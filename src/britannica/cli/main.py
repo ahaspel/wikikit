@@ -3,11 +3,11 @@ from pathlib import Path
 import typer
 
 from britannica.db.base import Base
-from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.clean_pages import clean_pages
-from britannica.db.models import Article, ArticleSegment, SourcePage
+from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
+from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -137,6 +137,35 @@ def list_articles(volume: int = typer.Option(None)) -> None:
             print(
                 f"vol={article.volume} pages={article.page_start}-{article.page_end} "
                 f"title={article.title!r} body={body}"
+            )
+    finally:
+        session.close()
+        
+@app.command("extract-xrefs")
+def extract_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
+    count = extract_xrefs_for_volume(volume)
+    print(f"Extracted {count} cross-references for volume {volume}.")
+
+
+@app.command("list-xrefs")
+def list_xrefs(volume: int = typer.Option(None)) -> None:
+    session = SessionLocal()
+    try:
+        query = session.query(CrossReference, Article).join(
+            Article, CrossReference.article_id == Article.id
+        )
+        if volume is not None:
+            query = query.filter(Article.volume == volume)
+
+        rows = query.order_by(Article.title, CrossReference.id).all()
+
+        for xref, article in rows:
+            print(
+                f"article={article.title!r} "
+                f"type={xref.xref_type!r} "
+                f"surface={xref.surface_text!r} "
+                f"target={xref.normalized_target!r} "
+                f"status={xref.status!r}"
             )
     finally:
         session.close()
