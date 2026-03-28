@@ -6,6 +6,8 @@ from britannica.db.base import Base
 from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.clean_pages import clean_pages
+from britannica.db.models import Article, ArticleSegment, SourcePage
+from britannica.pipeline.stages.detect_boundaries import detect_boundaries
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -63,6 +65,29 @@ def list_pages(volume: int = typer.Option(None)) -> None:
             print(
                 f"vol={page.volume} page={page.page_number} "
                 f"raw='{raw}' clean='{clean}'"
+            )
+    finally:
+        session.close()
+        
+@app.command("detect-boundaries")
+def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
+    count = detect_boundaries(volume)
+    print(f"Created {count} articles for volume {volume}.")
+
+
+@app.command("list-articles")
+def list_articles(volume: int = typer.Option(None)) -> None:
+    session = SessionLocal()
+    try:
+        query = session.query(Article)
+        if volume is not None:
+            query = query.filter(Article.volume == volume)
+
+        for article in query.order_by(Article.volume, Article.page_start).all():
+            body = repr(article.body[:60])
+            print(
+                f"vol={article.volume} pages={article.page_start}-{article.page_end} "
+                f"title={article.title!r} body={body}"
             )
     finally:
         session.close()
