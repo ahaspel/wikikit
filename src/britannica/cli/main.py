@@ -7,8 +7,13 @@ from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.clean_pages import clean_pages
 from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
+from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
 from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_for_volume
+from britannica.review.reports import (
+    get_unresolved_xrefs_report,
+    get_backlinks_report,
+)
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -175,6 +180,58 @@ def list_xrefs(volume: int = typer.Option(None)) -> None:
 def resolve_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
     count = resolve_xrefs_for_volume(volume)
     print(f"Resolved {count} cross-references for volume {volume}.")
+    
+@app.command("report-unresolved-xrefs")
+def report_unresolved_xrefs(volume: int = typer.Argument(...)) -> None:
+    report = get_unresolved_xrefs_report(volume)
+
+    if not report:
+        print(f"No unresolved cross-references for volume {volume}.")
+        return
+
+    total = 0
+
+    for article_title, xrefs in report.items():
+        print(f"{article_title}:")
+        for xref in xrefs:
+            print(
+                f"  - type={xref.xref_type!r} "
+                f"surface={xref.surface_text!r} "
+                f"target={xref.normalized_target!r}"
+            )
+            total += 1
+
+    print(f"\nTotal unresolved cross-references: {total}")
+
+@app.command("report-backlinks")
+def report_backlinks(volume: int = typer.Argument(...)) -> None:
+    report = get_backlinks_report(volume)
+
+    if not report:
+        print(f"No backlinks for volume {volume}.")
+        return
+
+    total = 0
+
+    for target_title, xrefs in report.items():
+        print(f"{target_title} ←")
+        for xref in xrefs:
+            print(
+                f"  - from_article_id={xref.article_id} "
+                f"type={xref.xref_type!r} "
+                f"surface={xref.surface_text!r}"
+            )
+            total += 1
+
+    print(f"\nTotal backlinks: {total}")
+
+@app.command("export-articles")
+def export_articles_cmd(
+    volume: int = typer.Argument(...),
+    out_dir: str = typer.Option("data/derived/articles"),
+) -> None:
+    count = export_articles_to_json(volume, out_dir)
+    print(f"Exported {count} articles for volume {volume} to {out_dir}.")
 
 
 def run() -> None:
