@@ -8,6 +8,7 @@ from britannica.pipeline.stages.clean_pages import clean_pages
 from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
+from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_for_volume
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -169,6 +170,11 @@ def list_xrefs(volume: int = typer.Option(None)) -> None:
             )
     finally:
         session.close()
+        
+@app.command("resolve-xrefs")
+def resolve_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
+    count = resolve_xrefs_for_volume(volume)
+    print(f"Resolved {count} cross-references for volume {volume}.")
 
 
 def run() -> None:
