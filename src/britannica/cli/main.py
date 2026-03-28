@@ -17,6 +17,36 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     print("Database initialized.")
 
+@app.command("reset-volume")
+def reset_volume(volume: int = typer.Argument(...)) -> None:
+    session = SessionLocal()
+    try:
+        page_ids = [
+            pid
+            for (pid,) in session.query(SourcePage.id)
+            .filter(SourcePage.volume == volume)
+            .all()
+        ]
+
+        if page_ids:
+            session.query(ArticleSegment).filter(
+                ArticleSegment.source_page_id.in_(page_ids)
+            ).delete(synchronize_session=False)
+
+        session.query(Article).filter(Article.volume == volume).delete(
+            synchronize_session=False
+        )
+
+        session.query(SourcePage).filter(SourcePage.volume == volume).delete(
+            synchronize_session=False
+        )
+
+        session.commit()
+    finally:
+        session.close()
+
+    print(f"Reset data for volume {volume}.")
+
 
 @app.command("import-sample-pages")
 def import_sample_pages(
@@ -65,6 +95,25 @@ def list_pages(volume: int = typer.Option(None)) -> None:
             print(
                 f"vol={page.volume} page={page.page_number} "
                 f"raw='{raw}' clean='{clean}'"
+            )
+    finally:
+        session.close()
+        
+@app.command("list-segments")
+def list_segments() -> None:
+    session = SessionLocal()
+    try:
+        segments = (
+            session.query(ArticleSegment)
+            .order_by(ArticleSegment.article_id, ArticleSegment.sequence_in_article)
+            .all()
+        )
+
+        for seg in segments:
+            print(
+                f"article_id={seg.article_id} "
+                f"seq={seg.sequence_in_article} "
+                f"text={seg.segment_text[:60]!r}"
             )
     finally:
         session.close()
