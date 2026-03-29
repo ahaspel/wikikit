@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
-from britannica.db.models import Article, ArticleImage, ArticleSegment, CrossReference
+from britannica.db.models import (
+    Article, ArticleContributor, ArticleImage, ArticleSegment,
+    Contributor, CrossReference,
+)
 from britannica.db.session import SessionLocal
 
 
@@ -91,6 +94,19 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         .all()
                     )
                 ],
+                "contributors": [
+                    {
+                        "initials": contrib.initials,
+                        "full_name": contrib.full_name,
+                    }
+                    for contrib in (
+                        session.query(Contributor)
+                        .join(ArticleContributor, ArticleContributor.contributor_id == Contributor.id)
+                        .filter(ArticleContributor.article_id == article.id)
+                        .order_by(ArticleContributor.sequence)
+                        .all()
+                    )
+                ],
             }
 
             safe_filename = _safe_filename(article.page_start, article.title)
@@ -149,6 +165,67 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
         index_path.write_text(
             json.dumps(index, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        # Build contributor index
+        contrib_map: dict[str, dict] = {}
+        for article in articles:
+            contribs = (
+                session.query(Contributor)
+                .join(ArticleContributor, ArticleContributor.contributor_id == Contributor.id)
+                .filter(ArticleContributor.article_id == article.id)
+                .order_by(ArticleContributor.sequence)
+                .all()
+            )
+            for c in contribs:
+                if c.full_name not in contrib_map:
+                    contrib_map[c.full_name] = {
+                        "full_name": c.full_name,
+                        "initials": c.initials,
+                        "articles": [],
+                    }
+                contrib_map[c.full_name]["articles"].append({
+                    "title": article.title,
+                    "filename": _safe_filename(article.page_start, article.title),
+                })
+
+        # Merge with existing contributors (from other volumes)
+        contrib_path = out_path / "contributors.json"
+        if contrib_path.exists():
+            existing_contribs = json.loads(contrib_path.read_text(encoding="utf-8"))
+            for ec in existing_contribs:
+                name = ec["full_name"]
+                if name in contrib_map:
+                    # Merge article lists, avoiding duplicates
+                    existing_fns = {a["filename"] for a in contrib_map[name]["articles"]}
+                    for a in ec["articles"]:
+                        if a["filename"] not in existing_fns:
+                            contrib_map[name]["articles"].append(a)
+                else:
+                    contrib_map[name] = ec
+
+        def _sort_name(c: dict) -> str:
+            # Strip parenthetical dates, then sort by last name
+            import re as _re
+            name = _re.sub(r"\s*\([^)]*\)", "", c["full_name"]).strip()
+            return name.rsplit(None, 1)[-1].lower()
+
+        def _display_name(full_name: str) -> str:
+            """Convert 'First Middle Last' to 'Last, First Middle'."""
+            import re as _re
+            name = _re.sub(r"\s*\([^)]*\)", "", full_name).strip()
+            parts = name.rsplit(None, 1)
+            if len(parts) == 2:
+                return f"{parts[1]}, {parts[0]}"
+            return name
+
+        for entry in contrib_map.values():
+            entry["display_name"] = _display_name(entry["full_name"])
+
+        contrib_list = sorted(contrib_map.values(), key=_sort_name)
+        contrib_path.write_text(
+            json.dumps(contrib_list, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
 
