@@ -35,7 +35,16 @@ def _normalize_title(title: str) -> str:
 
 
 def _has_valid_title_content(title: str) -> bool:
-    """Require at least one run of 2+ consecutive uppercase letters."""
+    """Require at least one run of 2+ consecutive uppercase letters.
+
+    Also rejects chemical formulas:
+    - contain middle-dot or arrow characters
+    - contain digits (from preserved subscript/superscript numbers)
+    """
+    if "\u00b7" in title or "\u2192" in title:
+        return False
+    if re.search(r"\d", title):
+        return False
     return bool(re.search(r"[A-Z]{2,}", title))
 
 

@@ -5,6 +5,14 @@ from britannica.db.models import Article, ArticleSegment, CrossReference
 from britannica.db.session import SessionLocal
 
 
+def _safe_filename(page_start: int, title: str) -> str:
+    raw = f"{page_start:04d}-{title}.json"
+    return "".join(
+        ch if ch.isalnum() or ch in ("-", "_", ".") else "_"
+        for ch in raw
+    )
+
+
 def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -36,6 +44,23 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 .all()
             )
 
+            xref_list = []
+            for xref in xrefs:
+                entry = {
+                    "surface_text": xref.surface_text,
+                    "normalized_target": xref.normalized_target,
+                    "xref_type": xref.xref_type,
+                    "status": xref.status,
+                    "target_article_id": xref.target_article_id,
+                }
+                if xref.target_article_id is not None:
+                    target = session.get(Article, xref.target_article_id)
+                    if target:
+                        entry["target_filename"] = _safe_filename(
+                            target.page_start, target.title
+                        )
+                xref_list.append(entry)
+
             payload = {
                 "id": article.id,
                 "title": article.title,
@@ -51,23 +76,10 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     }
                     for seg in segments
                 ],
-                "xrefs": [
-                    {
-                        "surface_text": xref.surface_text,
-                        "normalized_target": xref.normalized_target,
-                        "xref_type": xref.xref_type,
-                        "status": xref.status,
-                        "target_article_id": xref.target_article_id,
-                    }
-                    for xref in xrefs
-                ],
+                "xrefs": xref_list,
             }
 
-            filename = f"{article.page_start:04d}-{article.title}.json"
-            safe_filename = "".join(
-                ch if ch.isalnum() or ch in ("-", "_", ".") else "_"
-                for ch in filename
-            )
+            safe_filename = _safe_filename(article.page_start, article.title)
 
             (out_path / safe_filename).write_text(
                 json.dumps(payload, indent=2, ensure_ascii=False),
