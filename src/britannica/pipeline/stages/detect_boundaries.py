@@ -17,28 +17,45 @@ class ParsedPage:
 
 
 def _is_heading(line: str) -> bool:
+    title, _ = _extract_heading(line)
+    return title is not None
+
+
+def _extract_heading(line: str) -> tuple[str | None, str]:
     line = line.strip()
 
-    if "ACCORSO" in line or "ACCURSIUS" in line:
-        print(f"CHECKING SPECIAL CASE: {line!r}")
-
     if not line:
-        return False
+        return None, ""
 
-    if not any(ch.isalpha() for ch in line):
-        return False
+    # Simple all-uppercase heading line
+    if line.upper() == line and len(line) <= 255:
+        return line, ""
 
-    # Old simple case
-    if line.upper() == line:
-        return True
+    # Britannica biographical heading at start of a line, followed by prose.
+    # Example:
+    # ACCURSIUS (Ital. Accorso), FRANCISCUS (1182–1260), Italian jurist, was born...
+    # ACCORSO (Accursius), MARIANGELO (c. 1490–1544), Italian critic, was born...
+    m = re.match(
+        r"^("
+        r"[A-Z][A-Z'’.\-]+"
+        r"(?:\s+[A-Z][A-Z'’.\-]+)*"
+        r"(?:\s*\([^)]*\))?"
+        r"(?:,\s*[A-Z][A-Za-z'’.\-]+(?:\s+[A-Z][A-Za-z'’.\-]+)*)?"
+        r"(?:\s*\([^)]*\))?"
+        r")"
+        r"(.*)$",
+        line,
+    )
+    if not m:
+        return None, line
 
-    # Britannica biographical/article heading:
-    # ACCORSO (Accursius), MARIANGELO ...
-    # ACCURSIUS (Ital. Accorso), FRANCISCUS ...
-    if re.match(r"^[A-Z][A-Z'’.-]{2,}(?: [A-Z][A-Z'’.-]{1,})*\s*[(,]", line):
-        return True
+    title = m.group(1).strip()
+    remainder = m.group(2).lstrip(" ,")
 
-    return False
+    if len(title) > 255:
+        return None, line
+
+    return title, remainder
 
 
 def _parse_page(text: str) -> ParsedPage:
@@ -50,7 +67,8 @@ def _parse_page(text: str) -> ParsedPage:
 
     first_heading_index: int | None = None
     for i, line in enumerate(lines):
-        if _is_heading(line):
+        title, _ = _extract_heading(line)
+        if title is not None:
             first_heading_index = i
             break
 
@@ -68,7 +86,9 @@ def _parse_page(text: str) -> ParsedPage:
     current_body_lines: list[str] = []
 
     for line in article_lines:
-        if _is_heading(line):
+        title, remainder = _extract_heading(line)
+
+        if title is not None:
             if current_title is not None:
                 candidates.append(
                     CandidateArticle(
@@ -76,8 +96,12 @@ def _parse_page(text: str) -> ParsedPage:
                         body="\n".join(current_body_lines).strip(),
                     )
                 )
-            current_title = line
+
+            current_title = title
             current_body_lines = []
+
+            if remainder:
+                current_body_lines.append(remainder)
         else:
             if current_title is not None:
                 current_body_lines.append(line)
