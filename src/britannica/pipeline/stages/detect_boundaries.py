@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
-
+import re
 
 @dataclass
 class CandidateArticle:
@@ -19,16 +19,26 @@ class ParsedPage:
 def _is_heading(line: str) -> bool:
     line = line.strip()
 
-    if not line:
-        return False
+    if "ACCORSO" in line or "ACCURSIUS" in line:
+        print(f"CHECKING SPECIAL CASE: {line!r}")
 
-    if len(line) > 120:
+    if not line:
         return False
 
     if not any(ch.isalpha() for ch in line):
         return False
 
-    return line.upper() == line
+    # Old simple case
+    if line.upper() == line:
+        return True
+
+    # Britannica biographical/article heading:
+    # ACCORSO (Accursius), MARIANGELO ...
+    # ACCURSIUS (Ital. Accorso), FRANCISCUS ...
+    if re.match(r"^[A-Z][A-Z'’.-]{2,}(?: [A-Z][A-Z'’.-]{1,})*\s*[(,]", line):
+        return True
+
+    return False
 
 
 def _parse_page(text: str) -> ParsedPage:
