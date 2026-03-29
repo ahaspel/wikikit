@@ -21,6 +21,24 @@ def _is_heading(line: str) -> bool:
     return title is not None
 
 
+def _normalize_title(title: str) -> str:
+    """Strip parentheticals, trailing periods, and spacing artifacts."""
+    # Strip all parenthetical content (etymologies, dates, alternate names)
+    title = re.sub(r"\s*\([^)]*\)", "", title)
+    # Collapse whitespace
+    title = re.sub(r"\s+", " ", title).strip()
+    # Clean comma artifacts from parenthetical removal (e.g. "SMITH, , JOHN")
+    title = re.sub(r",\s*,", ",", title).strip(", ")
+    # Strip trailing period (encyclopedia formatting convention)
+    title = re.sub(r"\.$", "", title)
+    return title
+
+
+def _has_valid_title_content(title: str) -> bool:
+    """Require at least one run of 2+ consecutive uppercase letters."""
+    return bool(re.search(r"[A-Z]{2,}", title))
+
+
 def _extract_heading(line: str) -> tuple[str | None, str]:
     line = line.strip()
 
@@ -29,7 +47,10 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
 
     # Simple all-uppercase heading line
     if line.upper() == line and len(line) <= 255:
-        return line, ""
+        title = _normalize_title(line)
+        if not _has_valid_title_content(title):
+            return None, line
+        return title, ""
 
     # Britannica biographical heading at start of a line, followed by prose.
     # Example:
@@ -37,10 +58,10 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     # ACCORSO (Accursius), MARIANGELO (c. 1490–1544), Italian critic, was born...
     m = re.match(
         r"^("
-        r"[A-Z][A-Z'’.\-]+"
-        r"(?:\s+[A-Z][A-Z'’.\-]+)*"
+        r"[A-Z][A-Z’’.\-]+"
+        r"(?:\s+[A-Z][A-Z’’.\-]+)*"
         r"(?:\s*\([^)]*\))?"
-        r"(?:,\s*[A-Z][A-Za-z'’.\-]+(?:\s+[A-Z][A-Za-z'’.\-]+)*)?"
+        r"(?:,\s*[A-Z][A-Za-z’’.\-]+(?:\s+[A-Z][A-Za-z’’.\-]+)*)?"
         r"(?:\s*\([^)]*\))?"
         r")"
         r"(.*)$",
@@ -49,10 +70,15 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     if not m:
         return None, line
 
-    title = m.group(1).strip()
+    raw_title = m.group(1).strip()
     remainder = m.group(2).lstrip(" ,")
 
+    title = _normalize_title(raw_title)
+
     if len(title) > 255:
+        return None, line
+
+    if not _has_valid_title_content(title):
         return None, line
 
     return title, remainder

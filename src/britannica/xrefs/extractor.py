@@ -3,25 +3,125 @@ import re
 from britannica.xrefs.normalizer import normalize_xref_target
 
 
+# Target (q.v.) — the dominant cross-reference pattern.
+# Captures up to 6 words before (q.v.), but not across sentence/clause boundaries.
+_QV_PATTERN = re.compile(r"([\w][\w\-]*(?:\s+[\w][\w\-]*){0,5})\s*\(q\.v\.\)")
+
+
+_SENTENCE_STARTERS = frozenset({
+    "A", "An", "And", "As", "At", "But", "By", "For", "From", "He", "Her",
+    "Here", "His", "How", "If", "In", "Into", "Is", "It", "Its", "Later",
+    "Many", "Most", "No", "Not", "Of", "On", "One", "Or", "She", "So",
+    "Some", "Such", "That", "The", "Their", "Then", "There", "These",
+    "They", "This", "Those", "Through", "To", "Under", "Was", "Were",
+    "What", "When", "Where", "Which", "While", "Who", "With",
+})
+
+
+def _extract_qv_target(raw_match: str) -> str:
+    """Extract the actual reference target from text preceding (q.v.).
+
+    Works backwards from the end to find the proper-noun or term:
+    - "Aleutian Islands" -> "Aleutian Islands"
+    - "celebrated in Latin alchemy as Geber" -> "Geber"
+    - "first oxidized to aldehydes" -> "aldehydes"
+    - "Later Aristotle" -> "Aristotle"
+    """
+    words = raw_match.split()
+    if not words:
+        return raw_match
+
+    # Start from the last word and extend backwards through capitalized words
+    result = [words[-1]]
+    for word in reversed(words[:-1]):
+        if not word[0].isupper():
+            break
+        if word in _SENTENCE_STARTERS:
+            break
+        if result[0][0].islower():
+            break
+        result.insert(0, word)
+
+    return " ".join(result)
+
+# (See Target) and (See also Target) — parenthesized editorial references
+_PAREN_SEE_ALSO_PATTERN = re.compile(
+    r"\(See also\s+([^)]+)\)"
+)
+_PAREN_SEE_PATTERN = re.compile(
+    r"\(See\s+(?!also\s)([^)]+)\)"
+)
+
+# See TARGET / See also TARGET — sentence-level references (all-caps)
+_SEE_ALSO_PATTERN = re.compile(r"\bSee also ([A-Z][A-Z\s\-]+)\b")
+_SEE_PATTERN = re.compile(r"\bSee ([A-Z][A-Z\s\-]+)\b")
+
+
+def _clean_paren_see_target(raw: str) -> list[str]:
+    """Split parenthesized See targets on 'and', strip trailing punctuation."""
+    raw = raw.strip().rstrip(".")
+    parts = re.split(r"\s+and\s+", raw)
+    return [p.strip() for p in parts if _is_plausible_target(p.strip())]
+
+
+def _is_plausible_target(target: str) -> bool:
+    """Reject targets that are clearly not article references."""
+    if not target:
+        return False
+    # Reject single common words that result from broken markup or overcapture
+    if target.lower() in (
+        "a", "also", "and", "above", "below", "founded", "the", "under",
+    ):
+        return False
+    # Reject bibliographic citations (contain numbers, volume refs, page refs)
+    if re.search(r"\b(?:p\.|pp\.|vol\.|Ber\.|Journ\.|Proc\.|\d{4})", target):
+        return False
+    # Reject targets that start with "especially" or similar
+    if re.match(r"(?i)^(?:especially|particularly|also the)\b", target):
+        return False
+    return True
+
+
 def extract_xrefs(text: str) -> list[dict[str, str]]:
     results: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
 
-    patterns = [
-        ("see_also", re.compile(r"\bSee also ([A-Z][A-Z\s\-]+)\b")),
-        ("see", re.compile(r"\bSee ([A-Z][A-Z\s\-]+)\b")),
-    ]
+    def _add(surface: str, target: str, xref_type: str) -> None:
+        normalized = normalize_xref_target(target)
+        if not normalized:
+            return
+        key = (normalized, xref_type)
+        if key in seen:
+            return
+        seen.add(key)
+        results.append(
+            {
+                "surface_text": surface.strip(),
+                "normalized_target": normalized,
+                "xref_type": xref_type,
+            }
+        )
 
-    for xref_type, pattern in patterns:
-        for match in pattern.finditer(text):
-            surface = match.group(0).strip()
-            target = match.group(1).strip()
+    # q.v. references
+    for m in _QV_PATTERN.finditer(text):
+        target = _extract_qv_target(m.group(1))
+        if _is_plausible_target(target):
+            _add(m.group(0), target, "qv")
 
-            results.append(
-                {
-                    "surface_text": surface,
-                    "normalized_target": normalize_xref_target(target),
-                    "xref_type": xref_type,
-                }
-            )
+    # (See also X) before (See X) to avoid double-matching
+    for m in _PAREN_SEE_ALSO_PATTERN.finditer(text):
+        for target in _clean_paren_see_target(m.group(1)):
+            _add(m.group(0), target, "see_also")
+
+    for m in _PAREN_SEE_PATTERN.finditer(text):
+        for target in _clean_paren_see_target(m.group(1)):
+            _add(m.group(0), target, "see")
+
+    # Sentence-level See also / See (all-caps targets)
+    for m in _SEE_ALSO_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see_also")
+
+    for m in _SEE_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
 
     return results
