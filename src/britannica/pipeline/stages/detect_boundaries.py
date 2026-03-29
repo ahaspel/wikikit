@@ -94,14 +94,33 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
 
 
 def _parse_page(text: str) -> ParsedPage:
-    lines = [line.strip() for line in text.splitlines()]
-    lines = [line for line in lines if line]
+    # Split into paragraph blocks (separated by blank lines), preserving structure.
+    raw_lines = text.splitlines()
 
-    if not lines:
+    # Collapse into non-empty lines, preserving blank-line boundaries as "\n\n".
+    lines: list[str] = []
+    prev_blank = False
+    for raw in raw_lines:
+        stripped = raw.strip()
+        if not stripped:
+            prev_blank = True
+            continue
+        if prev_blank and lines:
+            # Insert a paragraph-break marker before this line
+            lines.append("")
+        lines.append(stripped)
+        prev_blank = False
+
+    # Filter to only non-empty lines for heading detection
+    content_lines = [l for l in lines if l]
+
+    if not content_lines:
         return ParsedPage(prefix_text="", candidates=[])
 
     first_heading_index: int | None = None
     for i, line in enumerate(lines):
+        if not line:
+            continue
         title, _ = _extract_heading(line)
         if title is not None:
             first_heading_index = i
@@ -109,7 +128,7 @@ def _parse_page(text: str) -> ParsedPage:
 
     if first_heading_index is None:
         return ParsedPage(
-            prefix_text="\n".join(lines).strip(),
+            prefix_text=_join_lines(lines),
             candidates=[],
         )
 
@@ -121,6 +140,11 @@ def _parse_page(text: str) -> ParsedPage:
     current_body_lines: list[str] = []
 
     for line in article_lines:
+        if not line:
+            # Blank line = paragraph break within body
+            current_body_lines.append(line)
+            continue
+
         title, remainder = _extract_heading(line)
 
         if title is not None:
@@ -128,7 +152,7 @@ def _parse_page(text: str) -> ParsedPage:
                 candidates.append(
                     CandidateArticle(
                         title=current_title,
-                        body="\n".join(current_body_lines).strip(),
+                        body=_join_lines(current_body_lines),
                     )
                 )
 
@@ -145,14 +169,28 @@ def _parse_page(text: str) -> ParsedPage:
         candidates.append(
             CandidateArticle(
                 title=current_title,
-                body="\n".join(current_body_lines).strip(),
+                body=_join_lines(current_body_lines),
             )
         )
 
     return ParsedPage(
-        prefix_text="\n".join(prefix_lines).strip(),
+        prefix_text=_join_lines(prefix_lines),
         candidates=candidates,
     )
+
+
+def _join_lines(lines: list[str]) -> str:
+    """Join lines, treating empty strings as paragraph-break markers."""
+    paragraphs: list[list[str]] = [[]]
+    for line in lines:
+        if not line:
+            if paragraphs[-1]:
+                paragraphs.append([])
+        else:
+            paragraphs[-1].append(line)
+    return "\n\n".join(
+        " ".join(p) for p in paragraphs if p
+    ).strip()
 
 
 def _append_segment(
@@ -175,7 +213,7 @@ def _append_segment(
 
     if segment_text:
         article.body = (
-            (article.body.rstrip() + "\n" + segment_text).strip()
+            (article.body.rstrip() + " " + segment_text).strip()
             if article.body
             else segment_text
         )
