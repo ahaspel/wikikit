@@ -44,7 +44,8 @@ def _normalize_title(title: str) -> str:
     return title
 
 
-_ROMAN_NUMERAL = re.compile(r"^[IVXLCDM]+\.?$")
+# Matches pure Roman numerals (II, IV) and numbered section headings (IV. TOPIC)
+_ROMAN_NUMERAL = re.compile(r"^[IVXLCDM]+\.?(\s|$)")
 
 # Two-letter article titles that actually exist in the encyclopedia.
 # Other 2-letter combinations (CH, RO, OF, etc.) are fragments.
@@ -81,6 +82,10 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
 
     if not line:
         return None, ""
+
+    # Skip inline markers (images, tables, footnotes)
+    if line.startswith("{{IMG:") or line.startswith("{{TABLE:") or line.startswith("\u00abFN:"):
+        return None, line
 
     # Simple all-uppercase heading line
     if line.upper() == line and len(line) <= 255:
@@ -220,17 +225,40 @@ def _parse_page(text: str) -> ParsedPage:
 
 
 def _join_lines(lines: list[str]) -> str:
-    """Join lines, treating empty strings as paragraph-break markers."""
+    """Join lines, treating empty strings as paragraph-break markers.
+
+    Table blocks ({{TABLE:...}TABLE}) are preserved with their internal newlines.
+    """
     paragraphs: list[list[str]] = [[]]
+    in_table = False
+
     for line in lines:
         if not line:
-            if paragraphs[-1]:
+            if not in_table and paragraphs[-1]:
                 paragraphs.append([])
-        else:
+            continue
+
+        if line.startswith("{{TABLE:"):
+            in_table = True
+        if in_table:
             paragraphs[-1].append(line)
-    return "\n\n".join(
-        " ".join(p) for p in paragraphs if p
-    ).strip()
+            if line.endswith("}TABLE}"):
+                in_table = False
+            continue
+
+        paragraphs[-1].append(line)
+
+    result_parts = []
+    for p in paragraphs:
+        if not p:
+            continue
+        # If this paragraph contains a table, join with newlines
+        if any(l.startswith("{{TABLE:") for l in p):
+            result_parts.append("\n".join(p))
+        else:
+            result_parts.append(" ".join(p))
+
+    return "\n\n".join(result_parts).strip()
 
 
 def _append_segment(
