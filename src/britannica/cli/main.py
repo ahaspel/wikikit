@@ -8,6 +8,7 @@ from britannica.pipeline.stages.clean_pages import clean_pages
 from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
 from britannica.export.article_json import export_articles_to_json
+from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 from britannica.pipeline.stages.extract_images import extract_images_for_volume
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
@@ -200,6 +201,14 @@ def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
 def extract_contributors_cmd(volume: int = typer.Argument(...)) -> None:
     count = extract_contributors_for_volume(volume)
     print(f"Extracted {count} article-contributor links for volume {volume}.")
+
+
+@app.command("classify-articles")
+def classify_articles_cmd(volume: int = typer.Argument(...)) -> None:
+    counts = classify_articles_for_volume(volume)
+    for article_type, count in sorted(counts.items()):
+        print(f"  {article_type}: {count}")
+    print(f"Classified {sum(counts.values())} articles for volume {volume}.")
 
 
 @app.command("report-unresolved-xrefs")

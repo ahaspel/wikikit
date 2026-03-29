@@ -67,6 +67,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             payload = {
                 "id": article.id,
                 "title": article.title,
+                "article_type": article.article_type,
                 "volume": article.volume,
                 "page_start": article.page_start,
                 "page_end": article.page_end,
@@ -91,6 +92,24 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         session.query(ArticleImage)
                         .filter(ArticleImage.article_id == article.id)
                         .order_by(ArticleImage.source_page_id, ArticleImage.sequence_in_article)
+                        .all()
+                    )
+                ],
+                "plates": [
+                    {
+                        "title": plate.title,
+                        "filename": _safe_filename(plate.page_start, plate.title),
+                        "page": plate.page_start,
+                    }
+                    for plate in (
+                        session.query(Article)
+                        .filter(
+                            Article.article_type == "plate",
+                            Article.volume == article.volume,
+                            Article.page_start >= article.page_start,
+                            Article.page_start <= article.page_end + 5,
+                        )
+                        .order_by(Article.page_start)
                         .all()
                     )
                 ],
@@ -145,6 +164,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             index.append({
                 "title": article.title,
+                "article_type": article.article_type,
                 "filename": _safe_filename(article.page_start, article.title),
                 "volume": article.volume,
                 "page_start": article.page_start,
