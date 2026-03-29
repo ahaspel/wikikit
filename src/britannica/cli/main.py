@@ -8,8 +8,9 @@ from britannica.pipeline.stages.clean_pages import clean_pages
 from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
 from britannica.export.article_json import export_articles_to_json
+from britannica.pipeline.stages.extract_images import extract_images_for_volume
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
-from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_for_volume
+from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_for_volume, resolve_xrefs_all
 from britannica.review.reports import (
     get_unresolved_xrefs_report,
     get_backlinks_report,
@@ -180,7 +181,20 @@ def list_xrefs(volume: int = typer.Option(None)) -> None:
 def resolve_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
     count = resolve_xrefs_for_volume(volume)
     print(f"Resolved {count} cross-references for volume {volume}.")
-    
+
+
+@app.command("resolve-xrefs-all")
+def resolve_xrefs_all_cmd() -> None:
+    count = resolve_xrefs_all()
+    print(f"Resolved {count} cross-references across all volumes.")
+
+
+@app.command("extract-images")
+def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
+    count = extract_images_for_volume(volume)
+    print(f"Extracted {count} images for volume {volume}.")
+
+
 @app.command("report-unresolved-xrefs")
 def report_unresolved_xrefs(volume: int = typer.Argument(...)) -> None:
     report = get_unresolved_xrefs_report(volume)

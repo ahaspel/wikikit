@@ -61,7 +61,12 @@ def _clean_paren_see_target(raw: str) -> list[str]:
     """Split parenthesized See targets on 'and', strip trailing punctuation."""
     raw = raw.strip().rstrip(".")
     parts = re.split(r"\s+and\s+", raw)
-    return [p.strip() for p in parts if _is_plausible_target(p.strip())]
+    results = []
+    for p in parts:
+        cleaned = p.strip().rstrip(";,.:!?").strip()
+        if cleaned and _is_plausible_target(cleaned):
+            results.append(cleaned)
+    return results
 
 
 def _is_plausible_target(target: str) -> bool:
@@ -70,14 +75,19 @@ def _is_plausible_target(target: str) -> bool:
         return False
     # Reject single common words that result from broken markup or overcapture
     if target.lower() in (
-        "a", "also", "and", "above", "below", "founded", "the", "under",
+        "a", "above", "also", "although", "and", "below", "but", "for",
+        "founded", "he", "her", "his", "in", "its", "of", "or", "the",
+        "their", "these", "this", "those", "to", "under", "which",
     ):
+        return False
+    # Reject targets that start with common words (sentence fragments, not titles)
+    if re.match(r"(?i)^(?:also|although|and|especially|for|particularly|the)\b", target):
         return False
     # Reject bibliographic citations (contain numbers, volume refs, page refs)
     if re.search(r"\b(?:p\.|pp\.|vol\.|Ber\.|Journ\.|Proc\.|\d{4})", target):
         return False
-    # Reject targets that start with "especially" or similar
-    if re.match(r"(?i)^(?:especially|particularly|also the)\b", target):
+    # Reject targets with stray semicolons (broken markup)
+    if ";" in target:
         return False
     return True
 

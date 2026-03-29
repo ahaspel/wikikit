@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from britannica.db.models import Article, ArticleSegment, CrossReference
+from britannica.db.models import Article, ArticleImage, ArticleSegment, CrossReference
 from britannica.db.session import SessionLocal
 
 
@@ -77,6 +77,20 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     for seg in segments
                 ],
                 "xrefs": xref_list,
+                "images": [
+                    {
+                        "filename": img.filename,
+                        "caption": img.caption,
+                        "commons_url": img.commons_url,
+                        "source_page_id": img.source_page_id,
+                    }
+                    for img in (
+                        session.query(ArticleImage)
+                        .filter(ArticleImage.article_id == article.id)
+                        .order_by(ArticleImage.source_page_id, ArticleImage.sequence_in_article)
+                        .all()
+                    )
+                ],
             }
 
             safe_filename = _safe_filename(article.page_start, article.title)
@@ -87,6 +101,56 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             )
 
             exported += 1
+
+        # Write index file for the viewer
+        index = []
+        for article in articles:
+            xref_count = (
+                session.query(CrossReference)
+                .filter(CrossReference.article_id == article.id)
+                .count()
+            )
+            resolved_count = (
+                session.query(CrossReference)
+                .filter(
+                    CrossReference.article_id == article.id,
+                    CrossReference.status == "resolved",
+                )
+                .count()
+            )
+            body = article.body or ""
+            # First ~10 words of body for disambiguation in the index
+            first_line = body.split("\n")[0]
+            words = first_line.split()
+            if len(words) > 10:
+                body_start = " ".join(words[:10]) + "\u2026"
+            else:
+                body_start = " ".join(words)
+
+            index.append({
+                "title": article.title,
+                "filename": _safe_filename(article.page_start, article.title),
+                "volume": article.volume,
+                "page_start": article.page_start,
+                "page_end": article.page_end,
+                "body_length": len(body.split()),
+                "body_start": body_start,
+                "xref_count": xref_count,
+                "resolved_count": resolved_count,
+            })
+
+        # Merge with existing index (from other volumes)
+        index_path = out_path / "index.json"
+        if index_path.exists():
+            existing = json.loads(index_path.read_text(encoding="utf-8"))
+            # Remove entries for this volume, keep other volumes
+            existing = [e for e in existing if e.get("volume") != volume]
+            index = existing + index
+
+        index_path.write_text(
+            json.dumps(index, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
         return exported
 

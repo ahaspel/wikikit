@@ -1,4 +1,5 @@
 from britannica.db.models import Article, CrossReference
+from britannica.xrefs.scoring import find_fuzzy_match
 
 
 def resolve_xref_exact(xref: CrossReference, articles: list[Article]) -> int | None:
@@ -9,3 +10,10 @@ def resolve_xref_exact(xref: CrossReference, articles: list[Article]) -> int | N
             return article.id
 
     return None
+
+
+def resolve_xref_fuzzy(
+    xref: CrossReference, title_map: dict[str, int]
+) -> int | None:
+    target = xref.normalized_target.strip().upper()
+    return find_fuzzy_match(target, title_map)

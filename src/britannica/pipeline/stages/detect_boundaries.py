@@ -29,21 +29,46 @@ def _normalize_title(title: str) -> str:
     title = re.sub(r"\s+", " ", title).strip()
     # Clean comma artifacts from parenthetical removal (e.g. "SMITH, , JOHN")
     title = re.sub(r",\s*,", ",", title).strip(", ")
+    # Strip trailing mixed-case phrase after comma — these are descriptors
+    # (e.g. "AELIAN, Greek" -> "AELIAN", "ALBERT, Grand Master" -> "ALBERT")
+    # but not given names (which are ALL-CAPS,
+    # e.g. "ACCURSIUS, FRANCISCUS" stays as-is).
+    if "," in title:
+        before, _, after = title.rpartition(",")
+        after = after.strip()
+        if after and not after.isupper():
+            title = before.strip()
     # Strip trailing period (encyclopedia formatting convention)
     title = re.sub(r"\.$", "", title)
     return title
 
 
+_ROMAN_NUMERAL = re.compile(r"^[IVXLCDM]+\.?$")
+
+# Two-letter article titles that actually exist in the encyclopedia.
+# Other 2-letter combinations (CH, RO, OF, etc.) are fragments.
+_VALID_TWO_LETTER = frozenset({
+    "AA", "AB", "AD", "AE", "AI", "AL", "AM", "AN", "AR", "AS", "AT",
+    "AX", "AY",
+})
+
+
 def _has_valid_title_content(title: str) -> bool:
     """Require at least one run of 2+ consecutive uppercase letters.
 
-    Also rejects chemical formulas:
-    - contain middle-dot or arrow characters
-    - contain digits (from preserved subscript/superscript numbers)
+    Also rejects:
+    - chemical formulas (middle-dot, arrow, or digit characters)
+    - pure Roman numerals (section numbers like II, III, IV)
+    - two-letter titles not in the known allowlist
     """
     if "\u00b7" in title or "\u2192" in title:
         return False
     if re.search(r"\d", title):
+        return False
+    if _ROMAN_NUMERAL.match(title):
+        return False
+    # Reject unknown 2-letter titles (common source of fragments)
+    if len(title) == 2 and title not in _VALID_TWO_LETTER:
         return False
     return bool(re.search(r"[A-Z]{2,}", title))
 
@@ -70,7 +95,7 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
         r"[A-Z][A-Z’’.\-]+"
         r"(?:\s+[A-Z][A-Z’’.\-]+)*"
         r"(?:\s*\([^)]*\))?"
-        r"(?:,\s*[A-Z][A-Za-z’’.\-]+(?:\s+[A-Z][A-Za-z’’.\-]+)*)?"
+        r"(?:,\s*[A-Z][A-Za-z’’\-]+(?:\s+[A-Z][A-Za-z’’\-]+)*)?"
         r"(?:\s*\([^)]*\))?"
         r")"
         r"(.*)$",
@@ -80,7 +105,7 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
         return None, line
 
     raw_title = m.group(1).strip()
-    remainder = m.group(2).lstrip(" ,")
+    remainder = m.group(2).lstrip(" ,.")
 
     title = _normalize_title(raw_title)
 
