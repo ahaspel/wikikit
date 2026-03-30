@@ -93,7 +93,7 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
 
     # Skip lines that ARE markers (start with marker syntax)
     if (line.startswith("{{IMG:") or line.startswith("{{TABLE:")
-            or line.startswith("\u00abFN:")
+            or line.startswith("\u00abFN:") or line.startswith("\u00abMATH:")
             or line.startswith("}TABLE}")):
         return None, line
 
