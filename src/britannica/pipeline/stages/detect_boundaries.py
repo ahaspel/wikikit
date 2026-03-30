@@ -82,7 +82,7 @@ def _has_valid_title_content(title: str) -> bool:
     # Reject unknown 2-letter titles (common source of fragments)
     if len(title) == 2 and title not in _VALID_TWO_LETTER:
         return False
-    return bool(re.search(r"[A-Z]{2,}", title))
+    return bool(re.search(r"[A-Z\u00C0-\u00DE]{2,}", title))
 
 
 def _extract_heading(line: str) -> tuple[str | None, str]:
@@ -91,11 +91,16 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     if not line:
         return None, ""
 
-    # Skip inline markers (images, tables, footnotes) and table content
+    # Skip lines that ARE markers (start with marker syntax)
     if (line.startswith("{{IMG:") or line.startswith("{{TABLE:")
             or line.startswith("\u00abFN:")
-            or "}TABLE}" in line or "{{TABLE:" in line
-            or "|" in line):
+            or line.startswith("}TABLE}")):
+        return None, line
+
+    # Skip lines with bare pipes (table content) — but not pipes inside markers or tables
+    stripped_markers = re.sub(r"\u00ab[A-Z]+:[^\u00bb]*\u00bb", "", line)
+    stripped_markers = re.sub(r"\{\{TABLE:.*?\}TABLE\}", "", stripped_markers, flags=re.DOTALL)
+    if "|" in stripped_markers:
         return None, line
 
     # Simple all-uppercase heading line (max 40 chars — longer lines are
@@ -112,10 +117,10 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     # ACCORSO (Accursius), MARIANGELO (c. 1490–1544), Italian critic, was born...
     m = re.match(
         r"^("
-        r"[A-Z][A-Z’’.\-]+"
-        r"(?:\s+[A-Z][A-Z’’.\-]+)*"
+        r"[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+"
+        r"(?:\s+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+)*"
         r"(?:\s+\([^)]*\))?"
-        r"(?:,\s*[A-Z][A-Za-z’’\-]+(?:\s+[A-Z][A-Za-z’’\-]+)*)?"
+        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+)*)?"
         r"(?:\s+\([^)]*\))?"
         r")"
         r"(.*)$",
@@ -149,10 +154,78 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     return title, remainder
 
 
+def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
+    """Split a plate page into sections by all-caps headings.
+
+    Returns list of (title, body) tuples. If no headings are found,
+    returns one section with no title.
+    """
+    lines = text.split("\n")
+    sections: list[tuple[str | None, list[str]]] = []
+    current_title: str | None = None
+    current_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Check if this is a section heading (all-caps, short, not a marker)
+        if (stripped.upper() == stripped
+                and not stripped.startswith("{{IMG:")
+                and not stripped.startswith("{{TABLE:")
+                and not stripped.endswith("}TABLE}")
+                and 2 < len(stripped) <= 60
+                and any(c.isalpha() for c in stripped)
+                and not any(c.isdigit() for c in stripped)):
+            # New section — save the previous one
+            heading = stripped.rstrip(".")
+            if heading != current_title:
+                if current_lines:
+                    sections.append((current_title, "\n\n".join(current_lines)))
+                    current_lines = []
+                current_title = heading
+        else:
+            current_lines.append(stripped)
+
+    # Save the last section
+    if current_lines or current_title:
+        sections.append((current_title, "\n\n".join(current_lines)))
+
+    # If no sections were created, return the whole text as one section
+    if not sections:
+        sections.append((None, text.strip()))
+
+    # Merge initial untitled section into the first titled section
+    if len(sections) > 1 and sections[0][0] is None and sections[1][0] is not None:
+        combined_body = sections[0][1] + "\n\n" + sections[1][1] if sections[0][1] else sections[1][1]
+        sections = [(sections[1][0], combined_body)] + sections[2:]
+
+    # Merge sections with the same title
+    merged: dict[str | None, list[str]] = {}
+    order: list[str | None] = []
+    for title, body in sections:
+        if title not in merged:
+            merged[title] = []
+            order.append(title)
+        if body:
+            merged[title].append(body)
+
+    return [(title, "\n\n".join(merged[title])) for title in order if merged[title]]
+
+
 def _is_plate_page(text: str) -> bool:
-    """Detect plate pages — starts with image markers."""
+    """Detect plate pages — mostly image markers with little prose."""
     stripped = text.strip()
-    return stripped.startswith("{{IMG:") and stripped.count("{{IMG:") >= 3
+    img_count = stripped.count("{{IMG:")
+    if img_count < 3:
+        return False
+    # Check if images appear very early (within first few lines)
+    lines = [l.strip() for l in stripped.split("\n") if l.strip()]
+    for line in lines[:3]:
+        if line.startswith("{{IMG:"):
+            return True
+    return False
 
 
 def _parse_page(text: str) -> ParsedPage:
@@ -346,37 +419,30 @@ def detect_boundaries(volume: int) -> int:
             # These should not create article boundaries — create a plate
             # entry with all the content and let the previous article continue.
             if _is_plate_page(text):
-                # Find a title from the headings on this page
-                plate_title = None
-                for line in text.split("\n"):
-                    line = line.strip()
-                    if line and not line.startswith("{{IMG:"):
-                        candidate, _ = _extract_heading(line)
-                        if candidate:
-                            plate_title = candidate
-                            break
-                if not plate_title:
-                    plate_title = f"PLATE (VOL. {page.volume}, P. {page.page_number})"
+                # Split plate page into sections by all-caps headings.
+                # Each section becomes its own plate entry.
+                sections = _split_plate_sections(text)
 
-                plate_article = Article(
-                    title=plate_title,
-                    volume=page.volume,
-                    page_start=page.page_number,
-                    page_end=page.page_number,
-                    body=text,
-                    article_type="plate",
-                )
-                session.add(plate_article)
-                session.flush()
-                session.add(
-                    ArticleSegment(
-                        article_id=plate_article.id,
-                        source_page_id=page.id,
-                        sequence_in_article=1,
-                        segment_text=text,
+                for section_title, section_body in sections:
+                    plate_article = Article(
+                        title=section_title or f"PLATE (VOL. {page.volume}, P. {page.page_number})",
+                        volume=page.volume,
+                        page_start=page.page_number,
+                        page_end=page.page_number,
+                        body=section_body,
+                        article_type="plate",
                     )
-                )
-                created += 1
+                    session.add(plate_article)
+                    session.flush()
+                    session.add(
+                        ArticleSegment(
+                            article_id=plate_article.id,
+                            source_page_id=page.id,
+                            sequence_in_article=1,
+                            segment_text=section_body,
+                        )
+                    )
+                    created += 1
 
                 # Don't update open_article — let it continue past the plate
                 continue

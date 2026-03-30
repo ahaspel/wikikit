@@ -7,6 +7,9 @@ from britannica.xrefs.normalizer import normalize_xref_target
 # Captures up to 6 words before (q.v.), but not across sentence/clause boundaries.
 _QV_PATTERN = re.compile(r"([\w][\w\-]*(?:\s+[\w][\w\-]*){0,5})\s*\(q\.v\.\)")
 
+# Link-marker variant: «LN:target|display» (q.v.) or «LN:target|display» (q.v.)
+_QV_LINK_PATTERN = re.compile(r"\u00abLN:([^|]*)\|[^\u00bb]*\u00bb\s*\(q\.v\.\)")
+
 
 _SENTENCE_STARTERS = frozenset({
     "A", "An", "And", "As", "At", "But", "By", "For", "From", "He", "Her",
@@ -75,16 +78,25 @@ def _is_plausible_target(target: str) -> bool:
         return False
     # Reject single common words that result from broken markup or overcapture
     if target.lower() in (
-        "a", "above", "also", "although", "and", "below", "but", "for",
-        "founded", "he", "her", "his", "in", "its", "of", "or", "the",
-        "their", "these", "this", "those", "to", "under", "which",
+        "a", "above", "also", "although", "an", "and", "at", "bel", "below",
+        "but", "by", "dr", "emperor", "for", "founded", "further",
+        "he", "her", "his", "in", "is", "it", "its",
+        "not", "of", "on", "or", "s", "son", "spread",
+        "the", "their", "these", "they", "this", "those", "to",
+        "under", "was", "were", "which", "with",
     ):
         return False
+    # Reject very short targets (1-2 chars) — almost always noise
+    if len(target) <= 2:
+        return False
     # Reject targets that start with common words (sentence fragments, not titles)
-    if re.match(r"(?i)^(?:also|although|and|especially|for|particularly|the)\b", target):
+    if re.match(r"(?i)^(?:also|although|and|especially|for|further|particularly|separate|the)\b", target):
         return False
     # Reject bibliographic citations (contain numbers, volume refs, page refs)
-    if re.search(r"\b(?:p\.|pp\.|vol\.|Ber\.|Journ\.|Proc\.|\d{4})", target):
+    if re.search(r"\b(?:p\.|pp\.|vol\.|Ber\.|Journ\.|Proc\.|Hist\.|Dict\.|Biog\.|Gesch\.|Zeits\.|\d{4})", target):
+        return False
+    # Reject bibliographic-style references (author name + title)
+    if re.search(r"'s\s+(Dict|Hist|Bibl|Life|Lives|Memoir)", target):
         return False
     # Reject targets with stray semicolons (broken markup)
     if ";" in target:
@@ -112,7 +124,19 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
             }
         )
 
-    # q.v. references
+    # Link markers are implicit cross-references
+    for m in re.finditer(r"\u00abLN:([^|]*)\|([^\u00bb]*)\u00bb", text):
+        target = m.group(1).strip()
+        if _is_plausible_target(target):
+            _add(m.group(0), target, "link")
+
+    # q.v. references — link-marker variant first (more precise)
+    for m in _QV_LINK_PATTERN.finditer(text):
+        target = m.group(1).strip()
+        if _is_plausible_target(target):
+            _add(m.group(0), target, "qv")
+
+    # q.v. references — plain text variant
     for m in _QV_PATTERN.finditer(text):
         target = _extract_qv_target(m.group(1))
         if _is_plausible_target(target):
