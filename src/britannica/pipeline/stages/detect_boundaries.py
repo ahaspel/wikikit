@@ -69,7 +69,15 @@ def _has_valid_title_content(title: str) -> bool:
     # but allow standalone numbers (dates like 1812 in "WAR OF 1812")
     if re.search(r"[A-Za-z]\d|\d[A-Za-z]", title):
         return False
+    if title and title[0].isdigit():
+        return False
     if _ROMAN_NUMERAL.match(title):
+        return False
+    # Reject numbered section headings (ORDER I, PART II, CLASS IV, etc.)
+    if re.match(
+        r"^(?:ORDER|PART|SECTION|CLASS|BOOK|CHAPTER|DIVISION|GROUP|SERIES|PERIOD|GRADE|LEGION|BRIGADE|FAMILY|TRIBE|GENUS|SUBORDER|SUBFAMILY)\s+[IVXLCDM]+\.?$",
+        title,
+    ):
         return False
     # Reject unknown 2-letter titles (common source of fragments)
     if len(title) == 2 and title not in _VALID_TWO_LETTER:
@@ -83,12 +91,16 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     if not line:
         return None, ""
 
-    # Skip inline markers (images, tables, footnotes)
-    if line.startswith("{{IMG:") or line.startswith("{{TABLE:") or line.startswith("\u00abFN:"):
+    # Skip inline markers (images, tables, footnotes) and table content
+    if (line.startswith("{{IMG:") or line.startswith("{{TABLE:")
+            or line.startswith("\u00abFN:")
+            or "}TABLE}" in line or "{{TABLE:" in line
+            or "|" in line):
         return None, line
 
-    # Simple all-uppercase heading line
-    if line.upper() == line and len(line) <= 255:
+    # Simple all-uppercase heading line (max 40 chars — longer lines are
+    # figure captions like "INTERIOR OF ST. LUKE'S, NEAR DELPHI")
+    if line.upper() == line and len(line) <= 40:
         title = _normalize_title(line)
         if not _has_valid_title_content(title):
             return None, line
@@ -102,9 +114,9 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
         r"^("
         r"[A-Z][A-Z’’.\-]+"
         r"(?:\s+[A-Z][A-Z’’.\-]+)*"
-        r"(?:\s*\([^)]*\))?"
+        r"(?:\s+\([^)]*\))?"
         r"(?:,\s*[A-Z][A-Za-z’’\-]+(?:\s+[A-Z][A-Za-z’’\-]+)*)?"
-        r"(?:\s*\([^)]*\))?"
+        r"(?:\s+\([^)]*\))?"
         r")"
         r"(.*)$",
         line,
@@ -112,8 +124,13 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
     if not m:
         return None, line
 
+    # Reject if the title runs directly into lowercase text (e.g. "HAMITESFellahin")
+    after_match = m.group(2)
+    if after_match and after_match[0].islower():
+        return None, line
+
     raw_title = m.group(1).strip()
-    remainder = m.group(2).lstrip(" ,.")
+    remainder = after_match.lstrip(" ,.")
 
     # Pull a trailing standalone number into the title (e.g. "WAR OF" + "1812")
     num_match = re.match(r"^(\d+)\b(.*)$", remainder)
@@ -163,8 +180,15 @@ def _parse_page(text: str) -> ParsedPage:
         return ParsedPage(prefix_text="", candidates=[])
 
     first_heading_index: int | None = None
+    in_table = False
     for i, line in enumerate(lines):
         if not line:
+            continue
+        if line.startswith("{{TABLE:"):
+            in_table = True
+        if in_table:
+            if line.endswith("}TABLE}"):
+                in_table = False
             continue
         title, _ = _extract_heading(line)
         if title is not None:
@@ -183,11 +207,22 @@ def _parse_page(text: str) -> ParsedPage:
     candidates: list[CandidateArticle] = []
     current_title: str | None = None
     current_body_lines: list[str] = []
+    in_table = False
 
     for line in article_lines:
         if not line:
             # Blank line = paragraph break within body
             current_body_lines.append(line)
+            continue
+
+        # Skip heading detection inside table blocks
+        if line.startswith("{{TABLE:"):
+            in_table = True
+        if in_table:
+            if current_title is not None:
+                current_body_lines.append(line)
+            if line.endswith("}TABLE}"):
+                in_table = False
             continue
 
         title, remainder = _extract_heading(line)
