@@ -69,9 +69,19 @@ def _get_or_create_contributor(
     session, full_name: str, initials: str
 ) -> Contributor:
     """Find or create a contributor record."""
+    # Try exact match, then normalized (with/without trailing period)
     existing = (
         session.query(Contributor)
         .filter(Contributor.initials == initials)
+        .first()
+    )
+    if existing:
+        return existing
+    # Try alternate form
+    alt = initials.rstrip(".") if initials.endswith(".") else initials + "."
+    existing = (
+        session.query(Contributor)
+        .filter(Contributor.initials == alt)
         .first()
     )
     if existing:

@@ -4,6 +4,9 @@ from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 import re
 
+_SEC_MARKER = re.compile(r"\u00abSEC:([^\u00bb]+)\u00bb")
+
+
 @dataclass
 class CandidateArticle:
     title: str
@@ -14,6 +17,90 @@ class CandidateArticle:
 class ParsedPage:
     prefix_text: str
     candidates: list[CandidateArticle]
+
+
+def _parse_page_by_sections(text: str) -> ParsedPage | None:
+    """Parse a page using section markers if present.
+
+    Returns None if no section markers found (fall back to heuristic parsing).
+    """
+    markers = list(_SEC_MARKER.finditer(text))
+    if not markers:
+        return None
+
+    # Split text into sections
+    sections: list[tuple[str, str]] = []  # (section_id, section_text)
+    for i, m in enumerate(markers):
+        start = m.end()
+        end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
+        section_text = text[start:end].strip()
+        sections.append((m.group(1), section_text))
+
+    # Text before the first marker is prefix (continuation of previous article)
+    prefix = text[:markers[0].start()].strip()
+
+    candidates = []
+    for sec_id, sec_text in sections:
+        # Determine the article title
+        # Named sections (not s1, s2, s3...) use the section ID as the title
+        is_named = not re.match(r"^s\d+$", sec_id)
+
+        # Strip bold markers for heading detection
+        first_line = sec_text.split("\n")[0] if sec_text else ""
+        clean_first = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", first_line)
+
+        heading_match = re.match(
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+"
+            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''.\-]*)*)",
+            clean_first,
+        )
+
+        if is_named:
+            if heading_match:
+                title = heading_match.group(1).strip().rstrip(",.")
+            else:
+                title = sec_id.upper()
+        else:
+            if heading_match:
+                title = heading_match.group(1).strip().rstrip(",.")
+            else:
+                # No heading found — continuation block
+                if prefix:
+                    prefix = prefix + "\n\n" + sec_text
+                else:
+                    prefix = sec_text
+                continue
+
+        # Extract body — find where the heading ends in the ORIGINAL text
+        # (which may have bold markers)
+        if heading_match:
+            # Find the heading text in the original first line and skip past it
+            heading_text = heading_match.group(0)
+            # The original might have bold markers around the heading
+            bold_heading = re.match(
+                r"^(?:\u00abB\u00bb)?" + re.escape(heading_text) + r"(?:\u00ab/B\u00bb)?",
+                first_line,
+            )
+            if bold_heading:
+                body = first_line[bold_heading.end():].lstrip(" ,.")
+            else:
+                body = first_line[len(heading_text):].lstrip(" ,.")
+            # Add remaining lines
+            remaining_lines = sec_text.split("\n")[1:]
+            if remaining_lines:
+                remaining = "\n".join(remaining_lines).strip()
+                if body and remaining:
+                    body = body + "\n" + remaining
+                elif remaining:
+                    body = remaining
+            body = body.strip()
+        else:
+            body = sec_text
+
+        if title:
+            candidates.append(CandidateArticle(title=title, body=body))
+
+    return ParsedPage(prefix_text=prefix, candidates=candidates)
 
 
 def _is_heading(line: str) -> bool:
@@ -71,6 +158,9 @@ def _has_valid_title_content(title: str) -> bool:
         return False
     if title and title[0].isdigit():
         return False
+    # Single letter titles (A, B, C) exist but are too ambiguous —
+    # they conflict with contributor initials on front matter pages.
+    # These 26 articles will be handled as special cases later.
     if _ROMAN_NUMERAL.match(title):
         return False
     # Reject numbered section headings (ORDER I, PART II, CLASS IV, etc.)
@@ -86,72 +176,40 @@ def _has_valid_title_content(title: str) -> bool:
 
 
 def _extract_heading(line: str) -> tuple[str | None, str]:
-    line = line.strip()
+    """Extract an all-caps heading from the start of a line.
 
+    Used by _parse_page_by_sections for anonymous sections only.
+    Returns (title, remainder) or (None, line) if no heading found.
+    """
+    line = line.strip()
     if not line:
         return None, ""
 
-    # Skip lines that ARE markers (start with marker syntax)
-    if (line.startswith("{{IMG:") or line.startswith(("{{TABLE:", "{{TABLEH:"))
-            or line.startswith("{{VERSE:") or line.endswith("}VERSE}")
-            or line.startswith("\u00abFN:") or line.startswith("\u00abMATH:")
-            or line.startswith("}TABLE}")):
-        return None, line
+    # Strip formatting markers before heading detection
+    clean = re.sub(r"\u00ab/?[BIS]C?\u00bb", "", line)
 
-    # Skip lines with bare pipes (table content) — but not pipes inside markers or tables
-    stripped_markers = re.sub(r"\u00ab[A-Z]+:[^\u00bb]*\u00bb", "", line)
-    stripped_markers = re.sub(r"\{\{TABLEH?:.*?(\}TABLE\}|$)", "", stripped_markers, flags=re.DOTALL)
-    if "|" in stripped_markers:
-        return None, line
-
-    # Simple all-uppercase heading line (max 40 chars — longer lines are
-    # figure captions like "INTERIOR OF ST. LUKE'S, NEAR DELPHI")
-    if line.upper() == line and len(line) <= 40:
-        title = _normalize_title(line)
-        if not _has_valid_title_content(title):
-            return None, line
-        return title, ""
-
-    # Britannica biographical heading at start of a line, followed by prose.
-    # Example:
-    # ACCURSIUS (Ital. Accorso), FRANCISCUS (1182–1260), Italian jurist, was born...
-    # ACCORSO (Accursius), MARIANGELO (c. 1490–1544), Italian critic, was born...
+    # Match all-caps word(s) at the start, optionally with parenthetical and comma-name
     m = re.match(
-        r"^("
-        r"[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+"
-        r"(?:\s+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+)*"
+        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+"
+        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+)*"
         r"(?:\s+\([^)]*\))?"
         r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+)*)?"
-        r"(?:\s+\([^)]*\))?"
-        r")"
-        r"(.*)$",
-        line,
+        r")",
+        clean,
     )
     if not m:
         return None, line
 
-    # Reject if the title runs directly into lowercase text (e.g. "HAMITESFellahin")
-    after_match = m.group(2)
-    if after_match and after_match[0].islower():
+    raw_title = m.group(0).strip().rstrip(",.")
+    # Strip parentheticals from title
+    title = re.sub(r"\s*\([^)]*\)", "", raw_title).strip()
+    title = re.sub(r"\.$", "", title)
+
+    if not title or len(title) > 255:
         return None, line
 
-    raw_title = m.group(1).strip()
-    remainder = after_match.lstrip(" ,.")
-
-    # Pull a trailing standalone number into the title (e.g. "WAR OF" + "1812")
-    num_match = re.match(r"^(\d+)\b(.*)$", remainder)
-    if num_match and raw_title.endswith((" OF", " OF THE")):
-        raw_title = raw_title + " " + num_match.group(1)
-        remainder = num_match.group(2).lstrip(" ,.")
-
-    title = _normalize_title(raw_title)
-
-    if len(title) > 255:
-        return None, line
-
-    if not _has_valid_title_content(title):
-        return None, line
-
+    # Get remainder from the clean line
+    remainder = clean[m.end():].lstrip(" ,.")
     return title, remainder
 
 
@@ -459,7 +517,10 @@ def detect_boundaries(volume: int) -> int:
                 # Don't update open_article — let it continue past the plate
                 continue
 
-            parsed = _parse_page(text)
+            parsed = _parse_page_by_sections(text)
+            if parsed is None:
+                # No section markers — entire page is continuation of previous article
+                parsed = ParsedPage(prefix_text=text, candidates=[])
 
             # Prefix text belongs to the currently open article, if any.
             if parsed.prefix_text and open_article is not None:
