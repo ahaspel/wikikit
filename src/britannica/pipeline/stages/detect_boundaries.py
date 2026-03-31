@@ -544,6 +544,25 @@ def detect_boundaries(volume: int) -> int:
             for candidate in parsed.candidates:
                 body_text = (candidate.body or "").strip()
 
+                # Wikisource repeats <section begin="X"> on continuation pages.
+                # If the currently open article has the same title, this is
+                # continuation — append rather than creating a duplicate.
+                if (
+                    open_article is not None
+                    and open_article.title == candidate.title
+                    and body_text
+                ):
+                    open_article_last_segment_seq += 1
+                    _append_segment(
+                        article=open_article,
+                        source_page_id=page.id,
+                        sequence_in_article=open_article_last_segment_seq,
+                        text=body_text,
+                        session=session,
+                    )
+                    open_article.page_end = page.page_number
+                    continue
+
                 existing = (
                     session.query(Article)
                     .filter(
