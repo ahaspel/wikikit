@@ -117,6 +117,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     {
                         "initials": contrib.initials,
                         "full_name": contrib.full_name,
+                        "credentials": contrib.credentials,
+                        "description": contrib.description,
                     }
                     for contrib in (
                         session.query(Contributor)
@@ -203,6 +205,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     contrib_map[c.full_name] = {
                         "full_name": c.full_name,
                         "initials": c.initials,
+                        "credentials": c.credentials or "",
+                        "description": c.description or "",
                         "articles": [],
                     }
                 contrib_map[c.full_name]["articles"].append({

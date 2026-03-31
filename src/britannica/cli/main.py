@@ -9,6 +9,7 @@ from britannica.db.models import Article, ArticleSegment, CrossReference, Source
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
+from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 from britannica.pipeline.stages.extract_images import extract_images_for_volume
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
@@ -201,6 +202,12 @@ def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
 def extract_contributors_cmd(volume: int = typer.Argument(...)) -> None:
     count = extract_contributors_for_volume(volume)
     print(f"Extracted {count} article-contributor links for volume {volume}.")
+
+
+@app.command("extract-contributor-bios")
+def extract_contributor_bios_cmd() -> None:
+    count = extract_contributor_bios()
+    print(f"Updated {count} contributors with biographical data.")
 
 
 @app.command("classify-articles")

@@ -92,14 +92,15 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
         return None, ""
 
     # Skip lines that ARE markers (start with marker syntax)
-    if (line.startswith("{{IMG:") or line.startswith("{{TABLE:")
+    if (line.startswith("{{IMG:") or line.startswith(("{{TABLE:", "{{TABLEH:"))
+            or line.startswith("{{VERSE:") or line.endswith("}VERSE}")
             or line.startswith("\u00abFN:") or line.startswith("\u00abMATH:")
             or line.startswith("}TABLE}")):
         return None, line
 
     # Skip lines with bare pipes (table content) — but not pipes inside markers or tables
     stripped_markers = re.sub(r"\u00ab[A-Z]+:[^\u00bb]*\u00bb", "", line)
-    stripped_markers = re.sub(r"\{\{TABLE:.*?\}TABLE\}", "", stripped_markers, flags=re.DOTALL)
+    stripped_markers = re.sub(r"\{\{TABLEH?:.*?(\}TABLE\}|$)", "", stripped_markers, flags=re.DOTALL)
     if "|" in stripped_markers:
         return None, line
 
@@ -173,7 +174,7 @@ def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
         # Check if this is a section heading (all-caps, short, not a marker)
         if (stripped.upper() == stripped
                 and not stripped.startswith("{{IMG:")
-                and not stripped.startswith("{{TABLE:")
+                and not stripped.startswith(("{{TABLE:", "{{TABLEH:"))
                 and not stripped.endswith("}TABLE}")
                 and 2 < len(stripped) <= 60
                 and any(c.isalpha() for c in stripped)
@@ -220,6 +221,17 @@ def _is_plate_page(text: str) -> bool:
     img_count = stripped.count("{{IMG:")
     if img_count < 3:
         return False
+
+    # Count non-image, non-marker words (actual prose)
+    prose = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
+    prose = re.sub(r"\{\{TABLE.*?\}TABLE\}", "", prose, flags=re.DOTALL)
+    prose_words = len(prose.split())
+
+    # Plate pages have many images relative to prose
+    # A page with >500 words of prose is an article page, not a plate
+    if prose_words > 500:
+        return False
+
     # Check if images appear very early (within first few lines)
     lines = [l.strip() for l in stripped.split("\n") if l.strip()]
     for line in lines[:3]:
@@ -257,7 +269,7 @@ def _parse_page(text: str) -> ParsedPage:
     for i, line in enumerate(lines):
         if not line:
             continue
-        if line.startswith("{{TABLE:"):
+        if line.startswith(("{{TABLE:", "{{TABLEH:")):
             in_table = True
         if in_table:
             if line.endswith("}TABLE}"):
@@ -289,7 +301,7 @@ def _parse_page(text: str) -> ParsedPage:
             continue
 
         # Skip heading detection inside table blocks
-        if line.startswith("{{TABLE:"):
+        if line.startswith(("{{TABLE:", "{{TABLEH:")):
             in_table = True
         if in_table:
             if current_title is not None:
@@ -346,7 +358,7 @@ def _join_lines(lines: list[str]) -> str:
                 paragraphs.append([])
             continue
 
-        if line.startswith("{{TABLE:"):
+        if line.startswith(("{{TABLE:", "{{TABLEH:")):
             in_table = True
         if in_table:
             paragraphs[-1].append(line)
@@ -361,7 +373,7 @@ def _join_lines(lines: list[str]) -> str:
         if not p:
             continue
         # If this paragraph contains a table, join with newlines
-        if any(l.startswith("{{TABLE:") for l in p):
+        if any(l.startswith(("{{TABLE:", "{{TABLEH:")) for l in p):
             result_parts.append("\n".join(p))
         else:
             result_parts.append(" ".join(p))

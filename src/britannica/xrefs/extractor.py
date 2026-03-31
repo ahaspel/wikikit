@@ -7,8 +7,8 @@ from britannica.xrefs.normalizer import normalize_xref_target
 # Captures up to 6 words before (q.v.), but not across sentence/clause boundaries.
 _QV_PATTERN = re.compile(r"([\w][\w\-]*(?:\s+[\w][\w\-]*){0,5})\s*\(q\.v\.\)")
 
-# Link-marker variant: «LN:target|display» (q.v.) or «LN:target|display» (q.v.)
-_QV_LINK_PATTERN = re.compile(r"\u00abLN:([^|]*)\|[^\u00bb]*\u00bb\s*\(q\.v\.\)")
+# Link-marker variant: «LN:target|display«/LN» (q.v.)
+_QV_LINK_PATTERN = re.compile(r"\u00abLN:([^|]*)\|[^«]*\u00ab/LN\u00bb\s*\(q\.v\.\)")
 
 
 _SENTENCE_STARTERS = frozenset({
@@ -125,7 +125,7 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         )
 
     # Link markers are implicit cross-references
-    for m in re.finditer(r"\u00abLN:([^|]*)\|([^\u00bb]*)\u00bb", text):
+    for m in re.finditer(r"\u00abLN:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
         target = m.group(1).strip()
         if _is_plausible_target(target):
             _add(m.group(0), target, "link")
