@@ -39,8 +39,23 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
     # Text before the first marker is prefix (continuation of previous article)
     prefix = text[:markers[0].start()].strip()
 
-    candidates = []
+    # Pre-split: a single section may contain multiple articles if there
+    # are bold headings mid-text.  Split on «B»ALLCAPS«/B» patterns that
+    # start a new line (paragraph boundary).
+    _BOLD_SPLIT = re.compile(
+        r"\n(?=(?:\u00abB\u00bb|\u00ab/B\u00bb)[A-Z])"
+    )
+    expanded_sections = []
     for sec_id, sec_text in sections:
+        parts = _BOLD_SPLIT.split(sec_text)
+        for j, part in enumerate(parts):
+            # First part keeps the original section ID; subsequent parts
+            # are anonymous sub-sections created by the split.
+            sub_id = sec_id if j == 0 else f"s{900 + len(expanded_sections)}"
+            expanded_sections.append((sub_id, part.strip()))
+
+    candidates = []
+    for sec_id, sec_text in expanded_sections:
         # Determine the article title
         # Named sections (not s1, s2, s3...) use the section ID as the title
         is_named = not re.match(r"^s\d+$", sec_id)
@@ -50,26 +65,44 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         clean_first = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", first_line)
 
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+"
-            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''.\-]*)*)",
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]+"
+            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]*)*)",
             clean_first,
         )
 
-        if is_named:
+        # A bold heading «B»TITLE«/B» at the start is the definitive signal
+        # for a new article.  Named sections without bold are continuations
+        # of the previous article repeated across pages on Wikisource.
+        # Some Wikisource pages have inverted markers «/B»TITLE«B» — treat
+        # these as bold headings too.
+        has_bold_heading = (
+            first_line.startswith("\u00abB\u00bb")
+            or first_line.startswith("\u00ab/B\u00bb")
+        )
+
+        # Bold heading is the sole signal for a new article, whether
+        # the section is named or anonymous.
+        if has_bold_heading:
             if heading_match:
                 title = heading_match.group(1).strip().rstrip(",.")
-            else:
+            elif is_named:
                 title = sec_id.upper()
-        else:
-            if heading_match:
-                title = heading_match.group(1).strip().rstrip(",.")
             else:
-                # No heading found — continuation block
-                if prefix:
-                    prefix = prefix + "\n\n" + sec_text
-                else:
-                    prefix = sec_text
-                continue
+                title = None
+        else:
+            # No bold heading — continuation of previous article
+            if prefix:
+                prefix = prefix + "\n\n" + sec_text
+            else:
+                prefix = sec_text
+            continue
+
+        if not title:
+            if prefix:
+                prefix = prefix + "\n\n" + sec_text
+            else:
+                prefix = sec_text
+            continue
 
         # Extract body — find where the heading ends in the ORIGINAL text
         # (which may have bold markers)
@@ -78,13 +111,16 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             heading_text = heading_match.group(0)
             # The original might have bold markers around the heading
             bold_heading = re.match(
-                r"^(?:\u00abB\u00bb)?" + re.escape(heading_text) + r"(?:\u00ab/B\u00bb)?",
+                r"^(?:\u00abB\u00bb|\u00ab/B\u00bb)?\s*"
+                + re.escape(heading_text)
+                + r"[,.\s]*(?:\u00abB\u00bb|\u00ab/B\u00bb)?\s*",
                 first_line,
             )
             if bold_heading:
                 body = first_line[bold_heading.end():].lstrip(" ,.")
             else:
-                body = first_line[len(heading_text):].lstrip(" ,.")
+                # Fall back: strip bold markers, find heading, take the rest
+                body = clean_first[len(heading_text):].lstrip(" ,.")
             # Add remaining lines
             remaining_lines = sec_text.split("\n")[1:]
             if remaining_lines:
@@ -99,6 +135,45 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
         if title:
             candidates.append(CandidateArticle(title=title, body=body))
+
+    return ParsedPage(prefix_text=prefix, candidates=candidates)
+
+
+def _split_on_bold_headings(text: str) -> ParsedPage:
+    """Split text with no section markers on bold headings.
+
+    Returns a ParsedPage with prefix (text before first bold heading)
+    and candidates for each bold heading found.
+    """
+    # Split on bold headings at line/paragraph boundaries
+    _BOLD_HEADING = re.compile(
+        r"(?:^|\n\n?)((?:\u00abB\u00bb|\u00ab/B\u00bb)"
+        r"[A-Z][A-Z\u00C0-\u00DE'\-,. ]+(?:\u00ab/B\u00bb|\u00abB\u00bb))",
+    )
+
+    parts = _BOLD_HEADING.split(text)
+
+    if len(parts) <= 1:
+        # No bold headings found — entire text is continuation
+        return ParsedPage(prefix_text=text, candidates=[])
+
+    prefix = parts[0].strip()
+    candidates = []
+
+    # parts alternates: text, bold-match, text, bold-match, text, ...
+    i = 1
+    while i < len(parts):
+        bold_marker = parts[i]
+        body_after = parts[i + 1].strip() if i + 1 < len(parts) else ""
+        # Extract title from the bold marker
+        clean = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", bold_marker)
+        title = clean.strip().rstrip(",.")
+        if title:
+            # Body is the bold marker text (minus title) + the following text
+            body_text = bold_marker[len(bold_marker):] + body_after
+            body_text = body_after.lstrip(" ,.")
+            candidates.append(CandidateArticle(title=title, body=body_text))
+        i += 2
 
     return ParsedPage(prefix_text=prefix, candidates=candidates)
 
@@ -519,8 +594,9 @@ def detect_boundaries(volume: int) -> int:
 
             parsed = _parse_page_by_sections(text)
             if parsed is None:
-                # No section markers — entire page is continuation of previous article
-                parsed = ParsedPage(prefix_text=text, candidates=[])
+                # No section markers — but still check for bold headings
+                # that indicate new articles on this page.
+                parsed = _split_on_bold_headings(text)
 
             # Prefix text belongs to the currently open article, if any.
             if parsed.prefix_text and open_article is not None:

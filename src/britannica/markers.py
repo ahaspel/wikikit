@@ -57,6 +57,10 @@ ITALIC_CLOSE = "\u00ab/I\u00bb"
 SMALLCAPS_OPEN = "\u00abSC\u00bb"
 SMALLCAPS_CLOSE = "\u00ab/SC\u00bb"
 
+# Shoulder heading markers: «SH»text«/SH» (internal section headings in long articles)
+SHOULDER_OPEN = "\u00abSH\u00bb"
+SHOULDER_CLOSE = "\u00ab/SH\u00bb"
+
 # ── Internal delimiters (used during fetch cleaning, converted before output) ─
 
 _INTERNAL_IMG = "\x00"

@@ -1,11 +1,47 @@
 import json
+import re
+from collections import Counter
 from pathlib import Path
 
 from britannica.db.models import (
     Article, ArticleContributor, ArticleImage, ArticleSegment,
-    Contributor, CrossReference,
+    Contributor, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
+
+
+_QUALITY_NOTES = {
+    0: "Untranscribed page",
+    1: "Unproofread OCR text",
+    2: "Problematic transcription",
+}
+
+
+def _source_quality(session, article: Article) -> dict:
+    """Build source quality metadata from page quality levels."""
+    pages = (
+        session.query(SourcePage)
+        .filter(
+            SourcePage.volume == article.volume,
+            SourcePage.page_number >= article.page_start,
+            SourcePage.page_number <= article.page_end,
+        )
+        .all()
+    )
+    levels = Counter()
+    for page in pages:
+        m = re.search(r'pagequality level="(\d)"', page.raw_text or "")
+        level = int(m.group(1)) if m else 3  # default to proofread
+        levels[level] += 1
+
+    lowest = min(levels.keys()) if levels else 3
+    note = _QUALITY_NOTES.get(lowest)
+
+    return {
+        "page_levels": {str(k): v for k, v in sorted(levels.items())},
+        "lowest_level": lowest,
+        "note": note,
+    }
 
 
 def _safe_filename(page_start: int, title: str) -> str:
@@ -64,6 +100,28 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         )
                 xref_list.append(entry)
 
+            quality = _source_quality(session, article)
+
+            # For plates, find the parent article
+            parent_article_info = None
+            if article.article_type == "plate":
+                parent = (
+                    session.query(Article)
+                    .filter(
+                        Article.article_type == "article",
+                        Article.volume == article.volume,
+                        Article.page_start <= article.page_start,
+                        Article.page_end >= article.page_start - 5,
+                    )
+                    .order_by(Article.page_start.desc())
+                    .first()
+                )
+                if parent:
+                    parent_article_info = {
+                        "title": parent.title,
+                        "filename": _safe_filename(parent.page_start, parent.title),
+                    }
+
             payload = {
                 "id": article.id,
                 "title": article.title,
@@ -71,6 +129,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "volume": article.volume,
                 "page_start": article.page_start,
                 "page_end": article.page_end,
+                "source_quality": quality,
+                "parent_article": parent_article_info,
                 "body": article.body,
                 "segments": [
                     {
