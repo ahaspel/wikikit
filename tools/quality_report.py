@@ -68,21 +68,11 @@ def run_db_checks() -> dict:
         )
         results["titles_1_char"] = sum(1 for a in articles if len(a.title) == 1)
 
-        # Body starts lowercase
-        lc_total = 0
-        lc_legit = 0
-        lc_continuation = 0
-        for a in articles:
-            body = a.body or ""
-            if body and body[0].islower():
-                lc_total += 1
-                if re.match(r"^(a |an |the |or |\()", body, re.IGNORECASE):
-                    lc_legit += 1
-                else:
-                    lc_continuation += 1
-        results["lowercase_body_total"] = lc_total
-        results["lowercase_body_legit"] = lc_legit
-        results["lowercase_body_continuation"] = lc_continuation
+        # Body starts lowercase (almost always legitimate — encyclopedia
+        # definitions continue from the bold title)
+        results["lowercase_body_total"] = sum(
+            1 for a in articles if (a.body or "") and (a.body or "")[0].islower()
+        )
 
         # Embedded bold headings
         bold_open = "\u00abB\u00bb"
@@ -166,10 +156,10 @@ def run_file_checks() -> dict:
 
         # Stray wiki markup
         if "{{" in body and not any(
-            m in body for m in ["{{IMG:", "{{TABLE", "{{FN:"]
+            m in body for m in ["{{IMG:", "{{TABLE", "{{FN:", "{{VERSE:"]
         ):
             issues["stray_braces"] += 1
-        if "}}" in body and "TABLE}" not in body and "IMG:" not in body:
+        if "}}" in body and "TABLE}" not in body and "IMG:" not in body and "VERSE}" not in body:
             issues["stray_close_braces"] += 1
         if "[[" in body or "]]" in body:
             issues["stray_wikilink"] += 1
@@ -241,9 +231,7 @@ def format_report(db: dict, files: dict) -> str:
     lines.append("")
 
     lines.append("=== Body Issues ===")
-    lines.append(f"  Lowercase body (total):        {db['lowercase_body_total']}")
-    lines.append(f"    Legitimate (article def):     {db['lowercase_body_legit']}")
-    lines.append(f"    Likely continuation:          {db['lowercase_body_continuation']}")
+    lines.append(f"  Lowercase body starts:          {db['lowercase_body_total']}")
     lines.append(f"  Embedded bold headings:         {db['embedded_bold_headings']}")
     lines.append(f"  Uncovered pages (mid-volume):   {db['uncovered_pages_mid_volume']}")
     lines.append("")
@@ -281,7 +269,6 @@ def diff_reports(current: dict, previous: dict) -> str:
     _diff("Xrefs unresolved", cur_db["xrefs_unresolved"], prev_db["xrefs_unresolved"])
     _diff("Titles with period", cur_db["titles_with_period"], prev_db["titles_with_period"])
     _diff("Titles with lowercase", cur_db["titles_with_lowercase"], prev_db["titles_with_lowercase"])
-    _diff("Lowercase body (continuation)", cur_db["lowercase_body_continuation"], prev_db["lowercase_body_continuation"])
     _diff("Embedded bold headings", cur_db["embedded_bold_headings"], prev_db["embedded_bold_headings"])
     _diff("Uncovered pages (mid-volume)", cur_db["uncovered_pages_mid_volume"], prev_db["uncovered_pages_mid_volume"])
 

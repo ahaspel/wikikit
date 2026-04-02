@@ -136,6 +136,10 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     {
                         "sequence_in_article": seg.sequence_in_article,
                         "source_page_id": seg.source_page_id,
+                        "page_number": (
+                            session.get(SourcePage, seg.source_page_id).page_number
+                            if seg.source_page_id else None
+                        ),
                         "segment_text": seg.segment_text,
                     }
                     for seg in segments
@@ -191,11 +195,9 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             }
 
             safe_filename = _safe_filename(article.page_start, article.title)
+            article_json = json.dumps(payload, indent=2, ensure_ascii=False)
 
-            (out_path / safe_filename).write_text(
-                json.dumps(payload, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            (out_path / safe_filename).write_text(article_json, encoding="utf-8")
 
             exported += 1
 
@@ -225,6 +227,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 body_start = " ".join(words)
 
             index.append({
+                "id": article.id,
                 "title": article.title,
                 "article_type": article.article_type,
                 "filename": _safe_filename(article.page_start, article.title),
@@ -270,6 +273,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         "articles": [],
                     }
                 contrib_map[c.full_name]["articles"].append({
+                    "id": article.id,
                     "title": article.title,
                     "filename": _safe_filename(article.page_start, article.title),
                 })
