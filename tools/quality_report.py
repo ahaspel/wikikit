@@ -149,8 +149,10 @@ def run_file_checks() -> dict:
     for f in files:
         with open(f, encoding="utf-8") as fh:
             a = json.load(fh)
-        title = a["title"]
+        title = a.get("title", "")
         body = a.get("body", "")
+        if not title:
+            continue
         if not body:
             continue
 
