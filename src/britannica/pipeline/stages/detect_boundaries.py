@@ -6,11 +6,46 @@ import re
 
 _SEC_MARKER = re.compile(r"\u00abSEC:([^\u00bb]+)\u00bb")
 
+# Generic Wikisource section IDs that are never real article titles.
+_GENERIC_SEC_ID = re.compile(
+    r"^(?:part|s|text|rpart|plate)\d*$", re.IGNORECASE
+)
+
+
+def _is_article_section_id(sec_id: str) -> bool:
+    """Return True if a section ID looks like a real article title, not a
+    generic Wikisource continuation marker (part1, s2, text1, etc.)."""
+    if _GENERIC_SEC_ID.match(sec_id):
+        return False
+    # Trailing digits on an otherwise-valid name (Egypt2, Egypt3) are
+    # Wikisource continuations, not separate articles.
+    if re.search(r"\d+$", sec_id):
+        return False
+    # Single letters are handled separately — they are only valid as
+    # letter-of-the-alphabet articles, detected via _is_letter_article.
+    if len(sec_id) == 1:
+        return False
+    return True
+
+
+def _is_letter_article(sec_id: str, sec_text: str) -> bool:
+    """Return True if this section is a single-letter encyclopedia article
+    (e.g. the article about the letter A, B, C, etc.).
+    These have a single-letter section ID and text about the letter itself."""
+    if len(sec_id) != 1 or not sec_id.isalpha():
+        return False
+    # The text should be about the letter — check for characteristic phrases
+    lower = sec_text[:200].lower()
+    return any(phrase in lower for phrase in [
+        "letter", "alphabet", "symbol", "phoenician",
+    ])
+
 
 @dataclass
 class CandidateArticle:
     title: str
     body: str
+    is_tentative: bool = False  # True if created from named section without bold
 
 
 @dataclass
@@ -60,13 +95,18 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # Named sections (not s1, s2, s3...) use the section ID as the title
         is_named = not re.match(r"^s\d+$", sec_id)
 
-        # Strip bold markers for heading detection
+        # Strip link wrappers and bold markers for heading detection.
+        # Some Wikisource headings are wrapped in «LN:...|«B»TITLE«/B»«/LN».
         first_line = sec_text.split("\n")[0] if sec_text else ""
-        clean_first = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", first_line)
+        first_line_unwrapped = re.sub(
+            r"\u00abLN:[^|]*\|(.*?)\u00ab/LN\u00bb",
+            r"\1", first_line,
+        )
+        clean_first = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", first_line_unwrapped)
 
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]+"
-            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]*)*)",
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]*"
+            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]+)*)",
             clean_first,
         )
 
@@ -76,19 +116,32 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # Some Wikisource pages have inverted markers «/B»TITLE«B» — treat
         # these as bold headings too.
         has_bold_heading = (
-            first_line.startswith("\u00abB\u00bb")
-            or first_line.startswith("\u00ab/B\u00bb")
+            first_line_unwrapped.startswith("\u00abB\u00bb")
+            or first_line_unwrapped.startswith("\u00ab/B\u00bb")
         )
+        _is_tentative = False
 
         # Bold heading is the sole signal for a new article, whether
         # the section is named or anonymous.
+        # Exception: a named section without bold that is the first content
+        # on the page (no candidates yet, no prefix) is treated as a new
+        # article — it's not a continuation if there's nothing to continue.
         if has_bold_heading:
-            if heading_match:
+            if heading_match and _has_valid_title_content(
+                _normalize_title(heading_match.group(1).strip().rstrip(",."))
+            ):
                 title = heading_match.group(1).strip().rstrip(",.")
-            elif is_named:
+            elif is_named and (len(sec_id) != 1 or _is_letter_article(sec_id, sec_text)):
                 title = sec_id.upper()
             else:
                 title = None
+        elif _is_letter_article(sec_id, sec_text):
+            # Single-letter article about the letter itself
+            title = sec_id.upper()
+        elif is_named and not candidates and not prefix and _is_article_section_id(sec_id):
+            # First named section on the page, no bold — tentatively new article
+            title = sec_id.upper()
+            _is_tentative = True
         else:
             # No bold heading — continuation of previous article
             if prefix:
@@ -134,7 +187,9 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             body = sec_text
 
         if title:
-            candidates.append(CandidateArticle(title=title, body=body))
+            candidates.append(CandidateArticle(
+                title=title, body=body, is_tentative=_is_tentative,
+            ))
 
     return ParsedPage(prefix_text=prefix, candidates=candidates)
 
@@ -623,11 +678,27 @@ def detect_boundaries(volume: int) -> int:
                 # Wikisource repeats <section begin="X"> on continuation pages.
                 # If the currently open article has the same title, this is
                 # continuation — append rather than creating a duplicate.
-                if (
+                # Tentative candidates (named section, no bold, first on page)
+                # also merge if titles are related (one starts with the other).
+                exact_match = (
                     open_article is not None
                     and open_article.title == candidate.title
-                    and body_text
-                ):
+                )
+                # Wikisource splits long articles across sections named
+                # "Egypt", "Egypt2", "Egypt3" etc.  Strip trailing digits
+                # before comparing so these merge as continuations.
+                _open_base = re.sub(r"\d+$", "", open_article.title) if open_article else ""
+                _cand_base = re.sub(r"\d+$", "", candidate.title)
+                fuzzy_match = (
+                    open_article is not None
+                    and candidate.is_tentative
+                    and (
+                        _open_base.startswith(_cand_base)
+                        or _cand_base.startswith(_open_base)
+                    )
+                    and _cand_base  # don't match empty after stripping
+                )
+                if (exact_match or fuzzy_match) and body_text:
                     open_article_last_segment_seq += 1
                     _append_segment(
                         article=open_article,
