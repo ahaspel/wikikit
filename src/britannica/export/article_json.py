@@ -17,6 +17,88 @@ _QUALITY_NOTES = {
 }
 
 
+_TITLE_PREFIXES = re.compile(
+    r"^(Sir |Rev\.? |Colonel |Major-General |Lieut\.-Gen\. |"
+    r"Right Hon\.? |The |Hon\.? |Rt\.? Rev\.? |Very Rev\.? |"
+    r"Viscount |Lord |Rear-Admiral |Field-Marshal |Mrs |"
+    r"Prince |Princess |Earl of |Baron |Dr\.? )+",
+    re.IGNORECASE,
+)
+
+
+def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
+    """Add bio_article_filename to contributors with biographical articles."""
+    # Build title -> filename lookup from all articles in DB
+    all_articles = session.query(Article).all()
+    title_map: dict[str, str] = {}
+    for a in all_articles:
+        title_map[a.title.upper()] = _safe_filename(a.page_start, a.title)
+
+    for entry in contrib_map.values():
+        desc = (entry.get("description") or "").lower()
+        if "biographical article" not in desc:
+            continue
+
+        full_name = entry["full_name"]
+        # Strip parenthetical dates
+        clean = re.sub(r"\s*\([^)]*\)", "", full_name).strip()
+        # Also strip trailing ordinals like "1st Baron Farnborough"
+        clean = re.sub(r",?\s+\d+\w*\s+Baron\s+.*$", "", clean, flags=re.IGNORECASE).strip()
+        # Strip titles/honorifics
+        stripped = _TITLE_PREFIXES.sub("", clean).strip()
+
+        parts = stripped.split()
+        if not parts:
+            continue
+
+        last = parts[-1].upper()
+        firsts = " ".join(parts[:-1]).upper()
+
+        # Build candidate inversions: without and with honorifics
+        candidates: list[str] = []
+        if firsts:
+            candidates.append(f"{last}, {firsts}")
+            # Also try with "Sir", "Rev." etc. between last name and first
+            title_match = _TITLE_PREFIXES.match(clean)
+            if title_match:
+                title = title_match.group(0).strip().upper()
+                candidates.append(f"{last}, {title} {firsts}")
+        else:
+            candidates.append(last)
+
+        fn = None
+        for candidate in candidates:
+            fn = title_map.get(candidate)
+            if fn:
+                break
+            fn = next(
+                (title_map[t] for t in title_map if t.startswith(candidate)),
+                None,
+            )
+            if fn:
+                break
+        if not fn and len(parts) > 1:
+            prefix = f"{last}, {parts[0].upper()}"
+            fn = next(
+                (title_map[t] for t in title_map if t.startswith(prefix)),
+                None,
+            )
+        # Fallback: word-set containment (A⊆B or B⊆A)
+        if not fn:
+            name_words = {w.upper().rstrip(".,") for w in stripped.split()}
+            for title, title_fn in title_map.items():
+                # Only consider biographical articles (LAST, FIRST...)
+                if "," not in title:
+                    continue
+                title_words = {w.rstrip(".,") for w in title.split()}
+                if name_words <= title_words or title_words <= name_words:
+                    fn = title_fn
+                    break
+
+        if fn:
+            entry["bio_article_filename"] = fn
+
+
 def _source_quality(session, article: Article) -> dict:
     """Build source quality metadata from page quality levels."""
     pages = (
@@ -122,6 +204,31 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         "filename": _safe_filename(parent.page_start, parent.title),
                     }
 
+            # Resolve inline link markers: embed target filename for resolved xrefs
+            # «LN:target|display«/LN» → «LN:filename|target|display«/LN»
+            body = article.body or ""
+            link_targets: dict[str, str] = {}  # normalized_target → filename
+            for xref in xrefs:
+                if xref.target_article_id is not None and xref.normalized_target:
+                    target = session.get(Article, xref.target_article_id)
+                    if target:
+                        link_targets[xref.normalized_target.lower()] = _safe_filename(
+                            target.page_start, target.title
+                        )
+
+            def _resolve_link(m: re.Match) -> str:
+                target_text, display = m.group(1), m.group(2)
+                fn = link_targets.get(target_text.strip().lower())
+                if fn:
+                    return f"\u00abLN:{fn}|{target_text}|{display}\u00ab/LN\u00bb"
+                return m.group(0)  # leave unresolved as-is (2-part)
+
+            body = re.sub(
+                r"\u00abLN:([^|]*)\|([^\u00ab]*)\u00ab/LN\u00bb",
+                _resolve_link,
+                body,
+            )
+
             payload = {
                 "id": article.id,
                 "title": article.title,
@@ -131,7 +238,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "page_end": article.page_end,
                 "source_quality": quality,
                 "parent_article": parent_article_info,
-                "body": article.body,
+                "body": body,
                 "segments": [
                     {
                         "sequence_in_article": seg.sequence_in_article,
@@ -310,6 +417,9 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
         for entry in contrib_map.values():
             entry["display_name"] = _display_name(entry["full_name"])
+
+        # Resolve biographical article links for contributors
+        _resolve_bio_articles(session, contrib_map)
 
         contrib_list = sorted(contrib_map.values(), key=_sort_name)
         contrib_path.write_text(

@@ -89,6 +89,9 @@ def _is_plausible_target(target: str) -> bool:
     # Reject very short targets (1-2 chars) — almost always noise
     if len(target) <= 2:
         return False
+    # Reject absurdly long targets (table content parsed as xrefs)
+    if len(target) > 200:
+        return False
     # Reject targets that start with common words (sentence fragments, not titles)
     if re.match(r"(?i)^(?:also|although|and|especially|for|further|particularly|separate|the)\b", target):
         return False

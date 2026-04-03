@@ -127,10 +127,17 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # on the page (no candidates yet, no prefix) is treated as a new
         # article — it's not a continuation if there's nothing to continue.
         if has_bold_heading:
-            if heading_match and _has_valid_title_content(
-                _normalize_title(heading_match.group(1).strip().rstrip(",."))
+            heading_title = heading_match.group(1).strip().rstrip(",.") if heading_match else None
+            # Prefer section ID when the heading match is a partial capture
+            # (e.g. "TISIO" from "TISIO (or Tisi), BENVENUTO")
+            if (heading_title and is_named
+                    and heading_title.upper() != sec_id.upper()
+                    and sec_id.upper().startswith(heading_title.upper().split(",")[0].split()[0])):
+                title = sec_id.upper()
+            elif heading_title and _has_valid_title_content(
+                _normalize_title(heading_title)
             ):
-                title = heading_match.group(1).strip().rstrip(",.")
+                title = heading_title
             elif is_named and (len(sec_id) != 1 or _is_letter_article(sec_id, sec_text)):
                 title = sec_id.upper()
             else:
