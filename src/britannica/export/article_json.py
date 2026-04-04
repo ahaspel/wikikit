@@ -307,7 +307,12 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             )
             body = article.body or ""
             # First ~10 words of body for disambiguation in the index
-            first_line = body.split("\n")[0]
+            first_line = re.sub(r"\x01PAGE:\d+\x01", "", body.split("\n")[0])
+            # Strip footnotes and internal markers for the preview
+            first_line = re.sub(r"\u00abFN:.*?\u00ab/FN\u00bb", "", first_line)
+            first_line = re.sub(r"\u00ab/?(?:B|I|SC|SH|LN)[^\u00ab]*\u00ab/(?:B|I|SC|SH|LN)\u00bb", "", first_line)
+            first_line = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", first_line)
+            first_line = re.sub(r"  +", " ", first_line).strip()
             words = first_line.split()
             if len(words) > 10:
                 body_start = " ".join(words[:10]) + "\u2026"

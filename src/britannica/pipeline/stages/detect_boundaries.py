@@ -178,9 +178,14 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         )
         clean_first = first_line_unwrapped.replace("'''", "")
 
+        # Extract the title from the start of the line.  The pattern must
+        # handle Mc/Mac/O'/d' prefixes which mix case (McCORMICK, O'BRIEN).
+        # Each word starts with uppercase (or a known prefix + uppercase).
+        # After the prefix, remaining chars must be uppercase to avoid
+        # matching into body text like "ABACUS A calculating..."
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]*"
-            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]+)*)",
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]*"
+            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+)*)",
             clean_first,
         )
 
@@ -195,8 +200,20 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # Exception: a named section without bold that is the first content
         # on the page (no candidates yet, no prefix) is treated as a new
         # article — it's not a continuation if there's nothing to continue.
+        _used_bold_fallback = False
         if has_bold_heading:
             heading_title = heading_match.group(1).strip().rstrip(",.") if heading_match else None
+            # If the regex couldn't extract the title, fall back to
+            # extracting the full bold text (handles Mc/Mac/O'/d' prefixes
+            # and extended Unicode that the heading regex doesn't cover).
+            if heading_title is None or not _has_valid_title_content(_normalize_title(heading_title)):
+                bold_match = re.match(r"^'''([^']+)'''", first_line)
+                if bold_match:
+                    fallback = bold_match.group(1).strip().rstrip(",.")
+                    # Strip any template wrappers (e.g. {{sc|...}})
+                    fallback = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", fallback)
+                    heading_title = fallback
+                    _used_bold_fallback = True
             # Prefer section ID when the heading match is a partial capture
             # (e.g. "TISIO" from "TISIO (or Tisi), BENVENUTO")
             if (heading_title and is_named
@@ -235,7 +252,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
         # Extract body — find where the heading ends in the ORIGINAL text
         # (which may have bold markers)
-        if heading_match:
+        if heading_match and not _used_bold_fallback:
             # Find the heading text in the original first line and skip past it
             heading_text = heading_match.group(0)
             # The original might have bold markers (''') around the heading
@@ -260,6 +277,22 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                 elif remaining:
                     body = remaining
             body = body.strip()
+        elif has_bold_heading:
+            # Bold heading present but regex couldn't parse it — strip
+            # the bold text from the first line to get the body.
+            stripped_first = re.sub(r"^'''[^']+'''\s*", "", first_line).lstrip(" ,.")
+            remaining_lines = _sec_lines[_first_line_idx + 1:]
+            if remaining_lines:
+                remaining = "\n".join(remaining_lines).strip()
+                if stripped_first and remaining:
+                    body = stripped_first + "\n" + remaining
+                elif remaining:
+                    body = remaining
+                else:
+                    body = stripped_first
+            else:
+                body = stripped_first
+            body = body.strip()
         else:
             body = "\n".join(_sec_lines[_first_line_idx:]).strip()
 
@@ -281,7 +314,7 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     # In raw wikitext, bold is '''TEXT'''
     _BOLD_HEADING = re.compile(
         r"(?:^|\n\n?)('{3}"
-        r"[A-Z][A-Z\u00C0-\u00DE'\-,. ]+'{3})",
+        r"[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE'\u2019\-,. ]+'{3})",
     )
 
     parts = _BOLD_HEADING.split(text)
@@ -397,10 +430,10 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
 
     # Match all-caps word(s) at the start, optionally with parenthetical and comma-name
     m = re.match(
-        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+"
-        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+)*"
+        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019.\-]+"
+        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019.\-]+)*"
         r"(?:\s+\([^)]*\))?"
-        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]+)*)?"
+        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\u2019\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\u2019\-]+)*)?"
         r")",
         clean,
     )
@@ -704,16 +737,41 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                 # Don't update open_article — let it continue past the plate
                 continue
 
-            # Prefix text belongs to the currently open article, if any.
-            if parsed.prefix_text and open_article is not None:
-                next_seq = len(open_article.segments) + 1
-                open_article.segments.append(SegmentInfo(
-                    source_page_id=page.id,
-                    page_number=page.page_number,
-                    sequence=next_seq,
-                    text=parsed.prefix_text,
-                ))
-                open_article.page_end = page.page_number
+            # Prefix text belongs to the currently open article — unless
+            # it starts with a bold ALL-CAPS heading, which signals a new
+            # article placed before the first section marker on this page.
+            # Only all-caps titles are treated as articles; mixed-case bold
+            # text is a subsection heading within the current article.
+            if parsed.prefix_text:
+                _prefix_art_match = re.match(
+                    r"'''([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\s,.\-]+)'''",
+                    parsed.prefix_text,
+                )
+                if (_prefix_art_match and parsed.candidates
+                        and _has_valid_title_content(
+                            _normalize_title(_prefix_art_match.group(1).strip().rstrip(",.")))):
+                    # Split the prefix: text before bold heading → open article,
+                    # bold heading onward → new candidate prepended to the list.
+                    prefix_parsed = _split_on_bold_headings(parsed.prefix_text)
+                    if prefix_parsed.prefix_text and open_article is not None:
+                        next_seq = len(open_article.segments) + 1
+                        open_article.segments.append(SegmentInfo(
+                            source_page_id=page.id,
+                            page_number=page.page_number,
+                            sequence=next_seq,
+                            text=prefix_parsed.prefix_text,
+                        ))
+                        open_article.page_end = page.page_number
+                    parsed.candidates = prefix_parsed.candidates + parsed.candidates
+                elif open_article is not None:
+                    next_seq = len(open_article.segments) + 1
+                    open_article.segments.append(SegmentInfo(
+                        source_page_id=page.id,
+                        page_number=page.page_number,
+                        sequence=next_seq,
+                        text=parsed.prefix_text,
+                    ))
+                    open_article.page_end = page.page_number
 
             # If there are no headings on the page, the whole page is continuation.
             if not parsed.candidates:

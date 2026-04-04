@@ -124,6 +124,10 @@ def run_db_checks() -> dict:
             )
             for p in pages:
                 if p.id not in covered and p.page_number >= first_art:
+                    # Skip pages with only headers/footers (<200 chars)
+                    text = (p.wikitext or "").strip()
+                    if len(text) < 200:
+                        continue
                     uncovered_mid += 1
         results["uncovered_pages_mid_volume"] = uncovered_mid
 
