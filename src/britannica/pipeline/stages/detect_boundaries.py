@@ -1,10 +1,17 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 import re
 
-_SEC_MARKER = re.compile(r"\u00abSEC:([^\u00bb]+)\u00bb")
+# Raw wikitext section-begin tag.
+_SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
+
+# Section-end tags — stripped during preprocessing.
+_SEC_END = re.compile(r'<section\s+end="[^"]*"\s*/?>', re.IGNORECASE)
+
+# <noinclude> blocks — stripped during preprocessing (page headers, quality tags).
+_NOINCLUDE = re.compile(r"<noinclude>.*?</noinclude>", re.DOTALL | re.IGNORECASE)
 
 # Generic Wikisource section IDs that are never real article titles.
 _GENERIC_SEC_ID = re.compile(
@@ -41,6 +48,58 @@ def _is_letter_article(sec_id: str, sec_text: str) -> bool:
     ])
 
 
+def _preprocess_wikitext(text: str) -> str:
+    """Minimal preprocessing of raw wikitext for boundary detection.
+
+    Strips <noinclude> blocks, <section end> tags, and normalizes line endings.
+    Preserves <section begin> tags and all other raw wikitext.
+    """
+    text = _NOINCLUDE.sub("", text)
+    text = _SEC_END.sub("", text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    return text
+
+
+# ── Detection output types ─────────────────────────────────────────────
+
+
+@dataclass
+class SegmentInfo:
+    """A text segment belonging to an article, with its source page."""
+    source_page_id: int
+    page_number: int
+    sequence: int
+    text: str
+
+
+@dataclass
+class DetectedArticle:
+    """An article boundary detected from raw wikitext.  Pure data — no DB models."""
+    title: str
+    volume: int
+    page_start: int
+    page_end: int
+    article_type: str  # "article" or "plate"
+    segments: list[SegmentInfo] = field(default_factory=list)
+
+    @property
+    def body(self) -> str:
+        """Reconstruct full body from segments."""
+        parts = []
+        for seg in sorted(self.segments, key=lambda s: s.sequence):
+            text = (seg.text or "").strip()
+            if not text:
+                continue
+            if parts:
+                joiner = "\n\n" if re.match(r"\[\[(?:File|Image):", text, re.IGNORECASE) else " "
+                parts.append(joiner)
+            parts.append(text)
+        return "".join(parts).strip()
+
+
+# ── Per-page parsing helpers ───────────────────────────────────────────
+
+
 @dataclass
 class CandidateArticle:
     title: str
@@ -75,10 +134,12 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
     prefix = text[:markers[0].start()].strip()
 
     # Pre-split: a single section may contain multiple articles if there
-    # are bold headings mid-text.  Split on «B»ALLCAPS«/B» patterns that
-    # start a new line (paragraph boundary).
+    # are bold headings mid-text.  Split on '''ALLCAPS patterns at
+    # paragraph boundaries only (double newline).  Raw wikitext has
+    # hard line breaks within paragraphs, so a single \n would create
+    # false splits on bold words that happen to start a line.
     _BOLD_SPLIT = re.compile(
-        r"\n(?=(?:\u00abB\u00bb|\u00ab/B\u00bb)[A-Z])"
+        r"\n\n(?='{3}[A-Z])"
     )
     expanded_sections = []
     for sec_id, sec_text in sections:
@@ -96,13 +157,26 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         is_named = not re.match(r"^s\d+$", sec_id)
 
         # Strip link wrappers and bold markers for heading detection.
-        # Some Wikisource headings are wrapped in «LN:...|«B»TITLE«/B»«/LN».
-        first_line = sec_text.split("\n")[0] if sec_text else ""
+        # Some Wikisource headings are wrapped in [[link|'''TITLE''']] wrappers.
+        # Skip leading non-content lines (HTML comments, tables, images,
+        # templates) to find the actual first content line.
+        first_line = ""
+        _sec_lines = sec_text.split("\n")
+        _first_line_idx = 0
+        for _i, _line in enumerate(_sec_lines):
+            stripped = _line.strip()
+            if not stripped:
+                continue
+            if re.match(r"^(<!--.*?-->|<table\b|\{\||<tr|<td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE):
+                continue
+            first_line = stripped
+            _first_line_idx = _i
+            break
         first_line_unwrapped = re.sub(
-            r"\u00abLN:[^|]*\|(.*?)\u00ab/LN\u00bb",
+            r"\[\[[^\]|]*\|(.*?)\]\]",
             r"\1", first_line,
         )
-        clean_first = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", first_line_unwrapped)
+        clean_first = first_line_unwrapped.replace("'''", "")
 
         heading_match = re.match(
             r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\-]*"
@@ -110,15 +184,10 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             clean_first,
         )
 
-        # A bold heading «B»TITLE«/B» at the start is the definitive signal
+        # A bold heading '''TITLE''' at the start is the definitive signal
         # for a new article.  Named sections without bold are continuations
         # of the previous article repeated across pages on Wikisource.
-        # Some Wikisource pages have inverted markers «/B»TITLE«B» — treat
-        # these as bold headings too.
-        has_bold_heading = (
-            first_line_unwrapped.startswith("\u00abB\u00bb")
-            or first_line_unwrapped.startswith("\u00ab/B\u00bb")
-        )
+        has_bold_heading = first_line_unwrapped.startswith("'''")
         _is_tentative = False
 
         # Bold heading is the sole signal for a new article, whether
@@ -169,11 +238,11 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         if heading_match:
             # Find the heading text in the original first line and skip past it
             heading_text = heading_match.group(0)
-            # The original might have bold markers around the heading
+            # The original might have bold markers (''') around the heading
             bold_heading = re.match(
-                r"^(?:\u00abB\u00bb|\u00ab/B\u00bb)?\s*"
+                r"^'{3}\s*"
                 + re.escape(heading_text)
-                + r"[,.\s]*(?:\u00abB\u00bb|\u00ab/B\u00bb)?\s*",
+                + r"[,.\s]*'{3}\s*",
                 first_line,
             )
             if bold_heading:
@@ -181,8 +250,9 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             else:
                 # Fall back: strip bold markers, find heading, take the rest
                 body = clean_first[len(heading_text):].lstrip(" ,.")
-            # Add remaining lines
-            remaining_lines = sec_text.split("\n")[1:]
+            # Add remaining lines (after the heading line, skipping
+            # any leading tables/images that were before the heading)
+            remaining_lines = _sec_lines[_first_line_idx + 1:]
             if remaining_lines:
                 remaining = "\n".join(remaining_lines).strip()
                 if body and remaining:
@@ -191,7 +261,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                     body = remaining
             body = body.strip()
         else:
-            body = sec_text
+            body = "\n".join(_sec_lines[_first_line_idx:]).strip()
 
         if title:
             candidates.append(CandidateArticle(
@@ -208,9 +278,10 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     and candidates for each bold heading found.
     """
     # Split on bold headings at line/paragraph boundaries
+    # In raw wikitext, bold is '''TEXT'''
     _BOLD_HEADING = re.compile(
-        r"(?:^|\n\n?)((?:\u00abB\u00bb|\u00ab/B\u00bb)"
-        r"[A-Z][A-Z\u00C0-\u00DE'\-,. ]+(?:\u00ab/B\u00bb|\u00abB\u00bb))",
+        r"(?:^|\n\n?)('{3}"
+        r"[A-Z][A-Z\u00C0-\u00DE'\-,. ]+'{3})",
     )
 
     parts = _BOLD_HEADING.split(text)
@@ -228,11 +299,9 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
         bold_marker = parts[i]
         body_after = parts[i + 1].strip() if i + 1 < len(parts) else ""
         # Extract title from the bold marker
-        clean = re.sub(r"\u00abB\u00bb|\u00ab/B\u00bb", "", bold_marker)
+        clean = bold_marker.replace("'''", "")
         title = clean.strip().rstrip(",.")
         if title:
-            # Body is the bold marker text (minus title) + the following text
-            body_text = bold_marker[len(bold_marker):] + body_after
             body_text = body_after.lstrip(" ,.")
             candidates.append(CandidateArticle(title=title, body=body_text))
         i += 2
@@ -323,14 +392,15 @@ def _extract_heading(line: str) -> tuple[str | None, str]:
         return None, ""
 
     # Strip formatting markers before heading detection
-    clean = re.sub(r"\u00ab/?[BIS]C?\u00bb", "", line)
+    # In raw wikitext: bold ('''), italic (''), wiki markup
+    clean = line.replace("'''", "").replace("''", "")
 
     # Match all-caps word(s) at the start, optionally with parenthetical and comma-name
     m = re.match(
-        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+"
-        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE’’.\-]+)*"
+        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+"
+        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''.\-]+)*"
         r"(?:\s+\([^)]*\))?"
-        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF’’\-]+)*)?"
+        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\-]+)*)?"
         r")",
         clean,
     )
@@ -368,9 +438,9 @@ def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
 
         # Check if this is a section heading (all-caps, short, not a marker)
         if (stripped.upper() == stripped
-                and not stripped.startswith("{{IMG:")
-                and not stripped.startswith(("{{TABLE:", "{{TABLEH:"))
-                and not stripped.endswith("}TABLE}")
+                and not stripped.startswith("[[File:")
+                and not stripped.startswith("[[Image:")
+                and not stripped.startswith(("{|", "|-", "|}"))
                 and 2 < len(stripped) <= 60
                 and any(c.isalpha() for c in stripped)
                 and not any(c.isdigit() for c in stripped)):
@@ -411,28 +481,23 @@ def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
 
 
 def _is_plate_page(text: str) -> bool:
-    """Detect plate pages — mostly image markers with little prose."""
+    """Detect plate pages — mostly images with little prose.
+
+    In raw wikitext, images are [[File:...]] or [[Image:...]].
+    Plate pages typically have 3+ images and under 500 words of prose,
+    with images often wrapped in wiki tables ({|...|}), not bare.
+    """
     stripped = text.strip()
-    img_count = stripped.count("{{IMG:")
+    img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
     if img_count < 3:
         return False
 
-    # Count non-image, non-marker words (actual prose)
-    prose = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
-    prose = re.sub(r"\{\{TABLE.*?\}TABLE\}", "", prose, flags=re.DOTALL)
+    # Count non-image, non-table words (actual prose)
+    prose = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", "", stripped, flags=re.IGNORECASE)
+    prose = re.sub(r"\{\|.*?\|\}", "", prose, flags=re.DOTALL)
     prose_words = len(prose.split())
 
-    # Plate pages have many images relative to prose
-    # A page with >500 words of prose is an article page, not a plate
-    if prose_words > 500:
-        return False
-
-    # Check if images appear very early (within first few lines)
-    lines = [l.strip() for l in stripped.split("\n") if l.strip()]
-    for line in lines[:3]:
-        if line.startswith("{{IMG:"):
-            return True
-    return False
+    return prose_words <= 500
 
 
 def _parse_page(text: str) -> ParsedPage:
@@ -464,10 +529,10 @@ def _parse_page(text: str) -> ParsedPage:
     for i, line in enumerate(lines):
         if not line:
             continue
-        if line.startswith(("{{TABLE:", "{{TABLEH:")):
+        if line.startswith("{|"):
             in_table = True
         if in_table:
-            if line.endswith("}TABLE}"):
+            if line.startswith("|}"):
                 in_table = False
             continue
         title, _ = _extract_heading(line)
@@ -496,12 +561,12 @@ def _parse_page(text: str) -> ParsedPage:
             continue
 
         # Skip heading detection inside table blocks
-        if line.startswith(("{{TABLE:", "{{TABLEH:")):
+        if line.startswith("{|"):
             in_table = True
         if in_table:
             if current_title is not None:
                 current_body_lines.append(line)
-            if line.endswith("}TABLE}"):
+            if line.startswith("|}"):
                 in_table = False
             continue
 
@@ -542,7 +607,8 @@ def _parse_page(text: str) -> ParsedPage:
 def _join_lines(lines: list[str]) -> str:
     """Join lines, treating empty strings as paragraph-break markers.
 
-    Table blocks ({{TABLE:...}TABLE}) are preserved with their internal newlines.
+    Table blocks ({|...|}  in raw wikitext) are preserved with their
+    internal newlines.
     """
     paragraphs: list[list[str]] = [[]]
     in_table = False
@@ -553,11 +619,11 @@ def _join_lines(lines: list[str]) -> str:
                 paragraphs.append([])
             continue
 
-        if line.startswith(("{{TABLE:", "{{TABLEH:")):
+        if line.startswith("{|"):
             in_table = True
         if in_table:
             paragraphs[-1].append(line)
-            if line.endswith("}TABLE}"):
+            if line.startswith("|}"):
                 in_table = False
             continue
 
@@ -568,7 +634,7 @@ def _join_lines(lines: list[str]) -> str:
         if not p:
             continue
         # If this paragraph contains a table, join with newlines
-        if any(l.startswith(("{{TABLE:", "{{TABLEH:")) for l in p):
+        if any(l.startswith("{|") for l in p):
             result_parts.append("\n".join(p))
         else:
             result_parts.append(" ".join(p))
@@ -576,35 +642,16 @@ def _join_lines(lines: list[str]) -> str:
     return "\n\n".join(result_parts).strip()
 
 
-def _append_segment(
-    article: Article,
-    source_page_id: int,
-    sequence_in_article: int,
-    text: str,
-    session,
-) -> None:
-    segment_text = (text or "").strip()
-
-    session.add(
-        ArticleSegment(
-            article_id=article.id,
-            source_page_id=source_page_id,
-            sequence_in_article=sequence_in_article,
-            segment_text=segment_text,
-        )
-    )
-
-    if segment_text:
-        if article.body:
-            # Use paragraph break if the new segment starts with an image
-            # or the previous body ends mid-image block
-            joiner = "\n\n" if segment_text.startswith("{{IMG:") else " "
-            article.body = (article.body.rstrip() + joiner + segment_text).strip()
-        else:
-            article.body = segment_text
+# ── Detection (pure) ──────────────────────────────────────────────────
 
 
-def detect_boundaries(volume: int) -> int:
+def detect_boundaries(volume: int) -> list[DetectedArticle]:
+    """Detect article boundaries from raw wikitext.
+
+    Reads SourcePages from the database but writes nothing.
+    Returns a list of DetectedArticle with titles, page ranges, and
+    raw wikitext segments.
+    """
     session = SessionLocal()
 
     try:
@@ -615,61 +662,57 @@ def detect_boundaries(volume: int) -> int:
             .all()
         )
 
-        created = 0
-        open_article: Article | None = None
-        open_article_last_segment_seq = 0
+        articles: list[DetectedArticle] = []
+        open_article: DetectedArticle | None = None
 
         for page in pages:
-            text = (page.cleaned_text or page.raw_text or "").strip()
+            # Read raw wikitext and preprocess minimally.
+            raw = (page.wikitext or "").strip()
+            if not raw:
+                continue
+            text = _preprocess_wikitext(raw)
 
-            # Detect plate pages: mostly images with little text.
-            # These should not create article boundaries — create a plate
-            # entry with all the content and let the previous article continue.
-            if _is_plate_page(text):
-                # Split plate page into sections by all-caps headings.
-                # Each section becomes its own plate entry.
+            # Try to parse article boundaries from this page.
+            parsed = _parse_page_by_sections(text)
+            if parsed is None:
+                parsed = _split_on_bold_headings(text)
+
+            # If the page has no article boundaries, check whether it's
+            # a plate page (full-page image layout) or a continuation.
+            # Plate pages occupy a full page, start no articles, and are
+            # mostly images — they should not be folded into the open
+            # article's body text.
+            if not parsed.candidates and _is_plate_page(text):
                 sections = _split_plate_sections(text)
 
                 for section_title, section_body in sections:
-                    plate_article = Article(
+                    plate = DetectedArticle(
                         title=section_title or f"PLATE (VOL. {page.volume}, P. {page.page_number})",
                         volume=page.volume,
                         page_start=page.page_number,
                         page_end=page.page_number,
-                        body=section_body,
                         article_type="plate",
-                    )
-                    session.add(plate_article)
-                    session.flush()
-                    session.add(
-                        ArticleSegment(
-                            article_id=plate_article.id,
+                        segments=[SegmentInfo(
                             source_page_id=page.id,
-                            sequence_in_article=1,
-                            segment_text=section_body,
-                        )
+                            page_number=page.page_number,
+                            sequence=1,
+                            text=section_body,
+                        )],
                     )
-                    created += 1
+                    articles.append(plate)
 
                 # Don't update open_article — let it continue past the plate
                 continue
 
-            parsed = _parse_page_by_sections(text)
-            if parsed is None:
-                # No section markers — but still check for bold headings
-                # that indicate new articles on this page.
-                parsed = _split_on_bold_headings(text)
-
             # Prefix text belongs to the currently open article, if any.
             if parsed.prefix_text and open_article is not None:
-                open_article_last_segment_seq += 1
-                _append_segment(
-                    article=open_article,
+                next_seq = len(open_article.segments) + 1
+                open_article.segments.append(SegmentInfo(
                     source_page_id=page.id,
-                    sequence_in_article=open_article_last_segment_seq,
+                    page_number=page.page_number,
+                    sequence=next_seq,
                     text=parsed.prefix_text,
-                    session=session,
-                )
+                ))
                 open_article.page_end = page.page_number
 
             # If there are no headings on the page, the whole page is continuation.
@@ -678,22 +721,17 @@ def detect_boundaries(volume: int) -> int:
                     open_article.page_end = page.page_number
                 continue
 
-            # Create articles for headings found on the page.
+            # Process headings found on the page.
             for candidate in parsed.candidates:
                 body_text = (candidate.body or "").strip()
 
                 # Wikisource repeats <section begin="X"> on continuation pages.
                 # If the currently open article has the same title, this is
                 # continuation — append rather than creating a duplicate.
-                # Tentative candidates (named section, no bold, first on page)
-                # also merge if titles are related (one starts with the other).
                 exact_match = (
                     open_article is not None
                     and open_article.title == candidate.title
                 )
-                # Wikisource splits long articles across sections named
-                # "Egypt", "Egypt2", "Egypt3" etc.  Strip trailing digits
-                # before comparing so these merge as continuations.
                 _open_base = re.sub(r"\d+$", "", open_article.title) if open_article else ""
                 _cand_base = re.sub(r"\d+$", "", candidate.title)
                 fuzzy_match = (
@@ -703,64 +741,71 @@ def detect_boundaries(volume: int) -> int:
                         _open_base.startswith(_cand_base)
                         or _cand_base.startswith(_open_base)
                     )
-                    and _cand_base  # don't match empty after stripping
+                    and _cand_base
                 )
                 if (exact_match or fuzzy_match) and body_text:
-                    open_article_last_segment_seq += 1
-                    _append_segment(
-                        article=open_article,
+                    next_seq = len(open_article.segments) + 1
+                    open_article.segments.append(SegmentInfo(
                         source_page_id=page.id,
-                        sequence_in_article=open_article_last_segment_seq,
+                        page_number=page.page_number,
+                        sequence=next_seq,
                         text=body_text,
-                        session=session,
-                    )
+                    ))
                     open_article.page_end = page.page_number
                     continue
 
-                existing = (
-                    session.query(Article)
-                    .filter(
-                        Article.volume == page.volume,
-                        Article.page_start == page.page_number,
-                        Article.title == candidate.title,
-                    )
-                    .first()
-                )
-
-                if existing:
-                    open_article = existing
-                    open_article_last_segment_seq = (
-                        session.query(ArticleSegment)
-                        .filter(ArticleSegment.article_id == existing.id)
-                        .count()
-                    )
-                    continue
-
-                article = Article(
+                # New article
+                detected = DetectedArticle(
                     title=candidate.title,
                     volume=page.volume,
                     page_start=page.page_number,
                     page_end=page.page_number,
-                    body=body_text,
+                    article_type="article",
                 )
-                session.add(article)
-                session.flush()
-
-                session.add(
-                    ArticleSegment(
-                        article_id=article.id,
+                if body_text:
+                    detected.segments.append(SegmentInfo(
                         source_page_id=page.id,
-                        sequence_in_article=1,
-                        segment_text=body_text,
-                    )
-                )
+                        page_number=page.page_number,
+                        sequence=1,
+                        text=body_text,
+                    ))
+                articles.append(detected)
+                open_article = detected
 
-                open_article = article
-                open_article_last_segment_seq = 1
-                created += 1
+        return articles
+
+    finally:
+        session.close()
+
+
+# ── Persistence ────────────────────────────────────────────────────────
+
+
+def persist_articles(detected: list[DetectedArticle]) -> int:
+    """Create Article and ArticleSegment records from detected boundaries."""
+    session = SessionLocal()
+    try:
+        for det in detected:
+            article = Article(
+                title=det.title,
+                volume=det.volume,
+                page_start=det.page_start,
+                page_end=det.page_end,
+                body=det.body,
+                article_type=det.article_type if det.article_type == "plate" else None,
+            )
+            session.add(article)
+            session.flush()
+
+            for seg in det.segments:
+                session.add(ArticleSegment(
+                    article_id=article.id,
+                    source_page_id=seg.source_page_id,
+                    sequence_in_article=seg.sequence,
+                    segment_text=(seg.text or "").strip(),
+                ))
 
         session.commit()
-        return created
-
+        return len(detected)
     finally:
         session.close()

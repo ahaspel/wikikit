@@ -190,9 +190,9 @@ def run_file_checks() -> dict:
         if " | " in bare_body and bare_body.count(" | ") > 3:
             issues["pipe_leak"] += 1
 
-        # Stray control characters
+        # Stray control characters (\x01 = page markers, \x02 = tables)
         for i in range(9):
-            if chr(i) in body and i != 2:  # \x02 expected in tables
+            if chr(i) in body and i not in (1, 2):
                 issues[f"stray_control_x0{i}"] += 1
                 break
 

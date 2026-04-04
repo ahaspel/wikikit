@@ -29,15 +29,17 @@ def build_page(payload: dict) -> SourcePage:
         source_name="wikisource",
         volume=payload["volume"],
         page_number=payload["page_number"],
-        raw_text=payload["cleaned_preview"],   # ← important choice
-        cleaned_text=None,                     # pipeline will populate this
+        raw_text=payload["cleaned_preview"],
+        cleaned_text=None,
+        wikitext=payload["raw_text"],          # actual raw wikitext for boundary detection
     )
 
 
 def update_page(existing: SourcePage, payload: dict) -> None:
     existing.raw_text = payload["cleaned_preview"]
     existing.source_name = "wikisource"
-    existing.cleaned_text = None  # force re-clean if re-importing
+    existing.cleaned_text = None
+    existing.wikitext = payload["raw_text"]
 
 
 def import_file(path: Path, overwrite: bool) -> str:

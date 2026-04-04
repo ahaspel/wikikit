@@ -5,8 +5,9 @@ import typer
 from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.clean_pages import clean_pages
-from britannica.db.models import Article, ArticleSegment, CrossReference, SourcePage
-from britannica.pipeline.stages.detect_boundaries import detect_boundaries
+from britannica.db.models import Article, CrossReference, SourcePage
+from britannica.pipeline.stages.detect_boundaries import detect_boundaries, persist_articles
+from britannica.pipeline.stages.transform_articles import transform_articles
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
 from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
@@ -109,29 +110,17 @@ def list_pages(volume: int = typer.Option(None)) -> None:
     finally:
         session.close()
         
-@app.command("list-segments")
-def list_segments() -> None:
-    session = SessionLocal()
-    try:
-        segments = (
-            session.query(ArticleSegment)
-            .order_by(ArticleSegment.article_id, ArticleSegment.sequence_in_article)
-            .all()
-        )
-
-        for seg in segments:
-            print(
-                f"article_id={seg.article_id} "
-                f"seq={seg.sequence_in_article} "
-                f"text={seg.segment_text[:60]!r}"
-            )
-    finally:
-        session.close()
-        
 @app.command("detect-boundaries")
 def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
-    count = detect_boundaries(volume)
-    print(f"Created {count} articles for volume {volume}.")
+    detected = detect_boundaries(volume)
+    count = persist_articles(detected)
+    print(f"Detected and created {count} articles for volume {volume}.")
+
+
+@app.command("transform-articles")
+def transform_articles_cmd(volume: int = typer.Argument(...)) -> None:
+    count = transform_articles(volume)
+    print(f"Transformed {count} articles for volume {volume}.")
 
 
 @app.command("list-articles")

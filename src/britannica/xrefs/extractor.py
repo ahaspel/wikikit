@@ -60,8 +60,18 @@ _SEE_ALSO_PATTERN = re.compile(r"\bSee also ([A-Z][A-Z\s\-]+)\b")
 _SEE_PATTERN = re.compile(r"\bSee ([A-Z][A-Z\s\-]+)\b")
 
 
+def _strip_markers(text: str) -> str:
+    """Remove internal markers (links, formatting) to get plain text."""
+    # Replace «LN:...|...|display«/LN» or «LN:target|display«/LN» with display text
+    text = re.sub(r"\u00abLN:(?:[^|]*\|)*([^«]*)\u00ab/LN\u00bb", r"\1", text)
+    # Strip formatting markers: «B», «I», «SC», etc.
+    text = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", text)
+    return text.strip()
+
+
 def _clean_paren_see_target(raw: str) -> list[str]:
     """Split parenthesized See targets on 'and', strip trailing punctuation."""
+    raw = _strip_markers(raw)
     raw = raw.strip().rstrip(".")
     parts = re.split(r"\s+and\s+", raw)
     results = []

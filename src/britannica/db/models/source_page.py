@@ -13,3 +13,4 @@ class SourcePage(Base):
     page_number: Mapped[int] = mapped_column(Integer, nullable=False)
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
     cleaned_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    wikitext: Mapped[str | None] = mapped_column(Text, nullable=True)

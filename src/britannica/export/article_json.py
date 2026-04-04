@@ -4,7 +4,7 @@ from collections import Counter
 from pathlib import Path
 
 from britannica.db.models import (
-    Article, ArticleContributor, ArticleImage, ArticleSegment,
+    Article, ArticleContributor, ArticleImage,
     Contributor, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
@@ -151,13 +151,6 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
         exported = 0
 
         for article in articles:
-            segments = (
-                session.query(ArticleSegment)
-                .filter(ArticleSegment.article_id == article.id)
-                .order_by(ArticleSegment.sequence_in_article)
-                .all()
-            )
-
             xrefs = (
                 session.query(CrossReference)
                 .filter(CrossReference.article_id == article.id)
@@ -239,18 +232,6 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "source_quality": quality,
                 "parent_article": parent_article_info,
                 "body": body,
-                "segments": [
-                    {
-                        "sequence_in_article": seg.sequence_in_article,
-                        "source_page_id": seg.source_page_id,
-                        "page_number": (
-                            session.get(SourcePage, seg.source_page_id).page_number
-                            if seg.source_page_id else None
-                        ),
-                        "segment_text": seg.segment_text,
-                    }
-                    for seg in segments
-                ],
                 "xrefs": xref_list,
                 "images": [
                     {

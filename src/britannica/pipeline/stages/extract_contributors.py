@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 from britannica.db.models import (
-    Article, ArticleContributor, ArticleSegment, Contributor, SourcePage,
+    Article, ArticleContributor, Contributor, SourcePage,
 )
 from britannica.db.session import SessionLocal
 
@@ -105,16 +105,18 @@ def extract_contributors_for_volume(volume: int) -> int:
         )
 
         # Build map: source_page_id -> article_id (last article on each page)
-        page_articles: dict[int, int] = {}
-        segments = (
-            session.query(ArticleSegment)
-            .join(Article, ArticleSegment.article_id == Article.id)
+        articles = (
+            session.query(Article)
             .filter(Article.volume == volume)
-            .order_by(ArticleSegment.source_page_id, ArticleSegment.sequence_in_article)
+            .order_by(Article.page_start)
             .all()
         )
-        for seg in segments:
-            page_articles[seg.source_page_id] = seg.article_id
+        page_articles: dict[int, int] = {}
+        for page in pages:
+            for art in reversed(articles):
+                if art.page_start <= page.page_number <= art.page_end:
+                    page_articles[page.id] = art.id
+                    break
 
         created = 0
 
