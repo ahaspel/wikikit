@@ -163,7 +163,7 @@ def run_file_checks() -> dict:
             issues["stray_braces"] += 1
         if "}}" in body and "TABLE}" not in body and "IMG:" not in body and "VERSE}" not in body:
             issues["stray_close_braces"] += 1
-        if "[[" in body or "]]" in body:
+        if re.search(r"\[\[.*?\]\]", body):
             issues["stray_wikilink"] += 1
         if "''" in body:
             issues["stray_wiki_italic"] += 1
@@ -183,11 +183,25 @@ def run_file_checks() -> dict:
         if words < 5 and a.get("article_type") == "article":
             issues["tiny_article"] += 1
 
-        # Pipe leaks
+        # Pipe leaks — tabular data that should be inside TABLE markers.
+        # Strip tables, verses, and math before checking.
         bare_body = re.sub(
             r"\{\{TABLE.*?\}TABLE\}", "", body, flags=re.DOTALL
         )
-        if " | " in bare_body and bare_body.count(" | ") > 3:
+        bare_body = re.sub(
+            r"\{\{VERSE:.*?\}VERSE\}", "", bare_body, flags=re.DOTALL
+        )
+        bare_body = re.sub(
+            r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", bare_body, flags=re.DOTALL
+        )
+        # Only count lines that start with | or || (table row pattern),
+        # or have figure|image leaked markup
+        pipe_lines = sum(
+            1 for line in bare_body.split("\n")
+            if re.match(r"\s*\|{1,2}\s*\S", line)
+            or "figure |" in line or "figure|" in line
+        )
+        if pipe_lines > 3:
             issues["pipe_leak"] += 1
 
         # Stray control characters (\x01 = page markers, \x02 = tables)
