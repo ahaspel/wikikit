@@ -127,7 +127,7 @@ def _source_quality(session, article: Article) -> dict:
 
 
 def _safe_filename(page_start: int, title: str) -> str:
-    raw = f"{page_start:04d}-{title}.json"
+    raw = f"{page_start:04d}-{title.upper()}.json"
     return "".join(
         ch if ch.isalnum() or ch in ("-", "_", ".") else "_"
         for ch in raw
@@ -308,9 +308,16 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             body = article.body or ""
             # First ~10 words of body for disambiguation in the index
             first_line = re.sub(r"\x01PAGE:\d+\x01", "", body.split("\n")[0])
-            # Strip footnotes and internal markers for the preview
+            # Strip footnotes for the preview
             first_line = re.sub(r"\u00abFN:.*?\u00ab/FN\u00bb", "", first_line)
-            first_line = re.sub(r"\u00ab/?(?:B|I|SC|SH|LN)[^\u00ab]*\u00ab/(?:B|I|SC|SH|LN)\u00bb", "", first_line)
+            # Strip formatting markers but KEEP the text between them
+            first_line = re.sub(r"\u00abB\u00bb(.*?)\u00ab/B\u00bb", r"\1", first_line)
+            first_line = re.sub(r"\u00abI\u00bb(.*?)\u00ab/I\u00bb", r"\1", first_line)
+            first_line = re.sub(r"\u00abSC\u00bb(.*?)\u00ab/SC\u00bb", r"\1", first_line)
+            first_line = re.sub(r"\u00abSH\u00bb(.*?)\u00ab/SH\u00bb", r"\1", first_line)
+            # Strip link markers, keep display text
+            first_line = re.sub(r"\u00abLN:[^|]*\|([^«]*)\u00ab/LN\u00bb", r"\1", first_line)
+            # Strip any remaining markers
             first_line = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", first_line)
             first_line = re.sub(r"  +", " ", first_line).strip()
             words = first_line.split()
