@@ -255,12 +255,12 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         if heading_match and not _used_bold_fallback:
             # Find the heading text in the original first line and skip past it
             heading_text = heading_match.group(0)
-            # The original might have bold markers (''') around the heading
+            # The original might have bold markers (''') around the heading.
+            # Strip ALL bold groups at the start (handles multi-word titles
+            # like '''PRAXIAS''' and '''ANDROSTHENES,''')
             bold_heading = re.match(
-                r"^'{3}\s*"
-                + re.escape(heading_text)
-                + r"[,.\s]*'{3}\s*",
-                first_line,
+                r"^(?:'{3}[^']+'{3}[\s,.\-]*(?:and\s+|&\s+)?)+",
+                first_line, re.IGNORECASE,
             )
             if bold_heading:
                 body = first_line[bold_heading.end():].lstrip(" ,.")
@@ -801,7 +801,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     )
                     and _cand_base
                 )
-                if (exact_match or fuzzy_match) and body_text:
+                if (exact_match or fuzzy_match) and body_text and candidate.is_tentative:
                     next_seq = len(open_article.segments) + 1
                     open_article.segments.append(SegmentInfo(
                         source_page_id=page.id,

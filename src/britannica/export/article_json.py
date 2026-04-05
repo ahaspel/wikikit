@@ -32,7 +32,7 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     all_articles = session.query(Article).all()
     title_map: dict[str, str] = {}
     for a in all_articles:
-        title_map[a.title.upper()] = _safe_filename(a.page_start, a.title)
+        title_map[a.title.upper()] = _safe_filename(a.id, a.title)
 
     for entry in contrib_map.values():
         desc = (entry.get("description") or "").lower()
@@ -112,26 +112,36 @@ def _source_quality(session, article: Article) -> dict:
     )
     levels = Counter()
     for page in pages:
-        m = re.search(r'pagequality level="(\d)"', page.raw_text or "")
+        m = re.search(r'pagequality level="(\d)"', page.wikitext or page.raw_text or "")
         level = int(m.group(1)) if m else 3  # default to proofread
         levels[level] += 1
 
     lowest = min(levels.keys()) if levels else 3
     note = _QUALITY_NOTES.get(lowest)
 
+    # Per-page quality map for margin indicators (only include non-validated)
+    page_quality = {}
+    for page in pages:
+        m = re.search(r'pagequality level="(\d)"', page.wikitext or page.raw_text or "")
+        level = int(m.group(1)) if m else 3
+        if level < 3:
+            page_quality[str(page.page_number)] = level
+
     return {
         "page_levels": {str(k): v for k, v in sorted(levels.items())},
         "lowest_level": lowest,
         "note": note,
+        "unproofed_pages": page_quality,
     }
 
 
-def _safe_filename(page_start: int, title: str) -> str:
-    raw = f"{page_start:04d}-{title.upper()}.json"
-    return "".join(
-        ch if ch.isalnum() or ch in ("-", "_", ".") else "_"
-        for ch in raw
+def _safe_filename(article_id: int, title: str) -> str:
+    """Generate a unique filename from article DB ID and title."""
+    safe_title = "".join(
+        ch if ch.isalnum() or ch in ("-", "_") else "_"
+        for ch in title.upper()
     )
+    return f"{article_id}-{safe_title}.json"
 
 
 def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
@@ -171,7 +181,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     target = session.get(Article, xref.target_article_id)
                     if target:
                         entry["target_filename"] = _safe_filename(
-                            target.page_start, target.title
+                            target.id, target.title
                         )
                 xref_list.append(entry)
 
@@ -194,7 +204,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 if parent:
                     parent_article_info = {
                         "title": parent.title,
-                        "filename": _safe_filename(parent.page_start, parent.title),
+                        "filename": _safe_filename(parent.id, parent.title),
                     }
 
             # Resolve inline link markers: embed target filename for resolved xrefs
@@ -206,7 +216,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     target = session.get(Article, xref.target_article_id)
                     if target:
                         link_targets[xref.normalized_target.lower()] = _safe_filename(
-                            target.page_start, target.title
+                            target.id, target.title
                         )
 
             def _resolve_link(m: re.Match) -> str:
@@ -250,7 +260,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "plates": [
                     {
                         "title": plate.title,
-                        "filename": _safe_filename(plate.page_start, plate.title),
+                        "filename": _safe_filename(plate.id, plate.title),
                         "page": plate.page_start,
                     }
                     for plate in (
@@ -282,7 +292,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 ],
             }
 
-            safe_filename = _safe_filename(article.page_start, article.title)
+            safe_filename = _safe_filename(article.id, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)
 
             (out_path / safe_filename).write_text(article_json, encoding="utf-8")
@@ -330,7 +340,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "id": article.id,
                 "title": article.title,
                 "article_type": article.article_type,
-                "filename": _safe_filename(article.page_start, article.title),
+                "filename": _safe_filename(article.id, article.title),
                 "volume": article.volume,
                 "page_start": article.page_start,
                 "page_end": article.page_end,
@@ -375,7 +385,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 contrib_map[c.full_name]["articles"].append({
                     "id": article.id,
                     "title": article.title,
-                    "filename": _safe_filename(article.page_start, article.title),
+                    "filename": _safe_filename(article.id, article.title),
                 })
 
         # Merge with existing contributors (from other volumes)

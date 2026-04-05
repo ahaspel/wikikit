@@ -169,11 +169,16 @@ def run_file_checks() -> dict:
             issues["stray_close_braces"] += 1
         if re.search(r"\[\[.*?\]\]", body):
             issues["stray_wikilink"] += 1
-        if "''" in body:
+        # Stray wiki italic — exclude occurrences inside MATH markers
+        body_no_math = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", body, flags=re.DOTALL)
+        if "''" in body_no_math:
             issues["stray_wiki_italic"] += 1
 
-        # Bare HTML tags
-        if re.search(r"<[a-z]+[^>]*>", body, re.I):
+        # Bare HTML tags — exclude single-letter "tags" that are really
+        # math comparisons (a<b, x<n) and OCR artifacts
+        bare_body_for_html = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", body, flags=re.DOTALL)
+        if re.search(r"<(?:table|tr|td|th|div|span|br|sub|sup|ref|poem|score|math)\b[^>]*>",
+                      bare_body_for_html, re.I):
             issues["html_tag"] += 1
 
         # Unclosed markers
