@@ -104,7 +104,10 @@ def extract_contributors_for_volume(volume: int) -> int:
             .all()
         )
 
-        # Build map: source_page_id -> article_id (last article on each page)
+        # Build map: source_page_id -> article_id
+        # Contributor footers appear at the end of articles, so when
+        # multiple articles share a page, prefer the one ending there
+        # (its footer is what we're extracting), not the one starting.
         articles = (
             session.query(Article)
             .filter(Article.volume == volume)
@@ -113,10 +116,13 @@ def extract_contributors_for_volume(volume: int) -> int:
         )
         page_articles: dict[int, int] = {}
         for page in pages:
-            for art in reversed(articles):
-                if art.page_start <= page.page_number <= art.page_end:
-                    page_articles[page.id] = art.id
-                    break
+            # Find all articles spanning this page
+            candidates = [a for a in articles
+                          if a.page_start <= page.page_number <= a.page_end]
+            if candidates:
+                # Prefer the article with the most content on this page:
+                # the one that started earliest (its footer is at page bottom)
+                page_articles[page.id] = min(candidates, key=lambda a: a.page_start).id
 
         created = 0
 
