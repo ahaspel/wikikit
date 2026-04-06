@@ -6,6 +6,8 @@ def resolve_xref_exact(xref: CrossReference, articles: list[Article]) -> int | N
     target = xref.normalized_target.strip().upper()
 
     for article in articles:
+        if article.article_type == "plate":
+            continue
         if article.title.strip().upper() == target:
             return article.id
 
