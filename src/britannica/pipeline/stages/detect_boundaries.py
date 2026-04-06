@@ -534,15 +534,19 @@ def _is_plate_page(text: str) -> bool:
     """
     stripped = text.strip()
     img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
-    if img_count < 3:
+    if img_count < 2:
         return False
 
     # Count non-image, non-table words (actual prose)
     prose = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", "", stripped, flags=re.IGNORECASE)
     prose = re.sub(r"\{\|.*?\|\}", "", prose, flags=re.DOTALL)
+    prose = re.sub(r"<table\b.*?</table>", "", prose, flags=re.DOTALL | re.IGNORECASE)
     prose_words = len(prose.split())
 
-    return prose_words <= 500
+    # 3+ images with moderate prose, or 2 images with very little prose
+    if img_count >= 3:
+        return prose_words <= 500
+    return prose_words <= 50
 
 
 def _parse_page(text: str) -> ParsedPage:
