@@ -236,7 +236,19 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             title = sec_id.upper()
             _is_tentative = True
         else:
-            # No bold heading — continuation of previous article
+            # No bold heading — check if this is a numbered continuation
+            # of a candidate on this page (e.g. Japan01 → Japan).
+            base_id = re.sub(r"\d+$", "", sec_id)
+            matched_candidate = None
+            if base_id:
+                for c in reversed(candidates):
+                    if c.title.upper() == base_id.upper():
+                        matched_candidate = c
+                        break
+            if matched_candidate:
+                matched_candidate.body += "\n\n" + sec_text
+                continue
+            # Otherwise, continuation of previous article
             if prefix:
                 prefix = prefix + "\n\n" + sec_text
             else:
@@ -716,23 +728,40 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
             # mostly images — they should not be folded into the open
             # article's body text.
             if not parsed.candidates and _is_plate_page(text):
-                sections = _split_plate_sections(text)
+                # Extract plate title from page header templates
+                plate_title = None
+                header_match = re.search(
+                    r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
+                if header_match:
+                    hdr = header_match.group(1)
+                    # {{x-larger|TITLE}} or {{larger|TITLE}}
+                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", hdr)
+                    if not t:
+                        t = re.search(r"\{\{larger\|([^}]+)\}\}", hdr)
+                    # {{EB1911 Page Heading|...|TITLE|...}}
+                    if not t:
+                        t = re.search(
+                            r"\{\{EB1911 Page Heading\|[^|]*\|([^|]+)\|",
+                            hdr)
+                    if t:
+                        plate_title = t.group(1).strip()
+                if not plate_title:
+                    plate_title = f"PLATE (VOL. {page.volume}, P. {page.page_number})"
 
-                for section_title, section_body in sections:
-                    plate = DetectedArticle(
-                        title=section_title or f"PLATE (VOL. {page.volume}, P. {page.page_number})",
-                        volume=page.volume,
-                        page_start=page.page_number,
-                        page_end=page.page_number,
-                        article_type="plate",
-                        segments=[SegmentInfo(
-                            source_page_id=page.id,
-                            page_number=page.page_number,
-                            sequence=1,
-                            text=section_body,
-                        )],
-                    )
-                    articles.append(plate)
+                plate = DetectedArticle(
+                    title=plate_title,
+                    volume=page.volume,
+                    page_start=page.page_number,
+                    page_end=page.page_number,
+                    article_type="plate",
+                    segments=[SegmentInfo(
+                        source_page_id=page.id,
+                        page_number=page.page_number,
+                        sequence=1,
+                        text=text,
+                    )],
+                )
+                articles.append(plate)
 
                 # Don't update open_article — let it continue past the plate
                 continue

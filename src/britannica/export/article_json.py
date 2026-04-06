@@ -240,6 +240,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "page_start": article.page_start,
                 "page_end": article.page_end,
                 "source_quality": quality,
+                "word_count": len(body.split()),
                 "parent_article": parent_article_info,
                 "body": body,
                 "xrefs": xref_list,
