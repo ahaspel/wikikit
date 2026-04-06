@@ -19,6 +19,19 @@ _GENERIC_SEC_ID = re.compile(
 )
 
 
+def _strip_templates(text: str) -> str:
+    """Unwrap nested wiki template wrappers, keeping the innermost content.
+
+    Handles patterns like {{mono|{{fs|108%|TITLE}}}} -> TITLE.
+    Multi-param templates keep the last parameter.
+    """
+    for _ in range(5):
+        text = re.sub(r"\{\{[^{}|]*\|([^{}|]*)\}\}", r"\1", text)
+        text = re.sub(r"\{\{[^{}]*\|([^{}|]*)\}\}", r"\1", text)
+    text = re.sub(r"\{\{[^{}]*\}\}", "", text)
+    return text.strip()
+
+
 def _is_article_section_id(sec_id: str) -> bool:
     """Return True if a section ID looks like a real article title, not a
     generic Wikisource continuation marker (part1, s2, text1, etc.)."""
@@ -209,9 +222,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             if heading_title is None or not _has_valid_title_content(_normalize_title(heading_title)):
                 bold_match = re.match(r"^'''([^']+)'''", first_line)
                 if bold_match:
-                    fallback = bold_match.group(1).strip().rstrip(",.")
-                    # Strip any template wrappers (e.g. {{sc|...}})
-                    fallback = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", fallback)
+                    fallback = _strip_templates(bold_match.group(1)).rstrip(",.")
                     heading_title = fallback
                     _used_bold_fallback = True
             # Prefer section ID when the heading match is a partial capture
@@ -343,9 +354,9 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     while i < len(parts):
         bold_marker = parts[i]
         body_after = parts[i + 1].strip() if i + 1 < len(parts) else ""
-        # Extract title from the bold marker
-        clean = bold_marker.replace("'''", "")
-        title = clean.strip().rstrip(",.")
+        # Extract title from the bold marker, stripping template wrappers
+        clean = _strip_templates(bold_marker.replace("'''", ""))
+        title = clean.rstrip(",.")
         if title:
             body_text = body_after.lstrip(" ,.")
             candidates.append(CandidateArticle(title=title, body=body_text))
@@ -739,15 +750,11 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                 if header_match:
                     hdr = header_match.group(1)
                     # {{x-larger|TITLE}} or {{larger|TITLE}} (may nest {{uc|...}})
-                    # First strip inner template wrappers, then match
-                    clean_hdr = hdr
-                    for _ in range(3):
-                        clean_hdr = re.sub(r"\{\{(?:uc|sc|small-caps)\|([^{}]*)\}\}", r"\1", clean_hdr)
-                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", clean_hdr)
+                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", hdr)
                     if not t:
-                        t = re.search(r"\{\{larger\|([^}]+)\}\}", clean_hdr)
+                        t = re.search(r"\{\{larger\|([^}]+)\}\}", hdr)
                     if t:
-                        plate_title = t.group(1).strip()
+                        plate_title = _strip_templates(t.group(1)).rstrip(",.")
                     else:
                         # {{rh|...|TITLE|...}} or {{EB1911 Page Heading|...|TITLE|...}}
                         # Split on top-level pipes (respecting brace depth) to find fields.
@@ -782,10 +789,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                             # For Page Heading: fields ~ [PH, plate-label, TITLE, ...]
                             # Find the best title candidate among fields[1:]
                             for f in fields[1:]:
-                                # Strip template wrappers from the field
-                                clean = re.sub(r"\{\{[^{}]*\|", "", f)
-                                clean = re.sub(r"\}\}", "", clean)
-                                clean = clean.strip().rstrip("}]")
+                                clean = _strip_templates(f).rstrip("}]")
                                 if (clean and len(clean) > 2
                                         and not clean.isdigit()
                                         and not re.match(r"^Plate\b", clean)
