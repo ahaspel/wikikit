@@ -65,31 +65,62 @@ def _load_raw_wikitext(volume: int, page_number: int) -> str | None:
     return None
 
 
+def _normalize_initials(initials: str) -> str:
+    """Normalize initials for matching: strip markup, normalize spacing."""
+    import re
+    # Strip leaked wiki/HTML markup
+    s = re.sub(r"\{\{[^{}]*", "", initials)
+    s = re.sub(r"<[^>]+>", "", s)
+    s = re.sub(r"\}\}", "", s)
+    # Normalize asterisk placement: "O*.", "O. *", "O.*" → "O.*"
+    s = re.sub(r"\*\s*\.", ".*", s)
+    s = re.sub(r"\.\s*\*", ".*", s)
+    # Deduplicate repeated punctuation
+    s = re.sub(r"\*+", "*", s)
+    s = re.sub(r"\.+", ".", s)
+    # Normalize spacing: "A.N." → "A. N.", but keep ".*" together
+    s = re.sub(r"\.([A-Za-z])", r". \1", s)
+    # Collapse multiple spaces
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+_contrib_cache: dict[str, Contributor] = {}  # full_name -> Contributor
+_initials_cache: dict[str, Contributor] = {}  # normalized initials -> Contributor
+
+
 def _get_or_create_contributor(
     session, full_name: str, initials: str
 ) -> Contributor:
     """Find or create a contributor record."""
-    # Try exact match, then normalized (with/without trailing period)
+    norm = _normalize_initials(initials)
+
+    # Try cache by full_name first (most reliable)
+    if full_name in _contrib_cache:
+        return _contrib_cache[full_name]
+
+    # Try DB by full_name
     existing = (
         session.query(Contributor)
-        .filter(Contributor.initials == initials)
+        .filter(Contributor.full_name == full_name)
         .first()
     )
     if existing:
-        return existing
-    # Try alternate form
-    alt = initials.rstrip(".") if initials.endswith(".") else initials + "."
-    existing = (
-        session.query(Contributor)
-        .filter(Contributor.initials == alt)
-        .first()
-    )
-    if existing:
+        _contrib_cache[full_name] = existing
+        _initials_cache[_normalize_initials(existing.initials)] = existing
         return existing
 
-    contributor = Contributor(initials=initials, full_name=full_name)
+    # Try cache by normalized initials
+    if norm in _initials_cache:
+        c = _initials_cache[norm]
+        _contrib_cache[full_name] = c
+        return c
+
+    contributor = Contributor(initials=norm, full_name=full_name)
     session.add(contributor)
     session.flush()
+    _contrib_cache[full_name] = contributor
+    _initials_cache[norm] = contributor
     return contributor
 
 
