@@ -3,6 +3,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from sqlalchemy import func
+
 from britannica.db.models import (
     Article, ArticleContributor, ArticleImage,
     Contributor, CrossReference, SourcePage,
@@ -190,17 +192,47 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             # For plates, find the parent article
             parent_article_info = None
             if article.article_type == "plate":
+                # Match by title first (plate title comes from page header)
+                plate_title = article.title.upper()
                 parent = (
                     session.query(Article)
                     .filter(
-                        Article.article_type == "article",
-                        Article.volume == article.volume,
-                        Article.page_start <= article.page_start,
-                        Article.page_end >= article.page_start - 5,
+                        Article.article_type != "plate",
+                        func.upper(Article.title) == plate_title,
                     )
-                    .order_by(Article.page_start.desc())
+                    .order_by(
+                        (Article.volume != article.volume).asc(),
+                        func.abs(Article.volume - article.volume).asc(),
+                    )
                     .first()
                 )
+                # Fallback: starts-with match (e.g. "DOVE" → "DOVE (BIRD)")
+                if not parent and len(plate_title) > 3:
+                    parent = (
+                        session.query(Article)
+                        .filter(
+                            Article.article_type != "plate",
+                            func.upper(Article.title).like(plate_title + "%"),
+                        )
+                        .order_by(
+                            (Article.volume != article.volume).asc(),
+                            func.abs(Article.volume - article.volume).asc(),
+                        )
+                        .first()
+                    )
+                # Last resort: nearest preceding article by page proximity
+                if not parent:
+                    parent = (
+                        session.query(Article)
+                        .filter(
+                            Article.article_type == "article",
+                            Article.volume == article.volume,
+                            Article.page_start <= article.page_start,
+                            Article.page_end >= article.page_start - 5,
+                        )
+                        .order_by(Article.page_start.desc())
+                        .first()
+                    )
                 if parent:
                     parent_article_info = {
                         "title": parent.title,

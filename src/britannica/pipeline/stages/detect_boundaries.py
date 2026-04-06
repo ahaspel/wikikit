@@ -325,7 +325,7 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     # Split on bold headings at line/paragraph boundaries
     # In raw wikitext, bold is '''TEXT'''
     _BOLD_HEADING = re.compile(
-        r"(?:^|\n\n?)('{3}"
+        r"(?:^|\n\n)('{3}"
         r"[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE'\u2019\-,. ]+'{3})",
     )
 
@@ -734,17 +734,62 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
                 if header_match:
                     hdr = header_match.group(1)
-                    # {{x-larger|TITLE}} or {{larger|TITLE}}
-                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", hdr)
+                    # {{x-larger|TITLE}} or {{larger|TITLE}} (may nest {{uc|...}})
+                    # First strip inner template wrappers, then match
+                    clean_hdr = hdr
+                    for _ in range(3):
+                        clean_hdr = re.sub(r"\{\{(?:uc|sc|small-caps)\|([^{}]*)\}\}", r"\1", clean_hdr)
+                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", clean_hdr)
                     if not t:
-                        t = re.search(r"\{\{larger\|([^}]+)\}\}", hdr)
-                    # {{EB1911 Page Heading|...|TITLE|...}}
-                    if not t:
-                        t = re.search(
-                            r"\{\{EB1911 Page Heading\|[^|]*\|([^|]+)\|",
-                            hdr)
+                        t = re.search(r"\{\{larger\|([^}]+)\}\}", clean_hdr)
                     if t:
                         plate_title = t.group(1).strip()
+                    else:
+                        # {{rh|...|TITLE|...}} or {{EB1911 Page Heading|...|TITLE|...}}
+                        # Split on top-level pipes (respecting brace depth) to find fields.
+                        for tmpl_start in [
+                            hdr.find("{{rh|"),
+                            hdr.find("{{EB1911 Page Heading|"),
+                        ]:
+                            if tmpl_start < 0:
+                                continue
+                            # Walk from the first | after template name
+                            fields = []
+                            depth = 0
+                            current = ""
+                            for ch in hdr[tmpl_start:]:
+                                if ch == "{":
+                                    depth += 1
+                                    current += ch
+                                elif ch == "}":
+                                    depth -= 1
+                                    if depth <= 0:
+                                        break
+                                    current += ch
+                                elif ch == "|" and depth <= 2:
+                                    fields.append(current)
+                                    current = ""
+                                else:
+                                    current += ch
+                            if current:
+                                fields.append(current)
+                            # fields[0] = template name, fields[1] = first arg, etc.
+                            # For rh: fields ~ [rh, left, TITLE, right]
+                            # For Page Heading: fields ~ [PH, plate-label, TITLE, ...]
+                            # Find the best title candidate among fields[1:]
+                            for f in fields[1:]:
+                                # Strip template wrappers from the field
+                                clean = re.sub(r"\{\{[^{}]*\|", "", f)
+                                clean = re.sub(r"\}\}", "", clean)
+                                clean = clean.strip().rstrip("}]")
+                                if (clean and len(clean) > 2
+                                        and not clean.isdigit()
+                                        and not re.match(r"^Plate\b", clean)
+                                        and re.search(r"[A-Za-z]{3,}", clean)):
+                                    plate_title = clean
+                                    break
+                            if plate_title:
+                                break
                 if not plate_title:
                     plate_title = f"PLATE (VOL. {page.volume}, P. {page.page_number})"
 
