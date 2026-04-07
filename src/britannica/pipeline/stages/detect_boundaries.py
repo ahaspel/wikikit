@@ -32,6 +32,15 @@ def _strip_templates(text: str) -> str:
     return text.strip()
 
 
+# Wikisource section ID corrections: typos and false article names.
+# Key = section ID as it appears in the source, value = corrected title
+# (or None to treat as a generic continuation, not a new article).
+_SECTION_ID_FIXES = {
+    "Algebrab": "ALGEBRA",
+    "Algebrae": None,  # continuation of ALGEBRA
+}
+
+
 def _is_article_section_id(sec_id: str) -> bool:
     """Return True if a section ID looks like a real article title, not a
     generic Wikisource continuation marker (part1, s2, text1, etc.)."""
@@ -165,6 +174,18 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
     candidates = []
     for sec_id, sec_text in expanded_sections:
+        # Apply section ID corrections (Wikisource typos, false splits)
+        if sec_id in _SECTION_ID_FIXES:
+            fix = _SECTION_ID_FIXES[sec_id]
+            if fix is None:
+                # Suppressed — treat as continuation, not a new article
+                if candidates:
+                    candidates[-1].body += "\n\n" + sec_text
+                else:
+                    prefix = (prefix + "\n\n" + sec_text).strip()
+                continue
+            sec_id = fix
+
         # Determine the article title
         # Named sections (not s1, s2, s3...) use the section ID as the title
         is_named = not re.match(r"^s\d+$", sec_id)
