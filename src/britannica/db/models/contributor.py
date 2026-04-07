@@ -8,10 +8,24 @@ class Contributor(Base):
     __tablename__ = "contributors"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    initials: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     credentials: Mapped[str | None] = mapped_column(String(500), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ContributorInitials(Base):
+    __tablename__ = "contributor_initials"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    contributor_id: Mapped[int] = mapped_column(
+        ForeignKey("contributors.id"),
+        nullable=False,
+    )
+
+    initials: Mapped[str] = mapped_column(
+        String(50), nullable=False, unique=True
+    )
 
 
 class ArticleContributor(Base):

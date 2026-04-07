@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 from britannica.db.models import (
     Article, ArticleContributor, ArticleImage,
-    Contributor, CrossReference, SourcePage,
+    Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
 
@@ -310,7 +310,11 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 ],
                 "contributors": [
                     {
-                        "initials": contrib.initials,
+                        "initials": (
+                            session.query(ContributorInitials.initials)
+                            .filter(ContributorInitials.contributor_id == contrib.id)
+                            .first() or ("",)
+                        )[0],
                         "full_name": contrib.full_name,
                         "credentials": contrib.credentials,
                         "description": contrib.description,
@@ -408,9 +412,14 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             )
             for c in contribs:
                 if c.full_name not in contrib_map:
+                    first_initials = (
+                        session.query(ContributorInitials.initials)
+                        .filter(ContributorInitials.contributor_id == c.id)
+                        .first() or ("",)
+                    )[0]
                     contrib_map[c.full_name] = {
                         "full_name": c.full_name,
-                        "initials": c.initials,
+                        "initials": first_initials,
                         "credentials": c.credentials or "",
                         "description": c.description or "",
                         "articles": [],

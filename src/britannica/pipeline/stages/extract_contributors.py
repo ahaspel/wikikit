@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 from britannica.db.models import (
-    Article, ArticleContributor, Contributor, SourcePage,
+    Article, ArticleContributor, Contributor, ContributorInitials, SourcePage,
 )
 from britannica.db.session import SessionLocal
 
@@ -19,6 +19,30 @@ _FOOTER_PATTERN = re.compile(
 )
 
 
+def _clean_footer_initials(initials: str) -> list[str]:
+    """Clean and split footer initials string.
+
+    Handles compound entries (E. H. P.; X.), brackets, crosses,
+    leaked markup, and HTML entities. Returns a list of clean
+    initials strings (excluding anonymous X. markers).
+    """
+    s = initials.strip()
+    # Strip brackets, parentheses, and crosses
+    s = s.strip("[]()").lstrip("✠").strip()
+    # Decode HTML entities
+    s = s.replace("&thinsp;", "").replace("&nbsp;", " ")
+    # Unwrap wiki templates (e.g. {{small-caps|He}} → He)
+    s = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", s)
+    s = re.sub(r"\{\{[^{}]*\}\}", "", s)
+    s = re.sub(r"\{\{[^{}]*", "", s)
+    s = re.sub(r"\}\}", "", s)
+    # Split on semicolons (compound entries like "E. H. P.; X.")
+    parts = [p.strip() for p in s.split(";")]
+    # Discard anonymous markers
+    parts = [p for p in parts if p and p not in ("X.", "X")]
+    return parts
+
+
 def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     """Parse contributor names and initials from a footer template."""
     results = []
@@ -27,10 +51,11 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     # First contributor: positional args (skip font-size like "108%")
     positional = [p.strip() for p in parts if "=" not in p and "%" not in p]
     if len(positional) >= 2:
-        results.append({
-            "full_name": positional[0],
-            "initials": positional[1],
-        })
+        for clean_init in _clean_footer_initials(positional[1]):
+            results.append({
+                "full_name": positional[0],
+                "initials": clean_init,
+            })
 
     # Additional contributors: name2=...|initials2=..., name3=..., etc.
     named = {}
@@ -43,10 +68,11 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
         name_key = f"name{n}"
         init_key = f"initials{n}"
         if name_key in named and init_key in named:
-            results.append({
-                "full_name": named[name_key],
-                "initials": named[init_key],
-            })
+            for clean_init in _clean_footer_initials(named[init_key]):
+                results.append({
+                    "full_name": named[name_key],
+                    "initials": clean_init,
+                })
 
     return results
 
@@ -85,38 +111,41 @@ def _normalize_initials(initials: str) -> str:
     return s
 
 
-def _get_or_create_contributor(
-    session, full_name: str, initials: str
-) -> Contributor:
-    """Find or create a contributor record.
+_initials_cache: dict[str, Contributor | None] = {}
 
-    Matches by full_name first, then by normalized initials.
-    Same initials with different names are treated as the same person
-    (the encyclopedia assigns unique initials per contributor).
+
+def _find_contributor(session, initials: str) -> Contributor | None:
+    """Find a contributor by initials via the contributor_initials table.
+
+    The contributor table is pre-built from front matter. This function
+    only looks up — it never creates records. Uses normalization as
+    a fallback when exact match fails.
     """
     norm = _normalize_initials(initials)
 
-    # Try DB by full_name (exact match)
-    existing = (
-        session.query(Contributor)
-        .filter(Contributor.full_name == full_name)
+    if norm in _initials_cache:
+        return _initials_cache[norm]
+
+    # Try exact match against contributor_initials table
+    ci = (
+        session.query(ContributorInitials)
+        .filter(ContributorInitials.initials == initials)
         .first()
     )
-    if existing:
-        # Update initials if new form is cleaner
-        if len(norm) > len(_normalize_initials(existing.initials)):
-            existing.initials = norm
-        return existing
+    if ci:
+        contributor = session.query(Contributor).get(ci.contributor_id)
+        _initials_cache[norm] = contributor
+        return contributor
 
-    # Try DB by normalized initials (same person, variant name)
-    for candidate in session.query(Contributor).filter(
-            Contributor.initials == norm).all():
-        return candidate
+    # Try normalized match
+    for ci in session.query(ContributorInitials).all():
+        if _normalize_initials(ci.initials) == norm:
+            contributor = session.query(Contributor).get(ci.contributor_id)
+            _initials_cache[norm] = contributor
+            return contributor
 
-    contributor = Contributor(initials=norm, full_name=full_name)
-    session.add(contributor)
-    session.flush()
-    return contributor
+    _initials_cache[norm] = None
+    return None
 
 
 def extract_contributors_for_volume(volume: int) -> int:
@@ -165,9 +194,11 @@ def extract_contributors_for_volume(volume: int) -> int:
                 contributors = _parse_contributors(match.group(1))
 
                 for i, contrib in enumerate(contributors):
-                    contributor = _get_or_create_contributor(
-                        session, contrib["full_name"], contrib["initials"]
+                    contributor = _find_contributor(
+                        session, contrib["initials"]
                     )
+                    if not contributor:
+                        continue
 
                     existing = (
                         session.query(ArticleContributor)
