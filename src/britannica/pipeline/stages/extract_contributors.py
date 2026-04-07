@@ -85,42 +85,37 @@ def _normalize_initials(initials: str) -> str:
     return s
 
 
-_contrib_cache: dict[str, Contributor] = {}  # full_name -> Contributor
-_initials_cache: dict[str, Contributor] = {}  # normalized initials -> Contributor
-
-
 def _get_or_create_contributor(
     session, full_name: str, initials: str
 ) -> Contributor:
-    """Find or create a contributor record."""
+    """Find or create a contributor record.
+
+    Matches by full_name first, then by normalized initials.
+    Same initials with different names are treated as the same person
+    (the encyclopedia assigns unique initials per contributor).
+    """
     norm = _normalize_initials(initials)
 
-    # Try cache by full_name first (most reliable)
-    if full_name in _contrib_cache:
-        return _contrib_cache[full_name]
-
-    # Try DB by full_name
+    # Try DB by full_name (exact match)
     existing = (
         session.query(Contributor)
         .filter(Contributor.full_name == full_name)
         .first()
     )
     if existing:
-        _contrib_cache[full_name] = existing
-        _initials_cache[_normalize_initials(existing.initials)] = existing
+        # Update initials if new form is cleaner
+        if len(norm) > len(_normalize_initials(existing.initials)):
+            existing.initials = norm
         return existing
 
-    # Try cache by normalized initials
-    if norm in _initials_cache:
-        c = _initials_cache[norm]
-        _contrib_cache[full_name] = c
-        return c
+    # Try DB by normalized initials (same person, variant name)
+    for candidate in session.query(Contributor).filter(
+            Contributor.initials == norm).all():
+        return candidate
 
     contributor = Contributor(initials=norm, full_name=full_name)
     session.add(contributor)
     session.flush()
-    _contrib_cache[full_name] = contributor
-    _initials_cache[norm] = contributor
     return contributor
 
 
