@@ -19,6 +19,34 @@ _QUALITY_NOTES = {
 }
 
 
+def _load_printed_pages() -> dict:
+    """Load the printed page number lookup."""
+    path = Path("data/derived/printed_pages.json")
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+_PRINTED_PAGES = None
+
+
+def _get_printed_pages() -> dict:
+    global _PRINTED_PAGES
+    if _PRINTED_PAGES is None:
+        _PRINTED_PAGES = _load_printed_pages()
+    return _PRINTED_PAGES
+
+
+def _printed_page(volume: int, ws_page: int) -> int:
+    """Look up the printed page number for a Wikisource page."""
+    pp = _get_printed_pages()
+    vol_map = pp.get(str(volume), {})
+    printed = vol_map.get(str(ws_page))
+    if printed is not None:
+        return printed
+    return ws_page  # fallback: return ws page unchanged
+
+
 _TITLE_PREFIXES = re.compile(
     r"^(Sir |Rev\.? |Colonel |Major-General |Lieut\.-Gen\. |"
     r"Right Hon\.? |The |Hon\.? |Rt\.? Rev\.? |Very Rev\.? |"
@@ -264,13 +292,20 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 body,
             )
 
+            # Convert PAGE markers from Wikisource to printed page numbers
+            def _replace_page_marker(m):
+                ws = int(m.group(1))
+                return f"\x01PAGE:{_printed_page(article.volume, ws)}\x01"
+
+            body = re.sub(r"\x01PAGE:(\d+)\x01", _replace_page_marker, body)
+
             payload = {
                 "id": article.id,
                 "title": article.title,
                 "article_type": article.article_type,
                 "volume": article.volume,
-                "page_start": article.page_start,
-                "page_end": article.page_end,
+                "page_start": _printed_page(article.volume, article.page_start),
+                "page_end": _printed_page(article.volume, article.page_end),
                 "source_quality": quality,
                 "word_count": len(body.split()),
                 "parent_article": parent_article_info,
@@ -294,7 +329,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     {
                         "title": plate.title,
                         "filename": _safe_filename(plate.id, plate.title),
-                        "page": plate.page_start,
+                        "page": _printed_page(article.volume, plate.page_start),
                     }
                     for plate in (
                         session.query(Article)
@@ -379,8 +414,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "article_type": article.article_type,
                 "filename": _safe_filename(article.id, article.title),
                 "volume": article.volume,
-                "page_start": article.page_start,
-                "page_end": article.page_end,
+                "page_start": _printed_page(article.volume, article.page_start),
+                "page_end": _printed_page(article.volume, article.page_end),
                 "body_length": len(body.split()),
                 "body_start": body_start,
                 "xref_count": xref_count,
