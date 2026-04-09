@@ -412,14 +412,15 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             )
             for c in contribs:
                 if c.full_name not in contrib_map:
-                    first_initials = (
-                        session.query(ContributorInitials.initials)
+                    all_initials = [
+                        ci.initials for ci in
+                        session.query(ContributorInitials)
                         .filter(ContributorInitials.contributor_id == c.id)
-                        .first() or ("",)
-                    )[0]
+                        .all()
+                    ]
                     contrib_map[c.full_name] = {
                         "full_name": c.full_name,
-                        "initials": first_initials,
+                        "initials": ", ".join(all_initials),
                         "credentials": c.credentials or "",
                         "description": c.description or "",
                         "articles": [],

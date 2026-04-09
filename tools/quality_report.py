@@ -160,25 +160,25 @@ def run_file_checks() -> dict:
         if not body:
             continue
 
+        # Strip blocks that intentionally contain HTML/wiki markup
+        clean = re.sub(r"\u00abHTMLTABLE:.*?\u00ab/HTMLTABLE\u00bb", "", body, flags=re.DOTALL)
+        clean = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", clean, flags=re.DOTALL)
+
         # Stray wiki markup
-        if "{{" in body and not any(
-            m in body for m in ["{{IMG:", "{{TABLE", "{{FN:", "{{VERSE:"]
+        if "{{" in clean and not any(
+            m in clean for m in ["{{IMG:", "{{TABLE", "{{FN:", "{{VERSE:"]
         ):
             issues["stray_braces"] += 1
-        if "}}" in body and "TABLE}" not in body and "IMG:" not in body and "VERSE}" not in body:
+        if "}}" in clean and "TABLE}" not in clean and "IMG:" not in clean and "VERSE}" not in clean:
             issues["stray_close_braces"] += 1
-        if re.search(r"\[\[.*?\]\]", body):
+        if re.search(r"\[\[.*?\]\]", clean):
             issues["stray_wikilink"] += 1
-        # Stray wiki italic — exclude occurrences inside MATH markers
-        body_no_math = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", body, flags=re.DOTALL)
-        if "''" in body_no_math:
+        if "''" in clean:
             issues["stray_wiki_italic"] += 1
 
-        # Bare HTML tags — exclude single-letter "tags" that are really
-        # math comparisons (a<b, x<n) and OCR artifacts
-        bare_body_for_html = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", body, flags=re.DOTALL)
+        # Bare HTML tags
         if re.search(r"<(?:table|tr|td|th|div|span|br|sub|sup|ref|poem|score|math)\b[^>]*>",
-                      bare_body_for_html, re.I):
+                      clean, re.I):
             issues["html_tag"] += 1
 
         # Unclosed markers
@@ -219,8 +219,9 @@ def run_file_checks() -> dict:
                 issues[f"stray_control_x0{i}"] += 1
                 break
 
-        # Leaked template names
-        if re.search(r"nowrap|colspan|rowspan|cellpadding", body):
+        # Leaked template names (skip HTMLTABLE blocks which intentionally contain these)
+        check = re.sub(r"\u00abHTMLTABLE:.*?\u00ab/HTMLTABLE\u00bb", "", body, flags=re.DOTALL)
+        if re.search(r"nowrap|colspan|rowspan|cellpadding", check):
             issues["leaked_html_attr"] += 1
 
     results["issues"] = dict(issues.most_common())
