@@ -5,10 +5,23 @@ from britannica.db.session import SessionLocal
 import re
 
 # Raw wikitext section-begin tag.
+def _match_section_begin(text):
+    """Find all section-begin markers, handling both quoted and unquoted forms."""
+    # Quoted: <section begin="Foo Bar" />
+    # Unquoted: <section begin=Foo/>
+    pattern = re.compile(
+        r'<section\s+begin=(?:"([^"]+)"|([A-Za-z][^/>\s]*))\s*/?>', re.IGNORECASE)
+    results = []
+    for m in pattern.finditer(text):
+        name = m.group(1) if m.group(1) is not None else m.group(2)
+        results.append((m.start(), m.end(), name))
+    return results
+
+# Keep the old pattern for simple finditer compatibility
 _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
 
 # Section-end tags — stripped during preprocessing.
-_SEC_END = re.compile(r'<section\s+end="[^"]*"\s*/?>', re.IGNORECASE)
+_SEC_END = re.compile(r'<section\s+end=(?:"[^"]*"|[^/>\s]*)\s*/?>', re.IGNORECASE)
 
 # <noinclude> blocks — stripped during preprocessing (page headers, quality tags).
 _NOINCLUDE = re.compile(r"<noinclude>.*?</noinclude>", re.DOTALL | re.IGNORECASE)
@@ -38,6 +51,7 @@ def _strip_templates(text: str) -> str:
 _SECTION_ID_FIXES = {
     "Algebrab": "ALGEBRA",
     "Algebrae": None,  # continuation of ALGEBRA
+    "PHOLOLOGY": None,  # typo for PHILOLOGY — continuation
 }
 
 
@@ -140,20 +154,20 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
     Returns None if no section markers found (fall back to heuristic parsing).
     """
-    markers = list(_SEC_MARKER.finditer(text))
-    if not markers:
+    raw_markers = _match_section_begin(text)
+    if not raw_markers:
         return None
 
     # Split text into sections
     sections: list[tuple[str, str]] = []  # (section_id, section_text)
-    for i, m in enumerate(markers):
-        start = m.end()
-        end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
+    for i, (mstart, mend, mname) in enumerate(raw_markers):
+        start = mend
+        end = raw_markers[i + 1][0] if i + 1 < len(raw_markers) else len(text)
         section_text = text[start:end].strip()
-        sections.append((m.group(1), section_text))
+        sections.append((mname, section_text))
 
     # Text before the first marker is prefix (continuation of previous article)
-    prefix = text[:markers[0].start()].strip()
+    prefix = text[:raw_markers[0][0]].strip()
 
     # Pre-split: a single section may contain multiple articles if there
     # are bold headings mid-text.  Split on '''ALLCAPS patterns at
@@ -186,6 +200,12 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                 continue
             sec_id = fix
 
+        # Section IDs with / are sub-sections (e.g. Britain/Roman).
+        # Use the part before / as the article name so sub-sections
+        # merge into one article.
+        if "/" in sec_id:
+            sec_id = sec_id.split("/")[0]
+
         # Determine the article title
         # Named sections (not s1, s2, s3...) use the section ID as the title
         is_named = not re.match(r"^s\d+$", sec_id)
@@ -201,7 +221,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             stripped = _line.strip()
             if not stripped:
                 continue
-            if re.match(r"^(<!--.*?-->|<table\b|\{\||<tr|<td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE):
+            if re.match(r"^(<!--.*?-->|<table\b|\{\||\|\}|\|-|\|(?!''')|<tr|<td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE):
                 continue
             first_line = stripped
             _first_line_idx = _i
@@ -723,6 +743,154 @@ def _join_lines(lines: list[str]) -> str:
     return "\n\n".join(result_parts).strip()
 
 
+def _extract_heading_title(raw: str) -> str | None:
+    """Extract the article title from a page heading template.
+
+    Page headings have the form:
+        {{EB1911 Page Heading|LEFT|TITLE|RIGHT|PAGE}}
+        {{rh|LEFT|TITLE|RIGHT}}
+
+    The title fields contain the first and/or last article on the page.
+    We look for the field that looks most like an article title (all-caps,
+    not a page number, not too short).
+    """
+    m = re.search(
+        r"\{\{(?:EB1911 Page Heading|rh)\|([^}]+)\}\}", raw[:500])
+    if not m:
+        return None
+    fields = m.group(1).split("|")
+    # Strip templates and whitespace from each field
+    candidates = []
+    for f in fields:
+        f = re.sub(r"\{\{[^{}]*\}\}", "", f).strip()
+        f = re.sub(r"&[a-z]+;", " ", f).strip()
+        if not f or f.isdigit() or len(f) < 3:
+            continue
+        # Must be mostly uppercase (article titles are ALL CAPS)
+        if f.upper() == f or f.replace(".", "").replace(",", "").upper() == f.replace(".", "").replace(",", ""):
+            candidates.append(f.rstrip(".,"))
+    if not candidates:
+        return None
+    # Return the longest candidate (most likely to be the article title)
+    return max(candidates, key=len)
+
+
+def _heading_matches(heading_title: str, article_title: str) -> bool:
+    """Check if a page heading title matches the current article title.
+
+    Handles partial matches: the heading might show a shortened or
+    slightly different form of the article title.
+    """
+    h = heading_title.upper().strip()
+    a = article_title.upper().strip()
+    # Exact match
+    if h == a:
+        return True
+    # One contains the other (handles abbreviations like "ROOSEVELT" matching
+    # "ROOSEVELT, THEODORE")
+    if h in a or a in h:
+        return True
+    # First word match (handles "ROORKEE" vs "ROORKEE, INDIA")
+    h_first = h.split(",")[0].split("(")[0].strip()
+    a_first = a.split(",")[0].split("(")[0].strip()
+    if h_first == a_first and len(h_first) > 3:
+        return True
+    return False
+
+
+def _fix_swallowed_pages(articles: list[DetectedArticle],
+                         pages: list) -> list[DetectedArticle]:
+    """Fix articles that swallowed pages belonging to a later article.
+
+    When consecutive pages have no section markers but their page heading
+    matches a later detected article, move those pages from the swallower
+    to the correct article.
+    """
+    # Build a map of article titles to articles (for lookup)
+    title_map = {}
+    for a in articles:
+        title_map[a.title.upper()] = a
+
+    # Build page heading map
+    heading_map = {}  # page_number -> heading title
+    for page in pages:
+        raw = (page.wikitext or "").strip()
+        if not raw:
+            continue
+        m = re.search(r'Page Heading\|[^|]*\|([^|]+)\|', raw[:300])
+        if m:
+            heading_map[page.page_number] = m.group(1).strip().upper().rstrip(",.")
+
+    # For each article, check if trailing pages have headings matching
+    # a different article that starts later
+    for art in articles:
+        if art.article_type != "article":
+            continue
+        if len(art.segments) < 2:
+            continue
+
+        # Find trailing segments whose heading doesn't match this article
+        # and DOES match a later article.  Only consider pages that have
+        # NO section markers — pages with markers are correctly placed
+        # by the main detection logic.
+        pages_with_markers = set()
+        for page in pages:
+            raw = (page.wikitext or "").strip()
+            if re.search(r'<section\s+begin=', raw):
+                pages_with_markers.add(page.page_number)
+
+        mismatch_start = None
+        for i, seg in enumerate(art.segments):
+            if seg.page_number in pages_with_markers:
+                mismatch_start = None  # reset — can't split at/past a marked page
+                continue
+            heading = heading_map.get(seg.page_number, "")
+            if not heading:
+                continue
+            matches_self = (
+                heading in art.title.upper() or
+                art.title.upper() in heading or
+                heading.split(",")[0] == art.title.upper().split(",")[0]
+            )
+            if not matches_self:
+                # Does the heading match any later article?
+                target = None
+                for later in articles:
+                    if later.page_start > art.page_start and later.article_type == "article":
+                        later_upper = later.title.upper()
+                        if (heading in later_upper or later_upper in heading or
+                                heading.split(",")[0] == later_upper.split(",")[0]):
+                            target = later
+                            break
+                if target and mismatch_start is None:
+                    mismatch_start = i
+
+        if mismatch_start is not None:
+            # Move segments from mismatch_start onward to the target article
+            moved_segments = art.segments[mismatch_start:]
+            art.segments = art.segments[:mismatch_start]
+            art.page_end = art.segments[-1].page_number if art.segments else art.page_start
+
+            # Find the target article and prepend the moved segments
+            heading = heading_map.get(moved_segments[0].page_number, "")
+            for target in articles:
+                if target.page_start > art.page_start and target.article_type == "article":
+                    target_upper = target.title.upper()
+                    if (heading in target_upper or target_upper in heading or
+                            heading.split(",")[0] == target_upper.split(",")[0]):
+                        # Renumber sequences
+                        offset = len(moved_segments)
+                        for seg in target.segments:
+                            seg.sequence += offset
+                        for j, seg in enumerate(moved_segments):
+                            seg.sequence = j + 1
+                        target.segments = moved_segments + target.segments
+                        target.page_start = moved_segments[0].page_number
+                        break
+
+    return articles
+
+
 # ── Detection (pure) ──────────────────────────────────────────────────
 
 
@@ -932,6 +1100,12 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     ))
                 articles.append(detected)
                 open_article = detected
+
+        # Post-process: fix pages whose heading indicates they belong to
+        # a different article.  Walk through detected articles and check
+        # each page's heading.  If a run of consecutive pages has a heading
+        # that matches a LATER article (by section marker), move those pages.
+        articles = _fix_swallowed_pages(articles, pages)
 
         return articles
 

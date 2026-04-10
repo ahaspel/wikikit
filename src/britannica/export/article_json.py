@@ -306,6 +306,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),
                 "page_end": _printed_page(article.volume, article.page_end),
+                "ws_page_start": article.page_start,
+                "ws_page_end": article.page_end,
                 "source_quality": quality,
                 "word_count": len(body.split()),
                 "parent_article": parent_article_info,
