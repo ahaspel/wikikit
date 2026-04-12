@@ -38,6 +38,23 @@ def find_fuzzy_match(target: str, title_map: dict[str, int]) -> int | None:
     if result is not None:
         return result
 
+    # Strategy 6: Section reference (EUROPE: HISTORY -> EUROPE)
+    result = _try_section_strip(target, title_map)
+    if result is not None:
+        return result
+
+    # Strategy 7: Strip trailing parenthetical (JOINTS (ANATOMY) -> JOINTS,
+    # LUXEMBURG (GRAND-DUCHY) -> LUXEMBURG).
+    result = _try_strip_parenthetical(target, title_map)
+    if result is not None:
+        return result
+
+    # Strategy 8: Strip trailing comma-qualifier (GRAIL, THE HOLY ->
+    # GRAIL, NELSON, HORATIO NELSON, VISCOUNT -> NELSON, HORATIO NELSON).
+    result = _try_strip_trailing_qualifier(target, title_map)
+    if result is not None:
+        return result
+
     return None
 
 
@@ -113,6 +130,68 @@ def _try_trailing_period(target: str, title_map: dict[str, int]) -> int | None:
         with_period = target + "."
         if with_period in title_map:
             return title_map[with_period]
+    return None
+
+
+def _try_strip_parenthetical(
+    target: str, title_map: dict[str, int]
+) -> int | None:
+    """Drop a trailing `(QUALIFIER)` — common disambiguator form.
+
+    `JOINTS (ANATOMY)` -> `JOINTS`, `LUXEMBURG (GRAND-DUCHY)` -> `LUXEMBURG`,
+    `ALEXANDER I. (TSAR)` -> `ALEXANDER I`  (also tries trailing-period strip).
+    """
+    m = re.match(r"^(.+?)\s*\([^)]+\)\s*$", target)
+    if not m:
+        return None
+    base = m.group(1).strip()
+    if len(base) < 3:
+        return None
+    if base in title_map:
+        return title_map[base]
+    # Also try with trailing period stripped (regnal ordinals like I., II.)
+    if base.endswith("."):
+        base_no_dot = base[:-1].strip()
+        if base_no_dot and base_no_dot in title_map:
+            return title_map[base_no_dot]
+    return None
+
+
+def _try_strip_trailing_qualifier(
+    target: str, title_map: dict[str, int]
+) -> int | None:
+    """Drop a trailing `, QUALIFIER` clause and retry.
+
+    `GRAIL, THE HOLY` -> `GRAIL`,
+    `NELSON, HORATIO NELSON, VISCOUNT` -> `NELSON, HORATIO NELSON`,
+    `ROSEBERY, ARCHIBALD PHILIP PRIMROSE, 5TH EARL OF` -> ... .
+
+    Tries from the LAST comma backward; returns on first hit.
+    """
+    parts = target.split(",")
+    if len(parts) < 2:
+        return None
+    # Try stripping from the right, one comma-chunk at a time.
+    for cut in range(len(parts) - 1, 0, -1):
+        candidate = ", ".join(p.strip() for p in parts[:cut]).strip()
+        if len(candidate) >= 3 and candidate in title_map:
+            return title_map[candidate]
+    return None
+
+
+def _try_section_strip(target: str, title_map: dict[str, int]) -> int | None:
+    """Strip a trailing section reference and match the base article.
+
+    EB1911 cross-references frequently point to a section within another
+    article: "Europe: History", "Greece: Language", "Algebra: Analytical".
+    The actual target article is the part before the colon. We normalize
+    `#` to `: ` in the xref normalizer, so both forms land here.
+    """
+    if ": " not in target:
+        return None
+    base = target.rsplit(": ", 1)[0].strip()
+    if base and base in title_map:
+        return title_map[base]
     return None
 
 

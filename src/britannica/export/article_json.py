@@ -20,14 +20,32 @@ _QUALITY_NOTES = {
 
 
 def _load_printed_pages() -> dict:
-    """Load the printed page number lookup."""
+    """Load the printed page number lookup (leaf → printed per volume)."""
     path = Path("data/derived/printed_pages.json")
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {}
 
 
+def _load_scan_map() -> dict:
+    """Load the ws → leaf mapping per volume."""
+    path = Path("data/derived/scan_map.json")
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+# Fallback ws → leaf offset when scan_map has no entry.
+_LEAF_OFFSET = {
+    1: 7, 2: 7, 3: 9, 4: 9, 5: 12, 6: 12, 7: 7, 8: 7,
+    9: 9, 10: 10, 11: 8, 12: 7, 13: 7, 14: 6, 15: 17, 16: 6,
+    17: 9, 18: 6, 19: 7, 20: 0, 21: 6, 22: 6, 23: 7, 24: 4,
+    25: 8, 26: 4, 27: 6, 28: 5, 29: 6,
+}
+
+
 _PRINTED_PAGES = None
+_SCAN_MAP = None
 
 
 def _get_printed_pages() -> dict:
@@ -37,8 +55,28 @@ def _get_printed_pages() -> dict:
     return _PRINTED_PAGES
 
 
+def _get_scan_map() -> dict:
+    global _SCAN_MAP
+    if _SCAN_MAP is None:
+        _SCAN_MAP = _load_scan_map()
+    return _SCAN_MAP
+
+
+def _leaf_for_ws(volume: int, ws_page: int) -> int:
+    """Translate a Wikisource page index to its physical scan leaf."""
+    sm = _get_scan_map().get(str(volume), {})
+    leaf = sm.get(str(ws_page))
+    if leaf is not None:
+        return int(leaf)
+    return ws_page + _LEAF_OFFSET.get(volume, 0)
+
+
 def _printed_page(volume: int, ws_page: int) -> int:
-    """Look up the printed page number for a Wikisource page."""
+    """Look up the printed page number for a Wikisource page.
+
+    printed_pages.json is ws-keyed (heading-sourced with monotonic
+    interpolation for gaps). Stays in ws space — no scan_map detour.
+    """
     pp = _get_printed_pages()
     vol_map = pp.get(str(volume), {})
     printed = vol_map.get(str(ws_page))
@@ -239,6 +277,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     "status": xref.status,
                     "target_article_id": xref.target_article_id,
                 }
+                if xref.target_section:
+                    entry["target_section"] = xref.target_section
                 if xref.target_article_id is not None:
                     target = session.get(Article, xref.target_article_id)
                     if target:
@@ -412,8 +452,32 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 .count()
             )
             body = article.body or ""
-            # First ~10 words of body for disambiguation in the index
-            first_line = re.sub(r"\x01PAGE:\d+\x01", "", body.split("\n")[0])
+            # First ~10 words of body for disambiguation in the index.
+            # Skip any leading paragraphs that are just image / table /
+            # verse markers — the preview should be TEXT, not raw markup
+            # (e.g. BEE's body starts with `{{IMG:…}}` followed by a
+            # caption; we want the caption/body, not the raw marker).
+            preview_source = body
+            preview_source = re.sub(r"\x01PAGE:\d+\x01", "", preview_source)
+            preview_source = re.sub(
+                r"\{\{IMG:[^}]*\}\}", "", preview_source)
+            preview_source = re.sub(
+                r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", preview_source)
+            preview_source = re.sub(
+                r"\{\{VERSE:[\s\S]*?\}VERSE\}", "", preview_source)
+            preview_source = re.sub(
+                r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
+                "", preview_source)
+            # Absorbed-subsection headings aren't part of the preview
+            preview_source = re.sub(
+                r"\u00abSEC:[^\u00ab]*\u00ab/SEC\u00bb",
+                "", preview_source)
+            # First non-empty line of the cleaned preview source
+            first_line = ""
+            for ln in preview_source.split("\n"):
+                if ln.strip():
+                    first_line = ln
+                    break
             # Strip footnotes for the preview
             first_line = re.sub(r"\u00abFN:.*?\u00ab/FN\u00bb", "", first_line)
             # Strip formatting markers but KEEP the text between them

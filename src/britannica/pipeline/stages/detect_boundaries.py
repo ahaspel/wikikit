@@ -37,11 +37,18 @@ def _strip_templates(text: str) -> str:
 
     Handles patterns like {{mono|{{fs|108%|TITLE}}}} -> TITLE.
     Multi-param templates keep the last parameter.
+    Also strips inline HTML formatting tags (<big>, <small>, <sub>, <sup>)
+    used for drop-caps / size emphasis in headings — we don't want
+    '<big>S</big>UCCINIC <big>A</big>CID' leaking into the title.
     """
     for _ in range(5):
         text = re.sub(r"\{\{[^{}|]*\|([^{}|]*)\}\}", r"\1", text)
         text = re.sub(r"\{\{[^{}]*\|([^{}|]*)\}\}", r"\1", text)
     text = re.sub(r"\{\{[^{}]*\}\}", "", text)
+    text = re.sub(
+        r"</?(?:big|small|sub|sup|span|font)\b[^>]*>",
+        "", text, flags=re.IGNORECASE,
+    )
     return text.strip()
 
 
@@ -194,6 +201,12 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
     candidates = []
     for sec_id, sec_text in expanded_sections:
+        # Normalize Wikisource-style section-ID artifacts:
+        #   - Trailing `_p1`/`_p2` = split-transclusion part markers
+        #   - `_` as URL-style word separator (Jade_(bay))
+        sec_id = re.sub(r"_p\d+$", "", sec_id, flags=re.IGNORECASE)
+        sec_id = sec_id.replace("_", " ")
+
         # Apply section ID corrections (Wikisource typos, false splits)
         if sec_id in _SECTION_ID_FIXES:
             fix = _SECTION_ID_FIXES[sec_id]
@@ -241,11 +254,19 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # Extract the title from the start of the line.  The pattern must
         # handle Mc/Mac/O'/d' prefixes which mix case (McCORMICK, O'BRIEN).
         # Each word starts with uppercase (or a known prefix + uppercase).
-        # After the prefix, remaining chars must be uppercase to avoid
-        # matching into body text like "ABACUS A calculating..."
+        # Subsequent words must be 2+ chars in general, with one
+        # exception: a pure Roman numeral (`I`, `V`, `X`, `L`, `C`, `D`,
+        # `M`) after a SPACE — for regnal numbers like ALEXANDER I,
+        # GEORGE V. Single letters after a COMMA are usually initials
+        # or chemical-formula starts (ACCIUS, LUCIUS, R... is the Latin
+        # poet ACCIUS, LUCIUS followed by R. era), so we don't allow
+        # them.
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]*"
-            r"(?:[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+)*)",
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+"
+            r"(?:"
+            r"[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+"
+            r"|\s+[IVX]+(?![A-Z])"
+            r")*)",
             clean_first,
         )
 
@@ -305,6 +326,24 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                         break
             if matched_candidate:
                 matched_candidate.body += "\n\n" + sec_text
+                continue
+            # If there's already a candidate on this page, append this
+            # section to it (not to prefix). This preserves PAGE ORDER
+            # when multiple named sections follow the first candidate
+            # (e.g. CLEMENT (POPES) page 502 has Clement VII then
+            # Clement VIII, IX, X, XI, XII in order — all should flow
+            # together in the containing article's body, not get
+            # reordered by having VIII+ in prefix). Emit a «SEC:name»
+            # marker before the appended content so the viewer can
+            # render each subsection as a navigable heading.
+            if candidates:
+                if is_named and _is_article_section_id(sec_id):
+                    candidates[-1].body += (
+                        f"\n\n\u00abSEC:{sec_id}\u00ab/SEC\u00bb\n\n"
+                        + sec_text
+                    )
+                else:
+                    candidates[-1].body += "\n\n" + sec_text
                 continue
             # Otherwise, continuation of previous article
             if prefix:
@@ -888,6 +927,21 @@ def _fix_swallowed_pages(articles: list[DetectedArticle],
                     target_upper = target.title.upper()
                     if (heading in target_upper or target_upper in heading or
                             heading.split(",")[0] == target_upper.split(",")[0]):
+                        # Strip redundant bold title from the first moved
+                        # segment — when a page has the target's bold
+                        # heading (e.g. `'''[[Author:…|ROOSEVELT, THEODORE]]'''`)
+                        # but no <section> marker, _split_on_bold_headings
+                        # couldn't parse it (wiki-link inside bold).
+                        # The segment body still has the raw `'''…'''`,
+                        # which the transform stage renders as `«B»…«/B»`,
+                        # duplicating the article title in the body.
+                        first = moved_segments[0]
+                        stripped = re.sub(
+                            r"^\s*'{3}(?:\[\[[^\]]*\|)?([^'\]]+)(?:\]\])?'{3}[\s,.\-]*",
+                            "", first.text or "",
+                        )
+                        if stripped != (first.text or ""):
+                            first.text = stripped.lstrip()
                         # Renumber sequences
                         offset = len(moved_segments)
                         for seg in target.segments:
@@ -1113,18 +1167,20 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     and _open_root in _heading_roots
                     and _cand_root not in _heading_roots
                 )
-                # Fallback for pages missing {{Page Heading|…}}: if the
-                # tentative candidate and the open article share their
-                # first word (e.g. "CLEMENT (POPES)" vs "CLEMENT VI",
-                # or "ALGAE" vs "ALGAE/SOMETHING"), treat the candidate
-                # as a subsection. Real article transitions always have
-                # different first words (ROORKEE → ROOSEVELT, THEODORE).
+                # First-word fallback: if the tentative candidate and
+                # the open article share their first word (e.g.
+                # "CLEMENT (POPES)" vs "CLEMENT VI" or "CLEMENT XII"),
+                # treat the candidate as a subsection. Real article
+                # transitions always have different first words
+                # (ROORKEE → ROOSEVELT, THEODORE). Applies even when
+                # a running header names a LATER article on the page —
+                # that header belongs to the *next* article, not the
+                # tentative continuation.
                 _open_firstword = _open_root.split()[0] if _open_root else ""
                 _cand_firstword = _cand_root.split()[0] if _cand_root else ""
                 firstword_says_continuation = (
                     candidate.is_tentative
                     and open_article is not None
-                    and not _heading_titles   # heading missing — fallback only
                     and _open_firstword
                     and _open_firstword == _cand_firstword
                 )
@@ -1134,11 +1190,37 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     or firstword_says_continuation
                 ):
                     next_seq = len(open_article.segments) + 1
+                    # If this is a subsection absorption (name differs
+                    # from the open article), emit a «SEC:name» marker
+                    # so the viewer can render it as a navigable heading
+                    # and xrefs can link to it as #section-<slug>.
+                    # Skip pure Wikisource continuations (same name as
+                    # open article, or same name as an already-emitted
+                    # SEC marker earlier in the article — Wikisource
+                    # repeats `<section begin="Clement XII"/>` on each
+                    # continuation page).
+                    _sec_name = candidate.title.strip()
+                    _sec_marker = f"\u00abSEC:{_sec_name}\u00ab/SEC\u00bb"
+                    _already_seen = False
+                    if _sec_name:
+                        _existing = "\n".join(s.text or "" for s in open_article.segments)
+                        if _sec_marker.upper() in _existing.upper():
+                            _already_seen = True
+                    if (not exact_match
+                            and not fuzzy_match
+                            and _sec_name
+                            and not _already_seen):
+                        marker_body = (
+                            f"\u00abSEC:{candidate.title.strip()}\u00ab/SEC\u00bb"
+                            "\n\n" + body_text
+                        )
+                    else:
+                        marker_body = body_text
                     open_article.segments.append(SegmentInfo(
                         source_page_id=page.id,
                         page_number=page.page_number,
                         sequence=next_seq,
-                        text=body_text,
+                        text=marker_body,
                     ))
                     open_article.page_end = page.page_number
                     continue
