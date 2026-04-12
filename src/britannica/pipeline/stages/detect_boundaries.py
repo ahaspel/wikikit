@@ -1061,19 +1061,78 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                 continue
 
             # Process headings found on the page.
+            # Running-head titles from {{EB1911 Page Heading|...}} —
+            # used below to disambiguate tentative candidates.
+            # Template shape: {{EB1911 Page Heading|L#|LTITLE|RTITLE|R#}}
+            _raw_head = (page.wikitext or "")[:400]
+            _hm = re.search(
+                r"Page Heading\|[^|]*\|([^|]*)\|([^|]*)\|", _raw_head)
+            _heading_titles: set[str] = set()
+            if _hm:
+                for t in (_hm.group(1), _hm.group(2)):
+                    t = t.strip().upper().rstrip(",.")
+                    if t:
+                        _heading_titles.add(t)
+
             for candidate in parsed.candidates:
                 body_text = (candidate.body or "").strip()
 
+                # Wikisource repeats <section begin="X"> on continuation pages.
+                # If the currently open article has the same title, this is
+                # continuation — append rather than creating a duplicate.
+                exact_match = (
+                    open_article is not None
+                    and open_article.title == candidate.title
+                )
+                _open_base = re.sub(r"\d+$", "", open_article.title) if open_article else ""
+                _cand_base = re.sub(r"\d+$", "", candidate.title)
+                fuzzy_match = (
+                    open_article is not None
+                    and candidate.is_tentative
+                    and (
+                        _open_base.startswith(_cand_base)
+                        or _cand_base.startswith(_open_base)
+                    )
+                    and _cand_base
+                )
                 # A tentative candidate (named section without a bold
-                # heading) is never a real new article — real EB1911
-                # article boundaries always have bold titles like
-                # '''ALGAE,''', whereas named sections without bold are
-                # either Wikisource continuations of the open article
-                # (same name, e.g. "Egypt" repeated across pages) or
-                # subsections used purely for transclusion (e.g.
-                # "Cyanophyceae" inside the ALGAE article). In both
-                # cases they belong to the currently open article.
-                if candidate.is_tentative and open_article is not None and body_text:
+                # heading) is a subsection of the currently open article
+                # when the page's running head (from {{Page Heading|…}})
+                # matches the open article's title AND does NOT match
+                # the candidate's own title. Pages that transition
+                # between two real articles carry BOTH titles in the
+                # heading ({left | right}); in that case the candidate
+                # is a legitimate new article, not a subsection, so we
+                # must not absorb it.
+                _open_root = open_article.title.upper().split(",")[0] if open_article else ""
+                _cand_root = candidate.title.upper().split(",")[0]
+                _heading_roots = {h.split(",")[0] for h in _heading_titles}
+                heading_says_continuation = (
+                    candidate.is_tentative
+                    and open_article is not None
+                    and _open_root in _heading_roots
+                    and _cand_root not in _heading_roots
+                )
+                # Fallback for pages missing {{Page Heading|…}}: if the
+                # tentative candidate and the open article share their
+                # first word (e.g. "CLEMENT (POPES)" vs "CLEMENT VI",
+                # or "ALGAE" vs "ALGAE/SOMETHING"), treat the candidate
+                # as a subsection. Real article transitions always have
+                # different first words (ROORKEE → ROOSEVELT, THEODORE).
+                _open_firstword = _open_root.split()[0] if _open_root else ""
+                _cand_firstword = _cand_root.split()[0] if _cand_root else ""
+                firstword_says_continuation = (
+                    candidate.is_tentative
+                    and open_article is not None
+                    and not _heading_titles   # heading missing — fallback only
+                    and _open_firstword
+                    and _open_firstword == _cand_firstword
+                )
+                if body_text and candidate.is_tentative and (
+                    exact_match or fuzzy_match
+                    or heading_says_continuation
+                    or firstword_says_continuation
+                ):
                     next_seq = len(open_article.segments) + 1
                     open_article.segments.append(SegmentInfo(
                         source_page_id=page.id,
