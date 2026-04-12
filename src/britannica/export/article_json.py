@@ -188,6 +188,38 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             .all()
         )
 
+        # Build plate → parent map using the same logic as parent_article_info.
+        # Each plate finds its parent by title match, then proximity fallback.
+        plate_map = {}  # parent_article_id → [plate_info, ...]
+        plates = [a for a in articles if a.article_type == "plate"]
+        non_plates = [a for a in articles if a.article_type != "plate"]
+        for plate in plates:
+            plate_title = plate.title.upper()
+            parent = None
+            # Title match (same volume first, then cross-volume)
+            for a in non_plates:
+                if a.title.upper() == plate_title:
+                    parent = a
+                    break
+            # Starts-with match
+            if not parent and len(plate_title) > 3:
+                for a in non_plates:
+                    if a.title.upper().startswith(plate_title):
+                        parent = a
+                        break
+            # Proximity fallback
+            if not parent:
+                for a in reversed(non_plates):
+                    if a.page_start <= plate.page_start and a.page_end >= plate.page_start - 5:
+                        parent = a
+                        break
+            if parent:
+                plate_map.setdefault(parent.id, []).append({
+                    "title": plate.title,
+                    "filename": _safe_filename(plate.id, plate.title),
+                    "page": _printed_page(plate.volume, plate.page_start),
+                })
+
         exported = 0
 
         for article in articles:
@@ -329,21 +361,11 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 ],
                 "plates": [
                     {
-                        "title": plate.title,
-                        "filename": _safe_filename(plate.id, plate.title),
-                        "page": _printed_page(article.volume, plate.page_start),
+                        "title": plate_info["title"],
+                        "filename": plate_info["filename"],
+                        "page": plate_info["page"],
                     }
-                    for plate in (
-                        session.query(Article)
-                        .filter(
-                            Article.article_type == "plate",
-                            Article.volume == article.volume,
-                            Article.page_start >= article.page_start,
-                            Article.page_start <= article.page_end + 5,
-                        )
-                        .order_by(Article.page_start)
-                        .all()
-                    )
+                    for plate_info in plate_map.get(article.id, [])
                 ],
                 "contributors": [
                     {
@@ -418,6 +440,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),
                 "page_end": _printed_page(article.volume, article.page_end),
+                "ws_page_start": article.page_start,
+                "ws_page_end": article.page_end,
                 "body_length": len(body.split()),
                 "body_start": body_start,
                 "xref_count": xref_count,

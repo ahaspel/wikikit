@@ -179,12 +179,18 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
     )
     expanded_sections = []
     for sec_id, sec_text in sections:
-        parts = _BOLD_SPLIT.split(sec_text)
-        for j, part in enumerate(parts):
-            # First part keeps the original section ID; subsequent parts
-            # are anonymous sub-sections created by the split.
-            sub_id = sec_id if j == 0 else f"s{900 + len(expanded_sections)}"
-            expanded_sections.append((sub_id, part.strip()))
+        # Named sections (not s1, s2, etc.) are kept whole — the bold
+        # heading inside is formatting, not a new article boundary.
+        is_named_sec = not re.match(r"^s\d+$", sec_id)
+        if is_named_sec:
+            expanded_sections.append((sec_id, sec_text.strip()))
+        else:
+            parts = _BOLD_SPLIT.split(sec_text)
+            for j, part in enumerate(parts):
+                # First part keeps the original section ID; subsequent parts
+                # are anonymous sub-sections created by the split.
+                sub_id = sec_id if j == 0 else f"s{900 + len(expanded_sections)}"
+                expanded_sections.append((sub_id, part.strip()))
 
     candidates = []
     for sec_id, sec_text in expanded_sections:
@@ -221,7 +227,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             stripped = _line.strip()
             if not stripped:
                 continue
-            if re.match(r"^(<!--.*?-->|<table\b|\{\||\|\}|\|-|\|(?!''')|<tr|<td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE):
+            if re.match(r"^(<!--.*?-->|</?table\b|\{\||\|\}|\|-|\|(?!''')|</?tr|</?td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE) or re.search(r"</table>\s*$", stripped, re.IGNORECASE):
                 continue
             first_line = stripped
             _first_line_idx = _i
@@ -331,8 +337,10 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             else:
                 # Fall back: strip bold markers, find heading, take the rest
                 body = clean_first[len(heading_text):].lstrip(" ,.")
-            # Add remaining lines (after the heading line, skipping
-            # any leading tables/images that were before the heading)
+            # Prepend any leading content (tables, images) that was skipped
+            # during heading detection — it belongs to this article.
+            pre_heading = "\n".join(_sec_lines[:_first_line_idx]).strip()
+            # Add remaining lines after the heading line
             remaining_lines = _sec_lines[_first_line_idx + 1:]
             if remaining_lines:
                 remaining = "\n".join(remaining_lines).strip()
@@ -340,6 +348,8 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                     body = body + "\n" + remaining
                 elif remaining:
                     body = remaining
+            if pre_heading:
+                body = pre_heading + "\n\n" + body
             body = body.strip()
         elif has_bold_heading:
             # Bold heading present but regex couldn't parse it — strip
@@ -1054,25 +1064,16 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
             for candidate in parsed.candidates:
                 body_text = (candidate.body or "").strip()
 
-                # Wikisource repeats <section begin="X"> on continuation pages.
-                # If the currently open article has the same title, this is
-                # continuation — append rather than creating a duplicate.
-                exact_match = (
-                    open_article is not None
-                    and open_article.title == candidate.title
-                )
-                _open_base = re.sub(r"\d+$", "", open_article.title) if open_article else ""
-                _cand_base = re.sub(r"\d+$", "", candidate.title)
-                fuzzy_match = (
-                    open_article is not None
-                    and candidate.is_tentative
-                    and (
-                        _open_base.startswith(_cand_base)
-                        or _cand_base.startswith(_open_base)
-                    )
-                    and _cand_base
-                )
-                if (exact_match or fuzzy_match) and body_text and candidate.is_tentative:
+                # A tentative candidate (named section without a bold
+                # heading) is never a real new article — real EB1911
+                # article boundaries always have bold titles like
+                # '''ALGAE,''', whereas named sections without bold are
+                # either Wikisource continuations of the open article
+                # (same name, e.g. "Egypt" repeated across pages) or
+                # subsections used purely for transclusion (e.g.
+                # "Cyanophyceae" inside the ALGAE article). In both
+                # cases they belong to the currently open article.
+                if candidate.is_tentative and open_article is not None and body_text:
                     next_seq = len(open_article.segments) + 1
                     open_article.segments.append(SegmentInfo(
                         source_page_id=page.id,

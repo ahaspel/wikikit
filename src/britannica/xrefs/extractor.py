@@ -47,12 +47,16 @@ def _extract_qv_target(raw_match: str) -> str:
 
     return " ".join(result)
 
-# (See Target) and (See also Target) — parenthesized editorial references
+# (See Target) and (See also Target) — parenthesized editorial references.
+# Inside the parentheses the content may itself contain parens because
+# link markers like «LN:Leopold I. (emperor)|…«/LN» embed them. So the
+# content matches either a complete link marker or any non-`)` char.
+_PAREN_CONTENT = r"(?:\u00abLN:[^\u00ab]*\u00ab/LN\u00bb|[^)])+"
 _PAREN_SEE_ALSO_PATTERN = re.compile(
-    r"\(See also\s+([^)]+)\)"
+    r"\(See also\s+(" + _PAREN_CONTENT + r")\)"
 )
 _PAREN_SEE_PATTERN = re.compile(
-    r"\(See\s+(?!also\s)([^)]+)\)"
+    r"\(See\s+(?!also\s)(" + _PAREN_CONTENT + r")\)"
 )
 
 # See TARGET / See also TARGET — sentence-level references (all-caps)
@@ -69,17 +73,48 @@ def _strip_markers(text: str) -> str:
     return text.strip()
 
 
+_MARKER_PLACEHOLDER = "\x05MARKER\x05"
+
+
 def _clean_paren_see_target(raw: str) -> list[str]:
-    """Split parenthesized See targets on 'and', strip trailing punctuation."""
-    raw = _strip_markers(raw)
-    raw = raw.strip().rstrip(".")
-    parts = re.split(r"\s+and\s+", raw)
-    results = []
-    for p in parts:
-        cleaned = p.strip().rstrip(";,.:!?").strip()
+    """Split parenthesized See content into individual xref targets.
+
+    Link markers `«LN:target|display«/LN»` contribute their TARGET
+    (preserving internal commas and periods, e.g. `Metternich-Winneburg,
+    Clemens Wenzel Lothar` or `Napoleon I.`). Plain text between/around
+    markers is split on commas, semicolons, and 'and'.
+
+    Using the link target (not display) lets see-entries deduplicate
+    against the same article referenced as a link elsewhere.
+    """
+    results: list[str] = []
+
+    # Pull link markers out intact — their target is the xref target.
+    def _capture_marker(m: re.Match) -> str:
+        results.append(m.group(1).strip())
+        return _MARKER_PLACEHOLDER
+
+    text = re.sub(
+        r"\u00abLN:([^|]*)\|[^\u00ab]*\u00ab/LN\u00bb",
+        _capture_marker,
+        raw,
+    )
+    text = _strip_markers(text)
+    text = text.strip().rstrip(".")
+
+    # Remaining plain-text targets: split on commas, semicolons, 'and'.
+    # Skip any piece that was adjacent to a link marker (fragments like
+    # ": History" or "of Russia" attached to a link aren't xref targets
+    # of their own — the link already captured the real target).
+    for piece in re.split(r"[;,]|\s+and\s+", text):
+        if _MARKER_PLACEHOLDER in piece:
+            continue
+        cleaned = piece.strip().strip(";,:!?").strip()
         if cleaned and _is_plausible_target(cleaned):
-            results.append(cleaned)
-    return results
+            results.append(cleaned.rstrip("."))
+
+    # Filter results through plausibility check too (link targets).
+    return [t for t in results if _is_plausible_target(t)]
 
 
 def _is_plausible_target(target: str) -> bool:
@@ -119,16 +154,24 @@ def _is_plausible_target(target: str) -> bool:
 
 def extract_xrefs(text: str) -> list[dict[str, str]]:
     results: list[dict[str, str]] = []
-    seen: set[tuple[str, str]] = set()
+    seen_by_type: set[tuple[str, str]] = set()   # (normalized, type)
+    seen_targets: set[str] = set()               # normalized only — dedupe
+                                                 # "see" or "see_also" lists
+                                                 # whose target already
+                                                 # appeared as a link xref.
 
     def _add(surface: str, target: str, xref_type: str) -> None:
         normalized = normalize_xref_target(target)
         if not normalized:
             return
-        key = (normalized, xref_type)
-        if key in seen:
+        # A see/see_also entry duplicating an existing link is redundant.
+        if xref_type in ("see", "see_also") and normalized in seen_targets:
             return
-        seen.add(key)
+        key = (normalized, xref_type)
+        if key in seen_by_type:
+            return
+        seen_by_type.add(key)
+        seen_targets.add(normalized)
         results.append(
             {
                 "surface_text": surface.strip(),
