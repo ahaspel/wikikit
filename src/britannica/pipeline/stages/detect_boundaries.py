@@ -148,6 +148,10 @@ class CandidateArticle:
     title: str
     body: str
     is_tentative: bool = False  # True if created from named section without bold
+    # Original case of the <section begin="…"> name. Used to detect
+    # Title Case subsection continuations (ALGAE's "Benthos", "Occurrence
+    # in the rocks") vs ALL-CAPS new-article continuations.
+    raw_sec_id: str = ""
 
 
 @dataclass
@@ -236,11 +240,25 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         first_line = ""
         _sec_lines = sec_text.split("\n")
         _first_line_idx = 0
+        # Track wikitable state: `{|` opens a table, `|}` closes it.
+        # Content between them (including caption lines that don't
+        # start with `|`, e.g. figure captions) is table content and
+        # must be skipped — otherwise the first caption line gets
+        # mistaken for the article's heading (MILLIPEDE vol 18 p.492).
+        _in_table = 0
         for _i, _line in enumerate(_sec_lines):
             stripped = _line.strip()
             if not stripped:
                 continue
-            if re.match(r"^(<!--.*?-->|</?table\b|\{\||\|\}|\|-|\|(?!''')|</?tr|</?td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE) or re.search(r"</table>\s*$", stripped, re.IGNORECASE):
+            if stripped.startswith("{|"):
+                _in_table += 1
+                continue
+            if _in_table > 0:
+                if stripped.startswith("|}"):
+                    _in_table -= 1
+                # Skip any line while inside a wikitable
+                continue
+            if re.match(r"^(<!--.*?-->|</?table\b|\|\}|\|-|\|(?!''')|</?tr|</?td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE) or re.search(r"</table>\s*$", stripped, re.IGNORECASE):
                 continue
             first_line = stripped
             _first_line_idx = _i
@@ -250,6 +268,14 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             r"\1", first_line,
         )
         clean_first = first_line_unwrapped.replace("'''", "")
+        # Strip bracketed alternate name forms so the heading regex can
+        # cross from surname to forename in split-bio entries like
+        # "ASELLI [Asellius, or Asellio], GASPARO (1581–1626)".
+        # Also strip {{sc|...}} and similar inline templates so their
+        # content doesn't block the regex.
+        clean_first = re.sub(r"\s*\[[^\]]*\]\s*", " ", clean_first)
+        clean_first = re.sub(r"\{\{[^}]*\|([^}|]*)\}\}", r"\1", clean_first)
+        clean_first = re.sub(r"\s+", " ", clean_first).strip()
 
         # Extract the title from the start of the line.  The pattern must
         # handle Mc/Mac/O'/d' prefixes which mix case (McCORMICK, O'BRIEN).
@@ -262,9 +288,9 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # poet ACCIUS, LUCIUS followed by R. era), so we don't allow
         # them.
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+"
+            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE\u0100\u0112\u012A\u014C\u016A''\u2018\u2019\-]+"
             r"(?:"
-            r"[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019\-]+"
+            r"[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE\u0100\u0112\u012A\u014C\u016A''\u2018\u2019\-]+"
             r"|\s+[IVX]+(?![A-Z])"
             r")*)",
             clean_first,
@@ -284,20 +310,38 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         _used_bold_fallback = False
         if has_bold_heading:
             heading_title = heading_match.group(1).strip().rstrip(",.") if heading_match else None
+            if heading_title:
+                # Normalize " , " → ", " (artifacts from stripping
+                # bracketed alternate forms between surname and forename
+                # in split bios like "ASELLI [alts], GASPARO").
+                heading_title = re.sub(r"\s+,", ",", heading_title)
+                heading_title = re.sub(r"\s+", " ", heading_title).strip()
             # If the regex couldn't extract the title, fall back to
             # extracting the full bold text (handles Mc/Mac/O'/d' prefixes
             # and extended Unicode that the heading regex doesn't cover).
             if heading_title is None or not _has_valid_title_content(_normalize_title(heading_title)):
                 bold_match = re.match(r"^'''([^']+)'''", first_line)
                 if bold_match:
-                    fallback = _strip_templates(bold_match.group(1)).rstrip(",.")
+                    fallback = bold_match.group(1)
+                    # Unwrap Author wikilinks: [[Author:X|DISPLAY]] → DISPLAY.
+                    # Also strip inline <ref>…</ref> (etymology footnotes
+                    # that break a bold heading, e.g. '''SEWING<ref>…</ref> MACHINES''').
+                    fallback = re.sub(
+                        r"<ref[^>]*>.*?</ref>", "", fallback, flags=re.DOTALL)
+                    fallback = re.sub(
+                        r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", fallback)
+                    fallback = _strip_templates(fallback).rstrip(",.")
                     heading_title = fallback
                     _used_bold_fallback = True
             # Prefer section ID when the heading match is a partial capture
-            # (e.g. "TISIO" from "TISIO (or Tisi), BENVENUTO")
+            # (e.g. "TISIO" from "TISIO (or Tisi), BENVENUTO" — sec_id
+            # "Tisio_Benvenuto" has more info). Only swap when sec_id is
+            # LONGER than the heading — otherwise the heading is the
+            # better title (e.g. "ASELLI, GASPARO" vs sec_id "Aselli").
             if (heading_title and is_named
                     and heading_title.upper() != sec_id.upper()
-                    and sec_id.upper().startswith(heading_title.upper().split(",")[0].split()[0])):
+                    and sec_id.upper().startswith(heading_title.upper().split(",")[0].split()[0])
+                    and len(sec_id) > len(heading_title)):
                 title = sec_id.upper()
             elif heading_title and _has_valid_title_content(
                 _normalize_title(heading_title)
@@ -412,6 +456,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         if title:
             candidates.append(CandidateArticle(
                 title=title, body=body, is_tentative=_is_tentative,
+                raw_sec_id=sec_id,
             ))
 
     return ParsedPage(prefix_text=prefix, candidates=candidates)
@@ -423,11 +468,18 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     Returns a ParsedPage with prefix (text before first bold heading)
     and candidates for each bold heading found.
     """
-    # Split on bold headings at line/paragraph boundaries
-    # In raw wikitext, bold is '''TEXT'''
+    # Split on bold headings at line/paragraph boundaries.
+    # In raw wikitext, bold is '''TEXT'''. Edge cases handled:
+    #   - Author-link wrap: '''[[Author:John Keats|KEATS, JOHN]]'''
+    #   - Inline etymology: '''SEWING<ref>…</ref> MACHINES.'''
     _BOLD_HEADING = re.compile(
         r"(?:^|\n\n)('{3}"
-        r"[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE'\u2019\-,. ]+'{3})",
+        r"(?:\[\[[^\]|]*\|)?"
+        r"[A-Z\u00C0-\u00DE]"
+        r"(?:[A-Z\u00C0-\u00DE'\u2018\u2019\-,. ]|<ref[^>]*>.*?</ref>)*"
+        r"(?:\]\])?"
+        r"'{3})",
+        re.DOTALL,
     )
 
     parts = _BOLD_HEADING.split(text)
@@ -444,8 +496,14 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     while i < len(parts):
         bold_marker = parts[i]
         body_after = parts[i + 1].strip() if i + 1 < len(parts) else ""
-        # Extract title from the bold marker, stripping template wrappers
-        clean = _strip_templates(bold_marker.replace("'''", ""))
+        # Extract title from the bold marker, stripping template wrappers.
+        # Unwrap wikilinks ([[Author:X|Y]] → Y) and strip inline refs.
+        stripped_bold = bold_marker.replace("'''", "")
+        stripped_bold = re.sub(
+            r"<ref[^>]*>.*?</ref>", "", stripped_bold, flags=re.DOTALL)
+        stripped_bold = re.sub(
+            r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", stripped_bold)
+        clean = _strip_templates(stripped_bold)
         title = clean.rstrip(",.")
         if title:
             body_text = body_after.lstrip(" ,.")
@@ -1184,10 +1242,26 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     and _open_firstword
                     and _open_firstword == _cand_firstword
                 )
+                # Title Case <section begin="Foo"/> names (those with any
+                # lowercase letter) are subsection continuations by
+                # Wikisource convention — EB1911 real article titles are
+                # ALL CAPS. ALGAE's "Benthos" continuation on ws 637 and
+                # "Occurrence in the rocks" on ws 638 were being carved
+                # off as spurious articles because neither shares first
+                # words with "ALGAE" and page 638's running head names
+                # ALGARDI/ALGAROTTI. Title-case detection covers these.
+                section_name_says_continuation = (
+                    candidate.is_tentative
+                    and open_article is not None
+                    and candidate.raw_sec_id
+                    and candidate.raw_sec_id != candidate.raw_sec_id.upper()
+                    and any(c.islower() for c in candidate.raw_sec_id)
+                )
                 if body_text and candidate.is_tentative and (
                     exact_match or fuzzy_match
                     or heading_says_continuation
                     or firstword_says_continuation
+                    or section_name_says_continuation
                 ):
                     next_seq = len(open_article.segments) + 1
                     # If this is a subsection absorption (name differs
@@ -1200,12 +1274,23 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     # repeats `<section begin="Clement XII"/>` on each
                     # continuation page).
                     _sec_name = candidate.title.strip()
-                    _sec_marker = f"\u00abSEC:{_sec_name}\u00ab/SEC\u00bb"
                     _already_seen = False
                     if _sec_name:
+                        # Normalize by stripping trailing "(qualifier)" so
+                        # a bare "CLEMENT VII" on a continuation page is
+                        # recognized as a dup of an earlier
+                        # "Clement VII (pope)" / "Clement VII (Antipope)".
+                        def _norm_sec(n: str) -> str:
+                            n = re.sub(r"\s*\([^)]*\)\s*$", "", n).strip()
+                            return n.upper()
+                        _cand_norm = _norm_sec(_sec_name)
                         _existing = "\n".join(s.text or "" for s in open_article.segments)
-                        if _sec_marker.upper() in _existing.upper():
-                            _already_seen = True
+                        for _m in re.finditer(
+                            r"\u00abSEC:([^\u00ab]+)\u00ab/SEC\u00bb", _existing
+                        ):
+                            if _norm_sec(_m.group(1)) == _cand_norm:
+                                _already_seen = True
+                                break
                     if (not exact_match
                             and not fuzzy_match
                             and _sec_name

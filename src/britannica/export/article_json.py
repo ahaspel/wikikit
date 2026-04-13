@@ -371,6 +371,67 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             body = re.sub(r"\x01PAGE:(\d+)\x01", _replace_page_marker, body)
 
+            # Fill in missing captions on body IMG markers from the
+            # ArticleImage table. transform_articles emits
+            # `{{IMG:filename}}` (no caption) when the wikitext has
+            # the image and caption on separate lines (the wrapper
+            # patterns WEIGHING MACHINES / SEWING MACHINES use).
+            # extract_images recovers those captions into the DB; here
+            # we write them back into the body marker so the viewer
+            # can render them.
+            _img_caps: dict[str, str] = {}
+            for _img in (
+                session.query(ArticleImage)
+                .filter(ArticleImage.article_id == article.id)
+                .all()
+            ):
+                if _img.caption and _img.filename not in _img_caps:
+                    _img_caps[_img.filename] = _img.caption
+
+            if _img_caps:
+                def _patch_img(m):
+                    fn = m.group(1)
+                    existing = m.group(2)
+                    if existing:  # caption already inline — keep it
+                        return m.group(0)
+                    cap = _img_caps.get(fn)
+                    if cap:
+                        # Sanitize so we can't break the IMG marker
+                        # syntax: `|` would split params, `}}` would
+                        # close the template prematurely.
+                        cap = cap.replace("|", " ").replace("}}", "))")
+                        return f"{{{{IMG:{fn}|{cap}}}}}"
+                    return m.group(0)
+
+                body = re.sub(
+                    r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}",
+                    _patch_img,
+                    body,
+                )
+
+            # Strip redundant bold article title at body start. EB1911
+            # articles open with "'''TITLE'''" (rendered as «B»TITLE«/B»);
+            # since the viewer already shows the title in the header,
+            # the inline repeat is redundant. Only strip when the bold
+            # text matches the article title (ignoring trailing
+            # punctuation). Covers PIETAS, SEMMELWEISS, etc. —
+            # ROOSEVELT is handled earlier via _fix_swallowed_pages.
+            _m = re.match(
+                r"^(\x01PAGE:\d+\x01)?\s*"
+                r"\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
+                r"[\s,.\-\u2013\u2014]*",
+                body,
+            )
+            if _m:
+                _bold = _m.group(2).strip().rstrip(",.;:").upper()
+                _title_key = article.title.strip().rstrip(",.;:").upper()
+                if (_bold == _title_key
+                        or _title_key.startswith(_bold + ",")
+                        or _title_key.startswith(_bold + " ")
+                        or _bold.startswith(_title_key + ",")
+                        or _bold.startswith(_title_key + " ")):
+                    body = (_m.group(1) or "") + body[_m.end():]
+
             payload = {
                 "id": article.id,
                 "title": article.title,
@@ -452,6 +513,25 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 .count()
             )
             body = article.body or ""
+            # Strip the redundant bold article title at body start
+            # (same logic as for the exported article file). Without
+            # this, index.json's body_start ends up with the title
+            # duplicated (e.g. "PIETAS, in Roman mythology…").
+            _title_m = re.match(
+                r"^(\x01PAGE:\d+\x01)?\s*"
+                r"\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
+                r"[\s,.\-\u2013\u2014]*",
+                body,
+            )
+            if _title_m:
+                _bold = _title_m.group(2).strip().rstrip(",.;:").upper()
+                _title_key = article.title.strip().rstrip(",.;:").upper()
+                if (_bold == _title_key
+                        or _title_key.startswith(_bold + ",")
+                        or _title_key.startswith(_bold + " ")
+                        or _bold.startswith(_title_key + ",")
+                        or _bold.startswith(_title_key + " ")):
+                    body = (_title_m.group(1) or "") + body[_title_m.end():]
             # First ~10 words of body for disambiguation in the index.
             # Skip any leading paragraphs that are just image / table /
             # verse markers — the preview should be TEXT, not raw markup
@@ -472,12 +552,26 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             preview_source = re.sub(
                 r"\u00abSEC:[^\u00ab]*\u00ab/SEC\u00bb",
                 "", preview_source)
-            # First non-empty line of the cleaned preview source
+            # First non-empty, non-caption line of the preview source.
+            # When an article opens with an image whose caption sits in
+            # its own paragraph (not bundled into the IMG marker), that
+            # caption shouldn't be the preview — e.g. BEE opens with
+            # "Fig. 1.—Honey-bee (Apis mellifica)…" which should be
+            # skipped so the real body text follows.
+            _caption_re = re.compile(
+                r"^\s*(?:\u00abSC\u00bb)?\s*(?:Fig|Plate)s?"
+                r"(?:\u00ab/SC\u00bb)?\s*\.?\s*"
+                r"(?:\d+|[IVX]+)?\b",
+                re.IGNORECASE,
+            )
             first_line = ""
             for ln in preview_source.split("\n"):
-                if ln.strip():
-                    first_line = ln
-                    break
+                if not ln.strip():
+                    continue
+                if _caption_re.match(ln):
+                    continue
+                first_line = ln
+                break
             # Strip footnotes for the preview
             first_line = re.sub(r"\u00abFN:.*?\u00ab/FN\u00bb", "", first_line)
             # Strip formatting markers but KEEP the text between them
