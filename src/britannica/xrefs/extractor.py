@@ -76,6 +76,32 @@ def _strip_markers(text: str) -> str:
 _MARKER_PLACEHOLDER = "\x05MARKER\x05"
 
 
+def _is_bibliographic(raw: str) -> bool:
+    """True if the (See …) content is a bibliographic citation rather
+    than a cross-reference to another Britannica article.
+
+    Bibliographic citations contain italic book/journal titles, quoted
+    paper titles, page/volume references, or "by Author" attributions.
+    Cross-references are plain article names, possibly with § sections.
+    """
+    # Italic markers indicate a book or journal title.
+    if "\u00abI\u00bb" in raw:
+        return True
+    # Quoted paper/chapter titles.
+    if re.search(r'"[^"]{4,}"', raw):
+        return True
+    # Page, volume, or roman-numeral volume refs.
+    if re.search(r"\b(?:p\.|pp\.|vol\.|chap\.)\s", raw):
+        return True
+    # Roman-numeral volume + page pattern: "xxii. p. 305"
+    if re.search(r"\b[ivxlc]{2,}\.\s*p\.", raw, re.IGNORECASE):
+        return True
+    # "by Author" attribution.
+    if re.search(r"\bby\s+[A-Z]", raw):
+        return True
+    return False
+
+
 def _clean_paren_see_target(raw: str) -> list[str]:
     """Split parenthesized See content into individual xref targets.
 
@@ -87,6 +113,12 @@ def _clean_paren_see_target(raw: str) -> list[str]:
     Using the link target (not display) lets see-entries deduplicate
     against the same article referenced as a link elsewhere.
     """
+    # Reject bibliographic citations before splitting — once split,
+    # fragments like "American Timber Bridges" lose their citation
+    # context and look like plausible article names.
+    if _is_bibliographic(raw):
+        return []
+
     results: list[str] = []
 
     # Pull link markers out intact — their target is the xref target.

@@ -258,6 +258,23 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                     _in_table -= 1
                 # Skip any line while inside a wikitable
                 continue
+            # Peel off leading invisible-output templates — they mask
+            # real headings from the pre-filter below. Example: the
+            # section for MORLEY (of Blackburn) starts with
+            # `{{nop}}[[Author:…|'''MORLEY''' …]]`; without this peel
+            # the `{{` prefix makes the whole line look like table
+            # markup and it gets skipped.
+            stripped = re.sub(
+                r"^(?:\{\{(?:nop|clear|-)\}\}\s*)+",
+                "", stripped, flags=re.IGNORECASE,
+            )
+            if not stripped:
+                continue
+            # Re-check table opener in case peeled leading {{nop}}
+            # revealed a `{|` table opener underneath.
+            if stripped.startswith("{|"):
+                _in_table += 1
+                continue
             if re.match(r"^(<!--.*?-->|</?table\b|\|\}|\|-|\|(?!''')|</?tr|</?td|\[\[(?:File|Image):|\{\{)", stripped, re.IGNORECASE) or re.search(r"</table>\s*$", stripped, re.IGNORECASE):
                 continue
             first_line = stripped
@@ -266,6 +283,15 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         first_line_unwrapped = re.sub(
             r"\[\[[^\]|]*\|(.*?)\]\]",
             r"\1", first_line,
+        )
+        # Strip invisible-output templates like {{nop}} at line start —
+        # they're used for paragraph-break spacing but block the
+        # `has_bold_heading` check below. Leaves '''…''' at line start
+        # detectable. Example (vol 18 p.840):
+        #   {{nop}}[[Author:John Morley|'''MORLEY''' [{{sc|of Blackburn}}]…]]
+        first_line_unwrapped = re.sub(
+            r"^\s*(?:\{\{(?:nop|clear|-)\}\}\s*)+",
+            "", first_line_unwrapped, flags=re.IGNORECASE,
         )
         clean_first = first_line_unwrapped.replace("'''", "")
         # Strip bracketed alternate name forms so the heading regex can

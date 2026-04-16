@@ -389,6 +389,16 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     _img_caps[_img.filename] = _img.caption
 
             if _img_caps:
+                def _sanitize_caption(cap: str) -> str:
+                    # Strip any wikitext italic / converted markers that
+                    # extract_images may have left in the stored caption
+                    # (mirrors what _clean_text does in transform).
+                    cap = re.sub(r"''+(.*?)''+", r"\1", cap)
+                    cap = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", cap)
+                    # Prevent IMG-marker syntax breaks
+                    cap = cap.replace("|", " ").replace("}}", "))")
+                    return cap.strip()
+
                 def _patch_img(m):
                     fn = m.group(1)
                     existing = m.group(2)
@@ -396,11 +406,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         return m.group(0)
                     cap = _img_caps.get(fn)
                     if cap:
-                        # Sanitize so we can't break the IMG marker
-                        # syntax: `|` would split params, `}}` would
-                        # close the template prematurely.
-                        cap = cap.replace("|", " ").replace("}}", "))")
-                        return f"{{{{IMG:{fn}|{cap}}}}}"
+                        cap = _sanitize_caption(cap)
+                        return f"{{{{IMG:{fn}|{cap}}}}}" if cap else m.group(0)
                     return m.group(0)
 
                 body = re.sub(
