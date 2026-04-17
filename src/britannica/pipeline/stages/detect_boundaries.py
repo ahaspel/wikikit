@@ -124,6 +124,10 @@ class DetectedArticle:
     page_end: int
     article_type: str  # "article" or "plate"
     segments: list[SegmentInfo] = field(default_factory=list)
+    # Wikisource <section begin="X"> name from the article's first page.
+    # Used as a tiebreaker in stable IDs when multiple articles share a
+    # (volume, page_start).
+    section_name: str = ""
 
     @property
     def body(self) -> str:
@@ -1362,6 +1366,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     page_start=page.page_number,
                     page_end=page.page_number,
                     article_type="article",
+                    section_name=candidate.raw_sec_id or "",
                 )
                 if body_text:
                     detected.segments.append(SegmentInfo(
@@ -1400,6 +1405,7 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
                 page_end=det.page_end,
                 body=det.body,
                 article_type=det.article_type if det.article_type == "plate" else None,
+                section_name=det.section_name or None,
             )
             session.add(article)
             session.flush()

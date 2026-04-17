@@ -16,3 +16,9 @@ class Article(Base):
     article_type: Mapped[str] = mapped_column(
         String(50), nullable=False, default="article", server_default="article"
     )
+    # Wikisource <section begin="X"> name for this article's starting
+    # segment. Used alongside (volume, page_start) as the stable-ID
+    # tiebreaker so URLs don't rot when page sequencing shifts.
+    section_name: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )

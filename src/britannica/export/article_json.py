@@ -100,7 +100,7 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     all_articles = session.query(Article).all()
     title_map: dict[str, str] = {}
     for a in all_articles:
-        title_map[a.title.upper()] = _safe_filename(a.id, a.title)
+        title_map[a.title.upper()] = _safe_filename(a, a.title)
 
     for entry in contrib_map.values():
         desc = (entry.get("description") or "").lower()
@@ -203,13 +203,53 @@ def _source_quality(session, article: Article) -> dict:
     }
 
 
-def _safe_filename(article_id: int, title: str) -> str:
-    """Generate a unique filename from article DB ID and title."""
+def _section_slug(name: str) -> str:
+    """URL-safe slug from a wikisource section name (or any string).
+
+    Preserves ASCII letters/digits, lowercases, collapses runs of other
+    chars to a single hyphen. Strips surrounding hyphens."""
+    name = (name or "").strip().lower()
+    name = re.sub(r"[^a-z0-9]+", "-", name)
+    return name.strip("-")
+
+
+def stable_id(article) -> str:
+    """Deterministic article identifier: {vol:02d}-{page:04d}-{section}.
+
+    - `volume` and `page_start` are intrinsic source properties — only
+      change when the article's physical location in the wikitext moves.
+    - Section slug disambiguates the up-to-12 articles that can share a
+      (vol, page) on a crowded page. Derived from the article's
+      `<section begin="X">` tag; falls back to a slug of the title when
+      no section name is stored (plates, legacy rows).
+
+    Stable URLs / S3 keys / Meilisearch doc IDs rely on this form.
+    External citations to britannica11.org/article/{stable_id}/{slug}
+    survive rebuilds."""
+    slug = _section_slug(article.section_name) if article.section_name else ""
+    if not slug:
+        slug = _section_slug(article.title)
+    return f"{article.volume:02d}-{article.page_start:04d}-{slug}"
+
+
+def _safe_filename(article_id, title: str) -> str:
+    """Generate a filename from an Article instance (or precomputed stable_id).
+
+    Numeric int IDs are no longer accepted — callers must pass the full
+    Article object or the stable-id string."""
+    if isinstance(article_id, Article):
+        stable = stable_id(article_id)
+    elif isinstance(article_id, str):
+        stable = article_id
+    else:
+        raise TypeError(
+            f"_safe_filename expected str stable_id or Article, got "
+            f"{type(article_id).__name__}")
     safe_title = "".join(
         ch if ch.isalnum() or ch in ("-", "_") else "_"
         for ch in title.upper()
     )
-    return f"{article_id}-{safe_title}.json"
+    return f"{stable}-{safe_title}.json"
 
 
 def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
@@ -274,7 +314,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             if parent:
                 plate_map.setdefault(parent.id, []).append({
                     "title": plate.title,
-                    "filename": _safe_filename(plate.id, plate.title),
+                    "filename": _safe_filename(plate, plate.title),
                     "page": _printed_page(plate.volume, plate.page_start),
                 })
 
@@ -303,7 +343,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     target = session.get(Article, xref.target_article_id)
                     if target:
                         entry["target_filename"] = _safe_filename(
-                            target.id, target.title
+                            target, target.title
                         )
                 xref_list.append(entry)
 
@@ -316,7 +356,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 if parent:
                     parent_article_info = {
                         "title": parent.title,
-                        "filename": _safe_filename(parent.id, parent.title),
+                        "filename": _safe_filename(parent, parent.title),
                     }
 
             # Resolve inline link markers: embed target filename for resolved xrefs
@@ -328,7 +368,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     target = session.get(Article, xref.target_article_id)
                     if target:
                         link_targets[xref.normalized_target.lower()] = _safe_filename(
-                            target.id, target.title
+                            target, target.title
                         )
 
             def _resolve_link(m: re.Match) -> str:
@@ -421,6 +461,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             payload = {
                 "id": article.id,
+                "stable_id": stable_id(article),
                 "title": article.title,
                 "article_type": article.article_type,
                 "volume": article.volume,
@@ -476,7 +517,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 ],
             }
 
-            safe_filename = _safe_filename(article.id, article.title)
+            safe_filename = _safe_filename(article, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)
 
             (out_path / safe_filename).write_text(article_json, encoding="utf-8")
@@ -579,9 +620,10 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             index.append({
                 "id": article.id,
+                "stable_id": stable_id(article),
                 "title": article.title,
                 "article_type": article.article_type,
-                "filename": _safe_filename(article.id, article.title),
+                "filename": _safe_filename(article, article.title),
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),
                 "page_end": _printed_page(article.volume, article.page_end),
@@ -633,8 +675,9 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                     }
                 contrib_map[c.full_name]["articles"].append({
                     "id": article.id,
+                    "stable_id": stable_id(article),
                     "title": article.title,
-                    "filename": _safe_filename(article.id, article.title),
+                    "filename": _safe_filename(article, article.title),
                 })
 
         # Merge with existing contributors (from other volumes)

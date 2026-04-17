@@ -63,9 +63,18 @@ def run_db_checks() -> dict:
 
         # Title issues
         results["titles_with_period"] = sum(1 for a in articles if "." in a.title)
+
+        # Lowercase check: ignore legitimate sources of lowercase —
+        # parenthetical aliases ("(or Mapes)"), bracketed alternates
+        # ("[Ælfheah]"), and Mc/Mac/De/La/Di/Van/O' name prefixes.
+        def _has_stray_lowercase(title):
+            stripped = re.sub(r"\([^)]*\)|\[[^\]]*\]", "", title)
+            stripped = re.sub(
+                r"\b(?:Mc|Mac|De|La|Di|Van|O\u2019|O')[A-Z]\w*", "",
+                stripped)
+            return bool(re.search(r"[a-z]", stripped))
         results["titles_with_lowercase"] = sum(
-            1 for a in articles if re.search(r"[a-z]", a.title)
-        )
+            1 for a in articles if _has_stray_lowercase(a.title))
         results["titles_1_char"] = sum(1 for a in articles if len(a.title) == 1)
 
         # Body starts lowercase (almost always legitimate — encyclopedia
