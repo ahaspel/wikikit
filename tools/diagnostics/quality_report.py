@@ -224,6 +224,26 @@ def run_file_checks() -> dict:
         if re.search(r"nowrap|colspan|rowspan|cellpadding", check):
             issues["leaked_html_attr"] += 1
 
+        # Unhandled inline markers inside HTMLTABLE blocks. formatCell now
+        # handles B/I/SC, FN, IMG, hieroglyph, MATH, and VERSE.  Anything
+        # else inside a cell is a new leak.
+        for ht in re.findall(
+            r"\u00abHTMLTABLE:(.*?)\u00ab/HTMLTABLE\u00bb",
+            body, re.DOTALL,
+        ):
+            stripped = re.sub(
+                r"</?(?:table|tr|td|th)(?:\s[^>]*)?>", "", ht)
+            stripped = re.sub(
+                r"\u00ab/?(?:B|I|SC|FN|MATH)(?::[^\u00ab]*)?\u00bb",
+                "", stripped)
+            stripped = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
+            stripped = re.sub(
+                r"\{\{VERSE:.*?\}VERSE\}", "", stripped, flags=re.DOTALL)
+            stripped = re.sub(r"\[hieroglyph:[^\]]*\]", "", stripped)
+            if re.search(r"\u00ab[^\u00bb]+\u00bb", stripped) or "{{" in stripped:
+                issues["unhandled_marker_in_htmltable"] += 1
+                break
+
     results["issues"] = dict(issues.most_common())
     return results
 

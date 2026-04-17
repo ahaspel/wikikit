@@ -226,31 +226,51 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             .all()
         )
 
-        # Build plate → parent map using the same logic as parent_article_info.
-        # Each plate finds its parent by title match, then proximity fallback.
+        # Build plate → parent map.
         plate_map = {}  # parent_article_id → [plate_info, ...]
         plates = [a for a in articles if a.article_type == "plate"]
         non_plates = [a for a in articles if a.article_type != "plate"]
-        for plate in plates:
+
+        def _find_parent(plate):
+            """Find the parent article for a plate.
+
+            When multiple articles share a title (e.g. 3 MAN articles
+            in vol 17), prefer the one whose page range contains the
+            plate's page. Otherwise fall back to title match, then
+            page proximity.
+            """
             plate_title = plate.title.upper()
-            parent = None
-            # Title match (same volume first, then cross-volume)
-            for a in non_plates:
-                if a.title.upper() == plate_title:
-                    parent = a
-                    break
-            # Starts-with match
-            if not parent and len(plate_title) > 3:
-                for a in non_plates:
-                    if a.title.upper().startswith(plate_title):
-                        parent = a
-                        break
-            # Proximity fallback
-            if not parent:
-                for a in reversed(non_plates):
-                    if a.page_start <= plate.page_start and a.page_end >= plate.page_start - 5:
-                        parent = a
-                        break
+            plate_page = plate.page_start
+            # Title match — prefer articles containing the plate's page.
+            title_matches = [a for a in non_plates
+                             if a.title.upper() == plate_title]
+            if title_matches:
+                covering = [a for a in title_matches
+                            if a.page_start <= plate_page <= a.page_end]
+                if covering:
+                    return covering[0]
+                # No exact coverage: pick nearest by page distance.
+                return min(title_matches,
+                           key=lambda a: abs(a.page_start - plate_page))
+            # Starts-with match (e.g. "DOVE" → "DOVE (BIRD)").
+            if len(plate_title) > 3:
+                prefix_matches = [a for a in non_plates
+                                  if a.title.upper().startswith(plate_title)]
+                if prefix_matches:
+                    covering = [a for a in prefix_matches
+                                if a.page_start <= plate_page <= a.page_end]
+                    if covering:
+                        return covering[0]
+                    return min(prefix_matches,
+                               key=lambda a: abs(a.page_start - plate_page))
+            # Proximity fallback — nearest preceding article.
+            for a in reversed(non_plates):
+                if a.page_start <= plate_page and a.page_end >= plate_page - 5:
+                    return a
+            return None
+
+        for plate in plates:
+            parent = _find_parent(plate)
             if parent:
                 plate_map.setdefault(parent.id, []).append({
                     "title": plate.title,
@@ -289,50 +309,10 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             quality = _source_quality(session, article)
 
-            # For plates, find the parent article
+            # For plates, find the parent article (same logic as plate_map).
             parent_article_info = None
             if article.article_type == "plate":
-                # Match by title first (plate title comes from page header)
-                plate_title = article.title.upper()
-                parent = (
-                    session.query(Article)
-                    .filter(
-                        Article.article_type != "plate",
-                        func.upper(Article.title) == plate_title,
-                    )
-                    .order_by(
-                        (Article.volume != article.volume).asc(),
-                        func.abs(Article.volume - article.volume).asc(),
-                    )
-                    .first()
-                )
-                # Fallback: starts-with match (e.g. "DOVE" → "DOVE (BIRD)")
-                if not parent and len(plate_title) > 3:
-                    parent = (
-                        session.query(Article)
-                        .filter(
-                            Article.article_type != "plate",
-                            func.upper(Article.title).like(plate_title + "%"),
-                        )
-                        .order_by(
-                            (Article.volume != article.volume).asc(),
-                            func.abs(Article.volume - article.volume).asc(),
-                        )
-                        .first()
-                    )
-                # Last resort: nearest preceding article by page proximity
-                if not parent:
-                    parent = (
-                        session.query(Article)
-                        .filter(
-                            Article.article_type == "article",
-                            Article.volume == article.volume,
-                            Article.page_start <= article.page_start,
-                            Article.page_end >= article.page_start - 5,
-                        )
-                        .order_by(Article.page_start.desc())
-                        .first()
-                    )
+                parent = _find_parent(article)
                 if parent:
                     parent_article_info = {
                         "title": parent.title,

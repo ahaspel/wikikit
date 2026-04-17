@@ -294,12 +294,8 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             "", first_line_unwrapped, flags=re.IGNORECASE,
         )
         clean_first = first_line_unwrapped.replace("'''", "")
-        # Strip bracketed alternate name forms so the heading regex can
-        # cross from surname to forename in split-bio entries like
-        # "ASELLI [Asellius, or Asellio], GASPARO (1581–1626)".
-        # Also strip {{sc|...}} and similar inline templates so their
-        # content doesn't block the regex.
-        clean_first = re.sub(r"\s*\[[^\]]*\]\s*", " ", clean_first)
+        # Unwrap {{sc|X}} → X and similar inline templates so their
+        # content counts toward the heading.
         clean_first = re.sub(r"\{\{[^}]*\|([^}|]*)\}\}", r"\1", clean_first)
         clean_first = re.sub(r"\s+", " ", clean_first).strip()
 
@@ -313,12 +309,30 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # or chemical-formula starts (ACCIUS, LUCIUS, R... is the Latin
         # poet ACCIUS, LUCIUS followed by R. era), so we don't allow
         # them.
+        # Uppercase letter classes used in EB1911 headings:
+        #   A-Z, À-Þ (Latin-1 uppercase),
+        #   Ā Ē Ī Ō Ū (Latin Extended-A with macrons, used in transliterations),
+        #   Œ Ś (ligature, Sanskrit),
+        #   Ḍ Ḥ Ṃ Ṇ Ṛ Ṣ Ṭ Ẓ (Latin Extended Additional, Arabic/Sanskrit
+        #     transliterations — MANṢŪR, AMĪR, etc.),
+        #   Æ is already in À-Þ (U+00C6).
+        _UC = (r"A-Z\u00C0-\u00DE\u0100\u0112\u012A\u014C\u016A\u0152\u015A"
+               r"\u1E0C\u1E24\u1E42\u1E46\u1E5A\u1E62\u1E6C\u1E92")
+        _UC_CHAR = rf"[{_UC}]"
+        _UC_RUN = rf"[{_UC}''\u2018\u2019\-]+"
+        # Qualifier between surname and forename:
+        #   "MAP (or Mapes), WALTER"
+        #   "MORLEY [of Blackburn], JOHN MORLEY"
+        #   "ASELLI [Asellius, or Asellio], GASPARO"
+        # The bracket/paren content is preserved in the title.
+        _QUALIFIER = r"\s*[\[\(][^\]\)]+[\]\)][,\s]+"
         heading_match = re.match(
-            r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE\u0100\u0112\u012A\u014C\u016A''\u2018\u2019\-]+"
-            r"(?:"
-            r"[\s,]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE\u0100\u0112\u012A\u014C\u016A''\u2018\u2019\-]+"
-            r"|\s+[IVX]+(?![A-Z])"
-            r")*)",
+            rf"^({_UC_CHAR}{_UC_RUN}"
+            rf"(?:"
+            rf"[\s,]+{_UC_CHAR}{_UC_RUN}"
+            rf"|\s+[IVX]+(?![A-Z])"
+            rf"|{_QUALIFIER}{_UC_CHAR}{_UC_RUN}"
+            rf")*)",
             clean_first,
         )
 
@@ -714,24 +728,29 @@ def _is_plate_page(text: str) -> bool:
     """Detect plate pages — mostly images with little prose.
 
     In raw wikitext, images are [[File:...]] or [[Image:...]].
-    Plate pages typically have 3+ images and under 500 words of prose,
-    with images often wrapped in wiki tables ({|...|}), not bare.
+    A true plate has minimal running prose (just captions and maybe a
+    title). Pages that happen to have several images mid-article
+    (e.g. vol 17 MAP p.641 with 4 figure images) are NOT plates —
+    they're text pages with figures embedded.
     """
     stripped = text.strip()
     img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
     if img_count < 2:
         return False
 
-    # Count non-image, non-table words (actual prose)
+    # Count non-image, non-table, non-caption words (actual running prose)
     prose = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", "", stripped, flags=re.IGNORECASE)
     prose = re.sub(r"\{\|.*?\|\}", "", prose, flags=re.DOTALL)
     prose = re.sub(r"<table\b.*?</table>", "", prose, flags=re.DOTALL | re.IGNORECASE)
+    # Strip caption-style content (Fig. N.—…, numbered lists)
+    prose = re.sub(r"(?:\{\{(?:small-caps|sc)\|[^}]*\}\}|Fig\.)\s*\d+[^.\n]*\.",
+                   "", prose, flags=re.IGNORECASE)
     prose_words = len(prose.split())
 
-    # 3+ images with moderate prose, or 2 images with very little prose
+    # Tight thresholds — genuine plates have very little narrative prose.
     if img_count >= 3:
-        return prose_words <= 500
-    return prose_words <= 50
+        return prose_words <= 80
+    return prose_words <= 30
 
 
 def _parse_page(text: str) -> ParsedPage:

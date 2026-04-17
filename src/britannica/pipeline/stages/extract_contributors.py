@@ -159,38 +159,39 @@ def extract_contributors_for_volume(volume: int) -> int:
             .all()
         )
 
-        # Build map: source_page_id -> article_id
-        # Contributor footers appear at the end of articles, so when
-        # multiple articles share a page, prefer the one ending there
-        # (its footer is what we're extracting), not the one starting.
-        articles = (
-            session.query(Article)
+        # Pre-load all segments per page so we can match each footer
+        # signature to the article whose segment contains it.
+        from britannica.db.models import ArticleSegment
+        segments_by_page: dict[int, list[ArticleSegment]] = {}
+        for seg in (
+            session.query(ArticleSegment)
+            .join(Article, ArticleSegment.article_id == Article.id)
             .filter(Article.volume == volume)
-            .order_by(Article.page_start)
             .all()
-        )
-        page_articles: dict[int, int] = {}
-        for page in pages:
-            # Find all articles spanning this page
-            candidates = [a for a in articles
-                          if a.page_start <= page.page_number <= a.page_end]
-            if candidates:
-                # Prefer the article with the most content on this page:
-                # the one that started earliest (its footer is at page bottom)
-                page_articles[page.id] = min(candidates, key=lambda a: a.page_start).id
+        ):
+            segments_by_page.setdefault(seg.source_page_id, []).append(seg)
 
         created = 0
 
         for page in pages:
-            article_id = page_articles.get(page.id)
-            if article_id is None:
-                continue
-
             raw = _load_raw_wikitext(volume, page.page_number)
             if not raw:
                 continue
 
+            page_segs = segments_by_page.get(page.id, [])
+            if not page_segs:
+                continue
+
             for match in _FOOTER_PATTERN.finditer(raw):
+                # Attribute this footer to the article whose segment
+                # contains it. Multiple articles can share a page
+                # (MALONIC ACID ends, MALORY ends, MALOT ends on ws513);
+                # each footer belongs to the article it sits within.
+                article_id = _article_for_footer(
+                    match, raw, page_segs)
+                if article_id is None:
+                    continue
+
                 contributors = _parse_contributors(match.group(1))
 
                 for i, contrib in enumerate(contributors):
@@ -225,3 +226,46 @@ def extract_contributors_for_volume(volume: int) -> int:
 
     finally:
         session.close()
+
+
+def _article_for_footer(match, raw: str, page_segs: list) -> int | None:
+    """Find which article's segment contains this footer match.
+
+    A footer `{{EB1911 footer initials|…}}` at the end of an article
+    is preceded by that article's content. We find the segment whose
+    text ends with content near the footer's position.
+    """
+    footer_start = match.start()
+    footer_text = match.group(0)
+
+    # Try each segment: does its text contain this exact footer?
+    # (segment_text has the footer literal since it hasn't been
+    # transformed yet at contributor-extraction time.)
+    candidates = []
+    for seg in page_segs:
+        if seg.segment_text and footer_text in seg.segment_text:
+            candidates.append(seg)
+
+    if not candidates:
+        # Fallback: attribute to the article whose segment ends closest
+        # to (but not past) the footer position in raw text.
+        best = None
+        best_dist = None
+        for seg in page_segs:
+            if not seg.segment_text:
+                continue
+            # Find where this segment's text ends in raw.
+            tail = seg.segment_text[-40:] if len(seg.segment_text) >= 40 else seg.segment_text
+            pos = raw.rfind(tail)
+            if pos < 0:
+                continue
+            seg_end = pos + len(tail)
+            if seg_end <= footer_start:
+                dist = footer_start - seg_end
+                if best_dist is None or dist < best_dist:
+                    best_dist = dist
+                    best = seg
+        return best.article_id if best else None
+
+    # Pick the most specific match (usually only one)
+    return candidates[0].article_id
