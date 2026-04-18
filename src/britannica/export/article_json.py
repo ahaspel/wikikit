@@ -151,17 +151,30 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
                 (title_map[t] for t in title_map if t.startswith(prefix)),
                 None,
             )
-        # Fallback: word-set containment (A⊆B or B⊆A)
+        # Fallback: word-set containment (A⊆B or B⊆A). Strip brackets
+        # and punctuation from both sides so titles with qualifiers
+        # ("MORLEY [of Blackburn], JOHN MORLEY") can match peerage-
+        # style contributor names ("Blackburn, Viscount Morley of").
         if not fn:
-            name_words = {w.upper().rstrip(".,") for w in stripped.split()}
-            for title, title_fn in title_map.items():
-                # Only consider biographical articles (LAST, FIRST...)
-                if "," not in title:
-                    continue
-                title_words = {w.rstrip(".,") for w in title.split()}
-                if name_words <= title_words or title_words <= name_words:
-                    fn = title_fn
-                    break
+            def _tokens(s):
+                s = re.sub(r"[\[\]\(\)]", " ", s)
+                return {w.upper().rstrip(".,:;") for w in s.split()
+                        if w.strip(".,:;[]()")}
+            # Drop filler words that don't help identify the person.
+            _filler = {"OF", "THE", "AND", "VISCOUNT", "BARON", "LORD",
+                       "LADY", "DUKE", "EARL", "COUNT", "COUNTESS",
+                       "MARQUIS", "KING", "QUEEN", "SIR"}
+            name_words = _tokens(stripped) - _filler
+            if name_words:
+                for title, title_fn in title_map.items():
+                    if "," not in title:
+                        continue
+                    title_words = _tokens(title) - _filler
+                    if not title_words:
+                        continue
+                    if name_words <= title_words or title_words <= name_words:
+                        fn = title_fn
+                        break
 
         if fn:
             entry["bio_article_filename"] = fn
@@ -230,6 +243,68 @@ def stable_id(article) -> str:
     if not slug:
         slug = _section_slug(article.title)
     return f"{article.volume:02d}-{article.page_start:04d}-{slug}"
+
+
+def _strip_redundant_title(body: str, title: str) -> str:
+    """Strip a body's leading '«B»…«/B»' title matter that duplicates the
+    article title. Handles single-bold ('''PIETAS''') and multi-bold
+    ('''POPILIA''' (or Popillia), '''VIA,''') forms by accumulating the
+    visible text of consecutive bold + interstitial chunks and comparing
+    to the article title."""
+    page_m = re.match(r"^(\x01PAGE:\d+\x01)?\s*", body)
+    page_prefix = page_m.group(0) if page_m else ""
+    rest = body[len(page_prefix):]
+
+    title_key = re.sub(r"\s+", " ", title.strip().rstrip(",.;:")).upper()
+    bold_re = re.compile(
+        r"^\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
+        r"([\s,.\-\u2013\u2014\u2003]*(?:\([^)]*\)|\[[^\]]*\])"
+        r"[\s,.\-\u2013\u2014\u2003]*|[\s,.\-\u2013\u2014\u2003]+)?"
+    )
+
+    cursor = 0
+    accumulated = ""
+    best_end = -1
+    while True:
+        m = bold_re.match(rest[cursor:])
+        if not m:
+            break
+        bold_text = m.group(1).strip().rstrip(",.;:")
+        interstitial = (m.group(2) or "").strip()
+        if accumulated:
+            accumulated += " "
+        accumulated += bold_text
+        if interstitial:
+            accumulated += " " + interstitial
+        cursor += m.end()
+        normalized = re.sub(r"\s+", " ", accumulated.rstrip(" ,.;:")).upper()
+        if normalized == title_key:
+            best_end = cursor
+            break
+        if not title_key.startswith(normalized):
+            break
+
+    if best_end < 0:
+        # Fall back to single-bold strip when the article title contains
+        # the first bold as a prefix (covers PIETAS / SEMMELWEISS style).
+        fallback = re.match(
+            r"^\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
+            r"[\s,.\-\u2013\u2014]*",
+            rest,
+        )
+        if fallback:
+            bold = fallback.group(1).strip().rstrip(",.;:").upper()
+            if (bold == title_key
+                    or title_key.startswith(bold + ",")
+                    or title_key.startswith(bold + " ")
+                    or bold.startswith(title_key + ",")
+                    or bold.startswith(title_key + " ")):
+                best_end = fallback.end()
+
+    if best_end >= 0:
+        tail = re.sub(r"^[\s,.\-\u2013\u2014\u2003]+", "", rest[best_end:])
+        return page_prefix + tail
+    return body
 
 
 def _safe_filename(article_id, title: str) -> str:
@@ -439,25 +514,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             # Strip redundant bold article title at body start. EB1911
             # articles open with "'''TITLE'''" (rendered as «B»TITLE«/B»);
             # since the viewer already shows the title in the header,
-            # the inline repeat is redundant. Only strip when the bold
-            # text matches the article title (ignoring trailing
-            # punctuation). Covers PIETAS, SEMMELWEISS, etc. —
-            # ROOSEVELT is handled earlier via _fix_swallowed_pages.
-            _m = re.match(
-                r"^(\x01PAGE:\d+\x01)?\s*"
-                r"\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
-                r"[\s,.\-\u2013\u2014]*",
-                body,
-            )
-            if _m:
-                _bold = _m.group(2).strip().rstrip(",.;:").upper()
-                _title_key = article.title.strip().rstrip(",.;:").upper()
-                if (_bold == _title_key
-                        or _title_key.startswith(_bold + ",")
-                        or _title_key.startswith(_bold + " ")
-                        or _bold.startswith(_title_key + ",")
-                        or _bold.startswith(_title_key + " ")):
-                    body = (_m.group(1) or "") + body[_m.end():]
+            # the inline repeat is redundant.
+            body = _strip_redundant_title(body, article.title)
 
             payload = {
                 "id": article.id,
@@ -541,25 +599,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 .count()
             )
             body = article.body or ""
-            # Strip the redundant bold article title at body start
-            # (same logic as for the exported article file). Without
-            # this, index.json's body_start ends up with the title
-            # duplicated (e.g. "PIETAS, in Roman mythology…").
-            _title_m = re.match(
-                r"^(\x01PAGE:\d+\x01)?\s*"
-                r"\u00abB\u00bb([^\u00ab]+)\u00ab/B\u00bb"
-                r"[\s,.\-\u2013\u2014]*",
-                body,
-            )
-            if _title_m:
-                _bold = _title_m.group(2).strip().rstrip(",.;:").upper()
-                _title_key = article.title.strip().rstrip(",.;:").upper()
-                if (_bold == _title_key
-                        or _title_key.startswith(_bold + ",")
-                        or _title_key.startswith(_bold + " ")
-                        or _bold.startswith(_title_key + ",")
-                        or _bold.startswith(_title_key + " ")):
-                    body = (_title_m.group(1) or "") + body[_title_m.end():]
+            body = _strip_redundant_title(body, article.title)
             # First ~10 words of body for disambiguation in the index.
             # Skip any leading paragraphs that are just image / table /
             # verse markers — the preview should be TEXT, not raw markup

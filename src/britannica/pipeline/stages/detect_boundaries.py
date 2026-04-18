@@ -272,6 +272,13 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                 r"^(?:\{\{(?:nop|clear|-)\}\}\s*)+",
                 "", stripped, flags=re.IGNORECASE,
             )
+            # Also peel `{{Section|Derby, Earls of}}` section anchors —
+            # they produce no visible output but hide the bold heading
+            # on the same line (DERBY, EARLS OF vol 8 p79).
+            stripped = re.sub(
+                r"^\{\{Section\|[^{}]*\}\}\s*",
+                "", stripped, flags=re.IGNORECASE,
+            )
             if not stripped:
                 continue
             # Re-check table opener in case peeled leading {{nop}}
@@ -284,6 +291,20 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             first_line = stripped
             _first_line_idx = _i
             break
+        # If first_line opens `[[Author:…` or `[[…|'''…'''` but the
+        # closing `]]` is on a following line (COMTE, AUGUSTE vol 6 p838
+        # splits the Author link across newlines), extend first_line
+        # until the outer brackets balance. Track the original heading
+        # start separately from the extended end so pre_heading /
+        # remaining_lines still slice the body correctly.
+        _heading_start_idx = _first_line_idx
+        while (
+            _first_line_idx is not None
+            and first_line.count("[[") > first_line.count("]]")
+            and _first_line_idx + 1 < len(_sec_lines)
+        ):
+            _first_line_idx += 1
+            first_line = first_line + " " + _sec_lines[_first_line_idx].strip()
         first_line_unwrapped = re.sub(
             r"\[\[[^\]|]*\|(.*?)\]\]",
             r"\1", first_line,
@@ -298,6 +319,15 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             "", first_line_unwrapped, flags=re.IGNORECASE,
         )
         clean_first = first_line_unwrapped.replace("'''", "")
+        # {{uc|Swift, Jonathan}} → SWIFT, JONATHAN (uppercase template —
+        # SWIFT vol 26 p243 wraps the whole title this way, and without
+        # uppercasing the unwrap leaves "Swift, Jonathan" which the
+        # UC-only heading regex collapses to just "S").
+        clean_first = re.sub(
+            r"\{\{uc\|([^{}|]*)\}\}",
+            lambda m: m.group(1).upper(),
+            clean_first, flags=re.IGNORECASE,
+        )
         # Unwrap {{sc|X}} → X and similar inline templates so their
         # content counts toward the heading.
         clean_first = re.sub(r"\{\{[^}]*\|([^}|]*)\}\}", r"\1", clean_first)
@@ -466,7 +496,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                 body = clean_first[len(heading_text):].lstrip(" ,.")
             # Prepend any leading content (tables, images) that was skipped
             # during heading detection — it belongs to this article.
-            pre_heading = "\n".join(_sec_lines[:_first_line_idx]).strip()
+            pre_heading = "\n".join(_sec_lines[:_heading_start_idx]).strip()
             # Add remaining lines after the heading line
             remaining_lines = _sec_lines[_first_line_idx + 1:]
             if remaining_lines:
@@ -495,7 +525,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                 body = stripped_first
             body = body.strip()
         else:
-            body = "\n".join(_sec_lines[_first_line_idx:]).strip()
+            body = "\n".join(_sec_lines[_heading_start_idx:]).strip()
 
         if title:
             candidates.append(CandidateArticle(
@@ -1292,19 +1322,28 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     and _open_firstword == _cand_firstword
                 )
                 # Title Case <section begin="Foo"/> names (those with any
-                # lowercase letter) are subsection continuations by
-                # Wikisource convention — EB1911 real article titles are
-                # ALL CAPS. ALGAE's "Benthos" continuation on ws 637 and
-                # "Occurrence in the rocks" on ws 638 were being carved
-                # off as spurious articles because neither shares first
-                # words with "ALGAE" and page 638's running head names
-                # ALGARDI/ALGAROTTI. Title-case detection covers these.
+                # lowercase letter) are usually subsection continuations
+                # by Wikisource convention — EB1911 real article titles
+                # are ALL CAPS. ALGAE's "Benthos" continuation and
+                # "Occurrence in the rocks" get carved off as spurious
+                # articles without this guard.
+                #
+                # Exception: biographical articles follow "Surname,
+                # Firstname" (or "Surname, Firstname (Qualifier)") form,
+                # which has lowercase letters but is always a real
+                # article — Angelico/Fra, Comte/Auguste, Cervantes, etc.
+                _sec_id = candidate.raw_sec_id or ""
+                _is_bio_section = bool(re.match(
+                    r"^[A-Z][a-zA-ZÀ-ÿ'\- ]+,\s+[A-Z]",
+                    _sec_id,
+                ))
                 section_name_says_continuation = (
                     candidate.is_tentative
                     and open_article is not None
-                    and candidate.raw_sec_id
-                    and candidate.raw_sec_id != candidate.raw_sec_id.upper()
-                    and any(c.islower() for c in candidate.raw_sec_id)
+                    and _sec_id
+                    and _sec_id != _sec_id.upper()
+                    and any(c.islower() for c in _sec_id)
+                    and not _is_bio_section
                 )
                 if body_text and candidate.is_tentative and (
                     exact_match or fuzzy_match
