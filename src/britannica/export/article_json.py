@@ -13,9 +13,9 @@ from britannica.db.session import SessionLocal
 
 
 _QUALITY_NOTES = {
-    0: "Untranscribed page",
-    1: "Unproofread OCR text",
-    2: "Problematic transcription",
+    0: "Untranscribed page.",
+    1: "Unproofread OCR text.",
+    2: "Problematic transcription.",
 }
 
 
@@ -613,6 +613,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", preview_source)
             preview_source = re.sub(
                 r"\{\{VERSE:[\s\S]*?\}VERSE\}", "", preview_source)
+            preview_source = re.sub(
+                r"\{\{LEGEND:[\s\S]*?\}LEGEND\}", "", preview_source)
             preview_source = re.sub(
                 r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
                 "", preview_source)

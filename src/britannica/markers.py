@@ -33,6 +33,12 @@ TABLE_CLOSE = "}TABLE}"
 VERSE_OPEN = "{{VERSE:"
 VERSE_CLOSE = "}VERSE}"
 
+# Legend markers: structured figure legends
+# Format: {{LEGEND:### Subhead.\nA. entry one.\nB. entry two.\n…}LEGEND}
+# Lines starting with "### " are subheadings; everything else is an entry.
+LEGEND_OPEN = "{{LEGEND:"
+LEGEND_CLOSE = "}LEGEND}"
+
 # Link markers: «LN:target|display«/LN»
 LN_OPEN = "\u00abLN:"
 LN_CLOSE = "\u00ab/LN\u00bb"
