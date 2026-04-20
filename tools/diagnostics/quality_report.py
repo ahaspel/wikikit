@@ -185,9 +185,14 @@ def run_file_checks() -> dict:
         if "''" in clean:
             issues["stray_wiki_italic"] += 1
 
-        # Bare HTML tags
+        # Bare HTML tags.  IMG-caption interiors can legitimately
+        # contain ``<br>``/``<sup>`` used as typographical formatting
+        # inside the figure caption, which the viewer renders as real
+        # HTML.  Strip ``{{IMG:…}}`` blocks before this check so only
+        # tags leaking into prose get flagged.
+        tag_clean = re.sub(r"\{\{IMG:[^}]*\}\}", "", clean)
         if re.search(r"<(?:table|tr|td|th|div|span|br|sub|sup|ref|poem|score|math)\b[^>]*>",
-                      clean, re.I):
+                      tag_clean, re.I):
             issues["html_tag"] += 1
 
         # Unclosed markers
