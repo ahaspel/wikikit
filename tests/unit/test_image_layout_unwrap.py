@@ -500,6 +500,286 @@ def test_abbey_3_sub_source_order():
         f"Monastic Buildings. not before G. Cloister:\n{text}")
 
 
+def test_hydromedusae_fig29_attribution_preserved():
+    """HYDROMEDUSAE Fig. 29 — image + attribution row + Fig-caption
+    row, no legend.  Caption AND attribution must both appear in the
+    IMG marker's caption (attribution appended in parens).  Neither
+    should leak as an orphan paragraph in the body."""
+    src = (
+        '{|align="left" width="275" style="margin-right: 1em"\n'
+        '|[[Image:EB1911 Hydromedusae - Tiaropsis rosea.jpg|275px]]\n'
+        '|-\n'
+        '|style="font-size: smaller"|\n'
+        "After O. Maas, ''Craspedoten Medusen'', by permission.\n"
+        '|-\n'
+        '|\n'
+        "{{sc|Fig. 29.}}—''Tiaropsis rosea'' showing the eight Statocysts.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=154)
+    imgs = extract_imgs(body)
+    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
+    _, caption = imgs[0]
+    assert caption is not None and caption.startswith("Fig. 29"), (
+        f"Caption wrong: {caption!r}")
+    assert "After O. Maas" in caption, (
+        f"Attribution lost from caption: {caption!r}")
+    assert "{{LEGEND:" not in body
+    # The attribution must NOT also appear as an orphan paragraph
+    # (it should be inside the IMG marker only).
+    body_outside_img = re.sub(r"\{\{IMG:[^}]+\}\}", "", body)
+    assert "After O. Maas" not in body_outside_img, (
+        f"Attribution duplicated outside IMG:\n{body_outside_img[:400]!r}")
+
+
+def test_hydromedusae_fig30_comma_label_legend():
+    """HYDROMEDUSAE Fig. 30 — legend entries use `label,||text` form
+    (comma after label, not period) with italicized labels like
+    `''c.c'',`, `''st.c'',`, `''con'',`."""
+    src = (
+        '{|align="center" width="250"\n'
+        '|colspan="2"|[[Image:EB1911 Hydromedusae - Statocyst.jpg|250px]]\n'
+        '|-\n'
+        '|colspan="2" style="font-size: smaller"|\n'
+        "Modified after Linko, ''Traveaux''.\n"
+        '|-\n'
+        '|colspan="2"|\n'
+        "{{sc|Fig. 30.}}—Section of a Statocyst.\n"
+        "|-valign=\"top\"\n"
+        "|''ex'',||Ex-umbral ectoderm.\n"
+        "|-valign=\"top\"\n"
+        "|''sub'',||Sub-umbral ectoderm.\n"
+        "|-valign=\"top\"\n"
+        "|''c.c'',||Circular canal.\n"
+        "|-\n"
+        "|''v'',||Velum.\n"
+        "|-valign=\"top\"\n"
+        "|''st.c'',&nbsp;||Cavity of statocyst.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=155)
+    imgs = extract_imgs(body)
+    assert len(imgs) == 1
+    _, caption = imgs[0]
+    assert caption and caption.startswith("Fig. 30"), f"caption={caption!r}"
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    for entry in ["ex. Ex-umbral", "sub. Sub-umbral", "c.c. Circular",
+                  "v. Velum", "st.c. Cavity"]:
+        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+
+
+def test_sponges_fig2_multiword_labels():
+    """SPONGES Fig. 2 — labels are multi-word italicized biological
+    abbreviations (`cl. osc.`, `contr. osc.`, `osc. div.`).  Must
+    match the multi-word label shape and produce a clean LEGEND."""
+    src = (
+        '{|align="center" width="400"\n'
+        '|colspan="2"|[[Image:EB1911 Sponges - Leucosolenia clathrus.jpg|400px]]\n'
+        '|-\n'
+        '|colspan="2"|(After Minchin.)\n'
+        '|-\n'
+        '|colspan="2"|\n'
+        "{{sc|Fig.}} 2.—''Leucosolenia'' clathrus, natural size.\n"
+        "|-\n"
+        "|align=\"right\"|''osc.'',||&nbsp;Osculum.\n"
+        "|-\n"
+        "|align=\"right\"|''cl. osc.'',||&nbsp;Closed osculum.\n"
+        "|-\n"
+        "|align=\"right\"|''contr. osc.'',||&nbsp;Closed oscula in contracted part.\n"
+        "|-\n"
+        "|align=\"right\"|''osc. div.'',||&nbsp;Diverticula from which new oscula arise.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=25, page_number=738)
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    for entry in ["osc. Osculum", "cl. osc. Closed osculum",
+                  "contr. osc. Closed oscula",
+                  "osc. div. Diverticula"]:
+        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+
+
+def test_fulminic_acid_not_classified_as_legend():
+    """FULMINIC ACID vol 11 p. 312 — chemistry formula comparison
+    table with chemist names (Steiner, Divers, Scholl, Nef).  Not a
+    legend — must NOT produce a LEGEND marker.  Blocked by
+    Fig.-caption requirement on MULTICOL."""
+    src = (
+        '{|style="line-height:100%; margin:auto"\n'
+        '|C : N·OH||rowspan=2|&nbsp;O[[File:Langle.svg|10px]]||N : CH '
+        '||CH : N·O|| rowspan=2| C : N·OH.\n'
+        '|-\n'
+        '|C : N·OH, &#8193;||N : Ċ·OH, &#8193;||ĊH : N·O, &#8193;\n'
+        '|- align=center\n'
+        '|Steiner,&#8193; || colspan=2|Divers,&#8193; ||Scholl,&#8193; ||Nef.\n'
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=11, page_number=312)
+    assert "{{LEGEND:" not in body, (
+        f"False-positive LEGEND for chemistry-formula table:\n{body[:500]!r}")
+
+
+def test_hydromedusae_fig26_prime_mark_labels():
+    """HYDROMEDUSAE Fig. 26 — legend labels use prime marks (`a′`,
+    `g″`, `k′`) — Unicode U+2032/U+2033.  The ascii-fold must drop
+    primes so the strict validator accepts these labels."""
+    src = (
+        '{|align="center" width="400"\n'
+        '|align="center" colspan="2"|[[Image:EB1911 Hydromedusae - Carmarina hastata.jpg|325px]]\n'
+        '|-\n'
+        '|align="center" colspan="2"|\n'
+        "{{sc|Fig. 26.}}—''Carmarina hastata''.\n"
+        '|-\n'
+        "|''a'',||Nerve ring.\n"
+        '|-valign="top"\n'
+        "|''a''\u2032,||Radial nerve.\n"
+        '|-\n'
+        "|''b'',||Tentaculocyst.\n"
+        '|-\n'
+        "|''g''\u2033,||Ovary.\n"
+        '|-\n'
+        "|''k''\u2032,||Sporosac.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=154)
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    # Prime marks must be PRESERVED in display
+    assert "a\u2032. Radial" in text, f"a′ label lost:\n{text}"
+    assert "g\u2033. Ovary" in text, f"g″ label lost:\n{text}"
+    assert "k\u2032. Sporosac" in text, f"k′ label lost:\n{text}"
+
+
+def test_hydromedusae_fig49_nowrap_wrapped_label():
+    """HYDROMEDUSAE Fig. 49 — first label is wrapped in `{{nowrap|…}}`:
+    `{{nowrap|&emsp;''a'',&nbsp;}}||Hydrocaulus (stem).`  The template
+    unwrapping must leave just the label text behind."""
+    src = (
+        '{|align="left" width="300" style="margin-right: 1em"\n'
+        '|colspan="2"|[[Image:EB1911 Hydromedusae - possible modifications.jpg|300px]]\n'
+        '|-\n'
+        '|colspan="2"|\n'
+        "{{sc|Fig. 49.}}—Diagram showing modifications of persons of a gymnoblastic ''Hydromedusa''.\n"
+        '|-valign="top"\n'
+        "|{{nowrap|&emsp;''a'',&nbsp;}}||Hydrocaulus (stem).\n"
+        '|-valign="top"\n'
+        "|&emsp;''b'',||Hydrorhiza (root).\n"
+        '|-valign="top"\n'
+        "|&emsp;''g''\u2032,||Hydranth contracted.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=162)
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    assert "a. Hydrocaulus (stem)" in text, f"a label lost:\n{text}"
+    assert "b. Hydrorhiza (root)" in text, f"b label lost:\n{text}"
+    assert "g\u2032. Hydranth" in text, f"g′ label lost:\n{text}"
+
+
+def test_hydromedusae_fig55_nested_plain_paragraph_legend():
+    """HYDROMEDUSAE Fig. 55 — nested table contains a single cell with
+    plain comma-after-label paragraphs separated by blank lines (no
+    ||, no <poem>).  Was producing no caption before the NESTED_LEGEND
+    fallback extractor."""
+    src = (
+        '{|align="right" width="250" style="margin-left: 1em"\n'
+        '|[[Image:EB1911 Hydromedusae - Oral Surface.jpg|250px]]\n'
+        '|-\n'
+        '|\n'
+        "{{sc|Fig. 55.}}—View of the Oral Surface of one of the ''Leptomedusae''.\n"
+        '|-\n'
+        '|align="center"|\n'
+        '{|\n'
+        '|\n'
+        "''ge'', Genital glands.\n\n"
+        "''M'', Manubrium.\n\n"
+        "''ot'', Otocysts.\n\n"
+        "''rc'', The four radiating canals.\n\n"
+        "''Ve'', The velum.\n"
+        '|}\n'
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=164)
+    imgs = extract_imgs(body)
+    assert len(imgs) == 1
+    _, caption = imgs[0]
+    assert caption and caption.startswith("Fig. 55"), f"caption={caption!r}"
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    for entry in ["ge. Genital", "M. Manubrium", "ot. Otocysts",
+                  "rc. The four radiating", "Ve. The velum"]:
+        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+
+
+def test_hydromedusae_fig73_nested_pipe_pair_legend():
+    """HYDROMEDUSAE Fig. 73 — nested table contains ||-separated
+    (label, text) rows; was rendering as an HTMLTABLE before the
+    NESTED_LEGEND handler learned Shape B."""
+    src = (
+        '{|align="left" width="200" style="margin-right: 1em"\n'
+        '|[[Image:EB1911 Hydromedusae - Physophora hydrostatica.jpg|200px]]\n'
+        '|-\n'
+        '|{{sm|After C. Gegenbaur.}}\n'
+        '|-\n'
+        "|align=\"center\"|{{sc|Fig. 73.}}—''Physophora hydrostatica''.\n"
+        '|-\n'
+        '|align="center"|\n'
+        '{|\n'
+        "|''a''\u2032,&nbsp;||Pneumatocyst.\n"
+        '|-\n'
+        "|''t'',||Palpons.\n"
+        '|-\n'
+        "|''a'',||Axis of the colony.\n"
+        '|-\n'
+        "|''m'',||Nectocalyx.\n"
+        '|}\n'
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=171)
+    imgs = extract_imgs(body)
+    assert len(imgs) == 1
+    _, caption = imgs[0]
+    assert caption and "Physophora" in caption, f"caption={caption!r}"
+    legends = extract_legends(body)
+    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
+    text = legends[0]
+    assert "a\u2032. Pneumatocyst" in text
+    assert "t. Palpons" in text
+    # No HTMLTABLE should appear for this legend
+    assert "\u00abHTMLTABLE:" not in body, f"HTMLTABLE leaked:\n{body[:400]!r}"
+
+
+def test_hydromedusae_fig5_is_not_multicol():
+    """HYDROMEDUSAE Fig. 5 vol 14 p. 149 — image + attribution row +
+    descriptive-caption row.  NOT a legend.  Previous bug: my MULTICOL
+    handler treated the attribution as the caption and the real
+    caption as a single (Fig, 5.—Colonies of Clava…) legend entry."""
+    src = (
+        '{|align="center" width="400"\n'
+        '|align="center"|[[Image:EB1911 Hydromedusae - Colonies of Clava.jpg|350px]]\n'
+        '|-\n'
+        '|style="font-size: smaller"|\n'
+        "From Allman's ''Gymnoblastic Hydroids'', by permission of the Council of the Ray\n"
+        'Society.\n'
+        '|-\n'
+        '|\n'
+        "{{sc|Fig. 5.}}—Colonies of ''Clava''. A, ''Clava squamata'', magnified. "
+        "B, ''C. multicornis'', natural size.\n"
+        '|}\n'
+    )
+    body = _transform_text_v2(src, volume=14, page_number=149)
+    # No bogus LEGEND should be emitted for this attribution+caption
+    # layout (there is no ||-separated multi-column legend here).
+    assert "{{LEGEND:" not in body, (
+        f"False-positive LEGEND for attribution+caption layout:\n{body[:500]!r}")
+
+
 def test_kirkstall_numeric_legend():
     """Fig. 9 Kirkstall Abbey — 2-column legend with NUMERIC labels
     (1, 2, … 20) including a range label `16-19`. Previously produced
