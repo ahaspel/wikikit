@@ -76,13 +76,23 @@ def _printed_page(volume: int, ws_page: int) -> int:
 
     printed_pages.json is ws-keyed (heading-sourced with monotonic
     interpolation for gaps). Stays in ws space — no scan_map detour.
+
+    If the exact ws page has no printed mapping (it's a plate/blank),
+    walk backward up to 10 pages to find the nearest numbered
+    predecessor.  SHIPBUILDING ends on a plate at ws 1057 with no
+    printed number; before this fallback its page_end was reported as
+    1057 (a ws index) instead of 981 (the last numbered page).
     """
     pp = _get_printed_pages()
     vol_map = pp.get(str(volume), {})
     printed = vol_map.get(str(ws_page))
     if printed is not None:
         return printed
-    return ws_page  # fallback: return ws page unchanged
+    for back in range(1, 11):
+        printed = vol_map.get(str(ws_page - back))
+        if printed is not None:
+            return printed
+    return ws_page  # last-resort fallback
 
 
 _TITLE_PREFIXES = re.compile(
@@ -459,10 +469,19 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 body,
             )
 
-            # Convert PAGE markers from Wikisource to printed page numbers
+            # Convert PAGE markers from Wikisource to printed page numbers.
+            # A ws page with no direct entry in printed_pages.json is
+            # a plate — no printed number — so we drop its marker
+            # entirely rather than walking back to the previous page
+            # (which creates misleading duplicates like "p. 980" twice
+            # with plate content between them).
+            pp = _get_printed_pages().get(str(article.volume), {})
             def _replace_page_marker(m):
                 ws = int(m.group(1))
-                return f"\x01PAGE:{_printed_page(article.volume, ws)}\x01"
+                direct = pp.get(str(ws))
+                if direct is None:
+                    return ""
+                return f"\x01PAGE:{direct}\x01"
 
             body = re.sub(r"\x01PAGE:(\d+)\x01", _replace_page_marker, body)
 
@@ -527,6 +546,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "page_end": _printed_page(article.volume, article.page_end),
                 "ws_page_start": article.page_start,
                 "ws_page_end": article.page_end,
+                "leaf_start": _leaf_for_ws(article.volume, article.page_start),
+                "leaf_end": _leaf_for_ws(article.volume, article.page_end),
                 "source_quality": quality,
                 "word_count": len(body.split()),
                 "parent_article": parent_article_info,
@@ -671,6 +692,8 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "page_end": _printed_page(article.volume, article.page_end),
                 "ws_page_start": article.page_start,
                 "ws_page_end": article.page_end,
+                "leaf_start": _leaf_for_ws(article.volume, article.page_start),
+                "leaf_end": _leaf_for_ws(article.volume, article.page_end),
                 "body_length": len(body.split()),
                 "body_start": body_start,
                 "xref_count": xref_count,

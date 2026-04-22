@@ -238,21 +238,30 @@ def run_file_checks() -> dict:
         if re.search(r"nowrap|colspan|rowspan|cellpadding", check):
             issues["leaked_html_attr"] += 1
 
-        # Unhandled inline markers inside HTMLTABLE blocks. formatCell now
-        # handles B/I/SC, FN, IMG, hieroglyph, MATH, and VERSE.  Anything
-        # else inside a cell is a new leak.
+        # Unhandled inline markers inside HTMLTABLE blocks. formatCell
+        # handles B/I/SC, FN, IMG, hieroglyph, MATH, VERSE, LN, LEGEND.
+        # Anything else inside a cell is a new leak worth investigating.
         for ht in re.findall(
             r"\u00abHTMLTABLE:(.*?)\u00ab/HTMLTABLE\u00bb",
             body, re.DOTALL,
         ):
             stripped = re.sub(
                 r"</?(?:table|tr|td|th)(?:\s[^>]*)?>", "", ht)
-            stripped = re.sub(
-                r"\u00ab/?(?:B|I|SC|FN|MATH)(?::[^\u00ab]*)?\u00bb",
-                "", stripped)
+            # Strip known markers; iterate to handle nested FN (the
+            # «-content-« pairs can nest, so a single pass of the
+            # non-greedy regex leaves the outer shells intact).
+            prev = None
+            while prev != stripped:
+                prev = stripped
+                stripped = re.sub(
+                    r"\u00ab/?(?:B|I|SC|FN|MATH|LN|LEGEND|SEC|SH)"
+                    r"(?::[^\u00ab\u00bb]*)?\u00bb",
+                    "", stripped)
             stripped = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
             stripped = re.sub(
                 r"\{\{VERSE:.*?\}VERSE\}", "", stripped, flags=re.DOTALL)
+            stripped = re.sub(
+                r"\{\{LEGEND:.*?\}LEGEND\}", "", stripped, flags=re.DOTALL)
             stripped = re.sub(r"\[hieroglyph:[^\]]*\]", "", stripped)
             if re.search(r"\u00ab[^\u00bb]+\u00bb", stripped) or "{{" in stripped:
                 issues["unhandled_marker_in_htmltable"] += 1

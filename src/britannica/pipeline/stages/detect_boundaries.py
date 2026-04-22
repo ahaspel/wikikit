@@ -1268,6 +1268,74 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
             for candidate in parsed.candidates:
                 body_text = (candidate.body or "").strip()
 
+                # Cross-article section redirect.  A Title Case
+                # ``<section begin="Regalia"/>`` on a continuation
+                # page would normally be absorbed as a subsection of
+                # the currently open article (REGENERATION OF LOST
+                # PARTS in our worked example) by the Title-Case
+                # heuristic below.  But if a real article with that
+                # section name ALREADY exists (REGALIA was detected on
+                # the prior page and is now closed), the content
+                # belongs to THAT article — typically a plate or
+                # continuation page interspersed with the open
+                # article's page range.  Route instead of absorb.
+                _redirect = None
+                if candidate.is_tentative and candidate.raw_sec_id:
+                    _cand_sec = candidate.raw_sec_id.casefold()
+                    for _a in articles:
+                        if (_a.section_name
+                                and _a.section_name.casefold() == _cand_sec
+                                and _a is not open_article):
+                            _redirect = _a
+                            break
+                if _redirect is not None:
+                    # Plate detection for redirected sections:
+                    # ``_is_plate_page`` is too strict here (REGALIA's
+                    # plate captions are verbose enough to exceed its
+                    # prose-word thresholds).  Instead look for the
+                    # explicit ``{{sc|Plate}} N.`` / ``PLATE N`` title
+                    # that every Wikisource EB1911 plate page carries.
+                    _looks_like_plate = body_text and (
+                        _is_plate_page(body_text)
+                        or bool(re.search(
+                            r"\{\{(?:sc|uc)\|Plate\}\}\s*[IVX]+",
+                            body_text, re.IGNORECASE))
+                        or bool(re.search(
+                            r"\{\{(?:sc|uc)\|Plate\s+[IVX]+[.,]?\}\}",
+                            body_text, re.IGNORECASE))
+                    )
+                    if _looks_like_plate:
+                        # Plate page (mostly images + captions) — create
+                        # a dedicated plate-type article owned by the
+                        # redirect target, matching the normal plate
+                        # path at line 1194.  Without this, the plate's
+                        # raw wikitable markup (image grids, caption
+                        # cells) gets dumped into the parent article's
+                        # prose body and renders as broken tables.
+                        articles.append(DetectedArticle(
+                            title=_redirect.title,
+                            volume=page.volume,
+                            page_start=page.page_number,
+                            page_end=page.page_number,
+                            article_type="plate",
+                            segments=[SegmentInfo(
+                                source_page_id=page.id,
+                                page_number=page.page_number,
+                                sequence=1,
+                                text=body_text,
+                            )],
+                        ))
+                    elif body_text:
+                        _next_seq = len(_redirect.segments) + 1
+                        _redirect.segments.append(SegmentInfo(
+                            source_page_id=page.id,
+                            page_number=page.page_number,
+                            sequence=_next_seq,
+                            text=body_text,
+                        ))
+                        _redirect.page_end = page.page_number
+                    continue
+
                 # Wikisource repeats <section begin="X"> on continuation pages.
                 # If the currently open article has the same title, this is
                 # continuation — append rather than creating a duplicate.
