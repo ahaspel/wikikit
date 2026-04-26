@@ -13,8 +13,11 @@ _RAW_DIRS = [
 ]
 
 # Matches: {{EB1911 footer initials|Full Name|Initials|name2=Name2|initials2=Init2}}
+#   or:    {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
+# The "double" variant uses four positional args instead of named
+# parameters; _parse_contributors handles both shapes.
 _FOOTER_PATTERN = re.compile(
-    r"\{\{EB1911 footer initials\|([^}]+)\}\}",
+    r"\{\{EB1911 footer(?: double)? initials\|([^}]+)\}\}",
     re.IGNORECASE,
 )
 
@@ -40,16 +43,29 @@ def _clean_footer_initials(initials: str) -> list[str]:
     parts = [p.strip() for p in s.split(";")]
     # Discard anonymous markers
     parts = [p for p in parts if p and p not in ("X.", "X")]
+    # Source-typo fix: initials always end with a period in the DB,
+    # but some article signatures are missing it (e.g. `A. H. J. G}}`
+    # in AGRARIAN LAWS). Append the period when the string ends in a
+    # letter — never when it ends in `.`, `*`, or other punct.
+    parts = [p + "." if p and p[-1].isalpha() else p for p in parts]
     return parts
 
 
 def _parse_contributors(template_content: str) -> list[dict[str, str]]:
-    """Parse contributor names and initials from a footer template."""
+    """Parse contributor names and initials from a footer template.
+
+    Handles both the single-author form (positional name+init, with
+    optional name2=/initials2=... named-parameter second author) and
+    the `footer double initials` variant which uses four positional
+    arguments (name1|init1|name2|init2).
+    """
     results = []
     parts = template_content.split("|")
 
-    # First contributor: positional args (skip font-size like "108%")
+    # Positional args (skip font-size sentinels like "108%")
     positional = [p.strip() for p in parts if "=" not in p and "%" not in p]
+
+    # First contributor: first two positional args.
     if len(positional) >= 2:
         for clean_init in _clean_footer_initials(positional[1]):
             results.append({
@@ -57,7 +73,17 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
                 "initials": clean_init,
             })
 
-    # Additional contributors: name2=...|initials2=..., name3=..., etc.
+    # Second contributor: the `footer double initials` template uses
+    # positional args 3 and 4 for (name2, init2). Detect by looking
+    # for a name-shaped third arg (has a space / capital letters).
+    if len(positional) >= 4:
+        for clean_init in _clean_footer_initials(positional[3]):
+            results.append({
+                "full_name": positional[2],
+                "initials": clean_init,
+            })
+
+    # Additional contributors via named params: name2=…|initials2=…
     named = {}
     for part in parts:
         if "=" in part:

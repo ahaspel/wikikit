@@ -91,13 +91,52 @@ def _is_letter_article(sec_id: str, sec_text: str) -> bool:
     ])
 
 
+# Match a `{|` opener up to the end of line OR the next `</noinclude>`,
+# whichever comes first — EB1911 pages often place `{|...` immediately
+# before `</noinclude>` on the same line.
+_NOINCLUDE_TABLE_OPEN = re.compile(
+    r"(?:^|\n)\s*\{\|[^\n<]*"
+)
+# Require the `|}` to be on its own (preceded by whitespace/newline
+# and not followed by another `}`) so we don't match the `|}}` pattern
+# that closes an empty-arg template like `{{rh|…|}}`.
+_NOINCLUDE_TABLE_CLOSE = re.compile(
+    r"(?:^|\n)\s*\|\}(?!\})"
+)
+
+
+def _strip_noinclude_preserve_tables(text: str) -> str:
+    """Strip <noinclude> blocks but preserve any `{|...` and `|}` markers.
+
+    Many EB1911 wikisource pages place the table opener `{|...` in the
+    page header <noinclude> and the closer `|}` in the footer <noinclude>
+    so the page displays as a valid table on its own. Stripping the whole
+    block leaves the middle rows orphaned — the balanced-table extractor
+    in process_elements then pairs a `{|` on one page with a `|}` many
+    pages later, swallowing all intermediate prose (this was silently
+    eating the Climate / Fauna and Flora / Population sections of
+    UNITED STATES, THE, and likely other long geography-heavy articles).
+    """
+    def _keep_tables(m: re.Match) -> str:
+        block = m.group(0)
+        kept: list[str] = []
+        for open_m in _NOINCLUDE_TABLE_OPEN.finditer(block):
+            kept.append(open_m.group(0).strip())
+        if _NOINCLUDE_TABLE_CLOSE.search(block):
+            kept.append("|}")
+        return ("\n" + "\n".join(kept) + "\n") if kept else ""
+
+    return _NOINCLUDE.sub(_keep_tables, text)
+
+
 def _preprocess_wikitext(text: str) -> str:
     """Minimal preprocessing of raw wikitext for boundary detection.
 
-    Strips <noinclude> blocks, <section end> tags, and normalizes line endings.
-    Preserves <section begin> tags and all other raw wikitext.
+    Strips <noinclude> blocks (preserving any table `{|`/`|}` wrappers),
+    <section end> tags, and normalizes line endings. Preserves
+    <section begin> tags and all other raw wikitext.
     """
-    text = _NOINCLUDE.sub("", text)
+    text = _strip_noinclude_preserve_tables(text)
     text = _SEC_END.sub("", text)
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     return text
@@ -183,6 +222,18 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
 
     # Text before the first marker is prefix (continuation of previous article)
     prefix = text[:raw_markers[0][0]].strip()
+
+    # If the prefix is just preserved noinclude table wrappers ({|/|}
+    # plus whitespace) it belongs WITH the following section's body
+    # (those `{|` lines wrap the rows that follow). Fold them into
+    # section 0 and clear the prefix so tentative-candidate detection
+    # downstream (which keys on `not prefix`) still fires.
+    if prefix and sections and re.fullmatch(
+        r"(?:\s*(?:\{\|[^\n]*|\|\}))+\s*", prefix
+    ):
+        sections[0] = (sections[0][0],
+                       (prefix + "\n" + sections[0][1]).strip())
+        prefix = ""
 
     # Pre-split: a single section may contain multiple articles if there
     # are bold headings mid-text.  Split on '''ALLCAPS patterns at
@@ -1117,6 +1168,8 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
 
         for page in pages:
             # Read raw wikitext and preprocess minimally.
+            # Corrections from data/corrections.json have already been
+            # applied to `wikitext` during clean_pages.
             raw = (page.wikitext or "").strip()
             if not raw:
                 continue

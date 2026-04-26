@@ -23,6 +23,11 @@ def find_fuzzy_match(target: str, title_map: dict[str, int]) -> int | None:
     if result is not None:
         return result
 
+    # Strategy 2b: Initial expansion (BACH, J. S. -> BACH, JOHANN SEBASTIAN)
+    result = _try_initial_expansion(target, title_map)
+    if result is not None:
+        return result
+
     # Strategy 3: Trailing "THE" (UNITED STATES -> UNITED STATES, THE)
     result = _try_trailing_article(target, title_map)
     if result is not None:
@@ -88,22 +93,75 @@ def _try_plural_singular(target: str, title_map: dict[str, int]) -> int | None:
 
 
 def _try_name_inversion(target: str, title_map: dict[str, int]) -> int | None:
-    """Try inverting 'FIRST LAST' to 'LAST, FIRST' and vice versa."""
+    """Try inverting between 'FIRST [MIDDLE…] LAST' and 'LAST, FIRST [MIDDLE…]'."""
     words = target.split()
-    if len(words) == 2:
-        # FIRST LAST -> LAST, FIRST
-        inverted = f"{words[1]}, {words[0]}"
+    if len(words) >= 2 and "," not in target:
+        # FIRST [MIDDLE...] LAST -> LAST, FIRST [MIDDLE...]
+        # Covers "WILLIAM BRADFORD", "WILLIAM CULLEN BRYANT",
+        # "JOHN ALEXANDER FULLER MAITLAND", etc.
+        inverted = f"{words[-1]}, {' '.join(words[:-1])}"
         if inverted in title_map:
             return title_map[inverted]
 
     if ", " in target:
-        # LAST, FIRST -> FIRST LAST
+        # LAST, FIRST [MIDDLE...] -> FIRST [MIDDLE...] LAST
         parts = target.split(", ", 1)
         if len(parts) == 2:
             inverted = f"{parts[1]} {parts[0]}"
             if inverted in title_map:
                 return title_map[inverted]
 
+    return None
+
+
+def _try_initial_expansion(
+    target: str, title_map: dict[str, int]
+) -> int | None:
+    """Match 'LAST, I. I.' against 'LAST, FIRSTNAME SECONDNAME'.
+
+    The Reader's Guide and other compact references often abbreviate
+    given names to initials ("Bach, J. S."), but EB article titles
+    spell them out ("BACH, JOHANN SEBASTIAN"). This finds candidates
+    with the same last name whose spelled-out first names start with
+    the given initials.
+    """
+    if ", " not in target:
+        return None
+    last, rest = target.split(", ", 1)
+    rest = rest.strip()
+    # Parse the right-hand side as a sequence of tokens.
+    tokens = [t for t in re.split(r"\s+", rest) if t]
+    if not tokens:
+        return None
+    # Pull off just the first letter of each token (initial or spelled).
+    initials = []
+    for t in tokens:
+        letter = t[0]
+        if not letter.isalpha():
+            return None
+        initials.append(letter.upper())
+    # Scan candidates with matching last name.
+    prefix = last + ", "
+    candidates: list[tuple[int, int]] = []
+    for title, aid in title_map.items():
+        if not title.startswith(prefix):
+            continue
+        cand_rest = title[len(prefix):]
+        cand_tokens = [t for t in re.split(r"\s+", cand_rest) if t]
+        if len(cand_tokens) < len(initials):
+            continue
+        # Match initial-by-initial against the candidate's leading tokens.
+        if all(
+            cand_tokens[i][0].upper() == initials[i]
+            for i in range(len(initials))
+        ):
+            candidates.append((len(title), aid))
+    if len(candidates) == 1:
+        return candidates[0][1]
+    if candidates:
+        # Multiple matches — pick the shortest (fewest extra tokens).
+        candidates.sort()
+        return candidates[0][1]
     return None
 
 

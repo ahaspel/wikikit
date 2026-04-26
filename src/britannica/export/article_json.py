@@ -943,20 +943,30 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 else:
                     contrib_map[name] = ec
 
-        def _sort_name(c: dict) -> str:
-            # Strip parenthetical dates, then sort by last name
-            import re as _re
-            name = _re.sub(r"\s*\([^)]*\)", "", c["full_name"]).strip()
-            return name.rsplit(None, 1)[-1].lower()
-
-        def _display_name(full_name: str) -> str:
-            """Convert 'First Middle Last' to 'Last, First Middle'."""
+        def _split_name_suffix(full_name: str) -> tuple[str, str]:
+            """Strip parenthetical dates and split a contributor's full
+            name into (head, suffix).  Suffix is anything after the
+            first comma — degrees ('Ph.D', 'Lic. Theol', 'Litt.D'),
+            titles ('Bart', 'Jr', 'Captain'), or any post-name
+            qualifier.  The head is the part to apply Last-First
+            rearrangement to; the suffix is re-appended afterwards."""
             import re as _re
             name = _re.sub(r"\s*\([^)]*\)", "", full_name).strip()
-            parts = name.rsplit(None, 1)
-            if len(parts) == 2:
-                return f"{parts[1]}, {parts[0]}"
-            return name
+            name = name.rstrip(",").strip()
+            head, _, tail = name.partition(",")
+            return head.strip(), tail.strip()
+
+        def _sort_name(c: dict) -> str:
+            head, _ = _split_name_suffix(c["full_name"])
+            return head.rsplit(None, 1)[-1].lower() if head else ""
+
+        def _display_name(full_name: str) -> str:
+            """Convert 'First Middle Last, Degree' to
+            'Last, First Middle, Degree'."""
+            head, suffix = _split_name_suffix(full_name)
+            parts = head.rsplit(None, 1)
+            rearranged = f"{parts[1]}, {parts[0]}" if len(parts) == 2 else head
+            return f"{rearranged}, {suffix}" if suffix else rearranged
 
         for entry in contrib_map.values():
             entry["display_name"] = _display_name(entry["full_name"])
