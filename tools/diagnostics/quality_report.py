@@ -195,8 +195,13 @@ def run_file_checks() -> dict:
                       tag_clean, re.I):
             issues["html_tag"] += 1
 
-        # Unclosed markers
-        if body.count("\u00abFN:") != body.count("\u00ab/FN\u00bb"):
+        # Unclosed markers. ``\u00abFN:`` is the unnamed form; ``\u00abFN[NAME]:``
+        # is the named form (Wikisource ``<ref name=X>`` / ``<ref name=X/>``
+        # \u2014 viewer groups all anchors with the same NAME under one
+        # footnote number). Both share the ``\u00ab/FN\u00bb`` closer, so count
+        # any ``\u00abFN`` opener regardless of suffix.
+        fn_opens = len(re.findall(r"\u00abFN(?:\[[^\]]+\])?:", body))
+        if fn_opens != body.count("\u00ab/FN\u00bb"):
             issues["unclosed_footnote"] += 1
         if body.count("{{TABLE") != body.count("}TABLE}"):
             issues["unclosed_table"] += 1

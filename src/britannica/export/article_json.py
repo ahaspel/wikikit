@@ -847,7 +847,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 first_line = ln
                 break
             # Strip footnotes for the preview
-            first_line = re.sub(r"\u00abFN:.*?\u00ab/FN\u00bb", "", first_line)
+            first_line = re.sub(r"\u00abFN(?:\[[^\]]+\])?:.*?\u00ab/FN\u00bb", "", first_line)
             # Strip formatting markers but KEEP the text between them
             first_line = re.sub(r"\u00abB\u00bb(.*?)\u00ab/B\u00bb", r"\1", first_line)
             first_line = re.sub(r"\u00abI\u00bb(.*?)\u00ab/I\u00bb", r"\1", first_line)
