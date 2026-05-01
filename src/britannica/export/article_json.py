@@ -521,9 +521,20 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
         articles = (
             session.query(Article)
             .filter(Article.volume == volume)
-            .order_by(Article.page_start, Article.title)
+            .order_by(Article.page_start, Article.page_end, Article.title)
             .all()
         )
+
+        # Global title → filename map for cross-volume soft-link
+        # resolution (e.g. {{EB9link|Atom}} on a vol-17 article wants
+        # to link to ATOM in vol 2).  Built once per export run.
+        global_title_to_filename: dict[str, str] = {}
+        for a in session.query(Article).all():
+            if a.article_type == "plate":
+                continue
+            global_title_to_filename.setdefault(
+                a.title.upper(), _safe_filename(a, a.title)
+            )
 
         # Build plate → parent map.
         plate_map = {}  # parent_article_id → [plate_info, ...]
@@ -638,6 +649,21 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                         link_targets[xref.normalized_target.lower()] = _safe_filename(
                             target, target.title
                         )
+
+            # \u00abEB9:target|display\u00ab/EB9\u00bb (soft 9th-edition refs):
+            # link to the 11th-edition article if one exists, else
+            # plain display text \u2014 never a search-link fallback.
+            def _resolve_eb9(m: re.Match) -> str:
+                target_text, display = m.group(1), m.group(2)
+                fn = global_title_to_filename.get(target_text.strip().upper())
+                if fn:
+                    return f"\u00abLN:{fn}|{target_text}|{display}\u00ab/LN\u00bb"
+                return display
+            body = re.sub(
+                r"\u00abEB9:([^|]*)\|([^\u00ab]*)\u00ab/EB9\u00bb",
+                _resolve_eb9,
+                body,
+            )
 
             def _resolve_link(m: re.Match) -> str:
                 target_text, display = m.group(1), m.group(2)
