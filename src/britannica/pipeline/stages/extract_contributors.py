@@ -21,6 +21,46 @@ _FOOTER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_CORRECTIONS: dict | None = None
+
+
+def _load_corrections() -> dict:
+    """Load `data/corrections.json` once.  Same file consumed by
+    `clean_pages.py` and `build_contributor_table.py`; we apply it
+    here too because this stage reads `raw_text` from the JSON files
+    directly (via `_load_raw_wikitext`), which bypasses the
+    SourcePage.wikitext path where clean_pages stored corrections.
+    Without this hook, body-footer typos like vol 6:680's
+    `{{EB1911 footer initials|James Thomson Shotwell|J. T. S.}}`
+    (missing asterisk) cannot be repaired via corrections.json."""
+    global _CORRECTIONS
+    if _CORRECTIONS is not None:
+        return _CORRECTIONS
+    p = Path("data/corrections.json")
+    if not p.exists():
+        _CORRECTIONS = {}
+        return _CORRECTIONS
+    with p.open(encoding="utf-8") as f:
+        _CORRECTIONS = json.load(f)
+    return _CORRECTIONS
+
+
+def _apply_corrections(text: str, volume: int) -> str:
+    """Apply per-volume `corrections.json` entries to `text`.  Mirrors
+    `clean_pages._apply_corrections` so the same fix file drives all
+    three stages that read raw wikitext."""
+    corrs = _load_corrections()
+    vol_prefix = f"{volume}:"
+    for key, entries in corrs.items():
+        if not key.startswith(vol_prefix):
+            continue
+        if not isinstance(entries, list):
+            continue
+        for c in entries:
+            if isinstance(c, dict) and "from" in c and "to" in c:
+                text = text.replace(c["from"], c["to"])
+    return text
+
 
 def _clean_footer_initials(initials: str) -> list[str]:
     """Clean and split footer initials string.
@@ -118,12 +158,50 @@ def _load_raw_wikitext(volume: int, page_number: int) -> str | None:
 
 
 def _normalize_initials(initials: str) -> str:
-    """Normalize initials for matching: strip markup, normalize spacing."""
+    """Canonicalize a contributor signature so equivalent forms compare
+    equal.
+
+    Used both at storage (`build_contributor_table.py` cleans front-
+    matter `initials` fields before grouping) and at lookup
+    (`_find_contributor` matches body-footer signatures against
+    ContributorInitials rows).  Anything that varies between print
+    convention, wikitext markup, and OCR transcription gets folded out
+    here so the same signature is stored and looked up under one key.
+
+    Folds applied:
+      - HTML/template markup stripped (`<small>`, `{{unicode|✠}}`, &c.)
+      - HTML-entity spaces decoded (`&thinsp;`, `&nbsp;`, …)
+      - Stray prefix sigils stripped (`✠ J. G.` → `J. G.`,
+        `✝ J. C. H.` → `J. C. H.`)
+      - Asterisk placement normalized to `.*` (e.g. `O*.` → `O.*`)
+      - Repeat-punctuation collapsed (`**` → `*`, `..` → `.`)
+      - Inter-letter spacing normalized (`A.N.` → `A. N.`)
+      - Trailing period appended when the value ends in a letter
+        (rescues `T. F. T` → `T. F. T.`; mirrors the same fix
+        `_clean_footer_initials` already applies on the footer side).
+    """
     import re
-    # Strip leaked wiki/HTML markup
-    s = re.sub(r"\{\{[^{}]*", "", initials)
+    # Strip leaked wiki/HTML markup.  Unwrap `{{X|Y}}` template forms
+    # to their inner text first (so `{{unicode|✠}}` → `✠`), then drop
+    # any remaining template residue and HTML tags.
+    s = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", initials)
+    s = re.sub(r"\{\{[^{}]*", "", s)
     s = re.sub(r"<[^>]+>", "", s)
     s = re.sub(r"\}\}", "", s)
+    # Decode HTML-entity spaces used in some wikitext entries
+    # (notably vol 6's `J.&thinsp;D.&thinsp;v.&thinsp;d.&thinsp;W.`
+    # for Van Der Waals — the entities pushed the raw initials field
+    # past the build script's 20-char filter).
+    s = (s.replace("&thinsp;", " ")
+           .replace("&nbsp;", " ")
+           .replace("&emsp;", " ")
+           .replace("&ensp;", " "))
+    # Strip stray leading sigils used as deceased / honorific markers
+    # in EB1911 print (cross, dagger, asterisk-as-marker).  These are
+    # decorative at the contributor-table level but never appear in
+    # body-footer signatures, so they must come off for matches to
+    # work.
+    s = re.sub(r"^[✠✝†*\s]+", "", s)
     # Normalize asterisk placement: "O*.", "O. *", "O.*" → "O.*"
     s = re.sub(r"\*\s*\.", ".*", s)
     s = re.sub(r"\.\s*\*", ".*", s)
@@ -134,6 +212,10 @@ def _normalize_initials(initials: str) -> str:
     s = re.sub(r"\.([A-Za-z])", r". \1", s)
     # Collapse multiple spaces
     s = re.sub(r"\s+", " ", s).strip()
+    # Append trailing period if value ends in a letter — contributor
+    # signatures always end with a period in the canonical form.
+    if s and s[-1].isalpha():
+        s += "."
     return s
 
 
@@ -203,6 +285,7 @@ def extract_contributors_for_volume(volume: int) -> int:
             raw = _load_raw_wikitext(volume, page.page_number)
             if not raw:
                 continue
+            raw = _apply_corrections(raw, volume)
 
             page_segs = segments_by_page.get(page.id, [])
             if not page_segs:

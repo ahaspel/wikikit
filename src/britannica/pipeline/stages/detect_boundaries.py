@@ -809,6 +809,80 @@ def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
     return [(title, "\n\n".join(merged[title])) for title in order if merged[title]]
 
 
+_PLATE_FIELD_RE = re.compile(
+    r"^\s*"
+    r"(?:\{\{smaller\|)?"                 # optional outer {{smaller| wrapper
+    r"\{\{(?:sc|uc|small-caps)\|"          # {{sc| (or uc / small-caps)
+    r"Plate"                              # the word "Plate"
+    r"(?:"
+    r"\s+[IVX]+\.?\}\}"                   #   …I.}}    (roman inside the sc)
+    r"|"
+    r"\s*\}\}\s*[IVX]+\.?"                #   }} II.   (roman outside the sc)
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _heading_names_plate(raw: str) -> bool:
+    """True iff the page's `<noinclude>` heading carries an explicit
+    `Plate N.` token in one of its named-header positions.
+
+    EB1911 wikisource convention: every plate insert page has a page-
+    heading template (`{{rh|…}}` or `{{EB1911 Page Heading|…}}`) where
+    one of the side-header fields holds `{{sc|Plate I.}}` (or II/III/…).
+    The article-name field holds the parent article (DOG, AMPHITHEATRE,
+    &c.).  Examples:
+
+        {{EB1911 Page Heading||DOG||{{sc|Plate I.}}}}      (right side)
+        {{EB1911 Page Heading|{{sc|Plate II.}}|DOG|...|...}} (left side)
+
+    This is the canonical signal for plate-ness: explicit, deterministic,
+    set by the wikisource transcribers wherever the print original
+    interleaves a numbered plate insert.  The `_is_plate_page` content
+    heuristic (≥N images, ≤M words of prose) is the fallback for plate
+    pages whose heading doesn't carry the marker; this function should
+    short-circuit ahead of it whenever the explicit signal is present.
+    """
+    header_match = re.search(
+        r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
+    if not header_match:
+        return False
+    hdr = header_match.group(1)
+    # Find the page-heading template (rh or EB1911 Page Heading).
+    for tmpl_name in ("rh", "EB1911 Page Heading"):
+        idx = hdr.find("{{" + tmpl_name + "|")
+        if idx < 0:
+            continue
+        # Walk fields with brace-depth awareness so nested templates
+        # like `{{sc|Plate I.}}` don't fool the field splitter.
+        fields: list[str] = []
+        depth = 0
+        current = ""
+        for ch in hdr[idx:]:
+            if ch == "{":
+                depth += 1
+                current += ch
+            elif ch == "}":
+                depth -= 1
+                if depth <= 0:
+                    break
+                current += ch
+            elif ch == "|" and depth <= 2:
+                fields.append(current)
+                current = ""
+            else:
+                current += ch
+        if current:
+            fields.append(current)
+        # fields[0] is the template name; check the rest for an
+        # explicit Plate-N token.  The token can appear bare, wrapped
+        # in `{{sc|…}}`, or wrapped in `{{smaller|{{sc|…}}}}`.
+        for f in fields[1:]:
+            if _PLATE_FIELD_RE.match(f):
+                return True
+    return False
+
+
 def _is_plate_page(text: str) -> bool:
     """Detect plate pages — mostly images with little prose.
 
@@ -1180,12 +1254,23 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
             if parsed is None:
                 parsed = _split_on_bold_headings(text)
 
-            # If the page has no article boundaries, check whether it's
-            # a plate page (full-page image layout) or a continuation.
-            # Plate pages occupy a full page, start no articles, and are
-            # mostly images — they should not be folded into the open
-            # article's body text.
-            if not parsed.candidates and _is_plate_page(text):
+            # Plate-page detection.  Two signals, in order of preference:
+            #
+            #   (1) Explicit: the page heading template names the page
+            #       as `Plate N.` in one of its side-header positions.
+            #       This is the canonical signal — wikisource transcribers
+            #       set it for every plate insert.  Fires regardless of
+            #       whether `parsed.candidates` is non-empty, so plates
+            #       embedded inside a parent article's `<section …>`
+            #       span (DOG breeds across pp. 392-3 and 398-9) get
+            #       split out instead of folded into the parent's body.
+            #
+            #   (2) Heuristic fallback: page has no article boundaries
+            #       AND `_is_plate_page(text)` (≥2 images, ≤80 words of
+            #       prose).  Catches plates whose heading doesn't carry
+            #       the explicit marker.
+            if _heading_names_plate(raw) or (
+                    not parsed.candidates and _is_plate_page(text)):
                 # Extract plate title from page header templates
                 plate_title = None
                 header_match = re.search(
