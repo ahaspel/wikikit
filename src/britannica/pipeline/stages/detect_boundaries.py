@@ -32,6 +32,38 @@ _GENERIC_SEC_ID = re.compile(
 )
 
 
+def _extract_template_content(text: str, template_name: str) -> str | None:
+    """Return the first argument of a ``{{template_name|…}}`` invocation
+    in ``text``, walking brace depth so nested templates stay intact.
+
+    Returns None if the template isn't present.  A regex like
+    ``{{x-larger\\|([^}]+)\\}\\}`` truncates at the first inner ``}``,
+    which breaks for nested wrappers (``{{x-larger|{{uc|TITLE}}}}``).
+    """
+    needle = "{{" + template_name + "|"
+    start = text.find(needle)
+    if start < 0:
+        return None
+    i = start + len(needle)
+    depth = 1  # we're already past the opening "{{"
+    out = []
+    while i < len(text):
+        if text[i] == "{" and i + 1 < len(text) and text[i + 1] == "{":
+            depth += 1
+            out.append("{{")
+            i += 2
+        elif text[i] == "}" and i + 1 < len(text) and text[i + 1] == "}":
+            depth -= 1
+            if depth == 0:
+                return "".join(out)
+            out.append("}}")
+            i += 2
+        else:
+            out.append(text[i])
+            i += 1
+    return None
+
+
 def _strip_templates(text: str) -> str:
     """Unwrap nested wiki template wrappers, keeping the innermost content.
 
@@ -49,6 +81,11 @@ def _strip_templates(text: str) -> str:
         r"</?(?:big|small|sub|sup|span|font)\b[^>]*>",
         "", text, flags=re.IGNORECASE,
     )
+    # Strip wiki bold/italic markers (vol 1 AMPHITHEATRE wraps the
+    # title field in `'''…'''` and the plate label in
+    # `<small>'''{{sc|Plate}} I.'''</small>`; we want neither leaking
+    # into rendered titles).
+    text = re.sub(r"'''|''", "", text)
     return text.strip()
 
 
@@ -811,54 +848,43 @@ def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
 
 _PLATE_FIELD_RE = re.compile(
     r"^\s*"
-    r"(?:\{\{smaller\|)?"                 # optional outer {{smaller| wrapper
+    r"(?:\{\{(?:smaller|larger)\|)?"      # optional outer size wrapper
     r"\{\{(?:sc|uc|small-caps)\|"          # {{sc| (or uc / small-caps)
     r"Plate"                              # the word "Plate"
     r"(?:"
-    r"\s+[IVX]+\.?\}\}"                   #   …I.}}    (roman inside the sc)
+    r"\s+([IVX]+)\.?\}\}"                 #   …I.}}    (roman inside the sc)
     r"|"
-    r"\s*\}\}\s*[IVX]+\.?"                #   }} II.   (roman outside the sc)
-    r")",
+    r"\s*\}\}\s*([IVX]+)\.?"              #   }} II.   (roman outside the sc)
+    r"|"
+    r"\s*\}\}"                            #   }} alone — single-plate article
+    r")",                                 #     (vol 2 ANTHROPOLOGY: no Roman)
     re.IGNORECASE,
 )
 
 
-def _heading_names_plate(raw: str) -> bool:
-    """True iff the page's `<noinclude>` heading carries an explicit
-    `Plate N.` token in one of its named-header positions.
+def _extract_plate_number(raw: str) -> str | None:
+    """Return the Roman-numeral plate number from a page's heading
+    template, or None if the page heading carries no `Plate N.` token.
 
-    EB1911 wikisource convention: every plate insert page has a page-
-    heading template (`{{rh|…}}` or `{{EB1911 Page Heading|…}}`) where
-    one of the side-header fields holds `{{sc|Plate I.}}` (or II/III/…).
-    The article-name field holds the parent article (DOG, AMPHITHEATRE,
-    &c.).  Examples:
+    This is the same walk as `_heading_names_plate`; it returns the
+    numeral instead of a bool so the boundary detector can compose a
+    title like "DOG, PLATE I" and the slug derived from it stays
+    deterministic across rebuilds (the plate number is the only
+    field guaranteed to be unique per plate).
 
-        {{EB1911 Page Heading||DOG||{{sc|Plate I.}}}}      (right side)
-        {{EB1911 Page Heading|{{sc|Plate II.}}|DOG|...|...}} (left side)
-
-    This is the canonical signal for plate-ness: explicit, deterministic,
-    set by the wikisource transcribers wherever the print original
-    interleaves a numbered plate insert.  The `_is_plate_page` content
-    heuristic (≥N images, ≤M words of prose) is the fallback for plate
-    pages whose heading doesn't carry the marker; this function should
-    short-circuit ahead of it whenever the explicit signal is present.
+    Searches the whole raw page rather than only the
+    ``<noinclude>…</noinclude>`` block: transcribers vary on whether
+    the page-heading template lives inside the noinclude (DOG vol 8,
+    SHAKESPEARE vol 24) or outside it (AEGEAN CIVILIZATION vol 1).
     """
-    header_match = re.search(
-        r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
-    if not header_match:
-        return False
-    hdr = header_match.group(1)
-    # Find the page-heading template (rh or EB1911 Page Heading).
     for tmpl_name in ("rh", "EB1911 Page Heading"):
-        idx = hdr.find("{{" + tmpl_name + "|")
+        idx = raw.find("{{" + tmpl_name + "|")
         if idx < 0:
             continue
-        # Walk fields with brace-depth awareness so nested templates
-        # like `{{sc|Plate I.}}` don't fool the field splitter.
         fields: list[str] = []
         depth = 0
         current = ""
-        for ch in hdr[idx:]:
+        for ch in raw[idx:]:
             if ch == "{":
                 depth += 1
                 current += ch
@@ -874,13 +900,46 @@ def _heading_names_plate(raw: str) -> bool:
                 current += ch
         if current:
             fields.append(current)
-        # fields[0] is the template name; check the rest for an
-        # explicit Plate-N token.  The token can appear bare, wrapped
-        # in `{{sc|…}}`, or wrapped in `{{smaller|{{sc|…}}}}`.
         for f in fields[1:]:
-            if _PLATE_FIELD_RE.match(f):
-                return True
-    return False
+            # Strip cosmetic wrappers transcribers add around the
+            # plate-label field (vol 1 AMPHITHEATRE:
+            # `<small>'''{{sc|Plate}} I.'''</small>`); the regex below
+            # only knows the bare and `{{(smaller|larger)|…}}` forms.
+            cleaned = re.sub(r"</?(?:big|small|sub|sup)\b[^>]*>",
+                             "", f, flags=re.IGNORECASE)
+            cleaned = re.sub(r"'''|''", "", cleaned)
+            m = _PLATE_FIELD_RE.match(cleaned)
+            if m:
+                # group(1)/group(2) are the Roman numeral when the
+                # heading carries one; both are None for bare
+                # `{{sc|Plate}}` (single-plate articles).  Empty
+                # string in that case so the gate fires while the
+                # title-composer can distinguish "PLATE I" from
+                # "PLATE" with no number.
+                return (m.group(1) or m.group(2) or "").upper()
+    return None
+
+
+def _heading_names_plate(raw: str) -> bool:
+    """True iff the page's heading template carries an explicit
+    `Plate N.` token in one of its named-header positions.
+
+    EB1911 wikisource convention: every plate insert page has a page-
+    heading template (`{{rh|…}}` or `{{EB1911 Page Heading|…}}`) where
+    one of the side-header fields holds `{{sc|Plate I.}}` (or II/III/…).
+    The article-name field holds the parent article (DOG, AMPHITHEATRE,
+    &c.).  Examples:
+
+        {{EB1911 Page Heading||DOG||{{sc|Plate I.}}}}      (right side)
+        {{EB1911 Page Heading|{{sc|Plate II.}}|DOG|...|...}} (left side)
+        {{rh||GRAPHIC ART|{{smaller|{{sc|Plate I.}}}}}}    (outside noinclude)
+
+    Transcribers vary on whether the heading template sits inside the
+    page's ``<noinclude>…</noinclude>`` block or outside it (AEGEAN
+    plates put it outside, DOG/SHAKESPEARE put it inside), so the walk
+    looks at the whole raw page.
+    """
+    return _extract_plate_number(raw) is not None
 
 
 def _is_plate_page(text: str) -> bool:
@@ -1277,12 +1336,16 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
                 if header_match:
                     hdr = header_match.group(1)
-                    # {{x-larger|TITLE}} or {{larger|TITLE}} (may nest {{uc|...}})
-                    t = re.search(r"\{\{x-larger\|([^}]+)\}\}", hdr)
-                    if not t:
-                        t = re.search(r"\{\{larger\|([^}]+)\}\}", hdr)
-                    if t:
-                        plate_title = _strip_templates(t.group(1)).rstrip(",.")
+                    # {{x-larger|TITLE}} or {{larger|TITLE}} — walk braces
+                    # so a nested wrapper like {{uc|SHAKESPEARE}} inside
+                    # {{x-larger|…}} doesn't truncate the captured field
+                    # at the inner `}` (a `[^}]+` capture would yield
+                    # `{{uc|SHAKESPEARE` and leak that into the title).
+                    inner = _extract_template_content(hdr, "x-larger")
+                    if inner is None:
+                        inner = _extract_template_content(hdr, "larger")
+                    if inner is not None:
+                        plate_title = _strip_templates(inner).rstrip(",.")
                     else:
                         # {{rh|...|TITLE|...}} or {{EB1911 Page Heading|...|TITLE|...}}
                         # Split on top-level pipes (respecting brace depth) to find fields.
@@ -1328,6 +1391,24 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                                 break
                 if not plate_title:
                     plate_title = f"PLATE (VOL. {page.volume}, P. {page.page_number})"
+
+                # Compose final title with the plate's Roman-numeral
+                # suffix (`DOG, PLATE I`, `SHAKESPEARE, PLATE II`).
+                # The plate number is the only universally unique
+                # signal across plates of the same article, so we key
+                # the slug off it: the collective legend may repeat
+                # (DOG plates II and III both read "TYPICAL SPORTING
+                # DOGS") or be absent entirely.
+                plate_num = _extract_plate_number(raw)
+                if plate_num:
+                    plate_title = f"{plate_title}, PLATE {plate_num}"
+                elif plate_num is not None:
+                    # Plate detected but heading carries no Roman numeral
+                    # (single-plate articles like vol 2 ANTHROPOLOGY use
+                    # bare `{{sc|Plate}}`).  Append the bare suffix so the
+                    # plate's title and slug stay distinct from the parent
+                    # article's.
+                    plate_title = f"{plate_title}, PLATE"
 
                 plate = DetectedArticle(
                     title=plate_title,
@@ -1450,8 +1531,13 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                         # raw wikitable markup (image grids, caption
                         # cells) gets dumped into the parent article's
                         # prose body and renders as broken tables.
+                        _plate_num2 = _extract_plate_number(raw)
+                        _plate_title2 = (
+                            f"{_redirect.title}, PLATE {_plate_num2}"
+                            if _plate_num2 else _redirect.title
+                        )
                         articles.append(DetectedArticle(
-                            title=_redirect.title,
+                            title=_plate_title2,
                             volume=page.volume,
                             page_start=page.page_number,
                             page_end=page.page_number,
