@@ -216,6 +216,23 @@ def _normalize_initials(initials: str) -> str:
     # signatures always end with a period in the canonical form.
     if s and s[-1].isalpha():
         s += "."
+    # Fold OCR all-caps variants of multi-letter initial tokens.
+    # ``W. AY.`` and ``W. Ay.`` are the same person ("Wilfrid Airy")
+    # but get stored as different ContributorInitials rows — and so
+    # different Contributor records — without this fold.  Only
+    # multi-letter alphabetic tokens with a trailing period are
+    # title-cased; single-letter tokens (``W.`` vs ``w.``) keep
+    # their case to avoid altering well-formed initials.
+    parts = []
+    for tok in s.split(" "):
+        if (len(tok) >= 3
+                and tok[-1] == "."
+                and tok[:-1].isalpha()
+                and tok[:-1].isupper()):
+            parts.append(tok[0] + tok[1:-1].lower() + ".")
+        else:
+            parts.append(tok)
+    s = " ".join(parts)
     return s
 
 

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from sqlalchemy import func
 
+from britannica.export.sections import detect_sections
 from britannica.db.models import (
     Article, ArticleContributor, ArticleImage,
     Contributor, ContributorInitials, CrossReference, SourcePage,
@@ -113,9 +114,39 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
         title_map[a.title.upper()] = _safe_filename(a, a.title)
 
     for entry in contrib_map.values():
-        desc = (entry.get("description") or "").lower()
+        desc_raw = entry.get("description") or ""
+        desc = desc_raw.lower()
         if "biographical article" not in desc:
             continue
+
+        # If the source description contained an explicit
+        # ``{{EB1911 article link|target|display}}`` template, we
+        # preserved it as a ``«BIOLINK:target|display«/BIOLINK»``
+        # marker in `_clean_description`.  Use the display text
+        # (full article title as written in the source) as the
+        # primary lookup key — bypasses the surname-inversion path
+        # for peerage cases like St. Cyres → Iddesleigh.
+        bio_m = re.search(
+            r"«BIOLINK:([^|«]*)\|([^«]*)«/BIOLINK»", desc_raw,
+        )
+        if bio_m:
+            link_target, link_display = (
+                bio_m.group(1).strip(), bio_m.group(2).strip()
+            )
+            # Try display first (matches the article title verbatim
+            # in the canonical "SURNAME, FIRSTNAMES, ..." form).
+            for cand in (link_display, link_target):
+                fn = title_map.get(cand.upper())
+                if fn:
+                    entry["bio_article_filename"] = fn
+                    break
+            else:
+                # No exact match.  Fall through to surname inversion
+                # below — the source's link target may differ slightly
+                # from how the article is filed.
+                pass
+            if "bio_article_filename" in entry:
+                continue
 
         full_name = entry["full_name"]
         # Strip parenthetical dates
@@ -188,6 +219,18 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
 
         if fn:
             entry["bio_article_filename"] = fn
+
+    # Strip BIOLINK markers from all descriptions: the viewer hides the
+    # "See the biographical article…" sentence anyway, but if any case
+    # leaks past the regex strip we don't want the raw marker visible.
+    # `«BIOLINK:target|display«/BIOLINK»` → `display`.
+    for entry in contrib_map.values():
+        desc = entry.get("description") or ""
+        if "«BIOLINK:" in desc:
+            entry["description"] = re.sub(
+                r"«BIOLINK:[^|«]*\|([^«]*)«/BIOLINK»",
+                r"\1", desc,
+            )
 
 
 def _source_quality(session, article: Article) -> dict:
@@ -346,6 +389,8 @@ _PROTECTED_SPAN_RES = (
     re.compile(r"«HTMLTABLE:.*?«/HTMLTABLE»", re.DOTALL),
     re.compile(r"«MATH:.*?«/MATH»", re.DOTALL),
     re.compile(r"«PRE:.*?«/PRE»", re.DOTALL),
+    re.compile(r"«OUTLINE:.*?«/OUTLINE»", re.DOTALL),
+    re.compile(r"«PLATE_OUTLINE:.*?«/PLATE_OUTLINE»", re.DOTALL),
 )
 
 
@@ -761,6 +806,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "word_count": len(body.split()),
                 "parent_article": parent_article_info,
                 "body": body,
+                "sections": detect_sections(body),
                 "xrefs": xref_list,
                 "images": [
                     {

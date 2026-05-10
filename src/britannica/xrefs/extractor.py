@@ -63,6 +63,56 @@ _PAREN_SEE_PATTERN = re.compile(
 _SEE_ALSO_PATTERN = re.compile(r"\bSee also ([A-Z][A-Z\s\-]+)\b")
 _SEE_PATTERN = re.compile(r"\bSee ([A-Z][A-Z\s\-]+)\b")
 
+# Mixed-case sentence-level references.  The all-caps patterns above
+# only catch ``See QUEBEC`` style; many EB1911 articles have
+# mixed-case titles (``Babylonia and Assyria``, ``Roman Art``) and
+# the references to them are ``See Roman Art`` or lowercase
+# ``see Roman Art`` mid-sentence.  Coverage audit (2026-05-07,
+# tools/diagnostics/xref_coverage_audit.py) found 1,300+ resolvable
+# candidates across these patterns.
+#
+# Target shape: starts with ``[A-Z]``, then any letter/digit/comma/
+# space/apostrophe/period/hyphen, bounded by punctuation or one of a
+# small list of stop-conjunctions ("and"/"or"/"in"/"of"/...).  Length
+# 4-80 to avoid grabbing single capitalized words ("see God") or
+# whole paragraphs.  ``_is_plausible_target`` filters the residual
+# junk; unresolvable targets just don't link.
+_TARGET_TAIL = (
+    r"([A-Z][A-Za-z][A-Za-z0-9 ,'.\-]{2,80}?)"
+    r"(?=[,;.)\"“”‘’]|"
+    r"\s+(?:and|or|in|of|on|by|at|to|from|with|for|under|"
+    r"who|which|where|when|while|the)\b|$|\n)"
+)
+
+# ``see article X`` / ``see the article X`` / ``see the article on X``
+# — the most distinctive form (68% precision in the audit).  Allow
+# the leading ``See``/``see`` to be either case.
+_SEE_ARTICLE_PATTERN = re.compile(
+    r"\b[Ss]ee\s+(?:the\s+)?article\s+(?:on\s+)?" + _TARGET_TAIL
+)
+
+# Mixed-case ``See X`` — sentence-leading ``See`` followed by mixed-
+# case target.  Runs after the all-caps version so dedup-by-target
+# avoids double-extraction when both match the same target.
+_SEE_MIXED_PATTERN = re.compile(r"\bSee\s+" + _TARGET_TAIL)
+
+# Lowercase ``see X`` mid-sentence.  Biggest single source of
+# unrealized links per the audit (781 resolvable).  More noise-prone
+# than the capitalised form (78% of candidates don't resolve), but
+# cheap because unresolvable ones are filtered at extraction by
+# ``_is_plausible_target`` and at resolution by absence-of-title.
+_SEE_LOWER_PATTERN = re.compile(r"(?<![\w.])see\s+" + _TARGET_TAIL)
+
+# ``See also X`` mixed-case variant.
+_SEE_ALSO_MIXED_PATTERN = re.compile(r"\bSee\s+also\s+" + _TARGET_TAIL)
+
+# ``Cf. X`` / ``cf. X`` — Latin abbreviation for ``compare``.
+_CF_PATTERN = re.compile(r"\b[Cc]f\.\s+" + _TARGET_TAIL)
+
+# ``compare X`` — English equivalent of ``cf.``.  Low volume but high
+# enough precision to be worth catching.
+_COMPARE_PATTERN = re.compile(r"\b[Cc]ompare\s+" + _TARGET_TAIL)
+
 
 def _strip_markers(text: str) -> str:
     """Remove internal markers (links, formatting) to get plain text."""
@@ -181,6 +231,27 @@ def _is_plausible_target(target: str) -> bool:
     # Reject targets with stray semicolons (broken markup)
     if ";" in target:
         return False
+    # Reject Wikisource cross-project / language-prefix targets:
+    # ``:sv:Antiqvarisk Tidskrift för Sverige`` (Swedish Wikisource),
+    # ``:de:...``, ``:fr:...``, etc.  These are inter-project links,
+    # not EB1911 article references.
+    if re.match(r"^\s*:[a-z]{2,3}:", target, re.IGNORECASE):
+        return False
+    # Reject targets ending in a single uppercase letter (with or
+    # without trailing period): ``See Rev. E``, ``See Miss A``,
+    # ``See Sir J`` — the trailing letter is a person's first
+    # initial, the surface text was truncated mid-name by the
+    # extractor's pattern.  Single uppercase letter is never a real
+    # article title.
+    if re.search(r"\b[A-Z]\.?\s*$", target) and len(target) <= 12:
+        return False
+    # Reject legal-citation residue: ``R.S.C., O. xliii.`` shape —
+    # comma-separated all-caps initialism followed by a period+lower-
+    # roman fragment.  These get extracted from cell-table tabular
+    # citations that the loose ``See X`` pattern grabs.
+    if re.search(r"^[A-Z]\.[A-Z]\.[A-Z]\.,?\s*[A-Z]?\.\s*[ivxlcdm]+\b",
+                 target, re.IGNORECASE):
+        return False
     return True
 
 
@@ -244,6 +315,28 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         _add(m.group(0), m.group(1), "see_also")
 
     for m in _SEE_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
+
+    # Mixed-case / lowercase variants — added 2026-05-07 after coverage
+    # audit found 1,710 resolvable candidates the strict patterns missed.
+    # Dedup ensures these don't double-emit when the all-caps versions
+    # also match.
+    for m in _SEE_ARTICLE_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
+
+    for m in _SEE_ALSO_MIXED_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see_also")
+
+    for m in _SEE_MIXED_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
+
+    for m in _SEE_LOWER_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
+
+    for m in _CF_PATTERN.finditer(text):
+        _add(m.group(0), m.group(1), "see")
+
+    for m in _COMPARE_PATTERN.finditer(text):
         _add(m.group(0), m.group(1), "see")
 
     return results
