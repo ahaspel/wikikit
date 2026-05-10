@@ -68,9 +68,7 @@ def _section_key(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", name.strip().lower())
 
 
-def _section_slug(name: str) -> str:
-    """URL-safe slug — lowercase, non-alphanumerics → single hyphen."""
-    return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
+from britannica.util.strings import section_slug as _section_slug
 
 
 def _display_section_name(name: str) -> str:

@@ -78,3 +78,23 @@ _INTERNAL_VERSE = "\x05"
 _INTERNAL_FORMAT = "\x06"   # bold, italic, small-caps
 _INTERNAL_SEC = "\x07"
 _INTERNAL_PRE = "\x08"
+
+
+# ── Shared compiled regexes and helpers ─────────────────────────────────────
+
+import re as _re
+
+# Page marker — emitted between source pages during article assembly.
+# Lives at the boundary between source pages so downstream stages can still
+# locate the original page when needed. Form: \x01PAGE:N\x01
+PAGE_MARKER_RE = _re.compile(r"\x01PAGE:\d+\x01")
+PAGE_MARKER_CAPTURE_RE = _re.compile(r"\x01PAGE:(\d+)\x01")
+
+
+def strip_page_markers(text: str, replacement: str = "") -> str:
+    """Remove all `\\x01PAGE:N\\x01` markers from ``text``.
+
+    Pass ``replacement=" "`` for search-index contexts where adjacent words
+    must remain distinct after the marker is removed.
+    """
+    return PAGE_MARKER_RE.sub(replacement, text)

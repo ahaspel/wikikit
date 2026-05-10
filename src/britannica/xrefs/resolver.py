@@ -87,9 +87,10 @@ _DISAMBIGUATOR_SYNONYMS: dict[str, set[str]] = {
 }
 
 
+from britannica.markers import PAGE_MARKER_RE as _PAGE_MARKER_RE
+
 _LN_DISPLAY_RE = re.compile(r"«LN:[^|]*\|([^«]*)«/LN»")
 _PAREN_DISAMBIG_RE = re.compile(r"\(([^)]+)\)")
-_PAGE_MARKER_RE = re.compile(r"\x01PAGE:\d+\x01")
 _INNER_MARKER_RE = re.compile(r"«/?[A-Z]+(?::[^«»]*)?»")
 
 

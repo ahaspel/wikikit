@@ -11,6 +11,7 @@ from britannica.db.models import (
     Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
+from britannica.markers import strip_page_markers
 
 
 _QUALITY_NOTES = {
@@ -269,14 +270,7 @@ def _source_quality(session, article: Article) -> dict:
     }
 
 
-def _section_slug(name: str) -> str:
-    """URL-safe slug from a wikisource section name (or any string).
-
-    Preserves ASCII letters/digits, lowercases, collapses runs of other
-    chars to a single hyphen. Strips surrounding hyphens."""
-    name = (name or "").strip().lower()
-    name = re.sub(r"[^a-z0-9]+", "-", name)
-    return name.strip("-")
+from britannica.util.strings import section_slug as _section_slug
 
 
 def stable_id(article) -> str:
@@ -437,7 +431,7 @@ def _clean_surface_for_matching(surface: str) -> str:
     located against an export-stage body that may have markers
     interleaved."""
     s = re.sub(r"«/?[A-Z]+(?::[^«»]*)?»", "", surface)
-    s = re.sub(r"\x01PAGE:\d+\x01", "", s)
+    s = strip_page_markers(s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
@@ -882,7 +876,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             # (e.g. BEE's body starts with `{{IMG:…}}` followed by a
             # caption; we want the caption/body, not the raw marker).
             preview_source = body
-            preview_source = re.sub(r"\x01PAGE:\d+\x01", "", preview_source)
+            preview_source = strip_page_markers(preview_source)
             preview_source = re.sub(
                 r"\{\{IMG:[^}]*\}\}", "", preview_source)
             preview_source = re.sub(
