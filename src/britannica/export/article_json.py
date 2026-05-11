@@ -374,9 +374,27 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
-def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
+def export_articles_to_json(
+    volume: int,
+    out_dir: str | Path,
+    body_override: dict[int, str] | None = None,
+) -> int:
+    """Export one volume's articles to JSON.
+
+    ``body_override`` (article.id → body) is a test seam: when given,
+    each article's body is taken from the map instead of ``article.body``.
+    Used by ``tools/diagnostics/verify_refactor.py --full`` to run the
+    full pipeline (transform → export → clean_body) against an
+    in-memory shadow body without writing to the DB.  Production callers
+    pass nothing and behavior is unchanged.
+    """
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+
+    _overrides = body_override or {}
+
+    def _body_for(article: Article) -> str:
+        return _overrides.get(article.id, article.body) or ""
 
     session = SessionLocal()
 
@@ -494,7 +512,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
 
             # Resolve inline link markers: embed target filename for resolved xrefs
             # «LN:target|display«/LN» → «LN:filename|target|display«/LN»
-            body = article.body or ""
+            body = _body_for(article)
             # Phase 2 body-wrapping: propagate resolved qv/see/see_also
             # xrefs into the body prose so those mentions render as
             # clickable links instead of only appearing in the xref
@@ -613,13 +631,13 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             # used to run as a separate post-export pass (postprocess.py);
             # folding it in here makes export the single owner of body
             # output, so reprocess_article.py produces faithful JSON.
-            #
-            # NOTE: word_count / sections are computed from the *pre*-cleanup
-            # body to stay byte-identical to historically shipped JSON —
-            # postprocess.py only ever rewrote the "body" field, leaving
-            # those two derived from the uncleaned text.
             cleaned_body = clean_body(body)
 
+            # word_count and sections describe the *shipped* body, so
+            # they're derived from cleaned_body — not the pre-cleanup
+            # text.  sections in particular must match what the viewer's
+            # detectSections() emits at render time (it runs on the
+            # shipped body), or deep-section URLs won't resolve.
             payload = {
                 "id": article.id,
                 "stable_id": stable_id(article),
@@ -633,10 +651,10 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "leaf_start": _leaf_for_ws(article.volume, article.page_start),
                 "leaf_end": _leaf_for_ws(article.volume, article.page_end),
                 "source_quality": quality,
-                "word_count": len(body.split()),
+                "word_count": len(cleaned_body.split()),
                 "parent_article": parent_article_info,
                 "body": cleaned_body,
-                "sections": detect_sections(body),
+                "sections": detect_sections(cleaned_body),
                 "xrefs": xref_list,
                 "images": [
                     {
@@ -704,7 +722,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 )
                 .count()
             )
-            body = article.body or ""
+            body = _body_for(article)
             body = _strip_redundant_title(body, article.title)
             # First ~10 words of body for disambiguation in the index.
             # Skip any leading paragraphs that are just image / table /

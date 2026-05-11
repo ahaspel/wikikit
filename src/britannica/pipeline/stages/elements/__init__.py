@@ -194,16 +194,45 @@ def _is_compound_table(table_text: str) -> bool:
     return False
 
 
+# Spans whose `{|` / `|}` are NOT wiki-table syntax — LaTeX inside
+# <math>…</math> (`\frac{|…}`), verbatim <nowiki>…</nowiki>, and
+# commented-out <!--…-->.  These get extracted to placeholders just
+# after this function runs (see extract()), so masking them here only
+# stops the balanced-table scan from reading a stray brace-pipe as a
+# table opener/closer — which silently swallowed ~5000 words of
+# INFINITESIMAL CALCULUS (vol 14 p577 `\frac{|\partial f}`) and shifted
+# table pairings in NUMBER (vol 19 p879 `\frac{R}{|√Δ|}`).  <ref> is
+# deliberately NOT masked: footnote bodies legitimately carry tables
+# this extractor must find.
+_NON_TABLE_BRACE_SPAN_RE = re.compile(
+    r"<math\b[^>]*>.*?</math\s*>"
+    r"|<nowiki\b[^>]*>.*?</nowiki\s*>"
+    r"|<!--.*?-->",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
 def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
     """Extract wiki tables using balanced {| |} matching.
 
     Handles nested tables correctly by finding outermost {| first.
     Tables containing {{Css image crop}} are registered as DJVU_CROP
     so they get image processing instead of table processing.
+
+    Brace-pipes inside <math>/<nowiki>/comment spans are masked off
+    before the scan (see _NON_TABLE_BRACE_SPAN_RE) so LaTeX like
+    `\\frac{|…}` isn't misread as a table boundary.
     """
     while True:
+        # Re-derive each iteration: extracting a table mutates `text`.
+        # Same length as `text` (spans replaced by equal-length spaces),
+        # so offsets are interchangeable — scan on `masked`, slice the
+        # extracted table out of the original `text`.
+        masked = _NON_TABLE_BRACE_SPAN_RE.sub(
+            lambda m: " " * len(m.group(0)), text)
+
         # Find the first {| that isn't already inside a placeholder
-        idx = text.find("{|")
+        idx = masked.find("{|")
         if idx < 0:
             break
 
@@ -222,15 +251,15 @@ def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
         i = idx
         found = False
         while i < len(text) - 1:
-            if text[i:i+2] == "{{":
+            if masked[i:i+2] == "{{":
                 # Skip to matching }} (nested-brace aware).
                 tdepth = 1
                 j = i + 2
                 while j < len(text) - 1 and tdepth > 0:
-                    if text[j:j+2] == "{{":
+                    if masked[j:j+2] == "{{":
                         tdepth += 1
                         j += 2
-                    elif text[j:j+2] == "}}":
+                    elif masked[j:j+2] == "}}":
                         tdepth -= 1
                         j += 2
                     else:
@@ -246,15 +275,15 @@ def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
                     # literal and keep scanning for the table close.
                     i += 2
                 continue
-            if text[i:i+2] == "{|":
+            if masked[i:i+2] == "{|":
                 depth += 1
                 i += 2
-            elif text[i:i+2] == "|}" or (
-                text[i:i+8].lower() == "</table>" and depth > 0
+            elif masked[i:i+2] == "|}" or (
+                masked[i:i+8].lower() == "</table>" and depth > 0
             ):
                 depth -= 1
                 # Compute length of the closer we matched.
-                closer_len = 2 if text[i:i+2] == "|}" else 8
+                closer_len = 2 if masked[i:i+2] == "|}" else 8
                 if depth == 0:
                     # Found the balanced close
                     table_text = text[idx:i + closer_len]
