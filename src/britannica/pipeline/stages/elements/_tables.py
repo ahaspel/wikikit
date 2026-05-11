@@ -18,7 +18,10 @@ from britannica.pipeline.stages.elements._leaf import (
     _is_structural_formula,
 )
 from britannica.pipeline.stages.elements._registry import ElementRegistry, _PH
-from britannica.pipeline.stages.elements._text import _strip_br
+from britannica.pipeline.stages.elements._text import (
+    _convert_inline_sub_sup,
+    _strip_br,
+)
 
 def _extract_subtable_values(table_text: str) -> list[str]:
     """Extract cell values from a nested sub-table (single-column layout)."""
