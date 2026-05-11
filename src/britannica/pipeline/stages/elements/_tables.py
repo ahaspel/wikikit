@@ -23,6 +23,35 @@ from britannica.pipeline.stages.elements._text import (
     _strip_br,
 )
 
+
+def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
+    """Join row strings into a ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` marker.
+
+    Data tables (``header=False``): canonical form — one space on each
+    side of every ``|`` separator, multi-space runs collapsed (an empty
+    cell renders as ``a | | b`` not ``a |   | b``), blank rows removed.
+    Emitting this directly from the renderer means ``clean_body``'s
+    ``_normalize_table_pipes`` / ``_collapse_table_blanks`` passes become
+    no-ops on renderer-produced tables.  (Downstream legend-detection in
+    ``legend_promote._table_row_cells`` is whitespace-robust, so the
+    collapsed-empty-cell form doesn't change which tables become legends.)
+
+    Header tables (``header=True``): rows are joined raw — ``clean_body``'s
+    ``\\{\\{TABLE:(.*?)\\}TABLE\\}`` regex never matched ``{{TABLEH:`` (the
+    ``:`` must follow ``TABLE`` immediately), so header tables were never
+    normalized.  Matching that here keeps shipped output identical;
+    normalizing header tables too is a deliberate-change item (burndown).
+    """
+    content = "\n".join(text_rows)
+    if not header:
+        content = re.sub(r"(?<! )\|", " |", content)
+        content = re.sub(r"\|(?! )", "| ", content)
+        content = re.sub(r"  +", " ", content)
+        content = re.sub(r"\n\s*\n", "\n", content)
+    tag = "TABLEH" if header else "TABLE"
+    return "{{" + tag + ":" + content + "}TABLE}"
+
+
 def _extract_subtable_values(table_text: str) -> list[str]:
     """Extract cell values from a nested sub-table (single-column layout)."""
     values = []
@@ -705,8 +734,7 @@ def _process_table(inner: str, text_transform,
     if image_parts:
         parts.extend(image_parts)
     if text_rows:
-        header = "H" if caption else ""
-        parts.append("{{TABLE" + header + ":" + "\n".join(text_rows) + "}TABLE}")
+        parts.append(_emit_table_marker(text_rows, header=bool(caption)))
 
     if parts:
         return "\n\n".join(parts)
@@ -1004,8 +1032,7 @@ def _process_html_table(
         if cells:
             text_rows.append(" | ".join(cells))
     if text_rows:
-        header = "H" if has_header else ""
-        return "{{TABLE" + header + ":" + "\n".join(text_rows) + "}TABLE}"
+        return _emit_table_marker(text_rows, header=bool(has_header))
     return ""
 
 
