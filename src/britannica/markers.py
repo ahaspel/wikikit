@@ -98,3 +98,10 @@ def strip_page_markers(text: str, replacement: str = "") -> str:
     must remain distinct after the marker is removed.
     """
     return PAGE_MARKER_RE.sub(replacement, text)
+
+
+# Image markers — full ``{{IMG:filename|optional caption}}`` block.
+# ``IMG_RE`` matches the whole marker (use to strip), ``IMG_PARTS_RE``
+# captures filename and optional caption.
+IMG_RE = _re.compile(r"\{\{IMG:[^}]*\}\}")
+IMG_PARTS_RE = _re.compile(r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}")
