@@ -13,8 +13,10 @@ is handled naturally by recursion.
 from __future__ import annotations
 
 import re
+from dataclasses import replace as _dc_replace
 
 from britannica.parsers import img_float as _img_float_parser
+from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._text import (
     _clean_text,
     _convert_inline_sub_sup,
@@ -27,7 +29,6 @@ from britannica.pipeline.stages.elements._ref import (
     _resolve_ref_bodies,
 )
 from britannica.pipeline.stages.elements._image import (
-    _CHART2_IMAGES,
     _CSS_CROP_RE,
     _parse_crop_param,
     _process_chart2,
@@ -394,14 +395,14 @@ def _strip_delimiters(element_type: str, raw: str) -> str:
 
 
 def _process_element(element_type: str, raw: str,
-                     text_transform, context: dict) -> str:
+                     text_transform, context: ElementContext) -> str:
     """Process a single element recursively.
 
     Args:
         element_type: TABLE, IMAGE, REF, POEM, MATH, SCORE, IMAGE_FLOAT
         raw: the raw wikitext of the element
         text_transform: function to transform plain wikitext (bold, italic, etc.)
-        context: dict with 'volume' and 'page_number' for score lookups
+        context: per-article ElementContext (volume / page / ref_bodies / crop counters)
     """
     # DJVU_CROP, CHART2, SCORE, and COMPOUND_TABLE are self-contained —
     # process from raw, no recursive child extraction.
@@ -432,10 +433,10 @@ def _process_element(element_type: str, raw: str,
     if element_type == "MATH":
         result = _process_math(inner)
     elif element_type == "REF_SELF":
-        result = _process_ref_self(raw, context.get("ref_bodies"))
+        result = _process_ref_self(raw, context.ref_bodies)
     elif element_type == "REF":
         result = _process_ref(raw, inner, text_transform,
-                              context.get("ref_bodies"))
+                              context.ref_bodies)
     elif element_type == "IMAGE":
         result = _process_image(inner, text_transform)
     elif element_type == "IMAGE_FLOAT":
@@ -617,13 +618,14 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
 
 # ── Public API ────────────────────────────────────────────────────────
 
-def process_elements(text: str, text_transform, context: dict) -> str:
+def process_elements(text: str, text_transform, context: ElementContext) -> str:
     """Extract, process, and reassemble all embedded elements.
 
     Args:
         text: raw wikitext (may contain tables, images, footnotes, etc.)
         text_transform: function that transforms plain wikitext to marker format
-        context: dict with 'volume', 'page_number' for score lookups
+        context: per-article ElementContext (volume / page used for score
+            and chart-image lookups)
 
     Returns:
         text with all embedded elements processed to their final form
@@ -640,9 +642,10 @@ def process_elements(text: str, text_transform, context: dict) -> str:
     # p684 where ``Atom<ref name=654f1/>`` is the anchor and the body
     # arrives only via ``<ref follow=654f1>…</ref>`` two paragraphs
     # later. Threaded into ``context`` so ``_process_element`` can
-    # forward it to ``_process_ref`` / ``_process_ref_self``.
-    context = dict(context)
-    context["ref_bodies"] = _resolve_ref_bodies(registry, text_transform)
+    # forward it to ``_process_ref`` / ``_process_ref_self``.  We copy
+    # the caller's context so we don't mutate it.
+    context = _dc_replace(context)
+    context.ref_bodies = _resolve_ref_bodies(registry, text_transform)
 
     # Process each element (recursion handles nesting)
     processed_map = {}

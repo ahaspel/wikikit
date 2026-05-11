@@ -11,6 +11,7 @@ from britannica.db.models import (
     Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
+from britannica.export.body_cleanup import clean_body
 from britannica.export.body_postprocess import (
     _BIBLIOGRAPHIC_PATTERNS,
     _PROTECTED_SPAN_RES,
@@ -607,6 +608,18 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
             # the inline repeat is redundant.
             body = _strip_redundant_title(body, article.title)
 
+            # Final body cleanup (codepoint normalization, leaked table
+            # attributes, orphan pipe-rows, blank-line collapse).  This
+            # used to run as a separate post-export pass (postprocess.py);
+            # folding it in here makes export the single owner of body
+            # output, so reprocess_article.py produces faithful JSON.
+            #
+            # NOTE: word_count / sections are computed from the *pre*-cleanup
+            # body to stay byte-identical to historically shipped JSON —
+            # postprocess.py only ever rewrote the "body" field, leaving
+            # those two derived from the uncleaned text.
+            cleaned_body = clean_body(body)
+
             payload = {
                 "id": article.id,
                 "stable_id": stable_id(article),
@@ -622,7 +635,7 @@ def export_articles_to_json(volume: int, out_dir: str | Path) -> int:
                 "source_quality": quality,
                 "word_count": len(body.split()),
                 "parent_article": parent_article_info,
-                "body": body,
+                "body": cleaned_body,
                 "sections": detect_sections(body),
                 "xrefs": xref_list,
                 "images": [

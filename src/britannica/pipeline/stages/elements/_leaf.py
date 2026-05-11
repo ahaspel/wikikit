@@ -10,18 +10,19 @@ from __future__ import annotations
 import html as html_mod
 import re
 
+from britannica.image_assets import SCORE_IMAGES, SCORE_TAG
+from britannica.pipeline.stages.elements._context import ElementContext
 
-def _process_score(raw: str, context: dict) -> str:
+
+def _process_score(raw: str, context: ElementContext) -> str:
     """Replace <score> tag with pre-rendered Wikimedia image URL."""
-    from britannica.pipeline.stages.clean_pages import _SCORE_IMAGES, _SCORE_TAG
-
-    vol = context.get("volume")
-    page = context.get("page_number")
+    vol = context.volume
+    page = context.page_number
     if vol is not None and page is not None:
         # Try to match by content against the static map
-        matches = list(_SCORE_TAG.finditer(raw))
+        matches = list(SCORE_TAG.finditer(raw))
         if matches:
-            for (v, p, idx), url in _SCORE_IMAGES.items():
+            for (v, p, idx), url in SCORE_IMAGES.items():
                 if v == vol and p == page:
                     return f"{{{{IMG:{url}|Musical notation}}}}"
     return "[Musical notation]"

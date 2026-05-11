@@ -527,12 +527,13 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # transform, so all tables have their {| and |} in the same text.
 
     # Extract, process, reassemble — this does all the work
-    context = {"volume": volume, "page_number": page_number}
+    from britannica.pipeline.stages.elements import ElementContext
+    context = ElementContext(volume=volume, page_number=page_number)
     text = process_elements(text, _transform_body_text, context)
 
     # Inject chart images for pages where chart2 markup was lost during import
-    from britannica.pipeline.stages.elements import _CHART2_IMAGES
-    for (v, p), filename in _CHART2_IMAGES.items():
+    from britannica.image_assets import CHART2_IMAGES
+    for (v, p), filename in CHART2_IMAGES.items():
         if v == volume and f"IMG:{filename}" not in text:
             marker = f"\x01PAGE:{p}\x01"
             if marker in text:

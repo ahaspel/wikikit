@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import re
 
+from britannica.image_assets import CHART2_IMAGES
 from britannica.parsers import img_float as _img_float_parser
+from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._text import _clean_text
 
 
@@ -80,13 +82,13 @@ def _parse_crop_param(body: str, name: str) -> str:
     return m.group(1).strip() if m else ""
 
 
-def _process_djvu_crop(raw: str, text_transform, context: dict) -> str:
+def _process_djvu_crop(raw: str, text_transform, context: ElementContext) -> str:
     """Process a table containing a {{Css image crop}} template.
 
     Extracts the crop filename and caption from the table, producing
     {{IMG:djvu_volNN_pageNNNN_cropN.jpg|caption}}.
 
-    Crop indices are tracked in context['_djvu_crop_counters'] to match
+    Crop indices are tracked in context.djvu_crop_counters to match
     the order used by tools/download_djvu_crops.py.
     """
     crop_m = _CSS_CROP_RE.search(raw)
@@ -105,8 +107,8 @@ def _process_djvu_crop(raw: str, text_transform, context: dict) -> str:
             return ""
         page = int(page_str)
         vol_m = re.search(r"Volume (\d+)", image)
-        vol = int(vol_m.group(1)) if vol_m else context.get("volume", 0)
-        counters = context.setdefault("_djvu_crop_counters", {})
+        vol = int(vol_m.group(1)) if vol_m else context.volume
+        counters = context.djvu_crop_counters
         key = (vol, page)
         idx = counters.get(key, 0)
         counters[key] = idx + 1
@@ -147,25 +149,15 @@ def _process_djvu_crop(raw: str, text_transform, context: dict) -> str:
     return f"\n\n{{{{IMG:{filename}}}}}\n\n"
 
 
-# Static lookup: (volume, page) → chart image filename
-_CHART2_IMAGES = {
-    (1, 124): "chart2_vol01_page0124.jpg",
-    (21, 573): "chart2_vol21_page0573.jpg",
-    (23, 945): "chart2_vol23_page0945.jpg",
-    (24, 271): "chart2_vol24_page0271.jpg",
-    (28, 952): "chart2_vol28_page0952.jpg",
-}
-
-
-def _process_chart2(raw: str, context: dict) -> str:
+def _process_chart2(raw: str, context: ElementContext) -> str:
     """Replace a chart2 genealogical tree with a pre-cropped page scan image.
 
     The 5 chart2 blocks in the encyclopedia have been manually cropped
     from DjVu page scans and saved as chart2_volNN_pageNNNN.jpg.
     """
-    vol = context.get("volume", 0)
+    vol = context.volume
     # Try all known charts for this volume
-    for (v, p), filename in _CHART2_IMAGES.items():
+    for (v, p), filename in CHART2_IMAGES.items():
         if v == vol:
             return f"\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n"
     # Unknown chart — strip rather than crash
