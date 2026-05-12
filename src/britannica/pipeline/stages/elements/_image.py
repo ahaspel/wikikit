@@ -10,7 +10,7 @@ import re
 from britannica.image_assets import CHART2_IMAGES
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._text import _clean_text
+from britannica.pipeline.stages.elements._text import clean_caption
 
 
 def _process_image(inner: str, text_transform) -> str:
@@ -44,7 +44,7 @@ def _process_image(inner: str, text_transform) -> str:
 
     if caption:
         caption = text_transform(caption)
-        caption = _clean_text(caption)
+        caption = clean_caption(caption)
         return f"{{{{IMG:{filename}|{caption}}}}}"
     return f"{{{{IMG:{filename}}}}}"
 
@@ -66,7 +66,7 @@ def _process_image_float(inner: str, text_transform) -> str:
     caption = parsed.caption
     if caption:
         caption = text_transform(caption)
-        caption = _clean_text(caption)
+        caption = clean_caption(caption)
     if caption:
         return f"{{{{IMG:{parsed.filename}|{caption}}}}}"
     return f"{{{{IMG:{parsed.filename}}}}}"
@@ -144,7 +144,7 @@ def _process_djvu_crop(raw: str, text_transform, context: ElementContext) -> str
 
     if caption_text:
         caption_text = text_transform(caption_text)
-        caption_text = _clean_text(caption_text)
+        caption_text = clean_caption(caption_text)
         return f"\n\n{{{{IMG:{filename}|{caption_text}}}}}\n\n"
     return f"\n\n{{{{IMG:{filename}}}}}\n\n"
 

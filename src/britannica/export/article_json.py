@@ -30,6 +30,7 @@ from britannica.export.pages import (
     _printed_page,
 )
 from britannica.markers import IMG_RE, strip_page_markers
+from britannica.pipeline.stages.elements._text import clean_caption
 
 
 _QUALITY_NOTES = {
@@ -594,14 +595,16 @@ def export_articles_to_json(
 
             if _img_caps:
                 def _sanitize_caption(cap: str) -> str:
-                    # Strip any wikitext italic / converted markers that
-                    # extract_images may have left in the stored caption
-                    # (mirrors what _clean_text does in transform).
-                    cap = re.sub(r"''+(.*?)''+", r"\1", cap)
-                    cap = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", cap)
-                    # Prevent IMG-marker syntax breaks
-                    cap = cap.replace("|", " ").replace("}}", "))")
-                    return cap.strip()
+                    # A MediaWiki image *size* param (`x90px`, `125px`) the
+                    # extractor mistook for a caption \u2014 not real caption
+                    # text.  Treat as no caption.
+                    if re.fullmatch(r"\s*x?\d+px\s*", cap, re.IGNORECASE):
+                        return ""
+                    # extract_images stored this caption straight off the
+                    # raw wikitext, so it may carry templates, entities,
+                    # cell-attr strings, stray pipes/braces \u2014 run the same
+                    # caption cleaner every {{IMG:fn|cap}} emit site uses.
+                    return clean_caption(cap)
 
                 def _patch_img(m):
                     fn = m.group(1)

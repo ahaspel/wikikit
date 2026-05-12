@@ -21,6 +21,7 @@ from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.cleaners.reflow import reflow_paragraphs
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
 from britannica.pipeline.stages.clean_pages import _replace_score_tags
+from britannica.pipeline.stages.elements._text import clean_caption
 from britannica.pipeline.stages.transform_articles.body_text import (
     _FMT,
     _FRAKTUR_MAP,
@@ -569,6 +570,21 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # Preserve `,,` adjacent (ditto marks in tables).
     text = re.sub(r",(\s+,)+", ",", text)
     text = re.sub(r",\s*([;.])", r"\1", text)
+
+    # Final IMG-caption normalization: re-run clean_caption over every
+    # `{{IMG:fn|cap}}` regardless of which handler emitted it.  The
+    # wiki-table-around-image paths (`_process_table` /
+    # `_layout._unwrap_layout_table`) build the caption from
+    # text_transform'd cells without running clean_caption, so an
+    # *unclosed* `{{left|` opener, a leaked cell-attr string, or an
+    # undecoded entity can survive (AMICE Fig. 2 — the source's
+    # `{{left|…` has no closing `}}`).  Idempotent on captions already
+    # cleaned upstream by _image.py / legend_promote.
+    def _renorm_img_caption(m: re.Match) -> str:
+        cap = clean_caption(m.group(2))
+        return (f"{{{{IMG:{m.group(1)}|{cap}}}}}" if cap
+                else f"{{{{IMG:{m.group(1)}}}}}")
+    text = re.sub(r"\{\{IMG:([^|}]+)\|([^}]*)\}\}", _renorm_img_caption, text)
 
     return text
 
