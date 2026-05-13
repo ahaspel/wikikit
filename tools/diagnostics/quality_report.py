@@ -236,6 +236,13 @@ def run_file_checks() -> dict:
         if not body:
             continue
 
+        # «CHEM:…«/CHEM» is a structure-preserving chemical-reaction block
+        # (a relabelled HTMLTABLE — atom-label cells, rowspan brackets,
+        # ⟨/⟩ images).  It legitimately contains the same HTML/attr markup
+        # an HTMLTABLE does, so treat it identically for every check below.
+        body = body.replace("«CHEM:", "«HTMLTABLE:").replace(
+            "«/CHEM»", "«/HTMLTABLE»")
+
         # Strip blocks that intentionally contain HTML/wiki markup
         clean = _strip_htmltable_blocks(body)
         clean = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", clean, flags=re.DOTALL)

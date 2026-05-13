@@ -21,7 +21,7 @@ from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.cleaners.reflow import reflow_paragraphs
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
 from britannica.pipeline.stages.clean_pages import _replace_score_tags
-from britannica.pipeline.stages.elements._text import clean_caption
+from britannica.captions import clean_caption
 from britannica.pipeline.stages.transform_articles.body_text import (
     _FMT,
     _FRAKTUR_MAP,

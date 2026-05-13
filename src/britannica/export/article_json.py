@@ -30,7 +30,7 @@ from britannica.export.pages import (
     _printed_page,
 )
 from britannica.markers import IMG_RE, strip_page_markers
-from britannica.pipeline.stages.elements._text import clean_caption
+from britannica.captions import clean_caption
 
 
 _QUALITY_NOTES = {

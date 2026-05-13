@@ -93,8 +93,10 @@ from britannica.pipeline.stages.elements._layout import (
 )
 from britannica.pipeline.stages.elements._tables import (
     _extract_subtable_values,
+    _is_chemistry_layout,
     _is_html_illustration_wrapper,
     _process_brace_table,
+    _process_chemistry_layout,
     _process_complex_table,
     _process_compound_table,
     _process_html_table,
@@ -484,6 +486,9 @@ def _process_element(element_type: str, raw: str,
             result = _unwrap_layout_table(inner, text_transform, inner_registry)
         elif table_kind == "COMPLEX_HTML":
             result = _process_complex_table(inner, text_transform)
+        elif table_kind == "CHEMISTRY_LAYOUT":
+            result = _process_chemistry_layout(
+                inner, text_transform, inner_registry)
         else:
             result = _process_table(inner, text_transform, inner_registry)
     elif element_type == "HTML_TABLE":
@@ -522,8 +527,15 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
         LAYOUT_WRAPPER  — image+caption wrapper or nested table wrapper
         PLATE_LAYOUT    — `summary="Illustration"` multi-image grid (plate)
         COMPLEX_HTML    — tables with rowspan that need HTML passthrough
+        CHEMISTRY_LAYOUT — 2-D chemical-reaction / structural-formula diagram
         DATA_TABLE      — regular data tables (default)
     """
+    # Chemistry-reaction / structural-formula layout — atom-label cells,
+    # ⟨/⟩ valence-bracket images, `||` bond-lines, ⟶ arrows, `rowspan`
+    # brackets.  Priority over every other classification (the
+    # `[[File:Langle/Rangle]]` ref is chemistry-exclusive).
+    if _is_chemistry_layout(raw):
+        return "CHEMISTRY_LAYOUT"
     # Complex HTML: tables with rowspan/colspan need full HTML rendering.
     # Check this BEFORE equation layout — rowspan is a strong signal of a
     # real data table, and {{ts}} stripping can create phantom empty cells

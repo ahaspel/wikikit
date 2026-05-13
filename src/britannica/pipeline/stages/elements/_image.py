@@ -10,7 +10,7 @@ import re
 from britannica.image_assets import CHART2_IMAGES
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._text import clean_caption
+from britannica.captions import clean_caption
 
 
 def _process_image(inner: str, text_transform) -> str:

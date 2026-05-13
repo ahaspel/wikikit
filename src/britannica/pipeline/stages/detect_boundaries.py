@@ -862,6 +862,46 @@ _PLATE_FIELD_RE = re.compile(
 )
 
 
+# Non-anchored variant of ``_PLATE_FIELD_RE`` — matches a
+# ``{{sc|Plate …}}`` / ``{{uc|Plate …}}`` token *anywhere* on the page,
+# not just at the start of a heading-template field.  Used by
+# ``_plate_label_from_content`` for the title suffix of heuristic-
+# detected plates whose ``Plate N.`` label sits in a layout-table cell.
+_PLATE_LABEL_ANY_RE = re.compile(
+    r"\{\{(?:sc|uc|small-caps)\|"
+    r"Plate"
+    r"(?:"
+    r"\s+([IVX]+)\s*\.?\s*\}\}"           #   …I.}}  /  …I}}
+    r"|"
+    r"\s*\.?\s*\}\}\s*([IVX]+)\.?"        #   }} II. /  .}} II
+    r"|"
+    r"\s*\.?\s*\}\}"                      #   }} alone /  .}}  (single-plate)
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _plate_label_from_content(raw: str) -> str | None:
+    """Return a plate's Roman numeral (or ``""`` for a bare ``Plate.``
+    with no numeral) from a ``{{sc|Plate …}}`` / ``{{uc|Plate …}}``
+    token appearing *anywhere* on the page.
+
+    Used only as a title-suffix fallback for heuristic-detected plates
+    (ROUND TOWERS, TAPESTRY, EGYPT, INDIA, …): their page heading is
+    ``{{c|{{x-larger|TITLE}}}}`` rather than ``{{rh|…|{{sc|Plate N.}}}}``,
+    so ``_extract_plate_number`` (heading-fields only — deliberately
+    narrow, since it also gates plate *detection* via
+    ``_heading_names_plate``) finds nothing.  The ``Plate N.`` label
+    still exists, just inside a layout-table cell instead.  Since this
+    only runs once a page is already known to be a plate, a stray
+    ``{{sc|Plate}} III`` cross-reference is the worst it can pick up — a
+    cosmetic title-suffix slip, never data loss."""
+    m = _PLATE_LABEL_ANY_RE.search(raw)
+    if not m:
+        return None
+    return (m.group(1) or m.group(2) or "").upper()
+
+
 def _extract_plate_number(raw: str) -> str | None:
     """Return the Roman-numeral plate number from a page's heading
     template, or None if the page heading carries no `Plate N.` token.
@@ -942,6 +982,217 @@ def _heading_names_plate(raw: str) -> bool:
     return _extract_plate_number(raw) is not None
 
 
+def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
+    """Build the title for a plate-insert page: the parent article's
+    name (from the page heading or, failing that, the ``<section
+    begin="…"/>`` name) suffixed with the plate's ``PLATE N.`` label.
+
+    Priority for the base name:
+      1. ``{{x-larger|TITLE}}`` / ``{{larger|TITLE}}`` in the
+         ``<noinclude>`` heading (``{{c|{{x-larger|ROUND TOWERS}}}}``).
+      2. The first plain-text field of a ``{{rh|…}}`` /
+         ``{{EB1911 Page Heading|…}}`` heading (the article-name slot).
+      3. The ``<section begin="X"/>`` name (REGALIA's plate carries
+         ``<section begin="Regalia"/>`` but a layout-template heading).
+      4. ``PLATE (VOL. n, P. m)`` — last resort, no recognizable title.
+
+    The plate number comes from the heading's ``{{sc|Plate N.}}``
+    side-header (``_extract_plate_number``) or, when the label sits in a
+    layout-table cell instead, from anywhere on the page
+    (``_plate_label_from_content``).  A bare ``Plate.`` (no numeral)
+    yields the ``, PLATE`` suffix so the plate's slug stays distinct
+    from its parent article's."""
+    plate_title: str | None = None
+    header_match = re.search(r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
+    if header_match:
+        hdr = header_match.group(1)
+        # {{x-larger|TITLE}} / {{larger|TITLE}} — walk braces so a
+        # nested {{uc|SHAKESPEARE}} inside {{x-larger|…}} doesn't
+        # truncate the field at the inner `}`.
+        inner = _extract_template_content(hdr, "x-larger")
+        if inner is None:
+            inner = _extract_template_content(hdr, "larger")
+        if inner is not None:
+            plate_title = _strip_templates(inner).rstrip(",.")
+        else:
+            # {{rh|…|TITLE|…}} / {{EB1911 Page Heading|…|TITLE|…}} —
+            # split on top-level pipes (brace-depth aware) for fields.
+            for tmpl_start in (hdr.find("{{rh|"),
+                               hdr.find("{{EB1911 Page Heading|")):
+                if tmpl_start < 0:
+                    continue
+                fields: list[str] = []
+                depth = 0
+                current = ""
+                for ch in hdr[tmpl_start:]:
+                    if ch == "{":
+                        depth += 1
+                        current += ch
+                    elif ch == "}":
+                        depth -= 1
+                        if depth <= 0:
+                            break
+                        current += ch
+                    elif ch == "|" and depth <= 2:
+                        fields.append(current)
+                        current = ""
+                    else:
+                        current += ch
+                if current:
+                    fields.append(current)
+                for f in fields[1:]:
+                    clean = _strip_templates(f).rstrip("}]")
+                    if (clean and len(clean) > 2 and not clean.isdigit()
+                            and not re.match(r"^Plate\b", clean)
+                            and re.search(r"[A-Za-z]{3,}", clean)):
+                        plate_title = clean
+                        break
+                if plate_title:
+                    break
+    if not plate_title:
+        secs = _match_section_begin(raw)
+        if secs:
+            name = (secs[0][2] or "").strip()
+            if (name and not re.fullmatch(r"s\d+", name, re.IGNORECASE)
+                    and re.search(r"[A-Za-z]{3,}", name)):
+                plate_title = name.upper()
+    if not plate_title:
+        plate_title = f"PLATE (VOL. {volume}, P. {page_number})"
+
+    plate_num = _extract_plate_number(raw)
+    if plate_num is None:
+        plate_num = _plate_label_from_content(raw)
+    if plate_num:
+        plate_title = f"{plate_title}, PLATE {plate_num}"
+    elif plate_num is not None:
+        plate_title = f"{plate_title}, PLATE"
+    return plate_title
+
+
+def _strip_wiki_table_spans(text: str) -> str:
+    """Drop every balanced ``{|…|}`` wiki-table span — together with the
+    ``{{ts|…}}`` styling templates and ``[[Image:…]]`` cells inside it,
+    however deeply nested.  ``{{…}}`` template blocks are skipped over
+    so a ``{{Ts|vmi|}}``'s ``|}}`` isn't misread as a table closer.
+
+    ``_is_plate_page`` measures the *narrative prose* left after the
+    figure layout is removed.  The old non-greedy ``\\{\\|.*?\\|\\}`` strip
+    stopped at the first ``|}`` — the innermost image-cell table — on
+    the deeply-nested plate inserts (ROUND TOWERS, TAPESTRY, EGYPT,
+    INDIA, …), leaving the rest of the layout's ``{{ts|…}}`` noise
+    behind and pushing the prose-word count over threshold."""
+    n = len(text)
+
+    def _skip_template(start: int) -> int:
+        depth, j = 1, start + 2
+        while j < n - 1 and depth > 0:
+            t = text[j:j + 2]
+            if t == "{{":
+                depth += 1
+                j += 2
+            elif t == "}}":
+                depth -= 1
+                j += 2
+            else:
+                j += 1
+        if depth > 0:
+            # Unbalanced ``{{`` (malformed source — e.g. CAPITAL's
+            # ``{{EB1911 Fine Print|{{sc|Fig.}} 1.—…`` with no matching
+            # ``}}`` before the cell ends).  Treat the ``{{`` as literal
+            # and resume scanning, rather than gobbling to end-of-text.
+            return start + 2
+        return j
+
+    out: list[str] = []
+    i = 0
+    while i < n:
+        two = text[i:i + 2]
+        if two == "{|":
+            depth, j = 1, i + 2
+            while j < n - 1 and depth > 0:
+                t = text[j:j + 2]
+                if t == "{{":
+                    j = _skip_template(j)
+                elif t == "{|":
+                    depth += 1
+                    j += 2
+                elif t == "|}":
+                    depth -= 1
+                    j += 2
+                else:
+                    j += 1
+            i = j                      # drop the whole table span
+        elif two == "{{":
+            j = _skip_template(i)
+            out.append(text[i:j])       # keep top-level templates intact
+            i = j
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out)
+
+
+_PROSE_CELL_RE = re.compile(
+    r"(?:^|\n)\s*\|(?!\}|-)"
+    r"(?:[A-Za-z][\w-]*\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s|]+)\s*)*"   # |attrs| prefix
+    r"\|?\s*"
+    r"([^|\n][^\n]*)",                                               # cell content
+)
+
+# Caption / legend / credit lead-ins — a cell whose text begins with
+# one of these is figure material, never running article prose.
+_CAPTION_LEADIN_RE = re.compile(
+    r"^(?:"
+    r"(?:Fig|Plate)s?\.?\s*[\dIVXLCivxlc]"        # Fig. 7.—…  /  Plate II.
+    r"|[\dIVXLCivxlc]+\s*[.,]?\s*[—–-]"           # 1.—THE SCEPTRES…  /  i.—…
+    r"|\(?\s*[a-z]\s*\)"                           # (a) …  /  a) …
+    r"|\(?\s*(?:Photo|From|After|By\s+permission|Copyright|Drawn|Redrawn|"
+    r"Reproduced|Modified|Lent|Engraved)\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _has_prose_cell(text: str) -> bool:
+    """True if some ``{|…|}`` cell holds a long run of running prose — a
+    real article paragraph laid out in a table, not a caption / credit /
+    title fragment.
+
+    Vetoes the ``_is_plate_page`` heuristic on pages like vol 22
+    POLLINATION p18, whose bird-/slug-pollination paragraphs sit inside
+    a ``{|cellpadding=…|}`` figure grid: ``_strip_wiki_table_spans``
+    (correctly, for a real plate) drops the whole table, so the prose-
+    word count collapses to ~0 and the page looks like a plate.  Genuine
+    plate cells are short or, at most, a verbose caption; the 40-word
+    floor on text that *isn't* a caption / legend / credit lead-in only
+    trips on a real article paragraph."""
+    for m in _PROSE_CELL_RE.finditer(text):
+        cell = m.group(1)
+        # Pull out the image link, line-breaks, and (iteratively) any
+        # styling-template wrappers so the leftover is the bare cell
+        # text — then it can be tested for a caption lead-in.
+        cell = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", " ", cell, flags=re.IGNORECASE)
+        cell = re.sub(r"<br\s*/?>|<[^>]+>", " ", cell, flags=re.IGNORECASE)
+        for _ in range(6):
+            new = re.sub(r"\{\{[^{}]*\}\}", " ", cell)
+            if new == cell:
+                break
+            cell = new
+        cell = re.sub(r"'''|''|&[a-z]+;|&#\d+;", " ", cell, flags=re.IGNORECASE)
+        cell = re.sub(r"^\s*[|!]+\s*", "", cell)            # leftover cell pipes
+        # Strip leading punctuation residue (a stranded ``. 7.—`` after
+        # the ``{{sc|Fig}}`` wrapper was removed) so the caption lead-in
+        # test sees ``7.—Flemish Mitre…`` rather than ``. 7.—…``.
+        cell = re.sub(r"^[\s.,;:—–\-]+", "", cell)
+        cell = cell.strip()
+        if not cell or _CAPTION_LEADIN_RE.match(cell):
+            continue
+        words = cell.split()
+        if len(words) >= 40 and any(c.islower() for c in cell):
+            return True
+    return False
+
+
 def _is_plate_page(text: str) -> bool:
     """Detect plate pages — mostly images with little prose.
 
@@ -955,13 +1206,31 @@ def _is_plate_page(text: str) -> bool:
     img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
     if img_count < 2:
         return False
+    # An article paragraph laid out in a table cell → not a plate
+    # (POLLINATION p18 et al.) — UNLESS the page also carries a
+    # ``{{sc|Plate N.}}`` label, which an article continuation page
+    # never does but a plate insert with a descriptive matter-paragraph
+    # (PALAEONTOLOGY p633's "Materials for the Restoration of
+    # Ichthyosaurs.—This plate illustrates…") does.  See _has_prose_cell.
+    if _has_prose_cell(stripped) and _plate_label_from_content(stripped) is None:
+        return False
 
-    # Count non-image, non-table, non-caption words (actual running prose)
+    # Count non-image, non-table, non-template, non-caption words
+    # (actual running prose).  Plate captions/matter live in
+    # ``{|…|}`` cells (stripped) or ``{{center|…}}`` / ``{{sc|…}}`` /
+    # ``{{EB1911 Fine Print|…}}`` wrappers (stripped here); whatever
+    # plain text remains is the page's narrative prose, and a real plate
+    # has almost none.
     prose = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", "", stripped, flags=re.IGNORECASE)
-    prose = re.sub(r"\{\|.*?\|\}", "", prose, flags=re.DOTALL)
+    prose = _strip_wiki_table_spans(prose)
     prose = re.sub(r"<table\b.*?</table>", "", prose, flags=re.DOTALL | re.IGNORECASE)
-    # Strip caption-style content (Fig. N.—…, numbered lists)
-    prose = re.sub(r"(?:\{\{(?:small-caps|sc)\|[^}]*\}\}|Fig\.)\s*\d+[^.\n]*\.",
+    for _ in range(8):
+        _next = re.sub(r"\{\{[^{}]*\}\}", " ", prose)
+        if _next == prose:
+            break
+        prose = _next
+    # Stray ``Fig. N.—…`` captions not wrapped in a template.
+    prose = re.sub(r"Figs?\.\s*[\dIVXLCivxlc]+[^.\n]*\.",
                    "", prose, flags=re.IGNORECASE)
     prose_words = len(prose.split())
 
@@ -1279,23 +1548,93 @@ def _fix_swallowed_pages(articles: list[DetectedArticle],
 # ── Detection (pure) ──────────────────────────────────────────────────
 
 
+def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
+    """PASS 1 of boundary detection.
+
+    Every EB1911 plate insert is a single, self-contained Wikisource
+    page, so plate detection is a pure per-page predicate — no
+    article-boundary state machine needed.  Pull each plate page into
+    its own ``type='plate'`` article and hand the remaining (plate-free)
+    pages to the article state machine, which then never has to reason
+    about plates at all.
+
+    A page is a plate when:
+      • it carries a ``{{sc|Plate N.}}`` / ``{{uc|Plate N.}}`` /
+        ``{{sc|Plate.}}`` label anywhere — in a page-heading side-header
+        (``_heading_names_plate``) or in a layout-table cell
+        (``_plate_label_from_content``).  An EB1911 plate insert always
+        has one; an article page never does.  This is the authoritative
+        signal — accepted regardless of anything else on the page; or
+      • it has no such label but is image-heavy with negligible running
+        prose (``_is_plate_page``) AND doesn't itself open a real
+        (bold-titled) article — the ~20 label-less plate inserts (ALTAR,
+        COSTUME, FORAMINIFERA, …).  A tiny stub with a couple of figures
+        is still an article, not a plate."""
+    plates: list[DetectedArticle] = []
+    rest: list = []
+    for page in pages:
+        raw = (page.wikitext or "").strip()
+        if not raw:
+            continue
+        text = _preprocess_wikitext(raw)
+        if _heading_names_plate(raw) or _plate_label_from_content(raw) is not None:
+            is_plate = True
+        elif _is_plate_page(text):
+            parsed = _parse_page_by_sections(text)
+            if parsed is None:
+                parsed = _split_on_bold_headings(text)
+            has_real_heading = any(
+                not c.is_tentative for c in parsed.candidates)
+            prefix_bold = bool(re.match(
+                r"'''[A-ZÀ-Þ][A-ZÀ-Þ''’\s,.\-]+'''",
+                parsed.prefix_text or ""))
+            is_plate = not has_real_heading and not prefix_bold
+        else:
+            is_plate = False
+        if is_plate:
+            plates.append(DetectedArticle(
+                title=_compose_plate_title(raw, page.volume, page.page_number),
+                volume=page.volume,
+                page_start=page.page_number,
+                page_end=page.page_number,
+                article_type="plate",
+                segments=[SegmentInfo(
+                    source_page_id=page.id,
+                    page_number=page.page_number,
+                    sequence=1,
+                    text=text,
+                )],
+            ))
+        else:
+            rest.append(page)
+    return plates, rest
+
+
 def detect_boundaries(volume: int) -> list[DetectedArticle]:
     """Detect article boundaries from raw wikitext.
 
     Reads SourcePages from the database but writes nothing.
     Returns a list of DetectedArticle with titles, page ranges, and
     raw wikitext segments.
+
+    Two passes: ``_split_out_plates`` lifts every (self-contained)
+    plate page out first; the streaming article state machine below then
+    runs over the remaining pages and never sees a plate.
     """
     session = SessionLocal()
 
     try:
-        pages = (
+        all_pages = (
             session.query(SourcePage)
             .filter(SourcePage.volume == volume)
             .order_by(SourcePage.page_number)
             .all()
         )
 
+        # PASS 1 — pull out every plate (each is one self-contained page).
+        plate_articles, pages = _split_out_plates(all_pages)
+
+        # PASS 2 — article boundaries over the remaining (plate-free) pages.
         articles: list[DetectedArticle] = []
         open_article: DetectedArticle | None = None
 
@@ -1312,121 +1651,6 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
             parsed = _parse_page_by_sections(text)
             if parsed is None:
                 parsed = _split_on_bold_headings(text)
-
-            # Plate-page detection.  Two signals, in order of preference:
-            #
-            #   (1) Explicit: the page heading template names the page
-            #       as `Plate N.` in one of its side-header positions.
-            #       This is the canonical signal — wikisource transcribers
-            #       set it for every plate insert.  Fires regardless of
-            #       whether `parsed.candidates` is non-empty, so plates
-            #       embedded inside a parent article's `<section …>`
-            #       span (DOG breeds across pp. 392-3 and 398-9) get
-            #       split out instead of folded into the parent's body.
-            #
-            #   (2) Heuristic fallback: page has no article boundaries
-            #       AND `_is_plate_page(text)` (≥2 images, ≤80 words of
-            #       prose).  Catches plates whose heading doesn't carry
-            #       the explicit marker.
-            if _heading_names_plate(raw) or (
-                    not parsed.candidates and _is_plate_page(text)):
-                # Extract plate title from page header templates
-                plate_title = None
-                header_match = re.search(
-                    r"<noinclude>(.*?)</noinclude>", raw, re.DOTALL)
-                if header_match:
-                    hdr = header_match.group(1)
-                    # {{x-larger|TITLE}} or {{larger|TITLE}} — walk braces
-                    # so a nested wrapper like {{uc|SHAKESPEARE}} inside
-                    # {{x-larger|…}} doesn't truncate the captured field
-                    # at the inner `}` (a `[^}]+` capture would yield
-                    # `{{uc|SHAKESPEARE` and leak that into the title).
-                    inner = _extract_template_content(hdr, "x-larger")
-                    if inner is None:
-                        inner = _extract_template_content(hdr, "larger")
-                    if inner is not None:
-                        plate_title = _strip_templates(inner).rstrip(",.")
-                    else:
-                        # {{rh|...|TITLE|...}} or {{EB1911 Page Heading|...|TITLE|...}}
-                        # Split on top-level pipes (respecting brace depth) to find fields.
-                        for tmpl_start in [
-                            hdr.find("{{rh|"),
-                            hdr.find("{{EB1911 Page Heading|"),
-                        ]:
-                            if tmpl_start < 0:
-                                continue
-                            # Walk from the first | after template name
-                            fields = []
-                            depth = 0
-                            current = ""
-                            for ch in hdr[tmpl_start:]:
-                                if ch == "{":
-                                    depth += 1
-                                    current += ch
-                                elif ch == "}":
-                                    depth -= 1
-                                    if depth <= 0:
-                                        break
-                                    current += ch
-                                elif ch == "|" and depth <= 2:
-                                    fields.append(current)
-                                    current = ""
-                                else:
-                                    current += ch
-                            if current:
-                                fields.append(current)
-                            # fields[0] = template name, fields[1] = first arg, etc.
-                            # For rh: fields ~ [rh, left, TITLE, right]
-                            # For Page Heading: fields ~ [PH, plate-label, TITLE, ...]
-                            # Find the best title candidate among fields[1:]
-                            for f in fields[1:]:
-                                clean = _strip_templates(f).rstrip("}]")
-                                if (clean and len(clean) > 2
-                                        and not clean.isdigit()
-                                        and not re.match(r"^Plate\b", clean)
-                                        and re.search(r"[A-Za-z]{3,}", clean)):
-                                    plate_title = clean
-                                    break
-                            if plate_title:
-                                break
-                if not plate_title:
-                    plate_title = f"PLATE (VOL. {page.volume}, P. {page.page_number})"
-
-                # Compose final title with the plate's Roman-numeral
-                # suffix (`DOG, PLATE I`, `SHAKESPEARE, PLATE II`).
-                # The plate number is the only universally unique
-                # signal across plates of the same article, so we key
-                # the slug off it: the collective legend may repeat
-                # (DOG plates II and III both read "TYPICAL SPORTING
-                # DOGS") or be absent entirely.
-                plate_num = _extract_plate_number(raw)
-                if plate_num:
-                    plate_title = f"{plate_title}, PLATE {plate_num}"
-                elif plate_num is not None:
-                    # Plate detected but heading carries no Roman numeral
-                    # (single-plate articles like vol 2 ANTHROPOLOGY use
-                    # bare `{{sc|Plate}}`).  Append the bare suffix so the
-                    # plate's title and slug stay distinct from the parent
-                    # article's.
-                    plate_title = f"{plate_title}, PLATE"
-
-                plate = DetectedArticle(
-                    title=plate_title,
-                    volume=page.volume,
-                    page_start=page.page_number,
-                    page_end=page.page_number,
-                    article_type="plate",
-                    segments=[SegmentInfo(
-                        source_page_id=page.id,
-                        page_number=page.page_number,
-                        sequence=1,
-                        text=text,
-                    )],
-                )
-                articles.append(plate)
-
-                # Don't update open_article — let it continue past the plate
-                continue
 
             # Prefix text belongs to the currently open article — unless
             # it starts with a bold ALL-CAPS heading, which signals a new
@@ -1488,16 +1712,16 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                 body_text = (candidate.body or "").strip()
 
                 # Cross-article section redirect.  A Title Case
-                # ``<section begin="Regalia"/>`` on a continuation
-                # page would normally be absorbed as a subsection of
-                # the currently open article (REGENERATION OF LOST
-                # PARTS in our worked example) by the Title-Case
-                # heuristic below.  But if a real article with that
-                # section name ALREADY exists (REGALIA was detected on
-                # the prior page and is now closed), the content
-                # belongs to THAT article — typically a plate or
-                # continuation page interspersed with the open
-                # article's page range.  Route instead of absorb.
+                # ``<section begin="Charles X."/>`` on a continuation
+                # page would normally be absorbed as a subsection of the
+                # currently open article by the Title-Case heuristic
+                # below.  But if a real article with that section name
+                # already exists and is closed — an interspersed
+                # continuation page (CHARLES X., DICTIONARY,
+                # HENRY VI./VII.) — the content belongs to THAT article:
+                # route it there instead of absorbing.  (Plate pages are
+                # lifted out by ``_split_out_plates`` before this loop
+                # runs, so the old plate branch here is gone.)
                 _redirect = None
                 if candidate.is_tentative and candidate.raw_sec_id:
                     _cand_sec = candidate.raw_sec_id.casefold()
@@ -1508,48 +1732,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                             _redirect = _a
                             break
                 if _redirect is not None:
-                    # Plate detection for redirected sections:
-                    # ``_is_plate_page`` is too strict here (REGALIA's
-                    # plate captions are verbose enough to exceed its
-                    # prose-word thresholds).  Instead look for the
-                    # explicit ``{{sc|Plate}} N.`` / ``PLATE N`` title
-                    # that every Wikisource EB1911 plate page carries.
-                    _looks_like_plate = body_text and (
-                        _is_plate_page(body_text)
-                        or bool(re.search(
-                            r"\{\{(?:sc|uc)\|Plate\}\}\s*[IVX]+",
-                            body_text, re.IGNORECASE))
-                        or bool(re.search(
-                            r"\{\{(?:sc|uc)\|Plate\s+[IVX]+[.,]?\}\}",
-                            body_text, re.IGNORECASE))
-                    )
-                    if _looks_like_plate:
-                        # Plate page (mostly images + captions) — create
-                        # a dedicated plate-type article owned by the
-                        # redirect target, matching the normal plate
-                        # path at line 1194.  Without this, the plate's
-                        # raw wikitable markup (image grids, caption
-                        # cells) gets dumped into the parent article's
-                        # prose body and renders as broken tables.
-                        _plate_num2 = _extract_plate_number(raw)
-                        _plate_title2 = (
-                            f"{_redirect.title}, PLATE {_plate_num2}"
-                            if _plate_num2 else _redirect.title
-                        )
-                        articles.append(DetectedArticle(
-                            title=_plate_title2,
-                            volume=page.volume,
-                            page_start=page.page_number,
-                            page_end=page.page_number,
-                            article_type="plate",
-                            segments=[SegmentInfo(
-                                source_page_id=page.id,
-                                page_number=page.page_number,
-                                sequence=1,
-                                text=body_text,
-                            )],
-                        ))
-                    elif body_text:
+                    if body_text:
                         _next_seq = len(_redirect.segments) + 1
                         _redirect.segments.append(SegmentInfo(
                             source_page_id=page.id,
@@ -1714,6 +1897,14 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         # each page's heading.  If a run of consecutive pages has a heading
         # that matches a LATER article (by section marker), move those pages.
         articles = _fix_swallowed_pages(articles, pages)
+
+        # Merge the PASS-1 plates back in, in page order.  When a plate
+        # and an article share a page_start (a plate insert can fall on
+        # the same printed page where an article continues), the article
+        # — which "owns" that page range — sorts first.
+        articles.extend(plate_articles)
+        articles.sort(key=lambda a: (
+            a.page_start, 0 if a.article_type == "article" else 1, a.title))
 
         return articles
 

@@ -372,6 +372,58 @@ def _process_complex_table(inner: str, text_transform) -> str:
     return "".join(parts)
 
 
+# \u2500\u2500 Chemistry-reaction / structural-formula layouts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+# ``Langle``/``Rangle`` plus the variant suffixes the corpus uses
+# (``LangleBar``, ``LangleIT``, ``LangleIB``, ``RangleBar``, …) — all
+# the EB1911 valence-bracket images.  ``[A-Za-z]*`` after ``angle`` is
+# wide but the false-positive surface is nil: it only matters for a
+# ``{|…|}`` raw, and the only ``[LR]angle*.svg/png`` files in this
+# corpus are these brackets.
+_CHEM_BRACKET_IMG_RE = re.compile(
+    r"\[\[(?:File|Image):\s*[LR]angle[A-Za-z]*\.(?:svg|png)", re.IGNORECASE)
+
+
+def _is_chemistry_layout(raw: str) -> bool:
+    """A ``{|\u2026|}`` block laid out as a 2-D chemical-reaction scheme or
+    structural formula \u2014 cells of atom labels, ``[[File:Langle.svg]]`` /
+    ``[[File:Rangle.svg]]`` valence-bracket images (the ``\u3008`` / ``\u3009``
+    EB1911 typesets reactions with), ``||`` bond-lines, ``\u27f6`` reaction
+    arrows, ``rowspan`` to bracket co-products.  Detected by the
+    angle-bracket image refs (``Langle``/``Rangle``/``LangleIB``/
+    ``RangleIB`` ``.svg``/``.png``), which are chemistry-exclusive in
+    the corpus (~36 such tables, clustered in the organic-chemistry
+    runs \u2014 FULMINIC ACID, POLYMETHYLENES, PURIN, INDAZOLES, \u2026)."""
+    return bool(_CHEM_BRACKET_IMG_RE.search(raw))
+
+
+def _process_chemistry_layout(inner: str, text_transform,
+                              inner_registry=None) -> str:
+    """Render a 2-D chemical-reaction / structural-formula layout.
+
+    These are NOT data tables \u2014 they're spatial diagrams (no gridlines,
+    no cell padding; the wiki-table syntax is just a positioning
+    crutch).  They get their own marker, ``\u00abCHEM:\u2026\u00ab/CHEM\u00bb``, distinct
+    from ``\u00abHTMLTABLE:\u2026\u00bb``, so the viewer can lay them out without
+    table chrome.
+
+    SKELETON: reuses ``_process_complex_table``'s rowspan/colspan-aware
+    cell walk only to PARSE the wiki-table syntax into rows \u00d7 cells \u00d7
+    spans, then relabels the marker.  Refine once we can iterate
+    against real article output:
+      \u2022 viewer: render ``\u00abCHEM:\u2026\u00bb`` as a CSS grid carrying ``rowspan``/
+        ``colspan`` as grid spans \u2014 not a ``<table>`` (and the marker's
+        internal encoding can move away from ``<table>`` HTML then).
+      \u2022 replace the ``Langle``/``Rangle`` image placeholders with
+        ``\u3008``/``\u3009`` glyphs; keep ``||`` as bond-lines and ``\u27f6``/``\u2192``
+        as arrows; render ``<br/>``-stacked cell fragments as a
+        vertical stack.
+    """
+    html = _process_complex_table(inner, text_transform)
+    return (html.replace("\u00abHTMLTABLE:", "\u00abCHEM:")
+                .replace("\u00ab/HTMLTABLE\u00bb", "\u00ab/CHEM\u00bb"))
+
+
 
 def _process_table(inner: str, text_transform,
                    inner_registry: ElementRegistry | None = None) -> str:
