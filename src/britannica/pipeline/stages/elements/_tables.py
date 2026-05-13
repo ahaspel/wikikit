@@ -79,11 +79,18 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
        empty / pure ``{{Ts|…}}`` styling).  Otherwise the entire body
        is content with empty attrs.
     """
-    # 1. Merge continuation lines.
+    # 1. Merge continuation lines AND skip `|+` caption lines (which
+    # are extracted at the table-processor level before this function
+    # is called).  The `|+` filter MUST run before `||` normalisation
+    # below — otherwise a cell whose content starts with `+`
+    # (ALGEBRAIC FORMS' `+B₁a₀` math operator) gets normalised to
+    # `|+B₁a₀` and incorrectly filtered as a caption.
     merged: list[str] = []
     for ln in row_text.split("\n"):
         stripped = ln.strip()
         if not stripped:
+            continue
+        if stripped.startswith("|+"):
             continue
         if stripped.startswith(("|", "!")) or stripped == "{|":
             merged.append(ln)
@@ -110,7 +117,7 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
     cells: list[tuple[str, str, str]] = []
     for line in text.split("\n"):
         line = line.strip()
-        if not line or line.startswith("|+") or line in ("}", "{|"):
+        if not line or line in ("}", "{|"):
             continue
         if not line.startswith(("|", "!")):
             continue
@@ -136,6 +143,53 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
             content.replace(_PIPE_ESCAPE, "|").strip(),
         ))
     return cells
+
+
+def parse_wiki_table(
+    text: str,
+) -> tuple[str, list[list[tuple[str, str, str]]]]:
+    """Parse a wiki-table's structure into ``(caption, rows)``.
+
+    The whole-table counterpart to :func:`split_wiki_row` (which
+    operates on one row at a time).  Steps:
+
+    1. Strip outer ``{|…\\n`` opener and ``\\n?|}`` closer (if present)
+       — accepts either form (``raw`` or ``inner``) for caller
+       convenience.
+    2. Strip ``<br>`` tags (soft-hyphen-aware via :func:`_strip_br`:
+       a ``-<br>`` line-break drops both halves so ``Circum-<br>ference``
+       renders as ``Circumference``; plain ``<br>`` becomes a space).
+    3. Extract the first ``|+ caption`` line as the table caption.
+    4. Split on ``|-`` row separators (line-anchored).
+    5. Run each row through :func:`split_wiki_row`; drop empty rows.
+
+    Returns:
+    * ``caption`` — caption text (empty if no ``|+`` line).
+    * ``rows`` — list of rows, each a list of
+      ``(sep, attr_part, content)`` cells.
+
+    Limitations: ``|-`` splitting is NOT depth-aware — it splits on
+    ``|-`` inside nested ``{|…|}`` blocks too.  Callers that need to
+    preserve nested-table structure (currently only
+    ``_process_compound_table``) must do their own depth-tracking
+    row split and call :func:`split_wiki_row` per row directly."""
+    text = re.sub(r"^\{\|[^\n]*\n?", "", text)
+    text = re.sub(r"\n?\|\}\s*$", "", text)
+
+    text = _strip_br(text)
+
+    caption = ""
+    cap_match = re.search(r"^\|\+\s*(.+?)$", text, re.MULTILINE)
+    if cap_match:
+        caption = cap_match.group(1).strip()
+
+    raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", text)
+    rows: list[list[tuple[str, str, str]]] = []
+    for raw_row in raw_rows:
+        cells = split_wiki_row(raw_row)
+        if cells:
+            rows.append(cells)
+    return caption, rows
 
 
 def emit_html_cell(
@@ -286,45 +340,24 @@ def _process_compound_table(raw: str, text_transform) -> str:
                         else v for v in values)
                     html_rows.append(f"<tr><td>{content}</td></tr>")
         else:
-            # Regular row (no nested tables) — process normally
+            # Regular row (no nested tables) — share the wiki-cell
+            # extraction with the other table paths.  Compound-table
+            # specialisation only kicks in for rows containing nested
+            # `{|…|}` sub-tables (the branch above); rows without
+            # nesting are just normal wiki rows whose cells get joined
+            # into a single `<tr>` of `<td>`s.
             cells_html = []
-            for line in row_text.split("\n"):
-                line = line.strip()
-                if not line or line.startswith("|+"):
-                    continue
-                if not (line.startswith("|") or line.startswith("!")):
-                    continue
-                tag = "th" if line.startswith("!") else "td"
-
-                # Strip {{Ts}} from cell lines
-                cell_text = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "",
-                                   line[1:])
-                # Protect pipes inside remaining {{...}} templates (e.g.
-                # {{brace2|4|l}}, {{sub|1}}) so the attr/content rpartition
-                # below doesn't mis-split on a template-internal pipe.
-                cell_text = re.sub(
-                    r"\{\{[^}]*\}\}",
-                    lambda m: m.group(0).replace("|", "\x04"),
-                    cell_text,
-                )
-                # Split on || for multi-cell lines
-                sep = "!!" if tag == "th" else "||"
-                for cell in cell_text.split(sep):
-                    # Strip attributes
-                    if "|" in cell:
-                        _, _, content = cell.rpartition("|")
-                    else:
-                        content = cell
-                    content = content.replace("\x04", "|")
-                    content = re.sub(r"\{\{[^{}]*\}\}", "", content)
-                    content = re.sub(r"&nbsp;", " ", content)
-                    content = _strip_br(content)
-                    content = re.sub(r"<td[^>]*>", "", content,
-                                     flags=re.IGNORECASE)
-                    content = content.strip()
-                    if content and text_transform:
-                        content = text_transform(content)
-                    cells_html.append(emit_html_cell(tag, content))
+            for sep, _attr, content in split_wiki_row(row_text):
+                tag = "th" if sep == "!" else "td"
+                content = re.sub(r"\{\{[^{}]*\}\}", "", content)
+                content = re.sub(r"&nbsp;", " ", content)
+                content = _strip_br(content)
+                content = re.sub(r"<td[^>]*>", "", content,
+                                 flags=re.IGNORECASE)
+                content = content.strip()
+                if content and text_transform:
+                    content = text_transform(content)
+                cells_html.append(emit_html_cell(tag, content))
 
             if cells_html:
                 html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
@@ -349,15 +382,13 @@ def _process_complex_table(inner: str, text_transform) -> str:
     with placeholders) so that nested elements like <math> are preserved.
     """
 
-    # Extract the wikitext table caption (`|+ TEXT` on its own line)
-    # so we can render it inside the HTML table's <caption> element.
-    # Without this the caption silently disappears (AFRICA's "BANTU
-    # NEGROIDS", EXCHEQUER's "Revenue"/"Expenditure" / "Surplus", etc.).
+    # Use the shared `parse_wiki_table` for table parsing — gets us
+    # caption extraction + row split + cell parsing in one call,
+    # consistent with every other wiki-table path.
+    caption_raw, parsed_rows = parse_wiki_table(inner)
     caption_html = ""
-    cap_match = re.search(r"^\|\+\s*(.+?)$", inner, re.MULTILINE)
-    if cap_match:
-        cap_raw = cap_match.group(1).strip()
-        cap_text = text_transform(cap_raw) if cap_raw else ""
+    if caption_raw:
+        cap_text = text_transform(caption_raw)
         if cap_text:
             # Strip any wiki cell-attribute prefix that survived
             # `text_transform` — when the caption line itself bears cell
@@ -371,131 +402,85 @@ def _process_complex_table(inner: str, text_transform) -> str:
         if cap_text:
             caption_html = f"<caption>{cap_text}</caption>"
 
-    # Row split on `|-` wiki row separators — but only when `|-` is at
-    # the start of a line. A `|-` in the middle of a line always means
-    # something else (template arg like ``{{rotate|-90|…}}``, math
-    # inline, etc.) and must not terminate a row. The old pattern
-    # `\|-[^\n]*` ate templates that happened to contain a `|-`.
-    rows = re.split(r"(?:^|\n)\|-[^\n]*", inner)
     html_rows = []
 
-    for row in rows:
-        # Merge continuation lines into the preceding cell: a wiki cell
-        # can have content that spills onto subsequent lines (e.g.
-        # `|attr|\n content\n more content`). Any non-empty line that
-        # doesn't start with `|`, `!`, or `{|` belongs to the previous
-        # cell.
-        merged: list[str] = []
-        for ln in row.split("\n"):
-            stripped = ln.strip()
-            if not stripped:
-                continue
-            if stripped.startswith(("|", "!")) or stripped == "{|":
-                merged.append(ln)
-            elif merged:
-                merged[-1] = merged[-1].rstrip() + " " + stripped
-            else:
-                # orphan text before any cell — keep as-is
-                merged.append(ln)
-
+    for parsed_row in parsed_rows:
         cells_html = []
-        for line in merged:
-            line = line.strip()
-            if not line or line.startswith("|+"):
-                continue
-            if not (line.startswith("|") or line.startswith("!")):
-                continue
-            tag = "th" if line.startswith("!") else "td"
-            sep = "!!" if tag == "th" else "||"
+        for sep, attr_part, content in parsed_row:
+            tag = "th" if sep == "!" else "td"
 
-            # Protect pipes inside {{...}} and [[...]] before any splitting
-            prot = re.sub(r"\{\{[^}]*\}\}",
-                          lambda m: m.group(0).replace("|", "\x04"), line[1:])
-            prot = re.sub(r"\[\[[^\]]*\]\]",
-                          lambda m: m.group(0).replace("|", "\x04"), prot)
+            # Extract structural attributes
+            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
+            cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
+            rowspan = int(rs.group(1)) if rs else 1
+            colspan = int(cs.group(1)) if cs else 1
+            # Propagate horizontal/vertical alignment from
+            # ``{{Ts|ar}}``/``ac``/``al`` style tokens or HTML
+            # ``align=`` / ``valign=`` attributes to inline CSS so
+            # the rendered table preserves the source's column
+            # alignment.  Without this, ``<td colspan="2">824,000
+            # </td>`` summation rows (BRITISH EMPIRE Africa /
+            # Australasia / Summary tables) default-left-align and
+            # detach from the value column above them.
+            ts_tokens: set[str] = set()
+            for ts in re.findall(r"\{\{[Tt]s\|([^{}]*)\}\}", attr_part):
+                for tok in ts.split("|"):
+                    ts_tokens.add(tok.strip().lower())
+            styles: list[str] = []
+            if ("ar" in ts_tokens
+                    or re.search(r'align\s*=\s*"?right"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("text-align:right")
+            elif ("ac" in ts_tokens
+                    or re.search(r'align\s*=\s*"?center"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("text-align:center")
+            elif ("al" in ts_tokens
+                    or re.search(r'align\s*=\s*"?left"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("text-align:left")
+            if ("vtp" in ts_tokens
+                    or re.search(r'valign\s*=\s*"?top"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("vertical-align:top")
+            elif ("vtm" in ts_tokens
+                    or re.search(r'valign\s*=\s*"?middle"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("vertical-align:middle")
+            elif ("vtb" in ts_tokens
+                    or re.search(r'valign\s*=\s*"?bottom"?',
+                                 attr_part, re.IGNORECASE)):
+                styles.append("vertical-align:bottom")
 
-            for cell in prot.split(sep):
-                # Split attributes from content on the last real |
-                if "|" in cell:
-                    attr_part, _, content = cell.rpartition("|")
-                    attr_part = attr_part.replace("\x04", "|")
-                else:
-                    attr_part = ""
-                    content = cell
-                content = content.replace("\x04", "|")
-
-                # Extract structural attributes
-                rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
-                cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
-                rowspan = int(rs.group(1)) if rs else 1
-                colspan = int(cs.group(1)) if cs else 1
-                # Propagate horizontal/vertical alignment from
-                # ``{{Ts|ar}}``/``ac``/``al`` style tokens or HTML
-                # ``align=`` / ``valign=`` attributes to inline CSS so
-                # the rendered table preserves the source's column
-                # alignment.  Without this, ``<td colspan="2">824,000
-                # </td>`` summation rows (BRITISH EMPIRE Africa /
-                # Australasia / Summary tables) default-left-align and
-                # detach from the value column above them.
-                ts_tokens: set[str] = set()
-                for ts in re.findall(r"\{\{[Tt]s\|([^{}]*)\}\}", attr_part):
-                    for tok in ts.split("|"):
-                        ts_tokens.add(tok.strip().lower())
-                styles: list[str] = []
-                if ("ar" in ts_tokens
-                        or re.search(r'align\s*=\s*"?right"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("text-align:right")
-                elif ("ac" in ts_tokens
-                        or re.search(r'align\s*=\s*"?center"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("text-align:center")
-                elif ("al" in ts_tokens
-                        or re.search(r'align\s*=\s*"?left"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("text-align:left")
-                if ("vtp" in ts_tokens
-                        or re.search(r'valign\s*=\s*"?top"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("vertical-align:top")
-                elif ("vtm" in ts_tokens
-                        or re.search(r'valign\s*=\s*"?middle"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("vertical-align:middle")
-                elif ("vtb" in ts_tokens
-                        or re.search(r'valign\s*=\s*"?bottom"?',
-                                     attr_part, re.IGNORECASE)):
-                    styles.append("vertical-align:bottom")
-
-                # Clean content
-                # Convert [[Image:...|params]] to {{IMG:filename}}
-                img_m = re.match(r"\s*\[\[(?:Image|File):([^|\]]+)[^\]]*\]\]\s*$",
-                                 content, re.IGNORECASE)
-                if img_m:
-                    content = f"{{{{IMG:{img_m.group(1).strip()}}}}}"
-                else:
-                    content = re.sub(r"\[\[(?:Image|File):[^\]]*\]\]", "", content, flags=re.IGNORECASE)
-                    content = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "\u2033",
-                                     content, flags=re.IGNORECASE)
-                    content = re.sub(r"\{\{\.\.\.\}\}", "...", content)
-                    content = _strip_br(content)
-                    content = content.strip()
-                    # Run text_transform FIRST so it can convert
-                    # templates it knows about (``{{sfrac|…}}``,
-                    # ``{{hi|…}}``, ``{{sc|…}}``, etc.) into their
-                    # marker form.  Previously the catch-all
-                    # ``\{\{[^{}]*\}\}`` strip ran first and ate every
-                    # unlabelled template, dropping SHIPBUILDING's
-                    # ``{{sfrac|…|Volume of Displacement|Length × …}}``
-                    # entirely from the "Block coefficients or" cell.
-                    if content:
-                        content = text_transform(content)
-                    # Strip any templates text_transform didn't handle.
-                    content = re.sub(r"\{\{[^{}]*\}\}", "", content)
-                cells_html.append(emit_html_cell(
-                    tag, content,
-                    rowspan=rowspan, colspan=colspan, styles=styles,
-                ))
+            # Clean content
+            # Convert [[Image:...|params]] to {{IMG:filename}}
+            img_m = re.match(r"\s*\[\[(?:Image|File):([^|\]]+)[^\]]*\]\]\s*$",
+                             content, re.IGNORECASE)
+            if img_m:
+                content = f"{{{{IMG:{img_m.group(1).strip()}}}}}"
+            else:
+                content = re.sub(r"\[\[(?:Image|File):[^\]]*\]\]", "", content, flags=re.IGNORECASE)
+                content = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "\u2033",
+                                 content, flags=re.IGNORECASE)
+                content = re.sub(r"\{\{\.\.\.\}\}", "...", content)
+                content = _strip_br(content)
+                content = content.strip()
+                # Run text_transform FIRST so it can convert
+                # templates it knows about (``{{sfrac|…}}``,
+                # ``{{hi|…}}``, ``{{sc|…}}``, etc.) into their
+                # marker form.  Previously the catch-all
+                # ``\{\{[^{}]*\}\}`` strip ran first and ate every
+                # unlabelled template, dropping SHIPBUILDING's
+                # ``{{sfrac|…|Volume of Displacement|Length × …}}``
+                # entirely from the "Block coefficients or" cell.
+                if content:
+                    content = text_transform(content)
+                # Strip any templates text_transform didn't handle.
+                content = re.sub(r"\{\{[^{}]*\}\}", "", content)
+            cells_html.append(emit_html_cell(
+                tag, content,
+                rowspan=rowspan, colspan=colspan, styles=styles,
+            ))
 
         if cells_html:
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
@@ -709,12 +694,6 @@ def _process_table(inner: str, text_transform,
             for m in re.finditer(r"(\d+)\.\s*([A-Z][A-Z\s,.:;()\-']+)", inner):
                 parts.append(f"{m.group(1)}. {m.group(2).strip()}")
             return "\n\n".join(parts)
-
-    # Check for brace layout (poem + translation side by side)
-    if "brace" in inner.lower() and "rowspan" in inner.lower():
-        result = _process_brace_table(inner, text_transform)
-        if result:
-            return result
 
     # Check for verse-layout table: 2 columns where col 1 is just punctuation
     # (quote marks) and col 2 has the actual verse text.
@@ -1216,48 +1195,5 @@ def _process_html_table(
     if text_rows:
         return _emit_table_marker(text_rows, header=bool(has_header))
     return ""
-
-
-def _process_brace_table(inner: str, text_transform) -> str | None:
-    """Handle tables with {{brace}} + rowspan used for poem/translation layout.
-
-    Pattern: left column has verse lines (one per row), middle has a brace,
-    right column has a merged translation cell.  Output as verse + translation.
-    """
-    rows = re.split(r"\|-[^\n]*", inner)
-
-    left_lines = []
-    right_text = ""
-
-    for row in rows:
-        # Strip templates and attributes
-        cleaned = re.sub(r"\{\{[^{}]*\}\}", "", row)
-        cells = re.findall(r"\|([^|\n]+)", cleaned)
-        cells = [c.strip() for c in cells
-                 if c.strip()
-                 and not re.match(
-                     r"^(?:colspan|rowspan|width|style|align|valign|class|"
-                     r"cellpadding|nowrap|border|bgcolor|height)[\s=|]",
-                     c.strip(), re.IGNORECASE)
-                 and c.strip() not in ("}", "{|")]
-
-        for cell in cells:
-            # Skip brace artifacts and empty cells
-            if not cell or len(cell) < 2:
-                continue
-            # The right-side translation tends to be the longest cell
-            if len(cell) > 40 and not right_text:
-                right_text = text_transform(cell)
-            elif len(cell) > 2:
-                left_lines.append(text_transform(cell))
-
-    if not left_lines:
-        return None
-
-    # Build verse block with translation
-    verse = "{{VERSE:" + "\n".join(left_lines) + "}VERSE}"
-    if right_text:
-        return verse + "\n\n" + right_text
-    return verse
 
 

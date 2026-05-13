@@ -95,7 +95,6 @@ from britannica.pipeline.stages.elements._tables import (
     _extract_subtable_values,
     _is_chemistry_layout,
     _is_html_illustration_wrapper,
-    _process_brace_table,
     _process_chemistry_layout,
     _process_complex_table,
     _process_compound_table,
