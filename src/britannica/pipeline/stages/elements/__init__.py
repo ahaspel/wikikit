@@ -136,23 +136,44 @@ _EXTRACTORS = [
         re.DOTALL | re.IGNORECASE), 0),
     ("IMAGE", re.compile(
         r"\[\[(?:File|Image):([^\]]+)\]\]"
-        # Optional caption block on the following line(s).  Allow up
-        # to 2 lines so attribution-line + Fig.-caption-line blocks
-        # stay together (WEAVING Fig. 29 `<small>From Roth's…</small>
-        # <br/>\n{{center|{{sc|Fig}} 29—Loom from Sarawak.}}`).  Each
-        # line must start with a recognized caption-or-attribution
-        # marker, optionally preceded by an HTML tag (`<small>`) or
-        # wrapper template (`{{sm|…}}`).
+        # Optional caption block on the following line(s).  The line
+        # must start with a structurally-unmistakable caption marker
+        # (a `<small>`-style HTML tag in front is tolerated):
+        #   • `{{sm|…}}` / `{{center|…}}`              — wrapped caption
+        #   • `{{sc|Fig…}}` / `{{small-caps|Fig…}}` / `{{Fine|Fig…}}`
+        #   • `Fig. N` / `Plate N`                     — caption opener
+        #   • `N.—…` / `N.–…`                          — numbered caption
+        #     (`N.` then an em-/en-dash — the EB1911 caption shape;
+        #     distinct from a numbered body section `N. Title…`)
+        # A *second* caption line is allowed so 2-line caption blocks
+        # stay together — and an attribution line (`From / After /
+        # Photo / Copyright / Modified …`) only counts when it is
+        # immediately followed by such a caption line, never alone
+        # (WEAVING Fig. 29 `<small>From Roth's…</small><br/>\n{{center|
+        # {{sc|Fig}} 29—Loom from Sarawak.}}`).  This is what stops a
+        # plain `From …` body paragraph from being eaten as the caption
+        # (AFGHANISTAN's run-on caption) — and the dropped
+        # `\d+\.\s*[A-Z]` trigger is what stops a numbered body section
+        # (`42. Successive Division…`) from being read as a caption.
         r"(?:\s*\n\n?("
         r"(?:<[a-z]+[^>\n]*>\s*)?"
-        r"(?:\{\{sm\||\{\{center\||\{\{(?:sc|Fine)\|Fig[.}]"
-        r"|Fig[. ]\d|Plate\s"
-        r"|(?:From|After|Photo|Copyright|Modified)\s"
-        r"|\d+\.\s*[A-Z])"
+        r"(?:"
+        # caption line, optionally followed by a 2nd caption line
+        r"(?:\{\{sm\||\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
+        r"|Fig[. ]\d|Plate\s|\d+\.\s*[—–])"
         r"[^\n]*"
         r"(?:\n(?:<[a-z]+[^>\n]*>\s*)?"
-        r"(?:\{\{center\||\{\{(?:sc|Fine)\|Fig[.}]|Fig[. ]\d)"
+        r"(?:\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
+        r"|Fig[. ]\d|\d+\.\s*[—–])"
         r"[^\n]*)?"
+        r"|"
+        # attribution line — only if a caption line follows it
+        r"(?:From|After|Photo|Copyright|Modified)\s[^\n]*"
+        r"\n(?:<[a-z]+[^>\n]*>\s*)?"
+        r"(?:\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
+        r"|Fig[. ]\d|\d+\.\s*[—–])"
+        r"[^\n]*"
+        r")"
         r"))?",
         re.IGNORECASE), 0),
     ("HIEROGLYPH", re.compile(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 
+from britannica.captions import clean_caption, strip_cell_attrs
 from britannica.pipeline.stages.elements._image import _process_image_from_raw
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
@@ -22,6 +23,154 @@ from britannica.pipeline.stages.elements._text import (
     _convert_inline_sub_sup,
     _strip_br,
 )
+
+
+# Wiki cell-attribute keywords — used in three places (here, _layout,
+# _emit_table_marker) to identify the `attr=value | content` prefix on
+# a cell.  Centralised here so every caller agrees on what counts as an
+# attribute vs body content.  The trailing `[\s=|]` is load-bearing —
+# bare keywords (no `=`) collide with English words like "Classics",
+# "border-line", etc., which would eat real content.
+_CELL_ATTR_KEYWORDS = (
+    r"colspan|rowspan|width|style|align|valign|class|"
+    r"cellpadding|nowrap|border|bgcolor|height"
+)
+_CELL_ATTR_RE = re.compile(
+    r"^(?:" + _CELL_ATTR_KEYWORDS + r")[\s=|]",
+    re.IGNORECASE,
+)
+
+# Internal sentinel used to mark pipes that are *inside* a protected
+# span (template, wikilink, child-element placeholder) so cell-splitting
+# regexes don't treat them as cell or attribute separators.  Restored to
+# `|` at the end of `split_wiki_row`.
+_PIPE_ESCAPE = "\x04"
+
+
+def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
+    """Split a wiki-table row into ``(sep, attr_part, content)`` cells.
+
+    * ``sep`` — ``'|'`` (data, from ``|`` or ``||``) or ``'!'``
+      (header, from ``!`` or ``!!``).
+    * ``attr_part`` — the cell-attribute prefix string
+      (``colspan="2" style="text-align:right"`` etc.), or ``''`` when
+      the cell has no attributes.
+    * ``content`` — the cell's text content with protected pipes
+      restored.
+
+    Shared by the data-table renderer (``_extract_cells`` inside
+    ``_process_table``), the complex-HTML renderer
+    (``_process_complex_table``), and the layout-table unwrapper
+    (``_unwrap_layout_table`` in ``_layout``).  Each caller used to
+    re-implement this — and the implementations diverged just enough
+    that the same leaked-attribute bug surfaced once per path.  Steps:
+
+    1. Merge continuation lines into the preceding cell-line (a wiki
+       cell can spill onto subsequent lines when it contains a multi-
+       line ``<ref>``, ``{{hi|…}}``, etc.).
+    2. Protect pipes inside ``{{…}}``, ``[[…]]`` wikilinks, and
+       ``\\x03…\\x03`` child-element placeholders so they don't get
+       treated as cell or attribute separators.
+    3. Normalise inline ``||`` / ``!!`` separators to line-anchored
+       ``\\n|`` / ``\\n!`` so every cell becomes its own line.
+    4. Split each cell-line into ``(sep, attr_part, content)`` via
+       ``rpartition('|')``: the part before the last ``|`` is the
+       attribute prefix iff it matches ``_CELL_ATTR_RE`` (or it's
+       empty / pure ``{{Ts|…}}`` styling).  Otherwise the entire body
+       is content with empty attrs.
+    """
+    # 1. Merge continuation lines.
+    merged: list[str] = []
+    for ln in row_text.split("\n"):
+        stripped = ln.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(("|", "!")) or stripped == "{|":
+            merged.append(ln)
+        elif merged:
+            merged[-1] = merged[-1].rstrip() + " " + stripped
+        else:
+            merged.append(ln)
+    text = "\n".join(merged)
+
+    # 2. Protect pipes inside templates / wikilinks / placeholders.
+    text = re.sub(r"\{\{[^}]*\}\}",
+                  lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text)
+    text = re.sub(r"\[\[[^\]]*\]\]",
+                  lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text)
+    text = re.sub(
+        re.escape(_PH) + r"[^" + re.escape(_PH) + r"]+" + re.escape(_PH),
+        lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text,
+    )
+
+    # 3. Inline cell-separator normalisation.
+    text = text.replace("||", "\n|").replace("!!", "\n!")
+
+    # 4. Per-cell attr / content split.
+    cells: list[tuple[str, str, str]] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line or line.startswith("|+") or line in ("}", "{|"):
+            continue
+        if not line.startswith(("|", "!")):
+            continue
+        sep = line[0]
+        body = line[1:].strip()
+        if "|" in body:
+            attr_part, _, content = body.rpartition("|")
+            attr_check = re.sub(
+                r"\{\{[Tt]s\|[^{}]*\}\}\s*", "",
+                attr_part.replace(_PIPE_ESCAPE, "|"),
+            ).strip()
+            if attr_check and not _CELL_ATTR_RE.match(attr_check):
+                # Not a real attribute prefix — keep whole body as
+                # content (this is the case for chemistry rows like
+                # `«I»d«B»ᵢ«/I» = 1.2 «I»r«/B»ᵢ«/I» | rowspan=3 | …`
+                # where the leading text isn't an attribute).
+                attr_part, content = "", body
+        else:
+            attr_part, content = "", body
+        cells.append((
+            sep,
+            attr_part.replace(_PIPE_ESCAPE, "|").strip(),
+            content.replace(_PIPE_ESCAPE, "|").strip(),
+        ))
+    return cells
+
+
+def emit_html_cell(
+    tag: str,
+    content: str,
+    *,
+    rowspan: int = 1,
+    colspan: int = 1,
+    styles: list[str] | None = None,
+) -> str:
+    """Build one HTML table cell with the standard attribute
+    serialisation.
+
+    * ``tag`` — ``'td'`` or ``'th'``.
+    * ``content`` — already-cleaned cell content (templates expanded,
+      entities decoded, etc.).
+    * ``rowspan`` / ``colspan`` — integer cell-span counts; the
+      attribute is emitted only when ``> 1``.
+    * ``styles`` — list of CSS declarations (e.g.
+      ``['text-align:right', 'vertical-align:top']``); joined with
+      ``;`` and emitted as a single ``style="…"`` attribute when
+      non-empty.
+
+    Shared by ``_process_complex_table`` (wiki ``{|…|}`` with spans →
+    HTML) and ``_process_html_table`` (HTML ``<table>`` → marker).
+    Centralising the serialisation here keeps the two output paths
+    byte-identical for the same logical cell."""
+    attrs = ""
+    if rowspan > 1:
+        attrs += f' rowspan="{rowspan}"'
+    if colspan > 1:
+        attrs += f' colspan="{colspan}"'
+    if styles:
+        attrs += f' style="{";".join(styles)}"'
+    return f"<{tag}{attrs}>{content}</{tag}>"
 
 
 def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
@@ -175,7 +324,7 @@ def _process_compound_table(raw: str, text_transform) -> str:
                     content = content.strip()
                     if content and text_transform:
                         content = text_transform(content)
-                    cells_html.append(f"<{tag}>{content}</{tag}>")
+                    cells_html.append(emit_html_cell(tag, content))
 
             if cells_html:
                 html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
@@ -209,6 +358,16 @@ def _process_complex_table(inner: str, text_transform) -> str:
     if cap_match:
         cap_raw = cap_match.group(1).strip()
         cap_text = text_transform(cap_raw) if cap_raw else ""
+        if cap_text:
+            # Strip any wiki cell-attribute prefix that survived
+            # `text_transform` — when the caption line itself bears cell
+            # styling (``|+ |style="…"|TEXT``, METEOR / PHOTOGRAPHY), the
+            # attribute would otherwise leak into the rendered `<caption>`.
+            # `strip_cell_attrs`, not `clean_caption`: the HTMLTABLE
+            # caption renders its `«SC»` / `«I»` / `«B»` markers as real
+            # small-caps / italics / bold, so we must NOT unwrap them
+            # here (ACCUMULATOR's «SC»Table I.«/SC», ALPACA's «I»Alpaca«/I»…).
+            cap_text = strip_cell_attrs(cap_text)
         if cap_text:
             caption_html = f"<caption>{cap_text}</caption>"
 
@@ -266,13 +425,10 @@ def _process_complex_table(inner: str, text_transform) -> str:
                 content = content.replace("\x04", "|")
 
                 # Extract structural attributes
-                attrs = ""
                 rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
                 cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
-                if rs:
-                    attrs += f' rowspan="{rs.group(1)}"'
-                if cs:
-                    attrs += f' colspan="{cs.group(1)}"'
+                rowspan = int(rs.group(1)) if rs else 1
+                colspan = int(cs.group(1)) if cs else 1
                 # Propagate horizontal/vertical alignment from
                 # ``{{Ts|ar}}``/``ac``/``al`` style tokens or HTML
                 # ``align=`` / ``valign=`` attributes to inline CSS so
@@ -310,8 +466,6 @@ def _process_complex_table(inner: str, text_transform) -> str:
                         or re.search(r'valign\s*=\s*"?bottom"?',
                                      attr_part, re.IGNORECASE)):
                     styles.append("vertical-align:bottom")
-                if styles:
-                    attrs += f' style="{";".join(styles)}"'
 
                 # Clean content
                 # Convert [[Image:...|params]] to {{IMG:filename}}
@@ -338,7 +492,10 @@ def _process_complex_table(inner: str, text_transform) -> str:
                         content = text_transform(content)
                     # Strip any templates text_transform didn't handle.
                     content = re.sub(r"\{\{[^{}]*\}\}", "", content)
-                cells_html.append(f"<{tag}{attrs}>{content}</{tag}>")
+                cells_html.append(emit_html_cell(
+                    tag, content,
+                    rowspan=rowspan, colspan=colspan, styles=styles,
+                ))
 
         if cells_html:
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
@@ -437,67 +594,40 @@ def _process_table(inner: str, text_transform,
     # line breaks, e.g. "Circum-<br>ference" → "Circumference").
     inner = _strip_br(inner)
 
-    # Cell attribute pattern
-    _ATTR = re.compile(
-        r"^(?:colspan|rowspan|width|style|align|valign|class|"
-        r"cellpadding|nowrap|border|bgcolor|height)[\s=|]",
-        re.IGNORECASE,
-    )
-
     def _extract_cells(row_text):
-        """Extract data cells from a row, stripping attributes, processing each."""
-        # Protect {{...}} and placeholders from pipe-splitting (this
-        # also protects pipes inside {{Ts|...}} cell-styling templates,
-        # so the template's internal `|` doesn't get interpreted as a
-        # cell boundary).
-        protected = re.sub(r"\{\{[^}]*\}\}",
-                           lambda m: m.group(0).replace("|", "\x04"),
-                           row_text)
-        protected = re.sub(re.escape(_PH) + r"[^" + re.escape(_PH) + r"]+"
-                           + re.escape(_PH),
-                           lambda m: m.group(0).replace("|", "\x04"),
-                           protected)
-
-        # Normalize `||` (MediaWiki same-line cell shorthand) to `\n|`
-        # so it's treated as a single cell separator, not two.
-        protected = protected.replace("||", "\n|")
-
-        # Split cells on `|` at LINE STARTS only — a mid-line `|` is
-        # the cell's internal attribute/content separator (`|attrs|
-        # content`), NOT a cell boundary.  The older ``\|([^|\n]*)``
-        # regex split on every `|` and produced phantom empty cells in
-        # rows like ``| ||{{Ts|ar}} | text`` (BRITISH EMPIRE Eastern
-        # Colonies summation rows): the source intent was one empty
-        # cell + one right-aligned cell, not three cells.
-        raw_cells = re.findall(r"(?:^|\n)\|([^\n]*)", protected)
-
+        """Extract data cells from a row via the shared `split_wiki_row`
+        helper, then drop any remaining `{{Ts|…}}` cell-styling
+        templates and run each cell's content through `text_transform`.
+        """
         cells = []
-        for c in raw_cells:
-            # Operate on the PROTECTED form (with `\x04` standing in
-            # for pipes inside `{{...}}` templates) so the rpartition
-            # below splits only on real cell attr/content separators,
-            # never on a pipe that lives inside ``{{em|3}}`` etc.
-            s_prot = c.strip()
-            if s_prot.replace("\x04", "|") in ("}", "{|"):
+        for sep, attr_part, content in split_wiki_row(row_text):
+            if content in ("}", "{|"):
                 continue
-            # Within-cell attribute/content split: the LAST `|` in a
-            # cell (outside templates) separates attribute prefix from
-            # content (``attrs|content``).  Treat the prefix as
-            # attributes only if it actually looks like one (Ts-styling
-            # template or standard table-attribute keyword).
-            if "|" in s_prot:
-                attr_part, _, content = s_prot.rpartition("|")
-                attr_check = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "",
-                                    attr_part.replace("\x04", "|")).strip()
-                if not attr_check or _ATTR.match(attr_check):
-                    s_prot = content
-            s = s_prot.replace("\x04", "|").strip()
-            if s and _ATTR.match(s):
+            if not content:
+                # Preserve as a real empty cell — this is `|` on its
+                # own (AETHER / AQUEDUCT column spacers) or `|attr|`
+                # with a trailing-pipe and empty content (GRASS AND
+                # GRASSLAND's `|width="50%" {{ts|ac|ba}}| ` header-
+                # corner: a real cell carrying only sizing/styling
+                # attributes).  The trailing pipe is the signal that
+                # source intended a real cell.  This is `split_wiki_row`'s
+                # contract: anything it returns is a real cell — and the
+                # mid-line case where source has `|attr-keyword` with NO
+                # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
+                # check on `content` below.
+                cells.append(" ")
                 continue
-            # Drop any remaining {{Ts|...}} cell-styling templates.
-            s = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", s).strip()
-            # Process cell content through text_transform (empty → " ")
-            cells.append(text_transform(s) if s else " ")
+            # Content that is itself a bare attribute keyword (`colspan=2`
+            # with no trailing-pipe boundary in source) is a malformed
+            # cell, not real content — drop it.
+            if _CELL_ATTR_RE.match(content):
+                continue
+            # Drop any leftover {{Ts|…}} cell-styling tokens — they
+            # carry CSS hints (`{{Ts|ar}}` for right-align) consumed by
+            # the complex-table renderer; the plain TABLE marker
+            # doesn't render alignment, so they're noise here.
+            cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
+            cells.append(text_transform(cleaned) if cleaned else " ")
         return cells
 
     # Tiny inline tables (few cells, short content) → unwrap to inline text.
@@ -978,6 +1108,9 @@ def _process_html_table(
     """Convert HTML table content to either an unwrapped illustration,
     a {{TABLE:...}TABLE} data table, or an HTMLTABLE marker when
     rowspan/colspan need to be preserved."""
+    if "Oriental Railways" in inner and "Mustafa-Pasha" in inner:
+        import sys as _sys
+        _sys.stderr.write("DEBUG: _process_html_table called for TURKEY\n")
     # Illustration wrapper — unwrap to IMG + caption
     if _is_html_illustration_wrapper(raw, inner_registry):
         return _unwrap_html_illustration(inner, text_transform, inner_registry)
@@ -1042,14 +1175,11 @@ def _process_html_table(
     if has_span:
         html_rows = []
         for parsed in parsed_rows:
-            cells_html = []
-            for tag, rowspan, colspan, content in parsed:
-                attrs = ""
-                if rowspan > 1:
-                    attrs += f' rowspan="{rowspan}"'
-                if colspan > 1:
-                    attrs += f' colspan="{colspan}"'
-                cells_html.append(f"<{tag}{attrs}>{content}</{tag}>")
+            cells_html = [
+                emit_html_cell(tag, content,
+                               rowspan=rowspan, colspan=colspan)
+                for tag, rowspan, colspan, content in parsed
+            ]
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
         return ("\n\n\u00abHTMLTABLE:<table>" +
                 "".join(html_rows) +

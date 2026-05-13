@@ -411,8 +411,22 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     text = replace_print_artifacts(text)
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Strip HTML comments (replace with space to avoid creating false paragraph breaks)
-    text = re.sub(r"\n?<!--.*?-->\n?", " ", text, flags=re.DOTALL)
+    # Strip HTML comments.  Preserve any newline(s) adjacent to the
+    # comment so a line-end comment doesn't glue the next line into the
+    # current one — TURKEY's railway table had ``</ref><!-- ... -->\n
+    # |align="center"|815``, and collapsing the trailing ``\n`` to a
+    # space joined the next cell's ``|align="..."|`` into the previous
+    # cell's content, leaking the attribute prefix into body text.  When
+    # both sides have newlines we keep the longer run, so a comment
+    # bracketing a real paragraph break (``\n\n<!-- ... -->\n\n``) still
+    # leaves the paragraph break intact; an inline comment with no
+    # adjacent newline collapses to a single space as before.
+    def _sub_comment(m: re.Match) -> str:
+        pre, post = m.group(1) or "", m.group(2) or ""
+        if not pre and not post:
+            return " "
+        return pre if len(pre) >= len(post) else post
+    text = re.sub(r"(\n*)<!--.*?-->(\n*)", _sub_comment, text, flags=re.DOTALL)
 
     # Unwrap poem wrappers: {{block center|<poem>...</poem>}} → <poem>...</poem>
     text = re.sub(
@@ -585,6 +599,12 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         return (f"{{{{IMG:{m.group(1)}|{cap}}}}}" if cap
                 else f"{{{{IMG:{m.group(1)}}}}}")
     text = re.sub(r"\{\{IMG:([^|}]+)\|([^}]*)\}\}", _renorm_img_caption, text)
+
+    # Final blank-line collapse.  Element-marker insertions
+    # (`{{IMG:…}}`, `{{LEGEND:…}LEGEND}`, etc.) each wrap themselves in
+    # `\n\n…\n\n`, so two adjacent blocks can produce 3+ consecutive
+    # newlines.  Doing this here means `clean_body` doesn't need to.
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text
 
