@@ -603,7 +603,8 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # Final blank-line collapse.  Element-marker insertions
     # (`{{IMG:…}}`, `{{LEGEND:…}LEGEND}`, etc.) each wrap themselves in
     # `\n\n…\n\n`, so two adjacent blocks can produce 3+ consecutive
-    # newlines.  Doing this here means `clean_body` doesn't need to.
+    # newlines.  Collapsing here means the transform produces its
+    # body cleanly in isolation, no downstream cleanup needed.
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text

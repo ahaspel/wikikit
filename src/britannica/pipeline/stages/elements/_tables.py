@@ -145,6 +145,25 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
     return cells
 
 
+def _strip_wiki_cell_attr_in_html(text: str) -> str:
+    """Strip wiki cell-attribute syntax (``|attr=val|``) that leaked
+    into HTML ``<td>`` cell content.
+
+    Some source authors mix syntaxes inside an HTML ``<table>`` —
+    CALENDAR (vol 4 pp. 1028-30) and HYDRAULICS (vol 14 p. 120) both
+    write ``<td>content|rowspan=3|content</td>``, expecting the wiki
+    ``|rowspan=3|`` to be interpreted as a cell attribute.  Wiki
+    syntax doesn't apply inside HTML, so the ``|rowspan=3|`` would
+    leak as raw text through ``<td>`` content.  This strip removes
+    the wiki-attr token (visual cell-spanning is lost, but the
+    surrounding math/text content survives clean)."""
+    return re.sub(
+        r"\|\s*(?:colspan|rowspan|style|align|valign|width|class|bgcolor|"
+        r"cellpadding|cellspacing|border|height)\s*=[^|\n]*\|",
+        " ", text, flags=re.IGNORECASE,
+    )
+
+
 def parse_wiki_table(
     text: str,
 ) -> tuple[str, list[list[tuple[str, str, str]]]]:
@@ -233,17 +252,16 @@ def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
     Data tables (``header=False``): canonical form — one space on each
     side of every ``|`` separator, multi-space runs collapsed (an empty
     cell renders as ``a | | b`` not ``a |   | b``), blank rows removed.
-    Emitting this directly from the renderer means ``clean_body``'s
-    ``_normalize_table_pipes`` / ``_collapse_table_blanks`` passes become
-    no-ops on renderer-produced tables.  (Downstream legend-detection in
+    The renderer emits canonical output directly so no downstream
+    pipe-normalisation pass is needed.  (Downstream legend-detection in
     ``legend_promote._table_row_cells`` is whitespace-robust, so the
     collapsed-empty-cell form doesn't change which tables become legends.)
 
-    Header tables (``header=True``): rows are joined raw — ``clean_body``'s
-    ``\\{\\{TABLE:(.*?)\\}TABLE\\}`` regex never matched ``{{TABLEH:`` (the
-    ``:`` must follow ``TABLE`` immediately), so header tables were never
-    normalized.  Matching that here keeps shipped output identical;
-    normalizing header tables too is a deliberate-change item (burndown).
+    Header tables (``header=True``): rows are joined raw.  Normalizing
+    header tables is a deliberate-change item (burndown) — would change
+    shipped output for ``{{TABLEH:`` tables that haven't been touched
+    since the historical ``\\{\\{TABLE:`` cleanup regex (which never
+    matched the ``H`` suffix) was deleted.
     """
     content = "\n".join(text_rows)
     if not header:
@@ -1106,6 +1124,7 @@ def _process_html_table(
         if cells:
             parts = []
             for c in cells:
+                c = _strip_wiki_cell_attr_in_html(c)
                 c = _strip_br(c)
                 c = _convert_inline_sub_sup(c)
                 c = re.sub(r"<[^>]+>", " ", c)
@@ -1138,7 +1157,8 @@ def _process_html_table(
             colspan = int(cs.group(1)) if cs else 1
             if rowspan > 1 or colspan > 1:
                 has_span = True
-            c = _strip_br(cell)
+            c = _strip_wiki_cell_attr_in_html(cell)
+            c = _strip_br(c)
             c = _convert_inline_sub_sup(c)
             c = re.sub(r"<[^>]+>", " ", c)
             c = re.sub(r"\s+", " ", c).strip()

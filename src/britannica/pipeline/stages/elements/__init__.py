@@ -13,7 +13,8 @@ is handled naturally by recursion.
 from __future__ import annotations
 
 import re
-from dataclasses import replace as _dc_replace
+from dataclasses import dataclass, replace as _dc_replace
+from typing import Callable
 
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
@@ -270,6 +271,7 @@ def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
         # this; we have to too, otherwise the table leaks as raw
         # wikitable markup.
         depth = 0
+        html_depth = 0  # tracks nested HTML <table>…</table> blocks
         i = idx
         found = False
         while i < len(text) - 1:
@@ -296,6 +298,25 @@ def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
                     # `{|...|}` table in the article. Treat the `{{` as
                     # literal and keep scanning for the table close.
                     i += 2
+                continue
+            # HTML `<table>` opener / closer — track separately from
+            # the wiki `{|` depth so that a `</table>` inside a NESTED
+            # HTML table doesn't masquerade as a wiki-table close
+            # (INTERPOLATION's outer `{|…|}` contains an HTML
+            # `<table>…</table>` whose close would otherwise pop the
+            # wiki depth, truncating the outer table early and leaking
+            # everything after `</table>` — equation-number cells,
+            # `|}`, etc. — as raw wikitext).
+            if (i + 7 < len(text) and masked[i:i+6].lower() == "<table"
+                    and masked[i+6] in (" ", ">", "\t", "\n")):
+                html_depth += 1
+                # Step past the `>` of the opening tag.
+                j = text.find(">", i)
+                i = j + 1 if j >= 0 else i + 6
+                continue
+            if masked[i:i+8].lower() == "</table>" and html_depth > 0:
+                html_depth -= 1
+                i += 8
                 continue
             if masked[i:i+2] == "{|":
                 depth += 1
@@ -445,26 +466,129 @@ def _strip_delimiters(element_type: str, raw: str) -> str:
     return raw
 
 
+# Element-handler registry.
+#
+# Each entry pairs an ``element_type`` with the function that converts
+# its wikitext to rendered output.  Two kinds of entries:
+#
+#   pre_extract=True  — handler runs on the raw element (no delimiter
+#                       strip, no child extraction).  Used for elements
+#                       that own their internal structure end-to-end
+#                       (DJVU_CROP, CHART2, SCORE, COMPOUND_TABLE).
+#
+#   pre_extract=False — handler runs after ``_strip_delimiters`` and
+#                       recursive child extraction.  Receives ``inner``
+#                       (delimiter-stripped, child placeholders intact)
+#                       and the child ``inner_registry``.  Children are
+#                       processed before the parent so the parent sees
+#                       opaque placeholder markers, not expanded text;
+#                       children get reinserted after the parent runs.
+#
+# All handlers share a normalized signature
+# ``(raw, inner, text_transform, context, inner_registry) -> str`` so
+# the dispatcher is a flat dict lookup.  Unknown element types fall
+# through to ``_passthrough_inner`` (the historical ``else: result =
+# inner`` behavior).
+#
+# Adding a new element type is now a one-line registry entry, not a
+# new ``elif`` branch in the dispatch tower.
+
+_ElementHandler = Callable[
+    [str, str, Callable, ElementContext, "ElementRegistry | None"], str]
+
+
+@dataclass(frozen=True)
+class _HandlerEntry:
+    handler: _ElementHandler
+    pre_extract: bool = False
+
+
+def _dispatch_table(raw: str, inner: str, text_transform,
+                    context: ElementContext,
+                    inner_registry: ElementRegistry | None) -> str:
+    """TABLE sub-dispatch: classify the wiki-table, then route."""
+    kind = _classify_table(raw, inner, inner_registry)
+    return _TABLE_KIND_HANDLERS.get(kind, _process_data_table)(
+        raw, inner, text_transform, context, inner_registry)
+
+
+def _process_data_table(raw, inner, text_transform, context,
+                        inner_registry):
+    return _process_table(inner, text_transform, inner_registry)
+
+
+def _passthrough_inner(raw, inner, text_transform, context,
+                       inner_registry):
+    return inner
+
+
+_TABLE_KIND_HANDLERS: dict[str, _ElementHandler] = {
+    "MATH_LAYOUT": lambda raw, inner, tt, ctx, reg:
+        _process_math_layout_table(raw),
+    "EQUATION_LAYOUT": lambda raw, inner, tt, ctx, reg:
+        _process_equation_layout(inner, tt),
+    "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
+        _unwrap_layout_table(inner, tt, reg),
+    "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
+        _process_complex_table(inner, tt),
+    "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
+        _process_chemistry_layout(inner, tt, reg),
+}
+
+
+_ELEMENT_HANDLERS: dict[str, _HandlerEntry] = {
+    # Pre-extract: opaque to child extraction.
+    "DJVU_CROP": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_djvu_crop(raw, tt, ctx),
+        pre_extract=True),
+    "CHART2": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
+        pre_extract=True),
+    "SCORE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_score(raw, ctx),
+        pre_extract=True),
+    "COMPOUND_TABLE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_compound_table(raw, tt),
+        pre_extract=True),
+
+    # Post-extract: receive inner + processed-child placeholders.
+    "MATH": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_math(inner)),
+    "REF_SELF": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg:
+            _process_ref_self(raw, ctx.ref_bodies)),
+    "REF": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg:
+            _process_ref(raw, inner, tt, ctx.ref_bodies)),
+    "IMAGE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_image(inner, tt)),
+    "IMAGE_FLOAT": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_image_float(inner, tt)),
+    "POEM": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt)),
+    "HIEROGLYPH": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: f"[hieroglyph: {inner}]"),
+    "TABLE": _HandlerEntry(_dispatch_table),
+    "HTML_TABLE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg:
+            _process_html_table(raw, inner, tt, reg)),
+    "OUTLINE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt)),
+}
+
+
 def _process_element(element_type: str, raw: str,
                      text_transform, context: ElementContext) -> str:
     """Process a single element recursively.
 
-    Args:
-        element_type: TABLE, IMAGE, REF, POEM, MATH, SCORE, IMAGE_FLOAT
-        raw: the raw wikitext of the element
-        text_transform: function to transform plain wikitext (bold, italic, etc.)
-        context: per-article ElementContext (volume / page / ref_bodies / crop counters)
+    Dispatch is registry-driven (see ``_ELEMENT_HANDLERS``).  Pre-extract
+    handlers run on ``raw``; post-extract handlers run after delimiter
+    stripping and recursive child extraction, with children reinserted
+    after the handler returns.
     """
-    # DJVU_CROP, CHART2, SCORE, and COMPOUND_TABLE are self-contained —
-    # process from raw, no recursive child extraction.
-    if element_type == "DJVU_CROP":
-        return _process_djvu_crop(raw, text_transform, context)
-    if element_type == "CHART2":
-        return _process_chart2(raw, context)
-    if element_type == "SCORE":
-        return _process_score(raw, context)
-    if element_type == "COMPOUND_TABLE":
-        return _process_compound_table(raw, text_transform)
+    entry = _ELEMENT_HANDLERS.get(element_type)
+    if entry is not None and entry.pre_extract:
+        return entry.handler(raw, "", text_transform, context, None)
 
     # Strip outer delimiters to get the element's inner content,
     # then recursively extract and process any child elements.  Skip
@@ -480,43 +604,8 @@ def _process_element(element_type: str, raw: str,
         processed_children[key] = _process_element(
             child_type, child_raw, text_transform, context)
 
-    # Process this element with placeholders still in place
-    if element_type == "MATH":
-        result = _process_math(inner)
-    elif element_type == "REF_SELF":
-        result = _process_ref_self(raw, context.ref_bodies)
-    elif element_type == "REF":
-        result = _process_ref(raw, inner, text_transform,
-                              context.ref_bodies)
-    elif element_type == "IMAGE":
-        result = _process_image(inner, text_transform)
-    elif element_type == "IMAGE_FLOAT":
-        result = _process_image_float(inner, text_transform)
-    elif element_type == "POEM":
-        result = _process_poem(inner, text_transform)
-    elif element_type == "HIEROGLYPH":
-        result = f"[hieroglyph: {inner}]"
-    elif element_type == "TABLE":
-        table_kind = _classify_table(raw, inner, inner_registry)
-        if table_kind == "MATH_LAYOUT":
-            result = _process_math_layout_table(raw)
-        elif table_kind == "EQUATION_LAYOUT":
-            result = _process_equation_layout(inner, text_transform)
-        elif table_kind == "LAYOUT_WRAPPER":
-            result = _unwrap_layout_table(inner, text_transform, inner_registry)
-        elif table_kind == "COMPLEX_HTML":
-            result = _process_complex_table(inner, text_transform)
-        elif table_kind == "CHEMISTRY_LAYOUT":
-            result = _process_chemistry_layout(
-                inner, text_transform, inner_registry)
-        else:
-            result = _process_table(inner, text_transform, inner_registry)
-    elif element_type == "HTML_TABLE":
-        result = _process_html_table(raw, inner, text_transform, inner_registry)
-    elif element_type == "OUTLINE":
-        result = _process_outline(inner, text_transform)
-    else:
-        result = inner
+    handler = entry.handler if entry is not None else _passthrough_inner
+    result = handler(raw, inner, text_transform, context, inner_registry)
 
     # Reinsert processed children.  A single pass isn't enough: a
     # processed child may itself contain placeholders for siblings

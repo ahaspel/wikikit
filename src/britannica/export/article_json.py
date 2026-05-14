@@ -11,7 +11,6 @@ from britannica.db.models import (
     Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
-from britannica.export.body_cleanup import clean_body
 from britannica.export.body_postprocess import (
     _BIBLIOGRAPHIC_PATTERNS,
     _PROTECTED_SPAN_RES,
@@ -385,9 +384,9 @@ def export_articles_to_json(
     ``body_override`` (article.id → body) is a test seam: when given,
     each article's body is taken from the map instead of ``article.body``.
     Used by ``tools/diagnostics/verify_refactor.py --full`` to run the
-    full pipeline (transform → export → clean_body) against an
-    in-memory shadow body without writing to the DB.  Production callers
-    pass nothing and behavior is unchanged.
+    full pipeline (transform → export) against an in-memory shadow
+    body without writing to the DB.  Production callers pass nothing
+    and behavior is unchanged.
     """
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -629,16 +628,16 @@ def export_articles_to_json(
             # the inline repeat is redundant.
             body = _strip_redundant_title(body, article.title)
 
-            # Final body cleanup (codepoint normalization, leaked table
-            # attributes, orphan pipe-rows, blank-line collapse).  This
-            # used to run as a separate post-export pass (postprocess.py);
-            # folding it in here makes export the single owner of body
-            # output, so reprocess_article.py produces faithful JSON.
-            cleaned_body = clean_body(body)
+            # No clean_body: each element is responsible for emitting
+            # clean output (split_wiki_row / parse_wiki_table /
+            # emit_html_cell consolidation made this possible).  Any
+            # remaining stray-pipe artifact is a producer bug to fix
+            # at source, not patch over downstream.
+            cleaned_body = body
 
             # word_count and sections describe the *shipped* body, so
-            # they're derived from cleaned_body — not the pre-cleanup
-            # text.  sections in particular must match what the viewer's
+            # they're derived from body — not pre-strip text.
+            # sections in particular must match what the viewer's
             # detectSections() emits at render time (it runs on the
             # shipped body), or deep-section URLs won't resolve.
             payload = {
