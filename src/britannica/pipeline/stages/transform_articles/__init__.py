@@ -141,6 +141,106 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
 # and not just a short word in a data table cell.
 
 
+# Page-cosmetic 2-column body-layout wrapper: ``{|cellpadding="N"
+# rules="cols"`` (in either attribute order) immediately followed by a
+# ``|width="NN%" valign="top"|`` cell with no body content.  This is
+# the Wikisource convention for typesetting a single page's prose in
+# two columns; it has nothing to do with the article's data.  Real
+# multi-page data tables (like INDIANS, NORTH AMERICAN's ``{|{{Ts|ma}}
+# rules=cols border="1"``) have ``border=`` and header cells, so
+# requiring "no border, then column-width-only first cell" cleanly
+# distinguishes the two.
+_LAYOUT_NOINCLUDE_OPENER_RE = re.compile(
+    r"<noinclude>"                                # block opener
+    r"(?P<head>(?:(?!</noinclude>).)*?)"          # everything up to
+    r"\{\|(?P<attrs>(?![^\n]*\bborder\s*=)"       # `{|` with NO border
+    r"[^\n]*\bcellpadding\s*="                    # has cellpadding
+    r"[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"       # AND rules=cols
+    r"|(?![^\n]*\bborder\s*=)"                    # OR (alt order)
+    r"[^\n]*\brules\s*=\s*[\"']?cols"
+    r"[^\n]*\bcellpadding\s*=[^\n]*)\n"
+    r"\s*\|width\s*=\s*[\"']?\d+%[\"']?"          # then width=NN%
+    r"\s+valign\s*=\s*[\"']?top[\"']?\|"          # valign=top cell
+    r"(?P<tail>(?:(?!</noinclude>).)*?)"
+    r"</noinclude>",
+    re.DOTALL | re.IGNORECASE,
+)
+
+# Bare-line variant — by the time `_transform_text_v2` runs against a
+# stored ArticleSegment, ``detect_boundaries._strip_noinclude_preserve_tables``
+# has already stripped ``<noinclude>`` wrappers but kept ``{|…`` opener
+# lines.  So in segment-text the JESUS CHRIST opener appears as just a
+# bare ``{|cellpadding="5" rules="cols"`` line at the start of its page
+# segment, no surrounding noinclude.  Same attribute fingerprint.
+_LAYOUT_BARE_OPENER_RE = re.compile(
+    # Use a look-behind for `^`, `\n`, or a PAGE marker (`\x01PAGE:NNN\x01`)
+    # so the substitution leaves the lead intact — the layout opener can
+    # sit immediately after a page marker in a joined segment stream
+    # (JESUS CHRIST p358), and we must keep the marker.
+    #
+    # CRITICAL: also require the NEXT line not to start with `|` — a
+    # real data table opener (BEAUFORT SCALE `{|rules=cols cellpadding=3`)
+    # is immediately followed by wiki-table row content (`|-` /
+    # `|cell...`).  A page-layout wrapper opener is followed by plain
+    # article prose.  Without this lookahead, the regex stripped real
+    # data tables corpus-wide (BEAUFORT, FUNCTION, PROBABILITY, ROOT,
+    # ROME, TROCHAIC, TURKEY, ZEUXIS — all leaked their pipe rows).
+    r"(?<=\n)\s*\{\|(?:"
+    r"(?![^\n]*\bborder\s*=)[^\n]*\bcellpadding\s*=[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"
+    r"|(?![^\n]*\bborder\s*=)[^\n]*\brules\s*=\s*[\"']?cols[^\n]*\bcellpadding\s*=[^\n]*"
+    r")\n(?!\s*\|)"
+    r"|(?<=\x01)\s*\{\|(?:"
+    r"(?![^\n]*\bborder\s*=)[^\n]*\bcellpadding\s*=[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"
+    r"|(?![^\n]*\bborder\s*=)[^\n]*\brules\s*=\s*[\"']?cols[^\n]*\bcellpadding\s*=[^\n]*"
+    r")\n(?!\s*\|)",
+    re.IGNORECASE,
+)
+
+# Matching closer in either form — wrapped noinclude or bare ``|}``
+# line.  Stripping any solo ``|}`` would risk a real multi-page data-
+# table closer, so closer-stripping is GATED by opener presence (see
+# `_strip_page_layout_noinclude_wrappers`).
+_LAYOUT_NOINCLUDE_CLOSER_RE = re.compile(
+    r"<noinclude>\s*\|\}\s*</noinclude>",
+    re.IGNORECASE,
+)
+_LAYOUT_BARE_CLOSER_RE = re.compile(
+    r"(?:^|\n)\s*\|\}(?!\})\s*(?=\n|$)",
+)
+
+
+def _strip_page_layout_noinclude_wrappers(text: str) -> str:
+    """Strip Wikisource per-page 2-column display wrappers.
+
+    These wrappers are typographic only (``cellpadding="5" rules="cols"``
+    with a single ``width="NN%" valign="top"`` cell carrying the page's
+    prose).  Without this pass, the opener is preserved as plain ``{|…``
+    text and the orphaned closer fakes a wrapper around the article body
+    (``_wrap_orphaned_table_rows`` adds a synthetic ``{|``).  The shape
+    cannot be confused with a real multi-page data table — those carry
+    ``border=`` plus header cells, both of which we exclude.
+
+    Two opener forms exist depending on where in the pipeline this is
+    invoked: ``<noinclude>{|cellpadding=…|width=…</noinclude>`` (raw
+    page wikitext) and a bare ``{|cellpadding=…`` line (segment-text,
+    after ``detect_boundaries`` has stripped noinclude wrappers but
+    preserved the ``{|`` opener).  Both are handled.  Strips opener and
+    matching closer in tandem so the body is left bare, as Wikisource's
+    standalone-page renderer intends when transcluded.
+    """
+    has_wrapped = _LAYOUT_NOINCLUDE_OPENER_RE.search(text) is not None
+    has_bare = _LAYOUT_BARE_OPENER_RE.search(text) is not None
+    if not has_wrapped and not has_bare:
+        return text
+    if has_wrapped:
+        text = _LAYOUT_NOINCLUDE_OPENER_RE.sub("", text)
+        text = _LAYOUT_NOINCLUDE_CLOSER_RE.sub("", text)
+    if has_bare:
+        text = _LAYOUT_BARE_OPENER_RE.sub("", text)
+        text = _LAYOUT_BARE_CLOSER_RE.sub("", text)
+    return text
+
+
 def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     """New architecture: extract-process-reassemble.
 
@@ -164,6 +264,20 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # logical rows via <br>-stacking — as N real rows, so downstream
     # table processing sees a well-formed N-row table instead of one
     # giant row with concatenated values.
+    # Strip purely-visual `{{word-spacing|<size>|content}}` wrappers
+    # before structural processing.  This is a CSS-only styling
+    # template (FISHERIES vol 10 p448 wraps currency columns with it
+    # for column alignment).  Leaving it in place causes the
+    # fold-unfold pass below to split its template-internal `<br>`
+    # along with the cell's real row separators, chopping the
+    # wrapper open and leaving `{{word-spacing|3px|6 7` fragments in
+    # rendered cells.  Stripping early keeps unfold structurally
+    # correct AND avoids per-cell template handling downstream.
+    raw_wikitext = re.sub(
+        r"\{\{word-spacing\|[^{}|]*\|([^{}]*)\}\}",
+        r"\1", raw_wikitext, flags=re.IGNORECASE,
+    )
+
     raw_wikitext = unfold_folded_rows(raw_wikitext)
 
     # Convert STANDALONE {{Css image crop|Image=EB1911 - Volume N.djvu|
@@ -286,6 +400,19 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # was silently eating Climate / Fauna / Population sections of
     # UNITED STATES, THE). detect_boundaries applies the same logic at
     # its own preprocess step; this is defence in depth.
+    #
+    # EXCEPTION: page-cosmetic 2-column body-layout wrappers
+    # (``{|cellpadding="5" rules="cols"`` followed by ``|width="NN%"
+    # valign="top"|`` cells) are NOT real tables — they're per-page
+    # typographic wrappers for 2-column display on Wikisource (JESUS
+    # CHRIST vol 15 p383: opener in header-noinclude, ``|}`` in
+    # footer-noinclude; the wrappers do not span across pages).  These
+    # need to be stripped ENTIRELY (both opener and matching closer)
+    # before the preserve-`{|`/`|}` step, otherwise the orphaned
+    # closer makes ``_wrap_orphaned_table_rows`` wrap the article's
+    # prose into a fake table.
+    text = _strip_page_layout_noinclude_wrappers(text)
+
     def _strip_noinclude(m: re.Match) -> str:
         block = m.group(0)
         kept: list[str] = []

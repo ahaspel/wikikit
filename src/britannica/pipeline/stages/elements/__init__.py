@@ -52,13 +52,11 @@ from britannica.pipeline.stages.elements._registry import (
 )
 from britannica.pipeline.stages.elements._math_layout import (
     _MATH_CELL_RE,
-    _is_equation_layout,
     _is_math_dominant_layout,
-    _is_math_layout,
     _math_cell_to_latex,
+    _math_table_kind,
     _parse_math_layout_cells,
-    _process_equation_layout,
-    _process_math_layout_table,
+    _process_math_table_layout,
 )
 from britannica.pipeline.stages.elements._outline import (
     _OUTLINE_RANGE_HEADER_RE,
@@ -524,9 +522,7 @@ def _passthrough_inner(raw, inner, text_transform, context,
 
 _TABLE_KIND_HANDLERS: dict[str, _ElementHandler] = {
     "MATH_LAYOUT": lambda raw, inner, tt, ctx, reg:
-        _process_math_layout_table(raw),
-    "EQUATION_LAYOUT": lambda raw, inner, tt, ctx, reg:
-        _process_equation_layout(inner, tt),
+        _process_math_table_layout(raw, inner, reg, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
@@ -624,6 +620,18 @@ def _process_element(element_type: str, raw: str,
         if not changed:
             break
 
+    # If a child wiki-table produced a `{{TABLE:...}TABLE}` marker and
+    # got substituted INSIDE an HTMLTABLE cell (nested-wiki-table
+    # source — ORNITHOLOGY taxonomic alignments, EOCENE etymology
+    # glossary in a `<ref>`), the marker would leak as cell text.
+    # Convert nested TABLE markers inside HTMLTABLE blocks to inline
+    # `<table>` HTML so the viewer renders them as nested sub-tables.
+    if "«HTMLTABLE:" in result and "{{TABLE:" in result:
+        from britannica.pipeline.stages.elements._tables import (
+            _inline_nested_table_markers_in_htmltable_blocks,
+        )
+        result = _inline_nested_table_markers_in_htmltable_blocks(result)
+
     return result
 
 
@@ -632,7 +640,10 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
     """Classify a wiki table into its processing type.
 
     Returns one of:
-        EQUATION_LAYOUT — math alignment (mostly MATH placeholders or spacer-heavy)
+        MATH_LAYOUT     — math/equation layout in any of three encodings
+                          (raw tokens, ``<math>`` blocks, or HTML-table
+                          wrapper).  Unified detector / dispatcher in
+                          ``_math_layout.py``.
         LAYOUT_WRAPPER  — image+caption wrapper or nested table wrapper
         PLATE_LAYOUT    — `summary="Illustration"` multi-image grid (plate)
         COMPLEX_HTML    — tables with rowspan that need HTML passthrough
@@ -672,7 +683,7 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
         # Navier-Stokes hydrodynamics block is the canonical case —
         # routing to COMPLEX_HTML renders it as a malformed data table.
         if _is_math_dominant_layout(raw, inner, inner_registry):
-            return "EQUATION_LAYOUT"
+            return "MATH_LAYOUT"
         return "COMPLEX_HTML"
     # Tables with data signals (border/rules/class) AND {{Ts}} templates
     # need COMPLEX_HTML processing — the template markup creates extra
@@ -687,10 +698,8 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
                    header, re.IGNORECASE))
     if has_data_signal and re.search(r'\{\{[Tt]s\|', raw):
         return "COMPLEX_HTML"
-    if _is_math_layout(raw, inner):
+    if _math_table_kind(raw, inner, inner_registry) is not None:
         return "MATH_LAYOUT"
-    if _is_equation_layout(inner, inner_registry):
-        return "EQUATION_LAYOUT"
     return "DATA_TABLE"
 
 

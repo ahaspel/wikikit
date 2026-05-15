@@ -1193,6 +1193,67 @@ def _has_prose_cell(text: str) -> bool:
     return False
 
 
+_RH_SIDE_PAGENUM_RE = re.compile(
+    r"\{\{(?:rh|RunningHeader|EB1911\s+Page\s+Heading)\|", re.IGNORECASE)
+
+
+def _rh_has_page_number_in_side_slot(text: str) -> bool:
+    """True if the rh-shape page-heading template's left or right
+    side-slot carries a printed page number.
+
+    EB1911 plate inserts are unpaginated — the rh either is absent or
+    carries no page number in its side slots (the centre slot holds
+    the article title; side slots are empty, or hold ``{{sc|Plate I.}}``
+    / a section keyword).  An article body page that happens to consist
+    of just rh + a single big figure (genealogical tables, large maps,
+    big diagrams) DOES carry its printed page number in the rh — that's
+    how a reader looks it up.
+
+    This is the raw-source distinguisher between "plate insert with one
+    composite image" (UNIFORMS, NEUROPATHOLOGY, COLORADO map) and
+    "body page with one big figure" (BOURBON / GUISE genealogies,
+    EGYPT tools page, etc.).
+    """
+    m = _RH_SIDE_PAGENUM_RE.search(text)
+    if not m:
+        return False
+    start = m.end()
+    depth, i = 2, start
+    while i < len(text) and depth > 0:
+        if text[i:i+2] == "{{":
+            depth += 2; i += 2
+        elif text[i:i+2] == "}}":
+            depth -= 2
+            if depth == 0:
+                break
+            i += 2
+        else:
+            i += 1
+    # Split args on top-level pipes.
+    args, d, cur = [], 0, []
+    for ch in text[start:i]:
+        if ch == "{":
+            d += 1; cur.append(ch)
+        elif ch == "}":
+            d -= 1; cur.append(ch)
+        elif ch == "|" and d == 0:
+            args.append("".join(cur)); cur = []
+        else:
+            cur.append(ch)
+    args.append("".join(cur))
+    # Side slots: index 0 (left) and any slot at index >= 2 (right /
+    # tail — covers 3-slot ``{{rh|L|M|R}}`` AND 4-slot
+    # ``{{EB1911 Page Heading|L|M|R|tail}}``).  Centre slot (index 1)
+    # holds the article title, never a page number.
+    side_slots = ([args[0]] if args else []) + args[2:]
+    page_num_re = re.compile(r"(?<![\w.])\d{2,}(?!\s*%)")
+    for slot in side_slots:
+        slot = re.sub(r"\{\{em\|[^}]*\}\}", "", slot)  # ``{{em|2.4}}`` is spacing
+        if page_num_re.search(slot):
+            return True
+    return False
+
+
 def _is_plate_page(text: str) -> bool:
     """Detect plate pages — mostly images with little prose.
 
@@ -1201,10 +1262,15 @@ def _is_plate_page(text: str) -> bool:
     title). Pages that happen to have several images mid-article
     (e.g. vol 17 MAP p.641 with 4 figure images) are NOT plates —
     they're text pages with figures embedded.
+
+    Single-image plate inserts (UNIFORMS, NEUROPATHOLOGY, COLORADO map
+    etc.) need the structural rh-page-number check to distinguish them
+    from body pages devoted to a single big figure (genealogy tables,
+    large diagrams that span a full page).
     """
     stripped = text.strip()
     img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
-    if img_count < 2:
+    if img_count < 1:
         return False
     # An article paragraph laid out in a table cell → not a plate
     # (POLLINATION p18 et al.) — UNLESS the page also carries a
@@ -1237,7 +1303,16 @@ def _is_plate_page(text: str) -> bool:
     # Tight thresholds — genuine plates have very little narrative prose.
     if img_count >= 3:
         return prose_words <= 80
-    return prose_words <= 30
+    if img_count >= 2:
+        return prose_words <= 30
+    # Single-image plate insert: ~7 such pages corpus-wide (UNIFORMS,
+    # NEUROPATHOLOGY, COLORADO map, JERUSALEM map, POLAR REGIONS map).
+    # Distinguish from a body page with one big figure (BOURBON/GUISE
+    # genealogies, EGYPT tools page) by the rh — body pages carry the
+    # printed page number in the rh's side slots; plate inserts don't.
+    if prose_words > 5:
+        return False
+    return not _rh_has_page_number_in_side_slot(stripped)
 
 
 def _parse_page(text: str) -> ParsedPage:

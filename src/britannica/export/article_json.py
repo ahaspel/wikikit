@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 from britannica.export.sections import detect_sections
 from britannica.db.models import (
-    Article, ArticleContributor, ArticleImage,
+    Article, ArticleContributor, ArticleImage, ArticleSegment,
     Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
@@ -30,6 +30,7 @@ from britannica.export.pages import (
 )
 from britannica.markers import IMG_RE, strip_page_markers
 from britannica.captions import clean_caption
+from britannica.export.plate_parent import find_parent_by_signal
 
 
 _QUALITY_NOTES = {
@@ -378,6 +379,7 @@ def export_articles_to_json(
     volume: int,
     out_dir: str | Path,
     body_override: dict[int, str] | None = None,
+    only_article_id: int | None = None,
 ) -> int:
     """Export one volume's articles to JSON.
 
@@ -387,6 +389,14 @@ def export_articles_to_json(
     full pipeline (transform → export) against an in-memory shadow
     body without writing to the DB.  Production callers pass nothing
     and behavior is unchanged.
+
+    ``only_article_id`` is the single-article iteration seam: when
+    set, only that one article's JSON is written.  ``tools/render_
+    article.py`` uses this together with ``body_override`` to re-render
+    a single article in ~5s after a transform-code change, vs the ~2min
+    that ``reprocess_article.py`` takes for a full per-volume rebuild.
+    The volume-wide ``index.json`` is also skipped in that mode since
+    the existing index already lists the article.
     """
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -422,14 +432,47 @@ def export_articles_to_json(
         plates = [a for a in articles if a.article_type == "plate"]
         non_plates = [a for a in articles if a.article_type != "plate"]
 
+        # Cache plate wikitext to avoid re-fetching when ``_find_parent``
+        # is called twice per plate (plate_map build + per-article loop).
+        plate_wikitext_cache: dict[int, str] = {}
+
+        def _plate_wikitext(plate):
+            if plate.id in plate_wikitext_cache:
+                return plate_wikitext_cache[plate.id]
+            segs = (session.query(ArticleSegment)
+                    .filter(ArticleSegment.article_id == plate.id)
+                    .order_by(ArticleSegment.sequence_in_article).all())
+            parts = []
+            for seg in segs:
+                pg = session.get(SourcePage, seg.source_page_id)
+                if pg and pg.wikitext:
+                    parts.append(pg.wikitext)
+            wt = "\n".join(parts)
+            plate_wikitext_cache[plate.id] = wt
+            return wt
+
         def _find_parent(plate):
             """Find the parent article for a plate.
 
-            When multiple articles share a title (e.g. 3 MAN articles
-            in vol 17), prefer the one whose page range contains the
-            plate's page. Otherwise fall back to title match, then
-            page proximity.
+            Cascade:
+              1. Raw-source signal from the plate's wikitext (``<section
+                 begin="..."/>`` / ``{{rh|...}}`` / ``{{c|{{x-larger|...}}}}``).
+                 This is the structural fix — EB1911 plates name their
+                 parent explicitly in the page header.
+              2. Exact / prefix title match (legacy behavior; kept for
+                 plates whose title happens to equal an article title,
+                 e.g. ``DOVE`` → ``DOVE (BIRD)``).
+              3. Page proximity — nearest preceding non-plate whose
+                 page range contains (or nearly contains) the plate's
+                 page.  Handles the ~16 plates with no recognizable
+                 signal (``PLATE (VOL. X, P. Y)`` orphans, etc.).
             """
+            # 1. Raw-source signal.
+            signal_parent = find_parent_by_signal(
+                _plate_wikitext(plate), plate.page_start, non_plates)
+            if signal_parent is not None:
+                return signal_parent
+
             plate_title = plate.title.upper()
             plate_page = plate.page_start
             # Title match — prefer articles containing the plate's page.
@@ -472,6 +515,9 @@ def export_articles_to_json(
         exported = 0
 
         for article in articles:
+            if (only_article_id is not None
+                    and article.id != only_article_id):
+                continue
             xrefs = (
                 session.query(CrossReference)
                 .filter(CrossReference.article_id == article.id)
@@ -707,6 +753,11 @@ def export_articles_to_json(
             (out_path / safe_filename).write_text(article_json, encoding="utf-8")
 
             exported += 1
+
+        # Skip the volume-wide index rebuild when we're only writing a
+        # single article — the existing index.json already lists it.
+        if only_article_id is not None:
+            return exported
 
         # Write index file for the viewer
         index = []

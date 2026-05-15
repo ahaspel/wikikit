@@ -326,18 +326,40 @@ def run_file_checks() -> dict:
             # Strip known markers; iterate to handle nested FN (the
             # «-content-« pairs can nest, so a single pass of the
             # non-greedy regex leaves the outer shells intact).
+            # Strip openers and closers SEPARATELY \u2014 the previous
+            # regex tried to match `\u00abMARKER:content\u00bb` as a single
+            # token, but our markers are wrapping pairs
+            # (`\u00abMATH:expr\u00ab/MATH\u00bb`) where the opener's content is the
+            # body between the two tokens.  Iterate so inner markers
+            # get stripped first, exposing outer.  Also strip nested
+            # HTMLTABLE/CHEM markers \u2014 the viewer's depth-aware
+            # rendering handles those; flagging them as leaks is a
+            # metric false positive.
+            _MARKER_NAMES = "B|I|SC|FN|MATH|LN|LEGEND|SEC|SH|HTMLTABLE|CHEM|PRE"
+            # Strip opener TOKEN only (no content consumption).  The
+            # earlier `(?::[^\u00ab\u00bb]*)?` form greedily ate VERSE content
+            # past an inner FN's boundary in SHIP \u2014 `\u00abFN:text\u00ab/FN\u00bb\n
+            # more VERSE content` lost everything past `\u00abFN:` because
+            # `[^\u00ab\u00bb]*` allowed newlines.  Stripping JUST the token
+            # leaves the marker's content untouched between opener and
+            # closer; the iterative loop then exposes outer markers.
+            _opener_re = re.compile(
+                r"\u00ab(?:" + _MARKER_NAMES + r")"
+                r"(?:\[[^\]]*\])?:?")
+            _closer_re = re.compile(
+                r"\u00ab/(?:" + _MARKER_NAMES + r")\u00bb")
             prev = None
             while prev != stripped:
                 prev = stripped
-                stripped = re.sub(
-                    r"\u00ab/?(?:B|I|SC|FN|MATH|LN|LEGEND|SEC|SH)"
-                    r"(?::[^\u00ab\u00bb]*)?\u00bb",
-                    "", stripped)
+                stripped = _closer_re.sub("", stripped)
+                stripped = _opener_re.sub("", stripped)
             stripped = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
             stripped = re.sub(
                 r"\{\{VERSE:.*?\}VERSE\}", "", stripped, flags=re.DOTALL)
             stripped = re.sub(
                 r"\{\{LEGEND:.*?\}LEGEND\}", "", stripped, flags=re.DOTALL)
+            stripped = re.sub(
+                r"\{\{TABLE:.*?\}TABLE\}", "", stripped, flags=re.DOTALL)
             stripped = re.sub(r"\[hieroglyph:[^\]]*\]", "", stripped)
             if re.search(r"\u00ab[^\u00bb]+\u00bb", stripped) or "{{" in stripped:
                 issues["unhandled_marker_in_htmltable"] += 1

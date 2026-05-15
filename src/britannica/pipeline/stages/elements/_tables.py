@@ -532,6 +532,79 @@ def _process_complex_table(inner: str, text_transform) -> str:
     return "".join(parts)
 
 
+def _inline_nested_table_markers_in_htmltable_blocks(text: str) -> str:
+    """Convert `{{TABLE:row|row|\u2026}TABLE}` markers nested INSIDE
+    `\u00abHTMLTABLE:\u2026\u00ab/HTMLTABLE\u00bb` blocks to inline `<table>` HTML.
+
+    A nested wiki table (ORNITHOLOGY taxonomic alignments, EOCENE
+    etymology glossary inside a `<ref>`) gets processed by the inner
+    element handler and emitted as a `{{TABLE:\u2026}TABLE}` marker.  When
+    the outer table is HTMLTABLE-formatted, the substituted child
+    marker leaks as literal text in the rendered cell.  Scoped to
+    inside HTMLTABLE blocks so top-level paragraph-level
+    `{{TABLE:\u2026}TABLE}` markers stay untouched.
+    """
+    def _convert_marker(m: re.Match) -> str:
+        inner = m.group(1)
+        rows_out: list[str] = []
+        for row in inner.split("\n"):
+            row = row.strip()
+            if not row:
+                continue
+            cells = [c.strip() for c in row.split("|")]
+            cells_html = "".join(f"<td>{c}</td>" for c in cells if c)
+            if cells_html:
+                rows_out.append(f"<tr>{cells_html}</tr>")
+        if not rows_out:
+            return ""
+        return (
+            '<table class="nested-data-table">'
+            + "".join(rows_out)
+            + "</table>"
+        )
+    # Walk HTMLTABLE blocks (depth-aware so nested HTMLTABLE markers
+    # don't shadow the outer's TABLE-marker conversion).
+    out: list[str] = []
+    i = 0
+    HT_OPEN = "\u00abHTMLTABLE:"
+    HT_CLOSE = "\u00ab/HTMLTABLE\u00bb"
+    while i < len(text):
+        opener = text.find(HT_OPEN, i)
+        if opener < 0:
+            out.append(text[i:])
+            break
+        out.append(text[i:opener])
+        depth = 1
+        j = opener + len(HT_OPEN)
+        block_start = j
+        while j < len(text) and depth > 0:
+            n_open = text.find(HT_OPEN, j)
+            n_close = text.find(HT_CLOSE, j)
+            if n_close < 0:
+                # Unbalanced \u2014 preserve original; don't risk
+                # mangling.
+                out.append(text[opener:])
+                return "".join(out)
+            if 0 <= n_open < n_close:
+                depth += 1
+                j = n_open + len(HT_OPEN)
+            else:
+                depth -= 1
+                if depth == 0:
+                    inner_block = text[block_start:n_close]
+                    inner_block = re.sub(
+                        r"\{\{TABLE:(.*?)\}TABLE\}",
+                        _convert_marker, inner_block,
+                        flags=re.DOTALL,
+                    )
+                    out.append(HT_OPEN + inner_block + HT_CLOSE)
+                    j = n_close + len(HT_CLOSE)
+                else:
+                    j = n_close + len(HT_CLOSE)
+        i = j
+    return "".join(out)
+
+
 # \u2500\u2500 Chemistry-reaction / structural-formula layouts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 # ``Langle``/``Rangle`` plus the variant suffixes the corpus uses
@@ -557,6 +630,80 @@ def _is_chemistry_layout(raw: str) -> bool:
     return bool(_CHEM_BRACKET_IMG_RE.search(raw))
 
 
+def _split_chem_row(row_text: str) -> list[tuple[str, str, str]]:
+    """Chem-specific row splitter — strict subset of `split_wiki_row`.
+
+    Diverges from the shared splitter in two ways:
+
+      * No ``|+`` caption-line filter: in chem layouts a cell starting
+        with ``+`` (post print-artifact-normalisation of ``＋``) is real
+        cell content, not a caption marker.
+      * No continuation-line merging: chem cells use ``<br>``
+        explicitly for multi-line atom stacks, so wrap lines are
+        already explicit rather than being part of the cell's text.
+
+    Otherwise the cell-splitting logic mirrors `split_wiki_row`
+    (pipe protection inside templates / wikilinks / placeholders;
+    ``||`` / ``!!`` normalisation; attribute-prefix detection).
+    """
+    text = row_text
+    text = re.sub(r"\{\{[^}]*\}\}",
+                  lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text)
+    text = re.sub(r"\[\[[^\]]*\]\]",
+                  lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text)
+    text = re.sub(
+        re.escape(_PH) + r"[^" + re.escape(_PH) + r"]+" + re.escape(_PH),
+        lambda m: m.group(0).replace("|", _PIPE_ESCAPE), text,
+    )
+    text = text.replace("||", "\n|").replace("!!", "\n!")
+
+    cells: list[tuple[str, str, str]] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line or line in ("}", "{|"):
+            continue
+        if not line.startswith(("|", "!")):
+            continue
+        sep = line[0]
+        body = line[1:].strip()
+        if "|" in body:
+            attr_part, _, content = body.rpartition("|")
+            attr_check = re.sub(
+                r"\{\{[Tt]s\|[^{}]*\}\}\s*", "",
+                attr_part.replace(_PIPE_ESCAPE, "|"),
+            ).strip()
+            if attr_check and not _CELL_ATTR_RE.match(attr_check):
+                attr_part, content = "", body
+        else:
+            attr_part, content = "", body
+        cells.append((
+            sep,
+            attr_part.replace(_PIPE_ESCAPE, "|").strip(),
+            content.replace(_PIPE_ESCAPE, "|").strip(),
+        ))
+    return cells
+
+
+_CHEM_SENTINEL = {
+    ("L", ""):   "\ue000",
+    ("R", ""):   "\ue001",
+    ("L", "IT"): "\ue002",
+    ("R", "IT"): "\ue003",
+    ("L", "IB"): "\ue004",
+    ("R", "IB"): "\ue005",
+}
+_CHEM_BR_SENTINEL = "\ue006"
+_CHEM_RESOLVE = {
+    "\ue000": "\u276e",
+    "\ue001": "\u276f",
+    "\ue002": '<span class="chem-bracket-it">\u276e</span>',
+    "\ue003": '<span class="chem-bracket-it">\u276f</span>',
+    "\ue004": '<span class="chem-bracket-ib">\u276e</span>',
+    "\ue005": '<span class="chem-bracket-ib">\u276f</span>',
+    "\ue006": "<br>",
+}
+
+
 def _process_chemistry_layout(inner: str, text_transform,
                               inner_registry=None) -> str:
     """Render a 2-D chemical-reaction / structural-formula layout.
@@ -567,21 +714,97 @@ def _process_chemistry_layout(inner: str, text_transform,
     from ``\u00abHTMLTABLE:\u2026\u00bb``, so the viewer can lay them out without
     table chrome.
 
-    SKELETON: reuses ``_process_complex_table``'s rowspan/colspan-aware
-    cell walk only to PARSE the wiki-table syntax into rows \u00d7 cells \u00d7
-    spans, then relabels the marker.  Refine once we can iterate
-    against real article output:
-      \u2022 viewer: render ``\u00abCHEM:\u2026\u00bb`` as a CSS grid carrying ``rowspan``/
-        ``colspan`` as grid spans \u2014 not a ``<table>`` (and the marker's
-        internal encoding can move away from ``<table>`` HTML then).
-      \u2022 replace the ``Langle``/``Rangle`` image placeholders with
-        ``\u3008``/``\u3009`` glyphs; keep ``||`` as bond-lines and ``\u27f6``/``\u2192``
-        as arrows; render ``<br/>``-stacked cell fragments as a
-        vertical stack.
+    Self-contained parser \u2014 does NOT delegate to ``_process_complex_table``
+    or ``parse_wiki_table``.  Going through the general data-table path
+    introduced too many side effects for spatial diagrams:
+
+      * ``parse_wiki_table``'s ``^\\|\\+`` caption regex misfires on
+        any chem cell whose content starts with ``+`` after the upstream
+        ``replace_print_artifacts`` pass converts ``\uff0b`` (FULLWIDTH PLUS)
+        \u2192 ``+`` \u2014 e.g. ALDEHYDES' first equation, where the third cell
+        ``|\uff0bCl\u00b7CH\u2082\u00b7COOC\u2082H\u2085`` got hoisted to ``<caption>``.
+      * ``_strip_br`` flattens stacked atom-bond-atom cells
+        (``CRR\u00b9<br>&vert;<br>CH\u00b7COOH``) into one line, killing the
+        vertical bond rendering.
+
+    Atom-bracket and ``<br>`` substitution is two-phase to survive
+    ``text_transform``'s HTML-tag strip: each placeholder/markup is
+    first replaced with a Private-Use-Area sentinel that passes
+    through text-transform unmolested; we resolve the sentinels to
+    final glyphs / ``<br>`` / spans after each cell is processed.
+
+    Variants of the valence chevron:
+
+      ``Langle.svg`` / ``Rangle.svg``     \u2014 plain heavy chevron \u2192 \u276e / \u276f
+      ``LangleIT.svg`` / ``RangleIT.svg`` \u2014 "Internal line Top"
+      ``LangleIB.svg`` / ``RangleIB.svg`` \u2014 "Internal line Bottom"
+
+    IT / IB variants have no single-char Unicode match \u2014 they're
+    emitted as ``<span class="chem-bracket-it">\u276e</span>`` / ``-ib``,
+    with the bar drawn by a CSS ``::before`` / ``::after`` pseudo-element.
     """
-    html = _process_complex_table(inner, text_transform)
-    return (html.replace("\u00abHTMLTABLE:", "\u00abCHEM:")
-                .replace("\u00ab/HTMLTABLE\u00bb", "\u00ab/CHEM\u00bb"))
+    # Build placeholder -> sentinel map for Langle/Rangle images.
+    angle_sentinel: dict[str, str] = {}
+    if inner_registry is not None:
+        for ph, (etype, eraw) in inner_registry.elements.items():
+            if etype != "IMAGE":
+                continue
+            m = re.match(
+                r"\[\[(?:File|Image):([LR])angle(IB|IT)?\.svg",
+                eraw, re.IGNORECASE,
+            )
+            if not m:
+                continue
+            side = m.group(1).upper()
+            suffix = (m.group(2) or "").upper()
+            angle_sentinel[ph] = _CHEM_SENTINEL[(side, suffix)]
+    for ph, sentinel in angle_sentinel.items():
+        inner = inner.replace(ph, sentinel)
+    # Preserve in-cell <br> as a sentinel so text_transform's HTML-tag
+    # strip doesn't eat the line breaks that stack atom-bond-atom.
+    inner = re.sub(r"<br\s*/?>", _CHEM_BR_SENTINEL, inner, flags=re.IGNORECASE)
+
+    # Split rows on |- only.  No caption / preamble detection \u2014 chem
+    # layouts are spatial diagrams; trying to interpret one cell as a
+    # title strips it out of the diagram.
+    raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", inner)
+
+    html_rows: list[str] = []
+    for raw_row in raw_rows:
+        if not raw_row.strip():
+            continue
+        cells_html: list[str] = []
+        for sep, attr_part, content in _split_chem_row(raw_row):
+            tag = "th" if sep == "!" else "td"
+            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part,
+                           re.IGNORECASE)
+            cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part,
+                           re.IGNORECASE)
+            rowspan = int(rs.group(1)) if rs else 1
+            colspan = int(cs.group(1)) if cs else 1
+            content = re.sub(
+                r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
+            content = content.strip()
+            if content:
+                content = text_transform(content)
+            # Anything text_transform didn't expand is unrecognised
+            # template noise (e.g. stray {{larger|...}} that the
+            # template was supposed to neutralise).
+            content = re.sub(r"\{\{[^{}]*\}\}", "", content)
+            content = (content.replace("&vert;", "|")
+                              .replace("&nbsp;", " "))
+            for sentinel, glyph in _CHEM_RESOLVE.items():
+                if sentinel in content:
+                    content = content.replace(sentinel, glyph)
+            cells_html.append(emit_html_cell(
+                tag, content, rowspan=rowspan, colspan=colspan,
+            ))
+        if cells_html:
+            html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
+    if not html_rows:
+        return ""
+    return ("\n\n\u00abCHEM:<table>" + "".join(html_rows)
+            + "</table>\u00ab/CHEM\u00bb\n\n")
 
 
 

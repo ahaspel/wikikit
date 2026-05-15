@@ -29,10 +29,28 @@ def _process_score(raw: str, context: ElementContext) -> str:
 
 
 def _process_math(inner: str) -> str:
-    """Convert math content to «MATH:...«/MATH» marker, preserving LaTeX."""
+    """Convert math content to «MATH:...«/MATH» marker, preserving LaTeX.
+
+    Looks up an offline-measured rendering hint
+    (``fs=N`` or ``popout``) and bakes it into the marker so the
+    viewer can render scaled or popped-out without runtime
+    measurement.  See ``britannica.math_widths`` for the table; see
+    ``tools/diagnostics/measure_math_widths.py`` for how it's built.
+    """
+    from britannica.math_widths import scale_hint
     inner = html_mod.unescape(inner.strip())
-    # Collapse blank lines — they break LaTeX math environments
-    inner = re.sub(r"\n{2,}", "\n", inner)
+    # Canonicalise whitespace: collapse all runs of whitespace
+    # (including newlines) to a single space.  LaTeX is whitespace-
+    # insensitive, so this is safe — and it ensures the marker's
+    # content is in the same form whether `_process_math` emits it
+    # fresh or a later transform pass normalises it.  Without this,
+    # the offline width-measurement (which keys by SHA256 of marker
+    # content) misses cache hits because the emission and the
+    # measured form differ.
+    inner = re.sub(r"\s+", " ", inner).strip()
+    hint = scale_hint(inner)
+    if hint:
+        return f"«MATH[{hint}]:{inner}«/MATH»"
     return f"«MATH:{inner}«/MATH»"
 
 
