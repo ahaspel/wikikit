@@ -28,7 +28,7 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
-from britannica.markers import IMG_RE, strip_page_markers
+from britannica.markers import IMG_RE, strip_page_markers, strip_title_markers
 from britannica.captions import clean_caption
 from britannica.export.plate_parent import find_parent_by_signal
 
@@ -248,9 +248,12 @@ def _safe_filename(article_id, title: str) -> str:
         raise TypeError(
             f"_safe_filename expected str stable_id or Article, got "
             f"{type(article_id).__name__}")
+    # Strip title-formatting markers (`«B»`/`«I»`/`«SC»`) so the
+    # filename slug doesn't carry underscore noise from the markers.
+    plain = strip_title_markers(title)
     safe_title = "".join(
         ch if ch.isalnum() or ch in ("-", "_") else "_"
-        for ch in title.upper()
+        for ch in plain.upper()
     )
     return f"{stable}-{safe_title}.json"
 

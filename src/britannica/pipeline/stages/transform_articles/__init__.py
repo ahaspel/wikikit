@@ -27,7 +27,6 @@ from britannica.pipeline.stages.transform_articles.body_text import (
     _FRAKTUR_MAP,
     _LNK,
     _SH,
-    _convert_bold_italic,
     _convert_hieroglyphs,
     _convert_links,
     _convert_shoulder_headings,

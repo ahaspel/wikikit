@@ -100,6 +100,24 @@ def strip_page_markers(text: str, replacement: str = "") -> str:
     return PAGE_MARKER_RE.sub(replacement, text)
 
 
+# Title-formatting markers: bold (`«B»…«/B»`), italic (`«I»…«/I»`),
+# small-caps (`«SC»…«/SC»`).  Stored in `Article.title` so the viewer
+# can render multi-bold / small-caps titles like
+# `«B»AGRICOLA«/B» (originally «SC»Schneider«/SC», …), «B»JOHANNES«/B>`
+# with the source's typographic distinctions intact.
+#
+# Callers that need plain-text titles (filename slugs, search indexes,
+# breadcrumb labels, page <title> elements, etc.) use the strip helper
+# below.
+_TITLE_MARKER_RE = _re.compile(r"«/?(?:B|I|SC)»")
+
+
+def strip_title_markers(title: str) -> str:
+    """Remove `«B»`/`«I»`/`«SC»` formatting markers from a title,
+    leaving the content intact.  Use for any plain-text consumer."""
+    return _TITLE_MARKER_RE.sub("", title)
+
+
 # Image markers — full ``{{IMG:filename|optional caption}}`` block.
 # ``IMG_RE`` matches the whole marker (use to strip), ``IMG_PARTS_RE``
 # captures filename and optional caption.
