@@ -226,33 +226,21 @@ def _extract_bold_delimited_title(text: str) -> tuple[str | None, str]:
 
 
 def _clean_extracted_title(title_raw: str) -> str:
-    """Flatten title-internal markup, preserving typographic semantics.
-
-    The returned title keeps these formatting markers so the viewer can
-    render them faithfully:
-      - `«B»…«/B»` (bold) — canonical name parts in mixed bold/plain
-        titles like `«B»AGRICOLA«/B» (originally …), «B»JOHANNES«/B»`.
-      - `«I»…«/I»` (italic) — foreign-language alternates like
-        `BELLARMINE (Ital. «I»Bellarmino«/I»), ROBERTO`.
-      - `«SC»…«/SC»` (small-caps with drop-cap) — converted from any
-        of `{{sc|X}}` / `{{asc|X}}` / `{{small-caps|X}}` /
-        `{{smallcaps|X}}` in the source.
+    """Flatten title-internal markup to plain text.
 
     Removes:
-      - `«FN:…«/FN»` footnote markers — disambiguation refs inside a
-        bold heading (e.g. `«B»ODO«FN:…«/FN» OF BAYEUX«/B»`).  Belong
-        in the body, not in the displayed title.
-      - `<ref…>…</ref>` raw footnotes (same reason).
+      - `«B»/«I»/«SC»` formatting markers (typography belongs in a
+        separate `title_html` field, computed at export time; the
+        DB-level `title` is plain so xref/contributor/search match
+        cleanly on string equality).
+      - `«FN:…«/FN»` footnote markers and raw `<ref…>…</ref>`.
       - Wikilink shells: `[[Author:X|DISPLAY]]` / `[[X|Y]]` / `[[X]]`
         collapse to display text.
+      - `{{sc|X}}` / `{{asc|X}}` / `{{smallcaps|X}}` small-caps
+        templates — unwrap to inner content.
       - Any other `{{name|…}}` template (mono, fs, …) — flatten to
         inner content.  `{{uc|X}}` uppercases its content.  Iterated
         to a fixed point so nested templates unwrap fully.
-
-    Note the bold delimiters are KEPT (the old behavior of stripping
-    them lost the bold/plain distinction inside multi-bold titles).
-    Callers that need plain text — filename generation, search index,
-    page metadata — should strip markers via a separate helper.
     """
     t = title_raw
     # Strip footnote markers (not appropriate in titles)
@@ -263,35 +251,25 @@ def _clean_extracted_title(title_raw: str) -> str:
     # Unwrap wikilinks
     t = re.sub(r"\[\[(?:Author:)?[^\]|]*\|([^\]]+)\]\]", r"\1", t)
     t = re.sub(r"\[\[([^\]|]+)\]\]", r"\1", t)
-    # Small-caps variants → «SC»…«/SC» (preserves typographic intent).
-    # Done BEFORE the generic template-unwrap loop so the marker is
-    # added before the surrounding template (if any) is collapsed.
+    # Small-caps variants — unwrap to plain content (no marker; we
+    # strip markers below anyway).
     t = re.sub(
         r"\{\{(?:sc|asc|small[\s\-]?caps?)\|([^{}|]*)\}\}",
-        r"«SC»\1«/SC»", t, flags=re.IGNORECASE,
+        r"\1", t, flags=re.IGNORECASE,
     )
-    # Iteratively unwrap remaining templates.  Nested templates need
-    # multiple passes because the regex requires `[^{}]` inside.
+    # Iteratively unwrap remaining templates.
     for _ in range(8):
         before = t
-        # `{{uc|X}}` → uppercase X (content-modifying special case)
         t = re.sub(r"\{\{uc\|([^{}|]*)\}\}",
                    lambda m: m.group(1).upper(), t, flags=re.IGNORECASE)
-        # Three-arg form: `{{name|key=val|content}}` → content
         t = re.sub(r"\{\{[^{}|]+\|[^{}]*\|([^{}|]*)\}\}", r"\1", t)
-        # Two-arg form: `{{name|content}}` → content
         t = re.sub(r"\{\{[^{}|]+\|([^{}|]*)\}\}", r"\1", t)
-        # No-arg form: `{{name}}` → "" (strip)
         t = re.sub(r"\{\{[^{}|]+\}\}", "", t)
         if t == before:
             break
+    # Strip all formatting markers — title is plain text.
+    t = re.sub(r"«/?(?:B|I|SC)»", "", t)
     t = re.sub(r"\s+", " ", t).strip().rstrip(",.;:")
-    # Strip trailing punctuation INSIDE the final marker — source
-    # often ends a bold span with the punctuation that separates
-    # title from body, e.g. `«B»AALBORG,«/B»`.  We don't want the
-    # comma in the title.  This matches the existing baseline
-    # convention and keeps filenames / search clean.
-    t = re.sub(r"([,.;:])(\s*«/(?:B|I|SC)»\s*)$", r"\2", t)
     return t
 
 
@@ -313,106 +291,79 @@ def _is_article_section_id(sec_id: str) -> bool:
     return True
 
 
-_LETTER_ARTICLE_OPENER_RE = re.compile(
-    # Optional `«B»` wrapper (vol 26 T uses `'''{{di|T}}'''` →
-    # `«B»{{di|T}}«/B»` after the converter).
-    r"(?:«B»\s*)?"
-    # Optional `{{Serif|` wrapper (vol 14 I uses `{{Serif|{{di|I|5em}}}}`).
-    r"(?:\{\{Serif\s*\|\s*)?"
-    r"\{\{(?:[Dd]rop\s*[Ii]nitial|[Dd]i)\s*\|\s*"
+# Letter-article opener: section starts with a drop-cap template
+# (`{{di|X}}` / `{{dropinitial|X}}`), optionally wrapped in `{{Serif|...}}`,
+# `'''...'''` (becomes `«B»...«/B»` post-converter), or both.  The 26
+# letter articles A–Z are the ONLY sections corpus-wide that match this
+# pattern (empirically verified 26/26 across 50,647 sections in
+# `tools/_scratch/scan_dropcap_letter_sections.py`), so a structural
+# match alone is sufficient — no body-keyword check needed.
+_LETTER_OPENER_RE = re.compile(
+    r"^\s*(?:'''|«B»)?\s*"
+    r"(?:\{\{\s*[Ss]erif\s*\|\s*)?"
+    r"\{\{\s*(?:[Dd]rop\s*[Ii]nitial|[Dd]i)\s*\|"
 )
-_LETTER_ARTICLE_KEYWORDS = (
-    "letter", "alphabet", "symbol", "phoenician",
-    "consonant", "vowel", "semitic",
-)
-_INLINE_TEMPLATE_UNWRAP_RE = re.compile(r"\{\{[^{}|]+\|([^{}|]+)\}\}")
 
 
-def _extract_letter_from_dropinit_arg(head: str, arg_start: int) -> str | None:
-    """Parse the first arg of an open ``{{dropinitial|...}}`` /
-    ``{{di|...}}`` template (starting at ``arg_start`` in ``head``)
-    and return the bare letter if the arg, after stripping nested
-    template wrappers / quote-runs, reduces to a single alphabetic
-    character.  Handles ``{{di|{{serif|J}}|4em}}`` (J inside
-    ``{{serif|...}}``) and ``{{dropinitial|'''{{serif|K}}'''|6em}}``
-    (K inside ``'''{{serif|K}}'''``).
+def _first_template_arg(text: str) -> str | None:
+    """Return the first positional argument of an open template.
 
-    Returns the uppercased letter on success, else None.
+    The caller positions ``text`` right after the opening ``{{name|``;
+    we read until the matching ``|`` (depth-1) or ``}}`` (depth-0),
+    counting nested ``{{...}}`` so a nested template doesn't end the
+    arg early.  Returns the raw arg text or None on imbalance.
     """
-    pos = arg_start
-    depth = 1
-    arg_end = None
-    while pos < len(head) and depth > 0:
-        if head[pos:pos+2] == "{{":
+    depth = 0
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if text[i:i+2] == "{{":
             depth += 1
-            pos += 2
-        elif head[pos:pos+2] == "}}":
-            depth -= 1
+            out.append("{{"); i += 2; continue
+        if text[i:i+2] == "}}":
             if depth == 0:
-                arg_end = pos
-                break
-            pos += 2
-        elif head[pos] == "|" and depth == 1:
-            arg_end = pos
-            break
-        else:
-            pos += 1
-    if arg_end is None:
-        return None
-    arg = head[arg_start:arg_end].strip()
-    # Iteratively strip wikitext bold/italic markers, `«B»/«I»/«SC»`
-    # converter markers, and inline `{{name|X}}` templates until we
-    # hit a bare token (or no further progress).
-    for _ in range(6):
-        before = arg
-        arg = re.sub(r"«/?(?:B|I|SC)»", "", arg)
-        arg = arg.strip().strip("'").strip()
-        arg = _INLINE_TEMPLATE_UNWRAP_RE.sub(r"\1", arg)
-        if arg == before:
-            break
-    arg = re.sub(r"«/?(?:B|I|SC)»", "", arg).strip().strip("'").strip()
-    if 1 <= len(arg) <= 3 and arg.isalpha():
-        return arg.upper()
+                return "".join(out)
+            depth -= 1
+            out.append("}}"); i += 2; continue
+        if ch == "|" and depth == 0:
+            return "".join(out)
+        out.append(ch); i += 1
     return None
 
 
 def _detect_letter_article(sec_id: str, sec_text: str) -> str | None:
-    """Special handler for the letter-article class (A, B, C, …, Z).
+    """Letter-article handler (A, B, C, …, Z; 26 total in EB1911).
 
-    EB1911 has 23 of these (no J, K).  They use a `{{di|X}}` or
-    `{{dropinitial|X}}` template instead of a bold heading.  We
-    identify them by REQUIRING both:
+    Letter articles open with a drop-cap template instead of a bold
+    heading.  Source uses six template shapes for this:
+      * `{{dropinitial|X}}` / `{{di|X}}`
+      * `{{Serif|{{di|X|5em}}}}`
+      * `{{di|{{serif|J}}|4em}}`
+      * `{{dropinitial|'''{{serif|K}}'''|6em}}`
+      * `'''{{di|T}}'''` (becomes `«B»{{di|T}}«/B»` post quote-run conv)
 
-    1. The section content begins with the dropinitial/di template
-       (with an optional `{{Serif|` wrapper) — within the first
-       ~120 chars after lstrip.
-    2. The first 200 chars contain at least one letter-article-shaped
-       keyword (``letter``, ``alphabet``, ``symbol``, ``phoenician``,
-       ``consonant``, ``vowel``, ``semitic``).
-
-    Both checks are required — (1) alone false-fires on decorative
-    drop-caps in front matter (vol 1 p6 "T"); (2) alone false-fires
-    on prose mentioning a letter.  Together they pin down the class.
-
-    The letter must be 1-3 alphabetic characters.  If the enclosing
-    `<section begin="X">` is named (not `s1`/`s2`/…), the letter
-    must match the section name.  Returns the uppercased letter if
-    matched, else None."""
-    head = sec_text.lstrip()[:300]
-    m = _LETTER_ARTICLE_OPENER_RE.match(head)
+    Match shape: drop-cap at section start with a single-letter arg
+    (after unwrapping at most one level of `{{serif|X}}` wrapper).
+    Returns the uppercased letter, else None.
+    """
+    m = _LETTER_OPENER_RE.match(sec_text)
     if not m:
         return None
-    letter = _extract_letter_from_dropinit_arg(head, m.end())
-    if letter is None:
+    arg = _first_template_arg(sec_text[m.end():])
+    if arg is None:
         return None
-    # If named section, letter must match the section name.
-    is_named = not re.match(r"^s\d+$", sec_id)
-    if is_named and letter != sec_id.upper():
+    # Unwrap a single layer of `{{name|X}}` (handles `{{serif|J}}`).
+    arg = re.sub(r"\{\{[^{}|]+\|([^{}|]+)\}\}", r"\1", arg)
+    # Strip residual markers, quotes, whitespace.
+    arg = re.sub(r"«/?[A-Z]+»|'''|''", "", arg).strip()
+    if len(arg) != 1 or not arg.isalpha():
         return None
-    # Confirm the body looks like a letter-article: contains at least
-    # one characteristic keyword in the first 300 chars.
-    body_head = sec_text[:400].lower()
-    if not any(kw in body_head for kw in _LETTER_ARTICLE_KEYWORDS):
+    letter = arg.upper()
+    # If the enclosing section is named (not `s1`/`s2`/…), letter must
+    # match the section name — keeps us from misidentifying a
+    # drop-cap that happens to appear inside another article's section.
+    if not re.match(r"^s\d+$", sec_id) and letter != sec_id.upper():
         return None
     return letter
 
@@ -692,6 +643,22 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         ):
             _first_line_idx += 1
             first_line = first_line + " " + _sec_lines[_first_line_idx].strip()
+        # Multi-line bold titles: when a name like
+        #   '''ROBESPIERRE, MAXIMILIEN FRANÇOIS MARIE ISIDORE'''
+        #   '''DE''' (1758-1794), French revolutionist, ...
+        # has its bold span continuation on the next physical line, the
+        # extractor would only see line 1.  Extend first_line while the
+        # next line starts with `«B»` AND the current line ended with a
+        # bold close (so we're chaining a multi-bold title, not stepping
+        # into a body paragraph that happens to begin with bold).
+        while (
+            _first_line_idx is not None
+            and _first_line_idx + 1 < len(_sec_lines)
+            and first_line.rstrip().endswith("«/B»")
+            and _sec_lines[_first_line_idx + 1].lstrip().startswith("«B»")
+        ):
+            _first_line_idx += 1
+            first_line = first_line + "\n" + _sec_lines[_first_line_idx].strip()
         first_line_unwrapped = re.sub(
             r"\[\[[^\]|]*\|(.*?)\]\]",
             r"\1", first_line,

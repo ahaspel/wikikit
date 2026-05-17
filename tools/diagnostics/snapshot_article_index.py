@@ -4,8 +4,8 @@ Two outputs:
   data/derived/article_index.tsv — vol, page_start, page_end,
                                     printed_page_start, printed_page_end,
                                     article_type, title
-  data/derived/xref_index.tsv    — source_vol, source_title, link_type,
-                                    raw_target, status, target_title
+  data/derived/xref_index.tsv    — source_vol, source_title, xref_type,
+                                    surface_text, status, target_title
 
 page_start/page_end are wikisource leaf numbers (the DB Article model
 uses these).  printed_page_start/printed_page_end are the corresponding
@@ -65,11 +65,11 @@ def main():
         art_by_id = {a.id: a for a in articles}
         xrefs = (s.query(CrossReference)
                  .order_by(CrossReference.article_id,
-                           CrossReference.link_type,
-                           CrossReference.raw_target)
+                           CrossReference.xref_type,
+                           CrossReference.surface_text)
                  .all())
         with out_xrefs.open("w", encoding="utf-8") as f:
-            f.write("source_vol\tsource_title\tlink_type\traw_target\t"
+            f.write("source_vol\tsource_title\txref_type\tsurface_text\t"
                     "status\ttarget_title\n")
             for x in xrefs:
                 src = art_by_id.get(x.article_id)
@@ -78,8 +78,8 @@ def main():
                 tgt = art_by_id.get(x.target_article_id)
                 tgt_title = tgt.title if tgt else ""
                 f.write(
-                    f"{src.volume}\t{src.title}\t{x.link_type}\t"
-                    f"{x.raw_target}\t{x.status}\t{tgt_title}\n")
+                    f"{src.volume}\t{src.title}\t{x.xref_type}\t"
+                    f"{x.surface_text}\t{x.status}\t{tgt_title}\n")
         print(f"Wrote {len(xrefs)} xrefs → {out_xrefs}")
     finally:
         s.close()
