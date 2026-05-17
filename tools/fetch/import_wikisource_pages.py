@@ -30,7 +30,6 @@ def build_page(payload: dict) -> SourcePage:
         volume=payload["volume"],
         page_number=payload["page_number"],
         raw_text=payload["cleaned_preview"],
-        cleaned_text=None,
         wikitext=payload["raw_text"],          # actual raw wikitext for boundary detection
     )
 
@@ -38,7 +37,6 @@ def build_page(payload: dict) -> SourcePage:
 def update_page(existing: SourcePage, payload: dict) -> None:
     existing.raw_text = payload["cleaned_preview"]
     existing.source_name = "wikisource"
-    existing.cleaned_text = None
     existing.wikitext = payload["raw_text"]
 
 

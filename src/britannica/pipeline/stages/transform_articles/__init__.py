@@ -3,7 +3,7 @@
 This stage runs after boundary detection.  Each article's body contains
 raw Wikisource wikitext at this point.  We convert it to the internal
 marker format (``«B»``, ``«FN:``, ``{{IMG:``, etc.) by running the same
-26 fetch stages and clean_pages transformations — but per-article instead
+26 fetch stages and prepare_wikitext transformations — but per-article instead
 of per-page, and skipping stage 3 (section-tag conversion) since
 boundaries have already been determined.
 
@@ -20,7 +20,6 @@ from britannica.db.session import SessionLocal
 from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.cleaners.reflow import reflow_paragraphs
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
-from britannica.pipeline.stages.clean_pages import _replace_score_tags
 from britannica.captions import clean_caption
 from britannica.pipeline.stages.transform_articles.body_text import (
     _FMT,
@@ -255,7 +254,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     from britannica.pipeline.stages.fold_unfold import unfold_folded_rows
 
     # Source-text corrections (transcription typos in wikisource) are
-    # applied once during clean_pages, mutating `wikitext` so all
+    # applied once during prepare_wikitext, mutating `wikitext` so all
     # downstream stages — including this one — operate on already-
     # corrected text. No repeat application needed here.
 
@@ -492,9 +491,6 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
                     i += 2
         return "".join(out)
     text = _strip_unclosed_templates(text)
-
-    # Replace <score> tags (static lookup, must happen before extraction)
-    text = _replace_score_tags(text, volume, page_number)
 
     # Normalize `EB1911 - Volume N.djvu/PPP` (and the typo variant
     # `…djvu-PPP.png`) to local filenames `djvu_volNN_pagePPPP.jpg`
@@ -819,7 +815,7 @@ def transform_articles(volume: int) -> int:
     Transforms each segment (page-sized) individually, then joins them
     into article.body with \\x01PAGE:N\\x01 markers at page boundaries.
     The markers are injected after transformation so they survive the
-    control-character stripping in clean_pages.
+    control-character stripping in prepare_wikitext.
 
     Processes one article at a time with per-article commits.
     """

@@ -4,7 +4,7 @@ import typer
 
 from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
-from britannica.pipeline.stages.clean_pages import clean_pages
+from britannica.pipeline.stages.prepare_wikitext import prepare_wikitext
 from britannica.db.models import Article, CrossReference, SourcePage
 from britannica.pipeline.stages.detect_boundaries import detect_boundaries, persist_articles
 from britannica.pipeline.stages.transform_articles import transform_articles
@@ -75,7 +75,6 @@ def import_sample_pages(
                 volume=volume,
                 page_number=i,
                 raw_text=page_text.strip(),
-                cleaned_text=None,
             )
             session.add(page)
 
@@ -86,10 +85,10 @@ def import_sample_pages(
     print(f"Imported {len(pages)} pages.")
 
 
-@app.command("clean-pages")
-def clean_pages_cmd(volume: int = typer.Argument(...)) -> None:
-    count = clean_pages(volume)
-    print(f"Cleaned {count} pages for volume {volume}.")
+@app.command("prepare-wikitext")
+def prepare_wikitext_cmd(volume: int = typer.Argument(...)) -> None:
+    count = prepare_wikitext(volume)
+    print(f"Prepared wikitext for {count} pages of volume {volume}.")
 
 
 @app.command("list-pages")
@@ -102,10 +101,10 @@ def list_pages(volume: int = typer.Option(None)) -> None:
 
         for page in query.order_by(SourcePage.volume, SourcePage.page_number).all():
             raw = repr(page.raw_text[:60])
-            clean = repr((page.cleaned_text or "")[:60])
+            wiki = repr((page.wikitext or "")[:60])
             print(
                 f"vol={page.volume} page={page.page_number} "
-                f"raw='{raw}' clean='{clean}'"
+                f"raw='{raw}' wiki='{wiki}'"
             )
     finally:
         session.close()

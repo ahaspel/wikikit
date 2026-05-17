@@ -3,8 +3,9 @@
 Used to live as three independent regexes — one in
 ``pipeline.stages.elements`` (for body rendering), one in
 ``pipeline.stages.extract_images`` (for ArticleImage rows), and one in
-``pipeline.stages.clean_pages`` (a salvage fallback for leaked
-templates).  Each had its own subtly-different ``\\|file=…`` pattern.
+the pre-split ``clean_pages`` (a salvage fallback for leaked templates;
+since removed when ``prepare_wikitext`` was tightened to two ops).
+Each had its own subtly-different ``\\|file=…`` pattern.
 A 2026-05 rebuild silently dropped 110 image references because two
 of the three regexes lacked whitespace tolerance around the
 ``=`` — the renderer emitted ``{{IMG:…}}`` markers that pointed at

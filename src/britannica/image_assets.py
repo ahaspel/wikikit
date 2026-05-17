@@ -1,9 +1,5 @@
 """Static lookup tables for pre-rendered / pre-cropped image assets.
 
-Both maps key on a physical source location (volume, page) so the
-element handlers can substitute the right asset without reaching
-across pipeline stages.
-
 This module imports nothing from the pipeline — it's a leaf, safe to
 import eagerly from anywhere.
 """
@@ -13,28 +9,76 @@ from __future__ import annotations
 import re
 
 
+def normalize_score_content(s: str) -> str:
+    """Whitespace-normalize a LilyPond block for content-keyed lookup.
+
+    Collapses every run of whitespace (spaces, tabs, newlines) to a
+    single space and strips ends.  LilyPond is whitespace-insensitive
+    so this is safe, and it makes the lookup robust to incidental
+    formatting differences between the SCORE_IMAGES keys and the tag
+    contents the element extractor delivers.
+    """
+    return re.sub(r"\s+", " ", s).strip()
+
+
 # ── <score> musical-notation tags → pre-rendered Wikimedia PNGs ─────────
 #
 # Wikisource ``<score>`` tags carry LilyPond source; the live wiki
 # renders them server-side to PNGs on upload.wikimedia.org.  We can't
-# run LilyPond here, so we map each occurrence — keyed by
-# ``(volume, page_number, occurrence_index)`` — to the rendered PNG URL.
+# run LilyPond here, so each tag's content is mapped to its pre-fetched
+# rendered URL.  Content-addressable (like math/poem) — the element
+# handler does a single dict lookup, no positional context required.
 
-SCORE_IMAGES: dict[tuple[int, int, int], str] = {
-    (3, 221, 0): "https://upload.wikimedia.org/score/h/z/hzcdxxolvqb8f88rf1kv99xpbkz4fhl/hzcdxxol.png",
-    (3, 221, 1): "https://upload.wikimedia.org/score/8/m/8muj660hon0gdc23klev5oueja71g2e/8muj660h.png",
-    (3, 221, 2): "https://upload.wikimedia.org/score/l/e/le30qszwd023fbi5l5p72zzgp0qif4z/le30qszw.png",
-    (3, 221, 3): "https://upload.wikimedia.org/score/t/a/ta4vp64mow2a4xgtut6yrr587tjqvwq/ta4vp64m.png",
-    (3, 971, 0): "https://upload.wikimedia.org/score/l/e/lexak41zsl71g5wdztqfen2titdlq9w/lexak41z.png",
-    (3, 972, 0): "https://upload.wikimedia.org/score/c/6/c6ls5kqiltjw1nu8qc0qh3r85v60gdx/c6ls5kqi.png",
-    (6, 415, 0): "https://upload.wikimedia.org/score/9/i/9iavthct92fgw9tjxwi3s57m4yb9fw0/9iavthct.png",
-    (6, 416, 0): "https://upload.wikimedia.org/score/i/y/iy808fgeauppb3nth1mdmfhjgi6rpy3/iy808fge.png",
-    (6, 416, 1): "https://upload.wikimedia.org/score/5/y/5ytbiminte2jgttcfyl2swwg254v2i0/5ytbimin.png",
-    (6, 416, 2): "https://upload.wikimedia.org/score/a/o/ao59rovwbfgbmxdrbumkluxcgxg7qoj/ao59rovw.png",
-    (6, 416, 3): "https://upload.wikimedia.org/score/7/y/7yn0x3i1tb37t4fg4v68yj3n4pnh1vi/7yn0x3i1.png",
+SCORE_IMAGES: dict[str, str] = {
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{f'_0 g_1 a_2 \\stemUp b_3 "
+        "\\stemNeutral c_4 d_5 e_6 f_7 g_8}>> }"
+    ): "https://upload.wikimedia.org/score/h/z/hzcdxxolvqb8f88rf1kv99xpbkz4fhl/hzcdxxol.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{ gis' \\stemUp bes "
+        "\\stemNeutral cis ees fis gis a}>> }"
+    ): "https://upload.wikimedia.org/score/8/m/8muj660hon0gdc23klev5oueja71g2e/8muj660h.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{gis'' a ais b c d}>> }"
+    ): "https://upload.wikimedia.org/score/l/e/le30qszwd023fbi5l5p72zzgp0qif4z/le30qszw.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{\\clef bass \\stemDown c g' c "
+        "\\clef treble \\stemNeutral g' c}>> }"
+    ): "https://upload.wikimedia.org/score/t/a/ta4vp64mow2a4xgtut6yrr587tjqvwq/ta4vp64m.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{ g'_1 a_2 \\stemUp bes_3 "
+        "\\stemNeutral c_4 d_5 e_6 g_7}>> }"
+    ): "https://upload.wikimedia.org/score/l/e/lexak41zsl71g5wdztqfen2titdlq9w/lexak41z.png",
+    normalize_score_content(
+        "{ \\new Staff \\with {\\clef bass \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative <<{g}>> }"
+    ): "https://upload.wikimedia.org/score/c/6/c6ls5kqiltjw1nu8qc0qh3r85v60gdx/c6ls5kqi.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine} \\relative { e''1 d g, b} }"
+    ): "https://upload.wikimedia.org/score/9/i/9iavthct92fgw9tjxwi3s57m4yb9fw0/9iavthct.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine} \\relative {\\clef bass e' d g, a} }"
+    ): "https://upload.wikimedia.org/score/i/y/iy808fgeauppb3nth1mdmfhjgi6rpy3/iy808fge.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine} \\relative {\\clef bass e' d g, b} }"
+    ): "https://upload.wikimedia.org/score/5/y/5ytbiminte2jgttcfyl2swwg254v2i0/5ytbimin.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine} \\relative {\\clef bass g a b c d e} }"
+    ): "https://upload.wikimedia.org/score/a/o/ao59rovwbfgbmxdrbumkluxcgxg7qoj/ao59rovw.png",
+    normalize_score_content(
+        "{ \\new Staff \\with { \\omit Score.TimeSignature "
+        "\\omit Score.BarLine } \\relative  { c' e g c e g} }"
+    ): "https://upload.wikimedia.org/score/7/y/7yn0x3i1tb37t4fg4v68yj3n4pnh1vi/7yn0x3i1.png",
 }
-
-SCORE_TAG = re.compile(r"<score[^>]*>.*?</score>", re.DOTALL)
 
 
 # ── {{chart2}} genealogical trees → pre-cropped local page scans ────────

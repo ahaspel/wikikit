@@ -10,21 +10,20 @@ from __future__ import annotations
 import html as html_mod
 import re
 
-from britannica.image_assets import SCORE_IMAGES, SCORE_TAG
-from britannica.pipeline.stages.elements._context import ElementContext
+from britannica.image_assets import SCORE_IMAGES, normalize_score_content
 
 
-def _process_score(raw: str, context: ElementContext) -> str:
-    """Replace <score> tag with pre-rendered Wikimedia image URL."""
-    vol = context.volume
-    page = context.page_number
-    if vol is not None and page is not None:
-        # Try to match by content against the static map
-        matches = list(SCORE_TAG.finditer(raw))
-        if matches:
-            for (v, p, idx), url in SCORE_IMAGES.items():
-                if v == vol and p == page:
-                    return f"{{{{IMG:{url}|Musical notation}}}}"
+def _process_score(inner: str) -> str:
+    """Replace a <score> tag's content with its pre-rendered Wikimedia
+    image URL.  Content-addressable: looks up the whitespace-normalized
+    LilyPond source in ``SCORE_IMAGES``.  Falls back to the literal
+    text "[Musical notation]" if the content isn't in our pre-fetched
+    table — only happens for newly-added EB1911 scores that haven't
+    been registered yet."""
+    key = normalize_score_content(inner)
+    url = SCORE_IMAGES.get(key)
+    if url:
+        return f"{{{{IMG:{url}|Musical notation}}}}"
     return "[Musical notation]"
 
 

@@ -540,9 +540,6 @@ _ELEMENT_HANDLERS: dict[str, _HandlerEntry] = {
     "CHART2": _HandlerEntry(
         lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
         pre_extract=True),
-    "SCORE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_score(raw, ctx),
-        pre_extract=True),
     "COMPOUND_TABLE": _HandlerEntry(
         lambda raw, inner, tt, ctx, reg: _process_compound_table(raw, tt),
         pre_extract=True),
@@ -550,6 +547,8 @@ _ELEMENT_HANDLERS: dict[str, _HandlerEntry] = {
     # Post-extract: receive inner + processed-child placeholders.
     "MATH": _HandlerEntry(
         lambda raw, inner, tt, ctx, reg: _process_math(inner)),
+    "SCORE": _HandlerEntry(
+        lambda raw, inner, tt, ctx, reg: _process_score(inner)),
     "REF_SELF": _HandlerEntry(
         lambda raw, inner, tt, ctx, reg:
             _process_ref_self(raw, ctx.ref_bodies)),

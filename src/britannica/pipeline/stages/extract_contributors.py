@@ -2,6 +2,7 @@ import json
 import re
 from pathlib import Path
 
+from britannica.corrections import apply_corrections
 from britannica.db.models import (
     Article, ArticleContributor, Contributor, ContributorInitials, SourcePage,
 )
@@ -20,46 +21,6 @@ _FOOTER_PATTERN = re.compile(
     r"\{\{EB1911 footer(?: double)? initials\|([^}]+)\}\}",
     re.IGNORECASE,
 )
-
-_CORRECTIONS: dict | None = None
-
-
-def _load_corrections() -> dict:
-    """Load `data/corrections.json` once.  Same file consumed by
-    `clean_pages.py` and `build_contributor_table.py`; we apply it
-    here too because this stage reads `raw_text` from the JSON files
-    directly (via `_load_raw_wikitext`), which bypasses the
-    SourcePage.wikitext path where clean_pages stored corrections.
-    Without this hook, body-footer typos like vol 6:680's
-    `{{EB1911 footer initials|James Thomson Shotwell|J. T. S.}}`
-    (missing asterisk) cannot be repaired via corrections.json."""
-    global _CORRECTIONS
-    if _CORRECTIONS is not None:
-        return _CORRECTIONS
-    p = Path("data/corrections.json")
-    if not p.exists():
-        _CORRECTIONS = {}
-        return _CORRECTIONS
-    with p.open(encoding="utf-8") as f:
-        _CORRECTIONS = json.load(f)
-    return _CORRECTIONS
-
-
-def _apply_corrections(text: str, volume: int) -> str:
-    """Apply per-volume `corrections.json` entries to `text`.  Mirrors
-    `clean_pages._apply_corrections` so the same fix file drives all
-    three stages that read raw wikitext."""
-    corrs = _load_corrections()
-    vol_prefix = f"{volume}:"
-    for key, entries in corrs.items():
-        if not key.startswith(vol_prefix):
-            continue
-        if not isinstance(entries, list):
-            continue
-        for c in entries:
-            if isinstance(c, dict) and "from" in c and "to" in c:
-                text = text.replace(c["from"], c["to"])
-    return text
 
 
 def _clean_footer_initials(initials: str) -> list[str]:
@@ -302,7 +263,7 @@ def extract_contributors_for_volume(volume: int) -> int:
             raw = _load_raw_wikitext(volume, page.page_number)
             if not raw:
                 continue
-            raw = _apply_corrections(raw, volume)
+            raw = apply_corrections(raw, volume)
 
             page_segs = segments_by_page.get(page.id, [])
             if not page_segs:
