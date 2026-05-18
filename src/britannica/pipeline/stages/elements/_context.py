@@ -6,7 +6,7 @@ Carries the small amount of cross-element state a handler may need:
   * ``volume`` / ``page_number`` — for score / chart-image lookups that
     key on physical location.
   * ``ref_bodies`` — name → resolved-footnote-body map, built once per
-    article by ``_resolve_ref_bodies`` and consumed by ``<ref name=X/>``
+    article by ``resolve_ref_bodies`` and consumed by ``<ref name=X/>``
     anchors.
   * ``djvu_crop_counters`` — per ``(volume, page)`` running index so
     successive ``{{Css image crop}}`` templates get distinct local

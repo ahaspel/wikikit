@@ -637,9 +637,11 @@ def _has_chem_brackets(registry: ElementRegistry | None) -> bool:
     extracted IMAGE elements."""
     if registry is None:
         return False
-    for placeholder, (element_type, raw) in registry.elements.items():
-        if element_type == "IMAGE" and _CHEM_BRACKET_IMG_RE.search(raw):
-            return True
+    for placeholder, label in registry.labels.items():
+        if label == "IMAGE":
+            raw = registry.elements[placeholder][1]
+            if _CHEM_BRACKET_IMG_RE.search(raw):
+                return True
         child_registry = registry.inner_registries.get(placeholder)
         if child_registry is not None and _has_chem_brackets(child_registry):
             return True
@@ -762,9 +764,10 @@ def _process_chemistry_layout(inner: str, text_transform,
     # Build placeholder -> sentinel map for Langle/Rangle images.
     angle_sentinel: dict[str, str] = {}
     if inner_registry is not None:
-        for ph, (etype, eraw) in inner_registry.elements.items():
-            if etype != "IMAGE":
+        for ph, label in inner_registry.labels.items():
+            if label != "IMAGE":
                 continue
+            eraw = inner_registry.elements[ph][1]
             m = re.match(
                 r"\[\[(?:File|Image):([LR])angle(IB|IT)?\.svg",
                 eraw, re.IGNORECASE,
@@ -898,8 +901,8 @@ def _process_table(inner: str, text_transform,
             if (len(row1_cells) == 1
                     and ph_re.fullmatch(row1_cells[0].strip())):
                 ph_id = row1_cells[0].strip()
-                etype, eraw = inner_registry.elements.get(ph_id, ("", ""))
-                if etype == "IMAGE":
+                if inner_registry.labels.get(ph_id) == "IMAGE":
+                    eraw = inner_registry.elements[ph_id][1]
                     fname_m = re.match(
                         r"\[\[(?:File|Image):([^\]|]+)",
                         eraw, re.IGNORECASE)
@@ -1180,12 +1183,12 @@ def _is_html_illustration_wrapper(
         return True
     if inner_registry is None:
         return False
-    child_types = [t for t, _ in inner_registry.elements.values()]
-    n_images = sum(1 for t in child_types if t == "IMAGE")
+    child_labels = list(inner_registry.labels.values())
+    n_images = sum(1 for lbl in child_labels if lbl == "IMAGE")
     if n_images < 1:
         return False
     # No other block-level children (nested tables etc.)
-    if any(t not in ("IMAGE", "REF", "MATH") for t in child_types):
+    if any(lbl not in ("IMAGE", "REF", "MATH") for lbl in child_labels):
         return False
     return True
 
@@ -1269,15 +1272,14 @@ def _unwrap_html_illustration(
         m = re.search(re.escape(_PH) + r"ELEM:\d+" + re.escape(_PH), cell)
         if m:
             key = m.group(0)
-            if key in inner_registry.elements:
-                img_type, img_raw = inner_registry.elements[key]
-                if img_type == "IMAGE":
-                    # Inject the caption via EXTCAP so _process_image bundles it.
-                    if caption_text:
-                        new_raw = img_raw + "\n\n" + caption_text
-                    else:
-                        new_raw = img_raw
-                    return _process_image_from_raw(new_raw, text_transform)
+            if inner_registry.labels.get(key) == "IMAGE":
+                img_raw = inner_registry.elements[key][1]
+                # Inject the caption via EXTCAP so _process_image bundles it.
+                if caption_text:
+                    new_raw = img_raw + "\n\n" + caption_text
+                else:
+                    new_raw = img_raw
+                return _process_image_from_raw(new_raw, text_transform)
 
     # Multi-image figure-grid: image-row + caption-row + optional
     # shared-caption row.  BOILER Fig 17 (vol 4 ws 162) is the canonical
@@ -1297,13 +1299,12 @@ def _unwrap_html_illustration(
                     m = re.search(
                         re.escape(_PH) + r"ELEM:\d+" + re.escape(_PH),
                         img_cell)
-                    if m and m.group(0) in inner_registry.elements:
-                        img_type, img_raw = inner_registry.elements[m.group(0)]
-                        if img_type == "IMAGE":
-                            new_raw = img_raw + "\n\n" + cap if cap else img_raw
-                            out.append(
-                                _process_image_from_raw(new_raw, text_transform))
-                            continue
+                    if m and inner_registry.labels.get(m.group(0)) == "IMAGE":
+                        img_raw = inner_registry.elements[m.group(0)][1]
+                        new_raw = img_raw + "\n\n" + cap if cap else img_raw
+                        out.append(
+                            _process_image_from_raw(new_raw, text_transform))
+                        continue
                     out.append(img_cell + ("\n\n" + cap if cap else ""))
                 # Remaining caption rows (typically a colspan shared
                 # caption) become a LEGEND block under the figure group.
@@ -1440,8 +1441,8 @@ def _process_html_table(
     ):
         only_cell = (parsed_rows[0][0][3] or "").strip()
         poem_phs = {
-            k for k, (t, _) in inner_registry.elements.items()
-            if t == "POEM"
+            k for k, label in inner_registry.labels.items()
+            if label == "POEM"
         }
         if only_cell in poem_phs:
             return "\n\n" + only_cell + "\n\n"

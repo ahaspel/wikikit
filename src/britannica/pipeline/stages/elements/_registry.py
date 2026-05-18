@@ -1,4 +1,6 @@
-"""ElementRegistry — placeholder bookkeeping for extracted elements.
+"""Element bookkeeping: placeholder counter, today's three-pass
+``ElementRegistry``, and the post-refactor ``ClassifiedElement``
+record.
 
 The counter lives at module scope, not on each registry instance, so
 keys remain unique across every registry created in a single processing
@@ -71,3 +73,60 @@ class ElementRegistry:
         key = f"{_PH}ELEM:{counter}{_PH}"
         self.elements[key] = (element_type, raw)
         return key
+
+
+# Producer-dispatch labels emitted by `_classify_table` for brace-pipe
+# wikitable source-type elements.  Siblings that need to ask "is this
+# child any kind of wikitable?" check label membership against this
+# set — the shape itself is the walker's private business.
+TABLE_LABELS: frozenset[str] = frozenset({
+    "LAYOUT_WRAPPER", "DATA_TABLE", "COMPLEX_HTML",
+    "MATH_LAYOUT_TOKENS", "MATH_LAYOUT_EQUATIONS",
+    "CHEMISTRY_LAYOUT", "COMPOUND_TABLE", "DJVU_CROP",
+})
+
+# Block-level child labels — anything that renders as its own
+# paragraph.  Used by table producers to decide whether to unwrap a
+# single-row table to inline text.
+BLOCK_LABELS: frozenset[str] = frozenset({"POEM", "HTML_TABLE"}) | TABLE_LABELS
+
+
+@dataclass
+class ClassifiedElement:
+    """The classifier's output for one element — replaces the
+    parallel dicts of ``ElementRegistry`` once the walker / classifier
+    / producer pipeline is restructured.
+
+    Under the post-refactor architecture the walker emits
+    ``(shape, raw_bytes)`` one level at a time and the classifier
+    drives the recursion: at each level it strips the shape's outer
+    delimiters, hands the inner back to the walker for next-level
+    extraction, recursively classifies each child the walker returns,
+    and finally decides its own ``label`` from the shape, the
+    identifier in its bytes, and the labels of its children.  A
+    ``ClassifiedElement`` is what the classifier returns from that
+    recursion.
+
+    Today's five parallel dicts collapse to one record per
+    placeholder:
+
+      * ``elements[ph] = (etype, raw)``           → ``raw`` + walker shape (gone)
+      * ``inners[ph]``                              → ``inner_text``
+      * ``inner_registries[ph]``                    → ``inner_registry``
+      * ``labels[ph]``                              → ``label``
+      * ``markers[ph]``                             → ``marker``
+
+    The shape itself is the walker's private vocabulary and is not
+    retained on the classifier's output — by the time a
+    ``ClassifiedElement`` exists, the question "what is this" has
+    been answered by ``label``.
+
+    Producers run as a bottom-up pass over the
+    ``ClassifiedElement`` tree and fill in ``marker``.
+    """
+
+    label: str
+    raw: str
+    inner_text: str
+    inner_registry: dict[str, "ClassifiedElement"] = field(default_factory=dict)
+    marker: str = ""
