@@ -35,16 +35,35 @@ def _next_placeholder_id() -> int:
 class ElementRegistry:
     """Stores extracted elements keyed by placeholder strings.
 
-    Uses a module-level counter so keys are unique across every
-    registry instance in a processing run.  Per-instance counters
-    caused silent collisions: an inner registry's ``ELEM:1``
-    matched the outer registry's ``ELEM:1``, so if a stale inner
-    placeholder escaped unreplaced (e.g. ``<ref>`` inside ``<poem>``
-    inside a table), the outer substitution pass would substitute
-    the outer ``ELEM:1``'s processed content into the inner's
-    location — duplicating content across the article.
+    The pipeline runs three passes over the tree of extracted
+    elements, each pass populating a parallel field on this object:
+
+      * `elements` — (element_type, raw bytes) — set by the walker
+        when it first registers an extracted element.  This is the
+        only field every caller has historically destructured, so the
+        tuple shape is preserved.
+      * `inners` and `inner_registries` — set by the walk pass when
+        it recurses into a non-leaf element.  `inners[placeholder]`
+        is the delimiter-stripped content with child placeholders;
+        `inner_registries[placeholder]` is the child registry built
+        by recursing on that inner content.
+      * `labels` — set by the classify pass.  `labels[placeholder]`
+        is the producer-dispatch label assigned by `classify()`
+        after seeing the element and its already-classified children.
+      * `markers` — set by the produce pass.  `markers[placeholder]`
+        is the final marker string the producer emitted.
+
+    Uses a module-level counter so placeholder keys are unique
+    across every registry instance in a processing run.
+    Per-instance counters caused silent collisions where an inner
+    `ELEM:1` matched an outer `ELEM:1` and substitution swapped
+    content between the two locations.
     """
     elements: dict[str, tuple[str, str]] = field(default_factory=dict)
+    inners: dict[str, str] = field(default_factory=dict)
+    inner_registries: dict[str, "ElementRegistry"] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
+    markers: dict[str, str] = field(default_factory=dict)
 
     def add(self, element_type: str, raw: str) -> str:
         """Add an element to the registry, return its placeholder."""

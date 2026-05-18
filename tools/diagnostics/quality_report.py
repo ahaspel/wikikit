@@ -13,6 +13,9 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from britannica.markers import RENDERED_MARKER_OPENS  # noqa: E402
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 REPORT_DIR = Path("data/derived/quality_reports")
@@ -247,12 +250,16 @@ def run_file_checks() -> dict:
         clean = _strip_htmltable_blocks(body)
         clean = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", clean, flags=re.DOTALL)
 
-        # Stray wiki markup
-        if "{{" in clean and not any(
-            m in clean for m in ["{{IMG:", "{{TABLE", "{{FN:", "{{VERSE:"]
-        ):
+        # Stray wiki markup.  A paragraph contains "legitimate" template
+        # braces iff at least one of the rendered-marker opens appears
+        # in it (from `britannica.markers.RENDERED_MARKER_OPENS` — single
+        # source of truth, shared with the body-text strip regex).  Same
+        # rule used symmetrically for both stray_braces (opens) and
+        # stray_close_braces (closes).
+        has_legitimate_marker = any(o in clean for o in RENDERED_MARKER_OPENS)
+        if "{{" in clean and not has_legitimate_marker:
             issues["stray_braces"] += 1
-        if "}}" in clean and "TABLE}" not in clean and "IMG:" not in clean and "VERSE}" not in clean:
+        if "}}" in clean and not has_legitimate_marker:
             issues["stray_close_braces"] += 1
         if re.search(r"\[\[.*?\]\]", clean):
             issues["stray_wikilink"] += 1

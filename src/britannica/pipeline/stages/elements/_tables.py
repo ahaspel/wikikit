@@ -617,17 +617,33 @@ _CHEM_BRACKET_IMG_RE = re.compile(
     r"\[\[(?:File|Image):\s*[LR]angle[A-Za-z]*\.(?:svg|png)", re.IGNORECASE)
 
 
-def _is_chemistry_layout(raw: str) -> bool:
-    """A ``{|\u2026|}`` block laid out as a 2-D chemical-reaction scheme or
-    structural formula \u2014 cells of atom labels, ``[[File:Langle.svg]]`` /
-    ``[[File:Rangle.svg]]`` valence-bracket images (the ``\u3008`` / ``\u3009``
-    EB1911 typesets reactions with), ``||`` bond-lines, ``\u27f6`` reaction
-    arrows, ``rowspan`` to bracket co-products.  Detected by the
-    angle-bracket image refs (``Langle``/``Rangle``/``LangleIB``/
-    ``RangleIB`` ``.svg``/``.png``), which are chemistry-exclusive in
-    the corpus (~36 such tables, clustered in the organic-chemistry
-    runs \u2014 FULMINIC ACID, POLYMETHYLENES, PURIN, INDAZOLES, \u2026)."""
-    return bool(_CHEM_BRACKET_IMG_RE.search(raw))
+def _has_chem_brackets(registry: ElementRegistry | None) -> bool:
+    """Recursively scan a registry tree for chemistry-bracket file refs
+    (``[[File:Langle*.svg]]`` / ``[[File:Rangle*.svg]]``).
+
+    A wiki table classifies as CHEMISTRY_LAYOUT when any of its
+    descendants is such a bracket \u2014 the EB1911 chemistry-reaction
+    diagrams use these images to typeset ``\u3008`` / ``\u3009`` valence
+    chevrons.  About 36 such tables corpus-wide, clustered in the
+    organic-chemistry runs (FULMINIC ACID, POLYMETHYLENES, PURIN,
+    INDAZOLES, \u2026).
+
+    Walks ``registry.elements`` for IMAGE-typed entries whose raw
+    bytes match the bracket regex, plus recurses into
+    ``inner_registries`` for nested tables.  This replaced an earlier
+    ``_is_chemistry_layout(raw)`` that regex-scanned the whole table's
+    raw bytes \u2014 that version could in principle false-match
+    Langle/Rangle text in prose; this one inspects only properly
+    extracted IMAGE elements."""
+    if registry is None:
+        return False
+    for placeholder, (element_type, raw) in registry.elements.items():
+        if element_type == "IMAGE" and _CHEM_BRACKET_IMG_RE.search(raw):
+            return True
+        child_registry = registry.inner_registries.get(placeholder)
+        if child_registry is not None and _has_chem_brackets(child_registry):
+            return True
+    return False
 
 
 def _split_chem_row(row_text: str) -> list[tuple[str, str, str]]:

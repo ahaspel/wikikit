@@ -123,3 +123,23 @@ def strip_title_markers(title: str) -> str:
 # captures filename and optional caption.
 IMG_RE = _re.compile(r"\{\{IMG:[^}]*\}\}")
 IMG_PARTS_RE = _re.compile(r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}")
+
+
+# Open-prefixes for the `{{X:…}}`-shape markers that survive cleaning
+# and reach the viewer.  Single source of truth — both the body-text
+# template-strip regex and the post-clean quality-report checks
+# reference this tuple to decide what counts as a legitimate marker
+# vs. stray template residue.  Add a new entry whenever you introduce
+# a new rendered marker, OR add it to both consumers separately and
+# inevitably end up with one out of sync (see the IMG-INLINE
+# stray_close_braces regression on 2026-05-17 for the canonical
+# failure mode).  Format: literal prefix INCLUDING the opening
+# ``{{`` braces.
+RENDERED_MARKER_OPENS: tuple[str, ...] = (
+    "{{IMG:",
+    "{{IMG-INLINE:",
+    "{{TABLE:",
+    "{{TABLEH:",
+    "{{LEGEND:",
+    "{{VERSE:",
+)

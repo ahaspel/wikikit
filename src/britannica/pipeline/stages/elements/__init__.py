@@ -92,7 +92,7 @@ from britannica.pipeline.stages.elements._layout import (
 )
 from britannica.pipeline.stages.elements._tables import (
     _extract_subtable_values,
-    _is_chemistry_layout,
+    _has_chem_brackets,
     _is_html_illustration_wrapper,
     _process_chemistry_layout,
     _process_complex_table,
@@ -115,9 +115,12 @@ from britannica.pipeline.stages.elements._tables import (
 # Footnotes, math, and scores are leaf-level or near-leaf.
 
 _EXTRACTORS = [
-    # Extraction order: outermost first.
-    # HTML elements first (they can contain wiki markup elements).
-    # Wiki tables handled separately with balanced matching.
+    # Extraction order is governed by the registry below (`_EXTRACTOR_REGISTRY`),
+    # NOT by this list — `_EXTRACTORS` is the legacy regex table the registry
+    # uses to build its regex-based entries.  Per-element ordering, the
+    # outline-pass recursion guard, and the wiki-table / chart2 / outline
+    # special-case extractors all live in the registry.  Keep this list
+    # in regex-grouping order; let the registry decide priority.
     ("REF_SELF", re.compile(r"<ref\s[^>]*/\s*>", re.IGNORECASE), 0),
     ("REF", re.compile(r"<ref(?:\s[^>]*)?>.*?</ref>", re.DOTALL | re.IGNORECASE), 0),
     ("HTML_TABLE", re.compile(r"<table\b[^>]*>.*?</table>", re.DOTALL | re.IGNORECASE), 0),
@@ -326,16 +329,13 @@ def _extract_balanced_tables(text: str, registry: ElementRegistry) -> str:
                 # Compute length of the closer we matched.
                 closer_len = 2 if masked[i:i+2] == "|}" else 8
                 if depth == 0:
-                    # Found the balanced close
+                    # Found the balanced close.  Walker always
+                    # registers as TABLE — the classifier
+                    # (`_classify_table`) decides whether this is a
+                    # DJVU_CROP, COMPOUND_TABLE, or other wikitable
+                    # sub-kind.
                     table_text = text[idx:i + closer_len]
-                    # Classify at extraction time
-                    if re.search(r"\{\{Css image crop", table_text, re.IGNORECASE):
-                        etype = "DJVU_CROP"
-                    elif _is_compound_table(table_text):
-                        etype = "COMPOUND_TABLE"
-                    else:
-                        etype = "TABLE"
-                    placeholder = registry.add(etype, table_text)
+                    placeholder = registry.add("TABLE", table_text)
                     text = text[:idx] + placeholder + text[i + closer_len:]
                     found = True
                     break
@@ -360,58 +360,150 @@ _CHART2_RE = re.compile(
 )
 
 
+# ── Extractor registry ────────────────────────────────────────────────
+#
+# Each entry is `(name, priority, extract_fn, recurse_safe)`.
+#
+#   * `priority` is the order the walker invokes extractors (low first).
+#     The numbering leaves gaps so new extractors can slot in without
+#     renumbering — `tens` clusters elements by phase
+#     (1x = pre-table, 2x = tables, 3x = pre-outline children of
+#     elements, 4x = outline, 5x = post-outline).
+#
+#   * `extract_fn(text, registry) -> text` consumes its element from
+#     `text` (replacing instances with placeholders registered in
+#     `registry`) and returns the modified text.  All extractors share
+#     this signature — regex-based and bespoke alike.
+#
+#   * `recurse_safe=False` marks extractors that must be SKIPPED on
+#     recursive walks into an element's inner content.  Only OUTLINE
+#     today: it inspects line-level indentation across the whole text
+#     and would re-trigger inside an OUTLINE's own indented body.
+#
+# Adding a new element type is one append here — the walker body is
+# unchanged.  Order matters: outermost-first so nested elements get
+# claimed by their natural parent (a wiki table claims the file refs
+# in its cells before the IMAGE extractor sees them bare).
+@dataclass(frozen=True)
+class _ExtractorEntry:
+    name: str
+    priority: int
+    extract_fn: Callable[[str, ElementRegistry], str]
+    recurse_safe: bool = True
+    # ``recurse_into_inner`` controls whether the orchestrator
+    # recursively walks the inner bytes of an EXTRACTED instance of
+    # this element type.  Leaf elements (CHART2 today, others as
+    # classification migrates) set this False; the walker leaves
+    # their bytes alone and the producer handles them as raw.  Looked
+    # up in `_LEAF_ELEMENT_TYPES` by `_process_element`.
+    recurse_into_inner: bool = True
+
+
+def _regex_extractor(name: str, pattern: re.Pattern):
+    """Adapt a (name, pattern) pair into the registry's uniform
+    `extract_fn` shape: scan `text` for `pattern`, replace each match
+    with a placeholder registered under `name`."""
+    def _extract(text: str, registry: ElementRegistry) -> str:
+        return pattern.sub(
+            lambda m: registry.add(name, m.group(0)), text)
+    return _extract
+
+
+def _chart2_extract(text: str, registry: ElementRegistry) -> str:
+    return _CHART2_RE.sub(
+        lambda m: registry.add("CHART2", m.group(0)), text)
+
+
+def _build_extractor_registry() -> list[_ExtractorEntry]:
+    """Construct the extractor registry from the regex table above
+    plus the bespoke wiki-table / chart2 / outline scanners.  Built
+    once at import time; the walker iterates this in priority order."""
+    by_name = {n: p for n, p, _f in _EXTRACTORS}
+    entries: list[_ExtractorEntry] = [
+        # Chart2 genealogical trees come before tables: their `{|…|}`
+        # would otherwise be eaten by the balanced-table scanner.
+        # Leaf: chart2 content is owned end-to-end by `_process_chart2`,
+        # never recursed into.
+        _ExtractorEntry("CHART2", 10, _chart2_extract,
+                         recurse_into_inner=False),
+        # Balanced wiki tables — outermost first via brace-counting.
+        _ExtractorEntry("WIKITABLE", 20, _extract_balanced_tables),
+        # Pre-outline elements: REF, REF_SELF, POEM, MATH must be
+        # placeholdered before the outline scanner runs, so its
+        # line-level indentation heuristics don't false-trigger on
+        # `{{em|N}}` in verse / equation continuations / footnote
+        # bodies.
+        _ExtractorEntry("REF_SELF", 30,
+                        _regex_extractor("REF_SELF", by_name["REF_SELF"])),
+        _ExtractorEntry("REF", 31,
+                        _regex_extractor("REF", by_name["REF"])),
+        _ExtractorEntry("POEM", 32,
+                        _regex_extractor("POEM", by_name["POEM"])),
+        _ExtractorEntry("MATH", 33,
+                        _regex_extractor("MATH", by_name["MATH"])),
+        # OUTLINE: taxonomic / genealogical / numbered-caption ladders.
+        # Recursion-unsafe — its line-indent scan would loop on its
+        # own extracted bytes.
+        _ExtractorEntry("OUTLINE", 40, _extract_outlines,
+                        recurse_safe=False),
+        # Post-outline elements.  Order within this band matches the
+        # legacy `_EXTRACTORS` iteration order so spec-by-spec
+        # behaviour is preserved (IMAGE_FLOAT before IMAGE, both
+        # HIEROGLYPH variants together).
+        _ExtractorEntry("HTML_TABLE", 50,
+                        _regex_extractor("HTML_TABLE", by_name["HTML_TABLE"])),
+        _ExtractorEntry("SCORE", 51,
+                        _regex_extractor("SCORE", by_name["SCORE"])),
+        _ExtractorEntry("IMAGE_FLOAT", 52,
+                        _regex_extractor("IMAGE_FLOAT", by_name["IMAGE_FLOAT"])),
+        _ExtractorEntry("IMAGE", 53,
+                        _regex_extractor("IMAGE", by_name["IMAGE"])),
+    ]
+    # HIEROGLYPH appears twice in _EXTRACTORS (template form and
+    # `<hiero>` tag form); preserve both as separate registry entries.
+    for i, (name, pat, _flags) in enumerate(_EXTRACTORS):
+        if name == "HIEROGLYPH":
+            entries.append(_ExtractorEntry(
+                f"HIEROGLYPH#{i}", 54 + i,
+                _regex_extractor("HIEROGLYPH", pat)))
+    return entries
+
+
+_EXTRACTOR_REGISTRY: list[_ExtractorEntry] = sorted(
+    _build_extractor_registry(), key=lambda e: e.priority)
+
+
+# Lookup for the walker-side recursion flag.  An element type appears
+# here iff it's in the extractor registry — i.e., the walker itself
+# extracted it.  Classifier-emitted labels (`DJVU_CROP`,
+# `COMPOUND_TABLE`) are not present here; their leaf-ness is still
+# carried on `_HandlerEntry.pre_extract` until classification migrates
+# off the WIKITABLE extractor's internal logic into the classifier.
+_RECURSE_INTO_INNER_BY_TYPE: dict[str, bool] = {
+    e.name: e.recurse_into_inner for e in _EXTRACTOR_REGISTRY
+}
+
+
 def extract(
     text: str, _outline_pass: bool = True,
 ) -> tuple[str, ElementRegistry]:
     """Extract all embedded elements from text, outermost first.
 
-    Returns the text with placeholders and a registry of extracted elements.
+    Iterates `_EXTRACTOR_REGISTRY` in priority order, calling each
+    entry's `extract_fn` to consume that element type from `text`
+    (replacing matches with placeholders registered in the returned
+    `ElementRegistry`).
 
-    `_outline_pass` is set to False on recursive calls (when processing
-    an OUTLINE element's own inner content), to prevent the outline
-    detector from re-finding itself and recursing forever.
+    `_outline_pass=False` is passed by recursive calls into an
+    OUTLINE element's own inner content; entries marked
+    `recurse_safe=False` are skipped in that case so the outline
+    scanner doesn't re-trigger on its own bytes.
     """
     registry = ElementRegistry()
-
-    # Chart2 genealogical trees — extract before tables
-    text = _CHART2_RE.sub(
-        lambda m: registry.add("CHART2", m.group(0)), text)
-
-    # Wiki tables first (outermost) — balanced matching handles nesting
-    text = _extract_balanced_tables(text, registry)
-
-    # POEM placeholdered before outline detection so verse stanzas
-    # with `{{em|N}}` indent (CHANT ROYAL etc.) don't false-trigger
-    # as taxonomic outlines.  Also REF and MATH out of the way for
-    # the same reason — multi-line equations / footnote bodies can
-    # contain indented continuation lines.
-    _PRE_OUTLINE_TYPES = {"POEM", "REF", "REF_SELF", "MATH"}
-    for element_type, pattern, _flags in _EXTRACTORS:
-        if element_type not in _PRE_OUTLINE_TYPES:
+    for entry in _EXTRACTOR_REGISTRY:
+        if not _outline_pass and not entry.recurse_safe:
             continue
-        text = pattern.sub(
-            lambda m, et=element_type: registry.add(et, m.group(0)),
-            text,
-        )
-
-    # Hierarchical taxonomic / genealogical / classificatory outlines
-    # — `:`-indented prose, `{{em|N}}` typesetter indent, etc.
-    # ARACHNIDA Tabular Classification, ZOOLOGY taxonomies, GEM plate
-    # captions, ~30+ pages corpus-wide.  Run BEFORE the IMAGE
-    # extractor so a plate-caption outline (numbered items beneath
-    # `[[File:…]]`) isn't consumed as the image's inline caption.
-    if _outline_pass:
-        text = _extract_outlines(text, registry)
-
-    # Remaining elements (images, html-tables, hieroglyph, image-float)
-    for element_type, pattern, _flags in _EXTRACTORS:
-        if element_type in _PRE_OUTLINE_TYPES:
-            continue
-        text = pattern.sub(
-            lambda m, et=element_type: registry.add(et, m.group(0)),
-            text,
-        )
-
+        text = entry.extract_fn(text, registry)
     return text, registry
 
 
@@ -464,55 +556,14 @@ def _strip_delimiters(element_type: str, raw: str) -> str:
     return raw
 
 
-# Element-handler registry.
-#
-# Each entry pairs an ``element_type`` with the function that converts
-# its wikitext to rendered output.  Two kinds of entries:
-#
-#   pre_extract=True  — handler runs on the raw element (no delimiter
-#                       strip, no child extraction).  Used for elements
-#                       that own their internal structure end-to-end
-#                       (DJVU_CROP, CHART2, SCORE, COMPOUND_TABLE).
-#
-#   pre_extract=False — handler runs after ``_strip_delimiters`` and
-#                       recursive child extraction.  Receives ``inner``
-#                       (delimiter-stripped, child placeholders intact)
-#                       and the child ``inner_registry``.  Children are
-#                       processed before the parent so the parent sees
-#                       opaque placeholder markers, not expanded text;
-#                       children get reinserted after the parent runs.
-#
-# All handlers share a normalized signature
-# ``(raw, inner, text_transform, context, inner_registry) -> str`` so
-# the dispatcher is a flat dict lookup.  Unknown element types fall
-# through to ``_passthrough_inner`` (the historical ``else: result =
-# inner`` behavior).
-#
-# Adding a new element type is now a one-line registry entry, not a
-# new ``elif`` branch in the dispatch tower.
-
+# Producer handler signature.  All producers share this shape:
+#   (raw, inner, text_transform, context, inner_registry) -> marker
+# `raw` is the source bytes of the element (with delimiters); `inner`
+# is the delimiter-stripped content with child placeholders.  Most
+# producers use `inner` + the child registry; the leaf cases
+# (CHART2, DJVU_CROP, COMPOUND_TABLE) use `raw` and ignore the rest.
 _ElementHandler = Callable[
     [str, str, Callable, ElementContext, "ElementRegistry | None"], str]
-
-
-@dataclass(frozen=True)
-class _HandlerEntry:
-    handler: _ElementHandler
-    pre_extract: bool = False
-
-
-def _dispatch_table(raw: str, inner: str, text_transform,
-                    context: ElementContext,
-                    inner_registry: ElementRegistry | None) -> str:
-    """TABLE sub-dispatch: classify the wiki-table, then route."""
-    kind = _classify_table(raw, inner, inner_registry)
-    return _TABLE_KIND_HANDLERS.get(kind, _process_data_table)(
-        raw, inner, text_transform, context, inner_registry)
-
-
-def _process_data_table(raw, inner, text_transform, context,
-                        inner_registry):
-    return _process_table(inner, text_transform, inner_registry)
 
 
 def _passthrough_inner(raw, inner, text_transform, context,
@@ -520,7 +571,41 @@ def _passthrough_inner(raw, inner, text_transform, context,
     return inner
 
 
-_TABLE_KIND_HANDLERS: dict[str, _ElementHandler] = {
+# ── Single classifier ─────────────────────────────────────────────────
+#
+# `classify` is the one and only entry point for "what kind of element
+# is this?"  The walker assigns a transport type (WIKITABLE, IMAGE,
+# MATH, …) when it extracts; the classifier accepts that type plus the
+# element's bytes/registry and returns a LABEL.  For element types
+# whose source syntax determines the kind uniquely (MATH, POEM,
+# SCORE, …), the label is just the transport type.  For element types
+# whose source syntax can carry multiple semantic shapes (WIKITABLE),
+# the classifier dispatches internally to a sub-function that examines
+# the bytes and returns the discriminated label.
+#
+# Producers are keyed by LABEL in `_PRODUCER_DISPATCH`.  Adding a new
+# sub-kind of an existing transport means: extend the classifier
+# branch to emit a new label, add the matching producer to
+# `_PRODUCER_DISPATCH`.  The walker is untouched.
+def classify(element_type: str, raw: str, inner: str,
+              inner_registry: ElementRegistry | None) -> str:
+    """Single classifier entry point.  Returns the producer-dispatch
+    label for an element extracted by the walker."""
+    if element_type == "TABLE":
+        return _classify_table(raw, inner, inner_registry)
+    # Single-label transports: the element_type IS the kind.
+    return element_type
+
+
+# ── Producer dispatch ─────────────────────────────────────────────────
+#
+# Flat label → producer table.  Both wikitable sub-kinds (returned by
+# `classify` for `element_type=TABLE`) and single-label element types
+# (returned trivially) coexist in one dict.  Replaces the previous
+# two-level dispatch (`_ELEMENT_HANDLERS` → `_dispatch_table` →
+# `_TABLE_KIND_HANDLERS`).
+_PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
+    # Wikitable sub-kinds.
     "MATH_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_math_table_layout(raw, inner, reg, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
@@ -529,109 +614,142 @@ _TABLE_KIND_HANDLERS: dict[str, _ElementHandler] = {
         _process_complex_table(inner, tt),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_chemistry_layout(inner, tt, reg),
+    "DATA_TABLE": lambda raw, inner, tt, ctx, reg:
+        _process_table(inner, tt, reg),
+    # Single-label kinds — element_type == label.
+    "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
+        _process_djvu_crop(raw, tt, ctx),
+    "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
+    "COMPOUND_TABLE": lambda raw, inner, tt, ctx, reg:
+        _process_compound_table(raw, tt),
+    "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
+    "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
+    "REF_SELF": lambda raw, inner, tt, ctx, reg:
+        _process_ref_self(raw, ctx.ref_bodies),
+    "REF": lambda raw, inner, tt, ctx, reg:
+        _process_ref(raw, inner, tt, ctx.ref_bodies),
+    "IMAGE": lambda raw, inner, tt, ctx, reg: _process_image(inner, tt),
+    "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
+        _process_image_float(inner, tt),
+    "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
+    "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
+        f"[hieroglyph: {inner}]",
+    "HTML_TABLE": lambda raw, inner, tt, ctx, reg:
+        _process_html_table(raw, inner, tt, reg),
+    "OUTLINE": lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt),
 }
 
 
-_ELEMENT_HANDLERS: dict[str, _HandlerEntry] = {
-    # Pre-extract: opaque to child extraction.
-    "DJVU_CROP": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_djvu_crop(raw, tt, ctx),
-        pre_extract=True),
-    "CHART2": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
-        pre_extract=True),
-    "COMPOUND_TABLE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_compound_table(raw, tt),
-        pre_extract=True),
-
-    # Post-extract: receive inner + processed-child placeholders.
-    "MATH": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_math(inner)),
-    "SCORE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_score(inner)),
-    "REF_SELF": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg:
-            _process_ref_self(raw, ctx.ref_bodies)),
-    "REF": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg:
-            _process_ref(raw, inner, tt, ctx.ref_bodies)),
-    "IMAGE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_image(inner, tt)),
-    "IMAGE_FLOAT": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_image_float(inner, tt)),
-    "POEM": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt)),
-    "HIEROGLYPH": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: f"[hieroglyph: {inner}]"),
-    "TABLE": _HandlerEntry(_dispatch_table),
-    "HTML_TABLE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg:
-            _process_html_table(raw, inner, tt, reg)),
-    "OUTLINE": _HandlerEntry(
-        lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt)),
-}
+# Element types the walker registers that should NOT be recursed
+# into.  Today's only entry is `CHART2`; DJVU_CROP and COMPOUND_TABLE
+# used to be here as transitional bridges but are now produced by
+# `_classify_table` as labels (the walker emits all wikitables as
+# `TABLE`).  Future leaf types declare themselves via
+# `recurse_into_inner=False` in the extractor registry.
+_LEAF_ELEMENT_TYPES: frozenset[str] = frozenset(
+    name for name, recurse
+    in _RECURSE_INTO_INNER_BY_TYPE.items() if not recurse
+)
 
 
-def _process_element(element_type: str, raw: str,
-                     text_transform, context: ElementContext) -> str:
-    """Process a single element recursively.
+# ── Three-pass element processing ─────────────────────────────────────
+#
+# Walk → Classify → Produce.  Each pass is a complete sweep over the
+# registry tree before the next begins.  Earlier the three were
+# interleaved in a single recursive `_process_element` call, which
+# meant that when a parent's classifier ran, it had to inspect its
+# children's RAW bytes to make decisions (e.g. `_is_chemistry_layout`
+# scanned for Langle/Rangle file refs).  Under separate passes, the
+# classifier can ask "what kind is my child's placeholder?" — a
+# registry lookup against the bottom-up classification result —
+# instead of re-parsing.
 
-    Dispatch is registry-driven (see ``_ELEMENT_HANDLERS``).  Pre-extract
-    handlers run on ``raw``; post-extract handlers run after delimiter
-    stripping and recursive child extraction, with children reinserted
-    after the handler returns.
+def _walk_recursive(text: str, _outline_pass: bool = True
+                     ) -> tuple[str, ElementRegistry]:
+    """Walk pass: extract elements at this level, then recurse into
+    each non-leaf element's inner bytes.
+
+    Returns (text_with_placeholders, registry) where the registry's
+    `elements` is populated by `extract()` and `inners` +
+    `inner_registries` are populated for every non-leaf element.
+    No classification or production has run yet.
     """
-    entry = _ELEMENT_HANDLERS.get(element_type)
-    if entry is not None and entry.pre_extract:
-        return entry.handler(raw, "", text_transform, context, None)
+    text, registry = extract(text, _outline_pass)
+    for placeholder, (element_type, raw) in registry.elements.items():
+        if element_type in _LEAF_ELEMENT_TYPES:
+            continue
+        inner = _strip_delimiters(element_type, raw)
+        inner, inner_registry = _walk_recursive(
+            inner, _outline_pass=(element_type != "OUTLINE"))
+        registry.inners[placeholder] = inner
+        registry.inner_registries[placeholder] = inner_registry
+    return text, registry
 
-    # Strip outer delimiters to get the element's inner content,
-    # then recursively extract and process any child elements.  Skip
-    # the outline-extraction pass when processing an OUTLINE — its
-    # raw content is already the body of one.
-    inner = _strip_delimiters(element_type, raw)
-    inner, inner_registry = extract(inner, _outline_pass=(element_type != "OUTLINE"))
 
-    # Process children but DON'T reinsert yet — keep placeholders
-    # so the parent processor sees opaque markers, not expanded content.
-    processed_children = {}
-    for key, (child_type, child_raw) in inner_registry.elements.items():
-        processed_children[key] = _process_element(
-            child_type, child_raw, text_transform, context)
+def _classify_recursive(registry: ElementRegistry) -> None:
+    """Classify pass: bottom-up over the tree.
 
-    handler = entry.handler if entry is not None else _passthrough_inner
-    result = handler(raw, inner, text_transform, context, inner_registry)
+    For each element, recurse into children's classification first,
+    then call `classify()` for this element.  The classifier can
+    therefore look up its children's labels from `inner_registry.labels`
+    when it makes a decision.  Stores the label in THIS registry's
+    `labels[placeholder]`.
+    """
+    for placeholder, (element_type, raw) in registry.elements.items():
+        inner_registry = registry.inner_registries.get(placeholder)
+        if inner_registry is not None:
+            _classify_recursive(inner_registry)
+        inner = registry.inners.get(placeholder, "")
+        registry.labels[placeholder] = classify(
+            element_type, raw, inner, inner_registry)
 
-    # Reinsert processed children.  A single pass isn't enough: a
-    # processed child may itself contain placeholders for siblings
-    # (e.g. ``<poem>`` with a ``<ref>`` inside — the poem processor
-    # carries the REF placeholder through opaque, because its inner
-    # ``extract()`` can't see past the ``\x03`` wrapper).  If we only
-    # substitute in registry order, such a re-introduced placeholder
-    # rides out into the parent's result and leaks.  Iterate until
-    # the result stops changing.
-    for _pass in range(5):
-        changed = False
-        for key, processed_child in processed_children.items():
-            if key in result:
-                result = result.replace(key, processed_child)
-                changed = True
-        if not changed:
-            break
 
-    # If a child wiki-table produced a `{{TABLE:...}TABLE}` marker and
-    # got substituted INSIDE an HTMLTABLE cell (nested-wiki-table
-    # source — ORNITHOLOGY taxonomic alignments, EOCENE etymology
-    # glossary in a `<ref>`), the marker would leak as cell text.
-    # Convert nested TABLE markers inside HTMLTABLE blocks to inline
-    # `<table>` HTML so the viewer renders them as nested sub-tables.
-    if "«HTMLTABLE:" in result and "{{TABLE:" in result:
-        from britannica.pipeline.stages.elements._tables import (
-            _inline_nested_table_markers_in_htmltable_blocks,
-        )
-        result = _inline_nested_table_markers_in_htmltable_blocks(result)
+def _produce_recursive(registry: ElementRegistry,
+                        text_transform, context: ElementContext) -> None:
+    """Produce pass: bottom-up over the tree.
 
-    return result
+    Children produced first; the producer is then called for this
+    element with the still-placeholder-containing inner (handlers
+    that inspect inner_registry expect to see opaque placeholders
+    there).  Child markers are substituted into the producer's
+    output after it runs.  Multi-pass substitution handles sibling
+    cross-references (a child's marker can carry a placeholder for
+    another child).  Stores the marker in THIS registry's
+    `markers[placeholder]`.
+    """
+    for placeholder, (element_type, raw) in registry.elements.items():
+        inner_registry = registry.inner_registries.get(placeholder)
+        if inner_registry is not None:
+            _produce_recursive(inner_registry, text_transform, context)
+        inner = registry.inners.get(placeholder, "")
+        label = registry.labels[placeholder]
+        handler = _PRODUCER_DISPATCH.get(label, _passthrough_inner)
+        marker = handler(raw, inner, text_transform, context, inner_registry)
+        # Substitute child markers into the handler's output.  Cannot
+        # be done before the handler runs — table-shaped producers
+        # inspect inner_registry to query child placeholder types.
+        # Multi-pass because a substituted child marker can itself
+        # contain placeholders for other children (cross-references).
+        if inner_registry is not None and inner_registry.markers:
+            for _ in range(5):
+                changed = False
+                for child_ph, child_marker in inner_registry.markers.items():
+                    if child_ph in marker:
+                        marker = marker.replace(child_ph, child_marker)
+                        changed = True
+                if not changed:
+                    break
+        # Post-substitution cleanup: a child wiki-table's
+        # `{{TABLE:…}TABLE}` marker embedded inside an HTMLTABLE cell
+        # leaks as cell text unless converted to inline `<table>` HTML
+        # (ORNITHOLOGY taxonomic alignments, EOCENE etymology glossary
+        # inside a `<ref>`).
+        if "«HTMLTABLE:" in marker and "{{TABLE:" in marker:
+            from britannica.pipeline.stages.elements._tables import (
+                _inline_nested_table_markers_in_htmltable_blocks,
+            )
+            marker = _inline_nested_table_markers_in_htmltable_blocks(marker)
+        registry.markers[placeholder] = marker
 
 
 
@@ -639,6 +757,11 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
     """Classify a wiki table into its processing type.
 
     Returns one of:
+        DJVU_CROP        — table wrapper around a `{{Css image crop}}`
+                          template; producer parses the crop directly
+                          from raw bytes.
+        COMPOUND_TABLE  — data table with nested sub-tables; producer
+                          parses the nested structure from raw bytes.
         MATH_LAYOUT     — math/equation layout in any of three encodings
                           (raw tokens, ``<math>`` blocks, or HTML-table
                           wrapper).  Unified detector / dispatcher in
@@ -649,11 +772,23 @@ def _classify_table(raw: str, inner: str, inner_registry: ElementRegistry | None
         CHEMISTRY_LAYOUT — 2-D chemical-reaction / structural-formula diagram
         DATA_TABLE      — regular data tables (default)
     """
+    # DJVU_CROP and COMPOUND_TABLE: raw-only classifications — their
+    # producers parse the original wikitext directly and don't need
+    # the recursed inner registry.  Checked first so we short-circuit
+    # before any content-level inspection.
+    if re.search(r"\{\{Css image crop", raw, re.IGNORECASE):
+        return "DJVU_CROP"
+    if _is_compound_table(raw):
+        return "COMPOUND_TABLE"
     # Chemistry-reaction / structural-formula layout — atom-label cells,
     # ⟨/⟩ valence-bracket images, `||` bond-lines, ⟶ arrows, `rowspan`
     # brackets.  Priority over every other classification (the
-    # `[[File:Langle/Rangle]]` ref is chemistry-exclusive).
-    if _is_chemistry_layout(raw):
+    # `[[File:Langle/Rangle]]` ref is chemistry-exclusive).  Detected
+    # by querying the bottom-up-classified registry tree for IMAGE
+    # elements whose filename matches the bracket pattern — these
+    # exist as registered children by the time this classifier runs,
+    # eliminating the need to regex-scan the table's raw bytes.
+    if _has_chem_brackets(inner_registry):
         return "CHEMISTRY_LAYOUT"
     # Complex HTML: tables with rowspan/colspan need full HTML rendering.
     # Check this BEFORE equation layout — rowspan is a strong signal of a
@@ -788,44 +923,52 @@ def process_elements(text: str, text_transform, context: ElementContext) -> str:
     Returns:
         text with all embedded elements processed to their final form
     """
-    extracted, registry = extract(text)
+    # Pass 1 — walk: build a complete registry tree from the article.
+    # Top-down recursion populates `elements`, `inners`, and
+    # `inner_registries` for every element in the article and its
+    # descendants.  No classification or production yet.
+    text, registry = _walk_recursive(text)
 
-    # Transform the body text (everything between elements)
-    extracted = text_transform(extracted)
+    # Body text transform — operates on the prose between top-level
+    # placeholders only; each element's inner content is transformed
+    # by its own producer when it runs.
+    text = text_transform(text)
 
-    # Build an article-wide registry of named-ref bodies so
-    # ``<ref name=X/>`` self-closing reuses (and ``<ref name=X>body…``
-    # definitions whose body comes via a later ``<ref follow=X>…``
-    # continuation) resolve to the merged body. Required by MOLECULE
-    # p684 where ``Atom<ref name=654f1/>`` is the anchor and the body
-    # arrives only via ``<ref follow=654f1>…</ref>`` two paragraphs
-    # later. Threaded into ``context`` so ``_process_element`` can
-    # forward it to ``_process_ref`` / ``_process_ref_self``.  We copy
-    # the caller's context so we don't mutate it.
+    # Article-wide ref-body resolution.  `<ref name=X/>` self-closing
+    # reuses (and `<ref name=X>body…` definitions whose body comes
+    # via a later `<ref follow=X>…` continuation) resolve to the
+    # merged body.  Required by MOLECULE p684 where
+    # `Atom<ref name=654f1/>` is the anchor and the body arrives via
+    # `<ref follow=654f1>…</ref>` two paragraphs later.  Threaded
+    # into `context` so the REF producer can read it.  Copy the
+    # caller's context so we don't mutate it.
     context = _dc_replace(context)
     context.ref_bodies = _resolve_ref_bodies(registry, text_transform)
 
-    # Process each element (recursion handles nesting)
-    processed_map = {}
-    for key, (element_type, raw) in registry.elements.items():
-        processed_map[key] = _process_element(
-            element_type, raw, text_transform, context)
+    # Pass 2 — classify: bottom-up over the tree.  Each element's
+    # classifier sees its already-classified children's labels via
+    # the inner_registry.
+    _classify_recursive(registry)
 
-    # Substitute all processed elements — repeat until stable
-    # (handles cross-element references: table placeholder inside a ref)
-    result = extracted
-    for _pass in range(3):  # max 3 passes for deeply nested cross-refs
+    # Pass 3 — produce: bottom-up over the tree.  Each element's
+    # producer runs after its children's markers exist; child markers
+    # are substituted into the producer's output afterward.
+    _produce_recursive(registry, text_transform, context)
+
+    # Reassemble: substitute top-level markers into the article body.
+    # Multi-pass handles sibling cross-references (one top-level
+    # element's marker can carry a placeholder for another).
+    for _ in range(3):
         changed = False
-        for key, processed in processed_map.items():
-            if key in result:
-                result = result.replace(key, processed)
+        for key, marker in registry.markers.items():
+            if key in text:
+                text = text.replace(key, marker)
                 changed = True
-            # Also check if the placeholder appears inside other processed elements
-            for other_key in processed_map:
-                if key in processed_map[other_key]:
-                    processed_map[other_key] = processed_map[other_key].replace(
-                        key, processed)
+            for other_key in registry.markers:
+                if other_key != key and key in registry.markers[other_key]:
+                    registry.markers[other_key] = (
+                        registry.markers[other_key].replace(key, marker))
         if not changed:
             break
 
-    return result
+    return text

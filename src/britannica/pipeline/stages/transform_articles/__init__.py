@@ -255,6 +255,14 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         promote_inline_glyphs,
     )
     from britannica.pipeline.stages.fold_unfold import unfold_folded_rows
+    from britannica.pipeline.stages.source_cleanup import (
+        normalize_line_endings,
+        strip_html_comments,
+        strip_noinclude_blocks,
+        strip_section_tags,
+        strip_unclosed_templates,
+        strip_word_spacing_templates,
+    )
 
     # Source-text corrections (transcription typos in wikisource) are
     # applied once during prepare_wikitext, mutating `wikitext` so all
@@ -270,24 +278,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # audit at tools/_scratch/audit_image_routing.py.
     raw_wikitext = promote_inline_glyphs(raw_wikitext)
 
-    # Rewrite folded wikitable rows — single physical rows holding N
-    # logical rows via <br>-stacking — as N real rows, so downstream
-    # table processing sees a well-formed N-row table instead of one
-    # giant row with concatenated values.
-    # Strip purely-visual `{{word-spacing|<size>|content}}` wrappers
-    # before structural processing.  This is a CSS-only styling
-    # template (FISHERIES vol 10 p448 wraps currency columns with it
-    # for column alignment).  Leaving it in place causes the
-    # fold-unfold pass below to split its template-internal `<br>`
-    # along with the cell's real row separators, chopping the
-    # wrapper open and leaving `{{word-spacing|3px|6 7` fragments in
-    # rendered cells.  Stripping early keeps unfold structurally
-    # correct AND avoids per-cell template handling downstream.
-    raw_wikitext = re.sub(
-        r"\{\{word-spacing\|[^{}|]*\|([^{}]*)\}\}",
-        r"\1", raw_wikitext, flags=re.IGNORECASE,
-    )
-
+    raw_wikitext = strip_word_spacing_templates(raw_wikitext)
     raw_wikitext = unfold_folded_rows(raw_wikitext)
 
     # Convert STANDALONE {{Css image crop|Image=EB1911 - Volume N.djvu|
@@ -396,9 +387,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         return _css_crop_replace(m)
     raw_wikitext = _crop_pat.sub(_maybe_replace, raw_wikitext)
 
-    # Strip section tags — boundaries already determined
-    text = re.sub(r'<section\s+(?:begin|end)="[^"]*"\s*/?>', "",
-                  raw_wikitext, flags=re.IGNORECASE)
+    text = strip_section_tags(raw_wikitext)
 
     # Strip <noinclude> blocks (page headers, quality tags), but preserve
     # any `{|` opener or `|}` closer lines inside them — EB1911 pages
@@ -423,86 +412,9 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # prose into a fake table.
     text = _strip_page_layout_noinclude_wrappers(text)
 
-    def _strip_noinclude(m: re.Match) -> str:
-        block = m.group(0)
-        kept: list[str] = []
-        for om in re.finditer(r"(?:^|\n)\s*\{\|[^\n<]*", block):
-            kept.append(om.group(0).strip())
-        if re.search(r"(?:^|\n)\s*\|\}(?!\})", block):
-            kept.append("|}")
-        return ("\n" + "\n".join(kept) + "\n") if kept else ""
-    text = re.sub(r"<noinclude>.*?</noinclude>", _strip_noinclude, text,
-                  flags=re.DOTALL | re.IGNORECASE)
+    text = strip_noinclude_blocks(text)
 
-    # Unclosed `{{nowrap|…` (malformed wikitext in sources like EGYPT
-    # vol 9 p76) confuses cell parsing because its inner `|` leaks as
-    # a cell separator. Scan for each opener; if it has no matching
-    # `}}`, strip just the opener. Balanced cases (including nested
-    # templates) are left alone for _unwrap_balanced to handle.
-    #
-    # Generalized to also handle `ppoem`, `right`, `float right`,
-    # `fine block`, `anchor` — quality-report sweep 2026-05-08
-    # surfaced unclosed openers of these in HOOD, TANCRED, THEODORE
-    # OF MOPSUESTIA, SARAVIA, ST LOUIS articles.  Adding each to the
-    # opener list here strips the orphan markup so it doesn't render
-    # as raw wikitext in prose.
-    _UNCLOSED_TEMPLATES = (
-        "nowrap", "ppoem", "right", "float right", "fine block",
-        "anchor",
-    )
-
-    def _strip_unclosed_templates(text):
-        out = []
-        i = 0
-        low = text.lower()
-        n = len(text)
-        while i < n:
-            # Try each opener.
-            matched_opener = None
-            for name in _UNCLOSED_TEMPLATES:
-                opener_with_pipe = "{{" + name + "|"
-                opener_with_space = "{{" + name + " "
-                if low[i:i + len(opener_with_pipe)] == opener_with_pipe:
-                    matched_opener = opener_with_pipe
-                    break
-                # Allow whitespace between name and pipe ("{{right |..."),
-                # but only if a pipe follows shortly.
-                if low[i:i + len(opener_with_space)] == opener_with_space:
-                    pipe_idx = text.find("|", i + len(opener_with_space))
-                    if 0 <= pipe_idx <= i + len(opener_with_space) + 20:
-                        matched_opener = text[i:pipe_idx]
-                        break
-            if matched_opener is None:
-                out.append(text[i])
-                i += 1
-                continue
-            # Find matching }} by depth counting.
-            depth = 1
-            j = i + 2
-            matched_close = False
-            while j < n - 1:
-                if text[j:j+2] == "{{":
-                    depth += 1
-                    j += 2
-                elif text[j:j+2] == "}}":
-                    depth -= 1
-                    j += 2
-                    if depth == 0:
-                        matched_close = True
-                        break
-                else:
-                    j += 1
-            if matched_close:
-                out.append(text[i:j])
-                i = j
-            else:
-                pipe_idx = text.find("|", i)
-                if pipe_idx >= 0:
-                    i = pipe_idx + 1
-                else:
-                    i += 2
-        return "".join(out)
-    text = _strip_unclosed_templates(text)
+    text = strip_unclosed_templates(text)
 
     # Normalize `EB1911 - Volume N.djvu/PPP` (and the typo variant
     # `…djvu-PPP.png`) to local filenames `djvu_volNN_pagePPPP.jpg`
@@ -540,27 +452,10 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         "", text, flags=re.IGNORECASE | re.DOTALL,
     )
 
-    # Normalize
     text = normalize_unicode(text)
     text = replace_print_artifacts(text)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-    # Strip HTML comments.  Preserve any newline(s) adjacent to the
-    # comment so a line-end comment doesn't glue the next line into the
-    # current one — TURKEY's railway table had ``</ref><!-- ... -->\n
-    # |align="center"|815``, and collapsing the trailing ``\n`` to a
-    # space joined the next cell's ``|align="..."|`` into the previous
-    # cell's content, leaking the attribute prefix into body text.  When
-    # both sides have newlines we keep the longer run, so a comment
-    # bracketing a real paragraph break (``\n\n<!-- ... -->\n\n``) still
-    # leaves the paragraph break intact; an inline comment with no
-    # adjacent newline collapses to a single space as before.
-    def _sub_comment(m: re.Match) -> str:
-        pre, post = m.group(1) or "", m.group(2) or ""
-        if not pre and not post:
-            return " "
-        return pre if len(pre) >= len(post) else post
-    text = re.sub(r"(\n*)<!--.*?-->(\n*)", _sub_comment, text, flags=re.DOTALL)
+    text = normalize_line_endings(text)
+    text = strip_html_comments(text)
 
     # Unwrap poem wrappers: {{block center|<poem>...</poem>}} → <poem>...</poem>
     text = re.sub(
