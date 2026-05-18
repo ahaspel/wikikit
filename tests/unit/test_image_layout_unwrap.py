@@ -36,7 +36,25 @@ import re
 
 import pytest
 
-from britannica.pipeline.stages.transform_articles import _transform_text_v2
+from britannica.pipeline.stages.prepare_wikitext import _convert_quote_runs
+from britannica.pipeline.stages.transform_articles import (
+    _transform_text_v2 as _raw_transform,
+)
+
+
+def _transform_text_v2(src: str, volume: int, page_number: int) -> str:
+    """Mirror the production pipeline.
+
+    In production, `_transform_text_v2` is called on wikitext that has
+    already passed through `prepare_wikitext` — meaning
+    `_convert_quote_runs` has converted `'''X'''` / `''Y''` to
+    `«B»X«/B»` / `«I»Y«/I»` markers upstream.  Tests that pass raw
+    wikitext directly to the unwrapped `_transform_text_v2` skip that
+    step, and legend / multi-col extraction silently fails to
+    recognise the still-`''`-wrapped italic labels.  This wrapper
+    re-establishes the production call shape.
+    """
+    return _raw_transform(_convert_quote_runs(src), volume, page_number)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────

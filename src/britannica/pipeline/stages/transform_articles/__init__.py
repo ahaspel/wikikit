@@ -251,12 +251,24 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     3. Done.
     """
     from britannica.pipeline.stages.elements import process_elements
+    from britannica.pipeline.stages.elements._inline_glyphs import (
+        promote_inline_glyphs,
+    )
     from britannica.pipeline.stages.fold_unfold import unfold_folded_rows
 
     # Source-text corrections (transcription typos in wikisource) are
     # applied once during prepare_wikitext, mutating `wikitext` so all
     # downstream stages — including this one — operate on already-
     # corrected text. No repeat application needed here.
+
+    # Promote in-prose `[[File:X|Npx]]` refs to `{{IMG-INLINE:X|Npx}}`
+    # so the viewer renders them inline at source-specified size.  Runs
+    # before any other preprocessing so line-start context matches the
+    # raw source (post-corrections).  Only the 337 INLINE_GLYPH bucket
+    # is rewritten; CHEM/TABLE_FIGURE/BLOCK_LAYOUT/CAPTIONED/STRANDED
+    # refs are left for the existing pipeline.  See the per-bucket
+    # audit at tools/_scratch/audit_image_routing.py.
+    raw_wikitext = promote_inline_glyphs(raw_wikitext)
 
     # Rewrite folded wikitable rows — single physical rows holding N
     # logical rows via <br>-stacking — as N real rows, so downstream
