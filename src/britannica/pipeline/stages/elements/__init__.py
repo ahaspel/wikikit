@@ -46,6 +46,7 @@ from britannica.pipeline.stages.elements._leaf import (
 )
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry,
+    TABLE_LABELS,
 )
 from britannica.pipeline.stages.elements._math_layout import (
     _MATH_CELL_RE,
@@ -84,6 +85,9 @@ from britannica.pipeline.stages.elements._layout import (
     _parse_multicol_legend_row,
     _parse_prose_legend_rows,
     _process_captioned_figure,
+    _process_captioned_figure_inline,
+    _process_legended_figure,
+    _process_legended_figure_child,
     _simple_table_text,
     _strip_cell_attributes,
     _try_image_layout_subclass,
@@ -181,6 +185,28 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # nested wikitables, POEM cells).
     "CAPTIONED_FIGURE": lambda raw, inner, tt, ctx, reg:
         _process_captioned_figure(raw, inner, tt, reg),
+    # CAPTIONED_FIGURE_INLINE — image and caption share one cell,
+    # `<br>`-separated, often wrapped in `{{center|…}}` or a
+    # `<span style="…">…</span>` styling element.  Producer strips
+    # the image placeholder + wrapper templates from the cell, the
+    # remaining text is the caption.
+    "CAPTIONED_FIGURE_INLINE": lambda raw, inner, tt, ctx, reg:
+        _process_captioned_figure_inline(raw, inner, tt, reg),
+    # LEGENDED_FIGURE — single-image figure carrying legend material
+    # (multicol `|LABEL.||text|…`, prose `LABEL. text` cells, POEM
+    # placeholder, or nested wikitable).  Producer finds + extracts
+    # the legend first, then runs the same one-pass extract on the
+    # caption/attribution remainder, then assembles.
+    "LEGENDED_FIGURE": lambda raw, inner, tt, ctx, reg:
+        _process_legended_figure(raw, inner, tt, reg),
+    # LEGENDED_FIGURE_CHILD — single-image figure whose legend lives
+    # in a POEM placeholder or a nested wikitable child.  Producer
+    # finds the child, calls the appropriate raw-parser
+    # (`_emit_legend_chunk` for POEM, `_extract_poem_legend` for
+    # nested TABLE), excises the placeholder, and runs one-pass
+    # extraction on the remainder.
+    "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
+        _process_legended_figure_child(raw, inner, tt, reg),
     # CAPTIONED_FIGURE_GRID — multi-image side-by-side figure layout
     # (≥2 IMAGE children in the first row, separated by `||`).
     # Initially shared with LAYOUT_WRAPPER's producer; a focused
@@ -260,7 +286,9 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
 
 
 _FIGURE_LABELS: frozenset[str] = frozenset({
-    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_GRID",
+    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
+    "CAPTIONED_FIGURE_GRID",
+    "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
 })
 
 
@@ -359,6 +387,181 @@ def _is_captioned_figure_grid_pred(
     return True
 
 
+# Legend-material detectors — used by `_is_legended_figure_pred`.
+#
+# A figure carries legend material when one of:
+#   (a) multicol shape — rows shaped like `|LABEL.||text||LABEL.||text…`
+#       where the labels are short alphanumerics; ABBEY Fig 5 is the
+#       canonical case (5 rows × 3 (label,text) pairs).
+#   (b) prose shape — a cell holding ≥3 line-start `LABEL. text` entries,
+#       optionally on one collapsed line; HYDROMEDUSAE Fig 1 cell:
+#       `a. Hydranth; b. Hydrocaulus; c. Hydrorhiza; …`.
+#   (c) a POEM child placeholder (legend rendered as a poem block).
+#   (d) a nested wikitable child (legend in its own sub-table).
+#
+# Predicate-time detection is coarse — the producer's `find_legend`
+# does the precise parse.  False-positives downgrade gracefully (the
+# producer just emits no legend block).
+
+_LEGEND_MULTICOL_ROW_RE = re.compile(
+    r"\n\s*\|"
+    r"(?:\s*(?:&emsp;|&nbsp;|&ensp;|&thinsp;))*\s*"
+    r"(?:«I»[A-Za-z][A-Za-z0-9]{0,5}«/I»|[A-Za-z][A-Za-z0-9]{0,5})"
+    r"\s*[.,]"
+    r"(?:\s+[A-Za-z][^|\n]*)?"
+    r"\s*\|\|"
+)
+
+_LEGEND_PROSE_ENTRY_RE = re.compile(
+    r"(?:^|\n|\|\s*|;\s*)"
+    r"(?:«I»[A-Za-z][A-Za-z0-9]{0,5}«/I»|[A-Za-z][A-Za-z0-9]{0,5})"
+    r"\s*[.,]\s+[A-Z‘“a-z]"
+)
+
+_LEGEND_NON_LABELS = frozenset({"Fig", "Plate", "fig", "plate"})
+
+
+def _has_legend_material(inner: str,
+                          registry: "ElementRegistry | None",
+                          image_phs: list[str]) -> bool:
+    """Predicate-time coarse detection of cell-based legend material
+    (multicol `||` rows or prose-multi-`LABEL.text` entries).
+    Child-element legends (POEM / nested-TABLE) are detected
+    separately via `_figure_has_child_legend`."""
+    if len(_LEGEND_MULTICOL_ROW_RE.findall(inner)) >= 2:
+        return True
+    prose_hits = 0
+    for m in _LEGEND_PROSE_ENTRY_RE.finditer(inner):
+        label_m = re.search(r"([A-Za-z]+|\d+)", m.group(0))
+        if label_m and label_m.group(1) in _LEGEND_NON_LABELS:
+            continue
+        prose_hits += 1
+        if prose_hits >= 3:
+            return True
+    return False
+
+
+def _legended_figure_base_gates(
+    raw: str, inner: str, registry: "ElementRegistry | None",
+) -> list[str] | None:
+    """Shared base gates for both `LEGENDED_FIGURE` and
+    `LEGENDED_FIGURE_CHILD`.  Returns the image placeholder list on
+    success or None if any gate fails."""
+    if registry is None:
+        return None
+    image_phs = [ph for ph, lbl in registry.labels.items()
+                 if lbl == "IMAGE"]
+    if len(image_phs) != 1:
+        return None
+    rows = re.split(r"\n\|-[^\n]*\n", inner)
+    if not rows or image_phs[0] not in rows[0]:
+        return None
+    if "||" in rows[0].strip():
+        return None
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return None
+    return image_phs
+
+
+def _figure_has_child_legend(
+    registry: ElementRegistry, image_phs: list[str],
+) -> bool:
+    """True iff the figure carries a POEM or nested-wikitable child —
+    the signal that the legend lives in a child element, not in
+    regular cells."""
+    for ph, lbl in registry.labels.items():
+        if ph in image_phs:
+            continue
+        if lbl == "POEM" or lbl in TABLE_LABELS:
+            return True
+    return False
+
+
+def _is_legended_figure_child_pred(
+    raw: str, inner: str, registry: ElementRegistry | None,
+) -> bool:
+    """Single-image figure whose legend lives in a POEM placeholder
+    or a nested-wikitable child.  Producer finds the child, calls
+    the appropriate raw-parser, excises the placeholder, then runs
+    one-pass extraction on the remainder.
+
+    Runs BEFORE `LEGENDED_FIGURE` so figures with child-element
+    legends use the child-aware producer."""
+    image_phs = _legended_figure_base_gates(raw, inner, registry)
+    if image_phs is None:
+        return False
+    return _figure_has_child_legend(registry, image_phs)
+
+
+def _is_legended_figure_pred(raw: str, inner: str,
+                               registry: ElementRegistry | None) -> bool:
+    """Single-image figure with cell-based legend material —
+    multicol `||` rows or prose-multi-`LABEL.text` cells.  Splits
+    off from CAPTIONED_FIGURE so a dedicated producer can find the
+    legend material before running one-pass extraction on the
+    remainder.
+
+    Runs AFTER `LEGENDED_FIGURE_CHILD` so figures with child-element
+    legends route there first."""
+    image_phs = _legended_figure_base_gates(raw, inner, registry)
+    if image_phs is None:
+        return False
+    if _figure_has_child_legend(registry, image_phs):
+        return False
+    return _has_legend_material(inner, registry, image_phs)
+
+
+_INLINE_CAPTION_MARKER_RE = re.compile(
+    r"\{\{\s*(?:sc|csc|SC)\s*\|\s*(?:Fig|Plate)s?\.?"
+    r"|\b(?:Fig|Plate)s?\.?\s*\d",
+    re.IGNORECASE,
+)
+
+
+def _is_captioned_figure_inline_pred(
+    raw: str, inner: str, registry: ElementRegistry | None,
+) -> bool:
+    """Single-image figure where image AND caption share the image's
+    row (typically the same cell), separated by ``<br>`` and often
+    wrapped in ``{{center|…}}`` or ``<span style="…">…</span>``.
+
+    Canonical cases: ORDNANCE Fig 54, STEAM_ENGINE Fig 10.  These
+    differ from CAPTIONED_FIGURE in that the caption sits in the
+    image's own row rather than appearing in a subsequent row.
+
+    Signal: the image's row contains a Fig./Plate. marker (either
+    ``{{sc|Fig`` wikitext or plain ``Fig. N``).
+    """
+    if registry is None:
+        return False
+    image_phs = [ph for ph, lbl in registry.labels.items()
+                 if lbl == "IMAGE"]
+    if len(image_phs) != 1:
+        return False
+    image_ph = image_phs[0]
+    for ph, lbl in registry.labels.items():
+        if ph == image_ph:
+            continue
+        if lbl == "POEM" or lbl in TABLE_LABELS:
+            return False
+    rows = re.split(r"\n\|-[^\n]*\n", inner)
+    if not rows or image_ph not in rows[0]:
+        return False
+    if "||" in rows[0].strip():
+        return False
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return False
+    return bool(_INLINE_CAPTION_MARKER_RE.search(rows[0]))
+
+
 def _is_captioned_figure_pred(raw: str, inner: str,
                                 registry: ElementRegistry | None) -> bool:
     """Single-image figure layout: exactly one IMAGE child sitting
@@ -382,6 +585,16 @@ def _is_captioned_figure_pred(raw: str, inner: str,
                  if lbl == "IMAGE"]
     if len(image_phs) != 1:
         return False
+    # Reject shapes that don't lend themselves to the one-pass
+    # cell scanner the producer uses: a POEM child means a
+    # structurally-separate legend that needs find_legend first;
+    # a nested wikitable child means MULTICOL/NESTED legend or
+    # composite layout.  Both get their own labels/producers.
+    for ph, lbl in registry.labels.items():
+        if ph in image_phs:
+            continue
+        if lbl == "POEM" or lbl in TABLE_LABELS:
+            return False
     # Image must sit in row 0 — figures lead with the image; data
     # tables with an embedded image rarely do.
     rows = re.split(r"\n\|-[^\n]*\n", inner)
@@ -486,6 +699,9 @@ _TABLE_PREDICATES: list[tuple[Callable[
     (_is_compound_table_pred,          "COMPOUND_TABLE"),
     (_is_chemistry_layout_pred,        "CHEMISTRY_LAYOUT"),
     (_is_captioned_figure_grid_pred,   "CAPTIONED_FIGURE_GRID"),
+    (_is_legended_figure_child_pred,   "LEGENDED_FIGURE_CHILD"),
+    (_is_legended_figure_pred,         "LEGENDED_FIGURE"),
+    (_is_captioned_figure_inline_pred, "CAPTIONED_FIGURE_INLINE"),
     (_is_captioned_figure_pred,        "CAPTIONED_FIGURE"),
     (_is_figure_group_pred,            "FIGURE_GROUP"),
     (_is_layout_wrapper_pred,          "LAYOUT_WRAPPER"),

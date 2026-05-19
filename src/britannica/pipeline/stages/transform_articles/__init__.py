@@ -467,10 +467,13 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         r"\1", text, flags=re.DOTALL | re.IGNORECASE,
     )
 
-    # Unwrap `{{center|[[File:…]]<br>caption}}` so the image and its
-    # caption become a normal image+caption sequence the IMAGE
-    # extractor already knows how to parse (WEAVING Fig. 1 & 2).
-    # Caption may contain one level of nested `{{…}}` templates.
+    # Unwrap `{{center|[[File:…]]<br>caption}}` to `[[File:…]]\ncaption`
+    # so bare (non-wikitable-wrapped) instances flow through the IMAGE
+    # extractor.  Carry-over from the catch-all era — should eventually
+    # migrate to a focused producer/extractor for the bare-`{{center|`
+    # shape so the in-wikitable case (handled by CAPTIONED_FIGURE_INLINE)
+    # and bare case both live in producers.  See memory:
+    # preprocessing-is-producer-work.
     text = re.sub(
         r"\{\{center\|(\[\[(?:File|Image):[^\]]+\]\])\s*<br\s*/?>\s*"
         r"((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",

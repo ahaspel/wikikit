@@ -165,7 +165,7 @@ In the ideal engine imagined by Carnot the action is of this simple character. T
 
 38. «I»Carnot’s Cycle with Steam for Working Substance«/I».—We are now in a position to study the action of a heat engine employing steam as the working substance. To simplify the first consideration as far as possible, let it be supposed that we have a long cylinder composed of non-conducting material except at the base, and fitted with a non-conducting piston; also a source of heat A at some temperature τ₁; a receiver of heat, or, as we may now call it, a condenser C, at a lower temperature τ₂; and a non-conducting cover B. Then We can perform as follows the ideal reversible cycle of operations first described by Carnot, which gives the highest possible efficiency attainable in any heat engine. To fix the ideas, suppose that there is 1 lb of water in the cylinder to begin with, at the temperature τ₁:—
 
-{{IMG:EB1911 Steam Engine Fig. 9.png|Fig. 9.—Carnot’s Cycle with water and steam for working substance. ( .)}}
+{{IMG:EB1911 Steam Engine Fig. 9.png|Fig. 9.—Carnot’s Cycle with water and steam for working substance.}}
 
 1. Apply A, and allow the piston to rise. The water will take in heat and be converted into steam, expanding isothermally at constant pressure 𝑝₁. This part of the operation is shown by the line 𝑎𝑏 in fig. 9.
 
