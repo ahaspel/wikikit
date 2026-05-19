@@ -22,6 +22,56 @@ _FOOTER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Sister pattern: {{right|([[Author:Full Name|Initials]]; [[Author:…|…]])}}
+# — author signature shape used by ~152 articles where the wiki-link
+# `[[Author:NAME|INITIALS]]` carries the contributor identity directly.
+# Multiple authors are `;`-separated inside the same template.
+# Canonical case: THUCYDIDES (vol 26).  Audit at
+# tools/_scratch/signature_shapes_audit.md.
+_RIGHT_AUTHOR_PATTERN = re.compile(
+    r"\{\{\s*right\s*\|\s*"
+    r"((?:[^{}]|\{\{[^{}]*\}\})*?"
+    r"\[\[Author:[^\]]+\]\]"
+    r"(?:[^{}]|\{\{[^{}]*\}\})*?)"
+    r"\}\}",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# Inside the `{{right|...}}` body, each contributor is one wiki-link
+# `[[Author:Full Name|Initials]]`.  The full-name comes from the
+# wiki-link target; the initials from the display text.
+_AUTHOR_LINK_RE = re.compile(
+    r"\[\[Author:([^|\]]+)\|([^\]]+)\]\]",
+    re.IGNORECASE,
+)
+
+
+def _parse_right_author_contributors(
+    template_content: str,
+) -> list[dict[str, str]]:
+    """Parse `[[Author:NAME|INITIALS]]` wiki-links from a
+    ``{{right|…}}`` template body.
+
+    Each link encodes (full_name, initials) directly.  The initials
+    may be wrapped in small-caps templates (``{{small-caps|W. MacD.}}``,
+    ``{{sc|…}}``); unwrap before delegating to `_clean_footer_initials`
+    which does the rest of the canonicalization.
+    """
+    results: list[dict[str, str]] = []
+    for m in _AUTHOR_LINK_RE.finditer(template_content):
+        name = m.group(1).strip()
+        init_raw = m.group(2).strip()
+        # Unwrap small-caps / styling templates around the initials.
+        init = re.sub(
+            r"\{\{\s*(?:small-caps|sc|csc|small)\s*\|([^{}]*)\}\}",
+            r"\1", init_raw, flags=re.IGNORECASE)
+        for clean in _clean_footer_initials(init):
+            results.append({
+                "full_name": name,
+                "initials": clean,
+            })
+    return results
+
 
 def _clean_footer_initials(initials: str) -> list[str]:
     """Clean and split footer initials string.
@@ -269,25 +319,16 @@ def extract_contributors_for_volume(volume: int) -> int:
             if not page_segs:
                 continue
 
-            for match in _FOOTER_PATTERN.finditer(raw):
-                # Attribute this footer to the article whose segment
-                # contains it. Multiple articles can share a page
-                # (MALONIC ACID ends, MALORY ends, MALOT ends on ws513);
-                # each footer belongs to the article it sits within.
-                article_id = _article_for_footer(
-                    match, raw, page_segs)
+            def _attribute(match, contributors):
+                nonlocal created
+                article_id = _article_for_footer(match, raw, page_segs)
                 if article_id is None:
-                    continue
-
-                contributors = _parse_contributors(match.group(1))
-
+                    return
                 for i, contrib in enumerate(contributors):
                     contributor = _find_contributor(
-                        session, contrib["initials"]
-                    )
+                        session, contrib["initials"])
                     if not contributor:
                         continue
-
                     existing = (
                         session.query(ArticleContributor)
                         .filter(
@@ -298,7 +339,6 @@ def extract_contributors_for_volume(volume: int) -> int:
                     )
                     if existing:
                         continue
-
                     session.add(
                         ArticleContributor(
                             article_id=article_id,
@@ -307,6 +347,20 @@ def extract_contributors_for_volume(volume: int) -> int:
                         )
                     )
                     created += 1
+
+            for match in _FOOTER_PATTERN.finditer(raw):
+                # Attribute this footer to the article whose segment
+                # contains it. Multiple articles can share a page
+                # (MALONIC ACID ends, MALORY ends, MALOT ends on ws513);
+                # each footer belongs to the article it sits within.
+                _attribute(match, _parse_contributors(match.group(1)))
+
+            # Sister signal: `{{right|([[Author:Name|Init]]; …)}}` shape
+            # (~152 articles).  Same article-attribution logic.
+            for match in _RIGHT_AUTHOR_PATTERN.finditer(raw):
+                _attribute(
+                    match,
+                    _parse_right_author_contributors(match.group(1)))
 
         session.commit()
         return created

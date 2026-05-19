@@ -88,6 +88,7 @@ from britannica.pipeline.stages.elements._layout import (
     _process_captioned_figure_inline,
     _process_legended_figure,
     _process_legended_figure_child,
+    _process_simple_plate,
     _simple_table_text,
     _strip_cell_attributes,
     _try_image_layout_subclass,
@@ -213,6 +214,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # grid-disentanglement producer is the natural follow-up.
     "CAPTIONED_FIGURE_GRID": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
+    # SIMPLE_PLATE — multi-image plate layouts that don't fit the
+    # simple side-by-side grid shape.  Producer partitions cells
+    # per image (vertical-stack OR parallel-row column-slice), then
+    # routes each image's cells through the shared figure pipeline.
+    "SIMPLE_PLATE": lambda raw, inner, tt, ctx, reg:
+        _process_simple_plate(raw, inner, tt, reg),
     # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
     # wikitables (HYDROMEDUSAE-style composite).  No direct images
     # at this level.  Initially shared with LAYOUT_WRAPPER.
@@ -287,7 +294,7 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
 
 _FIGURE_LABELS: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
-    "CAPTIONED_FIGURE_GRID",
+    "CAPTIONED_FIGURE_GRID", "SIMPLE_PLATE",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
 })
 
@@ -378,6 +385,40 @@ def _is_captioned_figure_grid_pred(
     if len(image_cells) < 2:
         return False
     # No data-table header signal.
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return False
+    return True
+
+
+def _is_simple_plate_pred(
+    raw: str, inner: str, registry: ElementRegistry | None,
+) -> bool:
+    """Multi-image plate layout (≥2 direct IMAGE children) that
+    doesn't fit `CAPTIONED_FIGURE_GRID` (simple parallel row of
+    images).
+
+    Runs AFTER CAPTIONED_FIGURE_GRID — anything matching the simple
+    grid shape has already been claimed.  What's left here is
+    plate-style: images stacked vertically with caption rows
+    interleaved, or arranged across multiple rows with column-major
+    captions.  Canonical cases: AMPHITHEATRE PLATE I/II, AQUEDUCT
+    PLATE I, BIRD, SHIP PLATE V-XIV, DOVE PLATE I/II.
+
+    Predicate is intentionally broad — the producer partitions cells
+    per image and hands each image's slice to the shared figure
+    pipeline (`_extract_figure_components` + `_assemble_figure_parts`).
+    """
+    if registry is None:
+        return False
+    image_phs = [ph for ph, lbl in registry.labels.items()
+                 if lbl == "IMAGE"]
+    if len(image_phs) < 2:
+        return False
+    # Skip data tables.
     header = raw.split("\n", 1)[0]
     if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
             or re.search(r'rules\s*=', header, re.IGNORECASE)
@@ -699,6 +740,7 @@ _TABLE_PREDICATES: list[tuple[Callable[
     (_is_compound_table_pred,          "COMPOUND_TABLE"),
     (_is_chemistry_layout_pred,        "CHEMISTRY_LAYOUT"),
     (_is_captioned_figure_grid_pred,   "CAPTIONED_FIGURE_GRID"),
+    (_is_simple_plate_pred,            "SIMPLE_PLATE"),
     (_is_legended_figure_child_pred,   "LEGENDED_FIGURE_CHILD"),
     (_is_legended_figure_pred,         "LEGENDED_FIGURE"),
     (_is_captioned_figure_inline_pred, "CAPTIONED_FIGURE_INLINE"),
