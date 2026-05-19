@@ -120,9 +120,10 @@ class TestNestedClassification:
         ce = classify(SHAPE_BRACE_PIPE, raw)
         assert ce.label == "MATH_LAYOUT_EQUATIONS"
 
-    def test_layout_wrapper_image_with_figure_caption(self):
-        # Wikitable with an image and a "Fig. N." caption — the
-        # caption pattern fires _is_layout_wrapper.
+    def test_captioned_figure_image_with_caption_row(self):
+        # Single-image wikitable, image alone in its row, caption
+        # row below.  Fires _is_captioned_figure_pred which runs
+        # ahead of _is_layout_wrapper_pred.
         raw = (
             "{|\n"
             "|[[File:Foo.jpg]]\n"
@@ -131,7 +132,7 @@ class TestNestedClassification:
             "|}"
         )
         ce = classify(SHAPE_BRACE_PIPE, raw)
-        assert ce.label == "LAYOUT_WRAPPER"
+        assert ce.label == "CAPTIONED_FIGURE"
 
 
 class TestClassifyArticle:

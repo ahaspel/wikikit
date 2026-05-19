@@ -132,10 +132,11 @@ def _derive_double_brace_label(raw: str) -> str:
         raise ValueError(
             f"DOUBLE_BRACE raw doesn't open with a template: {raw[:40]!r}")
     name = m.group(1).lower()
-    if name == "img":
-        # "{{img float|…}}" — the template name token before the space
-        # is "img"; the full name "img float" is split by the
-        # whitespace stop in the regex.
+    # The IMAGE_FLOAT walker regex matches `{{(?:img float|figure|FI)\|…}}`.
+    # `img float` tokenizes here as "img" (whitespace stop in the
+    # template-name pattern).  Figure-equivalent templates with a
+    # full-name token go through the same producer.
+    if name in {"img", "figure", "fi"}:
         return "IMAGE_FLOAT"
     if name == "hieroglyph":
         return "HIEROGLYPH"
@@ -244,7 +245,13 @@ def classify(
     inner_registry.
     """
     if shape in LEAF_SHAPES:
-        inner_text = ""
+        # Leaf shapes own their entire payload — the producer reads
+        # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
+        # and does whatever internal parsing it needs.  We still call
+        # `strip_outer` so `inner_text` reflects each leaf's own
+        # contract: CHART2 / REF_SELF return "", OUTLINE returns the
+        # indented-line ladder unchanged.
+        inner_text = strip_outer(shape, raw)
         inner_registry: dict[str, ClassifiedElement] = {}
     else:
         peeled = strip_outer(shape, raw)

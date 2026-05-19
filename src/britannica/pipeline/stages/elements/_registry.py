@@ -79,10 +79,17 @@ class ElementRegistry:
 # wikitable source-type elements.  Siblings that need to ask "is this
 # child any kind of wikitable?" check label membership against this
 # set — the shape itself is the walker's private business.
+#
+# Must contain EVERY label emitted by `_TABLE_PREDICATES`.  When you
+# add a new wikitable sub-classification (CAPTIONED_FIGURE_GRID,
+# LEGEND, etc.), add it here too — otherwise the legacy-registry
+# bridge maps it to its own name rather than "TABLE", and parent
+# wikitables miss it when checking for nested-table children.
 TABLE_LABELS: frozenset[str] = frozenset({
     "LAYOUT_WRAPPER", "DATA_TABLE", "COMPLEX_HTML",
     "MATH_LAYOUT_TOKENS", "MATH_LAYOUT_EQUATIONS",
     "CHEMISTRY_LAYOUT", "COMPOUND_TABLE", "DJVU_CROP",
+    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_GRID", "FIGURE_GROUP",
 })
 
 # Block-level child labels — anything that renders as its own

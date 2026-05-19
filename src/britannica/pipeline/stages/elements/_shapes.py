@@ -42,13 +42,22 @@ SHAPES: frozenset[str] = frozenset({
 })
 
 
-# Shapes whose inner content is not walked.  HTML_SELF_CLOSING has no
-# inner.  CHART2 is a non-wikitext template-pair region — its bytes
-# happen to include `{{…}}` templates but they're the chart's own
-# grammar, not extractable wikitext templates.
+# Shapes whose inner content is not walked — the producer owns the
+# entire payload between (or under) the markers and does whatever
+# internal parsing it needs.
+#
+# * HTML_SELF_CLOSING — no inner content.
+# * CHART2 — non-wikitext template-pair region; chart-grammar `{{…}}`
+#   tokens inside aren't extractable wikitext.
+# * OUTLINE — line-pattern (indented `;head:desc` ladder); the producer
+#   walks it line-by-line itself.  Balanced shapes inside an outline
+#   body have already been placeholdered by the linear scanner before
+#   the OUTLINE phase runs, so there's nothing for the classifier to
+#   recurse into anyway.
 LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_CHART2,
+    SHAPE_OUTLINE,
 })
 
 

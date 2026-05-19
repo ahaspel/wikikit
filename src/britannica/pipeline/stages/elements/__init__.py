@@ -83,6 +83,7 @@ from britannica.pipeline.stages.elements._layout import (
     _parse_inline_legend_cell,
     _parse_multicol_legend_row,
     _parse_prose_legend_rows,
+    _process_captioned_figure,
     _simple_table_text,
     _strip_cell_attributes,
     _try_image_layout_subclass,
@@ -173,6 +174,24 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_equation_layout(inner, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
+    # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
+    # in row 0, alone in cell, no data-table header signal).  Has
+    # its own focused producer; falls back to `_unwrap_layout_table`
+    # for shapes it doesn't yet handle (baked captions in image raw,
+    # nested wikitables, POEM cells).
+    "CAPTIONED_FIGURE": lambda raw, inner, tt, ctx, reg:
+        _process_captioned_figure(raw, inner, tt, reg),
+    # CAPTIONED_FIGURE_GRID — multi-image side-by-side figure layout
+    # (≥2 IMAGE children in the first row, separated by `||`).
+    # Initially shared with LAYOUT_WRAPPER's producer; a focused
+    # grid-disentanglement producer is the natural follow-up.
+    "CAPTIONED_FIGURE_GRID": lambda raw, inner, tt, ctx, reg:
+        _unwrap_layout_table(inner, tt, reg),
+    # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
+    # wikitables (HYDROMEDUSAE-style composite).  No direct images
+    # at this level.  Initially shared with LAYOUT_WRAPPER.
+    "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
+        _unwrap_layout_table(inner, tt, reg),
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
         _process_complex_table(inner, tt),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
@@ -238,6 +257,151 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
     """At least one descendant IMAGE element carries a chemistry
     bracket file ref (Langle/Rangle variant)."""
     return _has_chem_brackets(registry)
+
+
+_FIGURE_LABELS: frozenset[str] = frozenset({
+    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_GRID",
+})
+
+
+def _is_figure_group_pred(
+    raw: str, inner: str,
+    registry: ElementRegistry | None,
+) -> bool:
+    """Outer wikitable wrapping ≥2 nested figure wikitables, with NO
+    direct IMAGE child at this level.  The figures live one level
+    down — each nested wikitable already classified as
+    `CAPTIONED_FIGURE` / `CAPTIONED_FIGURE_GRID` by the bottom-up
+    pass — and this wrapper is just a layout shell to display them
+    together (HYDROMEDUSAE side-by-side Statocyst figures, etc.).
+
+    Producer (initially shared with LAYOUT_WRAPPER) handles the
+    composite layout by routing each nested figure through its own
+    producer and concatenating.
+
+    Constraint: nested children must be FIGURE-labeled (not arbitrary
+    wikitables).  A wrapper around two data tables is something
+    different — leave it at LAYOUT_WRAPPER or DATA_TABLE.
+    """
+    if registry is None:
+        return False
+    # No direct IMAGE child — those go to CAPTIONED_FIGURE /
+    # CAPTIONED_FIGURE_GRID instead.
+    if any(lbl == "IMAGE" for lbl in registry.labels.values()):
+        return False
+    # ≥2 nested figure children.
+    figure_children = [ph for ph, lbl in registry.labels.items()
+                       if lbl in _FIGURE_LABELS]
+    if len(figure_children) < 2:
+        return False
+    # No data-table header signal.
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return False
+    return True
+
+
+def _is_captioned_figure_grid_pred(
+    raw: str, inner: str,
+    registry: ElementRegistry | None,
+) -> bool:
+    """Multi-image figure grid: ≥2 IMAGE children, all sitting in
+    the first row separated by `\\|\\|` column dividers (parallel-
+    column layout, captions and legends in matching columns below).
+
+    The classic side-by-side figures case (BEE Figs 18/19, LARVAL
+    FORMS 5/6, FUNGI 12/13).  Producer disentangles by walking down
+    each column to pair an image with its column-stacked
+    caption / attribution / legend content.
+
+    No data-table header signal — otherwise the wikitable is a real
+    data table that happens to contain images.
+
+    Variant NOT covered by this predicate: a wikitable that wraps
+    two nested figure-wikitables side-by-side (HYDROMEDUSAE-style).
+    There the images are children-of-children, not direct children
+    of the outer wikitable — different structural shape, separate
+    predicate.
+    """
+    if registry is None:
+        return False
+    image_phs = [ph for ph, lbl in registry.labels.items()
+                 if lbl == "IMAGE"]
+    if len(image_phs) < 2:
+        return False
+    rows = re.split(r"\n\|-[^\n]*\n", inner)
+    if not rows:
+        return False
+    # All images must sit in the FIRST row, in separate cells.  Cell
+    # separators within a row can be either `||` (same-line) or
+    # `\n|` (newline-pipe) — both are valid wikitable syntax for
+    # parallel cells.  ARACHNIDA's side-by-side figures use newline-
+    # pipe with `{{em|3}}` / `{{gap}}` spacer cells between images.
+    first = rows[0]
+    if not all(ph in first for ph in image_phs):
+        return False
+    # Count cells in the first row.  Any non-empty cell counts.
+    cells = re.split(r"\n\||\|\|", first)
+    cells = [c for c in cells if c.strip()]
+    image_cells = [c for c in cells if any(ph in c for ph in image_phs)]
+    if len(image_cells) < 2:
+        return False
+    # No data-table header signal.
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return False
+    return True
+
+
+def _is_captioned_figure_pred(raw: str, inner: str,
+                                registry: ElementRegistry | None) -> bool:
+    """Single-image figure layout: exactly one IMAGE child sitting
+    alone IN THE FIRST ROW (no `\\|\\|`-separated parallel column),
+    no data-table header signal.
+
+    The dominant ~73% of figure-shaped wikitables: an image first,
+    then N rows of caption / attribution / legend below.  The
+    image-must-be-in-row-0 gate rejects data tables that happen to
+    contain a trailing image (ARENIG GROUP is a multi-row taxonomic
+    ladder with a geological-unconformity image in the last row —
+    the wikitable is data, not a figure).
+
+    Runs before LAYOUT_WRAPPER so single-image figures get their
+    own label.  Multi-image grids fall through to LAYOUT_WRAPPER
+    until a dedicated grid predicate lands.
+    """
+    if registry is None:
+        return False
+    image_phs = [ph for ph, lbl in registry.labels.items()
+                 if lbl == "IMAGE"]
+    if len(image_phs) != 1:
+        return False
+    # Image must sit in row 0 — figures lead with the image; data
+    # tables with an embedded image rarely do.
+    rows = re.split(r"\n\|-[^\n]*\n", inner)
+    if not rows:
+        return False
+    if image_phs[0] not in rows[0]:
+        return False
+    # And alone in that row — no `||` parallel cells (parallel-row
+    # multi-image grids fall through to LAYOUT_WRAPPER / future
+    # grid predicate).
+    if "||" in rows[0].strip():
+        return False
+    # Header carries no data-table signal.
+    header = raw.split("\n", 1)[0]
+    if (re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE)
+            or re.search(r'rules\s*=', header, re.IGNORECASE)
+            or re.search(r'class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
+                          header, re.IGNORECASE)):
+        return False
+    return True
 
 
 def _is_layout_wrapper_pred(raw: str, inner: str,
@@ -321,6 +485,9 @@ _TABLE_PREDICATES: list[tuple[Callable[
     (_is_djvu_crop_table,             "DJVU_CROP"),
     (_is_compound_table_pred,          "COMPOUND_TABLE"),
     (_is_chemistry_layout_pred,        "CHEMISTRY_LAYOUT"),
+    (_is_captioned_figure_grid_pred,   "CAPTIONED_FIGURE_GRID"),
+    (_is_captioned_figure_pred,        "CAPTIONED_FIGURE"),
+    (_is_figure_group_pred,            "FIGURE_GROUP"),
     (_is_layout_wrapper_pred,          "LAYOUT_WRAPPER"),
     (_is_brace_table,                  "DATA_TABLE"),
     (_is_math_dominant_pred,           "MATH_LAYOUT_EQUATIONS"),
