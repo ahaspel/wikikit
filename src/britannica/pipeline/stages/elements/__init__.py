@@ -81,10 +81,12 @@ from britannica.pipeline.stages.elements._layout import (
     _extract_poem_legend,
     _find_caption_row_idx,
     _format_legend_entries,
+    _HI_LEGEND_RE,
     _image_ph_filename,
     _is_layout_wrapper,
     _legend_cell_prep,
     _looks_like_caption,
+    _normalize_icl_markup,
     _parse_inline_legend_cell,
     _parse_multicol_legend_row,
     _parse_prose_legend_rows,
@@ -455,6 +457,11 @@ def _has_legend_material(inner: str,
     ``_row_has_legend_multicol_cells`` so the predicate and
     producer agree on what counts as legend.
     """
+    # Hanging-indent legend: ≥2 `{{Hi|SIZE|LABEL, text}}` entries
+    # (ARACHNIDA Fig 26, 72, 78).  Each is one entry; the producer's
+    # Phase 0 (`_extract_hi_legend`) extracts them.
+    if len(_HI_LEGEND_RE.findall(inner)) >= 2:
+        return True
     rows = re.split(r"\|-[^\n]*", inner)
     multicol_row_count = 0
     for row in rows:
@@ -602,6 +609,11 @@ def _classify_icl_shape(raw: str, inner: str,
         return None
 
     assert registry is not None  # _is_icl_family rejects on None
+    # Family-scoped normalization: strip pure-decoration layout
+    # templates so the sub-shape detectors see clean content.  Runs
+    # AFTER family confirmation, so it never touches a non-ICL table
+    # that happens to contain `{{center}}` etc.
+    inner = _normalize_icl_markup(inner)
     image_phs = [ph for ph, lbl in registry.labels.items()
                  if lbl == "IMAGE"]
 

@@ -1,6 +1,6 @@
 PAGE:302the zoological name given in 1815 by Lamarck (Gr. ἁράχνη, a spider) to a class which he instituted for the reception of the spiders, scorpions and mites, previously classified by Linnaeus in the order Aptera of his great group Insecta. Lamarck at the same time founded the class Crustacea for the lobsters, crabs and water-fleas, also until then included in the order Aptera of Linnaeus. Lamarck included the Thysanura and the Myriapoda in his class Arachnida. The Insecta of Linnaeus was a group exactly equivalent to the Arthropoda founded a hundred years later by Siebold and Stannius. It was thus reduced by Lamarck in area, and made to comprise only the six-legged, wing-bearing “Insecta.” For these Lamarck proposed the name Hexapoda; but that name has been little used, and they have retained to this day the title of the much larger Linnaean group, viz. Insecta. The position of the Arachnida in the great sub-phylum Arthropoda, according to recent anatomical and embryological researches, is explained in the article «LN:Arthropoda|Arthropoda«/LN». The Arachnida form a distinct class or line of descent in the grade Euarthropoda, diverging (perhaps in common at the start with the Crustacea) from primitive Euarthropods, which gave rise also to the separate lines of descent known as the classes Diplopoda, Crustacea, Chilopoda and Hexapoda.
 
-{{IMG:1911 Britannica-Arachnida-Limulus polyphemus.png|Fig. 1.—Entosternum, entosternite or plastron of Limulus polyphemus, Latr. Dorsal surface.}}
+{{IMG:1911 Britannica-Arachnida-Limulus polyphemus.png|Fig. 1.—Entosternum, entosternite or plastron of Limulus polyphemus, Latr. Dorsal surface. (From Lankester, Q. J. Mic. Sci., N. S. vol. xxiv, 1884.)}}
 
 {{LEGEND:LAP. Left anterior process
 RAP. Right anterior process
@@ -13,11 +13,18 @@ PLP. Posterior lateral process Natural size}LEGEND}
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus2.png|Fig. 2.—Ventral surface of the entosternum of Limulus polyphemus, Latr. Letters as in fig. 1 with the addition of NF, neural fossa protecting the aggregated ganglia of the central nervous system; PVP, left posterior ventral process; PMP, posterior median process. Natural size. (From Lankester.)}}
 
-{{IMG:1911 Britannica-Arachnida-Palamnaeus indus.png|Fig. 3.—Entosternum of scorpion (Palamnaeus indus, de Geer); dorsal surface.}}
+{{IMG:1911 Britannica-Arachnida-Palamnaeus indus.png|Fig. 3.—Entosternum of scorpion (Palamnaeus indus, de Geer); dorsal surface. (After Lankester, loc. cit.)}}
 
-{{LEGEND:pf. Posterior flap or diaphragm of Newport
+{{LEGEND:asp. Paired anterior process of the sub-neural arch
+snp. Sub-neural arch
+ap. Anterior lateral process (same as RAP and LAP in fig. 1)
+lmp. Lateral median process (same as ALR and PLR of fig. 1)
+pp. Posterior process (same as PLP in fig. 1)
+pf. Posterior flap or diaphragm of Newport
+m¹ and m². Perforations of the diaphragm for the passage of muscles
+DR. The paired dorsal ridges
 GC. Gastric canal or foramen
-AC. Arterial canal or foramen. (After Lankester, loc. cit.)}LEGEND}
+AC. Arterial canal or foramen}LEGEND}
 
 The various comparisons previously made between the structure of Limulus and the Eurypterines on the one hand, and that of a typical Arachnid, such as Scorpio, on the other, had been vitiated by erroneous notions as to the origin of the nerves supplying the anterior appendages of Limulus (which were finally removed by Alphonse Milne-Edwards in his beautiful memoir (6) on the structure of that animal), and secondly by the erroneous identification of the double sternal plates of Limulus, called “chilaria,” by Owen, with a pair of appendages (7). Once the identity of the chilaria with the pentagonal sternal plate of the scorpion is recognized—an identification first insisted on by Lankester—the whole series of segments and appendages in the two animals, Limulus and Scorpio, are seen to correspond most closely, segment for segment, with one another (see figs. 7 and 8). The structure of the prosomatic appendages or legs is also seen to present many significant points of agreement (see figures), but a curious discrepancy existed in the six-jointed structure of the limb in Limulus, which differed from the seven-jointed limb of Scorpio by the defect of one joint. R. I. Pocock of the British Museum has observed that in Limulus a marking exists on the fourth joint, which apparently indicates a previous division of this segment into two, and thus establishes the agreement of Limulus and Scorpio in this small feature of the number of segments in the legs (see fig. 11).
 
@@ -61,7 +68,14 @@ Passing on now from the mesosoma we come in Scorpio to the metasoma of six segme
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus4.png|Fig. 9.—Ventral view of the posterior carapace or meso-metasomatic (opisthospmatic) fusion of Limulus polyphemus. The soft integument and limbs of the mesosoma have been removed as well as all the viscera and muscles, so that the inner surface of the terga of these somites with their entopophyses are seen. The unsegmented dense chitinous sternal plate of the metasoma (XIII to XVIII) is not removed. Letters as in fig. 7.(After Lankester, loc. cit.)}}
 
-{{IMG:1911 Britannica-Arachnida-Palamnaeus indus3.png|Fig. 10.—Ventral view of a scorpion, Palamnaeus indus, de Geer, to show the arrangement of the coxae of the limbs, the sternal elements, genital plate and pectens. M, Mouth behind the oval median camerostome. I, The chelicerae. II, The chelae. III to VI, the four pairs of walking legs. VIIgo, The genital somite or first somite of the mesosoma with the genital operculum (a fused pair of limbs). VIIIp, The pectiniferous somite. IXstg to XIIstg, the four pulmonary somites. met, The pentagonal metasternite of the prosoma behind all the coxae. x, The sternum of the pectiniferous somite. y, The broad first somite of the metasoma.}}
+{{IMG:1911 Britannica-Arachnida-Palamnaeus indus3.png|Fig. 10.—Ventral view of a scorpion, Palamnaeus indus, de Geer, to show the arrangement of the coxae of the limbs, the sternal elements, genital plate and pectens. M, Mouth behind the oval median camerostome. I, The chelicerae. II, The chelae. III to VI, the four pairs of walking legs. VII}}
+
+{{LEGEND:go. The genital somite or first somite of the mesosoma with the genital operculum (a fused pair of limbs). VIII
+p. The pectiniferous somite. IXstg to XII
+stg. the four pulmonary somites
+met. The pentagonal metasternite of the prosoma behind all the coxae
+x. The sternum of the pectiniferous somite
+y. The broad first somite of the metasoma}LEGEND}
 
 In 1893, some years after the identification of the somites of Limulus with those of Scorpio, thus indicated, had been published, zoologists were startled by the discovery by a Japanese zoologist, Kishinouye (8), of a seventh prosomatic somite in the embryo of Limulus longispina. This was seen in longitudinal sections, as shown in fig. 19. The simple identification of somite with somite in Limulus and Scorpio seemed to be threatened by this discovery. But in 1896 Dr August Brauer of Marburg (9) discovered in the embryo of Scorpio a seventh prosomatic somite (see VII PrG, figs. 17 and 18), or, if we please so to term it, a «I»praegenital«/I» somite, hitherto unrecognized. In the case of Scorpio this segment is indicated in the embryo by the presence of a pair of rudimentary appendages, carried by a well-marked somite. As in Limulus, so in Scorpio, this unexpected somite and its appendages disappear in the course of development. In fact, more or less complete “excalation” of the somite takes place. Owing to its position it is convenient to term the somite which is excalated in Limulus and Scorpio “the praegenital somite.” It appears not improbable that the sternal plates wedged in between the last pair of legs in both Scorpio and Limulus, viz. the pentagonal sternite of Scorpio (fig. 10) and the chilaria of Limulus (see figs. 13 and 20), may in part represent in the adult the sternum of the excalated praegenital somite. This has not been demonstrated by an actual following out of the development, but the position of these pieces and the fact that they are (in Limulus) supplied by an independent segmental nerve, favours the view that they may comprise the sternal area of the vanished praegenital somite. This interpretation, however, of the “metasternites” of Limulus and Scorpio is opposed by the coexistence in Thelyphonus (figs. 55, 57 and 58) of a similar metasternite with a complete praegenital somite. H. J. Hansen (10) has recognized that the “praegenital somite” persists in a rudimentary condition, forming a “waist” to the series of somites in the Pedipalpi and Araneae. The present writer is of opinion that it will be found most convenient to treat this evanescent somite as something special, and not to attempt to reckon it to either the prosoma or the mesosoma. {{IMG:1911 Britannica-Arachnida-Limulus polyphemus5.png|Fig. 11.—Third leg of Limulus polyphemus, showing the division of the fourth segment of the leg by a groove S into two, thus giving seven segments to the leg as in scorpion. (From a drawing by Pocock.)}}
 
@@ -122,32 +136,57 @@ It must be confessed that we are singularly ignorant as to the functional signif
 
 5. «I»The Blood and the Blood-vascular System.«/I»—The blood fluids of Limulus and Scorpio are very similar. Not only are the blood corpuscles of Limulus more like in form and granulation to those of Scorpio than to those of any Crustacean, but the fluid is in both animals strongly impregnated with the blue-coloured respiratory proteid, haemocyanin. This body occurs also in the blood of Crustacea and of Molluscs, but its abundance in both Limulus and Scorpio is very marked, and gives to the freshly-shed blood a strong indigo-blue tint.
 
-{{IMG:1911 Britannica-Arachnida-Limulus polyphemus10.png|Fig. 20.—View of the ventral surface of the mid-line of the prosomatic region of Limulus polyphemus. The coxae of the five pairs of limbs following the chelicerae were arranged in a series on each side between the mouth, M, and the metasternites, mets. sf, The sub-frontal median sclerite. Ch, The chelicerae. cam, The camerostome or upper lip. M, The mouth. pmst, The promesosternal sclerite of chitinous plate, unpaired. mets, The right and left metasternites (corresponding to the similarly placed pentagonal sternite of Scorpio). Natural size. (After Lankester.)}}
+{{IMG:1911 Britannica-Arachnida-Limulus polyphemus10.png|Fig. 20.—View of the ventral surface of the mid-line of the prosomatic region of Limulus polyphemus. The coxae of the five pairs of limbs following the chelicerae were arranged in a series on each side between the mouth, M, and the metasternites, mets. (After Lankester.)}}
+
+{{LEGEND:sf. The sub-frontal median sclerite. Ch, The chelicerae
+cam. The camerostome or upper lip. M, The mouth
+pmst. The promesosternal sclerite of chitinous plate, unpaired
+mets. The right and left metasternites (corresponding to the similarly placed pentagonal sternite of Scorpio). Natural size}LEGEND}
 
 The great dorsal contractile vessel or “heart” of Limulus is closely similar to that of Scorpio; its ostia or incurrent orifices are placed in the same somites as those of Scorpio, but there is one additional posterior pair. The origin of the paired arteries from the PAGE:309heart differs in Limulus from the arrangement obtaining in Scorpio, in that a pair of lateral commissural arteries exist in Limulus (as described by Alphonse Milne-Edwards (6)) leading to a suppression of the more primitive direct connexion of the four pairs of posterior lateral arteries and of the great median posterior arteries with the heart itself (fig. 29).
 
-{{IMG:1911 Britannica-Arachnida-Laurie.png|Fig. 21.—Development of the lateral eyes of a scorpion. h, Epidermic cell-layer; mes, mesoblastic connective tissue; n, nerves; II, III, IV, V, depressions of the epidermis in each of which a cuticular lens will be formed. (From Korschelt and Heider, after Laurie.)}}
+{{IMG:1911 Britannica-Arachnida-Laurie.png|Fig. 21.—Development of the lateral eyes of a scorpion. (From Korschelt and Heider, after Laurie.)}}
+
+{{LEGEND:h. Epidermic cell-layer;
+mes. mesoblastic connective tissue;
+n. nerves; II, III, IV, V, depressions of the epidermis in each of which a cuticular lens will be formed}LEGEND}
 
 {{IMG:1911 Britannica-Arachnida-Bourne.png|Fig. 22.—Section through the lateral eye of Euscorpius italicus. lens, Cuticular lens. nerv. c, Retinal cells (nerve-end cells). rhabd, Rhabdomes. nerv. f, Nerve fibres of the optic nerve. int, Intermediate cells (lying between the bases of the retinal cells). (After Lankester and Bourne from Parker and Habwell’s Text book of Zoology, Macmillan & Co.)}}
 
-{{IMG:1911 Britannica-Arachnida-Watase.png|Fig. 23.—Section through a portion of the lateral eye of Limulus, showing three ommatidia—A, B and C. hyp, The epidermic cell-layer (so-called hypodermis), the cells of which increase in volume below each lens, l, and become nerve-end cells or retinula-cells, rt; in A, the letters rh point to a rhabdomere secreted by the cell rt; c, the peculiar central spherical cell; n, nerve fibres; mes, mesoblastic skeletal tissue; ch, chitinous cuticle.(From Korschelt and Heider after Watase.)}}
+{{IMG:1911 Britannica-Arachnida-Watase.png|Fig. 23.—Section through a portion of the lateral eye of Limulus, showing three ommatidia—A, B and C. (From Korschelt and Heider after Watase.)}}
+
+{{LEGEND:hyp. The epidermic cell-layer (so-called hypodermis), the cells of which increase in volume below each lens,
+l. and become nerve-end cells or retinula-cells, rt; in A, the letters rh point to a rhabdomere secreted by the cell rt;
+c. the peculiar central spherical cell;
+n. nerve fibres;
+mes. mesoblastic skeletal tissue;
+ch. chitinous cuticle}LEGEND}
 
 The arterial system is very completely developed in both Limulus and Scorpio, branching repeatedly until minute arterioles are formed, not to be distinguished from true capillaries; these open into irregular swollen vessels which are the veins or venous sinuses. A very remarkable feature in Limulus, first described by Owen, is the close accompaniment of the prosomatic nerve centres and nerves by arteries, so close indeed that the great ganglion mass and its out-running nerves are actually sunk in or invested by arteries. The connexion is not so intimate in Scorpio, but is nevertheless a very close one, closer than we find in any other Arthropods in which the arterial system is well developed, «I»e.g.«/I» the Myriapoda and some of the arthrostracous Crustacea. It seems that there is a primitive tendency in the Arthropoda for the arteries to accompany the nerve cords, and a “supra-spinal” artery—that is to say, an artery in close relation to the ventral nerve cords—has been described in several cases. On the other hand, in many Arthropods, especially those which possess tracheae, the arteries do not have a long course, but soon open into wide blood sinuses. Scorpio certainly comes nearer to Limulus in the high development of its arterial system, and the intimate relation of the anterior aorta and its branches to the nerve centres and great nerves, than does any other Arthropod.
 
 An arrangement of great functional importance in regard to the venous system must now be described, which was shown in 1883 by Lankester to be common to Limulus and Scorpio. This arrangement has not hitherto been detected in any other class than the Arachnida, and if it should ultimately prove to be peculiar to that group, would have considerable weight as a proof of the close genetic affinity of Limulus and Scorpio.
 
-{{IMG:1911 Britannica-Arachnida-Heider.png|Fig. 24.—Diagrams of the development and adult structure of one of the paired central eyes of a scorpion. A, Early condition before the lens is deposited, showing the folding of the epidermic cell-layer into three. B, Diagram showing the nature of this infolding. C, Section through the fully formed eye. h, Epidermic cell-layer. r, The retinal portion of the same which, owing to the infolding, lies between gl, the corneagen or lens-forming portion, and pr, the post-retinal or capsular portion or fold. l, Cuticular lens. g, Line separating lens from the lens-forming or corneagen cells of the epidermis. n, Nerve fibres. rh, Rhabdomeres. [How the inversion of the nerve-end-cells and their connexion with the nerve-fibres is to be reconciled with the condition found in the adult, or with that of the monostichous eye, has not hitherto been explained.] (From Korschelt and Heider.)}}
+{{IMG:1911 Britannica-Arachnida-Heider.png|Fig. 24.—Diagrams of the development and adult structure of one of the paired central eyes of a scorpion. A, Early condition before the lens is deposited, showing the folding of the epidermic cell-layer into three. B, Diagram showing the nature of this infolding. C, Section through the fully formed eye. (From Korschelt and Heider.)}}
+
+{{LEGEND:h. Epidermic cell-layer
+r. The retinal portion of the same which, owing to the infolding, lies between
+gl. the corneagen or lens-forming portion, and
+pr. the post-retinal or capsular portion or fold
+l. Cuticular lens
+g. Line separating lens from the lens-forming or corneagen cells of the epidermis
+n. Nerve fibres
+rh. Rhabdomeres. [How the inversion of the nerve-end-cells and their connexion with the nerve-fibres is to be reconciled with the condition found in the adult, or with that of the monostichous eye, has not hitherto been explained.]}LEGEND}
 
 The great pericardial sinus is strongly developed in both animals. Its walls are fibrous and complete, and it holds a considerable volume of blood when the heart itself is contracted. Opening in pairs in each somite, right and left into the pericardial sinus are large veins, which bring the blood respectively from the gill-books and the lung-books to that chamber, whence it passes by the ostia into the heart. The blood is brought to the respiratory organs in both cases by a great venous collecting sinus having a ventral median position. In both animals «I»the wall of the pericardial sinus is connected by vertical muscular bands to the wall of the ventral venous sinus«/I» (its lateral expansions around the lung-books in Scorpio) in each somite through which the pericardium passes. There are seven pairs of these «I»veno-pericardiac vertical muscles«/I» in Scorpio, and eight in Limulus (see figs. 30, 31, 32). It is obvious that the contraction of these muscles PAGE:310must cause a depression of the floor of the pericardium and a rising of the roof of the ventral blood sinus, and a consequent increase of volume and flow of blood to each. Whether the pericardium and the ventral sinus are made to expand simultaneously or all the movement is made by one only of the surfaces concerned, must depend on conditions of tension. In any case it is clear that we have in these muscles an apparatus for causing the blood to flow differentially in increased volume into either the pericardium, through the veins leading from the respiratory organs, or from the body generally into the great sinuses which bring the blood to the respiratory organs. These muscles act so as to pump the blood through the respiratory organs.
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus11.png|Fig. 25.—Section through one of the central eyes of a young Limulus. (After Lankester and Bourne, Q. J. Mic. Sci., 1883.)}}
 
-{{LEGEND:L. Cuticular or corneous lens
+{{LEGEND:«I»corn«/I». Its corneagen portion immediately underlying the lens
+«I»con. tiss«/I». Connective tissue (mesoblastic skeletal tissue)
+L. Cuticular or corneous lens
 «I»hy«/I». Epidermic cell-layer
-«I»corn«/I». Its corneagen portion immediately underlying the lens
 «I»ret«/I». Retinula cells
-«I»nf«/I». Nerve fibres
-«I»con. tiss«/I». Connective tissue (mesoblastic skeletal tissue)}LEGEND}
+«I»nf«/I». Nerve fibres}LEGEND}
 
 It is not surprising that with so highly developed an arterial system Limulus and Scorpio should have a highly developed mechanism for determining the flow of blood to the respiratory organs. That this is, so to speak, a need of animals with localized respiratory organs is seen by the existence of provisions serving a similar purpose in other animals, «I»e.g.«/I» the branchial hearts of the Cephalopoda.
 
@@ -159,16 +198,14 @@ The most important difference which exists between the structure of Limulus and 
 
 {{IMG:1911 Britannica-Arachnida-scorpion2.png|Fig. 26. (After Lankester.)}}
 
+{{LEGEND:A. Diagram of a retinula of thecentral eye of a scorpion consisting of five retina-cells (ret), with adherent branched pigment cells (pig)
+B. Rhabdom of the same, consisting of five confluent rhabdomeres
+C. Transverse section of the rhabdom of a retinula of the scorpion’s central eye, showing its five constituent rhabdomeres as rays of a star
+D. Transverse section of a retinula of the lateral eye of Limulus, showing ten retinula cells (ret), each bearing a rhabdomere (rhab)}LEGEND}
+
 {{IMG:1911 Britannica-Arachnida-scorpion3.png|Fig. 27.—Diagram showing the position of the coxal glands of a scorpion, Buthus australis, Lin., in relation to the legs, diaphragm (entosternal flap), and the gastric caeca. (From Lankester, Q. J. Mic. Sci., vol. xxiv. N.S. p. 152.)}}
 
-{{LEGEND:1. to 6, The bases of the six prosomatic limbs.
-A. prosomatic gastric gland (sometimes called salivary).
-B. Coxal gland.
-C. Diaphragm of Newport = fibrous flap of the entosternum.
-D. Mesosomatic gastric caeca (so-called liver).
-E. Alimentary canal.
-1. to 6, The bases of the six prosomatic limbs.
-A. prosomatic gastric gland (sometimes called salivary).
+{{LEGEND:A. prosomatic gastric gland (sometimes called salivary).
 B. Coxal gland.
 C. Diaphragm of Newport = fibrous flap of the entosternum.
 D. Mesosomatic gastric caeca (so-called liver).
@@ -178,15 +215,28 @@ E. Alimentary canal.}LEGEND}
 
 In regard to the important structures concerned with the fertilization of the egg, Limulus and Scorpio differ entirely from one another. PAGE:311The eggs of Limulus are fertilized in the sea after they have been laid. Scorpio, being a terrestrial animal, fertilizes by copulation. The male possesses elaborate copulatory structures of a chitinous nature, and the eggs are fertilized in the female without even quitting the place where they are formed on the wall of the reticular gonocoel. The female scorpion is viviparous, and the young are produced in a highly developed condition as fully formed scorpions.
 
-{{IMG:1911 Britannica-Arachnida-Packard.png|Fig. 28.—The right coxal gland of Limulus polyphemus, Latr.a² to a⁵, Posterior borders of the chitinous bases of the coxae of the second, third, fourth and fifth prosomatic limbs.b, Longitudinal lobe or stolon of the coxal gland.c. Its four transverse lobes or outgrowths corresponding to the four coxae.(From Lankester, loc. cit., after Packard.)}}
+{{IMG:1911 Britannica-Arachnida-Packard.png|Fig. 28.—The right coxal gland of Limulus polyphemus, Latr.(From Lankester, loc. cit., after Packard.)}}
+
+{{LEGEND:«I»a²«/I» to «I»a⁵«/I». Posterior borders of the chitinous bases of the coxae of the second, third, fourth and fifth prosomatic limbs
+«I»b«/I». Longitudinal lobe or stolon of the coxal gland
+«I»c«/I». Its four transverse lobes or outgrowths corresponding to the four coxae}LEGEND}
 
 «I»Differences between Limulus and Scorpio«/I».—We have now passed in review the principal structural features in which Limulus agrees with Scorpio and differs from other Arthropoda. There remains for consideration the one important structural difference between the two animals. Limulus agrees with the majority of the Crustacea in being destitute of renal excretory caeca or tubes opening into the hinder part of the gut. Scorpio, on the other hand, in common with all air-breathing Arthropoda except Peripatus, possesses these tubules, which are often called Malpighian tubes. A great deal has been made of this difference by some writers. It has been considered by them as proving that Limulus, in spite of all its special agreements with Scorpio (which, however, have scarcely been appreciated by the writers in question), really belongs to the Crustacean line of descent, whilst Scorpio, by possessing Malpighian tubes, is declared to be unmistakably tied together with the other Arachnida to the tracheate Arthropods, the Hexapods, Diplopods, and Chilopods, which all possess Malpighian tubes.
 
-{{IMG:1911 Britannica-Arachnida-Lankester.png|Fig. 29.—Diagram of the arterial system of A, Scorpio, and B, Limulus. The Roman numerals indicate the body somites and the two figures are adjusted for comparison. ce, Cerebral arteries; sp, supra-spinal or medullary artery; c, caudal artery; l, lateral anastomotic artery of Limulus. The figure B also shows the peculiar neural investiture formed by the cerebral arteries in Limulus and the derivation from this of the arteries to the limbs, III, IV, VI, whereas in Scorpio the latter have a separate origin from the anterior aorta. (From Lankester, “Limulus an Arachnid.”)}}
+{{IMG:1911 Britannica-Arachnida-Lankester.png|Fig. 29.—Diagram of the arterial system of A, Scorpio, and B, Limulus. The Roman numerals indicate the body somites and the two figures are adjusted for comparison. (From Lankester, “Limulus an Arachnid.”)}}
+
+{{LEGEND:ce. Cerebral arteries;
+sp. supra-spinal or medullary artery;
+c. caudal artery;
+l. lateral anastomotic artery of Limulus. The figure B also shows the peculiar neural investiture formed by the cerebral arteries in Limulus and the derivation from this of the arteries to the limbs, III, IV, VI, whereas in Scorpio the latter have a separate origin from the anterior aorta}LEGEND}
 
 It must be pointed out that the presence or absence of such renal excretory tubes opening into the intestine appears to be a question of adaptation to the changed physiological conditions of respiration, and not of morphological significance, since a pair of renal excretory tubes of this nature is found in certain Amphipod Crustacea (Talorchestia, &c.) which have abandoned a purely aquatic life. This view has been accepted and supported by Professors Korschelt and Heider (16). An important fact in its favour was discovered by Laurie (17), who investigated the embryology of two species of Scorpio under Lankester’s direction. It appears that the Malpighian tubes of Scorpio are developed from the mesenteron, viz. that portion of the gut which is formed by the hypoblast, whereas in Hexapod insects the similar caecal tubes are developed from the proctodaeum or in-pushed portion of the gut which is formed from epiblast. In fact it is not possible to maintain that the renal excretory tubes of the gut are of one common origin in the Arthropoda. They have appeared independently in connexion with a change in the excretion of nitrogenous waste in Arachnids, Crustacea, and the other classes of Arthropoda when aerial, as opposed to aquatic, respiration has been established—and they have been formed in some cases from the mesenteron, in other cases from the proctodaeum. Their appearance in the air-breathing Arachnids does not separate those forms from the water-breathing Arachnids which are devoid of them, any more than does their appearance in certain Amphipoda separate those Crustaceans from the other members of the class.
 
-{{IMG:1911 Britannica-Arachnida-Buthus occitanus.png|Fig. 30.—View from below of a scorpion (Buthus occitanus) opened and dissected so as to show the pericardium with its muscles, the lateral arteries, and the tergo-sternal muscles. PRO, Prosoma. dpm, Dorso-plastral muscle. art, Lateral artery. tsm¹, Tergo-sternal muscle (labelled dv in fig. 31) of the second (pectiniferous) mesosomatic somite; this is the most anterior pair of the series of six, none are present in the genital somite. tsm⁴, Tergo-sternal muscle of the fifth mesosomatic somite. tsm⁶, Tergo-sternal muscle of the enlarged first metasomatic somite. Per, Pericardium. VPM¹ to VPM⁷, The series of seven pairs of veno-pericardiac muscles (labelled pv in fig. 31). There is some reason to admit the existence of another more anterior pair of these muscles in Scorpio; this would make the number exactly correspond with the number in Limulus.(After Lankester, Trans. Zool. Soc. vol. xi, 1883.)}}
+{{IMG:1911 Britannica-Arachnida-Buthus occitanus.png|Fig. 30.—View from below of a scorpion (Buthus occitanus) opened and dissected so as to show the pericardium with its muscles, the lateral arteries, and the tergo-sternal muscles. PRO, Prosoma. (After Lankester, Trans. Zool. Soc. vol. xi, 1883.)}}
+
+{{LEGEND:dpm. Dorso-plastral muscle
+art. Lateral artery. tsm¹, Tergo-sternal muscle (labelled dv in fig. 31) of the second (pectiniferous) mesosomatic somite; this is the most anterior pair of the series of six, none are present in the genital somite. tsm⁴, Tergo-sternal muscle of the fifth mesosomatic somite. tsm⁶, Tergo-sternal muscle of the enlarged first metasomatic somite
+Per. Pericardium. VPM¹ to VPM⁷, The series of seven pairs of veno-pericardiac muscles (labelled pv in fig. 31). There is some reason to admit the existence of another more anterior pair of these muscles in Scorpio; this would make the number exactly correspond with the number in Limulus}LEGEND}
 
 Further, it is pointed out by Korschelt and Heider that the hinder portion of the gut frequently acts in Arthropoda as an organ of nitrogenous excretion in the absence of any special excretory tubules, and that the production of such caeca from its surface in separate lines of descent does not involve any elaborate or unlikely process of growth. In other words, the Malpighian tubes of the terrestrial Arachnida are «I»homoplastic«/I» with those of Hexapoda and Myriapoda, and not «I»homogenetic«/I» with them. We are compelled to take a similar view of the agreement between the tracheal air-tubes of Arachnida and other tracheate Arthropods. They are homoplasts (see 18) one of another, and do not owe their existence in the various classes compared to a common inheritance of an ancestral tracheal system. «I»Conclusions arising from the Close Affinity of Limulus and Scorpio.«/I»—When we consider the relationships of the various classes of Arthropoda, having accepted and established the fact of the close genetic affinity of Limulus and Scorpio, we are led to important conclusions. In such a consideration we have to make use not only of the fact just mentioned, but of three important generalizations which serve as it were as implements for the proper estimation of the relationships of any series of organic forms. First of all there is the generalization that the relationships of the various forms of animals (or of plants) to one another is that of the ultimate twigs of a much-branching genealogical tree. Secondly, identity of structure in two organisms does not necessarily indicate that the identical structure has been inherited from an ancestor common to the two organisms compared (homogeny), but may be due to independent development of a like structure in two different lines of descent (homoplasy). Thirdly, those members of a group which, whilst exhibiting undoubted structural characters indicative of their proper assignment to that group, yet are simpler than and inferior in elaboration of their organization to other members of the group, are not necessarily representatives of the earlier and primitive phases in the development of the group—but are very often examples of retrogressive change or degeneration. The second and third implements of analysis above cited are of the nature of cautions or checks. Agreements are not «I»necessarily«/I» due to common inheritance; simplicity is not «I»necessarily«/I» primitive and ancestral.
 
@@ -196,12 +246,23 @@ So, too, degeneration is not to be lightly assumed as the explanation of a simpl
 
 Applying these principles to the consideration of the Arachnida, we arrive at the conclusion that the smaller and simpler Arachnids are not the more primitive, but that the Acari or mites are, in fact, a degenerate group. This was maintained by Lankester in 1878 (19), again in 1881 (20); it was subsequently announced as a novelty by Claus in 1885 (21). Though the aquatic members of a class of animals are in some instances derived from terrestrial forms, the usual transition is from an aquatic ancestry to more recent land-living forms. There is no doubt, from a consideration of the facts of structure, that the aquatic water-breathing Arachnids, represented in the past by the Eurypterines and to-day by the sole survivor Limulus, have preceded the terrestrial air-breathing forms of that group. Hence we see at once that the better-known Arachnida form a series, leading from Limulus-like aquatic creatures through scorpions, spiders and harvest-men, to the degenerate Acari or mites. The spiders are specialized and reduced in apparent complexity, as compared with the scorpions, but they cannot be regarded as degenerate since the concentration of structure which occurs in them results in greater efficiency and power than are exhibited by the scorpion. The determination of the relative degree of perfection of organization attained by two animals compared is difficult when we introduce, as seems inevitable, the question of efficiency and power, and do not confine the question to the perfection of morphological development. We have no measure of the degree of power manifested by various animals—though it would be possible to arrive at some conclusions as to how that “power” should be estimated. It is not possible here to discuss that matter further. We must be content to point out that it seems that the spiders, the pedipalps, and other large Arachnids have not been derived from the scorpions directly, but have independently developed from aquatic ancestors, and from one of these independent groups—probably through the harvest-men from the spiders—the Acari have finally resulted.
 
-{{IMG:1911 Britannica-Arachnida-Beck.png|Fig. 31.—Diagram of a lateral view of a longitudinal section of a scorpion.}}
+{{IMG:1911 Britannica-Arachnida-Beck.png|Fig. 31.—Diagram of a lateral view of a longitudinal section of a scorpion. (After Beck, Trans. Zool. Soc. Vol. xi., 1883.)}}
 
 {{LEGEND:«I»d«/I». Chelicera
-«I»ad«/I». Muscle from carapace to entosternum}LEGEND}
+«I»ch«/I». Chela
+«I»cam«/I». Camerostome
+«I»m«/I». Mouth
+«I»ent«/I». Entosternum
+«I»p«/I». Pecten
+«I»stig«/I»¹. First pulmonary aperture
+«I»stig«/I»⁴. Fourth pulmonary aperture
+«I»dam«/I». Muscle from carapace to a praeoral entosclerite
+«I»ad«/I». Muscle from carapace to entosternum
+«I»md«/I». Muscle from tergite of genital somite to entosternum (same as «I»dpm«/I» in fig. 30)
+«I»dv«/I»¹ to «I»dv«/I»⁶. Dorso-ventral muscles (same as the series labelled «I»tsm«/I» in fig. 30)
+«I»pv«/I»¹ to «I»pv«/I»⁷. The seven veno-pericardiac muscles of the right side (labelled VPM in fig. 30)}LEGEND}
 
-{{IMG:1911 Britannica-Arachnida-Benham.png|Fig. 32.—Diagram of a lateral view of a longitudinal section of Limulus.}}
+{{IMG:1911 Britannica-Arachnida-Benham.png|Fig. 32.—Diagram of a lateral view of a longitudinal section of Limulus. (After Benham, Trans. Zool. Soc. Vol. xi., 1883.)}}
 
 {{LEGEND:«I»Suc«/I». Suctorial pharynx
 «I»al«/I». Alimentary canal
@@ -209,14 +270,20 @@ Applying these principles to the consideration of the Arachnida, we arrive at th
 «I»M«/I». Mouth
 «I»Est«/I». Entosternum
 VS. Ventral venous sinus
+«I»chi«/I». Chilaria
+«I»go«/I». Genital operculum
 «I»br«/I»¹ to «I»br«/I»⁵. Branchial appendages,
 «I»met«/I». Unsegmented metasoma
 «I»Entap«/I»⁴. Fourth dorsal entapophysis of left side
-«I»tsm«/I». Tergo-sternal muscles, six pairs as in Scorpio (labelled dv in fig. 31) VPM¹ to VPM⁸, The eight pairs of veno-pericardiac muscles (labelled pv in fig. 31). VPM¹ is probably represented in Scorpio, though not marked in figs. 30 and 31}LEGEND}
+«I»tsm«/I». Tergo-sternal muscles, six pairs as in Scorpio}LEGEND}
 
 PAGE:313
 
-{{IMG:1911 Britannica-Arachnida-Lankester2.png|Fig. 33.—The alimentary canal and gastric glands of a scorpion (A) and of Limulus (B).ps, Muscular suctorial enlargement of the pharynx.sal, Prosomatic pair of gastric caeca in Scorpio, called salivary glands by some writers.c¹, and c², The anterior two pairs of gastric caeca and ducts of the mesosomatic region.c³, c⁴ and c⁵. Caeca and ducts of Scorpio not represented in Limulus.M, The Malpighian or renal caecal diverticula of Scorpio.pro, The proctodaeum or portion of gut leading to anus and formed embryologically by an inversion of the epiblast at that orifice. (From Lankester, “Limulus an Arachnid.”.)}}
+{{IMG:1911 Britannica-Arachnida-Lankester2.png|Fig. 33.—The alimentary canal and gastric glands of a scorpion (A) and of Limulus (B). (From Lankester, “Limulus an Arachnid.”.)}}
+
+{{LEGEND:ps. Muscular suctorial enlargement of the pharynx
+sal. Prosomatic pair of gastric caeca in Scorpio, called salivary glands by some writers.c¹, and c², The anterior two pairs of gastric caeca and ducts of the mesosomatic region.c³, c⁴ and c⁵. Caeca and ducts of Scorpio not represented in Limulus.M, The Malpighian or renal caecal diverticula of Scorpio
+pro. The proctodaeum or portion of gut leading to anus and formed embryologically by an inversion of the epiblast at that orifice}LEGEND}
 
 Leaving that question for consideration in connexion with the systematic statement of the characters of the various groups of Arachnida which follows on p. 299, it is well now to consider the following question, viz., seeing that Limulus and Scorpio are such highly developed and specialized forms, and that they seem to constitute as it were the first and second steps in the series of recognized Arachnida—what do we know, or what are we led to suppose with regard to the more primitive Arachnida from which the Eurypterines and Limulus and Scorpio have sprung? Do we know in the recent or fossil condition any such primitive Arachnids? Such a question is not only legitimate, but prompted by the analogy of at least one other great class of Arthropods. The great Arthropod class, the Crustacea, presents to the zoologist at the present day an immense range of forms, comprising the primitive phyllopods, the minute copepods, the parasitic cirrhipedes and the powerful crabs and lobsters, and the highly elaborated sand-hoppers and slaters. It has been insisted, by those who accepted Lankester’s original doctrine of the direct or genetic affinity of the Chaetopoda and Arthropoda, that Apus and Branchipus really come very near to the ancestral forms which connected those two great branches of Appendiculate (Parapodiate) animals. On the other hand, the land crabs are at an immense distance from these simple forms. The record of the Crustacean family-tree is, in fact, a fairly complete one—the lower primitive members of the group are still represented by living forms in great abundance. In the case of the Arachnida, if we have to start their genealogical history with Limulus and Scorpio, we are much in the same position as we should be in dealing with the Crustacea, were the whole of the Entomostraca and the whole of the Arthrostraca wiped out of existence and record. There is no possibility of doubt that the series of forms corresponding in the Arachnidan line of descent, to the forms distinguished in the Crustacean line of descent as the lower grade—the Entomostraca—have ceased to exist, and not only so, but have left little evidence in the form of fossils as to their former existence and nature. It must, however, be admitted as probable that we should find some evidence, in ancient rocks or in the deep sea, of the early more primitive Arachnids. And it must be remembered that such forms must be expected to exhibit, when found, differences from Limulus and Scorpio as great as those which separate Apus and Cancer. The existing Arachnida, like the higher Crustacea, are “nomomeristic,” that is to say, have a fixed typical number of somites to the body. Further, they are like the higher Crustacea, “somatotagmic,” that is to say, they have this limited set of somites grouped in three (or more) “tagmata” or regions of a fixed number of similarly modified somites—each tagma differing in the modification of its fixed number of somites from that characterizing a neighbouring “tagma.” The most primitive among the lower Crustacea, on the other hand, for example, the Phyllopoda, have not a fixed number of somites, some genera—even allied species—have more, some less, within wide limits; they are “anomomeristic.” They also, as is generally the case with anomomeristic animals, do not exhibit any conformity to a fixed plan of “tagmatism” or division of the somites of the body into regions sharply marked off from one another; the head or prosomatic tagma is followed by a trunk consisting of somites which either graduate in character as we pass along the series or exhibit a large variety in different genera, families and orders, of grouping of the somites. They are anomotagmic, as well as anomomeristic.
 
@@ -311,7 +378,11 @@ On the other hand, it may well be doubted whether the pygidial or posterior cara
 
 {{IMG:1911 Britannica-Arachnida-Agnostus nudus.png|Fig. 40.—Four stages in the development of the trilobite Agnostus nudus. A, Youngest stage with no mesosomatic somites; B and C, stages with two mesosomatic somites between the prosomatic and telsonic carapaces; D, adult condition, still with only two free mesosomatic somites. (From Korschelt and Heider.)}}
 
-{{IMG:1911 Britannica-Arachnida-Sao hirsuta.png|From Korschelt and Heider, after Barrande. Fig. 41.—Five Stages in the development of the trilobite Sao hirsuta. A, Youngest stage. B, Older stage with distinct pygidial carapace. C, Stage with two free mesosomatic somites between the prosomatic and telsonic carapaces. D, Stage with seven free intermediate somites. E, Stage with twelve free somites; the telsonic carapace has not increased in size. a, Lateral eye. g, So-called facial “suture” (not really a suture). p, Telsonic carapace.}}
+{{IMG:1911 Britannica-Arachnida-Sao hirsuta.png|Fig. 41.—Five Stages in the development of the trilobite Sao hirsuta. A, Youngest stage. B, Older stage with distinct pygidial carapace. C, Stage with two free mesosomatic somites between the prosomatic and telsonic carapaces. D, Stage with seven free intermediate somites. E, Stage with twelve free somites; the telsonic carapace has not increased in size. (From Korschelt and Heider, after Barrande.)}}
+
+{{LEGEND:a. Lateral eye
+g. So-called facial “suture” (not really a suture)
+p. Telsonic carapace}LEGEND}
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus12.png|Fig. 42.—So-called “trilobite stage” of Limulus polyphemus. A, Dorsal; B, ventral view. (From Korschelt and Heider, after Leuckart.)}}
 
@@ -355,7 +426,11 @@ Family—Limulidae («I»Limulus«/I»). ”   *Belinuridae («I»Belinurus, A
 
 A species of «I»Limulus«/I» is found in the Buntersandstein of the Vosges; «I»L. Walchi«/I» is abundant in the Oolitic lithographic slates of Bavaria.
 
-{{IMG:1911 Britannica-Arachnida-Limulus polyphemus14.png|Fig. 45.—Ventral view of Limulus polyphemus. 1 to 6, The six prosomatic pairs of appendages. abd, the solid opisthosomatic carapace. tels, the post-anal spine (not the telson as the lettering would seem to imply, but only its post-anal portion). operc, the fused first pair of mesosomatic appendages forming the genital operculum. (From Parker and Haswell, Text book of Zoology, after Leuckart.)}}
+{{IMG:1911 Britannica-Arachnida-Limulus polyphemus14.png|Fig. 45.—Ventral view of Limulus polyphemus. 1 to 6, The six prosomatic pairs of appendages. (From Parker and Haswell, Text book of Zoology, after Leuckart.)}}
+
+{{LEGEND:abd. the solid opisthosomatic carapace
+tels. the post-anal spine (not the telson as the lettering would seem to imply, but only its post-anal portion)
+operc. the fused first pair of mesosomatic appendages forming the genital operculum}LEGEND}
 
 The genera «I»Belinurus«/I», «I»Aglaspis«/I», «I»Prestwichia«/I», «I»Hemiaspis«/I» and «I»Bunodes«/I» consist of small forms which occur in Palaeozoic rocks. In none of them are the appendages known, but in the form of the two carapaces and the presence of free somites they are distinctly intermediate between «I»Limulus«/I» and the Trilobitae. The young form of «I»Limulus«/I» itself (fig. 40) is also similar to a Trilobite so far as its segmentation and trilobation are concerned. The lateral eyes of «I»Limulus«/I» appear to be identical in structure and position with those of certain Trilobitae.
 
@@ -365,7 +440,7 @@ The genera «I»Belinurus«/I», «I»Aglaspis«/I», «I»Prestwichia«/I», «
 
 PAGE:318Appendages of anterior pair very large and chelate. Sub-order Pterygotomorpha, Pterygotidae («I»Pterygotus«/I»). Appendages of anterior pair minute and chelate. Sub-order Eurypteromorpha «MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» Stylonuridae («I»Stylonurus«/I»). Eurypteridae («I»Eurypterus, Slimonia«/I»).
 
-{{IMG:1911 Britannica-Arachnida-Pterygotus osiliensis.png|Fig. 47.—Pterygotus osiliensis, Schmidt. Silurian of Rootzikil. Restoration of the ventral surface, about a third natural size, after Schmidt. (From Zittel’s Palaeontology.)}}
+{{IMG:1911 Britannica-Arachnida-Pterygotus osiliensis.png|Fig. 47.—Pterygotus osiliensis, Schmidt. Silurian of Rootzikil. Restoration of the ventral surface, about a third natural size, after Schmidt. (From Zittel’s Palaeontology.) ([Observe the powerful gnathobases of the sixth pair of prosomatic limbs and the median plates behind m. The dotted line on somite I indicates the position of the genital operculum which was probably provided with branchial lamellae.)}}
 
 {{LEGEND:«I»a«/I». Camerostome or epistoma
 «I»m«/I». Chilarium or metasternite of the prosoma (so-called metastoma)
@@ -396,7 +471,9 @@ Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). ”   V
 
 {{IMG:1911 Britannica-Arachnida-Palaeophonus Hunteri.png|Fig. 49.—Ventral view of a restoration of Palaeophonus Hunteri, Pocock, the Silurian scorpion from Lesmahagow, Scotland. Restored by R. I. Pocock. The meeting of the coxae of all the prosomatic limbs in front of the pentagonal sternum; the space for a genital operculum; the pair of pectens, and the absence of any evidence of pulmonary stigmata are noticeable in this specimen. (See Pocock, Quart. Jour. Micr. Sci., 1901.)}}
 
-«I»Remarks on the Order Scorpiones«/I».—The Scorpion is one of the great animals of ancient lore and tradition. It and the crab are the only two invertebrates which had impressed the minds of early men sufficiently to be raised to the dignity of astronomical representation. It is all the more remarkable that the scorpion proves to be the oldest animal form of high elaboration which has persisted to the present day. In the Upper Silurian two specimens of a scorpion have been found (figs. 48, 49), one in Gothland and one in Scotland, PAGE:319which would be recognized at once as true scorpions by a child or a savage. The Silurian scorpion «I»Palaeophonus«/I», differs, so far as obvious points are concerned, from a modern scorpion only in the thickness of its legs and in their terminating in strong spike-like joints, instead of being slight and provided with a pair of terminal claws. The legs of the modern scorpion (fig. 10; fig. 51) are those of a terrestrial Arthropod, such as a beetle; whilst those of the Silurian scorpion are the legs of an aquatic Arthropod, such as a crab or lobster. It is probable that the Silurian scorpion was an aquatic animal, and that its respiratory lamellae were still projecting from the surface of the body to serve as branchiae. No trace of “stigmata,” the orifices of the lung-chambers of modern scorpions, can be found in the Scottish specimen of «I»Palaeophonus«/I», which presents the ventral surface of the animal to view. On the other hand, no trace of respiratory appendages excepting the pectens can be detected in the specimen (see fig. 49). {{IMG:1911 Britannica-Arachnida-Comparison.png|Fig. 50.—Comparison of the sixth prosomatic limb of a recent scorpion (B), of Palaeophonus (C), and of Limulus (A), showing their agreement in the number of segments; in the existence of a movable spine, Sp, at the distal border of the fifth segment; in the correspondence of the two claws at the free end of the limb of Scorpio with two spines similarly placed in Limulus; and, lastly, in the correspondence of the three talon-like spines carried on the distal margin of segment six of recent scorpions with the four larger but similarly situated spines on the leg of Limulus; s, groove dividing the ankylosed segments 4 and 5 of the Limulus leg into two. (After Pocock, Q. J. Mic. Sci., 1901.)}}
+«I»Remarks on the Order Scorpiones«/I».—The Scorpion is one of the great animals of ancient lore and tradition. It and the crab are the only two invertebrates which had impressed the minds of early men sufficiently to be raised to the dignity of astronomical representation. It is all the more remarkable that the scorpion proves to be the oldest animal form of high elaboration which has persisted to the present day. In the Upper Silurian two specimens of a scorpion have been found (figs. 48, 49), one in Gothland and one in Scotland, PAGE:319which would be recognized at once as true scorpions by a child or a savage. The Silurian scorpion «I»Palaeophonus«/I», differs, so far as obvious points are concerned, from a modern scorpion only in the thickness of its legs and in their terminating in strong spike-like joints, instead of being slight and provided with a pair of terminal claws. The legs of the modern scorpion (fig. 10; fig. 51) are those of a terrestrial Arthropod, such as a beetle; whilst those of the Silurian scorpion are the legs of an aquatic Arthropod, such as a crab or lobster. It is probable that the Silurian scorpion was an aquatic animal, and that its respiratory lamellae were still projecting from the surface of the body to serve as branchiae. No trace of “stigmata,” the orifices of the lung-chambers of modern scorpions, can be found in the Scottish specimen of «I»Palaeophonus«/I», which presents the ventral surface of the animal to view. On the other hand, no trace of respiratory appendages excepting the pectens can be detected in the specimen (see fig. 49).
+
+{{IMG:1911 Britannica-Arachnida-Comparison.png|Fig. 50.—Comparison of the sixth prosomatic limb of a recent scorpion (B), of Palaeophonus (C), and of Limulus (A), showing their agreement in the number of segments; in the existence of a movable spine, Sp, at the distal border of the fifth segment; in the correspondence of the two claws at the free end of the limb of Scorpio with two spines similarly placed in Limulus; and, lastly, in the correspondence of the three talon-like spines carried on the distal margin of segment six of recent scorpions with the four larger but similarly situated spines on the leg of Limulus; s, groove dividing the ankylosed segments 4 and 5 of the Limulus leg into two. (After Pocock, Q. J. Mic. Sci., 1901.)}}
 
 {{IMG:1911 Britannica-Arachnida-Buthusaustralis.png|Fig. 51.—Drawing from life of the desert scorpion, Buthusaustralis, Lin., from Biskra, N. Africa. (From Lankester, Journ. Linn. Soc. Zool. vol. xvi., 1881.)}}
 
@@ -442,7 +519,11 @@ B. Dorsal view of the opisthosoma of the same
 
 «I»Note«/I».—The possibility of another interpretation of the anterior somites of the mesosoma and the prae-genital somite must be borne in mind. Possibly, though not probably, the somites carrying the two lung-sacs correspond to the first two lung-bearing somites of «I»Scorpio«/I», and it is the genital opening which has shifted. The same caution applies in the case of the Araneae. Excalation of one or of two anterior mesosomatic somites, besides the prae-genital somite, would then have to be supposed to have occurred also.
 
-{{IMG:1911 Britannica-Arachnida-Thelyphonus assamensis.png|Fig. 56.—Thelyphonus assamensis ♂. Ventral surface of the anterior region of the opisthosoma, the first somite being pushed upwards and forwards so as to expose the subjacent structures. opistho 1, First somite of the opisthosoma; opistho 2, second do.; g, genital aperture; l, edges of the lamellae of the lung-books; m, stigmata of tergo-sternal muscles.(Original drawing by Pocock.)}}
+{{IMG:1911 Britannica-Arachnida-Thelyphonus assamensis.png|Fig. 56.—Thelyphonus assamensis ♂. Ventral surface of the anterior region of the opisthosoma, the first somite being pushed upwards and forwards so as to expose the subjacent structures. opistho 1, First somite of the opisthosoma; opistho 2, second do.;}}
+
+{{LEGEND:g. genital aperture;
+l. edges of the lamellae of the lung-books;
+m. stigmata of tergo-sternal muscles.(Original drawing by Pocock.)}LEGEND}
 
 Sub-order «I»a.«/I» Uropygi.—Prosoma longer than wide, its sternal area very narrow, furnished with a large prosternal and metasternal plate, and often with a small mesosternal sclerite. Appendages of 2nd pair with their basal segments united in the middle line and incapable of lateral movement; appendages of 3rd pair with only the apical segment many-jointed. Opisthosoma without trace of appendages; its posterior somites narrowed to form a movable tail for the support of the post-anal sclerite, which has no poison glands.
 
@@ -478,7 +559,11 @@ Family—Liphistiidae («I»Liphistius«/I», *«I»Arthrolycosa«/I»).
 
 Sub-order «I»b«/I». Opisthothelae (see fig. 63).—Opisthosoma without trace of separate terga and sterna, the segmentation merely represented posteriorly by slight integumental folds and the sterna of the 1st and 2nd somites by the opercular plates of the pulmonary sacs. The spinning appendages migrate to the posterior end of the opisthosoma and take up a position close to the anus; the inner branches of the anterior pair either atrophy or are represented homogenetically by a plate, the cribellum, or by an undivided membranous lobe, the colulus.
 
-{{IMG:1911 Britannica-Arachnida-Liphistius desultor3.png|Fig. 62.—Liphistius desultor. Lateral view. I to VI, Appendages of the prosoma cut off at the base. o, Ocular tubercle. praegen, The prae-genital somite. 1 and 2, Sternites of the first and second opisthosomatic somites. 3 and 4, Appendages of the third and fourth opisthosomatic somites, which are the spinning organs, and in this genus occupy their primitive position instead of migrating to the anal region as in other spiders. 5, Tergite of the fifth opisthosomatic somite. 11, Eleventh opisthosomatic somite; an, Anus.(Original.)}}
+{{IMG:1911 Britannica-Arachnida-Liphistius desultor3.png|Fig. 62.—Liphistius desultor. Lateral view. I to VI, Appendages of the prosoma cut off at the base.}}
+
+{{LEGEND:o. Ocular tubercle
+praegen. The prae-genital somite. 1 and 2, Sternites of the first and second opisthosomatic somites. 3 and 4, Appendages of the third and fourth opisthosomatic somites, which are the spinning organs, and in this genus occupy their primitive position instead of migrating to the anal region as in other spiders. 5, Tergite of the fifth opisthosomatic somite. 11, Eleventh opisthosomatic somite;
+an. Anus.(Original.)}LEGEND}
 
 Tribe 1. Mygalomorphae.—The plane of the articulation of the appendages of the 1st pair to the prosoma (the retrovert) vertical, the basal segment projecting straight forwards at its proximal end, the distal segment or fang closing backwards in a direction subparallel to the long axis of the body. Two pairs of pulmonary sacs.
 
@@ -486,9 +571,19 @@ Families—Theraphosidae («I»Avicularia, Poecilotheria«/I»). Barychelidae (�
 
 «I»Remarks on the Araneae«/I».—The Spiders are the most numerous PAGE:322and diversified group of the Arachnida; about 2000 species are known. No noteworthy fossil spiders are known; the best-preserved are in amber of Oligocene age. «I»Protolycosa«/I» and «I»Arthrolycosa«/I» occur in the Carboniferous. Morphologically, the spiders are remarkable for the concentration and specialization of their structure, which is accompanied with high physiological efficiency. The larger species of Bird’s Nest Spiders («I»Avicularia«/I»), the opisthosoma of which is as large as a bantam’s egg, undoubtedly attack young birds, and M‘Cook gives an account of the capture in its web by an ordinary house spider of a small mouse. The “retrovert” or bent-back first pair of appendages is provided with a poison gland opening on the fang or terminal segment. Spiders form at least two kinds of constructions—snares for the capture of prey and nests for the preservation of the young. The latter are only formed by the female, which is a larger and more powerful animal than the male. Like the scorpions the spiders have a special tendency to cannibalism, and accordingly the male, in approaching the female for the purpose of fertilizing her, is liable to be fallen upon and sucked dry by the object of his attentions. The sperm is removed by the male from the genital aperture into a special receptacle on the terminal segment of the 2nd prosomatic appendage. Thus held out at some distance from the body, it is cautiously advanced by the male spider to the genital aperture of the female.
 
-{{IMG:1911 Britannica-Arachnida-Mygalomorphae.png|Fig. 63.—Ventral view of a male mygalomorphous spider. I to VI, The six pairs of prosomatic appendages. a, Copulatory apparatus of the second appendage. b, Process of the fifth joint of the third appendage. M, Mouth. pro, Prosternite of the prosoma. mes, Mesosternite of the prosoma: observe the contact of the coxae of the sixth pair of limbs behind it; compare Liphistius (fig. 61) where this does not occur. stg, Lung aperture. gn, Genital aperture. a, Anus with a pair of backwardly migrated spinning appendages on each side of it; compare the position of these appendages in Liphistius (fig. 61).(From Lankester, “Limulus an Arachnid.”)}}
+{{IMG:1911 Britannica-Arachnida-Mygalomorphae.png|Fig. 63.—Ventral view of a male mygalomorphous spider. M, Mouth. pro, Prosternite of the prosoma. stg, Lung aperture. gn, Genital aperture. (From Lankester, “Limulus an Arachnid.”)}}
 
-{{IMG:1911 Britannica-Arachnida-Liphistius desultor4.png|Fig. 64.—Liphistius desultor. Under side of the uplifted genital or first opisthosomatic somite of the female; g, genital aperture; p, pitted plate, probably a gland for the secretion of adhesive material for the eggs; l, the edges of the lamellae of the lung-books of the first pair.(Original drawing by Pocock.)}}
+{{LEGEND:I to VI. The six pairs of prosomatic appendages
+«I»a«/I». Copulatory apparatus of the second appendage
+«I»b«/I». Process of the fifth joint of the third appendage
+«I»mes«/I». Mesosternite of the prosoma: observe the contact of the coxae of the sixth pair of limbs behind it; compare «I»Liphistius«/I» (fig. 61) where this does not occur
+«I»a«/I». Anus with a pair of backwardly migrated spinning appendages on each side of it; compare the position of these appendages in «I»Liphistius«/I» (fig. 61)}LEGEND}
+
+{{IMG:1911 Britannica-Arachnida-Liphistius desultor4.png|Fig. 64.—Liphistius desultor. Under side of the uplifted genital or first opisthosomatic somite of the female;}}
+
+{{LEGEND:g. genital aperture;
+p. pitted plate, probably a gland for the secretion of adhesive material for the eggs;
+l. the edges of the lamellae of the lung-books of the first pair.(Original drawing by Pocock.)}LEGEND}
 
 For an account of the courtship and dancing of spiders, of their webs and floating lines, the reader is referred to the works of M‘Cook («B»30«/B») and the Peckhams («B»31«/B»), whilst an excellent account of the nests of trap-door spiders is given by Moggridge («B»32«/B»). References to systematic works will also be found at the end of this article («B»33«/B»).
 
@@ -519,7 +614,13 @@ Family—Koeneniidae («I»Koenenia«/I»).
 
 Families—Hexisopodidae («I»Hexisopus«/I»). Solpugidae («I»Solpuga, Rhagodes«/I»). Galeodidae («I»Galeodes«/I»). PAGE:323«I»Remarks«/I».—These most strange-looking Arachnids occur in warmer temperate, and tropical regions of Asia, Africa and America. Their anatomy has not been studied, as yet, by means of freshly-killed material, and is imperfectly known, though the presence of the coxal glands was determined by Macleod in 1884. The proportionately enormous chelae (chelicerae) of the first pair of appendages are not provided with poison glands; their bite is not venomous.
 
-{{IMG:1911 Britannica-Arachnida-Galeodes.png|Fig. 66.—Galeodes sp., one of the Solifugae. Ventral view to show legs and somites. I to VI, The six leg-bearing somites of the prosoma. opisth 1, First or genital somite of the opisthosoma. ge, Site of the genital aperture. st, Thoracic tracheal aperture. l², Anterior tracheal aperture of the opisthosoma in somite 2 of the opisthosoma. l³, Tracheal aperture in somite 3 of the opisthosoma. a, Anus. (From Lankester, “Limulus an Arachnid.”)}}
+{{IMG:1911 Britannica-Arachnida-Galeodes.png|Fig. 66.—Galeodes sp., one of the Solifugae. Ventral view to show legs and somites. I to VI, The six leg-bearing somites of the prosoma. opisth 1, First or genital somite of the opisthosoma. (From Lankester, “Limulus an Arachnid.”)}}
+
+{{LEGEND:ge. Site of the genital aperture
+st. Thoracic tracheal aperture
+l². Anterior tracheal aperture of the opisthosoma in somite 2 of the opisthosoma
+l³. Tracheal aperture in somite 3 of the opisthosoma
+a. Anus}LEGEND}
 
 {{IMG:1911 Britannica-Arachnida-Galeodes2.png}}
 
@@ -554,11 +655,12 @@ Family—Cheliferidae («I»Chelifer«/I» (figs. 70, 71, 72), «I»Chiridium«/
 
 {{IMG:1911 Britannica-Arachnida-Garypus litoralis3.png|Fig. 72.—Garypus litoralis, one of the Pseudoscorpiones. Lateral view. (Original.)}}
 
-{{LEGEND:o. Eyes
-prae-gen. Tergite of the prae-genital somite
+{{LEGEND:I to VI. Basal segments of the six prosomatic appendages
+«I»prae-gen«/I». Tergite of the prae-genital somite
 1. Genital or first opisthosomatic somite
-11. The minute eleventh somite;
-an. The anus}LEGEND}
+2, 3, 10. The second, third and tenth somites of the opisthosoma
+«I»o«/I». Eyes
+11. The minute eleventh somite; an, The anus}LEGEND}
 
 Sub-order «I»b«/I». Hemictenodactyli.—Dorsal plate of prosoma scarcely narrowed in front; the appendages of the 1st pair large, not much narrower, taken together, than the posterior border of the carapace. The serrula or the movable digit free at its distal end, narrowed at the base; no external lamina on the immovable digit.
 
@@ -582,7 +684,11 @@ Family—Cryptostemmidae («I»Cryptostemma, Poliochera«/I»), Carboniferous.
 
 «I»Remarks on the Podogona«/I».—The name given to this small but remarkable group has reference to the position of the male intromittent organ (fig. 73, «SC»e«/SC»). They are small degenerate animals with a relatively firm integument. Not more than four species and twice that number of specimens are known. They have been found in West Africa and South America. A fact of special interest in regard to them is that the genus Poliochera, from the Coal Measures, appears to be a member of the same group. The name Cryptostemma, given to the first-known genus of the order, described by Guérin-Méneville, refers to the supposed concealment of the eyes by the movable cephalic sclerite. Reference to literature (38).
 
-{{IMG:1911 Britannica-Arachnida-Cryptostemma Karschii3.png|Fig. 75.—Cryptostemma Karschii, one of the Podogona. Ventral view. I to VI, The six pairs of appendages of the prosoma, the last three cut short. 1, 2, 3, 4, The four somites of the opisthosoma. a. Visible hood overhanging the first pair of appendages. b, Position of the genital orifice. c, Part of 3rd appendage. d, Fourth segment of 2nd appendage. Observe that the basal segment of appendage III does not meet its fellow in the middle line.(Original drawing by Pocock and Pickard-Cambridge.)}}
+{{IMG:1911 Britannica-Arachnida-Cryptostemma Karschii3.png|Fig. 75.—Cryptostemma Karschii, one of the Podogona. Ventral view. I to VI, The six pairs of appendages of the prosoma, the last three cut short. 1, 2, 3, 4, The four somites of the opisthosoma. a. Visible hood overhanging the first pair of appendages.}}
+
+{{LEGEND:b. Position of the genital orifice
+c. Part of 3rd appendage
+d. Fourth segment of 2nd appendage. Observe that the basal segment of appendage III does not meet its fellow in the middle line.(Original drawing by Pocock and Pickard-Cambridge.)}LEGEND}
 
 {{IMG:1911 Britannica-Arachnida-Cryptostemma Karschii4.png|Fig. 76.—Cryptostemma Karschii. Extremity of the fifth pair of appendages of the female for comparison with that of the male E in fig. 73.}}
 
@@ -604,7 +710,13 @@ Families—Sironidae («I»Siro, Pettalus«/I»). Stylocellidae («I»Stylocellu
 
 «I»Remarks on the Opiliones«/I».—These include the harvest-men, sometimes called also daddy-long-legs, with round undivided bodies and very long, easily-detached legs. The intromittent organs of the male are remarkable for their complexity and elaboration. The confluence of the regions of the body and the dislocation of apertures from their typical position are results of degeneration. The Opiliones seem to lead on from the Spiders to the Mites. Reference to literature («B»39«/B»).
 
-{{IMG:1911 Britannica-Arachnida-Stylocellus sumatranus.png|Fig. 77.—Stylocellus sumatranus, one of the Opiliones; after Thorell. Enlarged. A, Dorsal view; I to VI, the six prosomatic appendages. B, Ventral view of the prosoma and of the first somite of the opisthosoma, with the appendages I to VI cut off at the base; a, tracheal stigma; mx, maxillary processes of the coxae of the 3rd pair of appendages; g, genital aperture. C, Ventral surface of the prosoma and opisthosoma; a, tracheal stigma; b, last somite. D, Lateral view of the 1st and 2nd pair of appendages. E, Lateral view of the whole body and two 1st appendages, showing the fusion of the dorsal elements of the prosoma into a single plate, and of those of the opisthosoma into an imperfectly segmented plate continuous with that of the prosoma.}}
+{{IMG:1911 Britannica-Arachnida-Stylocellus sumatranus.png|Fig. 77.—Stylocellus sumatranus, one of the Opiliones; after Thorell. Enlarged. A, Dorsal view; I to VI, the six prosomatic appendages. B, Ventral view of the prosoma and of the first somite of the opisthosoma, with the appendages I to VI cut off at the base;}}
+
+{{LEGEND:a. tracheal stigma;
+mx. maxillary processes of the coxae of the 3rd pair of appendages;
+g. genital aperture. C, Ventral surface of the prosoma and opisthosoma;
+a. tracheal stigma;
+b. last somite. D, Lateral view of the 1st and 2nd pair of appendages. E, Lateral view of the whole body and two 1st appendages, showing the fusion of the dorsal elements of the prosoma into a single plate, and of those of the opisthosoma into an imperfectly segmented plate continuous with that of the prosoma}LEGEND}
 
 Apparently related to the Opiliones are two extinct groups, the Anthracomarti and Phalangiotarbi, which are not known to have survived the Carboniferous period. In the Anthracomarti the opisthosoma was movably articulated to the prosoma, and consisted of from eight to ten segments furnished with movable lateral plates, the anal segment being overlapped dorsally by a laminate expansion of the preceding segment. The carapace of the prosoma was unsegmented and often bore a pair of eyes. The appendages of the 2nd pair were slender and pediform; those of the 3rd, 4th, 5th and 6th pairs were similar in form and ambulatory in function with their basal segments arranged round a sternal area as in the order Araneae. The best-known genera were «I»Anthracomartus«/I» and «I»Eophognus«/I».
 
@@ -630,12 +742,12 @@ Sub-order «I»d. Prostigmata«/I».—Integument soft, strengthened by special 
 
 Families—Trombidiidae («I»Trombidium, Tetranychus«/I»). Hydrachnidae («I»Hydrachna, Atax«/I»). Halacaridae («I»Halacarus, Leptognathus«/I»). Bdellidae («I»Bdella, Eupodes«/I»).
 
-{{IMG:1911 Britannica-Arachnida-Holothyrus nitidissimus.png|Fig. 78.—Holothyrus nitidissimus, one of the Acari; after Thorell.}}
+{{IMG:1911 Britannica-Arachnida-Holothyrus nitidissimus.png|Fig. 78.—Holothyrus nitidissimus, one of the Acari; after Thorell. (A, Lateral view with appendages III to VI removed; 1, plate covering the whole dorsal area, representing the fused tergal sclerites of the prosoma and opisthosoma; 2, similarly-formed ventral plate; 3, tracheal stigma. B, Dorsal view of the same animal; II to VI, 2nd to 6th pairs of appendages. The 1st pair of appendages both in this and in C are retracted. C, Ventral view of the same; II to VI as in B;.)}}
 
-{{LEGEND:A. Lateral view with appendages III to VI removed; 1, plate covering the whole dorsal area, representing the fused tergal sclerites of the prosoma and opisthosoma; 2, similarly-formed ventral plate; 3, tracheal stigma
-B. Dorsal view of the same animal; II to VI, 2nd to 6th pairs of appendages. The 1st pair of appendages both in this and in C are retracted
-C. Ventral view of the same; II to VI as in B; a, genital orifice; b, anus; c, united basal segments of the second pair of appendages; d, basal segment of the 6th prosomatic appendage of the right side. The rest of the appendage, as also of app
-III. IV and V, has been cut away}LEGEND}
+{{LEGEND:a. genital orifice;
+b. anus;
+c. united basal segments of the second pair of appendages;
+d. basal segment of the 6th prosomatic appendage of the right side. The rest of the appendage, as also of app. III, IV and V, has been cut away}LEGEND}
 
 Sub-order «I»e. Astigmata«/I».—Degenerate, mostly parasitic forms approaching the Prostigmata in the development of integumental sclerites and the softness of the skin, but with the respiratory system absent.
 
