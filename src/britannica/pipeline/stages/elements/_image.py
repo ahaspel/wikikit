@@ -13,6 +13,73 @@ from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.captions import clean_caption
 
 
+def build_img_marker(
+    filename: str,
+    caption: str | None = None,
+    *,
+    align: str | None = None,
+    width: int | None = None,
+    height: int | None = None,
+) -> str:
+    """The single constructor for ``{{IMG:…}}`` markers.
+
+    Emits ``{{IMG:filename[|align=…][|width=N][|height=N][|caption]}}`` —
+    layout metadata first (in that fixed order, only when non-default),
+    caption last so it may contain ``|`` / ``=`` freely.  The grammar is
+    defined once in ``britannica.markers`` (``IMG_PARTS_RE``) and decoded
+    only by the renderer; see that module for the contract.
+
+    ``align``/``width``/``height`` are *optional* — producers that don't
+    have the source params (the layout/plate/table sites that work from a
+    bare filename) call ``build_img_marker(fn, cap)`` exactly as before and
+    get the identical metadata-free marker.
+
+    Applies ``clean_caption`` so every producer emits a clean caption as
+    part of producing — not a downstream renormalization pass.  Idempotent,
+    so callers that already cleaned their caption can route through it
+    harmlessly.  Every IMG-emitting producer should build markers via this
+    helper rather than an ad-hoc f-string."""
+    if caption:
+        caption = clean_caption(caption)
+    fields: list[str] = []
+    if align:
+        fields.append(f"align={align}")
+    if width:
+        fields.append(f"width={width}")
+    if height:
+        fields.append(f"height={height}")
+    if caption:
+        fields.append(caption)
+    if fields:
+        return f"{{{{IMG:{filename}|{'|'.join(fields)}}}}}"
+    return f"{{{{IMG:{filename}}}}}"
+
+
+# MediaWiki image sizing: ``Npx`` = width, ``xNpx`` = height (width auto),
+# ``WxHpx`` = bounding box.  Returns ``(width, height)`` in px, either may
+# be None.  ``upright``/``upright=F`` (scale factor, ~0 occurrences) and
+# anything unrecognized → ``(None, None)`` (renderer falls back to default).
+_SIZE_TOKEN_RE = re.compile(r"(\d+)?(?:x(\d+))?px$", re.IGNORECASE)
+
+
+def _parse_image_size(token: str) -> tuple[int | None, int | None]:
+    m = _SIZE_TOKEN_RE.fullmatch(token.strip())
+    if not m:
+        return (None, None)
+    w = int(m.group(1)) if m.group(1) else None
+    h = int(m.group(2)) if m.group(2) else None
+    return (w, h)
+
+
+# Explicit alignment keywords in an image's own params.  ``centre`` folds
+# to ``center``; ``none`` is not an alignment (it suppresses the default
+# float, i.e. block flow — our default already), so it is ignored.
+_ALIGN_KEYWORDS = {"center": "center", "centre": "center",
+                   "left": "left", "right": "right"}
+_DISPLAY_KEYWORDS = frozenset({
+    "thumb", "thumbnail", "frameless", "frame", "border", "none", "upright"})
+
+
 def _process_image(inner: str, text_transform) -> str:
     """Convert image content (already stripped of [[File:...]]) to {{IMG:filename|clean caption}}."""
     # Check for external caption (from plate pages: image + caption on next line)
@@ -23,20 +90,33 @@ def _process_image(inner: str, text_transform) -> str:
     parts = [p.strip() for p in inner.split("|")]
     filename = parts[0]
 
-    # Extract caption (last non-keyword, non-size part)
-    keywords = {"center", "left", "right", "thumb", "thumbnail", "frameless",
-                "frame", "border", "upright", "none"}
-    caption = ""
-    for part in reversed(parts[1:]):
+    # Single forward pass over the params, partitioning into layout
+    # metadata (align/size — carried into the marker) and positional
+    # values (the caption is the last positional, matching the prior
+    # "last non-keyword part" rule).
+    align: str | None = None
+    width: int | None = None
+    height: int | None = None
+    positional: list[str] = []
+    for part in parts[1:]:
         lower = part.lower()
-        if lower in keywords:
+        if lower in _ALIGN_KEYWORDS:
+            if align is None:
+                align = _ALIGN_KEYWORDS[lower]
             continue
-        if re.match(r"^\d+px$|^x\d+px$|^\d+x\d+px$", lower):
+        if lower in _DISPLAY_KEYWORDS or lower.startswith("upright="):
             continue
-        if "=" in part:  # named parameter
+        w, h = _parse_image_size(lower)
+        if w or h:
+            if w and width is None:
+                width = w
+            if h and height is None:
+                height = h
             continue
-        caption = part
-        break
+        if "=" in part:  # named parameter (link=, alt=, …)
+            continue
+        positional.append(part)
+    caption = positional[-1] if positional else ""
 
     # Use external caption if no inline caption
     if not caption and ext_caption:
@@ -44,9 +124,8 @@ def _process_image(inner: str, text_transform) -> str:
 
     if caption:
         caption = text_transform(caption)
-        caption = clean_caption(caption)
-        return f"{{{{IMG:{filename}|{caption}}}}}"
-    return f"{{{{IMG:{filename}}}}}"
+    return build_img_marker(
+        filename, caption or None, align=align, width=width, height=height)
 
 
 def _process_image_float(inner: str, text_transform) -> str:
@@ -66,10 +145,9 @@ def _process_image_float(inner: str, text_transform) -> str:
     caption = parsed.caption
     if caption:
         caption = text_transform(caption)
-        caption = clean_caption(caption)
-    if caption:
-        return f"{{{{IMG:{parsed.filename}|{caption}}}}}"
-    return f"{{{{IMG:{parsed.filename}}}}}"
+    return build_img_marker(
+        parsed.filename, caption or None,
+        align=parsed.align, width=parsed.width)
 
 
 _CSS_CROP_RE = re.compile(

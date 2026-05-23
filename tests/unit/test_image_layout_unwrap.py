@@ -123,12 +123,14 @@ WEIGHING_MACHINES = (
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
-IMG_RE = re.compile(r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}")
+# Central grammar — group 1 filename, group 2 meta-block, group 3 caption.
+# Matches the whole marker, so `IMG_RE.sub("", body)` still strips cleanly.
+from britannica.markers import IMG_PARTS_RE as IMG_RE
 
 
 def extract_imgs(body: str) -> list[tuple[str, str | None]]:
     """Return [(filename, caption), ...] for every IMG marker in body."""
-    return [(m.group(1), m.group(2)) for m in IMG_RE.finditer(body)]
+    return [(m.group(1), m.group(3)) for m in IMG_RE.finditer(body)]
 
 
 def count_substring(body: str, needle: str) -> int:

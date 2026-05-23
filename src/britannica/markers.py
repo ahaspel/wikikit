@@ -118,11 +118,54 @@ def strip_title_markers(title: str) -> str:
     return _TITLE_MARKER_RE.sub("", title)
 
 
-# Image markers — full ``{{IMG:filename|optional caption}}`` block.
-# ``IMG_RE`` matches the whole marker (use to strip), ``IMG_PARTS_RE``
-# captures filename and optional caption.
+# Image markers — full ``{{IMG:filename|meta…|optional caption}}`` block.
+#
+# Grammar (the article encodes this; the renderer is the sole decoder):
+#
+#     {{IMG:filename[|align=center|left|right][|width=N][|height=N][|caption]}}
+#
+# ``filename`` is the first ``|``-separated segment; then zero or more
+# layout-metadata fields (``align``/``width``/``height``, in that order),
+# emitted only when non-default; then the caption is the rest (so it may
+# freely contain ``|`` and ``=``).  ``align=inline`` is the unified
+# inline-glyph form (folded in from the old ``{{IMG-INLINE:}}`` marker);
+# the positional decision that an image is inline is made pre-extraction
+# by ``promote_inline_glyphs`` (the producer can't see position), but the
+# encoding and rendering are the same as any other image.
+#
+# The metadata alternation is value-typed (``align`` is a side word,
+# ``width``/``height`` are digits) so a prose caption can never be
+# mistaken for a field — the only way the meta block matches is a literal
+# ``align=left`` / ``width=375`` segment, which captions never start with.
+# Backward-compatible: a marker with no meta fields parses exactly as
+# before (group 2 empty, group 3 = caption).
+#
+# ``IMG_RE`` matches the whole marker (use to strip — unaffected by the
+# internal fields).  ``IMG_PARTS_RE`` captures (filename, meta-block,
+# caption); parse the meta-block with ``parse_img_meta``.  The same
+# regex source is mirrored verbatim in viewer.html.
 IMG_RE = _re.compile(r"\{\{IMG:[^}]*\}\}")
-IMG_PARTS_RE = _re.compile(r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}")
+
+_IMG_META_FIELD = r"align=(?:center|left|right|inline)|width=\d+|height=\d+"
+IMG_PARTS_RE = _re.compile(
+    r"\{\{IMG:([^|}]+)"
+    r"((?:\|(?:" + _IMG_META_FIELD + r"))*)"
+    r"(?:\|([^{}]*))?\}\}"
+)
+
+_IMG_META_KV_RE = _re.compile(r"(align|width|height)=([^|]+)")
+
+
+def parse_img_meta(meta_block: str) -> dict:
+    """Parse the meta-block (group 2 of ``IMG_PARTS_RE``) into a dict.
+
+    ``width``/``height`` come back as ints; ``align`` as a string.
+    Empty block → empty dict.
+    """
+    out: dict[str, object] = {}
+    for key, val in _IMG_META_KV_RE.findall(meta_block):
+        out[key] = int(val) if key in ("width", "height") else val
+    return out
 
 
 # Open-prefixes for the `{{X:…}}`-shape markers that survive cleaning
@@ -137,7 +180,6 @@ IMG_PARTS_RE = _re.compile(r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}")
 # ``{{`` braces.
 RENDERED_MARKER_OPENS: tuple[str, ...] = (
     "{{IMG:",
-    "{{IMG-INLINE:",
     "{{TABLE:",
     "{{TABLEH:",
     "{{LEGEND:",

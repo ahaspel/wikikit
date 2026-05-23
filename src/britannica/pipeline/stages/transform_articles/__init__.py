@@ -20,7 +20,6 @@ from britannica.db.session import SessionLocal
 from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.cleaners.reflow import reflow_paragraphs
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
-from britannica.captions import clean_caption
 from britannica.pipeline.stages.transform_articles.body_text import (
     _FMT,
     _FRAKTUR_MAP,
@@ -68,7 +67,6 @@ from britannica.pipeline.stages.transform_articles.legend_promote import (
     _parse_legend_lines,
     _parse_table_as_legend,
     _parse_verse_as_legend,
-    _process_figures,
     _promote_legend_tables,
     _promote_legend_verses,
     _promote_paragraph_legends,
@@ -467,18 +465,24 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         r"\1", text, flags=re.DOTALL | re.IGNORECASE,
     )
 
-    # Unwrap `{{center|[[File:…]]<br>caption}}` to `[[File:…]]\ncaption`
-    # so bare (non-wikitable-wrapped) instances flow through the IMAGE
-    # extractor.  Carry-over from the catch-all era — should eventually
-    # migrate to a focused producer/extractor for the bare-`{{center|`
-    # shape so the in-wikitable case (handled by CAPTIONED_FIGURE_INLINE)
-    # and bare case both live in producers.  See memory:
-    # preprocessing-is-producer-work.
+    # Bare (in-prose) `{{center|[[File:…]]<br>caption}}` → split the
+    # image and caption onto separate lines so the IMAGE extractor
+    # pairs them.  Anchored to a line start (`^\s*{{center`) so it
+    # fires ONLY for the bare paragraph form; an in-WIKITABLE instance
+    # sits after a cell marker (`|{{center`) and is left for the
+    # CAPTIONED_FIGURE_INLINE producer.
+    #
+    # This is the residual bare-image caption-pairing step.  The clean
+    # retirement (folding it into the IMAGE walker's EXTCAP) was tried
+    # and reverted: EXTCAP is context-blind, so a `<br>`-caption rule
+    # there grabs captions for in-wikitable and prose images alike,
+    # regressing Fig 10/57/58.  A context-aware bare-image extractor is
+    # the proper long-term home; this anchored pass is the interim.
     text = re.sub(
-        r"\{\{center\|(\[\[(?:File|Image):[^\]]+\]\])\s*<br\s*/?>\s*"
+        r"^[ \t]*\{\{center\|(\[\[(?:File|Image):[^\]]+\]\])\s*<br\s*/?>\s*"
         r"((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",
         r"\1\n\2",
-        text, flags=re.IGNORECASE,
+        text, flags=re.IGNORECASE | re.MULTILINE,
     )
 
     # Unwrap fine print markers
@@ -586,13 +590,6 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
             if marker in text:
                 text = text.replace(marker, f"{marker}\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n", 1)
 
-    # Single-pass figure walker: for each `{{IMG:…}}`, collect
-    # attribution lines + legend-shaped content (in any wrapper —
-    # VERSE, TABLE, paragraphs) up to the figure boundary, then emit
-    # one clean `{{IMG:…|caption}}` + optional `{{LEGEND:…}LEGEND}`.
-    # Replaces the previous zoo of container-specific promoters.
-    text = _process_figures(text)
-
     # Rejoin words split by line-break hyphenation (`trans- \nlation` →
     # `translation`).  Must run before reflow_paragraphs, which would
     # otherwise convert the line break to a space and freeze the broken
@@ -616,21 +613,6 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # Preserve `,,` adjacent (ditto marks in tables).
     text = re.sub(r",(\s+,)+", ",", text)
     text = re.sub(r",\s*([;.])", r"\1", text)
-
-    # Final IMG-caption normalization: re-run clean_caption over every
-    # `{{IMG:fn|cap}}` regardless of which handler emitted it.  The
-    # wiki-table-around-image paths (`_process_table` /
-    # `_layout._unwrap_layout_table`) build the caption from
-    # text_transform'd cells without running clean_caption, so an
-    # *unclosed* `{{left|` opener, a leaked cell-attr string, or an
-    # undecoded entity can survive (AMICE Fig. 2 — the source's
-    # `{{left|…` has no closing `}}`).  Idempotent on captions already
-    # cleaned upstream by _image.py / legend_promote.
-    def _renorm_img_caption(m: re.Match) -> str:
-        cap = clean_caption(m.group(2))
-        return (f"{{{{IMG:{m.group(1)}|{cap}}}}}" if cap
-                else f"{{{{IMG:{m.group(1)}}}}}")
-    text = re.sub(r"\{\{IMG:([^|}]+)\|([^}]*)\}\}", _renorm_img_caption, text)
 
     # Final blank-line collapse.  Element-marker insertions
     # (`{{IMG:…}}`, `{{LEGEND:…}LEGEND}`, etc.) each wrap themselves in

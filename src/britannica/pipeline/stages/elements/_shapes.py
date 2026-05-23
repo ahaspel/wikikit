@@ -29,6 +29,7 @@ SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
 SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}} region
+SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -39,6 +40,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_DOUBLE_BRACE,
     SHAPE_OUTLINE,
     SHAPE_CHART2,
+    SHAPE_FIGURE,
 })
 
 
@@ -58,6 +60,10 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_CHART2,
     SHAPE_OUTLINE,
+    # FIGURE — the producer owns the whole image+caption span: it re-processes
+    # a copy with figure-recognition off and assembles, so the main walk must
+    # NOT recurse into the raw here.
+    SHAPE_FIGURE,
 })
 
 
@@ -104,5 +110,9 @@ def strip_outer(shape: str, raw: str) -> str:
         # CHART2's bytes are chart-grammar templates; we never walk
         # inside.  Return empty so a downstream `walker.walk("")`
         # trivially yields no extracts.
+        return ""
+    if shape == SHAPE_FIGURE:
+        # Leaf — the producer reads `raw` (re-processes + assembles it); the
+        # main walk needs no inner content here.
         return ""
     raise ValueError(f"Unknown shape: {shape!r}")

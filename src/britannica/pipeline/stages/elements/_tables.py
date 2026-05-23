@@ -913,7 +913,7 @@ def _process_table(inner: str, text_transform,
                         caption = " ".join(c.strip() for c in row2_cells
                                            if c.strip())
                         if caption:
-                            return f"{{{{IMG:{filename}|{caption}}}}}"
+                            return f"{{{{IMG:{filename}|{clean_caption(caption)}}}}}"
                         return f"{{{{IMG:{filename}}}}}"
 
     # Single-column tables (1 cell per row) are text blocks, not data tables.

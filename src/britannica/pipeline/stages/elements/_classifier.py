@@ -48,6 +48,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
+    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
@@ -228,6 +229,8 @@ def _derive_label(
         return "CHART2"
     if shape == SHAPE_OUTLINE:
         return "OUTLINE"
+    if shape == SHAPE_FIGURE:
+        return "FIGURE"
     raise ValueError(f"Unknown shape: {shape!r}")
 
 
@@ -259,8 +262,11 @@ def classify(
         # an OUTLINE — prevents the outline extractor from
         # re-triggering on its own bytes (today's `recurse_safe`).
         next_allow_outline = _allow_outline and shape != SHAPE_OUTLINE
+        # Figures are body-level only — never recognize one inside an
+        # already-extracted element (incl. the FIGURE producer's own
+        # re-processing of its span, which would recurse forever).
         inner_text, extracts = walk(
-            peeled, _allow_outline=next_allow_outline)
+            peeled, _allow_outline=next_allow_outline, _allow_figure=False)
         inner_registry = {}
         for ph, child_shape, child_raw in extracts:
             inner_registry[ph] = classify(
@@ -286,7 +292,7 @@ def classify(
 
 
 def classify_article(
-    text: str,
+    text: str, _allow_figure: bool = True,
 ) -> tuple[str, dict[str, ClassifiedElement]]:
     """Top-level entry: classify every embedded element in an article
     body.
@@ -294,8 +300,12 @@ def classify_article(
     Returns ``(placeholderized_text, top_level_registry)`` where
     ``top_level_registry`` is ``dict[placeholder, ClassifiedElement]``
     — one record per top-level placeholder, recursively populated.
+
+    ``_allow_figure=False`` (used by the FIGURE producer's own re-process
+    of its span) suppresses figure recognition so it doesn't re-recognize —
+    and recurse on — its own span.
     """
-    placeholderized_text, extracts = walk(text)
+    placeholderized_text, extracts = walk(text, _allow_figure=_allow_figure)
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)
@@ -303,43 +313,6 @@ def classify_article(
 
 
 # ── Producer pass over the classified tree ────────────────────────────
-
-
-def resolve_ref_bodies(
-    tree: dict[str, ClassifiedElement], text_transform
-) -> dict[str, str]:
-    """Build NAME → resolved-body map by scanning top-level REF
-    entries.  Replaces today's ``_resolve_ref_bodies`` which iterates
-    a legacy ``ElementRegistry``.  Walks tree's top-level entries only
-    — under today's walker, refs inside poems / tables surface as
-    flat top-level extracts thanks to extractor priority order, so
-    a top-level scan is sufficient.
-    """
-    import re as _re
-    from britannica.pipeline.stages.elements._ref import _ref_attrs
-    from britannica.pipeline.stages.elements._text import _clean_text
-
-    parts: dict[str, list[str]] = {}
-    for _ph, ce in tree.items():
-        if ce.label != "REF":
-            continue
-        name, follow = _ref_attrs(ce.raw)
-        body = _re.sub(
-            r"<ref(?:\s[^>]*)?>|</ref>", "", ce.raw,
-            flags=_re.IGNORECASE | _re.DOTALL,
-        ).strip()
-        if not body:
-            continue
-        target = follow or name
-        if not target:
-            continue
-        parts.setdefault(target, []).append(body)
-    resolved: dict[str, str] = {}
-    for nm, bodies in parts.items():
-        joined = " ".join(bodies)
-        joined = text_transform(joined)
-        resolved[nm] = _clean_text(joined)
-    return resolved
 
 
 def produce_tree(

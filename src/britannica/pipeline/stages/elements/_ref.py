@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._text import _clean_text
-
 
 _REF_NAME_ATTR_RE = re.compile(r'\bname\s*=\s*"?([^"\s/>]+)"?', re.IGNORECASE)
 _REF_FOLLOW_ATTR_RE = re.compile(r'\bfollow\s*=\s*"?([^"\s/>]+)"?', re.IGNORECASE)
@@ -68,8 +66,47 @@ def _process_ref(raw, inner, text_transform, ref_bodies=None):
         return ""
     if name and ref_bodies and name in ref_bodies:
         return f"«FN[{name}]:{ref_bodies[name]}«/FN»"
-    content = text_transform(inner)
-    content = _clean_text(content)
+    # Produce the body the same way the main body is produced — keep its
+    # markers («I»/«B»/«SC»/«LN»/IMG/nested-element placeholders), which
+    # produce_tree substitutes afterwards.  No _clean_text flatten: that
+    # stripped formatting and mangled rendered markers (the footnote
+    # producer must own its body, not delegate to a generic flattener).
+    content = text_transform(inner).strip()
     if name:
         return f"«FN[{name}]:{content}«/FN»"
     return f"«FN:{content}«/FN»"
+
+
+def resolve_ref_bodies(tree, text_transform) -> dict[str, str]:
+    """Article-scoped resolution of named / continuation footnotes.
+
+    ref and note are SPLIT by necessity: a ``<ref name=X/>`` reuse, the
+    ``<ref name=X>body</ref>`` definition, and any ``<ref follow=X>…``
+    continuation can each live anywhere in the article.  This reunites
+    them into NAME → body.  It is footnote-owned (it used to live in the
+    classifier) and, like the producer, KEEPS the body's markers — no
+    flatten — so footnote formatting / links / glyphs survive.
+
+    Walks the tree's top-level entries only — under today's walker, refs
+    inside poems / tables surface as flat top-level extracts, so a
+    top-level scan suffices.
+    """
+    parts: dict[str, list[str]] = {}
+    for _ph, ce in tree.items():
+        if ce.label != "REF":
+            continue
+        name, follow = _ref_attrs(ce.raw)
+        body = re.sub(
+            r"<ref(?:\s[^>]*)?>|</ref>", "", ce.raw,
+            flags=re.IGNORECASE | re.DOTALL,
+        ).strip()
+        if not body:
+            continue
+        target = follow or name
+        if not target:
+            continue
+        parts.setdefault(target, []).append(body)
+    resolved: dict[str, str] = {}
+    for nm, bodies in parts.items():
+        resolved[nm] = text_transform(" ".join(bodies)).strip()
+    return resolved

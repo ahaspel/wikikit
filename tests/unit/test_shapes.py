@@ -16,6 +16,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
+    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
@@ -25,8 +26,11 @@ from britannica.pipeline.stages.elements._shapes import (
 
 
 class TestShapeVocabulary:
-    def test_seven_shapes(self):
-        assert len(SHAPES) == 7
+    def test_shape_count(self):
+        # 7 delimiter-balanced/text shapes + FIGURE (image + structural
+        # caption run, recognized by the structural figure break).
+        assert len(SHAPES) == 8
+        assert SHAPE_FIGURE in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)

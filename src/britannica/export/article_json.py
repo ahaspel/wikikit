@@ -28,7 +28,8 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
-from britannica.markers import IMG_RE, strip_page_markers, strip_title_markers
+from britannica.markers import (
+    IMG_RE, IMG_PARTS_RE, strip_page_markers, strip_title_markers)
 from britannica.captions import clean_caption
 from britannica.export.plate_parent import find_parent_by_signal
 
@@ -656,20 +657,18 @@ def export_articles_to_json(
 
                 def _patch_img(m):
                     fn = m.group(1)
-                    existing = m.group(2)
+                    meta_block = m.group(2)  # "|align=…|width=…" or ""
+                    existing = m.group(3)
                     if existing:  # caption already inline — keep it
                         return m.group(0)
                     cap = _img_caps.get(fn)
                     if cap:
                         cap = _sanitize_caption(cap)
-                        return f"{{{{IMG:{fn}|{cap}}}}}" if cap else m.group(0)
+                        if cap:
+                            return f"{{{{IMG:{fn}{meta_block}|{cap}}}}}"
                     return m.group(0)
 
-                body = re.sub(
-                    r"\{\{IMG:([^|}]+)(?:\|([^{}]*))?\}\}",
-                    _patch_img,
-                    body,
-                )
+                body = IMG_PARTS_RE.sub(_patch_img, body)
 
             # Strip redundant bold article title at body start. EB1911
             # articles open with "'''TITLE'''" (rendered as «B»TITLE«/B»);

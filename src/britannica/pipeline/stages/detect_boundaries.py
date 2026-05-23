@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
+from britannica.pipeline.stages.title import produce_title
 import re
 
 # Raw wikitext section-begin tag.
@@ -221,56 +222,9 @@ def _extract_bold_delimited_title(text: str) -> tuple[str | None, str]:
                     break
                 else:
                     i += 1
-    body_raw = body_raw.lstrip(" \t,.")
+    # Recognition only: split the heading from the body. Comma-consumption
+    # (and title cleaning) is the title producer's job — see title.py.
     return title_raw, body_raw
-
-
-def _clean_extracted_title(title_raw: str) -> str:
-    """Flatten title-internal markup to plain text.
-
-    Removes:
-      - `«B»/«I»/«SC»` formatting markers (typography belongs in a
-        separate `title_html` field, computed at export time; the
-        DB-level `title` is plain so xref/contributor/search match
-        cleanly on string equality).
-      - `«FN:…«/FN»` footnote markers and raw `<ref…>…</ref>`.
-      - Wikilink shells: `[[Author:X|DISPLAY]]` / `[[X|Y]]` / `[[X]]`
-        collapse to display text.
-      - `{{sc|X}}` / `{{asc|X}}` / `{{smallcaps|X}}` small-caps
-        templates — unwrap to inner content.
-      - Any other `{{name|…}}` template (mono, fs, …) — flatten to
-        inner content.  `{{uc|X}}` uppercases its content.  Iterated
-        to a fixed point so nested templates unwrap fully.
-    """
-    t = title_raw
-    # Strip footnote markers (not appropriate in titles)
-    t = re.sub(r"«FN(?:\[[^\]]+\])?:.*?«/FN»", "", t, flags=re.DOTALL)
-    # Strip raw <ref>…</ref>
-    t = re.sub(r"<ref[^>]*>.*?</ref>", "", t, flags=re.DOTALL)
-    t = re.sub(r"<ref[^/]*/\s*>", "", t)
-    # Unwrap wikilinks
-    t = re.sub(r"\[\[(?:Author:)?[^\]|]*\|([^\]]+)\]\]", r"\1", t)
-    t = re.sub(r"\[\[([^\]|]+)\]\]", r"\1", t)
-    # Small-caps variants — unwrap to plain content (no marker; we
-    # strip markers below anyway).
-    t = re.sub(
-        r"\{\{(?:sc|asc|small[\s\-]?caps?)\|([^{}|]*)\}\}",
-        r"\1", t, flags=re.IGNORECASE,
-    )
-    # Iteratively unwrap remaining templates.
-    for _ in range(8):
-        before = t
-        t = re.sub(r"\{\{uc\|([^{}|]*)\}\}",
-                   lambda m: m.group(1).upper(), t, flags=re.IGNORECASE)
-        t = re.sub(r"\{\{[^{}|]+\|[^{}]*\|([^{}|]*)\}\}", r"\1", t)
-        t = re.sub(r"\{\{[^{}|]+\|([^{}|]*)\}\}", r"\1", t)
-        t = re.sub(r"\{\{[^{}|]+\}\}", "", t)
-        if t == before:
-            break
-    # Strip all formatting markers — title is plain text.
-    t = re.sub(r"«/?(?:B|I|SC)»", "", t)
-    t = re.sub(r"\s+", " ", t).strip().rstrip(",.;:")
-    return t
 
 
 
@@ -715,9 +669,11 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # legacy path.  Everything else is a continuation segment.
         _new_title_raw, _new_body_raw = _extract_bold_delimited_title(
             first_line_unwrapped)
-        _new_title = (_clean_extracted_title(_new_title_raw)
-                      if _new_title_raw else "")
-        _new_title = re.sub(r"\s+,", ",", _new_title).strip()
+        if _new_title_raw:
+            _new_title, _new_body_raw = produce_title(
+                _new_title_raw, _new_body_raw)
+        else:
+            _new_title = ""
 
         if _new_title and _has_valid_title_content(
                 _normalize_title(_new_title)):

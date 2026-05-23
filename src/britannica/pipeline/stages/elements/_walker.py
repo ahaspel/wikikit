@@ -32,10 +32,21 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
+    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
 )
+from britannica.pipeline.stages.elements._figure import (
+    figure_tail_end,
+    figure_wrapper_end,
+)
+
+# An image whose trailing caption run the figure rule may absorb: a bracket
+# `[[File:]]`/`[[Image:]]` or a `{{img float}}`/`{{figure}}`/`{{FI}}` template
+# (hieroglyph excluded).
+_FIG_IMAGE_RAW = re.compile(
+    r"\[\[(?:File|Image):|\{\{\s*(?:img\s*float|figure|FI)\b", re.IGNORECASE)
 
 
 # ── Recognizer patterns ───────────────────────────────────────────────
@@ -152,6 +163,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
+    r"|\{\{\s*(?:center|block\s*center)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{(?:img float|figure|FI|hieroglyph)\b",  # DOUBLE_BRACE templates
     re.IGNORECASE,
 )
@@ -240,7 +252,7 @@ def _new_placeholder() -> str:
 
 
 def _walk_balanced_shapes(
-    text: str,
+    text: str, _allow_figure: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """Single linear pass: find every position where a recognizer's
     opener could match, dispatch in opener-specificity order, take
@@ -251,6 +263,7 @@ def _walk_balanced_shapes(
     output: list[str] = []
     pos = 0
     n = len(text)
+    figures = _allow_figure
 
     while pos < n:
         hint = _OPENER_HINT_RE.search(text, pos)
@@ -265,11 +278,30 @@ def _walk_balanced_shapes(
         # Try every recognizer at this position in specificity order.
         # First successful match wins.
         matched: tuple[int, str, str] | None = None
-        for shape, pattern in _REGEX_RECOGNIZERS:
-            m = pattern.match(text, opener_pos)
-            if m is not None:
-                matched = (m.end(), shape, m.group(0))
-                break
+
+        # Figure wrapper: a `{{center|…image…}}` enclosing an image IS the
+        # figure unit — recognized before its inner image so the caption that
+        # lives inside the wrapper stays intact.
+        if figures:
+            w = figure_wrapper_end(text, opener_pos)
+            if w is not None:
+                matched = (w, SHAPE_FIGURE, text[opener_pos:w])
+
+        if matched is None:
+            for shape, pattern in _REGEX_RECOGNIZERS:
+                m = pattern.match(text, opener_pos)
+                if m is not None:
+                    matched = (m.end(), shape, m.group(0))
+                    break
+
+            # Figure tail: a bare image followed by a structural caption run
+            # becomes one FIGURE (image + caption), stopping at body prose.
+            if (figures and matched is not None
+                    and matched[1] in (SHAPE_DOUBLE_BRACKET, SHAPE_DOUBLE_BRACE)
+                    and _FIG_IMAGE_RAW.match(matched[2])):
+                fig_end = figure_tail_end(text, matched[0])
+                if fig_end > matched[0]:
+                    matched = (fig_end, SHAPE_FIGURE, text[opener_pos:fig_end])
 
         # BRACE_PIPE doesn't have a regex pattern — its closer
         # requires balanced depth tracking.  Try it last (lowest
@@ -323,7 +355,7 @@ def _walk_outline(
 
 
 def walk(
-    text: str, _allow_outline: bool = True
+    text: str, _allow_outline: bool = True, _allow_figure: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """One-level shape-emitting walker.
 
@@ -332,9 +364,12 @@ def walk(
 
     ``_allow_outline=False`` is passed when the parent shape is
     OUTLINE so the outline scanner doesn't re-trigger on its own
-    bytes.
+    bytes.  ``_allow_figure=False`` is passed for every recursive
+    (inside-an-element) descent so a figure — a body-level construct —
+    is only recognized at the article level, never inside another
+    element or the figure producer's own re-processing of its span.
     """
-    text, extracts = _walk_balanced_shapes(text)
+    text, extracts = _walk_balanced_shapes(text, _allow_figure)
     if _allow_outline:
         text, outline_extracts = _walk_outline(text)
         extracts.extend(outline_extracts)

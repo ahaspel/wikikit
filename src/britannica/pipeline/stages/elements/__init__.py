@@ -19,7 +19,6 @@ from typing import Callable
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._text import (
-    _clean_text,
     _convert_inline_sub_sup,
     _strip_br,
 )
@@ -173,6 +172,26 @@ def _passthrough_inner(raw, inner, text_transform, context,
     return inner
 
 
+def _produce_figure(raw, inner, text_transform, context, inner_registry):
+    """Assemble a figure (image + its structural caption run).
+
+    Re-process the span with figure recognition OFF (so the sub-walk doesn't
+    re-recognize — and recurse on — this span), then run the figure-assembly
+    utility over the produced markers.
+
+    TEMPORARY: reuses `_assemble_figures` so the output is byte-identical to the
+    `_process_figures` baseline (which then no-ops on the already-assembled
+    figure).  That equality is what proves body-preservation in the wire-in
+    verification; a structural producer replaces this once the break is trusted.
+    """
+    from britannica.pipeline.stages.transform_articles.legend_promote import (
+        _assemble_figures,
+    )
+    produced = process_elements(
+        raw, text_transform, context, _allow_figure=False)
+    return _assemble_figures(produced)
+
+
 # ── Producer dispatch ─────────────────────────────────────────────────
 #
 # Flat label → producer table.  Both wikitable sub-kinds (returned by
@@ -242,6 +261,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # at this level.  Initially shared with LAYOUT_WRAPPER.
     "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
+    # FIGURE — a bare image + its structural caption run, carved as one span
+    # by the walker.  Producer re-processes + assembles (see `_produce_figure`).
+    "FIGURE": _produce_figure,
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
         _process_complex_table(inner, tt),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
@@ -872,7 +894,8 @@ def _classify_table(raw: str, inner: str,
 
 # ── Public API ────────────────────────────────────────────────────────
 
-def process_elements(text: str, text_transform, context: ElementContext) -> str:
+def process_elements(text: str, text_transform, context: ElementContext,
+                     _allow_figure: bool = True) -> str:
     """Extract, process, and reassemble all embedded elements.
 
     Walker–classifier–producer pipeline.  The classifier drives
@@ -893,15 +916,16 @@ def process_elements(text: str, text_transform, context: ElementContext) -> str:
     from britannica.pipeline.stages.elements._classifier import (
         classify_article,
         produce_tree,
-        resolve_ref_bodies,
         substitute_top_level_markers,
     )
+    from britannica.pipeline.stages.elements._ref import resolve_ref_bodies
 
     # Walk + classify (one mutually-recursive pass).  Returns the
     # placeholderized article body plus a tree of ClassifiedElement
     # records — each element knows its own label, raw bytes, inner
     # text, and inner registry of classified children.
-    placeholderized_text, tree = classify_article(text)
+    placeholderized_text, tree = classify_article(
+        text, _allow_figure=_allow_figure)
 
     # Body text transform — operates on the prose between top-level
     # placeholders only.  Each element's inner content is transformed
