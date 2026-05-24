@@ -146,6 +146,57 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
     return cells
 
 
+# ── Syntax-neutral table-structure primitives ─────────────────────────
+#
+# The shape classifiers (ICL / verse / data) ask structural questions —
+# "is the image alone in its row?", "are images in parallel row-0 cells?",
+# "is there a header / caption?" — that are identical for `{|…|}` and
+# `<table>…</table>`; only the surface markers differ.  These primitives
+# answer the row/cell question once, syntax-detected, so a single
+# predicate serves both encodings (remove-nontables-from-table-path).
+# RECOGNITION-only: row/cell boundaries are parsed and cell CONTENT is
+# returned raw/untransformed — no text_transform, nothing flows
+# differently to any producer.
+_HTML_TABLE_TAG_RE = re.compile(r"<t[rdh]\b", re.IGNORECASE)
+
+
+def _html_table_grid(inner: str) -> list[list[str]]:
+    """Rows × raw cell-content for an HTML `<table>` inner.
+
+    Robust to the unclosed `</td>`/`</tr>` the source sometimes emits
+    (the malformed markup that zeroed MAGNETISM / SATURN): cells are the
+    text after each `<td>`/`<th>` opener, cut at the next cell/row/table
+    boundary whether or not a closing tag is present."""
+    rows: list[list[str]] = []
+    for row in re.split(r"<tr\b[^>]*>", inner, flags=re.IGNORECASE):
+        cells: list[str] = []
+        for piece in re.split(r"<t[dh]\b[^>]*>", row, flags=re.IGNORECASE)[1:]:
+            content = re.split(
+                r"</t[dh]>|</tr>|</table>|<tr\b", piece,
+                maxsplit=1, flags=re.IGNORECASE)[0]
+            cells.append(content.strip())
+        if cells:
+            rows.append(cells)
+    return rows
+
+
+def _table_grid(inner: str) -> list[list[str]]:
+    """Rows × cell-content-strings for a wiki OR HTML table, syntax-detected.
+
+    The `{|` path uses the same `|-` row split + `split_wiki_row` cells the
+    ICL helpers already inline, so converting those helpers to this
+    primitive is label-preserving by construction; the `<table>` path
+    delegates to `_html_table_grid`."""
+    if _HTML_TABLE_TAG_RE.search(inner):
+        return _html_table_grid(inner)
+    grid: list[list[str]] = []
+    for row in re.split(r"\|-[^\n]*", inner):
+        cells = [content for _sep, _attr, content in split_wiki_row(row)]
+        if cells:  # drop empty segments (e.g. a leading `|-` row separator)
+            grid.append(cells)
+    return grid
+
+
 def _strip_wiki_cell_attr_in_html(text: str) -> str:
     """Strip wiki cell-attribute syntax (``|attr=val|``) that leaked
     into HTML ``<td>`` cell content.
@@ -665,6 +716,82 @@ def _has_chem_equation_content(raw: str) -> bool:
     """True for a chemical-reaction table that uses `<big>` operators + `<sub>`
     formulae rather than Langle/Rangle bracket images (see `_has_chem_brackets`)."""
     return bool(_CHEM_BIG_OP_RE.search(raw) and _CHEM_FORMULA_RE.search(raw))
+
+
+# Element-aware chemical-reaction recognizer.  Recognizes a reaction by its
+# CONTENT -- real molecular formulae joined by a reaction operator -- rather
+# than by surface markup, so reactions typeset with plain =/+/-> operators and
+# {{sub}}/<sub>/unicode formulae are caught even when they carry none of the
+# Langle/Rangle SVG brackets (`_has_chem_brackets`) or <big>-operator + <sub>
+# signals (`_has_chem_equation_content`).  This freezes the domain knowledge
+# (periodic table + formula grammar) those surface gates miss; without it such
+# reactions fall through to DATA_TABLE / SINGLE_COLUMN.  Validated corpus-wide:
+# flags 27 {| tables (11 already CHEMISTRY_LAYOUT, 16 misrouted), zero
+# math-layout / taxonomy false-positives.  `_chem_row_is_reaction` takes
+# already-joined cell text so it serves <table> cell extraction too (see #12).
+_CHEM_ELEMENTS = frozenset("""H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K
+Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Ru Rh Pd
+Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta
+W Os Ir Pt Au Hg Tl Pb Bi Th U""".split())
+_CHEM_REACTION_OP = re.compile("[=＝→⟶]")        # = , = , -> , -->
+_CHEM_ELEM_TOKEN = re.compile(r"([A-Z][a-z]?)(\d*)")
+_CHEM_SUB_DIGITS = str.maketrans(
+    "₀₁₂₃₄₅₆₇₈₉",
+    "0123456789")
+
+
+def _chem_normalize(s: str) -> str:
+    """Flatten subscript markup (<sub>, {{sub}}, unicode) to bare digits and
+    strip layout templates / markers so formula tokens can be parsed."""
+    s = re.sub(r"<sub>\s*(\d+)\s*</sub>", r"\1", s, flags=re.IGNORECASE)
+    s = re.sub(r"\{\{\s*sub\s*\|\s*(\d+)\s*\}\}", r"\1", s, flags=re.IGNORECASE)
+    s = re.sub("«/?[A-Z]+»", "", s)       # marker runs (italic etc.)
+    s = re.sub(r"\{\{[^{}]*\}\}", "", s)             # residual templates
+    s = (s.replace("&nbsp;", " ").replace("&emsp;", " ").replace("&ensp;", " ")
+          .replace("·", "").replace("<big>", "").replace("</big>", ""))
+    return s.translate(_CHEM_SUB_DIGITS)
+
+
+def _is_chem_formula(tok: str) -> bool:
+    """A token is a molecular formula iff it parses entirely as element symbols
+    (+ counts, parens, R/X/Y organic placeholders) AND contains H/O/N."""
+    if not re.sub(r"[()\[\]0-9\s]", "", tok):
+        return False
+    elems: list[str] = []
+    pos = 0
+    while pos < len(tok):
+        m = _CHEM_ELEM_TOKEN.match(tok, pos)
+        if m and m.group(1) in _CHEM_ELEMENTS:
+            elems.append(m.group(1))
+            pos = m.end()
+        elif tok[pos] in "()[]·0123456789 " or tok[pos] in "RXY":
+            pos += 1
+        else:
+            return False                             # a non-element letter
+    return len(elems) >= 2 and bool({"H", "O", "N"} & set(elems))
+
+
+def _chem_row_is_reaction(text: str) -> bool:
+    """A reaction = >=2 molecular-formula operands (with H/O/N) joined by a
+    reaction operator.  Syntax-agnostic: takes already-joined cell text, so it
+    serves both `{|` rows and `<table>` cell extraction."""
+    n = _chem_normalize(text)
+    if not _CHEM_REACTION_OP.search(n):
+        return False
+    operands = [o.strip(" .,;:") for o in re.split("[=＝→⟶+]", n)
+                if o.strip(" .,;:")]
+    return sum(1 for o in operands
+               if _is_chem_formula(o.replace(" ", ""))) >= 2
+
+
+def _has_chem_reaction_content(inner: str) -> bool:
+    """True if any row of a wiki table holds an operator-connected molecular
+    reaction -- the element-aware arm of the chemistry-layout predicate."""
+    for rv in re.split(r"\|-[^\n]*", inner):
+        cells = [c for _s, _a, c in split_wiki_row(rv) if c.strip()]
+        if cells and _chem_row_is_reaction(" ".join(cells)):
+            return True
+    return False
 
 
 def _split_chem_row(row_text: str) -> list[tuple[str, str, str]]:

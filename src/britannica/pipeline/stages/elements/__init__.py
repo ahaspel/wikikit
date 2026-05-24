@@ -106,6 +106,7 @@ from britannica.pipeline.stages.elements._tables import (
     _extract_subtable_values,
     _has_chem_brackets,
     _has_chem_equation_content,
+    _has_chem_reaction_content,
     _is_html_illustration_wrapper,
     _is_single_column_table,
     _is_verse_table,
@@ -116,6 +117,7 @@ from britannica.pipeline.stages.elements._tables import (
     _process_single_column_table,
     _process_table,
     _process_verse_table,
+    _table_grid,
     _unwrap_html_illustration,
     split_wiki_row,
 )
@@ -217,6 +219,17 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_equation_layout(inner, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
+    # UNPAIRED_FIGURE_GROUP — ≥2 images the classifier hands off as a
+    # group; the producer partitions cells per image (vertical-stack OR
+    # parallel-row column-slice) and routes each image's cells through the
+    # shared figure pipeline, bundling what pairs and passing through the
+    # rest.  Uses the former SIMPLE_PLATE producer, which is TOTAL here:
+    # vs the generic `_unwrap_layout_table` passthrough it bundles equal-
+    # or-more in every case (0 regressions, +11 fixes incl. 4 grids the
+    # passthrough was silently under-bundling).  Collapses the old
+    # SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels into one.
+    "UNPAIRED_FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
+        _process_simple_plate(raw, inner, tt, reg),
     # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
     # in row 0, alone in cell, no data-table header signal).  Has
     # its own focused producer; falls back to `_unwrap_layout_table`
@@ -254,18 +267,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # extraction on the remainder.
     "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
         _process_legended_figure_child(raw, inner, tt, reg),
-    # CAPTIONED_FIGURE_GRID — multi-image side-by-side figure layout
-    # (≥2 IMAGE children in the first row, separated by `||`).
-    # Initially shared with LAYOUT_WRAPPER's producer; a focused
-    # grid-disentanglement producer is the natural follow-up.
-    "CAPTIONED_FIGURE_GRID": lambda raw, inner, tt, ctx, reg:
-        _unwrap_layout_table(inner, tt, reg),
-    # SIMPLE_PLATE — multi-image plate layouts that don't fit the
-    # simple side-by-side grid shape.  Producer partitions cells
-    # per image (vertical-stack OR parallel-row column-slice), then
-    # routes each image's cells through the shared figure pipeline.
-    "SIMPLE_PLATE": lambda raw, inner, tt, ctx, reg:
-        _process_simple_plate(raw, inner, tt, reg),
+    # (SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels removed — multi-image
+    # figures now classify as UNPAIRED_FIGURE_GROUP, above, which inherits
+    # the SIMPLE_PLATE producer `_process_simple_plate`.)
     # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
     # wikitables (HYDROMEDUSAE-style composite).  No direct images
     # at this level.  Initially shared with LAYOUT_WRAPPER.
@@ -346,16 +350,20 @@ def _is_compound_table_pred(raw: str, inner: str,
 
 def _is_chemistry_layout_pred(raw: str, inner: str,
                                registry: ElementRegistry | None) -> bool:
-    """A chemistry-reaction / structural-formula layout, recognized either by a
-    descendant Langle/Rangle bracket IMAGE, or — for reactions typeset with
-    `<big>` operators + `<sub>` formulae (no bracket SVG) — by the equation
-    content itself (ACCUMULATOR discharge/energy reactions, acetone)."""
-    return _has_chem_brackets(registry) or _has_chem_equation_content(raw)
+    """A chemistry-reaction / structural-formula layout, recognized by any of:
+    a descendant Langle/Rangle bracket IMAGE; the `<big>`-operator + `<sub>`
+    formula signal (ACCUMULATOR discharge/energy, acetone); or — the
+    element-aware arm — operator-connected molecular formulae in a cell,
+    which catches reactions typeset with plain =/+/-> and {{sub}} formulae
+    that otherwise fall through to DATA_TABLE / SINGLE_COLUMN."""
+    return (_has_chem_brackets(registry)
+            or _has_chem_equation_content(raw)
+            or _has_chem_reaction_content(inner))
 
 
 _FIGURE_LABELS: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
-    "CAPTIONED_FIGURE_GRID", "SIMPLE_PLATE",
+    "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE",
     "LEGENDED_FIGURE_CHILD",
 })
@@ -414,26 +422,6 @@ def _is_icl_family(raw: str, inner: str,
     has_image = any(lbl == "IMAGE" for lbl in labels)
     figure_child_count = sum(1 for lbl in labels if lbl in _FIGURE_LABELS)
     return has_image or figure_child_count >= 2
-
-
-def _is_image_grid(inner: str, image_phs: list[str]) -> bool:
-    """Multi-image grid signal: all images sit in the FIRST row,
-    each in its own `\\|\\|`-separated cell (parallel-column layout
-    where captions/legends stack below in matching columns).
-
-    Distinguished from SIMPLE_PLATE which is the vertical-stack /
-    multi-row column-slice arrangement.
-    """
-    rows = re.split(r"\n\|-[^\n]*\n", inner)
-    if not rows:
-        return False
-    first = rows[0]
-    if not all(ph in first for ph in image_phs):
-        return False
-    cells = re.split(r"\n\||\|\|", first)
-    cells = [c for c in cells if c.strip()]
-    image_cells = [c for c in cells if any(ph in c for ph in image_phs)]
-    return len(image_cells) >= 2
 
 
 # Legend-material detectors — used by `_classify_icl_shape`.
@@ -559,13 +547,12 @@ def _has_inline_caption_signal(inner: str, image_ph: str) -> bool:
     Differs from a plain CAPTIONED_FIGURE in that the caption sits
     in the image's own row rather than a subsequent row.
     """
-    rows = re.split(r"\n\|-[^\n]*\n", inner)
-    if not rows:
-        return False
-    image_row = next((r for r in rows if image_ph in r), None)
+    grid = _table_grid(inner)
+    image_row = next((cells for cells in grid
+                      if any(image_ph in c for c in cells)), None)
     if image_row is None:
         return False
-    return bool(_INLINE_CAPTION_MARKER_RE.search(image_row))
+    return bool(_INLINE_CAPTION_MARKER_RE.search(" ".join(image_row)))
 
 
 def _image_alone_in_row(inner: str, image_ph: str) -> bool:
@@ -575,13 +562,12 @@ def _image_alone_in_row(inner: str, image_ph: str) -> bool:
     disqualify; non-empty sibling cells (legend material, footnote
     refs, decorative content) do.
     """
-    rows = re.split(r"\|-[^\n]*", inner)
-    image_row = next((r for r in rows if image_ph in r), None)
+    grid = _table_grid(inner)
+    image_row = next((cells for cells in grid
+                      if any(image_ph in c for c in cells)), None)
     if image_row is None:
         return False
-    cells = split_wiki_row(image_row)
-    siblings = [c for _sep, _attr, c in cells
-                if c.strip() and image_ph not in c]
+    siblings = [c for c in image_row if c.strip() and image_ph not in c]
     return len(siblings) == 0
 
 
@@ -631,8 +617,9 @@ def _classify_icl_shape(raw: str, inner: str,
     that distinguish ICL sub-shapes from each other:
 
       * 0 images + ≥2 nested figure children → ``FIGURE_GROUP``.
-      * ≥2 images in parallel row-0 cells   → ``CAPTIONED_FIGURE_GRID``.
-      * ≥2 images otherwise                  → ``SIMPLE_PLATE``.
+      * ≥2 images                            → ``UNPAIRED_FIGURE_GROUP``
+        (the producer bundles what pairs, passes through the rest; the
+        old SIMPLE_PLATE / CAPTIONED_FIGURE_GRID split is gone).
       * 1 image + POEM/TABLE child           → ``LEGENDED_FIGURE_CHILD``.
       * 1 image + cell-based legend material → ``LEGENDED_FIGURE``.
       * 1 image + Fig./Plate. marker in image row
@@ -671,12 +658,20 @@ def _classify_icl_shape(raw: str, inner: str,
         # not a group.  Fall through to LAYOUT_WRAPPER.
         return None
 
-    # Multi-image case: GRID (parallel-row in row 0) or PLATE
-    # (anything else).
+    # Multi-image case: UNPAIRED_FIGURE_GROUP — ≥2 images that we don't
+    # bundle per-image (the un-pairable multi-image figure; its intent is
+    # "multiple images that can't be mapped 1:1 to captions/legends").
+    # The old SIMPLE_PLATE / CAPTIONED_FIGURE_GRID plate-shaped labels are
+    # gone: plates route to parse_plate, and per-image bundling of the
+    # *pairable* multi-image case is deferred to the plate work (top-legend
+    # + ICLs + group-legend + bottom-legend).  We return the label
+    # DIRECTLY (not fall through) because the family gate has ALREADY
+    # confirmed this is a figure — letting it reach the data-table
+    # predicates would leak `{{small-caps|Fig.}}` + long-legend figures
+    # like ARTHROPODA into COMPLEX_HTML.  Shares LAYOUT_WRAPPER's
+    # passthrough producer.
     if len(image_phs) >= 2:
-        if _is_image_grid(inner, image_phs):
-            return "CAPTIONED_FIGURE_GRID"
-        return "SIMPLE_PLATE"
+        return "UNPAIRED_FIGURE_GROUP"
 
     # Single-image case: dispatch by what neighbours the image.
     image_ph = image_phs[0]
