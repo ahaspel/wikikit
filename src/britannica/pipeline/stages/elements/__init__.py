@@ -406,9 +406,13 @@ def _is_icl_family(raw: str, inner: str,
     header = raw.split("\n", 1)[0]
     if _DATA_TABLE_HEADER_RE.search(header):
         return False
-    if re.search(r"^\|\+", inner, re.MULTILINE):
+    # caption sigil: `|+` (wiki) or `<caption>` (HTML)
+    if (re.search(r"^\|\+", inner, re.MULTILINE)
+            or re.search(r"<caption\b", inner, re.IGNORECASE)):
         return False
-    if re.search(r"^\s*!", inner, re.MULTILINE):
+    # column-header sigil: `!` (wiki) or `<th>` (HTML)
+    if (re.search(r"^\s*!", inner, re.MULTILINE)
+            or re.search(r"<th\b", inner, re.IGNORECASE)):
         return False
     # Tall-brace taxonomy grouping (`<math>\left\{…\right.>`): a print-
     # typographic device that brackets grouped rows of an outline/
