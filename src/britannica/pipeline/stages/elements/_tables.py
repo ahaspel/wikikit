@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 
 from britannica.captions import clean_caption, strip_cell_attrs
+from britannica.markers import build_table_cell
 from britannica.pipeline.stages.elements._image import _process_image_from_raw
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
@@ -845,6 +846,35 @@ def _process_chemistry_layout(inner: str, text_transform,
 
 
 
+# Per-cell alignment the producer must carry so the viewer renders it instead
+# of defaulting to left.  Source encodes it two ways: an HTML/CSS attr
+# (``align="right"`` / ``text-align:center``) or an EB1911 ``{{Ts|…}}`` style
+# code (``ar`` right, ``ac`` center, ``al`` left).  Both live in the cell's
+# attr-part (and sometimes leak into content), so scan both.
+_CELL_ALIGN_ATTR_RE = re.compile(
+    r"(?:text-)?align\s*[:=]\s*\"?\s*(right|centre|center|left)", re.IGNORECASE)
+_CELL_TS_RE = re.compile(r"\{\{[Tt]s\|([^{}]*)\}\}")
+
+
+def _cell_align(attr_part: str, content: str) -> str | None:
+    """Resolved alignment for one cell: ``"right"``/``"center"``/``"left"`` or
+    ``None`` (left default)."""
+    blob = (attr_part or "") + " " + (content or "")
+    m = _CELL_ALIGN_ATTR_RE.search(blob)
+    if m:
+        a = m.group(1).lower()
+        return "center" if a.startswith("cent") else a
+    for tm in _CELL_TS_RE.finditer(blob):
+        codes = set(re.split(r"[|\s]+", tm.group(1).strip().lower()))
+        if "ar" in codes:
+            return "right"
+        if "ac" in codes:
+            return "center"
+        if "al" in codes:
+            return "left"
+    return None
+
+
 def _process_table(inner: str, text_transform,
                    inner_registry: ElementRegistry | None = None) -> str:
     """Convert table rows to {{TABLE:...}TABLE} with clean cells.
@@ -857,10 +887,15 @@ def _process_table(inner: str, text_transform,
     # line breaks, e.g. "Circum-<br>ference" → "Circumference").
     inner = _strip_br(inner)
 
-    def _extract_cells(row_text):
+    def _extract_cells(row_text, with_attrs=False):
         """Extract data cells from a row via the shared `split_wiki_row`
         helper, then drop any remaining `{{Ts|…}}` cell-styling
         templates and run each cell's content through `text_transform`.
+
+        ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
+        alignment the producer must CARRY (resolved before the `{{Ts}}` style
+        codes are stripped) so the viewer renders it instead of guessing.
+        Default returns plain content strings (the other callers' contract).
         """
         cells = []
         for sep, attr_part, content in split_wiki_row(row_text):
@@ -878,19 +913,20 @@ def _process_table(inner: str, text_transform,
                 # mid-line case where source has `|attr-keyword` with NO
                 # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
                 # check on `content` below.
-                cells.append(" ")
+                cells.append((" ", None) if with_attrs else " ")
                 continue
             # Content that is itself a bare attribute keyword (`colspan=2`
             # with no trailing-pipe boundary in source) is a malformed
             # cell, not real content — drop it.
             if _CELL_ATTR_RE.match(content):
                 continue
-            # Drop any leftover {{Ts|…}} cell-styling tokens — they
-            # carry CSS hints (`{{Ts|ar}}` for right-align) consumed by
-            # the complex-table renderer; the plain TABLE marker
-            # doesn't render alignment, so they're noise here.
+            # Resolve alignment BEFORE stripping the {{Ts|…}} style codes that
+            # carry it (`{{Ts|ar}}` = right) — the TABLE marker now CARRIES
+            # alignment so the viewer renders it rather than guessing.
+            align = _cell_align(attr_part, content) if with_attrs else None
             cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
-            cells.append(text_transform(cleaned) if cleaned else " ")
+            val = text_transform(cleaned) if cleaned else " "
+            cells.append((val, align) if with_attrs else val)
         return cells
 
     # Tiny inline tables (few cells, short content) → unwrap to inline text.
@@ -1010,17 +1046,27 @@ def _process_table(inner: str, text_transform,
     if _is_structural_formula(inner):
         return _format_structural_formula(inner)
 
-    # Check for table caption (|+ ...)
+    # Table caption (|+ …) — LINE-INITIAL only, so a `||+2.1` cell value is not
+    # mistaken for a caption.  CARRIED (transformed) so the viewer renders it as
+    # <caption> rather than dropping it.
     caption = ""
-    cap_match = re.search(r"\|\+\s*(.*?)(?:\n|$)", inner)
+    cap_match = re.search(r"(?:^|\n)\s*\|\+\s*(.+)", inner)
     if cap_match:
-        caption = re.sub(r"\{\{[^{}]*\}\}", "", cap_match.group(1)).strip()
+        caption = text_transform(cap_match.group(1).strip()).strip()
 
     # Split into rows on |- separators
     raw_rows = re.split(r"\|-[^\n]*", inner)
 
-    text_rows = []
+    # Header table = the FIRST data row uses `!` header cells (the real source
+    # signal).  Replaces the old `header=bool(caption)` guess, which both missed
+    # `!` rows and false-fired on `||+`-valued cells mis-read as captions.
+    _hdr_rows = [r for r in raw_rows if r.strip() and "|+" not in r]
+    is_header_table = bool(_hdr_rows) and any(
+        sep == "!" for sep, _, _ in split_wiki_row(_hdr_rows[0]))
+
     image_parts = []
+    data_rows: list[list[tuple[str, str | None]]] = []  # (content, align) per cell
+    _img_cell_re = re.compile(r"^\s*\{\{IMG:[^}]+\}\}\s*$")
 
     for raw_row in raw_rows:
         # Skip caption rows
@@ -1033,50 +1079,61 @@ def _process_table(inner: str, text_transform,
             if _PH in stripped_line and not stripped_line.startswith("|"):
                 image_parts.append(stripped_line)
 
-        # Extract and process cells
-        cells = _extract_cells(raw_row)
+        # Extract cells carrying per-cell alignment.
+        cells = _extract_cells(raw_row, with_attrs=True)
 
-        # Separate image-only cells from data cells — but only when
-        # the entire row is images (plate layout).  If a row mixes
-        # images and text (e.g. score + description), keep them together.
-        img_cells = [c for c in cells if re.match(r"^\s*\{\{IMG:[^}]+\}\}\s*$", c)]
-        non_img_cells = [c for c in cells if not re.match(r"^\s*\{\{IMG:[^}]+\}\}\s*$", c)]
-
-        if img_cells and not non_img_cells:
-            # All-image row — separate for plate layout
-            image_parts.extend(c.strip() for c in img_cells)
+        # All-image row → separate for plate layout (a row mixing images and
+        # text keeps them together as table cells).
+        img_cells = [c for c in cells if _img_cell_re.match(c[0])]
+        if img_cells and len(img_cells) == len(cells):
+            image_parts.extend(c[0].strip() for c in img_cells)
             continue
 
-        data_cells = cells  # keep images and text together
-
-        # Handle <br> in cells
-        br_cells = [i for i, c in enumerate(data_cells)
-                    if re.search(r"<br\s*/?>", c, re.IGNORECASE)]
-        if len(br_cells) >= 2:
-            # Multi-row data: expand
-            split = [re.split(r"<br\s*/?>", c, flags=re.IGNORECASE)
-                     for c in data_cells]
-            max_sub = max(len(s) for s in split)
-            for s in split:
-                while len(s) < max_sub:
-                    s.append("")
+        # Handle uppercase <br> that `_strip_br` (case-sensitive, run at the
+        # top) missed — carrying each cell's alignment to its sub-cells.
+        br_idx = [i for i, (cc, _) in enumerate(cells)
+                  if re.search(r"<br\s*/?>", cc, re.IGNORECASE)]
+        if len(br_idx) >= 2:
+            split = [(re.split(r"<br\s*/?>", cc, flags=re.IGNORECASE), al)
+                     for (cc, al) in cells]
+            max_sub = max(len(s) for s, _ in split)
             for i in range(max_sub):
-                sub = [s[i].strip() for s in split]
-                if any(sub):
-                    text_rows.append(" | ".join(sub))
-        elif br_cells:
-            # Single-cell br: collapse to space (strip soft-hyphen breaks)
-            data_cells = [_strip_br(c).strip() for c in data_cells]
-            text_rows.append(" | ".join(data_cells))
+                sub = [((s[i].strip() if i < len(s) else ""), al)
+                       for (s, al) in split]
+                if any(cc for cc, _ in sub):
+                    data_rows.append(sub)
+        elif br_idx:
+            data_rows.append([(_strip_br(cc).strip(), al) for (cc, al) in cells])
         else:
-            text_rows.append(" | ".join(data_cells))
+            data_rows.append(list(cells))
+
+    # Emit rows.  A true group-header row — content in the FIRST cell only,
+    # spanning the full width — becomes one colspan cell (the producer's
+    # decision, carried explicitly), replacing the viewer's sparseness guess.
+    # Every other cell carries its resolved alignment.
+    text_rows = []
+    maxcols = max((len(r) for r in data_rows), default=0)
+    for row in data_rows:
+        nonempty = [i for i, (cc, _) in enumerate(row) if cc.strip()]
+        if (maxcols >= 2 and len(row) == maxcols
+                and len(nonempty) == 1 and nonempty[0] == 0):
+            cc, al = row[0]
+            text_rows.append(build_table_cell(cc, align=al, colspan=maxcols))
+        else:
+            text_rows.append(" | ".join(
+                build_table_cell(cc, align=al) for (cc, al) in row))
 
     # Assemble output
     parts = []
     if image_parts:
         parts.extend(image_parts)
     if text_rows:
-        parts.append(_emit_table_marker(text_rows, header=bool(caption)))
+        # Caption rides as a ⟦+⟧-flagged leading row; the viewer pulls it out as
+        # <caption> before row-indexing, so `is_header_table` still applies to
+        # the first DATA row.
+        if caption:
+            text_rows.insert(0, "⟦+⟧" + caption)
+        parts.append(_emit_table_marker(text_rows, header=is_header_table))
 
     if parts:
         return "\n\n".join(parts)

@@ -585,8 +585,8 @@ By combining these the gunmakers’ formula for the wire is obtained
 «EQN:10«I»a«/I»»P₁=𝑟₂ − 𝑟₁/𝑟₁ (T + P₂) + P₂«/EQN»
 
 As T is to be uniform, when the gun is fired, the Initial Tensions of the wire are arranged accordingly, and the tensions at which the wire must be wound on to the guns have now to be determined. {{TABLE:Let θ | =the winding tension at radius 𝑟 in.
-(𝑡) | =the initial tension at radius 𝑟 in.
-(𝑝) | =the radial pressure between any two layers of wire at radius 𝑟 in.}TABLE}
+⟦r⟧(𝑡) | =the initial tension at radius 𝑟 in.
+⟦r⟧(𝑝) | =the radial pressure between any two layers of wire at radius 𝑟 in.}TABLE}
 
 It is assumed that M is uniform for the gun steel and wire.
 

@@ -103,7 +103,7 @@ There are a number of other important points of structure besides those referrin
 VIII, The pectens of Scorpio and the first | «I»epst«/I», Epistigmatic sclerite.
 branchial plate of Limulus. | «I»stg«/I», Stigma or orifice of the hollow tendons of the
 IX, The first pair of lung-books of Scorpio and the | branchial plates of Limulus.
-second branchial plate of Limulus. | }TABLE}
+⟦2⟧second branchial plate of Limulus.}TABLE}
 (After Lankester, «I»loc. cit.«/I»)
 
 Whilst Limulus agrees thus closely with Scorpio in regard to the eyes, it is to be noted that no Crustacean has structures corresponding to the peculiar diplostichous central eyes, though these occur again (with differences in detail) in Hexapoda. Possibly, however, an investigation of the development of the median eyes of some Crustacea (Apus, Palaemon) may prove them to be diplostichous in origin.
@@ -471,7 +471,7 @@ Family—Palaeophonidae, «I»Palaeophonus«/I» (figs. 48 and 49).
 
 Sub-order Dionychopoda.—The 3rd, 4th, 5th and 6th pairs of appendages slender, not evenly tapering, the segments longer than wide; the apical segment short, distally truncate, and provided with a pair of movable claws. Basal segments of the 5th and 6th pairs of appendages abutting against the sternum of the prosoma (see fig. 10 and figs. 51, 52 and 53).
 
-Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»). ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»). ”   Buthidae («I»Buthus, Centrurus«/I»). {{TABLE:”   *Cyclophthalmidae («I»Cyclophthalmus«/I»)  ”   *Eoscorpiidae («I»Eoscorpius, Centromachus«/I») | «MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» | Carboniferous.}TABLE}
+Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»). ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»). ”   Buthidae («I»Buthus, Centrurus«/I»). {{TABLE:”   *Cyclophthalmidae («I»Cyclophthalmus«/I»)  ”   *Eoscorpiidae («I»Eoscorpius, Centromachus«/I») | ⟦r⟧«MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» | Carboniferous.}TABLE}
 
 {{IMG:1911 Britannica-Arachnida-Palaeophonus Hunteri.png|Fig. 49.—Ventral view of a restoration of Palaeophonus Hunteri, Pocock, the Silurian scorpion from Lesmahagow, Scotland. Restored by R. I. Pocock. The meeting of the coxae of all the prosomatic limbs in front of the pentagonal sternum; the space for a genital operculum; the pair of pectens, and the absence of any evidence of pulmonary stigmata are noticeable in this specimen. (See Pocock, Quart. Jour. Micr. Sci., 1901.)}}
 

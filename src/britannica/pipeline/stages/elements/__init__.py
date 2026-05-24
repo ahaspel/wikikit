@@ -729,7 +729,13 @@ def _has_data_signal_and_ts(raw: str, inner: str,
                              registry: ElementRegistry | None) -> bool:
     """Header carries a data-table signal AND any cell uses `{{Ts}}`
     styling templates.  The combination breaks `_process_table`'s
-    cell parsing (Ts adds phantom pipes); needs HTML rendering."""
+    cell parsing (Ts adds phantom pipes); needs HTML rendering.
+
+    NOTE (#29): #28 made `_process_table` handle Ts cells, so re-routing the
+    PLAIN no-span tables here to DATA_TABLE is the intended knock-out — but the
+    attempt surfaced a pre-existing `_process_table` bug (it DROPS a sub-header
+    row, e.g. AGRICULTURE's "Average Acreage … Whole Farm | Proportion" table).
+    Re-route is parked until that DATA_TABLE row-drop is fixed."""
     header = raw.split("\n", 1)[0]
     has_data_signal = (
         re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE) or
