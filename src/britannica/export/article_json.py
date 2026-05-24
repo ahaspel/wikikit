@@ -692,6 +692,10 @@ def export_articles_to_json(
                 "id": article.id,
                 "stable_id": stable_id(article),
                 "title": article.title,
+                # Marked-up display title («B»/«I»/«SC» + «FN») when the
+                # title carries formatting/footnotes the plain title lost;
+                # null for plain titles (viewer falls back to `title`).
+                "title_display": article.title_display,
                 "article_type": article.article_type,
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),

@@ -163,7 +163,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
-    r"|\{\{\s*(?:center|block\s*center)\s*\|"  # FIGURE wrapper (image inside)
+    r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{(?:img float|figure|FI|hieroglyph)\b",  # DOUBLE_BRACE templates
     re.IGNORECASE,
 )

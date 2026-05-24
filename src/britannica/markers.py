@@ -185,3 +185,43 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
     "{{LEGEND:",
     "{{VERSE:",
 )
+
+
+# ── TABLE cell grammar ────────────────────────────────────────────────
+# Inside ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` the body is rows joined
+# by ``\n`` and cells joined by `` | ``.  A cell may carry an OPTIONAL prefix
+# ``⟦code⟧`` encoding the producer's RESOLVED per-cell layout — alignment
+# (``r``ight / ``c``enter; left is the render default → no prefix) followed by
+# optional colspan digits.  Defined once here and mirrored verbatim in
+# viewer.html.  Because a default (left, colspan 1) cell emits NO prefix, plain
+# text cells are byte-identical to the old format and existing snapshots stay
+# valid.  This is what lets the producer hand the viewer the table's real
+# structure (alignment from ``{{Ts|ar/ac}}`` / ``align=``, group-header spans)
+# so the viewer renders mechanically instead of guessing.
+TABLE_CELL_RE = _re.compile(r"^⟦([rc]?)(\d*)⟧")
+
+_TABLE_ALIGN_DECODE = {"r": "right", "c": "center"}
+_TABLE_ALIGN_ENCODE = {"right": "r", "center": "c"}
+
+
+def build_table_cell(content: str, *, align: str | None = None,
+                     colspan: int = 1) -> str:
+    """Emit one ``{{TABLE:}}`` cell with its resolved layout encoded as the
+    ``⟦code⟧`` prefix.  Default (left / colspan 1) → no prefix, so the cell is
+    identical to the bare-content form."""
+    code = _TABLE_ALIGN_ENCODE.get(align or "", "")
+    if colspan and colspan > 1:
+        code += str(colspan)
+    return f"⟦{code}⟧{content}" if code else content
+
+
+def parse_table_cell(cell: str) -> tuple[str | None, int, str]:
+    """Decode a ``{{TABLE:}}`` cell into ``(align, colspan, content)``.
+    ``align`` is ``"right"``/``"center"`` or ``None`` (left default); ``colspan``
+    is an int (1 default).  No prefix → ``(None, 1, cell)``."""
+    m = TABLE_CELL_RE.match(cell)
+    if not m:
+        return (None, 1, cell)
+    align = _TABLE_ALIGN_DECODE.get(m.group(1))
+    colspan = int(m.group(2)) if m.group(2) else 1
+    return (align, colspan, cell[m.end():])

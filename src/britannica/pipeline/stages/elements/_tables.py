@@ -648,6 +648,24 @@ def _has_chem_brackets(registry: ElementRegistry | None) -> bool:
     return False
 
 
+# A chemical-reaction table that typesets operators / brackets with
+# `<big>+</big>` / `<math>\Big[` instead of the Langle/Rangle SVG images
+# `_has_chem_brackets` keys on.  Signal: a `<big>` arithmetic operator AND a
+# chemical `<sub>` formula in the same table — e.g. ACCUMULATOR's discharge
+# (`«I»x«/I». PbO<sub>2</sub> … <big>+</big>`) and energy
+# (`PbO<sub>2</sub><big>+</big>2H<sub>2</sub>SO<sub>4</sub> ＝ …`) reactions, and
+# the acetone synthesis (vol 15).  Tight by audit: 5 such tables corpus-wide,
+# zero math-layout / taxonomy false-positives.
+_CHEM_BIG_OP_RE = re.compile(r"<big>\s*[-+−±=＋＝]")
+_CHEM_FORMULA_RE = re.compile(r"[A-Z][a-z]?<sub>\s*\d")
+
+
+def _has_chem_equation_content(raw: str) -> bool:
+    """True for a chemical-reaction table that uses `<big>` operators + `<sub>`
+    formulae rather than Langle/Rangle bracket images (see `_has_chem_brackets`)."""
+    return bool(_CHEM_BIG_OP_RE.search(raw) and _CHEM_FORMULA_RE.search(raw))
+
+
 def _split_chem_row(row_text: str) -> list[tuple[str, str, str]]:
     """Chem-specific row splitter — strict subset of `split_wiki_row`.
 
@@ -1052,103 +1070,6 @@ def _process_table(inner: str, text_transform,
             text_rows.append(" | ".join(data_cells))
         else:
             text_rows.append(" | ".join(data_cells))
-
-    # Strip spacer columns from colspan tables only.  These tables have
-    # group headers spanning multiple data columns, with empty separator
-    # columns between groups.  The colspan attribute in the raw markup
-    # is the reliable signal — no single-header table uses colspan.
-    if "colspan" in inner and len(text_rows) >= 4:
-        split_rows = [r.split(" | ") for r in text_rows]
-        ncols = max(len(r) for r in split_rows)
-        # Identify data rows vs section-divider rows.  Data rows repeat
-        # 3+ times (e.g. 1897, 1901, 1906) at a consistent column count.
-        # Section dividers (group labels) repeat fewer times.
-        from collections import Counter
-        col_counts = Counter(len(r) for r in split_rows)
-        # Column counts with 3+ occurrences are data row groups.
-        # Counts with exactly 2 are sub-header + section-divider pairs.
-        # Use 3+ as the threshold to separate data from labels.
-        data_col_groups = {n for n, cnt in col_counts.items() if cnt >= 3}
-        if not data_col_groups:
-            # Fallback: use the most common count with 2+
-            data_col_groups = {col_counts.most_common(1)[0][0]}
-            if col_counts.most_common(1)[0][1] < 2:
-                data_col_groups = set()
-
-        # For each group, find columns empty in ALL rows of that group
-        empty_by_group: dict[int, set[int]] = {}
-        for ncols_g in data_col_groups:
-            group_rows = [r for r in split_rows if len(r) == ncols_g]
-            empty = set()
-            for j in range(ncols_g):
-                if all(not r[j].strip() for r in group_rows):
-                    empty.add(j)
-            if empty:
-                empty_by_group[ncols_g] = empty
-
-        if empty_by_group:
-            new_rows = []
-            for cells in split_rows:
-                nc = len(cells)
-                if nc in empty_by_group:
-                    new_rows.append(" | ".join(
-                        cells[j] for j in range(nc)
-                        if j not in empty_by_group[nc]
-                    ))
-                else:
-                    # Section-divider row (group labels from colspan).
-                    # Strip empty cells, then pad to match the stripped
-                    # data column count so labels align over their groups.
-                    content_cells = [c for c in cells if c.strip()]
-                    if content_cells and empty_by_group:
-                        # Find the stripped data column count
-                        target = max(empty_by_group)
-                        stripped_ncols = target - len(empty_by_group[target])
-                        if stripped_ncols < 2:
-                            new_rows.append(" | ".join(
-                                c for c in cells if c.strip()))
-                            continue
-                        # Check if first raw cell is empty (no row label)
-                        has_label = bool(cells[0].strip()) if cells else True
-                        if has_label:
-                            # First content cell is the row label;
-                            # remaining cells are group headers
-                            n_groups = len(content_cells) - 1
-                            data_cols = stripped_ncols - 1
-                            span = data_cols // n_groups if n_groups > 0 else 1
-                            padded = [""] * stripped_ncols
-                            padded[0] = content_cells[0]
-                            for k, lbl in enumerate(content_cells[1:]):
-                                pos = 1 + k * span
-                                if pos < stripped_ncols:
-                                    padded[pos] = lbl
-                        else:
-                            # No row label on this row — all content cells are
-                            # group headers.  But a label column may still exist
-                            # (populated in the sub-header row, e.g. "Year.").
-                            n_groups = len(content_cells)
-                            data_cols = stripped_ncols - 1  # assume label column
-                            if n_groups > 0 and data_cols >= n_groups:
-                                span = data_cols // n_groups
-                                padded = [""] * stripped_ncols
-                                for k, lbl in enumerate(content_cells):
-                                    pos = 1 + k * span
-                                    if pos < stripped_ncols:
-                                        padded[pos] = lbl
-                            else:
-                                # No label column — groups fill all columns
-                                span = stripped_ncols // n_groups if n_groups > 0 else 1
-                                padded = [""] * stripped_ncols
-                                for k, lbl in enumerate(content_cells):
-                                    pos = k * span
-                                    if pos < stripped_ncols:
-                                        padded[pos] = lbl
-                        new_rows.append(" | ".join(padded))
-                    else:
-                        new_rows.append(" | ".join(
-                            c for c in cells if c.strip()
-                        ))
-            text_rows = new_rows
 
     # Assemble output
     parts = []

@@ -9,6 +9,15 @@ class Article(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Raw title span carved by the super-walker (article[:termination],
+    # markers/footnote intact) — the input the title producer transforms
+    # into `title_display`.  Plain `title` above stays flattened for
+    # xref/contributor/search string-equality matching.
+    title_raw: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Marked-up display title (the title span run through the element
+    # pipeline): «B»/«I»/«SC» formatting + «FN» title footnotes for the
+    # viewer to render.  None falls back to plain `title`.
+    title_display: Mapped[str | None] = mapped_column(Text, nullable=True)
     volume: Mapped[int] = mapped_column(Integer, nullable=False)
     page_start: Mapped[int] = mapped_column(Integer, nullable=False)
     page_end: Mapped[int] = mapped_column(Integer, nullable=False)

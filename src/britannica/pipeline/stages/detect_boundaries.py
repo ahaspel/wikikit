@@ -398,6 +398,10 @@ class DetectedArticle:
     # Used as a tiebreaker in stable IDs when multiple articles share a
     # (volume, page_start).
     section_name: str = ""
+    # Raw title span (markers/footnote intact) carried for the title
+    # producer to transform into the display title; "" for paths that
+    # don't carve one.
+    title_raw: str = ""
 
     @property
     def body(self) -> str:
@@ -426,6 +430,10 @@ class CandidateArticle:
     # Title Case subsection continuations (ALGAE's "Benthos", "Occurrence
     # in the rocks") vs ALL-CAPS new-article continuations.
     raw_sec_id: str = ""
+    # Raw title span (the «B»-delimited heading with markup intact) — the
+    # input the title producer transforms into the display title.  "" for
+    # candidate paths that have no carved heading (continuations, etc.).
+    title_raw: str = ""
 
 
 @dataclass
@@ -692,7 +700,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
             body = body.strip()
             candidates.append(CandidateArticle(
                 title=title, body=body, is_tentative=False,
-                raw_sec_id=sec_id,
+                raw_sec_id=sec_id, title_raw=_new_title_raw,
             ))
             continue
 
@@ -2298,6 +2306,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                     page_end=page.page_number,
                     article_type="article",
                     section_name=candidate.raw_sec_id or "",
+                    title_raw=candidate.title_raw,
                 )
                 if body_text:
                     detected.segments.append(SegmentInfo(
@@ -2345,6 +2354,7 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
                 body=det.body,
                 article_type=det.article_type if det.article_type == "plate" else None,
                 section_name=det.section_name or None,
+                title_raw=det.title_raw or None,
             )
             session.add(article)
             session.flush()

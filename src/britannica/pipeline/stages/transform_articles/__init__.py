@@ -771,6 +771,23 @@ def transform_articles(volume: int) -> int:
                             r"^(\x01PAGE:\d+\x01)?\s*\([^)]*\)[,;\s]*",
                             r"\1", article.body,
                         )
+            # Title producer: run the carved title span (markers/footnote
+            # intact) through the SAME transform as the body — «B»/«I»/«SC»
+            # are kept and a title <ref> becomes «FN» (the footnote
+            # producer), exactly like body text.  Store the display title
+            # only when it carries something the plain title lost
+            # (formatting or a footnote); plain bold titles leave it None
+            # and the viewer falls back to `title`.  Keeps the blast
+            # radius to the ~2% of titles that actually differ.
+            if article.title_raw:
+                _disp = _transform_text_v2(
+                    article.title_raw, volume,
+                    segments[0][1] if segments else article.page_start,
+                ).strip()
+                article.title_display = _disp if (
+                    _disp and (re.search(r"«(?:I|SC|FN)", _disp)
+                               or _disp.count("«B»") > 1)) else None
+
             session.commit()
             session.expire_all()
 

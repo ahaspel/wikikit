@@ -94,6 +94,7 @@ from britannica.pipeline.stages.elements._layout import (
     _process_legended_figure,
     _process_legended_figure_beside,
     _process_legended_figure_child,
+    _process_prose_figure,
     _process_simple_plate,
     _row_has_legend_multicol_cells,
     _simple_table_text,
@@ -104,6 +105,7 @@ from britannica.pipeline.stages.elements._layout import (
 from britannica.pipeline.stages.elements._tables import (
     _extract_subtable_values,
     _has_chem_brackets,
+    _has_chem_equation_content,
     _is_html_illustration_wrapper,
     _process_chemistry_layout,
     _process_complex_table,
@@ -175,15 +177,19 @@ def _passthrough_inner(raw, inner, text_transform, context,
 def _produce_figure(raw, inner, text_transform, context, inner_registry):
     """Assemble a figure (image + its structural caption run).
 
-    Re-process the span with figure recognition OFF (so the sub-walk doesn't
-    re-recognize — and recurse on — this span), then run the figure-assembly
-    utility over the produced markers.
+    Structural path: `_process_prose_figure` parses the span, folds the
+    caption + attribution into the `{{IMG:…}}` marker and emits any legend
+    separately — consuming the caption so it never renders twice (the
+    leak/duplicate fix).
 
-    TEMPORARY: reuses `_assemble_figures` so the output is byte-identical to the
-    `_process_figures` baseline (which then no-ops on the already-assembled
-    figure).  That equality is what proves body-preservation in the wire-in
-    verification; a structural producer replaces this once the break is trusted.
+    Multi-image caption rows (Figs 22-23) aren't owned by the structural
+    producer yet; for those it returns None and we fall back to the legacy
+    `_assemble_figures` (re-process with figure recognition OFF so the
+    sub-walk doesn't recurse on this span) so they keep rendering as before.
     """
+    structural = _process_prose_figure(raw, text_transform)
+    if structural is not None:
+        return structural
     from britannica.pipeline.stages.transform_articles.legend_promote import (
         _assemble_figures,
     )
@@ -326,9 +332,11 @@ def _is_compound_table_pred(raw: str, inner: str,
 
 def _is_chemistry_layout_pred(raw: str, inner: str,
                                registry: ElementRegistry | None) -> bool:
-    """At least one descendant IMAGE element carries a chemistry
-    bracket file ref (Langle/Rangle variant)."""
-    return _has_chem_brackets(registry)
+    """A chemistry-reaction / structural-formula layout, recognized either by a
+    descendant Langle/Rangle bracket IMAGE, or — for reactions typeset with
+    `<big>` operators + `<sub>` formulae (no bracket SVG) — by the equation
+    content itself (ACCUMULATOR discharge/energy reactions, acetone)."""
+    return _has_chem_brackets(registry) or _has_chem_equation_content(raw)
 
 
 _FIGURE_LABELS: frozenset[str] = frozenset({
