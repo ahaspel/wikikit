@@ -175,6 +175,7 @@ If the land taken from wheat had been cropped with one or both of the other cere
 The weekly average prices of English wheat in 1898 fluctuated between 48s. 1d. and 25s. 5d. per quarter, the former being the highest weekly average since 1882. The minimum annual average was 22s. 10d. in 1894, in the autumn of which year the weekly average sank to 17s. 6d. per quarter, the lowest on record. Wheat was so great a glut in the market that various methods were devised for feeding it to stock, a purpose for which it is not specially suited; in thus utilizing the grain, however, a smaller loss was often incurred than in sending it to market. In 1894 the monthly average price for October, the chief month for wheat-sowing in England, was only 17s. 8d. per quarter, and farmers naturally shrank from seeding the land freely with a crop which could not be grown except at a heavy loss. The result was that in the following year the wheat crop of the United Kingdom was harvested upon the smallest area on record—less than 1½ million acres. In only one year, 1878, did the annual average price of English barley touch 40s. per quarter; it never reached 30s. after 1885, whilst in 1895 it fell to so low a level as 21s. 11d. The same story of declining prices applies to oats. An average of 20s. per quarter was touched in 1891 and 1902, but with those exceptions this useful feeding grain did not reach that figure after 1885. In 1895 the average price of 480 lb of wheat, at 23s. 1d., was identical with that of 312 lb of oats in 1880, and it was less in the preceding year. The declining prices that have operated against the growers of wheat should be studied in conjunction with Table III., which shows, at intervals of five years, the imports of wheat grain and of wheat meal and flour into the United Kingdom.
 
 {{TABLE:⟦+⟧«SC»Table«/SC» III.—«I»Imports into the United Kingdom of Wheat Grain«/I»,
+⟦c⟧Year. |  Wheat Grain.  | ⟦c⟧Meal and Flour. | ⟦c⟧Total.
 ⟦c⟧1875 | ⟦r⟧51,876,517 | ⟦r⟧6,136,083 | ⟦r⟧58,012,600
 ⟦c⟧1880 | ⟦r⟧55,261,924 | ⟦r⟧10,558,312 | ⟦r⟧65,820,236
 ⟦c⟧1885 | ⟦r⟧61,498,864 | ⟦r⟧15,332,343 | ⟦r⟧77,331,707
@@ -570,8 +571,7 @@ The last half of the 19th century witnessed a remarkable diminution of the Briti
 1851. | 1861. | 1871. | 1881. | 1891. | 1901.
 3,453,500 | 3,080,500 | 2,744,000 | 2,573,900 | 2,394,500 | 2,262,600}TABLE}
 
-The number of “agricultural labourers and shepherds,” which affords a more precise index, declined in a still more marked degree. {{TABLE:
-1851. | 1861. | 1871. | 1881. | 1891. | 1901.
+The number of “agricultural labourers and shepherds,” which affords a more precise index, declined in a still more marked degree. {{TABLE:1851. | 1861. | 1871. | 1881. | 1891. | 1901.
 1,110,311 | 1,098,261 | 923,332 | 830,452 | 756,557 | 609,105}TABLE}
 
 The decrease in the demand for labour is attributable chiefly to the reduction of the cultivated area and the laying down to pasture of land once under the plough, and to the increasing use of agricultural machinery. It may, however, be noticed that the period 1850–1903 was marked by a steady increase of the cash wages of the farm labourer, as indicated in the following table from the Report on the Earnings of Agricultural Labourers issued by the Board of Trade in 1905.
@@ -673,6 +673,7 @@ The wages paid farm labourers, as ascertained by the Department of Agriculture, 
 The figures for farm capital and the value of agricultural products are so vast that it is extremely difficult to put them in an intelligible form. The farm capital of the United States reported by the census of 1900 reached $20,514,002,000, a sum more than four times the capital invested in manufactures, «SH»Value of farms and products.«/SH» the main classes being, in round numbers:—Land, fences and buildings, $16,674,690,000; machines and implements, $761,262,000; live stock $3,078,050,000. The products of the farms in the census year 1899 were valued at $4,739,119,000. Between 1850 and 1900 the aggregate farm capital increased 416%. The greatest increase of farm capital was between 1850 and 1860, 101%; the next was the decade 1880–1890, when the increase was 32%. Between 1890 and 1900 the increase was 28%.
 
 {{TABLE:⟦+⟧«SC»Table«/SC» XXX.—«I»Number of Persons of Ten Years of Age and over in the different Agricultural Pursuits in«/I» 1900.
+⟦c⟧Occupation. |  Total Persons. 
 Dairymen and women | ⟦r⟧10,875
 Farmers and farm superintendents | ⟦r⟧5,674,875
 Farm labourers | ⟦r⟧4,410,877
@@ -686,6 +687,7 @@ Other pursuits | ⟦r⟧5,530
 The growth of farm area and of capital invested in agriculture was followed by a proportionate increase in the chief crops (Table XXXI.). The distinguishing feature of the period 1870–1880 was the rate of increase of barley, Indian corn, wheat and oats. Since 1870 the production of nearly all of the farm crops increased more rapidly than the population, the most absolute proof of the substantial prosperity of the people. The increase in population for the fifty years from 1840 to 1890 was 267%; from 1870 to 1880, 30%; from 1880 to 1890, 25%; from 1890 to 1900, 21%; but the food and other supplies far exceeded the demands of even this great population.
 
 {{TABLE:⟦+⟧«SC»Table«/SC» XXXI.—«I»Production of certain Farm Crops from«/I» 1870 «I»to«/I» 1905—«I»Millions of Bushels.«/I»
+ |  Indian Corn.  | Wheat. |  Oats.  | Barley. 
  1870  | 1094 | 235 | 247 | ⟦r⟧26
 1880 | 1717 | 498 | 418 | ⟦r⟧45
 1890 | 1489 | 399 | 523 | ⟦r⟧67
@@ -805,8 +807,7 @@ The total value of farm animals exported from the United States has fluctuated g
 
 Since 1890 there has been a great development in the production of fruit and vegetables. Local market gardens are numerous in the vicinity of all cities, and highly specialized “truck gardening,” that is, the growing of early fruits and vegetables for transportation to distant markets where the seasons are later, has made rapid progress in the South Atlantic states. The census reports of 1900 use the potato acreage in these states as an index of the rate of development of truck gardening; the southern potato being largely a truck garden crop. In seven counties of Virginia the increase in acreage from 1889 to 1899 was 100%; in eleven counties of North Carolina, 314%; in five counties of South Carolina, 134%; in nine counties of Georgia, 111%; in six counties of Florida, 309%; in five counties of Alabama, 277%. Irish and sweet potatoes are the most important vegetables raised; the North Central states leading in the production of the former and the South Atlantic states in the production of the latter. The growth of the Irish potato industry is shown by the following table:—
 
-{{TABLE:
- Year.  |  Acreage.  |  Yield (bushels). 
+{{TABLE: Year.  |  Acreage.  |  Yield (bushels). 
 1870 | 1,325,119 | 114,775,000
 1880 | 1,842,510 | 167,659,570
 1890 | 2,651,579 | 148,289,696
@@ -814,8 +815,7 @@ Since 1890 there has been a great development in the production of fruit and veg
 1905 | 2,996,757 | 260,741,294}TABLE}
 The production of sweet potatoes, as reported in census years, was as follows:—
 
-{{TABLE:
- Year.  |  Acreage.  | Yield (bushels). 
+{{TABLE: Year.  |  Acreage.  | Yield (bushels). 
 1869 | .. | ⟦r⟧21,709,824
 1879 | ⟦r⟧444,817 | ⟦r⟧33,378,693
 1889 | ⟦r⟧524,588 | ⟦r⟧43,950,261

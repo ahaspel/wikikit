@@ -6,8 +6,7 @@ The practical value of the lead-peroxide-sulphuric-acid cell arises largely from
 Planté carefully studied the changes which occur in the formation, charge and discharge of the cell. In forming, he placed two sheets of lead in sulphuric acid, separating them by narrow strips of caoutchouc (fig. 1). When a charging current is sent through the cell, the hydrogen liberated at one plate escapes, a small quantity possibly being spent in «SH»Planté’s cell.«/SH» reducing the surface film of oxide generally found on lead. Some of the oxygen is always fixed on the other (positive) plate, forming a surface film of peroxide. After a few minutes the current is reversed so that the first plate is peroxidized, and the peroxide previously formed on the second plate is reduced to metallic lead in a spongy state. By repeated reversals, the surface of each plate is alternately peroxidized and reduced to metallic lead. In successive oxidations, the action penetrates farther into the plate, furnishing each time a larger quantity of spongy PbO₂ on one plate and of spongy lead on the other. It follows that the duration of the successive charging currents also increases. At the beginning, a few minutes suffice; at the end, many hours are required.
 After the first six or eight cycles, Planté allowed a period of repose before reversing. He claimed that the PbO₂ formed by reversal after repose was more strongly adherent, and also more crystalline than if no repose were allowed. The following figures show the relative amounts of oxygen absorbed by a given plate in successive charges (between one charge and the next the plate stood in repose for the time stated, then was reduced, and again charged as anode):—
 
-{{TABLE:
-Separate Periods of Repose. | Charge. | Relative Amount of Peroxide formed.
+{{TABLE:Separate Periods of Repose. | Charge. | Relative Amount of Peroxide formed.
 ⟦c⟧.. | First | 1·0
 ⟦c⟧18 hours | Second | 1·57
 ⟦c⟧ 2 days | Third | 1·71

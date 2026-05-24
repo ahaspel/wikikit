@@ -1069,8 +1069,14 @@ def _process_table(inner: str, text_transform,
     _img_cell_re = re.compile(r"^\s*\{\{IMG:[^}]+\}\}\s*$")
 
     for raw_row in raw_rows:
-        # Skip caption rows
-        if "|+" in raw_row:
+        # Drop the `|+` caption LINE (already extracted above) but KEEP the
+        # rest of this pre-`|-` segment — it can hold the header row.  The
+        # source often puts the caption and the first header row in the same
+        # segment before the first `|-` (AGRICULTURE's "Average Acreage" table:
+        # `|+ Table XXVIII…` then `| | Whole Farm. | Proportion…`).  Skipping
+        # the whole segment on `|+` dropped that header row.
+        raw_row = re.sub(r"(?:\A|\n)[ \t]*\|\+[^\n]*", "", raw_row)
+        if not raw_row.strip():
             continue
 
         # Preserve any child element placeholders outside cells
