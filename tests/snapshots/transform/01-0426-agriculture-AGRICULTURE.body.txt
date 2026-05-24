@@ -584,19 +584,11 @@ The decrease in the demand for labour is attributable chiefly to the reduction o
 
 «I»Agricultural Education.«/I»
 
-In Great Britain agricultural education as a whole lacks the scope and co-ordination which it has in some continental countries. Centres at which higher agricultural education is given are, however, numerous. The chief are:—
-
-The Royal Agricultural College, Cirencester.
-
-Aspatria Agricultural College, Carlisle.
-
-Tamworth Agricultural College.
-
-* Agricultural and Horticultural College, Uckfield, Sussex.
-
-* Agricultural and Horticultural College, Holme Chapel, Cheshire.
-
-PAGE:452{{TABLE:
+In Great Britain agricultural education as a whole lacks the scope and co-ordination which it has in some continental countries. Centres at which higher agricultural education is given are, however, numerous. The chief are:— {{TABLE: | The Royal Agricultural College, Cirencester.
+ | Aspatria Agricultural College, Carlisle.
+ | Tamworth Agricultural College.
+* | Agricultural and Horticultural College, Uckfield, Sussex.
+* | Agricultural and Horticultural College, Holme Chapel, Cheshire.}TABLE} PAGE:452{{TABLE:
 * | Midland Agricultural and Dairy College, Kingston, Derby.
 * | Harper-Adams Agricultural College, Newport, Salop.
 * | Lancashire County School, Harris Institute, Preston.

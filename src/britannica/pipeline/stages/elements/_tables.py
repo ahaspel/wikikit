@@ -875,6 +875,171 @@ def _cell_align(attr_part: str, content: str) -> str | None:
     return None
 
 
+def _extract_table_cells(row_text, text_transform, with_attrs=False):
+    """Extract data cells from a row via the shared `split_wiki_row`
+    helper, then drop any remaining `{{Ts|…}}` cell-styling templates
+    and run each cell's content through `text_transform`.
+
+    ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
+    alignment the producer must CARRY (resolved before the `{{Ts}}` style
+    codes are stripped) so the viewer renders it instead of guessing.
+    Default returns plain content strings (the other callers' contract).
+
+    Module-level so the lean data-grid producer (`_process_table`) and
+    the carved shape producers (single-column, etc.) share one cell
+    parser instead of each re-implementing it.
+    """
+    cells = []
+    for sep, attr_part, content in split_wiki_row(row_text):
+        if content in ("}", "{|"):
+            continue
+        if not content:
+            # Preserve as a real empty cell — this is `|` on its
+            # own (AETHER / AQUEDUCT column spacers) or `|attr|`
+            # with a trailing-pipe and empty content (GRASS AND
+            # GRASSLAND's `|width="50%" {{ts|ac|ba}}| ` header-
+            # corner: a real cell carrying only sizing/styling
+            # attributes).  The trailing pipe is the signal that
+            # source intended a real cell.  This is `split_wiki_row`'s
+            # contract: anything it returns is a real cell — and the
+            # mid-line case where source has `|attr-keyword` with NO
+            # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
+            # check on `content` below.
+            cells.append((" ", None) if with_attrs else " ")
+            continue
+        # Content that is itself a bare attribute keyword (`colspan=2`
+        # with no trailing-pipe boundary in source) is a malformed
+        # cell, not real content — drop it.
+        if _CELL_ATTR_RE.match(content):
+            continue
+        # Resolve alignment BEFORE stripping the {{Ts|…}} style codes that
+        # carry it (`{{Ts|ar}}` = right) — the TABLE marker now CARRIES
+        # alignment so the viewer renders it rather than guessing.
+        align = _cell_align(attr_part, content) if with_attrs else None
+        cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
+        val = text_transform(cleaned) if cleaned else " "
+        cells.append((val, align) if with_attrs else val)
+    return cells
+
+
+def _is_single_column_table(inner: str) -> bool:
+    """A wikitable whose every row holds exactly one cell — a boxed run of
+    lines, not a data grid.  Its producer renders it as a `«PRE:` block.
+
+    Purely STRUCTURAL.  The only fact consulted is how many cells each row
+    has (per `split_wiki_row`); a cell is present when it carries any
+    characters after its `{{Ts|…}}` *styling* marker is set aside (styling
+    is an attribute, not content — the same separation `split_wiki_row`
+    already makes for `attr=val|` prefixes).  Cell *content* — whether it's
+    a number, a word, or a `&ensp;` that happens to render as whitespace —
+    is never inspected: that is the producer's concern, not the
+    classifier's (see [[transform-only-two-places]]).  A table with even
+    one 2-cell row is therefore a grid, not single-column.
+    """
+    if "|-" not in inner:
+        return False
+    saw_row = False
+    for raw_row in re.split(r"\|-[^\n]*", inner):
+        cells = []
+        for _sep, _attr, content in split_wiki_row(raw_row):
+            if content in ("}", "{|") or not content:
+                continue
+            if _CELL_ATTR_RE.match(content):
+                continue
+            if re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip():
+                cells.append(content)
+        if not cells:
+            continue
+        if len(cells) > 1:
+            return False
+        saw_row = True
+    return saw_row
+
+
+def _process_single_column_table(inner: str, text_transform) -> str:
+    """Render a single-column wikitable as a `«PRE:` text block.
+
+    Carved out of `_process_table`'s hidden dispatch: a `{|…|}` used to
+    box/centre a run of text (one cell per row) is a text block, not a
+    grid.  Selected upstream by the `SINGLE_COLUMN_TABLE` label
+    (`_is_single_column_table`); this producer only ever sees that shape.
+    """
+    inner = _strip_br(inner)
+    text_lines = []
+    for raw_row in re.split(r"\|-[^\n]*", inner):
+        content = [c for c in _extract_table_cells(raw_row, text_transform)
+                   if c.strip()]
+        if content:
+            text_lines.append(content[0])
+    return "«PRE:" + "\n".join(text_lines) + "«/PRE»"
+
+
+# col1 of a verse quotation: only quotation/whitespace punctuation (the
+# hanging opening quote). Read on RAW col1 (no transform), so template/label
+# cells like `{{em|N}}` / `{{Dotted TOC line|…}}` / `{{nowrap|B.}}` are NOT
+# punctuation — which is exactly how the matrix / TOC / taxonomy false
+# positives (that branch 5 mis-claimed by transforming col1 to blank) get
+# excluded.
+_VERSE_COL1_PUNCT_RE = re.compile(
+    r'^[\s"\'“”‘’,.\-;:—]+$')
+
+
+def _is_verse_table(inner: str) -> bool:
+    """A 2-column quotation layout: col1 hangs only quotation punctuation
+    (the opening quote of a quoted poem), col2 holds the verse lines.
+
+    Content-recognition — a justified last resort, because no STRUCTURAL
+    signal separates a verse quotation from a 2-column data table (see
+    [[transform-only-two-places]]).  STRUCTURAL wherever it can be, and it
+    does NOT transform.  Requirements:
+      * every non-empty row is two cells (or one empty cell), each col1
+        punctuation-only or empty;
+      * ≥1 row hangs a non-empty (punctuation) col1 — the hanging mark a
+        determinant matrix / all-empty-col1 table lacks;
+      * ≥1 row carries col2 text.
+    Verified against the (static) corpus: all 24 table-verse hang a quote in
+    col1; none are unquoted.  See [[source-is-static]].
+    """
+    saw_punct_col1 = False
+    saw_verse_row = False
+    for rv in re.split(r"\|-[^\n]*", inner):
+        cells = [c for _s, _a, c in split_wiki_row(rv) if c not in ("}", "{|")]
+        if not cells:
+            continue
+        if len(cells) == 2:
+            col1, col2 = cells[0].strip(), cells[1].strip()
+            if col1 and not _VERSE_COL1_PUNCT_RE.match(col1):
+                return False
+            if col1:
+                saw_punct_col1 = True
+            if col2:
+                saw_verse_row = True
+        elif len(cells) == 1 and not cells[0].strip():
+            continue
+        else:
+            return False
+    return saw_verse_row and saw_punct_col1
+
+
+def _process_verse_table(inner: str, text_transform) -> str:
+    """Render a 2-column verse quotation as a `{{VERSE:}VERSE}` block.
+
+    Carved out of `_process_table`'s hidden dispatch; selected upstream by
+    the VERSE_TABLE label (`_is_verse_table`).  Each row's hanging-quote
+    col1 is rejoined to its col2 line.
+    """
+    inner = _strip_br(inner)
+    lines = []
+    for rv in re.split(r"\|-[^\n]*", inner):
+        cells = _extract_table_cells(rv, text_transform)
+        if len(cells) == 2:
+            col1, col2 = cells[0].strip(), cells[1].strip()
+            if col2:
+                line = f"{col1}{col2}" if col1 else col2
+                lines.append(text_transform(line))
+    return "\n\n{{VERSE:" + "\n".join(lines) + "}VERSE}\n\n"
+
+
 def _process_table(inner: str, text_transform,
                    inner_registry: ElementRegistry | None = None) -> str:
     """Convert table rows to {{TABLE:...}TABLE} with clean cells.
@@ -888,46 +1053,7 @@ def _process_table(inner: str, text_transform,
     inner = _strip_br(inner)
 
     def _extract_cells(row_text, with_attrs=False):
-        """Extract data cells from a row via the shared `split_wiki_row`
-        helper, then drop any remaining `{{Ts|…}}` cell-styling
-        templates and run each cell's content through `text_transform`.
-
-        ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
-        alignment the producer must CARRY (resolved before the `{{Ts}}` style
-        codes are stripped) so the viewer renders it instead of guessing.
-        Default returns plain content strings (the other callers' contract).
-        """
-        cells = []
-        for sep, attr_part, content in split_wiki_row(row_text):
-            if content in ("}", "{|"):
-                continue
-            if not content:
-                # Preserve as a real empty cell — this is `|` on its
-                # own (AETHER / AQUEDUCT column spacers) or `|attr|`
-                # with a trailing-pipe and empty content (GRASS AND
-                # GRASSLAND's `|width="50%" {{ts|ac|ba}}| ` header-
-                # corner: a real cell carrying only sizing/styling
-                # attributes).  The trailing pipe is the signal that
-                # source intended a real cell.  This is `split_wiki_row`'s
-                # contract: anything it returns is a real cell — and the
-                # mid-line case where source has `|attr-keyword` with NO
-                # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
-                # check on `content` below.
-                cells.append((" ", None) if with_attrs else " ")
-                continue
-            # Content that is itself a bare attribute keyword (`colspan=2`
-            # with no trailing-pipe boundary in source) is a malformed
-            # cell, not real content — drop it.
-            if _CELL_ATTR_RE.match(content):
-                continue
-            # Resolve alignment BEFORE stripping the {{Ts|…}} style codes that
-            # carry it (`{{Ts|ar}}` = right) — the TABLE marker now CARRIES
-            # alignment so the viewer renders it rather than guessing.
-            align = _cell_align(attr_part, content) if with_attrs else None
-            cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
-            val = text_transform(cleaned) if cleaned else " "
-            cells.append((val, align) if with_attrs else val)
-        return cells
+        return _extract_table_cells(row_text, text_transform, with_attrs)
 
     # Tiny inline tables (few cells, short content) → unwrap to inline text.
     # Only for single-row tables with no row separators and no block-level
@@ -970,24 +1096,9 @@ def _process_table(inner: str, text_transform,
                             return f"{{{{IMG:{filename}|{clean_caption(caption)}}}}}"
                         return f"{{{{IMG:{filename}}}}}"
 
-    # Single-column tables (1 cell per row) are text blocks, not data tables.
-    # Render as preformatted text with line breaks preserved.
-    if "|-" in inner:
-        raw_rows = re.split(r"\|-[^\n]*", inner)
-        all_single = True
-        text_lines = []
-        for raw_row in raw_rows:
-            cells = _extract_cells(raw_row)
-            content = [c for c in cells if c.strip()]
-            if len(content) == 0:
-                continue
-            if len(content) > 1:
-                all_single = False
-                break
-            text_lines.append(content[0])
-        if all_single and text_lines:
-            joined = "\n".join(text_lines)
-            return f"\u00abPRE:{joined}\u00ab/PRE\u00bb"
+    # (Single-column text-block tables are now classified upstream as
+    # SINGLE_COLUMN_TABLE and rendered by `_process_single_column_table`;
+    # they never reach here.)
 
     # Check for image-layout table (plate pages: grid of images + captions)
     if _PH in inner:
@@ -1009,38 +1120,8 @@ def _process_table(inner: str, text_transform,
                 parts.append(f"{m.group(1)}. {m.group(2).strip()}")
             return "\n\n".join(parts)
 
-    # Check for verse-layout table: 2 columns where col 1 is just punctuation
-    # (quote marks) and col 2 has the actual verse text.
-    raw_rows_v = re.split(r"\|-[^\n]*", inner)
-    verse_rows_v = []
-    is_verse_layout = len(raw_rows_v) >= 1
-    for rv in raw_rows_v:
-        cells_v = _extract_cells(rv)
-        if not cells_v:
-            continue
-        if len(cells_v) == 2:
-            col1 = cells_v[0].strip()
-            col2 = cells_v[1].strip()
-            # Col 1 must be only punctuation/quotes (or empty)
-            if col1 and not re.match(r'^[\s"\'\u201c\u201d\u2018\u2019,.\-;:—]+$', col1):
-                is_verse_layout = False
-                break
-            if col2:
-                verse_rows_v.append((col1, col2))
-        elif len(cells_v) == 1 and not cells_v[0].strip():
-            continue  # empty row
-        else:
-            is_verse_layout = False
-            break
-    if is_verse_layout and verse_rows_v:
-        # Combine leading/trailing punctuation with verse lines
-        lines = []
-        for col1, col2 in verse_rows_v:
-            line = f"{col1}{col2}" if col1 else col2
-            if text_transform:
-                line = text_transform(line)
-            lines.append(line)
-        return "\n\n{{VERSE:" + "\n".join(lines) + "}VERSE}\n\n"
+    # (Verse-layout tables are now classified upstream as VERSE_TABLE and
+    # rendered by `_process_verse_table`; they never reach here.)
 
     # Check for structural formula (monospaced, spatial layout)
     if _is_structural_formula(inner):

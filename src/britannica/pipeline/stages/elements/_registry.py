@@ -93,6 +93,7 @@ TABLE_LABELS: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE_GRID", "SIMPLE_PLATE", "FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE",
     "LEGENDED_FIGURE_CHILD",
+    "SINGLE_COLUMN_TABLE", "VERSE_TABLE",
 })
 
 # Block-level child labels — anything that renders as its own

@@ -107,11 +107,15 @@ from britannica.pipeline.stages.elements._tables import (
     _has_chem_brackets,
     _has_chem_equation_content,
     _is_html_illustration_wrapper,
+    _is_single_column_table,
+    _is_verse_table,
     _process_chemistry_layout,
     _process_complex_table,
     _process_compound_table,
     _process_html_table,
+    _process_single_column_table,
     _process_table,
+    _process_verse_table,
     _unwrap_html_illustration,
     split_wiki_row,
 )
@@ -276,6 +280,16 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_chemistry_layout(inner, tt, reg),
     "DATA_TABLE": lambda raw, inner, tt, ctx, reg:
         _process_table(inner, tt, reg),
+    # SINGLE_COLUMN_TABLE — a `{|…|}` boxing a run of text (one content
+    # cell per row), not a grid.  Carved out of `_process_table`'s hidden
+    # dispatch; rendered as a `«PRE:` text block.
+    "SINGLE_COLUMN_TABLE": lambda raw, inner, tt, ctx, reg:
+        _process_single_column_table(inner, tt),
+    # VERSE_TABLE — a 2-column quotation layout (hanging-quote col1 + verse
+    # lines col2).  Carved out of `_process_table`'s hidden dispatch;
+    # rendered as `{{VERSE:}VERSE}`.
+    "VERSE_TABLE": lambda raw, inner, tt, ctx, reg:
+        _process_verse_table(inner, tt),
     # Single-label kinds — element_type == label.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
         _process_djvu_crop(raw, tt, ctx),
@@ -757,6 +771,30 @@ def _has_rowspan_or_colspan(raw: str, inner: str,
         or re.search(r"colspan\s*=", raw, re.IGNORECASE))
 
 
+def _is_verse_table_pred(raw: str, inner: str,
+                          registry: ElementRegistry | None) -> bool:
+    """A 2-column quotation layout (hanging-quote col1 + verse lines).
+    Content-recognition last resort — no structural signal separates verse
+    from a 2-column data table.  Placed near the end (before single-col and
+    the DATA_TABLE catch-all): only re-labels tables that would otherwise be
+    DATA_TABLE."""
+    return _is_verse_table(inner)
+
+
+def _is_single_column_table_pred(raw: str, inner: str,
+                                  registry: ElementRegistry | None) -> bool:
+    """A `{|…|}` whose every non-empty row holds exactly one content
+    cell — a boxed/centred run of text, not a data grid.  Its producer
+    renders it as a `«PRE:` block.
+
+    Placed last (just before the DATA_TABLE catch-all) so it only ever
+    re-labels tables that would otherwise fall through to DATA_TABLE; it
+    never steals a table a more-specific predicate (layout/math/complex)
+    already claimed.  This is the first shape lifted out of
+    `_process_table`'s hidden dispatch into the classifier."""
+    return _is_single_column_table(inner)
+
+
 def _always_true(raw: str, inner: str,
                   registry: ElementRegistry | None) -> bool:
     """Catch-all — anything reaching here is a regular DATA_TABLE."""
@@ -798,6 +836,8 @@ _POST_ICL_PREDS: list[tuple[Callable[
     (_has_rowspan_or_colspan,        "COMPLEX_HTML"),
     (_is_math_layout_tokens_pred,    "MATH_LAYOUT_TOKENS"),
     (_is_math_layout_equations_pred, "MATH_LAYOUT_EQUATIONS"),
+    (_is_verse_table_pred,           "VERSE_TABLE"),
+    (_is_single_column_table_pred,   "SINGLE_COLUMN_TABLE"),
     (_always_true,                   "DATA_TABLE"),
 ]
 
