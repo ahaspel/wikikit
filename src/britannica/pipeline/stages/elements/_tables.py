@@ -983,6 +983,29 @@ def _process_single_column_table(inner: str, text_transform) -> str:
 _VERSE_COL1_PUNCT_RE = re.compile(
     r'^[\s"\'“”‘’,.\-;:—]+$')
 
+# A single-cell quoted poem: the whole table is ONE content cell that opens with
+# a quotation (`{{fqm}}` or a quote mark) and is broken into lines with `<br>`.
+# VERSE is a CONTENT-defined shape (see [[transform-only-two-places]]): a quoted
+# multi-line passage is a poem — recognise it, don't try to structure it.  The
+# quote requirement excludes `<br>`-lined non-verse (ARISTOTLE's logic diagram);
+# the `<br>` requirement excludes single-line prose quotes (ARMY's note).
+_VERSE_QUOTE_OPEN_RE = re.compile(r"^\s*(?:\{\{\s*fqm\b|[“”‘’\"'])")
+_VERSE_BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
+
+
+def _single_cell_verse_cell(inner: str) -> str | None:
+    """Raw cell content if `inner` is a single-cell quoted poem (one content
+    cell, quote-opened, `<br>`-lined); else None.  No transform — recognition
+    only."""
+    cells = [c for _s, _a, c in split_wiki_row(inner)
+             if c.strip() and c not in ("}", "{|")]
+    if len(cells) != 1:
+        return None
+    cell = cells[0].strip()
+    if _VERSE_QUOTE_OPEN_RE.match(cell) and _VERSE_BR_RE.search(cell):
+        return cell
+    return None
+
 
 def _is_verse_table(inner: str) -> bool:
     """A 2-column quotation layout: col1 hangs only quotation punctuation
@@ -997,9 +1020,15 @@ def _is_verse_table(inner: str) -> bool:
       * ≥1 row hangs a non-empty (punctuation) col1 — the hanging mark a
         determinant matrix / all-empty-col1 table lacks;
       * ≥1 row carries col2 text.
-    Verified against the (static) corpus: all 24 table-verse hang a quote in
-    col1; none are unquoted.  See [[source-is-static]].
+    Verified against the (static) corpus: all 24 two-column table-verse hang a
+    quote in col1; none are unquoted.  See [[source-is-static]].
+
+    Two VERSE shapes: the 2-column hanging-quote layout (below) and the
+    single-cell quoted poem (`_single_cell_verse_cell`).  Both are
+    content-recognition — VERSE is content-defined.
     """
+    if _single_cell_verse_cell(inner) is not None:
+        return True
     saw_punct_col1 = False
     saw_verse_row = False
     for rv in re.split(r"\|-[^\n]*", inner):
@@ -1025,9 +1054,20 @@ def _process_verse_table(inner: str, text_transform) -> str:
     """Render a 2-column verse quotation as a `{{VERSE:}VERSE}` block.
 
     Carved out of `_process_table`'s hidden dispatch; selected upstream by
-    the VERSE_TABLE label (`_is_verse_table`).  Each row's hanging-quote
-    col1 is rejoined to its col2 line.
+    the VERSE_TABLE label (`_is_verse_table`).  Two shapes: a single-cell
+    quoted poem (split on `<br>`) and the 2-column hanging-quote layout
+    (each row's col1 rejoined to its col2 line).
     """
+    # Single-cell quoted poem: split the cell on `<br>` into verse lines
+    # (joining soft-hyphen `-<br>` breaks first), BEFORE `_strip_br` would
+    # flatten them.
+    sc = _single_cell_verse_cell(inner)
+    if sc is not None:
+        sc = re.sub(r"(\w)-<br\s*/?>\s*", r"\1", sc, flags=re.IGNORECASE)
+        lines = [text_transform(ln.strip())
+                 for ln in _VERSE_BR_RE.split(sc) if ln.strip()]
+        return "\n\n{{VERSE:" + "\n".join(lines) + "}VERSE}\n\n"
+
     inner = _strip_br(inner)
     lines = []
     for rv in re.split(r"\|-[^\n]*", inner):
