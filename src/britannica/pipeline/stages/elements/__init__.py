@@ -67,6 +67,12 @@ from britannica.pipeline.stages.elements._outline import (
     _process_outline,
     _strip_page_marker_prefix,
 )
+from britannica.pipeline.stages.elements._section import (
+    _process_section,
+)
+from britannica.pipeline.stages.elements._noinclude import (
+    _process_noinclude,
+)
 from britannica.pipeline.stages.elements._layout import (
     _append_attribution,
     _ascii_fold_label,
@@ -306,7 +312,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, tt, ctx, reg:
         _process_ref(raw, inner, tt, ctx.ref_bodies),
-    "IMAGE": lambda raw, inner, tt, ctx, reg: _process_image(inner, tt),
+    "IMAGE": lambda raw, inner, tt, ctx, reg: _process_image_from_raw(raw, tt),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
         _process_image_float(inner, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
@@ -315,6 +321,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "HTML_TABLE": lambda raw, inner, tt, ctx, reg:
         _process_html_table(raw, inner, tt, reg),
     "OUTLINE": lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt),
+    # SECTION — `<section begin/end/>` transclusion marker; renders nothing
+    # (boundary signal, not content).  Owned element instead of a catch-all
+    # HTML strip; the catcher for the honest super-walker (B3).
+    "SECTION": lambda raw, inner, tt, ctx, reg: _process_section(raw),
+    # NOINCLUDE — `<noinclude>…</noinclude>` page container; producer drops
+    # chrome, keeps cross-page `{|`/`|}`.  Owned element instead of a pre-walk
+    # strip; the catcher for the honest super-walker (B3).
+    "NOINCLUDE": lambda raw, inner, tt, ctx, reg: _process_noinclude(raw),
 }
 
 

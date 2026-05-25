@@ -35,7 +35,9 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
+    SHAPE_SECTION,
 )
 from britannica.pipeline.stages.elements._figure import (
     figure_tail_end,
@@ -93,6 +95,20 @@ _SCORE_RE       = re.compile(r"<score[^>]*>.*?</score>",
                               re.DOTALL)
 _HIEROGLYPH_TAG_RE = re.compile(r"<hiero>[^<]*</hiero>", re.IGNORECASE)
 
+# Wikisource transclusion marker `<section begin="X"/>` / `<section end/>`.
+# A self-closing structural tag carrying boundary identity (the name), no inner
+# content.  Recognized so it becomes an owned SECTION element carried raw, rather
+# than being swept by the text producer's catch-all HTML strip.
+_SECTION_RE = re.compile(r"<section\s+(?:begin|end)\b[^>]*>", re.IGNORECASE)
+
+# Wikisource page container `<noinclude>…</noinclude>` — page-quality/header
+# chrome, occasionally a cross-page `{|`/`|}` table marker.  Recognized so it
+# becomes an owned NOINCLUDE element carried raw; the producer decides chrome
+# (drop) vs. structural content (keep) — a content decision that belongs in a
+# producer, not a pre-walk strip.
+_NOINCLUDE_RE = re.compile(r"<noinclude>.*?</noinclude>",
+                           re.DOTALL | re.IGNORECASE)
+
 # DOUBLE_BRACE template recognizers — named templates with up to four
 # levels of `{{…}}` nesting (CASTLE Fig. 9 cap parameters reach four
 # deep).  Specificity: each has a fixed template-name opener like
@@ -138,6 +154,8 @@ _IMAGE_RE = re.compile(
 # the first recognizer whose pattern matches.
 _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_CHART2,            _CHART2_RE),
+    (SHAPE_SECTION,           _SECTION_RE),
+    (SHAPE_NOINCLUDE,         _NOINCLUDE_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
     (SHAPE_HTML_TAG,          _REF_RE),
     (SHAPE_HTML_TAG,          _HTML_TABLE_RE),
@@ -161,6 +179,8 @@ _OPENER_HINT_RE = re.compile(
     r"\{\{chart2/start"             # CHART2
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
+    r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
+    r"|<noinclude\b"                # NOINCLUDE page container
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)

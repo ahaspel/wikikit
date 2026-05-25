@@ -51,7 +51,9 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
+    SHAPE_SECTION,
     strip_outer,
 )
 from britannica.pipeline.stages.elements._walker import walk
@@ -102,29 +104,6 @@ def _derive_double_bracket_label(raw: str) -> str:
     if m and m.group(1).lower() in {"file", "image"}:
         return "IMAGE"
     raise ValueError(f"Unknown DOUBLE_BRACKET prefix: {raw[:40]!r}")
-
-
-# IMAGE's "raw" extends past the `]]` to include an optional trailing
-# caption block (today's IMAGE extractor regex captures `[[File:…]]`
-# PLUS a following caption line if present).  Producer consumes the
-# trailing caption via a `|EXTCAP:` tail on `inner_text` — so the
-# classifier post-processes inner_text for IMAGE specifically to
-# strip the `File:`/`Image:` prefix AND fold the trailing caption in.
-_IMAGE_RAW_RE = re.compile(
-    r"\[\[(?:File|Image):(.+)\]\](?:\s*\n\n?(.+))?$",
-    re.IGNORECASE | re.DOTALL,
-)
-
-
-def _image_inner_with_extcap(raw: str) -> str:
-    m = _IMAGE_RAW_RE.match(raw)
-    if not m:
-        return raw
-    inner = m.group(1)
-    ext_caption = m.group(2)
-    if ext_caption:
-        inner = inner + "|EXTCAP:" + ext_caption
-    return inner
 
 
 def _derive_double_brace_label(raw: str) -> str:
@@ -283,6 +262,10 @@ def _derive_label(
         return "OUTLINE"
     if shape == SHAPE_FIGURE:
         return "FIGURE"
+    if shape == SHAPE_SECTION:
+        return "SECTION"
+    if shape == SHAPE_NOINCLUDE:
+        return "NOINCLUDE"
     raise ValueError(f"Unknown shape: {shape!r}")
 
 
@@ -327,13 +310,11 @@ def classify(
             )
     label = _derive_label(shape, raw, inner_text, inner_registry)
 
-    # Per-label inner_text post-processing.  Most labels accept the
-    # shape-uniform strip_outer result; IMAGE is the exception —
-    # its raw bytes may extend past the `]]` to include a trailing
-    # caption block, and its producer expects the `File:`/`Image:`
-    # prefix stripped with an `|EXTCAP:` tail folded in.
-    if label == "IMAGE":
-        inner_text = _image_inner_with_extcap(raw)
+    # NOTE: the walker is conservative — what comes in goes out unchewed.
+    # An IMAGE element therefore carries its raw `[[File:…]]` + trailing
+    # caption span VERBATIM; the file-ref/caption split is the producer's
+    # job (`_process_image_from_raw`), not a classify-time fold.  No
+    # per-label inner_text rewriting happens here.
 
     return ClassifiedElement(
         label=label,

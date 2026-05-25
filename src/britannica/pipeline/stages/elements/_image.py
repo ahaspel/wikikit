@@ -242,14 +242,42 @@ def _process_chart2(raw: str, context: ElementContext) -> str:
     return ""
 
 
-def _process_image_from_raw(raw: str, text_transform) -> str:
-    """Convenience: strip `[[File:...]]` and call _process_image."""
-    m = re.match(r"\[\[(?:File|Image):(.+)\]\](?:\s*\n\n?(.+))?$",
-                 raw, re.IGNORECASE | re.DOTALL)
+# An IMAGE element's raw is `[[File:…]]` plus an OPTIONAL trailing caption
+# block (`]]\n…` / `]]\n\n…`) the walker captured as part of the same unit.
+# This is the single source for splitting that raw into (file-ref inner,
+# trailing caption) — the parse the producer owns, NOT the walker.  The
+# walker carries the raw span unchewed; only here is it interpreted.
+_IMAGE_RAW_RE = re.compile(
+    r"\[\[(?:File|Image):(.+)\]\](?:\s*\n\n?(.+))?$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _split_image_raw(raw: str) -> tuple[str, str] | None:
+    """`(file_ref_inner, trailing_caption)` from a raw image span, or None if
+    `raw` is not an `[[File:…]]` span.  `trailing_caption` is "" when absent."""
+    m = _IMAGE_RAW_RE.match(raw)
     if not m:
+        return None
+    return m.group(1), (m.group(2) or "")
+
+
+def image_extcap_from_raw(raw: str) -> str:
+    """The trailing caption (after `]]`) of a raw `[[File:…]]` span, or "".
+    The honest replacement for reading a walker-folded `|EXTCAP:` tail —
+    parses the caption from the carried-along raw instead."""
+    sp = _split_image_raw(raw)
+    return sp[1] if sp else ""
+
+
+def _process_image_from_raw(raw: str, text_transform) -> str:
+    """Parse a raw `[[File:…]]` + optional trailing caption span and produce
+    the `{{IMG:…}}` marker.  The IMAGE producer's entry point — the walker
+    hands it the verbatim raw; the caption parse lives here, not upstream."""
+    sp = _split_image_raw(raw)
+    if sp is None:
         return raw
-    inner = m.group(1)
-    ext_caption = m.group(2)
+    inner, ext_caption = sp
     if ext_caption:
         inner = inner + "|EXTCAP:" + ext_caption
     return _process_image(inner, text_transform)

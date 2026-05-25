@@ -32,15 +32,15 @@ from britannica.db.session import SessionLocal
 from britannica.pipeline.stages.detect_boundaries import (
     _detect_letter_article,
     _normalize_title,
-    _preprocess_wikitext,
     _split_out_plates,
 )
 from britannica.pipeline.stages.elements._title import clean_title
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
-# Inner italic spans are tolerated; the closer is «/B».
-_HEADING = re.compile(r"(?:\[\[[^\]|]*\|)?«B»((?:[^«]|«/?I»)*?)«/B»")
+# Inner italic spans are tolerated; the closer is «/B».  `\s*` after the link
+# pipe: the «B» can sit on the NEXT line (`[[Author:…|\n«B»STAWELL…«/B»]]`).
+_HEADING = re.compile(r"(?:\[\[[^\]|]*\|\s*)?«B»((?:[^«]|«/?I»)*?)«/B»")
 _PAGE = re.compile(r"\x01PAGE:(\d+)\x01")
 
 # Block starts inside a section, after the open: a blank line, a page break, or
@@ -49,9 +49,13 @@ _BLOCK_BOUNDARY = re.compile(r"\n\n|\x01PAGE:\d+\x01|(?:\|\}|</table>)[ \t]*\n")
 # Leading whitespace / table-remnant pipes / nbsp to skip.
 _WS = re.compile(r"(?:\s|&nbsp;|\xa0|\|)+")
 # Lead layout that may sit before a heading — the article's own opening
-# illustration / fine-print frame / drop-cap / column comment — skipped to
-# reach the heading.
+# illustration / fine-print frame / drop-cap / column comment, or page-level
+# transclusion chrome (`<noinclude>` header/footer, `<section …>` tags) — all
+# skipped to REACH the heading on RAW source.  Recognized-and-skipped, never
+# stripped: what comes in goes out (their producers consume them downstream).
 _LEAD = [
+    re.compile(r"<noinclude>.*?</noinclude>", re.DOTALL | re.I),  # page chrome
+    re.compile(r"<section\s+(?:begin|end)\b[^>]*?/?>", re.I),     # transclusion tag
     re.compile(r"<!--.*?-->", re.DOTALL),                       # HTML comment
     re.compile(r"<br\s*/?>", re.I),                            # line break
     re.compile(r"\{\|.*?\n\s*\|\}", re.DOTALL),                 # wikitable
@@ -164,8 +168,15 @@ def _page_before(stream: str, pos: int) -> int:
 
 
 def volume_stream(volume: int) -> str:
-    """Concatenate a volume's plate-free pages (preprocessed) into one stream,
-    page breaks riding along as `\\x01PAGE:N\\x01`."""
+    """Concatenate a volume's plate-free pages into one RAW stream, page breaks
+    riding along as `\\x01PAGE:N\\x01`.
+
+    No preprocessing — the super-walker consumes nothing.  Page chrome
+    (`<noinclude>`, `<section …>`) is RECOGNIZED and skipped at the heading
+    search (see ``_LEAD``), not stripped from the stream, so every boundary and
+    every article body carries the original bytes.  (Corrections, if any, are a
+    source-layer concern applied before this — the one transform step 2 allows.)
+    """
     session = SessionLocal()
     try:
         all_pages = (session.query(SourcePage)
@@ -179,7 +190,7 @@ def volume_stream(volume: int) -> str:
             raw = (p.wikitext or "").strip()
             if not raw:
                 continue
-            parts.append(f"\x01PAGE:{p.page_number}\x01{_preprocess_wikitext(raw)}")
+            parts.append(f"\x01PAGE:{p.page_number}\x01{raw}")
         return "\n".join(parts)
     finally:
         session.close()
@@ -221,4 +232,14 @@ def super_walk(volume: int) -> list[WalkedArticle]:
                 gpos, _page_before(stream, gpos), m.group(1)))
 
     out.sort(key=lambda a: a.start)
-    return out
+    # A boundary SET has no duplicates: a heading can fall under two overlapping
+    # Wikisource <section begin> tags, and the per-section `seen` set only dedups
+    # within a section.  Collapse same-position boundaries here.
+    deduped: list[WalkedArticle] = []
+    seen_pos: set[int] = set()
+    for a in out:
+        if a.start in seen_pos:
+            continue
+        seen_pos.add(a.start)
+        deduped.append(a)
+    return deduped

@@ -19,7 +19,9 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
+    SHAPE_SECTION,
     SHAPES,
     strip_outer,
 )
@@ -28,9 +30,13 @@ from britannica.pipeline.stages.elements._shapes import (
 class TestShapeVocabulary:
     def test_shape_count(self):
         # 7 delimiter-balanced/text shapes + FIGURE (image + structural
-        # caption run, recognized by the structural figure break).
-        assert len(SHAPES) == 8
+        # caption run) + SECTION (`<section begin/end/>`) + NOINCLUDE
+        # (`<noinclude>…</noinclude>` page container) — both owned elements
+        # carried raw rather than swept by the catch-all.
+        assert len(SHAPES) == 10
         assert SHAPE_FIGURE in SHAPES
+        assert SHAPE_SECTION in SHAPES
+        assert SHAPE_NOINCLUDE in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)

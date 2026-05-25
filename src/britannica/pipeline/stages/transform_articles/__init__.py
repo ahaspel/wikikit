@@ -237,6 +237,14 @@ def _strip_page_layout_noinclude_wrappers(text: str) -> str:
     return text
 
 
+# ── Layer-A audit instrumentation (TEMPORARY) ─────────────────────────
+# Default-empty: production behavior is byte-identical.  An audit harness
+# assigns this module global to a {pass-name} set to measure each
+# preprocessing pass's MARGINAL render effect (does it do anything the
+# producers don't already do?).  Remove after the Layer-A migration.
+_AUDIT_SKIP: frozenset = frozenset()
+
+
 def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     """New architecture: extract-process-reassemble.
 
@@ -274,10 +282,10 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # is rewritten; CHEM/TABLE_FIGURE/BLOCK_LAYOUT/CAPTIONED/STRANDED
     # refs are left for the existing pipeline.  See the per-bucket
     # audit at tools/_scratch/audit_image_routing.py.
-    raw_wikitext = promote_inline_glyphs(raw_wikitext)
+    raw_wikitext = promote_inline_glyphs(raw_wikitext) if "inline_glyphs" not in _AUDIT_SKIP else raw_wikitext
 
-    raw_wikitext = strip_word_spacing_templates(raw_wikitext)
-    raw_wikitext = unfold_folded_rows(raw_wikitext)
+    raw_wikitext = strip_word_spacing_templates(raw_wikitext) if "word_spacing" not in _AUDIT_SKIP else raw_wikitext
+    raw_wikitext = unfold_folded_rows(raw_wikitext) if "unfold" not in _AUDIT_SKIP else raw_wikitext
 
     # Convert STANDALONE {{Css image crop|Image=EB1911 - Volume N.djvu|
     # Page=P|…}} templates (not inside a wikitable) to File links.
@@ -383,9 +391,9 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
             if s <= m.start() < e:
                 return m.group(0)  # inside a table — leave alone
         return _css_crop_replace(m)
-    raw_wikitext = _crop_pat.sub(_maybe_replace, raw_wikitext)
+    raw_wikitext = _crop_pat.sub(_maybe_replace, raw_wikitext) if "css_crop" not in _AUDIT_SKIP else raw_wikitext
 
-    text = strip_section_tags(raw_wikitext)
+    text = strip_section_tags(raw_wikitext) if "section_tags" not in _AUDIT_SKIP else raw_wikitext
 
     # Strip <noinclude> blocks (page headers, quality tags), but preserve
     # any `{|` opener or `|}` closer lines inside them — EB1911 pages
@@ -408,18 +416,18 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # before the preserve-`{|`/`|}` step, otherwise the orphaned
     # closer makes ``_wrap_orphaned_table_rows`` wrap the article's
     # prose into a fake table.
-    text = _strip_page_layout_noinclude_wrappers(text)
+    text = _strip_page_layout_noinclude_wrappers(text) if "page_layout_noinclude" not in _AUDIT_SKIP else text
 
-    text = strip_noinclude_blocks(text)
+    text = strip_noinclude_blocks(text) if "noinclude" not in _AUDIT_SKIP else text
 
-    text = strip_unclosed_templates(text)
+    text = strip_unclosed_templates(text) if "unclosed_templates" not in _AUDIT_SKIP else text
 
     # Normalize `EB1911 - Volume N.djvu/PPP` (and the typo variant
     # `…djvu-PPP.png`) to local filenames `djvu_volNN_pagePPPP.jpg`
     # BEFORE image extraction.  `download_djvu_crops.py` provisions
     # these files from the volume's DjVu renders — otherwise the
     # viewer would try (and fail) to resolve them on Commons.
-    text = _normalize_djvu_page_refs(text)
+    text = _normalize_djvu_page_refs(text) if "djvu" not in _AUDIT_SKIP else text
 
     # {{raw image|filename}} is an alternate EB1911 image syntax used
     # for figures whose caption sits on a following line as
@@ -428,42 +436,45 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # so downstream extraction renders them as a single figure (avoids
     # the figure showing both a figcaption and a duplicate caption
     # paragraph below — see WEIGHING MACHINES / SEWING MACHINES).
-    text = _bundle_raw_image_with_caption(text)
+    text = _bundle_raw_image_with_caption(text) if "bundle_raw_image" not in _AUDIT_SKIP else text
 
     # Unwrap center `{{c|…}}` templates — they only control alignment.
     # Done before element extraction so an image caption like
     # `{{c|{{sc|Fig. 10.}}}}` simplifies to `{{sc|Fig. 10.}}` and the
     # IMAGE extractor's caption-pairing regex can recognize it.
-    for _ in range(3):
-        new = re.sub(
-            r"\{\{\s*c\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",
-            r"\1", text, flags=re.IGNORECASE,
-        )
-        if new == text:
-            break
-        text = new
+    if "c_unwrap" not in _AUDIT_SKIP:
+        for _ in range(3):
+            new = re.sub(
+                r"\{\{\s*c\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",
+                r"\1", text, flags=re.IGNORECASE,
+            )
+            if new == text:
+                break
+            text = new
 
     # Strip {{missing table}} markers that precede chart2 blocks (the chart
     # image replaces the table; the marker is redundant)
-    text = re.sub(
-        r"\{\{missing table\}\}\s*(?:\x01PAGE:\d+\x01)?\s*(?=\{\{center\|.*?GENEALOGICAL|\{\{chart2/start)",
-        "", text, flags=re.IGNORECASE | re.DOTALL,
-    )
+    if "missing_table" not in _AUDIT_SKIP:
+        text = re.sub(
+            r"\{\{missing table\}\}\s*(?:\x01PAGE:\d+\x01)?\s*(?=\{\{center\|.*?GENEALOGICAL|\{\{chart2/start)",
+            "", text, flags=re.IGNORECASE | re.DOTALL,
+        )
 
-    text = normalize_unicode(text)
-    text = replace_print_artifacts(text)
-    text = normalize_line_endings(text)
-    text = strip_html_comments(text)
+    text = normalize_unicode(text) if "unicode" not in _AUDIT_SKIP else text
+    text = replace_print_artifacts(text) if "print_artifacts" not in _AUDIT_SKIP else text
+    text = normalize_line_endings(text) if "line_endings" not in _AUDIT_SKIP else text
+    text = strip_html_comments(text) if "html_comments" not in _AUDIT_SKIP else text
 
     # Unwrap poem wrappers: {{block center|<poem>...</poem>}} → <poem>...</poem>
-    text = re.sub(
-        r"\{\{block center\|(<poem>.*?</poem>)\}\}",
-        r"\1", text, flags=re.DOTALL | re.IGNORECASE,
-    )
-    text = re.sub(
-        r"\{\{center\|(<poem>.*?</poem>)\}\}",
-        r"\1", text, flags=re.DOTALL | re.IGNORECASE,
-    )
+    if "poem_unwrap" not in _AUDIT_SKIP:
+        text = re.sub(
+            r"\{\{block center\|(<poem>.*?</poem>)\}\}",
+            r"\1", text, flags=re.DOTALL | re.IGNORECASE,
+        )
+        text = re.sub(
+            r"\{\{center\|(<poem>.*?</poem>)\}\}",
+            r"\1", text, flags=re.DOTALL | re.IGNORECASE,
+        )
 
     # Bare (in-prose) `{{center|[[File:…]]<br>caption}}` → split the
     # image and caption onto separate lines so the IMAGE extractor
@@ -478,18 +489,20 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # there grabs captions for in-wikitable and prose images alike,
     # regressing Fig 10/57/58.  A context-aware bare-image extractor is
     # the proper long-term home; this anchored pass is the interim.
-    text = re.sub(
-        r"^[ \t]*\{\{center\|(\[\[(?:File|Image):[^\]]+\]\])\s*<br\s*/?>\s*"
-        r"((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",
-        r"\1\n\2",
-        text, flags=re.IGNORECASE | re.MULTILINE,
-    )
+    if "center_file_split" not in _AUDIT_SKIP:
+        text = re.sub(
+            r"^[ \t]*\{\{center\|(\[\[(?:File|Image):[^\]]+\]\])\s*<br\s*/?>\s*"
+            r"((?:[^{}]|\{\{[^{}]*\}\})*)\}\}",
+            r"\1\n\2",
+            text, flags=re.IGNORECASE | re.MULTILINE,
+        )
 
     # Unwrap fine print markers
-    text = re.sub(
-        r"\{\{EB1911 fine print/s\}\}(.*?)\{\{EB1911 fine print/e\}\}",
-        r"\1", text, flags=re.DOTALL | re.IGNORECASE,
-    )
+    if "fine_print_se" not in _AUDIT_SKIP:
+        text = re.sub(
+            r"\{\{EB1911 fine print/s\}\}(.*?)\{\{EB1911 fine print/e\}\}",
+            r"\1", text, flags=re.DOTALL | re.IGNORECASE,
+        )
 
     # Unwrap {{fine block|...}} with balanced brace matching
     def _unwrap_balanced(text, template_name):
@@ -553,10 +566,11 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # is MediaWiki's positional-parameter syntax and appears in some
     # hand-edited articles (e.g. JEWS, MALAYS, AMERICAN WAR OF
     # INDEPENDENCE).
-    text = re.sub(
-        r"\{\{center\|(?:1=)?\{\{sc\|([^{}]*)\}\}\}\}",
-        r"{{csc|\1}}", text, flags=re.IGNORECASE,
-    )
+    if "csc_normalize" not in _AUDIT_SKIP:
+        text = re.sub(
+            r"\{\{center\|(?:1=)?\{\{sc\|([^{}]*)\}\}\}\}",
+            r"{{csc|\1}}", text, flags=re.IGNORECASE,
+        )
 
     # Note: ``hi`` intentionally NOT in this list. ``{{hi|Nem|content}}``
     # has a two-arg form with a size prefix that the generic balanced
@@ -564,15 +578,17 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # dedicated handlers in ``_unwrap_content_templates`` (called per
     # text-transform pass) handle both ``{{hi|content}}`` and
     # ``{{hi|Nem|content}}`` correctly.
-    for tmpl in ["block center", "fine block", "center", "c", "larger", "smaller",
-                  "EB1911 Fine Print", "nowrap", "Fine", "sm"]:
-        text = _unwrap_balanced(text, tmpl)
+    if "balanced_unwrap" not in _AUDIT_SKIP:
+        for tmpl in ["block center", "fine block", "center", "c", "larger", "smaller",
+                      "EB1911 Fine Print", "nowrap", "Fine", "sm"]:
+            text = _unwrap_balanced(text, tmpl)
     # Note: {{ts|...}} templates are stripped inside table processors,
     # not globally — global stripping corrupts cell boundaries in complex tables.
     # Convert spacing templates to a space ({{gap}}, {{em|N}}, {{rule}})
-    text = re.sub(r"\{\{gap(?:\|[^{}]*)?\}\}", " ", text, flags=re.IGNORECASE)
-    text = re.sub(r"\{\{em\s*\|[^{}]*\}\}", " ", text, flags=re.IGNORECASE)
-    text = re.sub(r"\{\{rule\}\}", "———", text, flags=re.IGNORECASE)
+    if "spacing" not in _AUDIT_SKIP:
+        text = re.sub(r"\{\{gap(?:\|[^{}]*)?\}\}", " ", text, flags=re.IGNORECASE)
+        text = re.sub(r"\{\{em\s*\|[^{}]*\}\}", " ", text, flags=re.IGNORECASE)
+        text = re.sub(r"\{\{rule\}\}", "———", text, flags=re.IGNORECASE)
 
     # No need for orphan table wrapping — articles are joined before
     # transform, so all tables have their {| and |} in the same text.
