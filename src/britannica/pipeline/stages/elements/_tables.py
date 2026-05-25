@@ -785,11 +785,13 @@ def _chem_row_is_reaction(text: str) -> bool:
 
 
 def _has_chem_reaction_content(inner: str) -> bool:
-    """True if any row of a wiki table holds an operator-connected molecular
-    reaction -- the element-aware arm of the chemistry-layout predicate."""
-    for rv in re.split(r"\|-[^\n]*", inner):
-        cells = [c for _s, _a, c in split_wiki_row(rv) if c.strip()]
-        if cells and _chem_row_is_reaction(" ".join(cells)):
+    """True if any row of a table holds an operator-connected molecular
+    reaction -- the element-aware arm of the chemistry-layout predicate.
+    Syntax-neutral via `_table_grid`, so `{|` and `<table>` reactions both
+    route to CHEMISTRY_LAYOUT instead of falling to the table path."""
+    for cells in _table_grid(inner):
+        nonempty = [c for c in cells if c.strip()]
+        if nonempty and _chem_row_is_reaction(" ".join(nonempty)):
             return True
     return False
 

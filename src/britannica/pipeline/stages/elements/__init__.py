@@ -498,14 +498,13 @@ def _has_legend_material(inner: str,
     # Phase 0 (`_extract_hi_legend`) extracts them.
     if len(_HI_LEGEND_RE.findall(inner)) >= 2:
         return True
-    rows = re.split(r"\|-[^\n]*", inner)
     multicol_row_count = 0
-    for row in rows:
-        if not row.strip():
+    for cells in _table_grid(inner):
+        if not any(c.strip() for c in cells):
             continue
-        if image_phs and any(ph in row for ph in image_phs):
+        if image_phs and any(ph in c for c in cells for ph in image_phs):
             continue
-        if _row_has_legend_multicol_cells(row):
+        if _row_has_legend_multicol_cells(cells):
             multicol_row_count += 1
             if multicol_row_count >= 2:
                 return True

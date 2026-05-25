@@ -206,6 +206,42 @@ def _classify_brace_pipe(
     return _classify_table(raw, inner_text, legacy)
 
 
+# ── `<table>` flip (Phase 2 step 3) ───────────────────────────────────
+#
+# Route a `<table>` through the SAME shape classifiers a `{|` wikitable gets
+# (`_classify_table`), so disguised non-tables (figures) leave the table path
+# instead of being flatly labelled HTML_TABLE.  But two constraints keep the
+# blast radius to exactly the non-tables we can handle:
+#   * a genuine `<table>` grid must stay on the span-preserving
+#     `_process_html_table` producer — the DATA_TABLE catch-all's producer
+#     `_process_table` is wiki-only and would break it; and
+#   * the not-yet-`<table>`-ready non-table producers (math/chem/verse/
+#     single-column still parse wiki `|`/`|-`) would also break on `<table>`.
+# So ONLY the figure-family labels — whose producers were made syntax-neutral
+# via `_table_grid` in step 2 and verified to render `<table>` figures content-
+# preserved — leave the table path; every other label falls back to HTML_TABLE,
+# byte-identical to today.  Grow `_HTML_TABLE_ROUTE_AWAY` as each producer
+# family is converted (math/chem/verse next).
+_HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
+    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "UNPAIRED_FIGURE_GROUP",
+    "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
+})
+
+
+def _classify_html_table(
+    raw: str,
+    inner_text: str,
+    inner_registry: dict[str, ClassifiedElement],
+) -> str:
+    """Classify a `<table>` element via the shared table classifier, letting
+    only `<table>`-ready figure shapes leave the table path; genuine grids and
+    not-yet-ready shapes stay HTML_TABLE."""
+    from britannica.pipeline.stages.elements import _classify_table
+    legacy = _to_legacy_registry(inner_registry)
+    label = _classify_table(raw, inner_text, legacy)
+    return label if label in _HTML_TABLE_ROUTE_AWAY else "HTML_TABLE"
+
+
 # ── Top-level label dispatcher ────────────────────────────────────────
 
 
@@ -218,6 +254,9 @@ def _derive_label(
     if shape == SHAPE_BRACE_PIPE:
         return _classify_brace_pipe(raw, inner_text, inner_registry)
     if shape == SHAPE_HTML_TAG:
+        m = _HTML_TAG_NAME_RE.match(raw)
+        if m and m.group(1).lower() == "table":
+            return _classify_html_table(raw, inner_text, inner_registry)
         return _derive_html_tag_label(raw)
     if shape == SHAPE_HTML_SELF_CLOSING:
         return _derive_html_self_closing_label(raw)
