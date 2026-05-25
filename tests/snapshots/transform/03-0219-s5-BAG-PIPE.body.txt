@@ -26,7 +26,7 @@ The conclusion of the tune is thus expressed:
 
 “Hiundratatateriri, hiendatatateriri, hiundratatateriri, hiundratatateriri.”«FN:«I»A Collection of Piobaireachd or Pipe Tunes as verbally taught by the M'Crummen Pipers on the Isle of Skye to their apprentices«/I», as taken from John M'Crummen (or Crimmon) by Niel MacLeod of Gesto, Skye (Edinburgh, 1880).«/FN» Written down this seems a mere unintelligible jumble, but could we hear it, as sounded by the pipers, with due regard for the rhythmical value of notes, it would be a very different matter. Alexander Campbell«FN:Albyn's «I»Anthology«/I», vol. i. p. 90.«/FN» relates that a melody had to be taken down or translated “from the syllabic jargon of illiterate pipers into musical characters, which, when correctly done, he found to his astonishment to coincide exactly with musical notation.”
 
-{{IMG:Bag-pipe 1.png|Fig. 1.—(1) Cornemuse. (2) Irish bag-pipe. (3) Musette. (4) Highland bag-pipe, A.D. 1409. (5) Border bag-pipe. (From Capt. C. R. Day's Descriptive Catalogue of Musical Instruments exhibited at the Royal Military Exhibition, by permission of Eyre & Spottiswoode.)}}
+{{IMG:Bag-pipe 1.png|width=450|Fig. 1.—(1) Cornemuse. (2) Irish bag-pipe. (3) Musette. (4) Highland bag-pipe, A.D. 1409. (5) Border bag-pipe. (From Capt. C. R. Day's Descriptive Catalogue of Musical Instruments exhibited at the Royal Military Exhibition, by permission of Eyre & Spottiswoode.)}}
 
 A Highland bag-pipe of the 15th century, dated MCCCCIX., in the possession of Messrs J. & R. Glen of Edinburgh, was exhibited at the Royal Military Exhibition in London in 1890«FN:«I»Descriptive Catalogue of the Musical Instruments exhibited at the Royal Military Exhibition, London, 1890«/I», Eyre & Spottiswoode, 1891, pl. ix. A, and description p. 57.«/FN» (see fig. 1 (4)). There were two drones, inserted in a single stock in the form of a wide-spread fork, and tuned to A in unison with the lowest note of the chaunter, which had seven finger-holes in front and a thumb-hole at the back.
 
@@ -34,23 +34,23 @@ A Highland bag-pipe of the 15th century, dated MCCCCIX., in the possession of Me
 
 PAGE:221
 
-{{IMG:Bag-pipe music 4.png}}
+{{IMG:Bag-pipe music 4.png|align=right|width=130}}
 
 The «I»cornemuse«/I» and «I»chalemie«/I» were the bag-pipes in use in France, Italy and the Netherlands before the advent of the «I»musette«/I», to which they bear the same relation as the old Irish bag-pipe does to the union-pipes, or the «I»cornemusa«/I» or «I»piva«/I» to the «I»sampogna«/I» or «I»surdelina«/I» in Italy. Two kinds of cornemuses were known in France during the 16th and 17th centuries, differing in one important structural detail, which affected the «I»timbre«/I» of the instruments. Père Marin Mersenne«FN:«I»L’Harmonie universelle«/I», vol. ii. bk. v. pp. 282-287 and 305 (Paris, 1636–1637).«/FN» has given a detailed description of these varieties and of the musette, with very clear illustrations of the instruments and all their parts. The cornemuse or chalemie used by shepherds, and as a solo instrument (see fig. 1 (1) ), was similar to the Highland bag-pipe; it consisted of a leather bag, inflated by means of a valved blow-pipe; a large drone («I»gros bourdon«/I») 2½ ft. long included the beating-reed, which measured 2½ in., and was fixed in the stock; the small drone («I»petit bourdon«/I»), 1 ft. in length including a reed 2 in. long, also had a beating-reed and was fixed in the same stock as {{IMG:Bag-pipe music 5.png|width=130}} the chaunter. The two drones were tuned to C. The chaunter had a conical bore and a double reed like an oboe, but hidden within the stock; it could be taken out and played separately, when the compass given by the eight holes (seven in front and a thumb-hole) C to C′ could be increased by a third to E, by overblowing the D and E an octave by pressure of the breath and lips on the reed, now taken directly into the mouth. The second kind of cornemuse was played only in concert with a family of instruments known as «I»Hautbois de Poitou«/I», a hautbois having the reed enclosed in an air-chamber, just as is the case with the reeds of the bag-pipe. This cornemuse had but one drone which could, like the others, be lengthened for tuning by drawing out the joint; the reed was not a beating-reed but a double reed like that of the chaunter; this constitutes the main difference between the two cornemuses. The chaunter had eight holes, the lowest of which was covered by a key enclosed in a perforated box.
 
 The «I»Sackpfeife«/I» or «I»Dudelsack«/I» of Germany was an instrument of some importance made in no less than five sizes, all described and illustrated by Michael Praetorius.«FN:«I»Syntagma Musicum«/I», part ii., «I»De Organographia«/I» (Wolfenbüttel, 1618); republished in Band xiii. of the «I»Publicationen der Gesellschaft für Musikforschung«/I» (Berlin, 1884), chap. xix. and pl. v., xi., xiii.«/FN» They consist of the «I»Grosser Bock«/I» or double-bass bag-pipe, a formidable-looking instrument with a single cylindrical drone of a great length, terminating, as did the chaunter also, in a curved ram’s horn (to which the name was due). The chaunter had seven finger-holes and a vent-hole in front, and a thumb-hole at the back. The drone was tuned to G, an octave below the chaunter.
 
-{{IMG:Bag-pipe music 6.png}}
+{{IMG:Bag-pipe music 6.png|width=210|Sackpfeife or Dudelsack.}}
 
-{{IMG:Bag-pipe music 7.png}}
+{{IMG:Bag-pipe music 7.png|width=210|Bock.}}
 
 The «I»Bock«/I», of similar construction, was pitched a fourth higher in C.
 
 The «I»Schäferpfeife«/I» had two drones in B♭ and F. Praetorius explains that the upper notes of the chaunter of this sackpfeife had a faulty intonation which could not be corrected owing to the absence of the thumb-hole, usual in all other varieties of the instrument.
 
-{{IMG:Bag-pipe music 8.png}}
+{{IMG:Bag-pipe music 8.png|width=210|Schäferpfeife.}}
 
-{{IMG:Bag-pipe music 9.png}}
+{{IMG:Bag-pipe music 9.png|width=210|Hümmelchen.}}
 
 The «I»Hümmelchen«/I» had two drones tuned to F and C.
 
@@ -90,7 +90,7 @@ That the bag-pipe was introduced by the Romans into the British Isles is a concl
 
 From England the bag-pipe spread to Caledonia and Ireland, where it took root, identifying itself with the life of the people, as a military instrument held in great esteem by the Celtic races. The bag-pipe was used at weddings and funerals, and at all festivals; to lighten labour, during the 18th century, as for instance in Skye, in 1786, when the inhabitants were engaged in roadmaking, and each party of labourers had its bag-piper. It was used in old mysteries at Coventry in 1534. Readers who wish to follow closely the history of the bag-pipe in the British Isles should consult Sir John Graham Dalyell’s «I»Musical Memoirs of Scotland«/I» (London, 1849, with illustrative plates).
 
-{{IMG:Bag-pipe 2.png|Fig. 2.—Ancient Persian bag-pipe. (From Sir Robert Porter’s Travels in Georgia, Persia, &c., vol. ii. p. 177, pl. lxiv.)}}
+{{IMG:Bag-pipe 2.png|align=left|width=160|Fig. 2.—Ancient Persian bag-pipe. (From Sir Robert Porter’s Travels in Georgia, Persia, &c., vol. ii. p. 177, pl. lxiv.)}}
 
 On the downfall of the Roman empire, the bag-pipe, sharing the fate of other instruments, probably lingered for a time among itinerant musicians, actors, jugglers, &c., reappearing later in primitive guise with the stamp of «I»naïveté«/I» which characterizes the productions of the early middle ages, and with a new name, «LN:chorus|chorus«/LN» («I»q.v.«/I»). An illustration of a Persian bag-pipe dating from the 6th century «SC»A.D.«/SC» (reign of Chosroes II.) is to be found on the great arch at Takht-i-Bostan (see fig. 2). This very crude representation of the bag-pipe can only be useful as evidence that during centuries which elapsed between the moulding of the figurine found in the «I»tell«/I» at Susa, mentioned above, and the carving in the rock at Takht-i-Bostan, the instrument had survived. The reign of Chosroes was noted for its high standard of musical culture. The fault probably lies with the draughtsman, who drew the sculptures on the arch for the book. Nothing more is heard henceforth of the tibia utricularis. If the drawings of the early medieval bag-pipes, which are by no means rare in MSS. and monuments of the 9th to the 13th century, are to be trusted, it seems hard to understand the «I»raison d'être«/I» of the instrument shorn of its drones, to see how it justified its existence except as an ill-understood reminiscence. What could be the object of laboriously inflating a bag for the purpose of making a single chaunter speak, which could be done so much more satisfactorily by taking the reed itself into the mouth, as was the practice of the Greeks and Romans? There is a fine psalter in the library of University Court, Glasgow,«FN:See Catalogue of the Exhibition of Illuminated MSS. at the Burlington Fine Arts Club, 1908, No. 31.«/FN» belonging co the Hunterian collection, in which King David is represented, as usual in the 12th century, playing or rather tuning a harp, surrounded by musicians playing bells, rebec, guitar fiddle (in 'cello position), quadruple pipes or ganistrum, and a bag-pipe with long chaunter having a well-defined stock. The insufflation tube appears to have been left out, and there are no drones to be seen.
 

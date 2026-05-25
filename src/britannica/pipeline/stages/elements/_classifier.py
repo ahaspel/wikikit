@@ -225,6 +225,19 @@ def _classify_brace_pipe(
 _HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
+    # MATH — producers (`_process_equation_layout`, `_process_math_layout_table`)
+    # made `<table>`-aware via `_content_rows`; classifier already recognizes them.
+    "MATH_LAYOUT_EQUATIONS", "MATH_LAYOUT_TOKENS",
+    # CHEM — `_process_chemistry_layout` made `<table>`-aware (`_split_html_chem_row`
+    # + `<tr>` split); classifier (`_is_chemistry_layout_pred`) already recognizes.
+    "CHEMISTRY_LAYOUT",
+    # SINGLE-COLUMN — detector (`_is_single_column_table`) + producer
+    # (`_process_single_column_table`) both made `<table>`-aware (one cell per
+    # row → `«PRE:` text block).
+    "SINGLE_COLUMN_TABLE",
+    # VERSE — poem-wrapper (`_is_poem_wrapper_pred`: a table that just centres
+    # `<poem>` child(ren)) → `_process_verse_table` emits each as `{{VERSE:}`.
+    "VERSE_TABLE",
 })
 
 

@@ -293,7 +293,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # lines col2).  Carved out of `_process_table`'s hidden dispatch;
     # rendered as `{{VERSE:}VERSE}`.
     "VERSE_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_verse_table(inner, tt),
+        _process_verse_table(inner, tt, reg),
     # Single-label kinds — element_type == label.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
         _process_djvu_crop(raw, tt, ctx),
@@ -471,6 +471,13 @@ _LEGEND_PROSE_ENTRY_RE = re.compile(
 _LEGEND_NON_LABELS = frozenset({"Fig", "Plate", "fig", "plate"})
 
 
+# A cell that OPENS with a Fig./Plate. marker is a caption, not a legend —
+# never mine legend entries from it (default-to-caption; no guessing legends out
+# of flowing caption prose where the structural signal is absent).
+_CAPTION_OPENER_RE = re.compile(
+    r"^\s*(?:\{\{\s*c?sc\s*\|\s*)?(?:Fig|Plate)s?\b", re.IGNORECASE)
+
+
 def _has_legend_material(inner: str,
                           registry: "ElementRegistry | None",
                           image_phs: list[str]) -> bool:
@@ -493,11 +500,15 @@ def _has_legend_material(inner: str,
     ``_row_has_legend_multicol_cells`` so the predicate and
     producer agree on what counts as legend.
     """
-    # Hanging-indent legend: ≥2 `{{Hi|SIZE|LABEL, text}}` entries
-    # (ARACHNIDA Fig 26, 72, 78).  Each is one entry; the producer's
-    # Phase 0 (`_extract_hi_legend`) extracts them.
-    if len(_HI_LEGEND_RE.findall(inner)) >= 2:
-        return True
+    # `{{Hi}}` hanging-indent is NO LONGER a legend signal.  It's ambiguous —
+    # a real legend in ARACHNIDA Fig 26/72/78, but numbered SUB-FIGURE
+    # descriptions inside a "Figs. N-M" composite caption (BRACHIOPODA Fig
+    # 12-18), structurally identical, with no clean discriminator (number-vs-
+    # letter / length keys are the "fancy heuristic" that's doomed).  Per
+    # default-to-caption (user 2026-05-24) we don't trust it: `{{Hi}}` content
+    # stays caption text.  Revertible if a real structural discriminator turns
+    # up — add it at the producer and the whole bucket works.  See
+    # [[turn-bugs-into-producer-bugs]] / [[project_loose_legend_no_bare]].
     multicol_row_count = 0
     for cells in _table_grid(inner):
         if not any(c.strip() for c in cells):
@@ -508,15 +519,27 @@ def _has_legend_material(inner: str,
             multicol_row_count += 1
             if multicol_row_count >= 2:
                 return True
-    # Prose-cell legend: any cell with ≥3 inline `LABEL.,text` entries.
-    prose_hits = 0
-    for m in _LEGEND_PROSE_ENTRY_RE.finditer(inner):
-        label_m = re.search(r"([A-Za-z]+|\d+)", m.group(0))
-        if label_m and label_m.group(1) in _LEGEND_NON_LABELS:
-            continue
-        prose_hits += 1
-        if prose_hits >= 3:
-            return True
+    # Prose-cell legend: a single DEDICATED legend cell with ≥3 inline
+    # `LABEL.,text` entries (HYDROMEDUSAE Fig 1).  A cell opening with a
+    # Fig./Plate. marker is a caption — its inline gloss-runs (BRACHIOPODA
+    # Fig 12-18: "…ventral valve. f, foramen; d, deltidium;…") stay in the
+    # caption, never mined as a legend.
+    for cells in _table_grid(inner):
+        for content in cells:
+            cs = content.strip()
+            # Caption cells (Fig./Plate. opener) and `{{Hi}}` cells (now
+            # caption content, not legends) are not mined for legend entries.
+            if _CAPTION_OPENER_RE.match(cs) or re.match(r"\{\{\s*hi\b", cs,
+                                                        re.IGNORECASE):
+                continue
+            prose_hits = 0
+            for m in _LEGEND_PROSE_ENTRY_RE.finditer(content):
+                label_m = re.search(r"([A-Za-z]+|\d+)", m.group(0))
+                if label_m and label_m.group(1) in _LEGEND_NON_LABELS:
+                    continue
+                prose_hits += 1
+            if prose_hits >= 3:
+                return True
     return False
 
 
@@ -769,6 +792,38 @@ def _has_rowspan_or_colspan(raw: str, inner: str,
         or re.search(r"colspan\s*=", raw, re.IGNORECASE))
 
 
+def _is_poem_wrapper_pred(raw: str, inner: str,
+                           registry: ElementRegistry | None) -> bool:
+    """A table whose content is just `<poem>` child(ren) — a centred quotation
+    (BELL/BOAT), verse not a table.  STRUCTURAL: ≥1 POEM child, no IMAGE, no
+    data-table header (`!` / `<th>` / `<caption>`).  Placed BEFORE
+    `_is_layout_wrapper_pred` so poem-wrappers route to VERSE_TABLE rather than
+    being swept into the LAYOUT_WRAPPER catch-all."""
+    if registry is None:
+        return False
+    poem_phs = [ph for ph, lbl in registry.labels.items() if lbl == "POEM"]
+    if not poem_phs:
+        return False
+    if any(lbl == "IMAGE" for lbl in registry.labels.values()):
+        return False
+    if (re.search(r"^\s*!", inner, re.MULTILINE)
+            or re.search(r"<(?:th|caption)\b", inner, re.IGNORECASE)):
+        return False
+    # Every cell must be JUST a poem placeholder (+ layout noise) — NO
+    # substantive non-poem text.  A caption/legend cell ("Figs. 1-11.—…",
+    # BRACHIOPODA) means this is a figure-legend table, not a verse wrapper;
+    # routing it here would drop that caption.
+    for cells in _table_grid(inner):
+        for content in cells:
+            for ph in poem_phs:
+                content = content.replace(ph, "")
+            content = re.sub(r"\{\{[^{}]*\}\}", "", content)   # Ts / sc / etc.
+            content = re.sub(r"«/?[A-Z]+»|&[a-zA-Z]+;|&#\d+;", "", content)
+            if re.search(r"[A-Za-z0-9]", content):
+                return False
+    return True
+
+
 def _is_verse_table_pred(raw: str, inner: str,
                           registry: ElementRegistry | None) -> bool:
     """A 2-column quotation layout (hanging-quote col1 + verse lines).
@@ -827,6 +882,7 @@ _PRE_ICL_PREDS: list[tuple[Callable[
 
 _POST_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
+    (_is_poem_wrapper_pred,          "VERSE_TABLE"),
     (_is_layout_wrapper_pred,        "LAYOUT_WRAPPER"),
     (_is_brace_table,                "DATA_TABLE"),
     (_is_math_dominant_pred,         "MATH_LAYOUT_EQUATIONS"),

@@ -49,9 +49,18 @@ class TestAtomicLabels:
         assert ce.label == "SCORE"
 
     def test_html_table(self):
+        # A genuine multi-column grid stays HTML_TABLE.  (Post-flip, `<table>`
+        # is routed through the shape classifiers, so a ONE-cell-per-row table
+        # is now SINGLE_COLUMN_TABLE — see test_html_table_single_column.)
         ce = classify(SHAPE_HTML_TAG,
-                       "<table><tr><td>a</td></tr></table>")
+                       "<table><tr><td>a</td><td>b</td></tr></table>")
         assert ce.label == "HTML_TABLE"
+
+    def test_html_table_single_column(self):
+        # One cell per row → not a grid → routed out of the table path.
+        ce = classify(SHAPE_HTML_TAG,
+                       "<table><tr><td>a</td></tr><tr><td>b</td></tr></table>")
+        assert ce.label == "SINGLE_COLUMN_TABLE"
 
     def test_hieroglyph_tag(self):
         ce = classify(SHAPE_HTML_TAG, "<hiero>A1-B2</hiero>")

@@ -850,6 +850,22 @@ def _split_chem_row(row_text: str) -> list[tuple[str, str, str]]:
     return cells
 
 
+def _split_html_chem_row(row_text: str) -> list[tuple[str, str, str]]:
+    """`<table>` analog of `_split_chem_row`: ``(sep, attr, content)`` per
+    ``<td>``/``<th>`` cell, so the chem producer's span-aware cell loop (which
+    reads rowspan/colspan off ``attr`` and th-vs-td off ``sep``) serves
+    `<table>` chem layouts too.  ``sep`` = ``!`` for ``<th>`` else ``|``."""
+    cells: list[tuple[str, str, str]] = []
+    for m in re.finditer(
+            r"<(t[dh])\b([^>]*)>(.*?)(?=</t[dh]>|<t[dh]\b|</tr>|</table>|$)",
+            row_text, re.IGNORECASE | re.DOTALL):
+        sep = "!" if m.group(1).lower() == "th" else "|"
+        content = m.group(3).strip()
+        if content:
+            cells.append((sep, m.group(2) or "", content))
+    return cells
+
+
 _CHEM_SENTINEL = {
     ("L", ""):   "\ue000",
     ("R", ""):   "\ue001",
@@ -931,17 +947,23 @@ def _process_chemistry_layout(inner: str, text_transform,
     # strip doesn't eat the line breaks that stack atom-bond-atom.
     inner = re.sub(r"<br\s*/?>", _CHEM_BR_SENTINEL, inner, flags=re.IGNORECASE)
 
-    # Split rows on |- only.  No caption / preamble detection \u2014 chem
-    # layouts are spatial diagrams; trying to interpret one cell as a
-    # title strips it out of the diagram.
-    raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", inner)
+    # Split rows.  No caption / preamble detection \u2014 chem layouts are
+    # spatial diagrams; interpreting a cell as a title strips it out.  Wiki
+    # path (``|-`` + `_split_chem_row`) is untouched; a `<table>` splits on
+    # `<tr>` and reads `<td>`/`<th>` via `_split_html_chem_row`.
+    if _HTML_TABLE_TAG_RE.search(inner):
+        raw_rows = re.split(r"<tr\b[^>]*>", inner, flags=re.IGNORECASE)
+        _row_cells = _split_html_chem_row
+    else:
+        raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", inner)
+        _row_cells = _split_chem_row
 
     html_rows: list[str] = []
     for raw_row in raw_rows:
         if not raw_row.strip():
             continue
         cells_html: list[str] = []
-        for sep, attr_part, content in _split_chem_row(raw_row):
+        for sep, attr_part, content in _row_cells(raw_row):
             tag = "th" if sep == "!" else "td"
             rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part,
                            re.IGNORECASE)
@@ -1065,12 +1087,17 @@ def _is_single_column_table(inner: str) -> bool:
     classifier's (see [[transform-only-two-places]]).  A table with even
     one 2-cell row is therefore a grid, not single-column.
     """
-    if "|-" not in inner:
+    # Wiki needs a `|-` row separator to be a multi-row table; `<table>` uses
+    # `<tr>` instead (no `|-`).  Cells come from `_table_grid` either way
+    # (wiki = the same `re.split(|-)`+`split_wiki_row` content as before, so the
+    # wiki result is unchanged).
+    is_html = bool(_HTML_TABLE_TAG_RE.search(inner))
+    if not is_html and "|-" not in inner:
         return False
     saw_row = False
-    for raw_row in re.split(r"\|-[^\n]*", inner):
+    for cells_row in _table_grid(inner):
         cells = []
-        for _sep, _attr, content in split_wiki_row(raw_row):
+        for content in cells_row:
             if content in ("}", "{|") or not content:
                 continue
             if _CELL_ATTR_RE.match(content):
@@ -1095,11 +1122,18 @@ def _process_single_column_table(inner: str, text_transform) -> str:
     """
     inner = _strip_br(inner)
     text_lines = []
-    for raw_row in re.split(r"\|-[^\n]*", inner):
-        content = [c for c in _extract_table_cells(raw_row, text_transform)
-                   if c.strip()]
-        if content:
-            text_lines.append(content[0])
+    if _HTML_TABLE_TAG_RE.search(inner):
+        for cells in _html_table_grid(inner):
+            content = [c for c in (text_transform(x) for x in cells)
+                       if c.strip()]
+            if content:
+                text_lines.append(content[0])
+    else:
+        for raw_row in re.split(r"\|-[^\n]*", inner):
+            content = [c for c in _extract_table_cells(raw_row, text_transform)
+                       if c.strip()]
+            if content:
+                text_lines.append(content[0])
     return "«PRE:" + "\n".join(text_lines) + "«/PRE»"
 
 
@@ -1179,14 +1213,29 @@ def _is_verse_table(inner: str) -> bool:
     return saw_verse_row and saw_punct_col1
 
 
-def _process_verse_table(inner: str, text_transform) -> str:
-    """Render a 2-column verse quotation as a `{{VERSE:}VERSE}` block.
+def _process_verse_table(inner: str, text_transform,
+                         inner_registry: ElementRegistry | None = None) -> str:
+    """Render a verse table as `{{VERSE:}VERSE}`.
 
-    Carved out of `_process_table`'s hidden dispatch; selected upstream by
-    the VERSE_TABLE label (`_is_verse_table`).  Two shapes: a single-cell
-    quoted poem (split on `<br>`) and the 2-column hanging-quote layout
-    (each row's col1 rejoined to its col2 line).
+    Three shapes: a POEM-wrapper (the table just centres `<poem>` child(ren) —
+    BELL/BOAT, the dominant `<table>` case), a single-cell quoted poem (split on
+    `<br>`), and the 2-column hanging-quote layout (col1 rejoined to col2).
     """
+    # Poem-wrapper: emit each `<poem>` child as verse, drop the table chrome.
+    # The poem's inner is rendered exactly as a standalone `<poem>` would be
+    # (`_process_poem` = `{{VERSE: tt(inner) }VERSE}`).
+    if inner_registry is not None:
+        labels = inner_registry.labels
+        poem_phs = [ph for ph, lbl in labels.items() if lbl == "POEM"]
+        if poem_phs and not any(lbl == "IMAGE" for lbl in labels.values()):
+            parts = []
+            for ph in poem_phs:
+                body = text_transform(
+                    (inner_registry.inners.get(ph) or "").strip())
+                if body.strip():
+                    parts.append("{{VERSE:" + body + "}VERSE}")
+            if parts:
+                return "\n\n" + "\n\n".join(parts) + "\n\n"
     # Single-cell quoted poem: split the cell on `<br>` into verse lines
     # (joining soft-hyphen `-<br>` breaks first), BEFORE `_strip_br` would
     # flatten them.
