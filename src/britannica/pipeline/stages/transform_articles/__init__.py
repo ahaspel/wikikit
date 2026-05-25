@@ -282,6 +282,14 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # is rewritten; CHEM/TABLE_FIGURE/BLOCK_LAYOUT/CAPTIONED/STRANDED
     # refs are left for the existing pipeline.  See the per-bucket
     # audit at tools/_scratch/audit_image_routing.py.
+    #
+    # HONEST HAND-OFF (Stage 2): producers must receive the RAW (corrections-
+    # only) body — never a Layer-A view.  `original_raw` is captured here, before
+    # any pass mutates `raw_wikitext`, and fed to `process_elements` below.  The
+    # whole Layer A that follows is being DRAINED per-family into the producers
+    # (layout-unwrap already moved to `_transform_body_text`); it is bypassed at
+    # the hand-off and will be deleted as each family lands.
+    original_raw = raw_wikitext
     raw_wikitext = promote_inline_glyphs(raw_wikitext) if "inline_glyphs" not in _AUDIT_SKIP else raw_wikitext
 
     raw_wikitext = strip_word_spacing_templates(raw_wikitext) if "word_spacing" not in _AUDIT_SKIP else raw_wikitext
@@ -593,10 +601,11 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # No need for orphan table wrapping — articles are joined before
     # transform, so all tables have their {| and |} in the same text.
 
-    # Extract, process, reassemble — this does all the work
+    # Extract, process, reassemble — this does all the work.  Fed the RAW body
+    # (see `original_raw` above): producers receive raw, transform it themselves.
     from britannica.pipeline.stages.elements import ElementContext
     context = ElementContext(volume=volume, page_number=page_number)
-    text = process_elements(text, _transform_body_text, context)
+    text = process_elements(original_raw, _transform_body_text, context)
 
     # Inject chart images for pages where chart2 markup was lost during import
     from britannica.image_assets import CHART2_IMAGES
