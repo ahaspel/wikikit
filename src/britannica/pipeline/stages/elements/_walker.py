@@ -124,6 +124,7 @@ _MIRROR_GLYPH_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+
 # DOUBLE_BRACE template recognizers — named templates with up to four
 # levels of `{{…}}` nesting (CASTLE Fig. 9 cap parameters reach four
 # deep).  Specificity: each has a fixed template-name opener like
@@ -509,6 +510,20 @@ _HTML_WRAPPER_TAGS: tuple[str, ...] = (
     "div", "span", "small", "big", "p", "ins",
 )
 
+# Paired begin/end markers — `{{NAME/s}}…{{NAME/e}}` — that span body
+# content (potentially with embedded element placeholders).  The body
+# producer's regex needs to see the whole pair to emit a marker; if
+# body-wrap fragments the span at a placeholder boundary, the regex
+# can't match across body runs.  Listed here so atomic-span finder
+# keeps them whole.  Match-text built dynamically (no `|` arg syntax
+# like the brace-counted wrappers above).
+_PAIRED_WRAPPER_NAMES: tuple[str, ...] = (
+    "EB1911 fine print",
+    "c",
+    "block center",
+    "center block",
+)
+
 
 def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:
     """Find every balanced wrapper span that should stay atomic during
@@ -563,6 +578,14 @@ def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:
     for tag in _HTML_WRAPPER_TAGS:
         pattern = re.compile(
             rf"<{tag}\b[^>]*>.*?</{tag}>",
+            re.IGNORECASE | re.DOTALL)
+        for m in pattern.finditer(text):
+            spans.append((m.start(), m.end()))
+    for name in _PAIRED_WRAPPER_NAMES:
+        esc = re.escape(name)
+        pattern = re.compile(
+            rf"\{{\{{\s*{esc}\s*/s\s*\}}\}}.*?"
+            rf"\{{\{{\s*{esc}\s*/e\s*\}}\}}",
             re.IGNORECASE | re.DOTALL)
         for m in pattern.finditer(text):
             spans.append((m.start(), m.end()))
