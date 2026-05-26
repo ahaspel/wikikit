@@ -33,6 +33,7 @@ SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}
 SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
 SHAPE_NOINCLUDE         = "NOINCLUDE"          # <noinclude>…</noinclude> page container
+SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -47,6 +48,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_FIGURE,
     SHAPE_SECTION,
     SHAPE_NOINCLUDE,
+    SHAPE_BODY,
 })
 
 
@@ -77,6 +79,12 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # (page-chrome vs. a cross-page `{|` table marker), so disposition is a
     # CONTENT decision the producer makes from `raw` — not walked here.
     SHAPE_NOINCLUDE,
+    # BODY — article-level prose run between other elements.  The body
+    # producer owns it end-to-end (markup conversion + body finishing);
+    # the walker does NOT recurse into it (any extractable shape would
+    # already have been pulled out as its own element before the BODY
+    # wrapper ran).
+    SHAPE_BODY,
 })
 
 
@@ -136,4 +144,8 @@ def strip_outer(shape: str, raw: str) -> str:
         # Leaf — the producer reads `raw` (re-processes + assembles it); the
         # main walk needs no inner content here.
         return ""
+    if shape == SHAPE_BODY:
+        # No delimiters — the raw bytes ARE the body prose; the producer
+        # transforms them end-to-end.
+        return raw
     raise ValueError(f"Unknown shape: {shape!r}")

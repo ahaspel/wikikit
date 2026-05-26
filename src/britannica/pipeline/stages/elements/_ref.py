@@ -71,7 +71,10 @@ def _process_ref(raw, inner, text_transform, ref_bodies=None):
     # produce_tree substitutes afterwards.  No _clean_text flatten: that
     # stripped formatting and mangled rendered markers (the footnote
     # producer must own its body, not delegate to a generic flattener).
-    content = text_transform(inner).strip()
+    from britannica.pipeline.stages.transform_articles.body_text import (
+        strip_known_wrapper_tags,
+    )
+    content = strip_known_wrapper_tags(text_transform(inner)).strip()
     if name:
         return f"«FN[{name}]:{content}«/FN»"
     return f"«FN:{content}«/FN»"

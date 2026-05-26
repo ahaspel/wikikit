@@ -188,6 +188,27 @@ def _passthrough_inner(raw, inner, text_transform, context,
     return inner
 
 
+def _produce_body(raw, inner, text_transform, context, inner_registry):
+    """BODY producer: apply markup conversion + body-prose finishing
+    (whitespace collapse, ``\\xa0`` → space, paragraph-break normalization,
+    line-leading ``:``/``;`` sigil strip, body-only ``<br>`` → space rule).
+
+    The walker emits SHAPE_BODY for residual prose runs between extracted
+    elements; this producer is the sole owner of body-text rendering.
+    Article assembly is then pure ordered concatenation of element markers
+    — no special body-substrate, no marker-substitution glue layer.
+
+    Lazy-imports ``_transform_body_text`` from ``transform_articles`` to
+    avoid the elements → transform_articles → elements cycle that would
+    form at module load.  A future refactor moves body-text logic into
+    ``elements/_body.py`` and collapses the cycle.
+    """
+    from britannica.pipeline.stages.transform_articles.body_text import (
+        _transform_body_text,
+    )
+    return _transform_body_text(raw)
+
+
 def _produce_figure(raw, inner, text_transform, context, inner_registry):
     """Assemble a figure (one or more images + structural caption run).
 
@@ -321,6 +342,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # chrome, keeps cross-page `{|`/`|}`.  Owned element instead of a pre-walk
     # strip; the catcher for the honest super-walker (B3).
     "NOINCLUDE": lambda raw, inner, tt, ctx, reg: _process_noinclude(raw),
+    # BODY — article-level prose run between extracted elements; the body
+    # producer applies markup conversion + body-only finishing.  With BODY
+    # owning its bytes as a normal element, article assembly collapses to
+    # ordered concatenation of element markers (no body-substrate, no
+    # marker-substitution glue layer).
+    "BODY": _produce_body,
 }
 
 
@@ -1008,7 +1035,8 @@ def _classify_table(raw: str, inner: str,
 
 # ── Public API ────────────────────────────────────────────────────────
 
-def process_elements(text: str, text_transform, context: ElementContext,
+def process_elements(text: str, markup_transform,
+                     context: ElementContext,
                      _allow_figure: bool = True) -> str:
     """Extract, process, and reassemble all embedded elements.
 
@@ -1018,11 +1046,22 @@ def process_elements(text: str, text_transform, context: ElementContext,
     classifies each child, then decides its own label.  The producer
     pass walks the classified tree bottom-up emitting markers.
 
+    With BODY as its own element shape, the walker emits SHAPE_BODY for
+    every residual prose run between extracted elements; the BODY
+    producer (registered like any other) applies markup + body finishing.
+    Article assembly is then pure ordered concatenation of element
+    markers — no body-substrate, no marker-substitution glue layer.
+
     Args:
         text: raw wikitext (may contain tables, images, footnotes, etc.)
-        text_transform: function that transforms plain wikitext to marker format
-        context: per-article ElementContext (volume / page used for score
-            and chart-image lookups)
+        markup_transform: shared markup-conversion utility (small-caps /
+            italic / sub-sup / hieroglyph / template-unwrap / spacing-
+            template expansion / entity decode / marker finalisation).
+            Threaded to every element producer via ``produce_tree`` and to
+            ``resolve_ref_bodies``.  Producers call this on the fragments
+            they own (cell contents, captions, attributions, legends, …).
+        context: per-article ElementContext (volume / page used for
+            score and chart-image lookups).
 
     Returns:
         text with all embedded elements processed to their final form
@@ -1037,14 +1076,11 @@ def process_elements(text: str, text_transform, context: ElementContext,
     # Walk + classify (one mutually-recursive pass).  Returns the
     # placeholderized article body plus a tree of ClassifiedElement
     # records — each element knows its own label, raw bytes, inner
-    # text, and inner registry of classified children.
+    # text, and inner registry of classified children.  With BODY-wrap
+    # on, the placeholderized text contains only placeholders — every
+    # byte of the article is owned by some classified element.
     placeholderized_text, tree = classify_article(
         text, _allow_figure=_allow_figure)
-
-    # Body text transform — operates on the prose between top-level
-    # placeholders only.  Each element's inner content is transformed
-    # by its own producer when it runs.
-    text = text_transform(placeholderized_text)
 
     # Article-wide ref-body resolution.  `<ref name=X/>` self-closing
     # reuses (and `<ref name=X>body…` definitions whose body arrives
@@ -1052,12 +1088,14 @@ def process_elements(text: str, text_transform, context: ElementContext,
     # merged body.  Threaded into `context` so the REF producer can
     # read it.  Copy the caller's context so we don't mutate it.
     context = _dc_replace(context)
-    context.ref_bodies = resolve_ref_bodies(tree, text_transform)
+    context.ref_bodies = resolve_ref_bodies(tree, markup_transform)
 
     # Produce: bottom-up over the tree.  Each element's producer
     # runs after its children's markers exist; child markers are
     # substituted into the producer's output by the framework.
-    produce_tree(tree, text_transform, context)
+    produce_tree(tree, markup_transform, context)
 
-    # Reassemble: substitute top-level markers into the article body.
-    return substitute_top_level_markers(text, tree)
+    # Reassemble: substitute markers into the placeholder-only text —
+    # since BODY runs are now placeholders too, this reduces to ordered
+    # concatenation of element markers in walker source order.
+    return substitute_top_level_markers(placeholderized_text, tree)

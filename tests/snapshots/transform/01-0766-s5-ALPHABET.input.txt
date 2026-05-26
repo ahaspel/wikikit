@@ -150,7 +150,6 @@ The rock inscriptions in the wild district of Safah near Damascus which have bee
 There still remain for discussion the alphabets of the Indo-European peoples of Persia and India from which the other alphabets of the Farther East are descended. When Darius in 516&nbsp;{{asc|B.C.}} caused the great Behistun inscription to be engraved, it was the cuneiform writing, already long in use for the languages of Mesopotamia, that was adopted for this purpose. We have seen that {{EB1911 Shoulder HeadingFine|Persia.}}at Babylon itself the Aramaic language and character were well known. It is probable therefore, a priori, that from the Aramaic alphabet the later writing of Persia should be developed. The conclusion is confirmed by the coins, the only records with Iranian script which go back so far; but the special form of Aramaic from which the Iranian alphabet is derived must at present be left undecided. The later developments of the Iranian alphabet are the Pahlavi and the Zend, in which the MSS. of the Avesta are written. Of these manuscripts none is older than the 15th century&nbsp;{{asc|A.D.}} The Pahlavi is properly the alphabet of the Sassanid kings who ruled in Persia from {{asc|A.D.}}&nbsp;226 till the Arab conquest in the 7th century&nbsp;{{asc|A.D.}} Under the Sassanids the old Persian worship, which had fallen with the Achaemenid dynasty in Alexander’s time, and
 PAGE:775had been neglected by the subsequent Arsacid line, was revived and the remains of its liturgical literature collected. The name is, however, also applied to the alphabet on the coins of the Parthian or Arsacid dynasty, which in its beginnings was clearly under Greek influence; while later, when a knowledge of Greek had disappeared, the attempts to imitate the old legends are as grotesque as those in western Europe to copy the inscriptions on Roman coins. The relationship between the Pahlavi and the Aramaic is clearest in the records written in the “Chaldaeo-Pahlavi” characters; the most important of these documents is the liturgical inscription of Hadji-abad, where the Arsacid and Sassanian alphabets are found side by side. Taylor («I»The Alphabet«/I», ii. p.&nbsp;248&nbsp;f.) regards the former as probably derived from the “ancient alphabet of Eastern Iran, a sister alphabet of the Aramaean of the satrapies,” while the Sassanian belongs to a later stage of Aramaic.
 
-{{csc|Table I.}}
 {{Css image crop
 |Image   = EB1911 - Volume 01.djvu
 |Page    = 775
@@ -158,11 +157,11 @@ There still remain for discussion the alphabets of the Indo-European peoples of 
 |cWidth  = 600
 |cHeight = 505
 |oTop    = 130
-|oLeft   = 
+|oLeft   =
 |Location = center
-|Description    = 
+|Description    =
 }}
-{{center|{{sc|Table II}}.—«I»Cyrillic and Glagolitic Symbols not given above.«/I»}}
+{{csc|Table I.}}
 {{Css image crop
 |Image   = EB1911 - Volume 01.djvu
 |Page    = 775
@@ -170,10 +169,11 @@ There still remain for discussion the alphabets of the Indo-European peoples of 
 |cWidth  = 600
 |cHeight = 58
 |oTop    = 646
-|oLeft   = 
+|oLeft   =
 |Location = center
-|Description    = 
+|Description    =
 }}
+{{center|{{sc|Table II}}.—«I»Cyrillic and Glagolitic Symbols not given above.«/I»}}
 
 The alphabets of India all spring from two sources: («I»a«/I») the Kharoṣṭhī, («I»b«/I») the Brāhmī alphabet. The history of the former is fairly clear. It was always a local alphabet, and never attained the importance of its rival. According to Bühler,<ref>Bühler, «I»Indian Studies«/I», iii. (2nd.&nbsp;ed., 1898), p.&nbsp;93. The account of these alphabets is drawn from this work and from the same author’s «I»Indische Paläographie«/I» in the «I»Grundriss der indo«/I»-«I»arischen Philologie«/I», to which is attached an atlas of plates (Strassburg, 1896), and in which a full bibliography is given.</ref> its range lay between 69° and 73°&nbsp;30′&nbsp;E. and 33° to 35°&nbsp;N., {{EB1911 Shoulder HeadingFine|India.}}a conclusion which is not invalidated by the fact that some important modifications are found beyond this area, nor by Dr&nbsp;Stein’s discovery of a great mass of documents in this alphabet at Khotan in Turkestan, for, according to tradition, the ancient inhabitants of Khotan were emigrants banished in the time of King Açoka from the area to which Bühler assigns this alphabet (see Stein’s «I»Preliminary Report«/I», 1901, p.&nbsp;51). Rapson<ref>For a coin and a gild token with inscriptions see Rapson’s «I»Indian Coins«/I» (in «I»Grundriss d. ind.-ar. Phil.«/I»), Plate&nbsp;I.</ref> has pointed out that both Kharoṣṭhī and Brāhmī letters are found upon Persian silver «I»sigloi«/I», which were coined in the Punjab and belong to the period of the Achaemenid kings of Persia. As Bühler shows in detail, the Kharoṣṭhī alphabet is derived from the alphabet of the Aramaic inscriptions which date from the earlier part of the Achaemenid period. The Aramaic alphabet passed into India with the staff of subordinate officials by whom Darius organized his conquests there. The people of India already possessed their Brāhmī alphabet,
 PAGE:776but had this other alphabet forced upon them in their dealings with their rulers. The Kharoşţhī is then the gradual development under local conditions of the Aramaic alphabet of the Persian period. As Stein’s explorations show, both alphabets may be found on opposite sides of the same piece of wood.

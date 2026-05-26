@@ -28,6 +28,7 @@ from britannica.pipeline.stages.elements._registry import (
     ElementRegistry, _PH, _next_placeholder_id,
 )
 from britannica.pipeline.stages.elements._shapes import (
+    SHAPE_BODY,
     SHAPE_BRACE_PIPE,
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
@@ -183,7 +184,22 @@ _BR_TAG_RE = re.compile(r"<br\s*/?\s*>", re.IGNORECASE)
 def _is_inline_image_position(text: str, pos: int) -> bool:
     """True iff position ``pos`` (right after a matched `]]`) sits in an
     inline-prose context — same-line non-structural content follows.
-    Structural separators (`\\n`, `<br>`, `|`) are NOT inline."""
+
+    Structural separators / closers are NOT inline; they indicate the
+    image sits at a container boundary where the container owns layout:
+      * line-ender ``\\n`` or ``<br>`` — paragraph / line break
+      * wikitable cell pipe ``|`` (``|`` or ``||`` or ``|-``)
+      * template close ``}`` (``}}`` of a wrapper template)
+      * template open ``{`` (``{{brace2|…}}`` decoration, ``{{Ts|…}}``
+        cell styling — non-prose; an inline content template would be
+        inside a body sentence and the image would have at least one
+        separating character, e.g. punctuation or space-then-alpha)
+      * HTML close tag ``</…>`` (``</td>``, ``</tr>``, ``</span>``, …)
+        — the image is the LAST thing in its enclosing HTML element.
+    Inline-element OPEN tags (``<ref>``, ``<sub>``, etc.) are NOT
+    structural separators here — same-line elements after an image
+    are part of the inline flow.
+    """
     end = pos
     n = len(text)
     while end < n and text[end] in " \t":
@@ -191,10 +207,13 @@ def _is_inline_image_position(text: str, pos: int) -> bool:
     if end >= n:
         return False
     nxt = text[end]
-    if nxt == "\n" or nxt == "|":
+    if nxt == "\n" or nxt == "|" or nxt == "}" or nxt == "{":
         return False
-    if nxt == "<" and _BR_TAG_RE.match(text, end):
-        return False
+    if nxt == "<":
+        if _BR_TAG_RE.match(text, end):
+            return False
+        if end + 1 < n and text[end + 1] == "/":
+            return False
     return True
 
 
@@ -435,13 +454,165 @@ def _walk_outline(
     return text, outline_extracts
 
 
+_PLACEHOLDER_RE = re.compile(rf"{re.escape(_PH)}ELEM:\d+{re.escape(_PH)}")
+
+# Layout-template names whose ``{{name|…}}`` wrappers are TEXT-LEVEL
+# regularization: the body producer's ``_unwrap_layout_templates`` peels
+# them to inner content.  When body-wrapping a placeholder-bearing prose
+# stream, we must treat such wrappers as ATOMIC — a placeholder inside
+# one of them belongs to the wrapper's body run, not to a separate
+# split.  Otherwise the wrapper's ``{{`` opener and ``}}`` closer land in
+# different BODY runs and the brace-counted unwrap can't pair them.
+#
+# Same names as ``body_text._LAYOUT_TEMPLATES`` — kept in sync there.
+_LAYOUT_WRAPPER_NAMES: tuple[str, ...] = (
+    "block center", "center", "c", "fine block",
+    "EB1911 Fine Print", "larger", "smaller", "nowrap",
+    "Fine", "sm",
+)
+
+# HTML wrapper tags whose body content includes extracted-element
+# placeholders (e.g. ``<div style="float:right">[[File:…]]</div>`` in
+# ACCUMULATOR).  Same atomic-span discipline as the wikitext layout
+# wrappers above — keeping the wrapper whole lets the body producer's
+# Family A wrapper-strip rule pair its open/close across the embedded
+# placeholder.  Enumerated; mirrors ``body_text``'s wrapper-strip set.
+_HTML_WRAPPER_TAGS: tuple[str, ...] = (
+    "div", "span", "small", "big", "p", "ins",
+)
+
+
+def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:
+    """Find every balanced wrapper span that should stay atomic during
+    body-splitting.  Returns ``[(start, end), …]`` sorted by start.
+
+    Two wrapper families covered:
+
+      * ``{{NAME|…}}`` wikitext layout wrappers (``{{center|…}}``,
+        ``{{larger|…}}``, …) — brace-counted matching so an inner
+        template with a literal single ``{`` (e.g. ``{{xx-larger|√ {}}``
+        in STEAM_ENGINE's Q=V equation) doesn't break the pairing.
+      * ``<TAG…>…</TAG>`` HTML wrappers (``<div style="float:right">``
+        around ``[[File:…]]`` in ACCUMULATOR, similar inline spans).
+        Non-greedy DOTALL match — sufficient for the non-nested
+        wrapper cases that exist in the corpus today; nested cases
+        would need depth tracking, but the body producer's wrapper-
+        strip already handles content correctness, so we only need
+        ``_wrap_body_runs`` to KEEP the span together.
+
+    Placeholders inside any returned span stay in the surrounding BODY
+    run; the producer's wrapper-strip then sees the whole wrapper and
+    can pair its open/close cleanly."""
+    spans: list[tuple[int, int]] = []
+    text_lower = text.lower()
+    n = len(text)
+    for name in _LAYOUT_WRAPPER_NAMES:
+        prefix = "{{" + name.lower() + "|"
+        pos = 0
+        while pos < n:
+            idx = text_lower.find(prefix, pos)
+            if idx < 0:
+                break
+            content_start = idx + len(prefix)
+            depth = 1
+            j = content_start
+            while j < n - 1:
+                if text[j:j + 2] == "{{":
+                    depth += 1
+                    j += 2
+                elif text[j:j + 2] == "}}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                    j += 2
+                else:
+                    j += 1
+            if depth == 0:
+                spans.append((idx, j + 2))
+                pos = j + 2
+            else:
+                pos = content_start
+    for tag in _HTML_WRAPPER_TAGS:
+        pattern = re.compile(
+            rf"<{tag}\b[^>]*>.*?</{tag}>",
+            re.IGNORECASE | re.DOTALL)
+        for m in pattern.finditer(text):
+            spans.append((m.start(), m.end()))
+    spans.sort()
+    return spans
+
+
+def _wrap_body_runs(
+    text: str,
+    extracts: list[tuple[str, str, str]],
+) -> tuple[str, list[tuple[str, str, str]]]:
+    """Wrap residual prose runs in ``text`` as SHAPE_BODY extracts.
+
+    After ``_walk_balanced_shapes`` + ``_walk_outline``, the article-level
+    placeholderized text is a mix of placeholders and residual body prose.
+    This phase makes it homogeneous: each prose run becomes its own
+    BODY-shape extract with its own placeholder, so the body producer is
+    just another producer in the dispatch table and article assembly
+    collapses to ordered concatenation of element markers.
+
+    Layout-template wrappers (``{{center|…}}``, ``{{larger|…}}``, …) are
+    treated as ATOMIC — a placeholder inside such a wrapper stays in the
+    surrounding BODY run rather than splitting it.  The body producer's
+    brace-counted ``_unwrap_layout_templates`` then peels the wrapper
+    cleanly; the inner placeholder rides through into the BODY marker,
+    where ``substitute_top_level_markers`` resolves it cross-reference-
+    style (the same mechanism a child marker inside a parent marker
+    already uses)."""
+    atomic_spans = _find_atomic_wrapper_spans(text)
+
+    def _is_in_atomic_span(pos: int) -> bool:
+        for s, e in atomic_spans:
+            if s <= pos < e:
+                return True
+            if pos < s:
+                return False
+        return False
+
+    out: list[str] = []
+    body_buf: list[str] = []
+    n = len(text)
+    pos = 0
+
+    def _flush_body() -> None:
+        if not body_buf:
+            return
+        body_raw = "".join(body_buf)
+        body_buf.clear()
+        if not body_raw:
+            return
+        ph = _new_placeholder()
+        out.append(ph)
+        extracts.append((ph, SHAPE_BODY, body_raw))
+
+    while pos < n:
+        m = _PLACEHOLDER_RE.match(text, pos)
+        if m and not _is_in_atomic_span(pos):
+            _flush_body()
+            out.append(m.group(0))
+            pos = m.end()
+        else:
+            body_buf.append(text[pos])
+            pos += 1
+    _flush_body()
+    return "".join(out), extracts
+
+
 def walk(
-    text: str, _allow_outline: bool = True, _allow_figure: bool = True,
+    text: str,
+    _allow_outline: bool = True,
+    _allow_figure: bool = True,
+    _wrap_body: bool = False,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """One-level shape-emitting walker.
 
-    Linear scan + optional OUTLINE phase.  Returns the
-    placeholderized text plus `(placeholder, shape, raw)` tuples.
+    Linear scan + optional OUTLINE phase + optional BODY-wrap phase.
+    Returns the placeholderized text plus `(placeholder, shape, raw)`
+    tuples.
 
     ``_allow_outline=False`` is passed when the parent shape is
     OUTLINE so the outline scanner doesn't re-trigger on its own
@@ -449,9 +620,15 @@ def walk(
     (inside-an-element) descent so a figure — a body-level construct —
     is only recognized at the article level, never inside another
     element or the figure producer's own re-processing of its span.
+    ``_wrap_body=True`` is passed at the article entry point so
+    residual prose between extracted elements becomes its own SHAPE_BODY
+    extracts; recursive walks (inside cells, captions, figure interiors)
+    pass False — those contexts don't have an article-level "body."
     """
     text, extracts = _walk_balanced_shapes(text, _allow_figure)
     if _allow_outline:
         text, outline_extracts = _walk_outline(text)
         extracts.extend(outline_extracts)
+    if _wrap_body:
+        text, extracts = _wrap_body_runs(text, extracts)
     return text, extracts

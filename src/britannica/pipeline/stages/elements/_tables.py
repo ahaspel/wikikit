@@ -25,6 +25,9 @@ from britannica.pipeline.stages.elements._text import (
     _convert_inline_sub_sup,
     _strip_br,
 )
+from britannica.pipeline.stages.transform_articles.body_text import (
+    strip_known_wrapper_tags,
+)
 
 
 # Wiki cell-attribute keywords — used in three places (here, _layout,
@@ -425,6 +428,12 @@ def _process_compound_table(raw: str, text_transform) -> str:
                 content = _strip_br(content)
                 content = re.sub(r"<td[^>]*>", "", content,
                                  flags=re.IGNORECASE)
+                # Cell-content wrapper-strip: enumerated tag set the
+                # complex-table cell renders inline content of (e.g.
+                # AFRICA's `<span style="border-bottom..." title="…">`
+                # transcriber-amendment annotations).  Shared toolkit
+                # utility; the producer composes it like any other rule.
+                content = strip_known_wrapper_tags(content)
                 content = content.strip()
                 if content and text_transform:
                     content = text_transform(content)
@@ -548,6 +557,11 @@ def _process_complex_table(inner: str, text_transform) -> str:
                     content = text_transform(content)
                 # Strip any templates text_transform didn't handle.
                 content = re.sub(r"\{\{[^{}]*\}\}", "", content)
+                # Cell-content wrapper-strip: enumerated HTML tags
+                # whose inner content the cell renders directly (AFRICA's
+                # `<span title="amended from 'Sierre'">Sierra</span>`
+                # transcriber-annotation spans).  Shared toolkit utility.
+                content = strip_known_wrapper_tags(content)
             cells_html.append(emit_html_cell(
                 tag, content,
                 rowspan=rowspan, colspan=colspan, styles=styles,
@@ -986,6 +1000,9 @@ def _process_chemistry_layout(inner: str, text_transform,
             # template noise (e.g. stray {{larger|...}} that the
             # template was supposed to neutralise).
             content = re.sub(r"\{\{[^{}]*\}\}", "", content)
+            # Cell-content wrapper-strip: shared toolkit utility,
+            # enumerated tag set, same as the BODY producer's call.
+            content = strip_known_wrapper_tags(content)
             content = (content.replace("&vert;", "|")
                               .replace("&nbsp;", " "))
             for sentinel, glyph in _CHEM_RESOLVE.items():
@@ -1074,7 +1091,14 @@ def _extract_table_cells(row_text, text_transform, with_attrs=False):
         # alignment so the viewer renders it rather than guessing.
         align = _cell_align(attr_part, content) if with_attrs else None
         cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
-        val = text_transform(cleaned) if cleaned else " "
+        # text_transform expands layout templates like ``{{gap}}`` /
+        # ``{{em|N}}`` to whitespace, which can leave stray leading or
+        # trailing whitespace at the cell boundary — render-irrelevant for
+        # most consumers but markup-noisy.  Strip after the transform so
+        # the cell's emitted bytes are canonical.  Ascii-space-and-tab only
+        # so visible-on-render non-breaking entities (``&nbsp;`` → ``\xa0``)
+        # the source carried deliberately survive.
+        val = text_transform(cleaned).strip(" \t") if cleaned else " "
         cells.append((val, align) if with_attrs else val)
     return cells
 

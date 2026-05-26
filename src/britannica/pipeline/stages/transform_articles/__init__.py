@@ -25,6 +25,7 @@ from britannica.pipeline.stages.transform_articles.body_text import (
     _FRAKTUR_MAP,
     _LNK,
     _SH,
+    _apply_markup,
     _convert_hieroglyphs,
     _convert_links,
     _convert_shoulder_headings,
@@ -32,7 +33,6 @@ from britannica.pipeline.stages.transform_articles.body_text import (
     _convert_sub_sup,
     _decode_entities,
     _finalize_markers,
-    _strip_html,
     _strip_templates,
     _to_fraktur,
     _transform_body_text,
@@ -268,7 +268,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # classifiers to call privately, but the pipeline-style chain that
     # used to thread their outputs across stages here has been deleted.
     context = ElementContext(volume=volume, page_number=page_number)
-    text = process_elements(raw_wikitext, _transform_body_text, context)
+    text = process_elements(raw_wikitext, _apply_markup, context)
 
     # Inject chart images for pages where chart2 markup was lost during import
     from britannica.image_assets import CHART2_IMAGES

@@ -39,7 +39,7 @@ VII. Usually considered to be the tergum of the genital somite, but suggested by
 VIII to XIII. The six somites of the mesosoma, each with a movable pleural spine and a pair of dorsal entopophysis or muscle-attaching ingrowths
 XIV to XVIII. The confluent or unexpressed six somites of the metasoma}LEGEND}
 
-«PRE: [According to the system of numbering explained in the text, if VII is the tergum of the
+«PRE:    [According to the system of numbering explained in the text, if VII is the tergum of the
 praegenital somite (as is probable) it should be labelled «I»Prg«/I» without any number, and the
 somites VIII to XIII should be lettered 1 to 6, indicating that they are the six normal somites
 of the mesosoma; whilst XV to XVIII should be replaced by the numbers 7 to 12—an
@@ -139,7 +139,7 @@ The great pericardial sinus is strongly developed in both animals. Its walls are
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus11.png|align=center|width=380|Fig. 25.—Section through one of the central eyes of a young Limulus.}}
 
 {{LEGEND:«I»corn«/I». Its corneagen portion immediately underlying the lens
-«I»con. tiss«/I». Connective tissue (mesoblastic skeletal tissue)
+«I»con. tiss«/I». Connective tissue  (mesoblastic skeletal tissue)
 L. Cuticular or corneous lens
 «I»hy«/I». Epidermic cell-layer
 «I»ret«/I». Retinula cells
@@ -538,7 +538,7 @@ Families—Hexisopodidae («I»Hexisopus«/I»). Solpugidae («I»Solpuga, Rhago
 
 {{TABLE:I to VI, The six prosomatic | «I»e«/I», Third plate of the prosomalimbs cut short. | carrying appendage VI.
 «I»o«/I», The eyes. | The prae-genital somite is
-«I»b, c«/I», Demarcated areae of the | absent.
+«I»b, c«/I», Demarcated areae of the           | absent.
 cephalic or first | 1, First somite of the
 prosomatic plate | opisthosoma.
 corresponding respectively | 2, Second do.

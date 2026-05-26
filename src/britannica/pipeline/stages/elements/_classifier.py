@@ -44,6 +44,7 @@ from britannica.pipeline.stages.elements._registry import (
 )
 from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
+    SHAPE_BODY,
     SHAPE_BRACE_PIPE,
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
@@ -277,6 +278,8 @@ def _derive_label(
         return "SECTION"
     if shape == SHAPE_NOINCLUDE:
         return "NOINCLUDE"
+    if shape == SHAPE_BODY:
+        return "BODY"
     raise ValueError(f"Unknown shape: {shape!r}")
 
 
@@ -348,8 +351,14 @@ def classify_article(
     ``_allow_figure=False`` (used by the FIGURE producer's own re-process
     of its span) suppresses figure recognition so it doesn't re-recognize —
     and recurse on — its own span.
+
+    Article-level walk runs with ``_wrap_body=True`` so residual prose
+    between extracted elements becomes its own SHAPE_BODY extracts.
+    After this call the placeholderized text contains only placeholders
+    — every byte of the article is owned by some classified element.
     """
-    placeholderized_text, extracts = walk(text, _allow_figure=_allow_figure)
+    placeholderized_text, extracts = walk(
+        text, _allow_figure=_allow_figure, _wrap_body=True)
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)

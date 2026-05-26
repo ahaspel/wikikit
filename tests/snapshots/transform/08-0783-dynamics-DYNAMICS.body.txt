@@ -620,7 +620,7 @@ If «MATH:t, t'\!«/MATH» be the times of passing through the initial and final
 
 since the upper and lower limits of the integral must both be regarded as variable. This may be written «MATH[fs=90]:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH»
 
-«EQN:4»«MATH[popout]:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
+«EQN:4» «MATH[popout]:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
 
 Now, by d’Alembert’s principle,
 
@@ -660,7 +660,7 @@ In the formula (2) the energy in the hypothetical motion is prescribed, whilst t
 
 where «MATH:t, t'\!«/MATH» are the prescribed times of passing through the given initial and final configurations. The proof of (12) is simple; we have «MATH[fs=80]:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»
 
-«EQN:13»«MATH[fs=90]:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
+«EQN:13» «MATH[fs=90]:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
 
 The integrated terms vanish at both limits, since by hypothesis the configurations at these instants are fixed; and the terms under the integral sign vanish by d’Alembert’s principle.
 
