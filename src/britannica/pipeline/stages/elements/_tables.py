@@ -925,6 +925,11 @@ def _process_chemistry_layout(inner: str, text_transform,
     emitted as ``<span class="chem-bracket-it">\u276e</span>`` / ``-ib``,
     with the bar drawn by a CSS ``::before`` / ``::after`` pseudo-element.
     """
+    # Strip HTML comments before cell-splitting — chem layouts often carry
+    # column-number markers (``<!--2--><!--3-->…``) that the bypassed Layer-A
+    # ``html_comments`` pass used to remove; on raw input they leak as bogus
+    # cells (ACCUMULATOR fig 22/23 row).
+    inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
     # Build placeholder -> sentinel map for Langle/Rangle images.
     angle_sentinel: dict[str, str] = {}
     if inner_registry is not None:
@@ -1628,6 +1633,10 @@ def _process_html_table(
     """Convert HTML table content to either an unwrapped illustration,
     a {{TABLE:...}TABLE} data table, or an HTMLTABLE marker when
     rowspan/colspan need to be preserved."""
+    # Strip HTML comments before any row/cell parsing — matches what the
+    # bypassed Layer-A ``html_comments`` pass did; without this, comments
+    # between ``<tr>``s leak as bogus content (cf. the chem producer).
+    inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
     if "Oriental Railways" in inner and "Mustafa-Pasha" in inner:
         import sys as _sys
         _sys.stderr.write("DEBUG: _process_html_table called for TURKEY\n")
