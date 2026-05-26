@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_INLINE_IMAGE,
     SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
@@ -139,10 +140,13 @@ _RAW_IMAGE_RE = re.compile(
     re.IGNORECASE | re.DOTALL)
 
 # DOUBLE_BRACKET image — `[[File:…]]` or `[[Image:…]]` with optional
-# trailing caption block (see today's IMAGE regex for the caption
-# shapes recognized).
+# trailing caption block (EXTCAP form).  The regex absorbs nothing more —
+# inline-vs-block is decided structurally by lookahead at dispatch time
+# (see _is_inline_image_position below); the walker advances past `]]`
+# (or past the EXTCAP) and the surrounding bytes stay in the
+# placeholderized text intact.
 _IMAGE_RE = re.compile(
-    r"\[\[(?:File|Image):([^\]]+)\]\]"
+    r"\[\[(?:File|Image):[^\]]+\]\]"
     r"(?:\s*\n\n?("
     r"(?:<[a-z]+[^>\n]*>\s*)?"
     r"(?:"
@@ -163,6 +167,35 @@ _IMAGE_RE = re.compile(
     r"))?",
     re.IGNORECASE,
 )
+
+
+# Inline-image structural recognition.  At the moment the walker has just
+# matched an `[[File:…]]` (no EXTCAP), it checks the text immediately AFTER
+# `]]` for an inline-glyph signal: same-line content that ISN'T a line-ender
+# (`\n` / `<br>`) and ISN'T a wikitable cell separator (`|`).  No bytes
+# consumed; the placeholderized text keeps its surrounding context.  When the
+# signal is present the walker emits SHAPE_INLINE_IMAGE instead of
+# SHAPE_DOUBLE_BRACKET; the classifier maps that shape to its own label and
+# the dedicated producer stamps `align=inline`.
+_BR_TAG_RE = re.compile(r"<br\s*/?\s*>", re.IGNORECASE)
+
+
+def _is_inline_image_position(text: str, pos: int) -> bool:
+    """True iff position ``pos`` (right after a matched `]]`) sits in an
+    inline-prose context — same-line non-structural content follows.
+    Structural separators (`\\n`, `<br>`, `|`) are NOT inline."""
+    end = pos
+    n = len(text)
+    while end < n and text[end] in " \t":
+        end += 1
+    if end >= n:
+        return False
+    nxt = text[end]
+    if nxt == "\n" or nxt == "|":
+        return False
+    if nxt == "<" and _BR_TAG_RE.match(text, end):
+        return False
+    return True
 
 
 # Recognizer dispatch table in opener-specificity order.  At each
@@ -340,6 +373,16 @@ def _walk_balanced_shapes(
                 fig_end = figure_tail_end(text, matched[0])
                 if fig_end > matched[0]:
                     matched = (fig_end, SHAPE_FIGURE, text[opener_pos:fig_end])
+
+            # Inline-image lookahead: a bare `[[File:…]]` (no EXTCAP, no
+            # figure-tail upgrade) sitting in same-line prose is structurally
+            # an inline glyph.  Lookahead-only — no bytes absorbed; the
+            # surrounding text keeps its newlines and separators intact.
+            if (matched is not None
+                    and matched[1] == SHAPE_DOUBLE_BRACKET
+                    and matched[2].endswith("]]")
+                    and _is_inline_image_position(text, matched[0])):
+                matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
         # BRACE_PIPE doesn't have a regex pattern — its closer
         # requires balanced depth tracking.  Try it last (lowest

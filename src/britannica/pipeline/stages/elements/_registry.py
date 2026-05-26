@@ -101,6 +101,14 @@ TABLE_LABELS: frozenset[str] = frozenset({
 # single-row table to inline text.
 BLOCK_LABELS: frozenset[str] = frozenset({"POEM", "HTML_TABLE"}) | TABLE_LABELS
 
+# Image-shaped child labels — File-bracket image elements regardless of
+# whether the walker recognised an inline-prose context (INLINE_IMAGE) or
+# a block / structural context (IMAGE).  Figure-table producers and
+# image-counters key off the SHAPE (image element), not the alignment;
+# layout in a cell is the container's job, so both labels are equally
+# "an image child" to anything iterating children.
+IMAGE_LABELS: frozenset[str] = frozenset({"IMAGE", "INLINE_IMAGE"})
+
 
 @dataclass
 class ClassifiedElement:

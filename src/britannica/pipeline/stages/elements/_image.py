@@ -80,12 +80,15 @@ _DISPLAY_KEYWORDS = frozenset({
     "thumb", "thumbnail", "frameless", "frame", "border", "none", "upright"})
 
 
-def _process_image(inner: str, text_transform, force_align: str | None = None) -> str:
+def _process_image(inner: str, text_transform, default_align: str | None = None) -> str:
     """Convert image content (already stripped of [[File:...]]) to {{IMG:filename|clean caption}}.
 
-    ``force_align`` overrides the parsed alignment — used by the INLINE_IMAGE
-    producer to stamp ``align=inline`` on a glyph the classifier recognized as
-    inline from its line context (the source omits the attribute)."""
+    ``default_align`` is the alignment to use when the image's own params don't
+    name one — used by ``_process_image_from_raw`` to stamp ``align=inline``
+    on a bare image whose raw shows no trailing separator (walker structural
+    signal: same-line content follows ``]]``, so nothing was absorbed).  When
+    the image params DO carry an alignment (``[[File:foo|450px|center]]``),
+    that explicit choice wins and the default is ignored."""
     # Check for external caption (from plate pages: image + caption on next line)
     ext_caption = ""
     if "|EXTCAP:" in inner:
@@ -129,7 +132,7 @@ def _process_image(inner: str, text_transform, force_align: str | None = None) -
     if caption:
         caption = text_transform(caption)
     return build_img_marker(
-        filename, caption or None, align=force_align or align,
+        filename, caption or None, align=align or default_align,
         width=width, height=height)
 
 
@@ -305,19 +308,25 @@ def image_extcap_from_raw(raw: str) -> str:
     return sp[1] if sp else ""
 
 
-def _process_image_from_raw(raw: str, text_transform, inline: bool = False) -> str:
-    """Parse a raw `[[File:…]]` + optional trailing caption span and produce
-    the `{{IMG:…}}` marker.  The IMAGE producer's entry point — the walker
-    hands it the verbatim raw; the caption parse lives here, not upstream.
+def _process_image_from_raw(raw: str, text_transform,
+                            inline: bool = False) -> str:
+    """Parse a raw `[[File:…]]` + optional trailing capture and produce the
+    `{{IMG:…}}` marker.
 
-    ``inline`` (the INLINE_IMAGE producer) stamps ``align=inline`` — the
-    classifier decided inline from the carried line context; the producer just
-    renders it."""
+    The walker has already decided block-vs-inline by emitting
+    SHAPE_INLINE_IMAGE (for inline glyphs adjacent to same-line prose) or
+    SHAPE_DOUBLE_BRACKET (everything else); the classifier maps those to
+    the IMAGE / INLINE_IMAGE label, and the dispatch passes ``inline=True``
+    here for the inline case.  The producer just acts on that signal —
+    stamping ``align=inline`` as the default when the image's own params
+    don't carry an alignment, and otherwise leaving alignment up to the
+    image params (which still win)."""
     sp = _split_image_raw(raw)
     if sp is None:
         return raw
     inner, ext_caption = sp
     if ext_caption:
         inner = inner + "|EXTCAP:" + ext_caption
-    return _process_image(inner, text_transform,
-                          force_align="inline" if inline else None)
+    return _process_image(
+        inner, text_transform,
+        default_align="inline" if inline else None)

@@ -19,7 +19,8 @@ from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
     _is_structural_formula,
 )
-from britannica.pipeline.stages.elements._registry import ElementRegistry, _PH
+from britannica.pipeline.stages.elements._registry import (
+    ElementRegistry, IMAGE_LABELS, _PH)
 from britannica.pipeline.stages.elements._text import (
     _convert_inline_sub_sup,
     _strip_br,
@@ -690,7 +691,7 @@ def _has_chem_brackets(registry: ElementRegistry | None) -> bool:
     if registry is None:
         return False
     for placeholder, label in registry.labels.items():
-        if label == "IMAGE":
+        if label in IMAGE_LABELS:
             raw = registry.elements[placeholder][1]
             if _CHEM_BRACKET_IMG_RE.search(raw):
                 return True
@@ -934,7 +935,7 @@ def _process_chemistry_layout(inner: str, text_transform,
     angle_sentinel: dict[str, str] = {}
     if inner_registry is not None:
         for ph, label in inner_registry.labels.items():
-            if label != "IMAGE":
+            if label not in IMAGE_LABELS:
                 continue
             eraw = inner_registry.elements[ph][1]
             m = re.match(
@@ -1232,7 +1233,8 @@ def _process_verse_table(inner: str, text_transform,
     if inner_registry is not None:
         labels = inner_registry.labels
         poem_phs = [ph for ph, lbl in labels.items() if lbl == "POEM"]
-        if poem_phs and not any(lbl == "IMAGE" for lbl in labels.values()):
+        if poem_phs and not any(
+                lbl in IMAGE_LABELS for lbl in labels.values()):
             parts = []
             for ph in poem_phs:
                 body = text_transform(
@@ -1304,7 +1306,7 @@ def _process_table(inner: str, text_transform,
             if (len(row1_cells) == 1
                     and ph_re.fullmatch(row1_cells[0].strip())):
                 ph_id = row1_cells[0].strip()
-                if inner_registry.labels.get(ph_id) == "IMAGE":
+                if inner_registry.labels.get(ph_id) in IMAGE_LABELS:
                     eraw = inner_registry.elements[ph_id][1]
                     fname_m = re.match(
                         r"\[\[(?:File|Image):([^\]|]+)",
@@ -1472,11 +1474,12 @@ def _is_html_illustration_wrapper(
     if inner_registry is None:
         return False
     child_labels = list(inner_registry.labels.values())
-    n_images = sum(1 for lbl in child_labels if lbl == "IMAGE")
+    n_images = sum(1 for lbl in child_labels if lbl in IMAGE_LABELS)
     if n_images < 1:
         return False
     # No other block-level children (nested tables etc.)
-    if any(lbl not in ("IMAGE", "REF", "MATH") for lbl in child_labels):
+    if any(lbl not in IMAGE_LABELS and lbl not in ("REF", "MATH")
+           for lbl in child_labels):
         return False
     return True
 
@@ -1560,7 +1563,7 @@ def _unwrap_html_illustration(
         m = re.search(re.escape(_PH) + r"ELEM:\d+" + re.escape(_PH), cell)
         if m:
             key = m.group(0)
-            if inner_registry.labels.get(key) == "IMAGE":
+            if inner_registry.labels.get(key) in IMAGE_LABELS:
                 img_raw = inner_registry.elements[key][1]
                 # Inject the caption via EXTCAP so _process_image bundles it.
                 if caption_text:
@@ -1587,7 +1590,7 @@ def _unwrap_html_illustration(
                     m = re.search(
                         re.escape(_PH) + r"ELEM:\d+" + re.escape(_PH),
                         img_cell)
-                    if m and inner_registry.labels.get(m.group(0)) == "IMAGE":
+                    if m and inner_registry.labels.get(m.group(0)) in IMAGE_LABELS:
                         img_raw = inner_registry.elements[m.group(0)][1]
                         new_raw = img_raw + "\n\n" + cap if cap else img_raw
                         out.append(

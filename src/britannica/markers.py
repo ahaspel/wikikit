@@ -129,9 +129,9 @@ def strip_title_markers(title: str) -> str:
 # emitted only when non-default; then the caption is the rest (so it may
 # freely contain ``|`` and ``=``).  ``align=inline`` is the unified
 # inline-glyph form (folded in from the old ``{{IMG-INLINE:}}`` marker);
-# the positional decision that an image is inline is made pre-extraction
-# by ``promote_inline_glyphs`` (the producer can't see position), but the
-# encoding and rendering are the same as any other image.
+# the inline-vs-block decision is made by the walker (SHAPE_INLINE_IMAGE
+# lookahead — see ``elements/_walker.py``), the classifier maps shape to
+# the INLINE_IMAGE label, and the producer stamps ``align=inline``.
 #
 # The metadata alternation is value-typed (``align`` is a side word,
 # ``width``/``height`` are digits) so a prose caption can never be

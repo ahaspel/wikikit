@@ -51,6 +51,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_INLINE_IMAGE,
     SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
@@ -262,6 +263,8 @@ def _derive_label(
         return _derive_html_self_closing_label(raw)
     if shape == SHAPE_DOUBLE_BRACKET:
         return _derive_double_bracket_label(raw)
+    if shape == SHAPE_INLINE_IMAGE:
+        return "INLINE_IMAGE"
     if shape == SHAPE_DOUBLE_BRACE:
         return _derive_double_brace_label(raw)
     if shape == SHAPE_CHART2:
@@ -332,37 +335,6 @@ def classify(
     )
 
 
-# Inline-image recognition.  The walker carries the surrounding markup in the
-# placeholderized text — the IMAGE placeholder sits exactly where the ref was,
-# amid the prose / `<br>` / `\n`.  Here, at CLASSIFICATION time (never in the
-# walker), we read that line context and supply the `align=inline` the source
-# omits: if prose continues on the image's line right after it, relabel
-# IMAGE → INLINE_IMAGE.  Trailing context suffices — an inline glyph has prose
-# after it on its line; a stranded block has the line-end (`\n`/`<br>`) there.
-# Separators, spacer templates and sibling element placeholders aren't prose.
-_INLINE_NOISE = re.compile(
-    r"\x03ELEM:\d+\x03"
-    r"|<br\s*/?>"
-    r"|&(?:nbsp|ensp|emsp|thinsp);"
-    r"|\{\{\s*(?:em|gap|dhr)(?:\s*\|[^{}]*)?\s*\}\}"
-    r"|\s",
-    re.IGNORECASE)
-
-
-def _mark_inline_images(
-    ph_text: str, registry: dict[str, ClassifiedElement]
-) -> None:
-    for ph, ce in registry.items():
-        if ce.label != "IMAGE":
-            continue
-        i = ph_text.find(ph)
-        if i < 0:
-            continue
-        line_after = ph_text[i + len(ph):].split("\n", 1)[0]
-        if _INLINE_NOISE.sub("", line_after).strip():
-            ce.label = "INLINE_IMAGE"
-
-
 def classify_article(
     text: str, _allow_figure: bool = True,
 ) -> tuple[str, dict[str, ClassifiedElement]]:
@@ -381,8 +353,6 @@ def classify_article(
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)
-    # Inline-vs-block call from the carried line context (body-level prose).
-    _mark_inline_images(placeholderized_text, registry)
     return placeholderized_text, registry
 
 

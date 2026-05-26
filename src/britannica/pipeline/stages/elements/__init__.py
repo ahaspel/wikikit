@@ -46,6 +46,7 @@ from britannica.pipeline.stages.elements._leaf import (
 )
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry,
+    IMAGE_LABELS,
     TABLE_LABELS,
     _PH,
 )
@@ -102,7 +103,7 @@ from britannica.pipeline.stages.elements._layout import (
     _process_legended_figure_beside,
     _process_legended_figure_child,
     _process_prose_figure,
-    _process_simple_plate,
+    _process_unpaired_figure_group,
     _row_has_legend_multicol_cells,
     _simple_table_text,
     _strip_cell_attributes,
@@ -188,27 +189,15 @@ def _passthrough_inner(raw, inner, text_transform, context,
 
 
 def _produce_figure(raw, inner, text_transform, context, inner_registry):
-    """Assemble a figure (image + its structural caption run).
+    """Assemble a figure (one or more images + structural caption run).
 
-    Structural path: `_process_prose_figure` parses the span, folds the
-    caption + attribution into the `{{IMG:…}}` marker and emits any legend
-    separately — consuming the caption so it never renders twice (the
-    leak/duplicate fix).
-
-    Multi-image caption rows (Figs 22-23) aren't owned by the structural
-    producer yet; for those it returns None and we fall back to the legacy
-    `_assemble_figures` (re-process with figure recognition OFF so the
-    sub-walk doesn't recurse on this span) so they keep rendering as before.
+    Total over SHAPE_FIGURE: ``_process_prose_figure`` parses the span,
+    folds caption/attribution into the ``{{IMG:…}}`` marker(s) and emits
+    any legend separately — consuming the caption so it never renders
+    twice.  No post-pass, no fallback; the producer is the final word on
+    this span.
     """
-    structural = _process_prose_figure(raw, text_transform)
-    if structural is not None:
-        return structural
-    from britannica.pipeline.stages.transform_articles.legend_promote import (
-        _assemble_figures,
-    )
-    produced = process_elements(
-        raw, text_transform, context, _allow_figure=False)
-    return _assemble_figures(produced)
+    return _process_prose_figure(raw, text_transform)
 
 
 # ── Producer dispatch ─────────────────────────────────────────────────
@@ -226,17 +215,17 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_equation_layout(inner, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
-    # UNPAIRED_FIGURE_GROUP — ≥2 images the classifier hands off as a
-    # group; the producer partitions cells per image (vertical-stack OR
-    # parallel-row column-slice) and routes each image's cells through the
-    # shared figure pipeline, bundling what pairs and passing through the
-    # rest.  Uses the former SIMPLE_PLATE producer, which is TOTAL here:
-    # vs the generic `_unwrap_layout_table` passthrough it bundles equal-
-    # or-more in every case (0 regressions, +11 fixes incl. 4 grids the
+    # UNPAIRED_FIGURE_GROUP — ≥2 images in a wikitable / `<table>` grid
+    # that the classifier hands off as a group; the producer partitions
+    # cells per image (vertical-stack OR parallel-row column-slice) and
+    # routes each image's cells through the shared figure pipeline,
+    # bundling what pairs and passing through the rest.  TOTAL: vs the
+    # generic `_unwrap_layout_table` passthrough it bundles equal-or-more
+    # in every case (0 regressions, +11 fixes incl. 4 grids the
     # passthrough was silently under-bundling).  Collapses the old
     # SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels into one.
     "UNPAIRED_FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _process_simple_plate(raw, inner, tt, reg),
+        _process_unpaired_figure_group(raw, inner, tt, reg),
     # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
     # in row 0, alone in cell, no data-table header signal).  Has
     # its own focused producer; falls back to `_unwrap_layout_table`
@@ -275,8 +264,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
         _process_legended_figure_child(raw, inner, tt, reg),
     # (SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels removed — multi-image
-    # figures now classify as UNPAIRED_FIGURE_GROUP, above, which inherits
-    # the SIMPLE_PLATE producer `_process_simple_plate`.)
+    # figures now classify as UNPAIRED_FIGURE_GROUP, above.)
     # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
     # wikitables (HYDROMEDUSAE-style composite).  No direct images
     # at this level.  Initially shared with LAYOUT_WRAPPER.
@@ -441,7 +429,7 @@ def _is_icl_family(raw: str, inner: str,
         return False
     # 2. Figure carrier present.
     labels = registry.labels.values()
-    has_image = any(lbl == "IMAGE" for lbl in labels)
+    has_image = any(lbl in IMAGE_LABELS for lbl in labels)
     figure_child_count = sum(1 for lbl in labels if lbl in _FIGURE_LABELS)
     return has_image or figure_child_count >= 2
 
@@ -690,7 +678,7 @@ def _classify_icl_shape(raw: str, inner: str,
     # that happens to contain `{{center}}` etc.
     inner = _normalize_icl_markup(inner)
     image_phs = [ph for ph, lbl in registry.labels.items()
-                 if lbl == "IMAGE"]
+                 if lbl in IMAGE_LABELS]
 
     # No-image case: FIGURE_GROUP wraps ≥2 nested figure children.
     if not image_phs:
@@ -822,7 +810,7 @@ def _is_poem_wrapper_pred(raw: str, inner: str,
     poem_phs = [ph for ph, lbl in registry.labels.items() if lbl == "POEM"]
     if not poem_phs:
         return False
-    if any(lbl == "IMAGE" for lbl in registry.labels.values()):
+    if any(lbl in IMAGE_LABELS for lbl in registry.labels.values()):
         return False
     if (re.search(r"^\s*!", inner, re.MULTILINE)
             or re.search(r"<(?:th|caption)\b", inner, re.IGNORECASE)):

@@ -26,6 +26,7 @@ SHAPE_BRACE_PIPE        = "BRACE_PIPE"        # {|...|}
 SHAPE_HTML_TAG          = "HTML_TAG"          # <NAME ...>...</NAME>
 SHAPE_HTML_SELF_CLOSING = "HTML_SELF_CLOSING" # <NAME ... />
 SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
+SHAPE_INLINE_IMAGE      = "INLINE_IMAGE"      # [[File:...]] in inline-prose context
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
 SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}} region
@@ -39,6 +40,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_TAG,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_DOUBLE_BRACKET,
+    SHAPE_INLINE_IMAGE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_OUTLINE,
     SHAPE_CHART2,
@@ -114,7 +116,7 @@ def strip_outer(shape: str, raw: str) -> str:
         # Not walked — the producer reads `raw` and makes the chrome-vs-
         # content (keep `{|`/`|}`) decision itself.
         return ""
-    if shape == SHAPE_DOUBLE_BRACKET:
+    if shape == SHAPE_DOUBLE_BRACKET or shape == SHAPE_INLINE_IMAGE:
         s = re.sub(r"^\[\[", "", raw)
         s = re.sub(r"\]\]\s*$", "", s)
         return s
