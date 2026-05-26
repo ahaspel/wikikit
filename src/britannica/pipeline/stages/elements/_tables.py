@@ -494,43 +494,12 @@ def _process_complex_table(inner: str, text_transform) -> str:
             cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
             rowspan = int(rs.group(1)) if rs else 1
             colspan = int(cs.group(1)) if cs else 1
-            # Propagate horizontal/vertical alignment from
-            # ``{{Ts|ar}}``/``ac``/``al`` style tokens or HTML
-            # ``align=`` / ``valign=`` attributes to inline CSS so
-            # the rendered table preserves the source's column
-            # alignment.  Without this, ``<td colspan="2">824,000
-            # </td>`` summation rows (BRITISH EMPIRE Africa /
-            # Australasia / Summary tables) default-left-align and
-            # detach from the value column above them.
-            ts_tokens: set[str] = set()
-            for ts in re.findall(r"\{\{[Tt]s\|([^{}]*)\}\}", attr_part):
-                for tok in ts.split("|"):
-                    ts_tokens.add(tok.strip().lower())
-            styles: list[str] = []
-            if ("ar" in ts_tokens
-                    or re.search(r'align\s*=\s*"?right"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("text-align:right")
-            elif ("ac" in ts_tokens
-                    or re.search(r'align\s*=\s*"?center"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("text-align:center")
-            elif ("al" in ts_tokens
-                    or re.search(r'align\s*=\s*"?left"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("text-align:left")
-            if ("vtp" in ts_tokens
-                    or re.search(r'valign\s*=\s*"?top"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("vertical-align:top")
-            elif ("vtm" in ts_tokens
-                    or re.search(r'valign\s*=\s*"?middle"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("vertical-align:middle")
-            elif ("vtb" in ts_tokens
-                    or re.search(r'valign\s*=\s*"?bottom"?',
-                                 attr_part, re.IGNORECASE)):
-                styles.append("vertical-align:bottom")
+            # Full Ts styling extraction via `_cell_styles` — handles
+            # alignment + vertical-align + padding + border + width +
+            # size + line-height + margin + font-weight (the whole
+            # known shorthand-code set).  Previously inline-ad-hoc and
+            # alignment-only, dropping the rest into the catch-all.
+            styles = _cell_styles(attr_part, content)
 
             # Clean content
             # Convert [[Image:...|params]] to {{IMG:filename}}
@@ -1030,26 +999,135 @@ _CELL_ALIGN_ATTR_RE = re.compile(
 _CELL_TS_RE = re.compile(r"\{\{[Tt]s\|([^{}]*)\}\}")
 
 
+# `{{Ts|...}}` code → CSS declaration.  EB1911 shorthand for inline
+# styling; the cell producer extracts these into a list of CSS rules and
+# `emit_html_cell` applies them as a `style="..."` attr.  Codes without
+# a known mapping are silently dropped (the Ts catch-all dismantling
+# campaign — task #36 — grows this table over time; unknown codes mean
+# the catch-all still has work).
+def _parse_ts_codes(codes_str: str) -> list[str]:
+    """Parse `{{Ts|code|code|...}}` arg-string into a list of CSS
+    declarations like `['text-align:right', 'padding-left:0.5em']`.
+    """
+    rules: list[str] = []
+    if not codes_str:
+        return rules
+    for code in re.split(r"[|\s]+", codes_str.strip()):
+        if not code:
+            continue
+        # Inline CSS style passed through as-is: `width:50px`,
+        # `margin-left:1em`, `text-align:center`, etc.  Drop trailing `;`.
+        if ":" in code:
+            rules.append(code.rstrip(";"))
+            continue
+        c = code.lower()
+        # Alignment
+        if c == "ar":   rules.append("text-align:right")
+        elif c == "ac": rules.append("text-align:center")
+        elif c == "al": rules.append("text-align:left")
+        # Vertical alignment
+        elif c in ("vtt", "vtp", "vt"): rules.append("vertical-align:top")
+        elif c == "vtm": rules.append("vertical-align:middle")
+        elif c in ("vtb", "vbb"): rules.append("vertical-align:bottom")
+        # Borders (1px solid, currentColor)
+        elif c == "ba": rules.append("border:1px solid")
+        elif c == "bt": rules.append("border-top:1px solid")
+        elif c == "bb": rules.append("border-bottom:1px solid")
+        elif c == "bl": rules.append("border-left:1px solid")
+        elif c == "br": rules.append("border-right:1px solid")
+        elif c == "bn": rules.append("border:none")
+        # Margin auto (centers a table)
+        elif c == "ma": rules.append("margin:0 auto")
+        # Font weight
+        elif c == "fwb": rules.append("font-weight:bold")
+        # Padding (em units)
+        elif m := re.match(r"^p([lrtb])([\d.]+)$", c):
+            sides = {"l": "left", "r": "right", "t": "top", "b": "bottom"}
+            rules.append(f"padding-{sides[m.group(1)]}:{m.group(2)}em")
+        # Margin (em units)
+        elif m := re.match(r"^m([lrtb])([\d.]+)$", c):
+            sides = {"l": "left", "r": "right", "t": "top", "b": "bottom"}
+            rules.append(f"margin-{sides[m.group(1)]}:{m.group(2)}em")
+        # Width (em integer)
+        elif m := re.match(r"^w(\d+)$", c):
+            rules.append(f"width:{m.group(1)}em")
+        # Font size (percent)
+        elif m := re.match(r"^sm(\d+)$", c):
+            rules.append(f"font-size:{m.group(1)}%")
+        elif c == "sm":
+            rules.append("font-size:90%")
+        # Line height (lh10..lh19 = 1.0..1.9; lh100..lh999 = percentages)
+        elif m := re.match(r"^lh(\d+)$", c):
+            n = int(m.group(1))
+            if n >= 100:
+                rules.append(f"line-height:{n}%")
+            else:
+                rules.append(f"line-height:{n / 10}")
+        # Unknown — silently drop for now.  Each one is an opportunity
+        # to extend this table (task #36 progress metric).
+    return rules
+
+
 def _cell_align(attr_part: str, content: str) -> str | None:
     """Resolved alignment for one cell: ``"right"``/``"center"``/``"left"`` or
-    ``None`` (left default)."""
-    blob = (attr_part or "") + " " + (content or "")
-    m = _CELL_ALIGN_ATTR_RE.search(blob)
-    if m:
-        a = m.group(1).lower()
-        return "center" if a.startswith("cent") else a
-    for tm in _CELL_TS_RE.finditer(blob):
-        codes = set(re.split(r"[|\s]+", tm.group(1).strip().lower()))
-        if "ar" in codes:
-            return "right"
-        if "ac" in codes:
-            return "center"
-        if "al" in codes:
-            return "left"
+    ``None`` (left default).  Thin wrapper around ``_cell_styles`` for
+    callers that only need alignment (the ``{{TABLE:}`` marker can only
+    encode alignment via ``⟦c⟧``/``⟦r⟧`` codes, not the full styling
+    set)."""
+    for rule in _cell_styles(attr_part, content):
+        if rule.startswith("text-align:"):
+            val = rule.split(":", 1)[1].strip()
+            return val if val in ("right", "center", "left") else None
     return None
 
 
-def _extract_table_cells(row_text, text_transform, with_attrs=False):
+def _cell_styles(attr_part: str, content: str) -> list[str]:
+    """Extract the FULL styling for one cell, combining:
+       * HTML ``align="..."``/``valign="..."`` attributes
+       * Inline ``style="..."`` declarations
+       * ``{{Ts|...}}`` shorthand code template(s)
+    Returns a list of CSS declarations like
+    ``['text-align:right', 'vertical-align:top', 'padding-left:0.5em']``.
+    Empty list means "no styling beyond defaults"."""
+    rules: list[str] = []
+    blob = (attr_part or "") + " " + (content or "")
+    # HTML align="right" → text-align:right
+    m = _CELL_ALIGN_ATTR_RE.search(blob)
+    if m:
+        a = m.group(1).lower()
+        a = "center" if a.startswith("cent") else a
+        if a in ("right", "center", "left"):
+            rules.append(f"text-align:{a}")
+    # HTML valign="top" → vertical-align:top
+    vm = re.search(r"valign\s*=\s*\"?(top|middle|bottom)", blob, re.IGNORECASE)
+    if vm:
+        rules.append(f"vertical-align:{vm.group(1).lower()}")
+    # Inline style="..." — pass through as-is.
+    sm = re.search(r"style\s*=\s*\"([^\"]*)\"", blob, re.IGNORECASE)
+    if sm:
+        for decl in sm.group(1).split(";"):
+            d = decl.strip()
+            if d:
+                rules.append(d)
+    # `{{Ts|code|code|...}}` shorthand — parse codes.
+    for tm in _CELL_TS_RE.finditer(blob):
+        rules.extend(_parse_ts_codes(tm.group(1)))
+    # Dedupe while preserving order — later occurrences override earlier
+    # by removing the earlier match on the same property.
+    seen: dict[str, int] = {}
+    deduped: list[str] = []
+    for r in rules:
+        prop = r.split(":", 1)[0]
+        if prop in seen:
+            deduped[seen[prop]] = r
+        else:
+            seen[prop] = len(deduped)
+            deduped.append(r)
+    return deduped
+
+
+def _extract_table_cells(row_text, text_transform,
+                         with_attrs=False, with_styles=False):
     """Extract data cells from a row via the shared `split_wiki_row`
     helper, then drop any remaining `{{Ts|…}}` cell-styling templates
     and run each cell's content through `text_transform`.
@@ -1057,7 +1135,16 @@ def _extract_table_cells(row_text, text_transform, with_attrs=False):
     ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
     alignment the producer must CARRY (resolved before the `{{Ts}}` style
     codes are stripped) so the viewer renders it instead of guessing.
-    Default returns plain content strings (the other callers' contract).
+
+    ``with_styles=True`` returns ``(content, styles)`` tuples where
+    ``styles`` is the full list of CSS declarations (alignment +
+    vertical-align + padding + borders + width + size + line-height +
+    margin + font-weight, anything `_cell_styles` can extract).  Use
+    this when emitting through `emit_html_cell` which accepts the full
+    styles list; the wiki ``{{TABLE:}`` marker callers stick with
+    ``with_attrs`` since their format only encodes alignment.
+
+    Default (neither flag) returns plain content strings.
 
     Module-level so the lean data-grid producer (`_process_table`) and
     the carved shape producers (single-column, etc.) share one cell
@@ -1079,16 +1166,19 @@ def _extract_table_cells(row_text, text_transform, with_attrs=False):
             # mid-line case where source has `|attr-keyword` with NO
             # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
             # check on `content` below.
-            cells.append((" ", None) if with_attrs else " ")
+            empty = (" ", []) if with_styles else (" ", None) if with_attrs else " "
+            cells.append(empty)
             continue
         # Content that is itself a bare attribute keyword (`colspan=2`
         # with no trailing-pipe boundary in source) is a malformed
         # cell, not real content — drop it.
         if _CELL_ATTR_RE.match(content):
             continue
-        # Resolve alignment BEFORE stripping the {{Ts|…}} style codes that
-        # carry it (`{{Ts|ar}}` = right) — the TABLE marker now CARRIES
-        # alignment so the viewer renders it rather than guessing.
+        # Resolve styling BEFORE stripping the {{Ts|…}} codes that carry
+        # it.  `with_styles` returns the full CSS list (for HTML cell
+        # emission); `with_attrs` returns just alignment (for the wiki
+        # `{{TABLE:}` marker, which only encodes ⟦c⟧/⟦r⟧).
+        styles = _cell_styles(attr_part, content) if with_styles else None
         align = _cell_align(attr_part, content) if with_attrs else None
         cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
         # text_transform expands layout templates like ``{{gap}}`` /
@@ -1099,7 +1189,12 @@ def _extract_table_cells(row_text, text_transform, with_attrs=False):
         # so visible-on-render non-breaking entities (``&nbsp;`` → ``\xa0``)
         # the source carried deliberately survive.
         val = text_transform(cleaned).strip(" \t") if cleaned else " "
-        cells.append((val, align) if with_attrs else val)
+        if with_styles:
+            cells.append((val, styles or []))
+        elif with_attrs:
+            cells.append((val, align))
+        else:
+            cells.append(val)
     return cells
 
 
