@@ -37,6 +37,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
+    SHAPE_MIRROR_GLYPH,
     SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
@@ -110,6 +111,18 @@ _SECTION_RE = re.compile(r"<section\s+(?:begin|end)\b[^>]*>", re.IGNORECASE)
 # producer, not a pre-walk strip.
 _NOINCLUDE_RE = re.compile(r"<noinclude>.*?</noinclude>",
                            re.DOTALL | re.IGNORECASE)
+
+# Wikisource `<span style="…{{mirrorH}}…">content</span>` — a horizontally
+# mirrored glyph (used in ALPHABET to show left-right-flipped letters of
+# early/regional alphabets like Etruscan, Italic, Cleonae's reversed E).
+# Recognized as its own shape so the mirror SEMANTIC survives end-to-end
+# (catch-all stripping silently lost the styling, leaving glyphs displayed
+# un-mirrored).  The producer emits `«MIRROR:content«/MIRROR»`; the viewer
+# applies `transform: scaleX(-1)`.
+_MIRROR_GLYPH_RE = re.compile(
+    r'<span\s+style\s*=\s*"[^"]*\{\{mirrorH\}\}[^"]*">(?:[^<]|<(?!/span>))*?</span>',
+    re.IGNORECASE | re.DOTALL,
+)
 
 # DOUBLE_BRACE template recognizers — named templates with up to four
 # levels of `{{…}}` nesting (CASTLE Fig. 9 cap parameters reach four
@@ -224,6 +237,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_CHART2,            _CHART2_RE),
     (SHAPE_SECTION,           _SECTION_RE),
     (SHAPE_NOINCLUDE,         _NOINCLUDE_RE),
+    (SHAPE_MIRROR_GLYPH,      _MIRROR_GLYPH_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
     (SHAPE_HTML_TAG,          _REF_RE),
     (SHAPE_HTML_TAG,          _HTML_TABLE_RE),
@@ -252,6 +266,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
     r"|<noinclude\b"                # NOINCLUDE page container
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
+    r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image)\b",  # DOUBLE_BRACE templates
@@ -456,19 +471,32 @@ def _walk_outline(
 
 _PLACEHOLDER_RE = re.compile(rf"{re.escape(_PH)}ELEM:\d+{re.escape(_PH)}")
 
-# Layout-template names whose ``{{name|…}}`` wrappers are TEXT-LEVEL
-# regularization: the body producer's ``_unwrap_layout_templates`` peels
-# them to inner content.  When body-wrapping a placeholder-bearing prose
-# stream, we must treat such wrappers as ATOMIC — a placeholder inside
-# one of them belongs to the wrapper's body run, not to a separate
-# split.  Otherwise the wrapper's ``{{`` opener and ``}}`` closer land in
-# different BODY runs and the brace-counted unwrap can't pair them.
+# Template names whose ``{{name|…}}`` wrappers must stay ATOMIC during
+# body-splitting — placeholders inside them belong to the wrapper's body
+# run, not to a separate split.  Otherwise the wrapper's ``{{`` opener
+# and ``}}`` closer land in different BODY runs and the body producer's
+# template-handler regexes (which require both ends visible) can't match.
 #
-# Same names as ``body_text._LAYOUT_TEMPLATES`` — kept in sync there.
+# Two families:
+#
+#   * Layout wrappers — ``_unwrap_layout_templates`` strips them to inner
+#     content (``{{center|…}}``, ``{{larger|…}}``, …).  Same names as
+#     ``body_text._LAYOUT_TEMPLATES``.
+#   * Content-transform wrappers — ``_unwrap_content_templates`` converts
+#     them to markers (``{{ne||content|(N)}}`` → ``«EQN:N»content«/EQN»``).
+#     Without atomicity, the BODY-as-element refactor splits these at any
+#     embedded element placeholder (e.g. ``<math>`` extracted from inside
+#     ``{{ne|}}``) and the regex no longer sees both ends.
 _LAYOUT_WRAPPER_NAMES: tuple[str, ...] = (
+    # Layout (unwrap-to-content)
     "block center", "center", "c", "fine block",
     "EB1911 Fine Print", "larger", "smaller", "nowrap",
     "Fine", "sm",
+    # Content-transform (rewrite to marker — must stay whole around
+    # placeholders for the rewrite regex to match)
+    "ne",
+    "sans-serif",
+    "xx-larger", "x-larger",
 )
 
 # HTML wrapper tags whose body content includes extracted-element

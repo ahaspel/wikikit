@@ -34,6 +34,7 @@ SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
 SHAPE_NOINCLUDE         = "NOINCLUDE"          # <noinclude>…</noinclude> page container
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
+SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -49,6 +50,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_SECTION,
     SHAPE_NOINCLUDE,
     SHAPE_BODY,
+    SHAPE_MIRROR_GLYPH,
 })
 
 
@@ -148,4 +150,13 @@ def strip_outer(shape: str, raw: str) -> str:
         # No delimiters — the raw bytes ARE the body prose; the producer
         # transforms them end-to-end.
         return raw
+    if shape == SHAPE_MIRROR_GLYPH:
+        # Strip the wrapping `<span style="…{{mirrorH}}…">…</span>`; the
+        # mirror semantic is now carried by the shape's label.  Inner is
+        # the glyph(s) to mirror, possibly with content-template markup
+        # (`{{larger|𐌔}}`) which the producer's text_transform resolves.
+        s = re.sub(r"^<span\s+style\s*=\s*\"[^\"]*\"\s*>", "", raw,
+                   flags=re.IGNORECASE)
+        s = re.sub(r"</span>\s*$", "", s, flags=re.IGNORECASE)
+        return s
     raise ValueError(f"Unknown shape: {shape!r}")

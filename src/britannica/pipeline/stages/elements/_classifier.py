@@ -53,6 +53,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
+    SHAPE_MIRROR_GLYPH,
     SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
@@ -280,6 +281,8 @@ def _derive_label(
         return "NOINCLUDE"
     if shape == SHAPE_BODY:
         return "BODY"
+    if shape == SHAPE_MIRROR_GLYPH:
+        return "MIRROR_GLYPH"
     raise ValueError(f"Unknown shape: {shape!r}")
 
 
@@ -407,11 +410,20 @@ def produce_tree(
         # Substitute child markers into the producer's output.
         # Multi-pass because a substituted child marker can itself
         # carry a placeholder for another child (cross-references).
+        # Empty markers SUBSTITUTE NORMALLY — they're legitimate
+        # producer output (`_process_ref_self` returns "" when a ref
+        # name isn't resolved per its drop-silently contract; SECTION /
+        # NOINCLUDE / `<ref follow=>` continuations return "" too).
+        # The previous `if child_ce.marker and ...` check short-
+        # circuited on empty markers and leaked the placeholder
+        # bytes (`\x03ELEM:N\x03`) into output — AFRICA's territorial
+        # tables had ~17 such leaks from unresolved-`<ref name=X/>`
+        # citation reuses inside `«HTMLTABLE:` blocks.
         if ce.inner_registry:
             for _ in range(5):
                 changed = False
                 for child_ph, child_ce in ce.inner_registry.items():
-                    if child_ce.marker and child_ph in marker:
+                    if child_ph in marker:
                         marker = marker.replace(child_ph, child_ce.marker)
                         changed = True
                 if not changed:

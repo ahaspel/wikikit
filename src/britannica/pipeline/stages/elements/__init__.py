@@ -348,6 +348,16 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # ordered concatenation of element markers (no body-substrate, no
     # marker-substitution glue layer).
     "BODY": _produce_body,
+    # MIRROR_GLYPH — `<span style="…{{mirrorH}}…">content</span>`:
+    # a horizontally mirrored glyph (ALPHABET shows ~18 of these for
+    # left-right-flipped letters in Etruscan / Italic / Cleonae's E).
+    # Producer emits `«MIRROR:content«/MIRROR»` — preserves the mirror
+    # SEMANTIC end-to-end so the viewer can apply `transform: scaleX(-1)`.
+    # Without this, the catch-all silently dropped the `{{mirrorH}}` CSS
+    # and the wrapper-strip removed the `<span>`, leaving glyphs displayed
+    # un-mirrored with no signal that they were ever meant to be.
+    "MIRROR_GLYPH": lambda raw, inner, tt, ctx, reg:
+        f"«MIRROR:{tt(inner).strip()}«/MIRROR»",
 }
 
 
