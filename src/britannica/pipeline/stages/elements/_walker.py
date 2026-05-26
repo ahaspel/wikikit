@@ -121,6 +121,22 @@ _IMAGE_FLOAT_RE = re.compile(
 )
 _HIEROGLYPH_TMPL_RE = re.compile(
     r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
+# `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params), optionally
+# followed by a `{{center|cap}}` / `{{csc|cap}}` caption.  Recognized as one
+# DOUBLE_BRACE image element (→ DJVU_CROP); the producer crops + captions it.
+# In-table crops route via the table classifier instead — this catches the
+# standalone ones the old `_css_crop_replace` pre-pass used to convert.
+_DJVU_CROP_RE = re.compile(
+    r"\{\{\s*Css image crop\b(?:[^{}]|\{\{[^{}]*\}\})*\}\}"
+    r"(?:\s*\{\{\s*(?:center|csc)\s*\|(?:[^{}]|\{\{[^{}]*\}\})*\}\})?",
+    re.IGNORECASE | re.DOTALL)
+# `{{raw image|X}}` — EB1911's bare full-image syntax (a DjVu page-ref → full-
+# page render, or a plain filename), with an OPTIONAL trailing `{{c|cap}}`.
+# Recognized as one DOUBLE_BRACE image element (→ RAW_IMAGE).
+_RAW_IMAGE_RE = re.compile(
+    r"\{\{\s*raw\s+image\s*\|[^{}|]+\}\}"
+    r"(?:\s*\{\{\s*c\s*\|(?:[^{}]|\{\{[^{}]*\}\})*\}\})?",
+    re.IGNORECASE | re.DOTALL)
 
 # DOUBLE_BRACKET image — `[[File:…]]` or `[[Image:…]]` with optional
 # trailing caption block (see today's IMAGE regex for the caption
@@ -163,6 +179,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_HTML_TAG,          _MATH_RE),
     (SHAPE_HTML_TAG,          _SCORE_RE),
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
+    (SHAPE_DOUBLE_BRACE,      _DJVU_CROP_RE),
+    (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
     (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
@@ -184,7 +202,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{(?:img float|figure|FI|hieroglyph)\b",  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image)\b",  # DOUBLE_BRACE templates
     re.IGNORECASE,
 )
 

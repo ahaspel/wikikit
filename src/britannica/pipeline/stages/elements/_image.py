@@ -80,8 +80,12 @@ _DISPLAY_KEYWORDS = frozenset({
     "thumb", "thumbnail", "frameless", "frame", "border", "none", "upright"})
 
 
-def _process_image(inner: str, text_transform) -> str:
-    """Convert image content (already stripped of [[File:...]]) to {{IMG:filename|clean caption}}."""
+def _process_image(inner: str, text_transform, force_align: str | None = None) -> str:
+    """Convert image content (already stripped of [[File:...]]) to {{IMG:filename|clean caption}}.
+
+    ``force_align`` overrides the parsed alignment — used by the INLINE_IMAGE
+    producer to stamp ``align=inline`` on a glyph the classifier recognized as
+    inline from its line context (the source omits the attribute)."""
     # Check for external caption (from plate pages: image + caption on next line)
     ext_caption = ""
     if "|EXTCAP:" in inner:
@@ -125,7 +129,8 @@ def _process_image(inner: str, text_transform) -> str:
     if caption:
         caption = text_transform(caption)
     return build_img_marker(
-        filename, caption or None, align=align, width=width, height=height)
+        filename, caption or None, align=force_align or align,
+        width=width, height=height)
 
 
 def _process_image_float(inner: str, text_transform) -> str:
@@ -227,6 +232,36 @@ def _process_djvu_crop(raw: str, text_transform, context: ElementContext) -> str
     return f"\n\n{{{{IMG:{filename}}}}}\n\n"
 
 
+# `{{raw image|EB1911 - Volume N.djvu/PPP}}` — EB1911 alternate image syntax for
+# a full-page DjVu scan; the arg is a DjVu page-ref normalized to the local
+# full-page render `djvu_volNN_pagePPPP.jpg` (matching download_djvu_crops.py).
+_RAW_IMAGE_ARG_RE = re.compile(r"\{\{\s*raw\s+image\s*\|([^{}|]+)\}\}", re.IGNORECASE)
+_RAW_DJVU_REF_RE = re.compile(r"EB1911\s*-\s*Volume\s*(\d+)\.djvu/(\d+)", re.IGNORECASE)
+_RAW_CAPTION_RE = re.compile(
+    r"\{\{\s*c\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}", re.IGNORECASE)
+
+
+def _process_raw_image(raw: str, text_transform) -> str:
+    """`{{raw image|…}}` → `{{IMG:…}}`.  A DjVu page-ref arg becomes the local
+    full-page render; any other arg passes through as a filename.  Folds an
+    optional trailing `{{c|caption}}` the walker carried along."""
+    m = _RAW_IMAGE_ARG_RE.match(raw)
+    if not m:
+        return raw
+    arg = m.group(1).strip()
+    dref = _RAW_DJVU_REF_RE.match(arg)
+    if dref:
+        filename = f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
+    else:
+        # Keep spaces — a plain filename resolves as-is, like every other IMAGE
+        # producer (MediaWiki treats space/underscore alike; spaces match the
+        # regular [[File:…]] output and the old bundler).
+        filename = arg
+    cap_m = _RAW_CAPTION_RE.search(raw, m.end())
+    caption = text_transform(cap_m.group(1).strip()) if cap_m else ""
+    return build_img_marker(filename, caption or None)
+
+
 def _process_chart2(raw: str, context: ElementContext) -> str:
     """Replace a chart2 genealogical tree with a pre-cropped page scan image.
 
@@ -270,14 +305,19 @@ def image_extcap_from_raw(raw: str) -> str:
     return sp[1] if sp else ""
 
 
-def _process_image_from_raw(raw: str, text_transform) -> str:
+def _process_image_from_raw(raw: str, text_transform, inline: bool = False) -> str:
     """Parse a raw `[[File:…]]` + optional trailing caption span and produce
     the `{{IMG:…}}` marker.  The IMAGE producer's entry point — the walker
-    hands it the verbatim raw; the caption parse lives here, not upstream."""
+    hands it the verbatim raw; the caption parse lives here, not upstream.
+
+    ``inline`` (the INLINE_IMAGE producer) stamps ``align=inline`` — the
+    classifier decided inline from the carried line context; the producer just
+    renders it."""
     sp = _split_image_raw(raw)
     if sp is None:
         return raw
     inner, ext_caption = sp
     if ext_caption:
         inner = inner + "|EXTCAP:" + ext_caption
-    return _process_image(inner, text_transform)
+    return _process_image(inner, text_transform,
+                          force_align="inline" if inline else None)

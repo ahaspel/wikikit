@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._image import (
     _process_image,
     _process_image_float,
     _process_image_from_raw,
+    _process_raw_image,
 )
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
@@ -313,6 +314,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "REF": lambda raw, inner, tt, ctx, reg:
         _process_ref(raw, inner, tt, ctx.ref_bodies),
     "IMAGE": lambda raw, inner, tt, ctx, reg: _process_image_from_raw(raw, tt),
+    "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
+        _process_image_from_raw(raw, tt, inline=True),
+    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _process_raw_image(raw, tt),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
         _process_image_float(inner, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
