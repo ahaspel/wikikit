@@ -635,10 +635,13 @@ def export_articles_to_json(
             # (MediaWiki `alt=` params, partial `Fig` strings, etc.), so
             # deletion improved output on those.  See
             # `[[total-functions-not-cleanup-passes]]`.
-            # Strip redundant bold article title at body start. EB1911
-            # articles open with "'''TITLE'''" (rendered as «B»TITLE«/B»);
-            # since the viewer already shows the title in the header,
-            # the inline repeat is redundant.
+            # Title-bold strip is now done at producer time inside
+            # `_transform_text_v2`.  This export-side call remains as a
+            # transitional safety net for stale `article.body` rows in
+            # the DB (the producer change only takes effect on the next
+            # `transform_articles` rebuild).  After the rebuild this
+            # call is a no-op and can be deleted; until then it keeps
+            # exports clean.  See task #43.
             body = _strip_redundant_title(body, article.title)
 
             # No clean_body: each element is responsible for emitting
@@ -747,6 +750,8 @@ def export_articles_to_json(
                 .count()
             )
             body = _body_for(article)
+            # Transitional safety net (see comment at the other strip
+            # call site above) — delete after the next transform rebuild.
             body = _strip_redundant_title(body, article.title)
             # First ~10 words of body for disambiguation in the index.
             # Skip any leading paragraphs that are just image / table /

@@ -200,7 +200,9 @@ def _strip_page_layout_noinclude_wrappers(text: str) -> str:
 _AUDIT_SKIP: frozenset = frozenset()
 
 
-def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
+def _transform_text_v2(
+    raw_wikitext: str, volume: int, page_number: int, title: str = "",
+) -> str:
     """Transform an article's raw wikitext body into the internal marker
     format.
 
@@ -211,9 +213,24 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     Post-extraction steps below (chart injection, hyphenation rejoin,
     paragraph reflow, blank-line collapse) operate on the producer
     output's body shape, not on the raw.
+
+    ``title`` (optional): when given, strip the article's leading bold
+    title from the body opener — the article opens with `«B»TITLE«/B»`
+    in source, and the viewer already shows the title in the header, so
+    the inline bold is redundant.  Producer-time work; the export's
+    downstream `_strip_redundant_title` sweeper was deleted once this
+    landed.  Empty title (the test-harness / title_raw paths) skips
+    the strip.
     """
     from britannica.pipeline.stages.elements import (
         ElementContext, process_elements)
+    from britannica.export.body_postprocess import _strip_redundant_title
+
+    # Title-bold strip at producer time.  Source has `'''TITLE'''` →
+    # `«B»TITLE«/B»` at the article opener; we strip it here once,
+    # rather than letting downstream sweepers paper over the duplicate.
+    if title and raw_wikitext:
+        raw_wikitext = _strip_redundant_title(raw_wikitext, title)
 
     # Source-text corrections (transcription typos in wikisource) are
     # applied once during prepare_wikitext, mutating `wikitext` so all
@@ -412,6 +429,7 @@ def transform_articles(volume: int) -> int:
                 article.body = _transform_text_v2(
                     joined_raw, volume,
                     segments[0][1] if segments else 0,
+                    title=article.title,
                 ) if joined_raw else ""
                 # Strip redundant title qualifier from body start.
                 # e.g. title "YORK, HOUSE OF" → body starts "(House of),"
