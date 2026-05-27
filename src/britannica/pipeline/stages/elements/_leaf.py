@@ -66,7 +66,7 @@ def _process_poem(inner: str, text_transform) -> str:
     quote was the canonical case).
     """
     content = text_transform(inner)
-    return "\n\n{{VERSE:" + content + "}VERSE}\n\n"
+    return "{{VERSE:" + content + "}VERSE}"
 
 
 def _is_structural_formula(text: str) -> bool:
@@ -87,7 +87,17 @@ def _is_structural_formula(text: str) -> bool:
 
 
 def _format_structural_formula(text: str) -> str:
-    """Convert a structural formula table to a PRE block."""
+    """Render a structural formula table as paragraphs of its cell lines.
+
+    Historically wrapped in a `«PRE:…«/PRE»` marker so a monospace
+    `<pre>` block preserved the spatial alignment of the source.  In a
+    responsive web viewport with proportional fonts the alignment can't
+    survive, so the PRE wrap was dead weight (and a leak source: cell
+    transforms emitted `«CTR»` inside, which leaked as text when the
+    PRE renderer escapeHtml'd its content — ARACHNIDA Fig 7 case).
+    Marker dropped per [[preserved-markup-is-a-contract]]: emit each
+    line as its own paragraph.
+    """
     lines = []
     for line in text.split("\n"):
         line = line.strip()
@@ -95,5 +105,6 @@ def _format_structural_formula(text: str) -> str:
             line = line[1:].strip()
         if line and line not in ("|-", "}", "{|"):
             lines.append(line)
-    content = "\n".join(lines)
-    return f"«PRE:{content}«/PRE»"
+    if not lines:
+        return ""
+    return "\n".join(lines)

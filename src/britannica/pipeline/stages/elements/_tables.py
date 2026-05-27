@@ -463,8 +463,8 @@ def _process_compound_table(raw: str, text_transform) -> str:
     if not html_rows:
         return ""
 
-    return ("\n\n\u00abHTMLTABLE:<table>" + "".join(html_rows)
-            + "</table>\u00ab/HTMLTABLE\u00bb\n\n")
+    return ("\u00abHTMLTABLE:<table>" + "".join(html_rows)
+            + "</table>\u00ab/HTMLTABLE\u00bb")
 
 
 def _process_complex_table(raw: str, inner: str, text_transform) -> str:
@@ -589,12 +589,12 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
 
     parts = []
     for p in preamble:
-        parts.append("\n\n" + p + "\n\n")
+        parts.append(p)
     if html_rows:
-        parts.append("\n\n\u00abHTMLTABLE:<table" + table_style_attr + ">" +
+        parts.append("\u00abHTMLTABLE:<table" + table_style_attr + ">" +
                      caption_html +
-                     "".join(html_rows) + "</table>\u00ab/HTMLTABLE\u00bb\n\n")
-    return "".join(parts)
+                     "".join(html_rows) + "</table>\u00ab/HTMLTABLE\u00bb")
+    return "\n\n".join(parts)
 
 
 def _inline_table_marker_as_html(marker: str) -> str:
@@ -988,9 +988,9 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
     table_styles = _table_opener_styles(raw)
     table_style_attr = (f' style="{";".join(table_styles)}"'
                         if table_styles else "")
-    return ("\n\n\u00abCHEM:<table" + table_style_attr + ">"
+    return ("\u00abCHEM:<table" + table_style_attr + ">"
             + "".join(html_rows)
-            + "</table>\u00ab/CHEM\u00bb\n\n")
+            + "</table>\u00ab/CHEM\u00bb")
 
 
 
@@ -1276,12 +1276,26 @@ def _is_single_column_table(inner: str) -> bool:
 
 
 def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
-    """Render a single-column wikitable as a `«PRE:` text block.
+    """Render a single-column wikitable as one body paragraph.
 
     Carved out of `_process_table`'s hidden dispatch: a `{|…|}` used to
     box/centre a run of text (one cell per row) is a text block, not a
     grid.  Selected upstream by the `SINGLE_COLUMN_TABLE` label
     (`_is_single_column_table`); this producer only ever sees that shape.
+
+    Cells are joined with a single `\n` — a soft-wrap inside the body
+    paragraph.  The renderer (browser, via `<p>`) treats single
+    newlines as whitespace, so the print-column-width line breaks
+    naturally reflow at the viewport width.  The producer makes no
+    claim about where paragraph breaks belong: that decision is the
+    renderer's, based on `\n\n` boundaries between source content.
+
+    Historically wrapped in `«PRE[style:…]:` so a monospace `<pre>` block
+    preserved the source's boxed/centred typography.  Monospace
+    whitespace alignment doesn't survive a responsive web viewport with
+    proportional fonts, and the PRE wrap was a leak source for inline
+    markers in cell content.  Marker dropped per
+    [[preserved-markup-is-a-contract]].
     """
     inner = _strip_br(inner)
     text_lines = []
@@ -1297,13 +1311,9 @@ def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
                        if c.strip()]
             if content:
                 text_lines.append(content[0])
-    # Whole-table styling from the source `{|<attrs>` opener (extracted
-    # from `raw`).  Single-column tables are commonly centred via
-    # `{|{{Ts|ma|ac}}` for boxed/quoted text blocks — emit as
-    # `«PRE[style:…]:` so the renderer wraps the `<pre>` accordingly.
-    table_styles = _table_opener_styles(raw)
-    style_slot = (f"[style:{';'.join(table_styles)}]" if table_styles else "")
-    return "«PRE" + style_slot + ":" + "\n".join(text_lines) + "«/PRE»"
+    if not text_lines:
+        return ""
+    return "\n".join(text_lines)
 
 
 # col1 of a verse quotation: only quotation/whitespace punctuation (the
@@ -1405,7 +1415,7 @@ def _process_verse_table(raw: str, inner: str, text_transform,
                 if body.strip():
                     parts.append("{{VERSE:" + body + "}VERSE}")
             if parts:
-                return "\n\n" + "\n\n".join(parts) + "\n\n"
+                return "\n\n".join(parts)
     # Single-cell quoted poem: split the cell on `<br>` into verse lines
     # (joining soft-hyphen `-<br>` breaks first), BEFORE `_strip_br` would
     # flatten them.
@@ -1414,7 +1424,7 @@ def _process_verse_table(raw: str, inner: str, text_transform,
         sc = re.sub(r"(\w)-<br\s*/?>\s*", r"\1", sc, flags=re.IGNORECASE)
         lines = [text_transform(ln.strip())
                  for ln in _VERSE_BR_RE.split(sc) if ln.strip()]
-        return "\n\n{{VERSE:" + "\n".join(lines) + "}VERSE}\n\n"
+        return "{{VERSE:" + "\n".join(lines) + "}VERSE}"
 
     inner = _strip_br(inner)
     lines = []
@@ -1431,8 +1441,8 @@ def _process_verse_table(raw: str, inner: str, text_transform,
     # smaller-font quoted passages).
     table_styles = _table_opener_styles(raw)
     style_slot = (f"[style:{';'.join(table_styles)}]" if table_styles else "")
-    return ("\n\n{{VERSE" + style_slot + ":"
-            + "\n".join(lines) + "}VERSE}\n\n")
+    return ("{{VERSE" + style_slot + ":"
+            + "\n".join(lines) + "}VERSE}")
 
 
 def _process_table(raw: str, inner: str, text_transform,
@@ -1899,9 +1909,9 @@ def _process_html_table(
                 for tag, rowspan, colspan, content, styles in parsed
             ]
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
-        output = ("\n\n\u00abHTMLTABLE:<table>" +
+        output = ("\u00abHTMLTABLE:<table>" +
                   "".join(html_rows) +
-                  "</table>\u00ab/HTMLTABLE\u00bb\n\n")
+                  "</table>\u00ab/HTMLTABLE\u00bb")
         # Pre-substitute DATA_TABLE child markers as inline `<table>`
         # HTML so they render correctly inside our HTML cells instead
         # of leaking `{{TABLE:\u2026}TABLE}` marker text (the previous
@@ -1944,7 +1954,7 @@ def _process_html_table(
             if label == "POEM"
         }
         if only_cell in poem_phs:
-            return "\n\n" + only_cell + "\n\n"
+            return only_cell
 
     text_rows = []
     for parsed in parsed_rows:

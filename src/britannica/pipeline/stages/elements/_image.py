@@ -231,8 +231,8 @@ def _process_djvu_crop(raw: str, text_transform, context: ElementContext) -> str
     if caption_text:
         caption_text = text_transform(caption_text)
         caption_text = clean_caption(caption_text)
-        return f"\n\n{{{{IMG:{filename}|{caption_text}}}}}\n\n"
-    return f"\n\n{{{{IMG:{filename}}}}}\n\n"
+        return f"{{{{IMG:{filename}|{caption_text}}}}}"
+    return f"{{{{IMG:{filename}}}}}"
 
 
 # `{{raw image|EB1911 - Volume N.djvu/PPP}}` — EB1911 alternate image syntax for
@@ -275,7 +275,7 @@ def _process_chart2(raw: str, context: ElementContext) -> str:
     # Try all known charts for this volume
     for (v, p), filename in CHART2_IMAGES.items():
         if v == vol:
-            return f"\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n"
+            return f"{{{{IMG:{filename}|Genealogical table}}}}"
     # Unknown chart — strip rather than crash
     return ""
 

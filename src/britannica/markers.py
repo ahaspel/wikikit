@@ -43,10 +43,6 @@ LEGEND_CLOSE = "}LEGEND}"
 LN_OPEN = "\u00abLN:"
 LN_CLOSE = "\u00ab/LN\u00bb"
 
-# Preformatted block markers: «PRE:text«/PRE» (structural formulas, etc.)
-PRE_OPEN = "\u00abPRE:"
-PRE_CLOSE = "\u00ab/PRE\u00bb"
-
 # Math markers: «MATH:latex«/MATH»
 MATH_OPEN = "\u00abMATH:"
 MATH_CLOSE = "\u00ab/MATH\u00bb"

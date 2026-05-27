@@ -233,29 +233,19 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
             if marker in text:
                 text = text.replace(marker, f"{marker}\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n", 1)
 
-    # Per-paragraph regularize: split any multi-paragraph `«FINE:…«/FINE»`
-    # into a sequence of single-paragraph FINE blocks.  The viewer's
-    # paragraph splitter operates on `\n\n` boundaries and matches the
-    # FINE marker per paragraph; a multi-paragraph FINE block would
-    # fragment with no balanced ends in any single paragraph and leak
-    # as raw text.  Block-element paragraphs (TABLE/LEGEND/IMG/VERSE/
-    # PRE/OUTLINE) inside the fine-print run stay UNWRAPPED — wrapping
-    # a block element in `«FINE:…«/FINE»` would suppress its own
-    # renderer (whose regex matches only at paragraph start).
-    _FINE_BLOCK_PREFIX = re.compile(
-        r"^\s*(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«PRE[\[:]|«OUTLINE:|«HTMLTABLE)")
-    def _split_fine(m: re.Match) -> str:
-        out_parts = []
-        for p in re.split(r"\n\n+", m.group(1)):
-            p = p.strip()
-            if not p:
-                continue
-            if _FINE_BLOCK_PREFIX.match(p):
-                out_parts.append(p)
-            else:
-                out_parts.append(f"«FINE:{p}«/FINE»")
-        return "\n\n".join(out_parts)
-    text = re.sub(r"«FINE:([\s\S]*?)«/FINE»", _split_fine, text)
+    # Cross-page sentence reflow: a segment ending mid-sentence (no
+    # terminator) followed by `\x01PAGE:N\x01` and a lowercase
+    # continuation is a column-wrap at the page edge, not a paragraph
+    # break.  The segment-end `\n` plus the join `\n` between
+    # `<noinclude>` chrome that the walker strips, leaves `\n+` here.
+    # Collapse to a single space so the prose stays one paragraph; the
+    # page marker stays inline at the wrap point.  Must run before
+    # `reflow_paragraphs` (which splits on `\n\n`) so the `\n+` doesn't
+    # become a paragraph break first.
+    text = re.sub(
+        r"(\w)\s*\n+\s*(\x01PAGE:\d+\x01)([a-zA-Z])",
+        r"\1 \2\3", text,
+    )
 
     # Rejoin words split by line-break hyphenation (`trans- \nlation` →
     # `translation`).  Must run before reflow_paragraphs, which would
@@ -418,6 +408,7 @@ def transform_articles(volume: int) -> int:
                     r"(\w)-\n(\x01PAGE:\d+\x01)(\w)",
                     r"\1\2\3", joined_raw,
                 )
+
                 article.body = _transform_text_v2(
                     joined_raw, volume,
                     segments[0][1] if segments else 0,

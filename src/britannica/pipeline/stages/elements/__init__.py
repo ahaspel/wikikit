@@ -358,14 +358,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # un-mirrored with no signal that they were ever meant to be.
     "MIRROR_GLYPH": lambda raw, inner, tt, ctx, reg:
         f"«MIRROR:{tt(inner).strip()}«/MIRROR»",
-    # FINE_PRINT — paired `{{EB1911 fine print/s}}…{{EB1911 fine print/e}}`
-    # scholarly aside.  Inner is normal article body (paragraphs, refs,
-    # images, etc.); the classifier already walked it for embedded
-    # elements.  Producer emits `«FINE:content«/FINE»` so the viewer can
-    # render the small-type semantic — or choose not to (capture-now-
-    # decide-later, the typography crutch in scans is often too subtle).
-    # 25,755 paired markers corpus-wide; previously stripped silently,
-    # losing the distinction between main flow and scholarly tangent.
 }
 
 

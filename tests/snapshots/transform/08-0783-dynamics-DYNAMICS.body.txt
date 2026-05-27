@@ -158,9 +158,7 @@ It is important to notice that the symbols «MATH:\delta\!«/MATH» and «MATH:d
 
 «EQN:3»«MATH:\delta\dot{x} = \frac{d}{dt}(x + \delta x) - \frac{dx}{dt} = \frac{d}{dt}\delta x, \And\!\!\!\text{c.}«/MATH»«/EQN»
 
-Hence
-
-«CTR»«MATH[popout]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»«/CTR»
+Hence «MATH[popout]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»
 
 «EQN:4»«MATH:= \frac{d}{dt}(p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots) - \delta\mathrm{T},«/MATH»«/EQN»
 
@@ -242,9 +240,7 @@ where
 
 «EQN:5»«MATH:\left.\begin{align}\alpha_{0} &= \Sigma m \left\{\left(\frac{\partial x}{\partial t}\right)^2 + \left(\frac{\partial y}{\partial t}\right)^2 + \left(\frac{\partial z}{\partial t}\right)^2 \right\},\\ \alpha_{r} &= \Sigma m \left\{\frac{\partial x}{\partial t}\,\frac{\partial x}{\partial q_{r}} + \frac{\partial y}{\partial t}\,\frac{\partial y}{\partial q_{r}} + \frac{\partial z}{\partial t}\,\frac{\partial z}{\partial q_{r}}\right\},\end{align}\right\}«/MATH»«/EQN»
 
-and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given by § 1 (7). It is to be remembered that the coefficients «MATH:\alpha_{0}, \alpha_{1}, \alpha_{2}, \ldots \mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12} \ldots\!«/MATH» will in general involve «MATH:t\!«/MATH» explicitly as well as implicitly through the co-ordinates «MATH:q_{1}, q_{2},\ldots\!«/MATH». Again, we find
-
-«CTR»«MATH[popout]:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»«/CTR»
+and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given by § 1 (7). It is to be remembered that the coefficients «MATH:\alpha_{0}, \alpha_{1}, \alpha_{2}, \ldots \mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12} \ldots\!«/MATH» will in general involve «MATH:t\!«/MATH» explicitly as well as implicitly through the co-ordinates «MATH:q_{1}, q_{2},\ldots\!«/MATH». Again, we find «MATH[popout]:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»
 
 «EQN:6»«MATH:= \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta q_{1} + \frac{\partial \mathrm{T}}{\partial\dot{q}_{2}}\delta q_{2} + \ldots= p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots,«/MATH»«/EQN»
 
@@ -342,11 +338,7 @@ It should be observed that the remarkable formula (20) may in the present case b
 
 «EQN:27»«MATH[fs=80]:\frac{d\mathrm{T}}{dt} = \frac{d}{dt}(\mathfrak{T} + \mathrm{T}_{0}) + \omega\cdot \Sigma m (x\ddot{y} - y\ddot{x}) = \frac{d}{dt}(\mathfrak{T} - \mathrm{T}_{0}) + \omega\cdot \Sigma(x\mathrm{Y} - y\mathrm{X}).«/MATH»«/EQN»
 
-PAGE:786This must be equal to the rate at which the forces acting on the system do work, viz. to
-
-«CTR»«MATH:\omega\Sigma(x\mathrm{Y} - y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH»«/CTR»
-
-where the first term represents the work done in virtue of the rotation.
+PAGE:786This must be equal to the rate at which the forces acting on the system do work, viz. to «MATH:\omega\Sigma(x\mathrm{Y} - y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH» where the first term represents the work done in virtue of the rotation.
 
 We have still to notice the modifications which Lagrange’s equations undergo when the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» are not all independently variable. In the first place, we may suppose them connected by a number «MATH:m (< n)\!«/MATH» of relations of the type «SH»Constrained systems.«/SH»
 
@@ -450,9 +442,7 @@ If, as in § 1 (25), we write
 
 «EQN:3»«MATH:\mathrm{R} = \mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \kappa''\dot{\chi}'' - \ldots,«/MATH»«/EQN»
 
-and imagine «MATH:\mathrm{R}«/MATH» to be expressed by means of (2) as a quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH» with coefficients which are in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», then, performing the operation «MATH:\delta\!«/MATH» on both sides, we find
-
-«CTR»«MATH[popout]:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»«/CTR»
+and imagine «MATH:\mathrm{R}«/MATH» to be expressed by means of (2) as a quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH» with coefficients which are in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», then, performing the operation «MATH:\delta\!«/MATH» on both sides, we find «MATH[popout]:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»
 
 «EQN:4»«MATH:+ \frac{\partial \mathrm{T}}{\partial\dot{\chi}}\delta\dot{\chi} + \ldots + \frac{\partial \mathrm{T}}{\partial\chi_{1}}\delta q_{1} + \ldots- \kappa\delta\dot{\chi} - \dot{\chi}\delta\kappa- \ldots.«/MATH»«/EQN»
 
@@ -558,9 +548,7 @@ so that the formulae (23) become
 
 «EQN:28»«MATH:\mathrm{Q}_{1} = - \frac{\partial \mathrm{T}_{0}}{\partial q_{1}}, \qquad \mathrm{Q}_{2} = - \frac{\partial \mathrm{T}_{0}}{\partial q_{2}}, \ldots«/MATH»«/EQN»
 
-A simple example is furnished by the top («LN:Mechanics|Mechanics«/LN», § 22). The cyclic co-ordinates being «MATH:\psi, \phi\!«/MATH», we find
-
-«CTR»«MATH:2\mathfrak{T} = \mathrm{A}\dot{\theta}^2, \qquad 2\mathrm{K} = \frac{(\mu - \nu\cos\theta)^2}{\mathrm{A} \sin^2 \theta} + \frac{\nu^2}{\mathrm{C}},«/MATH»«/CTR»
+A simple example is furnished by the top («LN:Mechanics|Mechanics«/LN», § 22). The cyclic co-ordinates being «MATH:\psi, \phi\!«/MATH», we find «MATH:2\mathfrak{T} = \mathrm{A}\dot{\theta}^2, \qquad 2\mathrm{K} = \frac{(\mu - \nu\cos\theta)^2}{\mathrm{A} \sin^2 \theta} + \frac{\nu^2}{\mathrm{C}},«/MATH»
 
 «EQN:29»«MATH:2\mathrm{T}_{0} = \mathrm{A} \sin^2 \theta\dot{\psi}^2 + \mathrm{C} (\dot{\phi} + \psi\cos\theta)^2,«/MATH»«/EQN»
 
@@ -630,9 +618,7 @@ If «MATH:t, t'\!«/MATH» be the times of passing through the initial and final
 
 «EQN:3»«MATH:\begin{align}\delta\mathrm{A} &= \delta\int^{t'}_{t} \Sigma m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) dt\\ &= \int^{t'}_{t} \delta Tdt + 2\mathrm{T}'\delta t' + 2\mathrm{T}\delta t,\end{align}«/MATH»«/EQN»
 
-since the upper and lower limits of the integral must both be regarded as variable. This may be written
-
-«CTR»«MATH[fs=90]:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH» «/CTR»
+since the upper and lower limits of the integral must both be regarded as variable. This may be written «CTR»«MATH[fs=90]:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH» «/CTR»
 
 «EQN:4» «MATH[popout]:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
 
@@ -672,17 +658,13 @@ In the formula (2) the energy in the hypothetical motion is prescribed, whilst t
 
 «EQN:12»«MATH:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = 0,«/MATH»«/EQN»
 
-where «MATH:t, t'\!«/MATH» are the prescribed times of passing through the given initial and final configurations. The proof of (12) is simple; we have
-
-«CTR»«MATH[fs=80]:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»«/CTR»
+where «MATH:t, t'\!«/MATH» are the prescribed times of passing through the given initial and final configurations. The proof of (12) is simple; we have «MATH[fs=80]:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»
 
 «EQN:13» «MATH[fs=90]:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
 
 The integrated terms vanish at both limits, since by hypothesis the configurations at these instants are fixed; and the terms under the integral sign vanish by d’Alembert’s principle.
 
-The fact that in (12) the variation does not affect the time of transit renders the formula easy of application in any system of co-ordinates. Thus, to deduce Lagrange’s equations, we have
-
-«CTR»«MATH[fs=85]:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»«/CTR»
+The fact that in (12) the variation does not affect the time of transit renders the formula easy of application in any system of co-ordinates. Thus, to deduce Lagrange’s equations, we have «MATH[fs=85]:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»
 
 «EQN:14»«MATH[popout]:= \Big[p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots\Big]^{t'}_{t}\ - \int^{t'}_{t} \left\{\left[\dot{p}_{1} - \frac{\partial \mathrm{T}}{\partial q_{1}} + \frac{\partial \mathrm{V}}{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial \mathrm{T}}{\partial q_{2}} + \frac{\partial \mathrm{V}}{\partial q_{2}}\right) \delta q_{2} + \ldots\right\} dt.«/MATH»«/EQN»
 
@@ -702,11 +684,7 @@ To prove (16) we have, on the above understandings,
 
 «EQN:17»«MATH[fs=90]:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
 
-where terms have been cancelled in virtue of § 5 (2). The last member of (17) represents a variation of the integral
-
-«CTR»«MATH:\int^{t'}_{t} (\mathrm{T} - \mathrm{V}) dt«/MATH»«/CTR»
-
-on the supposition that «MATH:\delta \mathrm{X} = 0, \delta \mathrm{X}' = 0, \delta \mathrm{X}'' = 0, \ldots\!«/MATH» throughout, whilst «MATH:\delta q_{1}, \delta q_{2}, \delta q_{m}\!«/MATH» vanish at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH»; «I»i.e.«/I» it is a variation in which the initial and final configurations are absolutely unaltered. It therefore vanishes as a consequence of the Hamiltonian principle in its original form.
+where terms have been cancelled in virtue of § 5 (2). The last member of (17) represents a variation of the integral «MATH:\int^{t'}_{t} (\mathrm{T} - \mathrm{V}) dt«/MATH» on the supposition that «MATH:\delta \mathrm{X} = 0, \delta \mathrm{X}' = 0, \delta \mathrm{X}'' = 0, \ldots\!«/MATH» throughout, whilst «MATH:\delta q_{1}, \delta q_{2}, \delta q_{m}\!«/MATH» vanish at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH»; «I»i.e.«/I» it is a variation in which the initial and final configurations are absolutely unaltered. It therefore vanishes as a consequence of the Hamiltonian principle in its original form.
 
 Larmor has also given the corresponding form of the principle of least action. He shows that if we write
 
