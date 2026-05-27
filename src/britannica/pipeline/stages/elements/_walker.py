@@ -45,6 +45,7 @@ from britannica.pipeline.stages.elements._shapes import (
 from britannica.pipeline.stages.elements._figure import (
     figure_tail_end,
     figure_wrapper_end,
+    html_float_figure_end,
 )
 
 # An image whose trailing caption run the figure rule may absorb: a bracket
@@ -268,6 +269,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<noinclude\b"                # NOINCLUDE page container
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
+    r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image)\b",  # DOUBLE_BRACE templates
@@ -387,9 +389,12 @@ def _walk_balanced_shapes(
 
         # Figure wrapper: a `{{center|…image…}}` enclosing an image IS the
         # figure unit — recognized before its inner image so the caption that
-        # lives inside the wrapper stays intact.
+        # lives inside the wrapper stays intact.  Also the HTML float-wrapper
+        # variant `<span/div style="float:…">…image…</…>` (WATERBUCK family).
         if figures:
             w = figure_wrapper_end(text, opener_pos)
+            if w is None:
+                w = html_float_figure_end(text, opener_pos)
             if w is not None:
                 matched = (w, SHAPE_FIGURE, text[opener_pos:w])
 
