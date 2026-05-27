@@ -222,15 +222,18 @@ def _strip_wiki_cell_attr_in_html(text: str) -> str:
 
 def parse_wiki_table(
     text: str,
-) -> tuple[str, list[list[tuple[str, str, str]]]]:
-    """Parse a wiki-table's structure into ``(caption, rows)``.
+) -> tuple[str, str, list[list[tuple[str, str, str]]]]:
+    """Parse a wiki-table's structure into ``(opener_attrs, caption, rows)``.
 
     The whole-table counterpart to :func:`split_wiki_row` (which
     operates on one row at a time).  Steps:
 
-    1. Strip outer ``{|…\\n`` opener and ``\\n?|}`` closer (if present)
-       — accepts either form (``raw`` or ``inner``) for caller
-       convenience.
+    1. Capture the outer ``{|<attrs>\\n`` opener's attribute string
+       (whole-table styling: ``{{Ts|ma|bc|fwb}}``, ``class="…"``,
+       ``style="…"``, etc.) — previously dropped on the floor, now
+       returned so producers can apply the styling to the rendered
+       ``<table>``.  Strip outer ``\\n?|}`` closer.  Accepts either
+       form (``raw`` or ``inner``) for caller convenience.
     2. Strip ``<br>`` tags (soft-hyphen-aware via :func:`_strip_br`:
        a ``-<br>`` line-break drops both halves so ``Circum-<br>ference``
        renders as ``Circumference``; plain ``<br>`` becomes a space).
@@ -239,6 +242,8 @@ def parse_wiki_table(
     5. Run each row through :func:`split_wiki_row`; drop empty rows.
 
     Returns:
+    * ``opener_attrs`` — whole-table attribute string (empty if no
+      opener present, ``raw``-form callers).
     * ``caption`` — caption text (empty if no ``|+`` line).
     * ``rows`` — list of rows, each a list of
       ``(sep, attr_part, content)`` cells.
@@ -248,7 +253,11 @@ def parse_wiki_table(
     preserve nested-table structure (currently only
     ``_process_compound_table``) must do their own depth-tracking
     row split and call :func:`split_wiki_row` per row directly."""
-    text = re.sub(r"^\{\|[^\n]*\n?", "", text)
+    opener_attrs = ""
+    opener_m = re.match(r"^\{\|([^\n]*)\n?", text)
+    if opener_m:
+        opener_attrs = opener_m.group(1).strip()
+        text = text[opener_m.end():]
     text = re.sub(r"\n?\|\}\s*$", "", text)
 
     text = _strip_br(text)
@@ -264,7 +273,7 @@ def parse_wiki_table(
         cells = split_wiki_row(raw_row)
         if cells:
             rows.append(cells)
-    return caption, rows
+    return opener_attrs, caption, rows
 
 
 def emit_html_cell(
@@ -302,7 +311,10 @@ def emit_html_cell(
     return f"<{tag}{attrs}>{content}</{tag}>"
 
 
-def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
+def _emit_table_marker(
+    text_rows: list[str], header: bool = False,
+    styles: list[str] | None = None,
+) -> str:
     """Join row strings into a ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` marker.
 
     Data tables (``header=False``): canonical form — one space on each
@@ -318,6 +330,13 @@ def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
     shipped output for ``{{TABLEH:`` tables that haven't been touched
     since the historical ``\\{\\{TABLE:`` cleanup regex (which never
     matched the ``H`` suffix) was deleted.
+
+    Whole-table styling (``styles``) — when the source ``{|<attrs>``
+    opener carries ``{{Ts|ma|sm92|…}}`` etc., it is extracted by
+    :func:`_table_opener_styles` and emitted as
+    ``{{TABLE[style:margin:0 auto;font-size:92%]:rows}TABLE}``.  The
+    renderer reads the optional ``[style:…]`` slot and applies it to the
+    ``<table>`` element.  Absent / empty ``styles`` → unchanged marker.
     """
     content = "\n".join(text_rows)
     if not header:
@@ -326,7 +345,8 @@ def _emit_table_marker(text_rows: list[str], header: bool = False) -> str:
         content = re.sub(r"  +", " ", content)
         content = re.sub(r"\n\s*\n", "\n", content)
     tag = "TABLEH" if header else "TABLE"
-    return "{{" + tag + ":" + content + "}TABLE}"
+    style_slot = (f"[style:{';'.join(styles)}]" if styles else "")
+    return "{{" + tag + style_slot + ":" + content + "}TABLE}"
 
 
 def _extract_subtable_values(table_text: str) -> list[str]:
@@ -449,7 +469,7 @@ def _process_compound_table(raw: str, text_transform) -> str:
             + "</table>\u00ab/HTMLTABLE\u00bb\n\n")
 
 
-def _process_complex_table(inner: str, text_transform) -> str:
+def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     """Convert a wiki table with rowspan/colspan to HTML.
 
     Strategy: each cell in wiki markup has the form
@@ -458,14 +478,25 @@ def _process_complex_table(inner: str, text_transform) -> str:
     We keep only rowspan/colspan from the attributes and transform the content.
     Pipes inside {{...}} are protected so they don't confuse the split.
 
-    Receives `inner` (delimiters already stripped, child elements replaced
-    with placeholders) so that nested elements like <math> are preserved.
+    Receives both:
+    * `raw` — the full wikitable text (``{|<attrs>…|}``), used to extract
+      whole-table styling from the opener attrs that ``strip_outer`` would
+      otherwise discard.
+    * `inner` — delimiters already stripped, child elements replaced with
+      placeholders, so nested elements like <math> are preserved.
     """
 
     # Use the shared `parse_wiki_table` for table parsing — gets us
     # caption extraction + row split + cell parsing in one call,
     # consistent with every other wiki-table path.
-    caption_raw, parsed_rows = parse_wiki_table(inner)
+    _, caption_raw, parsed_rows = parse_wiki_table(inner)
+    # Whole-table styling extracted from `raw` (not `inner`, which has the
+    # ``{|<attrs>\n`` opener already stripped by `strip_outer`):
+    # `{|{{Ts|ma|bc|fwb}}` → `<table style="margin:0 auto;…">` so the
+    # rendered table inherits margin-auto / borders / etc.
+    table_styles = _table_opener_styles(raw)
+    table_style_attr = (f' style="{";".join(table_styles)}"'
+                        if table_styles else "")
     caption_html = ""
     if caption_raw:
         cap_text = text_transform(caption_raw)
@@ -562,7 +593,7 @@ def _process_complex_table(inner: str, text_transform) -> str:
     for p in preamble:
         parts.append("\n\n" + p + "\n\n")
     if html_rows:
-        parts.append("\n\n\u00abHTMLTABLE:<table>" +
+        parts.append("\n\n\u00abHTMLTABLE:<table" + table_style_attr + ">" +
                      caption_html +
                      "".join(html_rows) + "</table>\u00ab/HTMLTABLE\u00bb\n\n")
     return "".join(parts)
@@ -629,7 +660,7 @@ def _inline_nested_table_markers_in_htmltable_blocks(text: str) -> str:
                 if depth == 0:
                     inner_block = text[block_start:n_close]
                     inner_block = re.sub(
-                        r"\{\{TABLE:(.*?)\}TABLE\}",
+                        r"\{\{TABLE(?:\[style:[^\]]*\])?:(.*?)\}TABLE\}",
                         _convert_marker, inner_block,
                         flags=re.DOTALL,
                     )
@@ -870,7 +901,7 @@ _CHEM_RESOLVE = {
 }
 
 
-def _process_chemistry_layout(inner: str, text_transform,
+def _process_chemistry_layout(raw: str, inner: str, text_transform,
                               inner_registry=None) -> str:
     """Render a 2-D chemical-reaction / structural-formula layout.
 
@@ -960,6 +991,11 @@ def _process_chemistry_layout(inner: str, text_transform,
                            re.IGNORECASE)
             rowspan = int(rs.group(1)) if rs else 1
             colspan = int(cs.group(1)) if cs else 1
+            # Full Ts + align/valign + inline style extraction.  Previously
+            # the cell-styling was discarded (the chem cell loop only kept
+            # rowspan/colspan structural attrs); the producer emitted
+            # bare `<td>` cells in the CHEM marker.
+            styles = _cell_styles(attr_part, content)
             content = re.sub(
                 r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
             content = content.strip()
@@ -979,12 +1015,21 @@ def _process_chemistry_layout(inner: str, text_transform,
                     content = content.replace(sentinel, glyph)
             cells_html.append(emit_html_cell(
                 tag, content, rowspan=rowspan, colspan=colspan,
+                styles=styles,
             ))
         if cells_html:
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
     if not html_rows:
         return ""
-    return ("\n\n\u00abCHEM:<table>" + "".join(html_rows)
+    # Whole-table styling from the `{|<attrs>` opener (extracted from
+    # `raw`, since `inner` has the opener line stripped by `strip_outer`).
+    # Chem layouts often carry `{|{{Ts|ma|sm92}}` for centering / font-
+    # sizing \u2014 apply as inline `style="\u2026"` on the `<table>`.
+    table_styles = _table_opener_styles(raw)
+    table_style_attr = (f' style="{";".join(table_styles)}"'
+                        if table_styles else "")
+    return ("\n\n\u00abCHEM:<table" + table_style_attr + ">"
+            + "".join(html_rows)
             + "</table>\u00ab/CHEM\u00bb\n\n")
 
 
@@ -999,16 +1044,37 @@ _CELL_ALIGN_ATTR_RE = re.compile(
 _CELL_TS_RE = re.compile(r"\{\{[Tt]s\|([^{}]*)\}\}")
 
 
-# `{{Ts|...}}` code → CSS declaration.  EB1911 shorthand for inline
-# styling; the cell producer extracts these into a list of CSS rules and
-# `emit_html_cell` applies them as a `style="..."` attr.  Codes without
-# a known mapping are silently dropped (the Ts catch-all dismantling
-# campaign — task #36 — grows this table over time; unknown codes mean
-# the catch-all still has work).
+# `{{Ts|...}}` code → CSS declaration.  Direct mirror of the wikisource
+# `Module:Table_style/styles` + `/aliases` tables (see `_ts_codes.py` for
+# the converted Python dicts).  Codes resolve identically to the way
+# wikisource itself renders them: alias → canonical code → CSS string.
+#
+# Two fallback rules cover corpus-only patterns the Module's lookup
+# table does NOT define:
+#
+# 1. **Missing-period decoding** (`pl15` → `pl1.5`, `lh11` → `lh110`,
+#    `sm92` → `fs092` etc.) — corpus has ~1300 `p[lrtb]NN` codes whose
+#    intent is decimal-em (`pl15` = ``1.5em``) but whose period was
+#    dropped in the wikitext.  These render as broken CSS on wikisource
+#    itself (the Module emits the literal token); we silently recover
+#    the intended em-with-period form and look up again.  Without this,
+#    1261 cells would carry `padding:15em` (the PADDING_SCALE
+#    regression).
+#
+# 2. **Inline CSS passthrough** (`width:50px`, `border:1px solid red`,
+#    etc.) — any `code` containing `:` is a literal CSS declaration
+#    the source author wrote in `{{Ts|...}}`'s pass-through slot; emit
+#    as-is.
+#
+# Unknown bare codes (no `:`, no Module entry, no decoding) are
+# dropped silently — they're broken on wikisource too.
 def _parse_ts_codes(codes_str: str) -> list[str]:
     """Parse `{{Ts|code|code|...}}` arg-string into a list of CSS
     declarations like `['text-align:right', 'padding-left:0.5em']`.
     """
+    from britannica.pipeline.stages.elements._ts_codes import (
+        TS_STYLES, TS_ALIASES,
+    )
     rules: list[str] = []
     if not codes_str:
         return rules
@@ -1021,50 +1087,27 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
             rules.append(code.rstrip(";"))
             continue
         c = code.lower()
-        # Alignment
-        if c == "ar":   rules.append("text-align:right")
-        elif c == "ac": rules.append("text-align:center")
-        elif c == "al": rules.append("text-align:left")
-        # Vertical alignment
-        elif c in ("vtt", "vtp", "vt"): rules.append("vertical-align:top")
-        elif c == "vtm": rules.append("vertical-align:middle")
-        elif c in ("vtb", "vbb"): rules.append("vertical-align:bottom")
-        # Borders (1px solid, currentColor)
-        elif c == "ba": rules.append("border:1px solid")
-        elif c == "bt": rules.append("border-top:1px solid")
-        elif c == "bb": rules.append("border-bottom:1px solid")
-        elif c == "bl": rules.append("border-left:1px solid")
-        elif c == "br": rules.append("border-right:1px solid")
-        elif c == "bn": rules.append("border:none")
-        # Margin auto (centers a table)
-        elif c == "ma": rules.append("margin:0 auto")
-        # Font weight
-        elif c == "fwb": rules.append("font-weight:bold")
-        # Padding (em units)
-        elif m := re.match(r"^p([lrtb])([\d.]+)$", c):
-            sides = {"l": "left", "r": "right", "t": "top", "b": "bottom"}
-            rules.append(f"padding-{sides[m.group(1)]}:{m.group(2)}em")
-        # Margin (em units)
-        elif m := re.match(r"^m([lrtb])([\d.]+)$", c):
-            sides = {"l": "left", "r": "right", "t": "top", "b": "bottom"}
-            rules.append(f"margin-{sides[m.group(1)]}:{m.group(2)}em")
-        # Width (em integer)
-        elif m := re.match(r"^w(\d+)$", c):
-            rules.append(f"width:{m.group(1)}em")
-        # Font size (percent)
-        elif m := re.match(r"^sm(\d+)$", c):
-            rules.append(f"font-size:{m.group(1)}%")
-        elif c == "sm":
-            rules.append("font-size:90%")
-        # Line height (lh10..lh19 = 1.0..1.9; lh100..lh999 = percentages)
-        elif m := re.match(r"^lh(\d+)$", c):
-            n = int(m.group(1))
-            if n >= 100:
-                rules.append(f"line-height:{n}%")
-            else:
-                rules.append(f"line-height:{n / 10}")
-        # Unknown — silently drop for now.  Each one is an opportunity
-        # to extend this table (task #36 progress metric).
+        # Alias → canonical (wikisource resolves these first).
+        c = TS_ALIASES.get(c, c)
+        # Direct Module lookup (covers ~262 canonical codes).
+        style = TS_STYLES.get(c)
+        if style is None:
+            # Missing-period decoding: `pl15` is wikitext shorthand for
+            # `pl1.5` (the period was dropped editing).  Try inserting
+            # one and re-looking-up.  Restricted to known prefixes
+            # (`p[lrtb]`, `plr`, `m[lrtb]`) so we don't synthesise codes
+            # that happen to match the pattern but aren't real.
+            if m := re.match(r"^(p[lrtb]|plr|m[lrtb])(\d)(\d+)$", c):
+                guess = f"{m.group(1)}{m.group(2)}.{m.group(3)}"
+                style = TS_STYLES.get(guess)
+        if style:
+            # Split semicolon-joined Module entries (`'ma' ↔
+            # 'margin-right:auto; margin-left:auto'`) into individual
+            # rules so downstream property-dedup works.
+            for decl in style.split(";"):
+                d = decl.strip()
+                if d:
+                    rules.append(d)
     return rules
 
 
@@ -1081,16 +1124,51 @@ def _cell_align(attr_part: str, content: str) -> str | None:
     return None
 
 
+def _table_opener_styles(text: str) -> list[str]:
+    """Extract CSS styling from a wiki table's opener line.
+
+    Source ``{|<attrs>\\n…`` carries whole-table styling (``{|{{Ts|ma|bc|fwb}}``
+    centers the table, ``{|class="data-table"`` adds a class, etc.) that
+    was previously discarded — ``parse_wiki_table`` strips the opener
+    line wholesale.  We extract via the same ``_cell_styles`` shape as
+    cells, so e.g. a ``{{Ts|ma|sm92}}`` opener emits
+    ``['margin:0 auto', 'font-size:92%']`` for the ``<table>`` element's
+    ``style="…"`` attr.
+
+    Returns ``[]`` if the text isn't a wikitable opener or carries no
+    extractable styling."""
+    m = re.match(r"^\{\|([^\n]*)", text)
+    if not m:
+        return []
+    return _cell_styles(m.group(1).strip(), "")
+
+
 def _cell_styles(attr_part: str, content: str) -> list[str]:
-    """Extract the FULL styling for one cell, combining:
+    """Extract the FULL styling for one cell from its attribute portion.
+
+    Scans:
        * HTML ``align="..."``/``valign="..."`` attributes
        * Inline ``style="..."`` declarations
        * ``{{Ts|...}}`` shorthand code template(s)
     Returns a list of CSS declarations like
     ``['text-align:right', 'vertical-align:top', 'padding-left:0.5em']``.
-    Empty list means "no styling beyond defaults"."""
+    Empty list means "no styling beyond defaults".
+
+    SCOPED TO ``attr_part`` ONLY.  Cell ``content`` is inline body text that
+    may legitimately contain its own ``<span style="…">``, ``<i>``, ``{{Ts}}``,
+    etc. — those belong to the inline rendering of the cell body and MUST
+    NOT be hoisted to the cell-level ``style="…"`` attr.  ``content`` is kept
+    in the signature so callers that previously scanned both (and the
+    ``_cell_align`` helper) don't have to be touched; it's accepted and
+    ignored.  Historical bugs from scanning content: AFRICA shipped a
+    ``border-bottom:1px dashed red`` from an inner annotation ``<span>``;
+    ALDEHYDES duplicated the Toluicaldehyde cell text after a malformed
+    inline ``<span style="…>"`` (missing closing quote) made the style
+    regex match past the cell boundary.
+    """
+    del content  # intentionally unused — see docstring.
     rules: list[str] = []
-    blob = (attr_part or "") + " " + (content or "")
+    blob = attr_part or ""
     # HTML align="right" → text-align:right
     m = _CELL_ALIGN_ATTR_RE.search(blob)
     if m:
@@ -1237,7 +1315,7 @@ def _is_single_column_table(inner: str) -> bool:
     return saw_row
 
 
-def _process_single_column_table(inner: str, text_transform) -> str:
+def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
     """Render a single-column wikitable as a `«PRE:` text block.
 
     Carved out of `_process_table`'s hidden dispatch: a `{|…|}` used to
@@ -1259,7 +1337,13 @@ def _process_single_column_table(inner: str, text_transform) -> str:
                        if c.strip()]
             if content:
                 text_lines.append(content[0])
-    return "«PRE:" + "\n".join(text_lines) + "«/PRE»"
+    # Whole-table styling from the source `{|<attrs>` opener (extracted
+    # from `raw`).  Single-column tables are commonly centred via
+    # `{|{{Ts|ma|ac}}` for boxed/quoted text blocks — emit as
+    # `«PRE[style:…]:` so the renderer wraps the `<pre>` accordingly.
+    table_styles = _table_opener_styles(raw)
+    style_slot = (f"[style:{';'.join(table_styles)}]" if table_styles else "")
+    return "«PRE" + style_slot + ":" + "\n".join(text_lines) + "«/PRE»"
 
 
 # col1 of a verse quotation: only quotation/whitespace punctuation (the
@@ -1338,7 +1422,7 @@ def _is_verse_table(inner: str) -> bool:
     return saw_verse_row and saw_punct_col1
 
 
-def _process_verse_table(inner: str, text_transform,
+def _process_verse_table(raw: str, inner: str, text_transform,
                          inner_registry: ElementRegistry | None = None) -> str:
     """Render a verse table as `{{VERSE:}VERSE}`.
 
@@ -1381,10 +1465,17 @@ def _process_verse_table(inner: str, text_transform,
             if col2:
                 line = f"{col1}{col2}" if col1 else col2
                 lines.append(text_transform(line))
-    return "\n\n{{VERSE:" + "\n".join(lines) + "}VERSE}\n\n"
+    # Whole-table styling from the source `{|<attrs>` opener (extracted
+    # from `raw`).  Threaded into `{{VERSE[style:…]:` slot for the
+    # renderer (verse blocks are commonly `{|{{Ts|ma|sm}}` for centred /
+    # smaller-font quoted passages).
+    table_styles = _table_opener_styles(raw)
+    style_slot = (f"[style:{';'.join(table_styles)}]" if table_styles else "")
+    return ("\n\n{{VERSE" + style_slot + ":"
+            + "\n".join(lines) + "}VERSE}\n\n")
 
 
-def _process_table(inner: str, text_transform,
+def _process_table(raw: str, inner: str, text_transform,
                    inner_registry: ElementRegistry | None = None) -> str:
     """Convert table rows to {{TABLE:...}TABLE} with clean cells.
 
@@ -1554,6 +1645,12 @@ def _process_table(inner: str, text_transform,
             text_rows.append(" | ".join(
                 build_table_cell(cc, align=al) for (cc, al) in row))
 
+    # Whole-table styling from the source `{|<attrs>` opener (extracted
+    # from `raw`, since `inner` has the opener line stripped by
+    # `strip_outer`).  Threaded through the `{{TABLE[style:…]:` marker
+    # slot so the renderer can apply it to the `<table>` element.
+    table_styles = _table_opener_styles(raw)
+
     # Assemble output
     parts = []
     if image_parts:
@@ -1564,7 +1661,8 @@ def _process_table(inner: str, text_transform,
         # the first DATA row.
         if caption:
             text_rows.insert(0, "⟦+⟧" + caption)
-        parts.append(_emit_table_marker(text_rows, header=is_header_table))
+        parts.append(_emit_table_marker(text_rows, header=is_header_table,
+                                        styles=table_styles))
 
     if parts:
         return "\n\n".join(parts)
@@ -1811,6 +1909,12 @@ def _process_html_table(
             colspan = int(cs.group(1)) if cs else 1
             if rowspan > 1 or colspan > 1:
                 has_span = True
+            # Full Ts + align/valign + inline style= extraction via
+            # `_cell_styles`.  Previously dropped entirely \u2014 HTMLTABLE
+            # cells emitted as `<td>` with NO styling regardless of
+            # source intent.  Now the full CSS rule list flows through
+            # to `emit_html_cell`'s `styles=` param.
+            styles = _cell_styles(attrs, cell)
             c = _strip_wiki_cell_attr_in_html(cell)
             c = _strip_br(c)
             c = _convert_inline_sub_sup(c)
@@ -1818,7 +1922,7 @@ def _process_html_table(
             c = re.sub(r"\s+", " ", c).strip()
             if c:
                 c = text_transform(c)
-            parsed.append((tag.lower(), rowspan, colspan, c))
+            parsed.append((tag.lower(), rowspan, colspan, c, styles))
         if parsed:
             parsed_rows.append(parsed)
 
@@ -1830,8 +1934,9 @@ def _process_html_table(
         for parsed in parsed_rows:
             cells_html = [
                 emit_html_cell(tag, content,
-                               rowspan=rowspan, colspan=colspan)
-                for tag, rowspan, colspan, content in parsed
+                               rowspan=rowspan, colspan=colspan,
+                               styles=styles)
+                for tag, rowspan, colspan, content, styles in parsed
             ]
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
         return ("\n\n\u00abHTMLTABLE:<table>" +
@@ -1863,7 +1968,7 @@ def _process_html_table(
 
     text_rows = []
     for parsed in parsed_rows:
-        cells = [content for _, _, _, content in parsed if content]
+        cells = [content for _, _, _, content, _ in parsed if content]
         if cells:
             text_rows.append(" | ".join(cells))
     if text_rows:

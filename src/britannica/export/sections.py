@@ -57,7 +57,7 @@ _EXCLUDED_RE = re.compile(
 # don't have to enumerate the title patterns ("Table N.", place names,
 # etc.) the inconsistency can produce.
 _TABLE_MARKER_PREFIX_RE = re.compile(
-    r"^(?:\{\{TABLE:|«HTMLTABLE:)"
+    r"^(?:\{\{TABLE(?:\[style:[^\]]*\])?:|«HTMLTABLE:)"
 )
 _DEHYPH_RE = re.compile(r"([a-z])-\s*([a-z])")
 
@@ -136,7 +136,7 @@ def detect_sections(body: str) -> list[dict]:
         # Signal B — SC heading.  Detect first so any SH on the same
         # paragraph evaluates margin-pointer status against the new
         # heading's key, not the previous section's.
-        if "{{IMG:" not in p and "{{TABLE:" not in p:
+        if "{{IMG:" not in p and "{{TABLE" not in p:
             m = _SC_RE.match(p)
             if m:
                 outer_roman = m.group(1)

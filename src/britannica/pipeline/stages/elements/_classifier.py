@@ -434,7 +434,7 @@ def produce_tree(
         # cell leaks as cell text unless converted to inline
         # ``<table>`` HTML (ORNITHOLOGY taxonomic alignments,
         # EOCENE etymology glossary inside a `<ref>`).
-        if "«HTMLTABLE:" in marker and "{{TABLE:" in marker:
+        if "«HTMLTABLE:" in marker and "{{TABLE" in marker:
             marker = _inline_nested_table_markers_in_htmltable_blocks(marker)
 
         ce.marker = marker

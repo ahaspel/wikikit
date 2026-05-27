@@ -295,21 +295,21 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # by the walker.  Producer re-processes + assembles (see `_produce_figure`).
     "FIGURE": _produce_figure,
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
-        _process_complex_table(inner, tt),
+        _process_complex_table(raw, inner, tt),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
-        _process_chemistry_layout(inner, tt, reg),
+        _process_chemistry_layout(raw, inner, tt, reg),
     "DATA_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table(inner, tt, reg),
+        _process_table(raw, inner, tt, reg),
     # SINGLE_COLUMN_TABLE — a `{|…|}` boxing a run of text (one content
     # cell per row), not a grid.  Carved out of `_process_table`'s hidden
     # dispatch; rendered as a `«PRE:` text block.
     "SINGLE_COLUMN_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_single_column_table(inner, tt),
+        _process_single_column_table(raw, inner, tt),
     # VERSE_TABLE — a 2-column quotation layout (hanging-quote col1 + verse
     # lines col2).  Carved out of `_process_table`'s hidden dispatch;
     # rendered as `{{VERSE:}VERSE}`.
     "VERSE_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_verse_table(inner, tt, reg),
+        _process_verse_table(raw, inner, tt, reg),
     # Single-label kinds — element_type == label.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
         _process_djvu_crop(raw, tt, ctx),

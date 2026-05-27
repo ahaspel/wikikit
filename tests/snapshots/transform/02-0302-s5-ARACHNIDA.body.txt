@@ -39,7 +39,7 @@ VII. Usually considered to be the tergum of the genital somite, but suggested by
 VIII to XIII. The six somites of the mesosoma, each with a movable pleural spine and a pair of dorsal entopophysis or muscle-attaching ingrowths
 XIV to XVIII. The confluent or unexpressed six somites of the metasoma}LEGEND}
 
-«PRE:    [According to the system of numbering explained in the text, if VII is the tergum of the
+«PRE[style:margin-right:auto;margin-left:auto]:    [According to the system of numbering explained in the text, if VII is the tergum of the
 praegenital somite (as is probable) it should be labelled «I»Prg«/I» without any number, and the
 somites VIII to XIII should be lettered 1 to 6, indicating that they are the six normal somites
 of the mesosoma; whilst XV to XVIII should be replaced by the numbers 7 to 12—an
@@ -84,7 +84,7 @@ There are a number of other important points of structure besides those referrin
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus8.png|width=600|Fig. 14.—The first three pairs of mesosomatic appendages of Scorpio and Limulus compared.}}
 
-{{TABLE:VII, The genital operculum. | «I»gp«/I», Genital pore.
+{{TABLE[style:text-align:center]:VII, The genital operculum. | «I»gp«/I», Genital pore.
 VIII, The pectens of Scorpio and the first | «I»epst«/I», Epistigmatic sclerite.
 branchial plate of Limulus. | «I»stg«/I», Stigma or orifice of the hollow tendons of the
 IX, The first pair of lung-books of Scorpio and the | branchial plates of Limulus.
@@ -367,7 +367,7 @@ Mesosomatic segments furnished with large plate-like appendages, the 1st pair ac
 
 «B»Order 1. Xiphosura.«/B»—The prae-genital somite fuses in the embryo with the prosoma and disappears (see fig. 19). Not free-swimming, none of the prosomatic appendages modified to act as paddles; segments of the mesosoma and metasoma ( = opisthosoma) not more than ten in number, distinct or coalesced.
 
-Family—Limulidae («I»Limulus«/I»). ”   *Belinuridae («I»Belinurus, Aglaspis, Prestwichia«/I»). ”   *Hemiaspidae («I»Hemiaspis, Bunodes«/I»).
+::Family—Limulidae («I»Limulus«/I»). :: ”   *Belinuridae («I»Belinurus, Aglaspis, Prestwichia«/I»). :: ”   *Hemiaspidae («I»Hemiaspis, Bunodes«/I»).
 
 {{IMG:1911 Britannica-Arachnida-Limulus polyphemus13.png|align=left|width=220|Fig. 44.—Dorsal view of Limulus polyphemus, Latr. (From Parker and Haswell, Text book of Zoology, after Leuckart.)}}
 
@@ -383,7 +383,7 @@ The genera «I»Belinurus«/I», «I»Aglaspis«/I», «I»Prestwichia«/I», «
 
 «B»Order 2. Gigantostraca«/B» (figs. 46, 47).—Free-swimming forms, with the appendages of the 6th or 5th and 6th pairs flattened or lengthened to act as oars; segments of mesosoma and metasoma (= opisthosoma), twelve in number.
 
-PAGE:318Appendages of anterior pair very large and chelate. Sub-order Pterygotomorpha, Pterygotidae («I»Pterygotus«/I»). Appendages of anterior pair minute and chelate. Sub-order Eurypteromorpha «MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» Stylonuridae («I»Stylonurus«/I»). Eurypteridae («I»Eurypterus, Slimonia«/I»).
+PAGE:318Appendages of anterior pair very large and chelate. ::Sub-order Pterygotomorpha, Pterygotidae («I»Pterygotus«/I»). Appendages of anterior pair minute and chelate. Sub-order Eurypteromorpha «MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» Stylonuridae («I»Stylonurus«/I»). Eurypteridae («I»Eurypterus, Slimonia«/I»).
 
 {{IMG:1911 Britannica-Arachnida-Pterygotus osiliensis.png|align=center|width=380|Fig. 47.—Pterygotus osiliensis, Schmidt. Silurian of Rootzikil. Restoration of the ventral surface, about a third natural size, after Schmidt. (From Zittel’s Palaeontology.) ([Observe the powerful gnathobases of the sixth pair of prosomatic limbs and the median plates behind m. The dotted line on somite I indicates the position of the genital operculum which was probably provided with branchial lamellae.)}}
 
@@ -412,7 +412,7 @@ Family—Palaeophonidae, «I»Palaeophonus«/I» (figs. 48 and 49).
 
 Sub-order Dionychopoda.—The 3rd, 4th, 5th and 6th pairs of appendages slender, not evenly tapering, the segments longer than wide; the apical segment short, distally truncate, and provided with a pair of movable claws. Basal segments of the 5th and 6th pairs of appendages abutting against the sternum of the prosoma (see fig. 10 and figs. 51, 52 and 53).
 
-Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»). ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»). ”   Buthidae («I»Buthus, Centrurus«/I»). {{TABLE:”   *Cyclophthalmidae («I»Cyclophthalmus«/I»)  ”   *Eoscorpiidae («I»Eoscorpius, Centromachus«/I») | ⟦r⟧«MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» | Carboniferous.}TABLE}
+Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»). ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»). ”   Buthidae («I»Buthus, Centrurus«/I»). {{TABLE[style:text-align:left]:”   *Cyclophthalmidae («I»Cyclophthalmus«/I»)  ”   *Eoscorpiidae («I»Eoscorpius, Centromachus«/I») | ⟦r⟧«MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH» | Carboniferous.}TABLE}
 
 {{IMG:1911 Britannica-Arachnida-Palaeophonus Hunteri.png|align=left|width=220|Fig. 49.—Ventral view of a restoration of Palaeophonus Hunteri, Pocock, the Silurian scorpion from Lesmahagow, Scotland. Restored by R. I. Pocock. The meeting of the coxae of all the prosomatic limbs in front of the pentagonal sternum; the space for a genital operculum; the pair of pectens, and the absence of any evidence of pulmonary stigmata are noticeable in this specimen. (See Pocock, Quart. Jour. Micr. Sci., 1901.)}}
 
@@ -482,7 +482,7 @@ Family—Hubbardiidae («I»Schizomus, Hubbardia«/I») (figs. 57-59).
 
 Sub-order «I»b«/I». Amblypygi.—Prosoma wider than long, covered above by a single shield bearing median and lateral eyes, which have diplostichous ommatea. Sternal area broad, with prosternal, two mesosternal, and metasternal plates, the prosternum projecting forwards beneath the coxae of the 2nd pair of appendages. Appendages of 2nd pair folding in a horizontal plane; their basal segments PAGE:321freely movable; claw free or fused; basal segments of 4th and 5th pairs widely separated by the sternal area; appendages of 3rd pair with all the segments except the proximal three, forming a many-jointed flagellum. Opisthosoma without post-anal sclerite and posterior caudal elongation: with frequently a pair of small lobate appendages on the sternum of the 3rd somite. Respiratory organs, as in Urotricha.
 
-Family—Phrynichidae («I»Phrynichus, Damon«/I»). ”   Admetidae («I»Admetus, Heterophrynus«/I»). ”   Charontidae («I»Charon, Sarax«/I»). (Family?)—*«I»Graeophonus«/I».
+::Family—Phrynichidae («I»Phrynichus, Damon«/I»). :: ”   Admetidae («I»Admetus, Heterophrynus«/I»). :: ”   Charontidae («I»Charon, Sarax«/I»). ::(Family?)—*«I»Graeophonus«/I».
 
 {{IMG:1911 Britannica-Arachnida-Schizomus crassicaudatus3.png|align=center|width=320|Fig. 59.—Schizomus crassicaudatus, one of the Pedipalpi. Lateral view of a male. II to VI, the prosomatic appendages, the first being concealed (see fig. 58); 5, the fifth, and 11, the eleventh tergites of the opisthosoma; pa, the conical post-anal lobe.(Original as preceding.)}}
 
@@ -496,7 +496,7 @@ Family—Phrynichidae («I»Phrynichus, Damon«/I»). ”   Admetidae («I»Ad
 
 Sub-order «I»a«/I». Mesothelae (see figs. 60 to 62).—Opisthosoma distinctly segmented, furnished with 11 tergal plates, as in the Amblypygi; the ventral surface of the 1st and 2nd somites with large sternal plates, covering the genital aperture and the two pairs of pulmonary sacs, the sternal plates from the 6th to the 11th somites represented by integumental ridges, weakly chitinized in the middle. The two pairs of spinning appendages retain their primitive position in the middle of the lower surface of the opisthosoma far in advance of the anus on the 3rd and 4th somites, each appendage consisting of a stout, many-jointed outer branch and a slender, unsegmented inner branch. Prosoma as in the Mygalomorphae, except that the mesosternal area is long and narrow.
 
-Family—Liphistiidae («I»Liphistius«/I», *«I»Arthrolycosa«/I»).
+::Family—Liphistiidae («I»Liphistius«/I», *«I»Arthrolycosa«/I»).
 
 Sub-order «I»b«/I». Opisthothelae (see fig. 63).—Opisthosoma without trace of separate terga and sterna, the segmentation merely represented posteriorly by slight integumental folds and the sterna of the 1st and 2nd somites by the opercular plates of the pulmonary sacs. The spinning appendages migrate to the posterior end of the opisthosoma and take up a position close to the anus; the inner branches of the anterior pair either atrophy or are represented homogenetically by a plate, the cribellum, or by an undivided membranous lobe, the colulus.
 
@@ -546,7 +546,7 @@ Families—Hexisopodidae («I»Hexisopus«/I»). Solpugidae («I»Solpuga, Rhago
 
 {{IMG:1911 Britannica-Arachnida-Galeodes4.png|width=360|Fig. 69.—Galeodes sp., one of the Solifugae.}}
 
-{{TABLE:I to VI, The six prosomatic | «I»e«/I», Third plate of the prosomalimbs cut short. | carrying appendage VI.
+{{TABLE[style:text-align:center]:I to VI, The six prosomatic | «I»e«/I», Third plate of the prosomalimbs cut short. | carrying appendage VI.
 «I»o«/I», The eyes. | The prae-genital somite is
 «I»b, c«/I», Demarcated areae of the           | absent.
 cephalic or first | 1, First somite of the
@@ -571,7 +571,7 @@ appendage V. | 10, Tenth opisthosomatic
 
 Sub-order «I»a«/I». Panctenodactyli.—Dorsal plate of prosoma (carapace) narrowed in front; the appendages of the 1st pair small, much narrower, taken together, than the posterior border of the carapace. Serrula on movable digit of appendages of 1st pair fixed throughout its length, and broader at its proximal than at its distal end; the immovable digit with an external process.
 
-Family—Cheliferidae («I»Chelifer«/I» (figs. 70, 71, 72), «I»Chiridium«/I»). ”   Garypidae («I»Garypus«/I»).
+::Family—Cheliferidae («I»Chelifer«/I» (figs. 70, 71, 72), «I»Chiridium«/I»). :: ”   Garypidae («I»Garypus«/I»).
 
 {{IMG:1911 Britannica-Arachnida-Garypus litoralis3.png|width=350|Fig. 72.—Garypus litoralis, one of the Pseudoscorpiones. Lateral view. (I to VI, Basal segments of the six prosomatic appendages. o, Eyes. prae-gen, Tergite of the prae-genital somite. 1, Genital or first opisthosomatic somite.) (2, 3, 10, The second, third and tenth somites of the opisthosoma. 11, The minute eleventh somite; an, The anus.)}}
 
@@ -579,7 +579,7 @@ Family—Cheliferidae («I»Chelifer«/I» (figs. 70, 71, 72), «I»Chiridium«/
 
 Sub-order «I»b«/I». Hemictenodactyli.—Dorsal plate of prosoma scarcely narrowed in front; the appendages of the 1st pair large, not much narrower, taken together, than the posterior border of the carapace. The serrula or the movable digit free at its distal end, narrowed at the base; no external lamina on the immovable digit.
 
-Family—Obisiidae («I»Obisium, Pseudobisium«/I»). ”   Chthoniidae («I»Chthonius, Tridenchthonius«/I»).
+::Family—Obisiidae («I»Obisium, Pseudobisium«/I»). :: ”   Chthoniidae («I»Chthonius, Tridenchthonius«/I»).
 
 «I»Remarks«/I».—The book-scorpions—so called because they were, in old times, found not unfrequently in libraries—are found in rotten wood and under stones. The similarity of the form of their appendages to those of the scorpions suggests that they are a degenerate group derived from the latter, but the large size of the prae-genital somite in them would indicate a connexion with forms preceding the scorpions. Reference to literature (37).
 
@@ -611,15 +611,15 @@ Intromittent organ of male lying within the genital orifice.
 
 Sub-order «I»a«/I». Laniatores.—Orifice of foetid glands opening above the coxa of the 4th appendage, not raised upon a tubercle. Orifice of coxal gland situated just behind that of the foetid gland. Sternal plate of prosoma long and narrow, with a distinct prosternal element underlying the mouth. Coxae of 4th, 5th and 6th appendages immovable. Appendages of 2nd pair, strong, usually prehensile and spiny. Genital orifice covered by an operculum.
 
-Families—Gonoleptidae («I»Gonoleptes, Goniasoma«/I»). Biantidae («I»Biantes«/I»). Oncopodidae («I»Oncopus, Pelitnus«/I»). Trioenonychidae («I»Trioenonyx, Acumontia«/I»).
+::Families—Gonoleptidae («I»Gonoleptes, Goniasoma«/I»). ::      Biantidae («I»Biantes«/I»). ::      Oncopodidae («I»Oncopus, Pelitnus«/I»). ::      Trioenonychidae («I»Trioenonyx, Acumontia«/I»).
 
 Sub-order «I»b«/I». Palpatores.—Orifice of foetid glands opening above the coxa of the 3rd appendage, not raised upon a tubercle. Orifice of coxal gland situated between the coxae of the 5th and 6th appendages. Sternal plate of prosoma usually short and wide, rarely longer than broad; with a larger or smaller prosternal element underlying the mouth. Coxae of 3rd, 4th, 5th and 6th appendages movable PAGE:325or immovable. Appendages of 2nd pair weak, pediform not prehensile. Genital orifice covered by an operculum.
 
-Families—Phalangiidae («I»Phalangium, Gagrella«/I»). Ischyropsalidae («I»Ischyropsalis, Taracus«/I»). Nemastomidae («I»Nemastoma«/I»). Trogulidae («I»Trogulus, Anelasmocephalus«/I»).
+::Families—Phalangiidae («I»Phalangium, Gagrella«/I»). ::      Ischyropsalidae («I»Ischyropsalis, Taracus«/I»). ::      Nemastomidae («I»Nemastoma«/I»). ::      Trogulidae («I»Trogulus, Anelasmocephalus«/I»).
 
 Sub-order «I»c. Cyphophthalmi«/I» («I»Anepignathi«/I»).—Orifice of foetid glands opening on a tubercle situated near the lateral border of the carapace above the base of the 5th appendage. Orifice of coxal gland probably situated at base of coxa of 5th appendage; sternal plate of prosema minute or absent; no prosternal element underlying the mouth. Coxae of 5th and 6th, and usually also of 4th appendages immovable. Appendages of 2nd pair weak, pediform, not prehensile. Genital orifice not covered by an operculum.
 
-Families—Sironidae («I»Siro, Pettalus«/I»). Stylocellidae («I»Stylocellus«/I»).
+::Families—Sironidae («I»Siro, Pettalus«/I»). ::      Stylocellidae («I»Stylocellus«/I»).
 
 «I»Remarks on the Opiliones«/I».—These include the harvest-men, sometimes called also daddy-long-legs, with round undivided bodies and very long, easily-detached legs. The intromittent organs of the male are remarkable for their complexity and elaboration. The confluence of the regions of the body and the dislocation of apertures from their typical position are results of degeneration. The Opiliones seem to lead on from the Spiders to the Mites. Reference to literature («B»39«/B»).
 
@@ -635,33 +635,33 @@ Several genera have been established, the best-characterized being «I»Geraphog
 
 Sub-order «I»a. Notostigmata«/I».—Opisthosoma consisting of ten segments defined by integumental grooves, each of the anterior four of these furnished with a single pair of dorsally-placed spiracles or tracheal stigmata.
 
-Family—Opilioacaridae («I»Opilioacarus«/I»).
+::Family—Opilioacaridae («I»Opilioacarus«/I»).
 
 Sub-order «I»b. Cryptostigmata«/I».—Integument hard, strengthened by a continuously chitinized dorsal and ventral sclerite. Tracheae typically opening by stigmata situated in the articular sockets (acetabula) of the 3rd, 4th, 5th and 6th pairs of appendages.
 
-Family—Oribatidae («I»Oribata, Nothrus, Hoplophora«/I»).
+::Family—Oribatidae («I»Oribata, Nothrus, Hoplophora«/I»).
 
 Sub-order «I»c. Metastigmata«/I».—Integument mostly like that of the Cryptostigmata. Tracheae opening by a pair of stigmata situated above and behind the base of the 4th or 5th or 6th pair of appendages.
 
-Families—Gamasidae («I»Gamasus, Pteroptus«/I»). Argasidae («I»Argas, Ornithodoros«/I»). Ixodidae («I»Ixodes, Rhipicephalus«/I»).
+::Families—Gamasidae («I»Gamasus, Pteroptus«/I»). ::      Argasidae («I»Argas, Ornithodoros«/I»). ::      Ixodidae («I»Ixodes, Rhipicephalus«/I»).
 
 Sub-order «I»d. Prostigmata«/I».—Integument soft, strengthened by special sclerites, those on the ventral surface of the prosoma apparently representing the basal segments of the legs embedded in the skin. Tracheae, except in the aquatic species in which they are atrophied, opening by a pair of stigmata situated close to or above the base of the appendages of the 1st pair (mandibles).
 
-Families—Trombidiidae («I»Trombidium, Tetranychus«/I»). Hydrachnidae («I»Hydrachna, Atax«/I»). Halacaridae («I»Halacarus, Leptognathus«/I»). Bdellidae («I»Bdella, Eupodes«/I»).
+::Families—Trombidiidae («I»Trombidium, Tetranychus«/I»). ::      Hydrachnidae («I»Hydrachna, Atax«/I»). ::      Halacaridae («I»Halacarus, Leptognathus«/I»). ::      Bdellidae («I»Bdella, Eupodes«/I»).
 
 {{IMG:1911 Britannica-Arachnida-Holothyrus nitidissimus.png|width=400|Fig. 78.—Holothyrus nitidissimus, one of the Acari; after Thorell. (A, Lateral view with appendages III to VI removed; 1, plate covering the whole dorsal area, representing the fused tergal sclerites of the prosoma and opisthosoma; 2, similarly-formed ventral plate; 3, tracheal stigma. B, Dorsal view of the same animal; II to VI, 2nd to 6th pairs of appendages. The 1st pair of appendages both in this and in C are retracted. C, Ventral view of the same; II to VI as in B; a, genital orifice; b, anus; c, united basal segments of the second pair of appendages; d, basal segment of the 6th prosomatic appendage of the right side. The rest of the appendage, as also of app. III, IV and V, has been cut away.)}}
 
 Sub-order «I»e. Astigmata«/I».—Degenerate, mostly parasitic forms approaching the Prostigmata in the development of integumental sclerites and the softness of the skin, but with the respiratory system absent.
 
-Families—Tyroglyphidae («I»Tyroglyphus, Rhizoglyphus«/I»). Sarcoptidae («I»Sarcoptes, Analges«/I»).
+::Families—Tyroglyphidae («I»Tyroglyphus, Rhizoglyphus«/I»). ::      Sarcoptidae («I»Sarcoptes, Analges«/I»).
 
 Sub-order «I»f. Vermiformia«/I».—Degenerate atracheate parasitic forms with the body produced posteriorly into an annulated caudal prolongation, and the 3rd, 4th, 5th and 6th pairs of appendages short and only three-jointed.
 
-Family—Demodicidae («I»Demodex«/I»).
+::Family—Demodicidae («I»Demodex«/I»).
 
 Sub-order «I»g. Tetrapoda«/I».—Degenerate atracheate gall-mites in which the body is produced posteriorly and annulated, as in «I»Demodex«/I», but in which the appendages of the 3rd and 4th pairs are long and normally segmented and those of the 5th and 6th pairs entirely absent.
 
-Family—Eriophyidae («I»Eriophyes, Phyllocoptes«/I»).
+::Family—Eriophyidae («I»Eriophyes, Phyllocoptes«/I»).
 
 «I»Remarks on the Rhynchostomi«/I».—The Acari include a number of forms which are of importance and special interest on account of their parasitic habits. The ticks («I»Ixodes«/I») are not only injurious as blood-suckers, but are now credited with carrying the germs of Texas cattle-fever, just as mosquitoes carry those of malaria. The itch-insect («I»Sarcoptes scabiei«/I») is a well-known human parasite, so minute that it was not discovered until the end of the 18th century, and “the itch” was treated medicinally as a rash. The female burrows in the epidermis much as the female trap-door spider burrows in turf in order to make a nest in which to rear her young. The male does not burrow, but wanders freely on the surface of the skin. «I»Demodex folliculorum«/I» is also a common parasite of the sebaceous PAGE:326glands of the skin of the face in man, and is frequent in the skin of the dog. Many Acari are parasitic on marine and freshwater molluscs, and others are found on the feathers of birds and the hair of mammals. Others have a special faculty of consuming dry, powdery vegetable and animal refuse, and are liable to multiply in manufactured products of this nature, such as mouldy cheese. A species of Acarus is recorded as infesting a store of powdered strychnine and feeding on that drug, so poisonous to larger organisms. Reference to literature («B»40«/B»).
 

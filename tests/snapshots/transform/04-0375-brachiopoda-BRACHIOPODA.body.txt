@@ -8,7 +8,7 @@ The name Brachiopod (βραχίων, an arm, and πούς, ποδός, a foot) w
 
 «CTR»«SC»Figs«/SC». 1–11.—Various forms of Brachiopoda.«/CTR»
 
-</td></tr><tr><td>
+</td></tr><tr><td style="width: 50%;vertical-align: top">
 
 {{VERSE:1. «I»Magellania«/I» [«I»Waldheimia«/I»] «I»cranium«/I». A, ventral,
   B, dorsal valve.
@@ -17,7 +17,7 @@ The name Brachiopod (βραχίων, an arm, and πούς, ποδός, a foot) w
 5. «I»Spirifer«/I». Dorsal valve, showing calcareous spiral coils. 
 6. «I»Orthis calligramma«/I».}VERSE}
 
-</td><td>
+</td><td style="width: 50%">
 
 {{VERSE: 7. «I»Leptaena transversalis«/I». A, ventral, B, dorsal valve.
  8. «I»Productus horridus«/I».
