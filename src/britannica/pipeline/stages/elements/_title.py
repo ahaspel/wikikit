@@ -64,7 +64,8 @@ def clean_title(raw: str) -> str:
 # link's closing `]]` (after «/B») so clean_title's link-stripper can fire.
 # `\s*` after the pipe: the «B» can sit on the next line (STAWELL).
 _BOLD = re.compile(r"(?:\[\[[^\]|]*\|\s*)?«B».*?«/B»(?:\s*\]\])?", re.DOTALL)
-_DROPINITIAL = re.compile(r"\{\{\s*drop\s*initial\s*\|\s*([^{}|]+)", re.I)
+_DROPINITIAL = re.compile(
+    r"\{\{\s*(?:drop\s*initial|di)\s*\|\s*([^{}|]+)", re.I)
 # [[Author:…|inner]] / [[Portal:…|inner]] link wrapper — unwrapped to its inner
 # heading in the title_raw span so the downstream title_display transform keeps
 # the bold run instead of mangling the link (HOLLAR, WENZEL or WENCESLAUS).

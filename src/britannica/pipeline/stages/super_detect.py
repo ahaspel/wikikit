@@ -31,7 +31,8 @@ from britannica.pipeline.stages.elements._title import produce_title
 
 _PAGE_RE = re.compile(r"\x01PAGE:(\d+)\x01")
 _SECBEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
-_DROPINITIAL = re.compile(r"\{\{\s*drop\s*initial", re.IGNORECASE)
+_DROPINITIAL = re.compile(
+    r"\{\{\s*(?:drop\s*initial|di)\s*[|}]", re.IGNORECASE)
 
 
 def super_detect_boundaries(volume: int) -> list[DetectedArticle]:

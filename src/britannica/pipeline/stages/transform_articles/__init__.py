@@ -233,6 +233,30 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
             if marker in text:
                 text = text.replace(marker, f"{marker}\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n", 1)
 
+    # Per-paragraph regularize: split any multi-paragraph `«FINE:…«/FINE»`
+    # into a sequence of single-paragraph FINE blocks.  The viewer's
+    # paragraph splitter operates on `\n\n` boundaries and matches the
+    # FINE marker per paragraph; a multi-paragraph FINE block would
+    # fragment with no balanced ends in any single paragraph and leak
+    # as raw text.  Block-element paragraphs (TABLE/LEGEND/IMG/VERSE/
+    # PRE/OUTLINE) inside the fine-print run stay UNWRAPPED — wrapping
+    # a block element in `«FINE:…«/FINE»` would suppress its own
+    # renderer (whose regex matches only at paragraph start).
+    _FINE_BLOCK_PREFIX = re.compile(
+        r"^\s*(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«PRE[\[:]|«OUTLINE:|«HTMLTABLE)")
+    def _split_fine(m: re.Match) -> str:
+        out_parts = []
+        for p in re.split(r"\n\n+", m.group(1)):
+            p = p.strip()
+            if not p:
+                continue
+            if _FINE_BLOCK_PREFIX.match(p):
+                out_parts.append(p)
+            else:
+                out_parts.append(f"«FINE:{p}«/FINE»")
+        return "\n\n".join(out_parts)
+    text = re.sub(r"«FINE:([\s\S]*?)«/FINE»", _split_fine, text)
+
     # Rejoin words split by line-break hyphenation (`trans- \nlation` →
     # `translation`).  Must run before reflow_paragraphs, which would
     # otherwise convert the line break to a space and freeze the broken
