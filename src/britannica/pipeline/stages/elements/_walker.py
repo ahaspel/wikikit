@@ -271,7 +271,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
-    r"|\{\{\s*(?:center|block\s*center|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
+    r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image)\b",  # DOUBLE_BRACE templates
     re.IGNORECASE,
 )

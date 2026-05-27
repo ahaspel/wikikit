@@ -29,8 +29,7 @@ from britannica.export.pages import (
     _printed_page,
 )
 from britannica.markers import (
-    IMG_RE, IMG_PARTS_RE, strip_page_markers, strip_title_markers)
-from britannica.captions import clean_caption
+    IMG_RE, strip_page_markers, strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
 
 
@@ -625,51 +624,17 @@ def export_articles_to_json(
 
             body = re.sub(r"\x01PAGE:(\d+)\x01", _replace_page_marker, body)
 
-            # Fill in missing captions on body IMG markers from the
-            # ArticleImage table. transform_articles emits
-            # `{{IMG:filename}}` (no caption) when the wikitext has
-            # the image and caption on separate lines (the wrapper
-            # patterns WEIGHING MACHINES / SEWING MACHINES use).
-            # extract_images recovers those captions into the DB; here
-            # we write them back into the body marker so the viewer
-            # can render them.
-            _img_caps: dict[str, str] = {}
-            for _img in (
-                session.query(ArticleImage)
-                .filter(ArticleImage.article_id == article.id)
-                .all()
-            ):
-                if _img.caption and _img.filename not in _img_caps:
-                    _img_caps[_img.filename] = _img.caption
-
-            if _img_caps:
-                def _sanitize_caption(cap: str) -> str:
-                    # A MediaWiki image *size* param (`x90px`, `125px`) the
-                    # extractor mistook for a caption \u2014 not real caption
-                    # text.  Treat as no caption.
-                    if re.fullmatch(r"\s*x?\d+px\s*", cap, re.IGNORECASE):
-                        return ""
-                    # extract_images stored this caption straight off the
-                    # raw wikitext, so it may carry templates, entities,
-                    # cell-attr strings, stray pipes/braces \u2014 run the same
-                    # caption cleaner every {{IMG:fn|cap}} emit site uses.
-                    return clean_caption(cap)
-
-                def _patch_img(m):
-                    fn = m.group(1)
-                    meta_block = m.group(2)  # "|align=…|width=…" or ""
-                    existing = m.group(3)
-                    if existing:  # caption already inline — keep it
-                        return m.group(0)
-                    cap = _img_caps.get(fn)
-                    if cap:
-                        cap = _sanitize_caption(cap)
-                        if cap:
-                            return f"{{{{IMG:{fn}{meta_block}|{cap}}}}}"
-                    return m.group(0)
-
-                body = IMG_PARTS_RE.sub(_patch_img, body)
-
+            # Caption back-fill from ArticleImage (the `_patch_img`
+            # sweeper) was deleted 2026-05-27.  The figure-family
+            # producers now emit captions inline via the canonical
+            # `Figure(image, caption, legend, attribution)` -> `render_figure`
+            # pipeline; any caption a producer doesn't emit inline is by
+            # definition an extractor bug to fix in place, not something
+            # a downstream sweeper should paper over.  The sweeper was
+            # also writing junk for ~33 of its 83 corpus invocations
+            # (MediaWiki `alt=` params, partial `Fig` strings, etc.), so
+            # deletion improved output on those.  See
+            # `[[total-functions-not-cleanup-passes]]`.
             # Strip redundant bold article title at body start. EB1911
             # articles open with "'''TITLE'''" (rendered as «B»TITLE«/B»);
             # since the viewer already shows the title in the header,
