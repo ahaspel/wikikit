@@ -18,6 +18,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
+    SHAPE_INLINE_IMAGE,
 )
 from britannica.pipeline.stages.elements._walker import walk
 
@@ -37,10 +38,14 @@ class TestWalkOutput:
         assert ph in text_out
 
     def test_image_link(self):
+        # `[[File:…]]` in inline-prose context now classifies as
+        # SHAPE_INLINE_IMAGE rather than SHAPE_DOUBLE_BRACKET — the
+        # walker emits a more specific label so producers (figure /
+        # inline-glyph) can dispatch without re-recognising.
         text_out, extracts = walk("body [[File:Foo.jpg]] end")
         assert len(extracts) == 1
         _ph, shape, raw = extracts[0]
-        assert shape == SHAPE_DOUBLE_BRACKET
+        assert shape == SHAPE_INLINE_IMAGE
         assert raw.startswith("[[File:")
 
     def test_self_closing_ref(self):
@@ -80,7 +85,9 @@ class TestWalkOutput:
         )
         assert len(extracts) == 2
         shapes = sorted(s for _ph, s, _raw in extracts)
-        assert shapes == [SHAPE_DOUBLE_BRACKET, SHAPE_HTML_TAG]
+        # `<math>` → HTML_TAG; `[[File:F.jpg]]` in inline-prose
+        # context → INLINE_IMAGE (more specific than DOUBLE_BRACKET).
+        assert shapes == [SHAPE_HTML_TAG, SHAPE_INLINE_IMAGE]
         for ph, _shape, _raw in extracts:
             assert ph in text_out
 

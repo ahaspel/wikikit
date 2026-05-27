@@ -321,9 +321,7 @@ def _emit_table_marker(
     side of every ``|`` separator, multi-space runs collapsed (an empty
     cell renders as ``a | | b`` not ``a |   | b``), blank rows removed.
     The renderer emits canonical output directly so no downstream
-    pipe-normalisation pass is needed.  (Downstream legend-detection in
-    ``legend_promote._table_row_cells`` is whitespace-robust, so the
-    collapsed-empty-cell form doesn't change which tables become legends.)
+    pipe-normalisation pass is needed.
 
     Header tables (``header=True``): rows are joined raw.  Normalizing
     header tables is a deliberate-change item (burndown) — would change
@@ -599,77 +597,39 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     return "".join(parts)
 
 
-def _inline_nested_table_markers_in_htmltable_blocks(text: str) -> str:
-    """Convert `{{TABLE:row|row|\u2026}TABLE}` markers nested INSIDE
-    `\u00abHTMLTABLE:\u2026\u00ab/HTMLTABLE\u00bb` blocks to inline `<table>` HTML.
+def _inline_table_marker_as_html(marker: str) -> str:
+    """Convert a ``{{TABLE[style:\u2026]:row\\n\u2026}TABLE}`` marker to inline
+    ``<table class="nested-data-table">\u2026</table>`` HTML.
 
-    A nested wiki table (ORNITHOLOGY taxonomic alignments, EOCENE
-    etymology glossary inside a `<ref>`) gets processed by the inner
-    element handler and emitted as a `{{TABLE:\u2026}TABLE}` marker.  When
-    the outer table is HTMLTABLE-formatted, the substituted child
-    marker leaks as literal text in the rendered cell.  Scoped to
-    inside HTMLTABLE blocks so top-level paragraph-level
-    `{{TABLE:\u2026}TABLE}` markers stay untouched.
+    Used by HTML-emitting parent producers (HTMLTABLE) to render their
+    wiki-table CHILDREN inline, so a nested wiki ``{|\u2026|}`` inside an
+    HTML ``<table>`` cell (ORNITHOLOGY taxonomic alignments, EOCENE
+    etymology glossary inside a ``<ref>``) doesn't leak its
+    ``{{TABLE:\u2026}TABLE}`` marker as cell text.
+
+    Lossy by design \u2014 drops ``\u27e6\u2026\u27e7`` cell-layout prefixes and the
+    ``[style:\u2026]`` slot.  The full styling path would route nested wiki
+    tables through ``_process_complex_table``'s HTML emitter; this
+    helper covers the small/simple-table case where that's overkill.
     """
-    def _convert_marker(m: re.Match) -> str:
-        inner = m.group(1)
-        rows_out: list[str] = []
-        for row in inner.split("\n"):
-            row = row.strip()
-            if not row:
-                continue
-            cells = [c.strip() for c in row.split("|")]
-            cells_html = "".join(f"<td>{c}</td>" for c in cells if c)
-            if cells_html:
-                rows_out.append(f"<tr>{cells_html}</tr>")
-        if not rows_out:
-            return ""
-        return (
-            '<table class="nested-data-table">'
-            + "".join(rows_out)
-            + "</table>"
-        )
-    # Walk HTMLTABLE blocks (depth-aware so nested HTMLTABLE markers
-    # don't shadow the outer's TABLE-marker conversion).
-    out: list[str] = []
-    i = 0
-    HT_OPEN = "\u00abHTMLTABLE:"
-    HT_CLOSE = "\u00ab/HTMLTABLE\u00bb"
-    while i < len(text):
-        opener = text.find(HT_OPEN, i)
-        if opener < 0:
-            out.append(text[i:])
-            break
-        out.append(text[i:opener])
-        depth = 1
-        j = opener + len(HT_OPEN)
-        block_start = j
-        while j < len(text) and depth > 0:
-            n_open = text.find(HT_OPEN, j)
-            n_close = text.find(HT_CLOSE, j)
-            if n_close < 0:
-                # Unbalanced \u2014 preserve original; don't risk
-                # mangling.
-                out.append(text[opener:])
-                return "".join(out)
-            if 0 <= n_open < n_close:
-                depth += 1
-                j = n_open + len(HT_OPEN)
-            else:
-                depth -= 1
-                if depth == 0:
-                    inner_block = text[block_start:n_close]
-                    inner_block = re.sub(
-                        r"\{\{TABLE(?:\[style:[^\]]*\])?:(.*?)\}TABLE\}",
-                        _convert_marker, inner_block,
-                        flags=re.DOTALL,
-                    )
-                    out.append(HT_OPEN + inner_block + HT_CLOSE)
-                    j = n_close + len(HT_CLOSE)
-                else:
-                    j = n_close + len(HT_CLOSE)
-        i = j
-    return "".join(out)
+    m = re.match(r"^\{\{TABLE(?:\[style:[^\]]*\])?:(.*)\}TABLE\}$",
+                 marker, re.DOTALL)
+    if not m:
+        return marker
+    inner = m.group(1)
+    rows_out: list[str] = []
+    for row in inner.split("\n"):
+        row = row.strip()
+        if not row:
+            continue
+        cells = [c.strip() for c in row.split("|")]
+        cells_html = "".join(f"<td>{c}</td>" for c in cells if c)
+        if cells_html:
+            rows_out.append(f"<tr>{cells_html}</tr>")
+    if not rows_out:
+        return ""
+    return ('<table class="nested-data-table">' + "".join(rows_out)
+            + "</table>")
 
 
 # \u2500\u2500 Chemistry-reaction / structural-formula layouts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -1939,9 +1899,29 @@ def _process_html_table(
                 for tag, rowspan, colspan, content, styles in parsed
             ]
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
-        return ("\n\n\u00abHTMLTABLE:<table>" +
-                "".join(html_rows) +
-                "</table>\u00ab/HTMLTABLE\u00bb\n\n")
+        output = ("\n\n\u00abHTMLTABLE:<table>" +
+                  "".join(html_rows) +
+                  "</table>\u00ab/HTMLTABLE\u00bb\n\n")
+        # Pre-substitute DATA_TABLE child markers as inline `<table>`
+        # HTML so they render correctly inside our HTML cells instead
+        # of leaking `{{TABLE:\u2026}TABLE}` marker text (the previous
+        # ``_inline_nested_table_markers_in_htmltable_blocks``
+        # post-pass in `_classifier.py`, now folded into the producer
+        # that needs the conversion \u2014 see [[refactoring-is-the-model]]
+        # / [[pipeline-is-the-only-clean-place]]).  Other child types
+        # are left as placeholders for `produce_tree`'s generic
+        # post-substitution.  Child markers are already populated when
+        # this producer runs (`produce_tree` recurses children first).
+        if inner_registry is not None:
+            for ph, label in list(inner_registry.labels.items()):
+                if label != "DATA_TABLE":
+                    continue
+                if ph not in output:
+                    continue
+                child_marker = inner_registry.markers.get(ph, "")
+                output = output.replace(
+                    ph, _inline_table_marker_as_html(child_marker))
+        return output
 
     # Verse-only layout: a single-row, single-cell <table> whose
     # entire content is a <poem> placeholder is an editor's centering

@@ -29,11 +29,19 @@ from britannica.pipeline.stages.elements._shapes import (
 
 class TestShapeVocabulary:
     def test_shape_count(self):
-        # 7 delimiter-balanced/text shapes + FIGURE (image + structural
-        # caption run) + SECTION (`<section begin/end/>`) + NOINCLUDE
-        # (`<noinclude>…</noinclude>` page container) — both owned elements
-        # carried raw rather than swept by the catch-all.
-        assert len(SHAPES) == 10
+        # 7 delimiter-balanced/text shapes + structural extras:
+        #   FIGURE (image + structural caption run),
+        #   SECTION (``<section begin/end/>``),
+        #   NOINCLUDE (``<noinclude>…</noinclude>`` page container),
+        #   INLINE_IMAGE (``[[File:…]]`` in inline-prose context —
+        #     more specific than DOUBLE_BRACKET so producers don't
+        #     re-recognise),
+        #   BODY (residual prose between other elements — task #14:
+        #     SHAPE_BODY, owner-of-output principle says every span
+        #     maps to one producer),
+        #   MIRROR_GLYPH (``<span style="{{mirrorH}}">…</span>``).
+        # Bump this count alongside ``_shapes.SHAPES``.
+        assert len(SHAPES) == 13
         assert SHAPE_FIGURE in SHAPES
         assert SHAPE_SECTION in SHAPES
         assert SHAPE_NOINCLUDE in SHAPES

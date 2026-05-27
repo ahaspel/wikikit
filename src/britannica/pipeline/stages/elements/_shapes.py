@@ -159,13 +159,4 @@ def strip_outer(shape: str, raw: str) -> str:
                    flags=re.IGNORECASE)
         s = re.sub(r"</span>\s*$", "", s, flags=re.IGNORECASE)
         return s
-    if shape == SHAPE_FINE_PRINT:
-        # Strip the paired `{{EB1911 fine print/s}}` open and `/e` close
-        # markers; the inner is normal body prose (paragraphs, refs,
-        # images, etc.) that the classifier walks recursively.
-        s = re.sub(r"^\{\{\s*EB1911\s+fine\s+print/s\s*\}\}\s*", "", raw,
-                   flags=re.IGNORECASE)
-        s = re.sub(r"\s*\{\{\s*EB1911\s+fine\s+print/e\s*\}\}\s*$", "", s,
-                   flags=re.IGNORECASE)
-        return s
     raise ValueError(f"Unknown shape: {shape!r}")

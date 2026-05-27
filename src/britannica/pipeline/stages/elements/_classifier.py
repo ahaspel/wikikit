@@ -387,9 +387,6 @@ def produce_tree(
     from britannica.pipeline.stages.elements import (
         _PRODUCER_DISPATCH, _passthrough_inner,
     )
-    from britannica.pipeline.stages.elements._tables import (
-        _inline_nested_table_markers_in_htmltable_blocks,
-    )
 
     for ph, ce in tree.items():
         # Recurse first — children's markers must be populated
@@ -428,14 +425,6 @@ def produce_tree(
                         changed = True
                 if not changed:
                     break
-
-        # Post-substitution cleanup: a child wiki-table's
-        # `{{TABLE:…}TABLE}` marker embedded inside an HTMLTABLE
-        # cell leaks as cell text unless converted to inline
-        # ``<table>`` HTML (ORNITHOLOGY taxonomic alignments,
-        # EOCENE etymology glossary inside a `<ref>`).
-        if "«HTMLTABLE:" in marker and "{{TABLE" in marker:
-            marker = _inline_nested_table_markers_in_htmltable_blocks(marker)
 
         ce.marker = marker
 

@@ -42,39 +42,6 @@ from britannica.pipeline.stages.transform_articles.body_text import (
 from britannica.pipeline.stages.transform_articles.plate_legacy import (
     _transform_plate,
 )
-from britannica.pipeline.stages.transform_articles.legend_promote import (
-    _ATTRIBUTION_START_RE,
-    _BLOCK_END_RE,
-    _BLOCK_MARKER_RE,
-    _FIGURE_BOUNDARY_MARKERS,
-    _INLINE_SECTION_HEADING_RE,
-    _LEGEND_CELL_RE,
-    _LEGEND_LABEL_ALONE_RE,
-    _PARA_LEGEND_LABEL_ONE,
-    _PARA_LEGEND_PLAIN_RE,
-    _PARA_LEGEND_STRICT_RE,
-    _append_attr_to_img,
-    _build_legend_line_re,
-    _bundle_raw_image_with_caption,
-    _classify_figure_paragraph,
-    _clean_loose_caption,
-    _find_matching_double_braces,
-    _fold_image_attribution,
-    _is_attribution_paragraph,
-    _legend_entries_from_paragraph,
-    _match_legend_line,
-    _paragraphs_starting_at,
-    _parse_legend_lines,
-    _parse_table_as_legend,
-    _parse_verse_as_legend,
-    _promote_legend_tables,
-    _promote_legend_verses,
-    _promote_paragraph_legends,
-    _split_multi_entry_line,
-    _strip_inline_italic,
-    _try_convert_verse_simple,
-    _try_convert_with_attr,
-)
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,
@@ -115,18 +82,6 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
 # the distinguishing shape — legend captions with Roman-numeral labels
 # (CENTIPEDE "I. Mandibles", HYDRAULICS "VI. STEADY FLOW…") do NOT
 # italicize their text or use em-dashes, so this regex misses them.
-
-# ── Figure walker (unified IMG+attribution+legend handler) ────────────
-#
-# For each `{{IMG:…}}` marker, walk forward paragraph-by-paragraph
-# collecting "figure material" (attribution, legend-shaped content in
-# any wrapper) until we hit a figure boundary, then emit a cleanly
-# formatted IMG + optional LEGEND.  This replaces the earlier zoo of
-# container-specific promoters (`_promote_legend_tables/verses/
-# paragraphs`) with one pipeline: (1) classify pattern, (2) locate
-# boundary, (3) format content.
-
-
 
 # Bare label cell (label without text in same cell): `a,` / `At,` /
 # `br.s,` / `br f,` / `g.s.`.  Up to ~12 chars; may contain dots,

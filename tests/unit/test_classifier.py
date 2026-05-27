@@ -146,18 +146,32 @@ class TestNestedClassification:
 
 class TestClassifyArticle:
     def test_multiple_top_level_elements(self):
+        # SHAPE_BODY (task #14) makes residual prose its own element,
+        # so plain-prose spans appear in the registry alongside MATH/
+        # IMAGE.  The test asserts (a) the non-prose extracts come
+        # through with the right labels, (b) every registered
+        # placeholder appears in the placeholderized body.
         text = ("Body text <math>x</math> more text "
                 "[[File:F.jpg]] end")
         placeholderized, registry = classify_article(text)
-        assert len(registry) == 2
         labels = sorted(ce.label for ce in registry.values())
-        assert labels == ["IMAGE", "MATH"]
-        # All registered placeholders appear in the placeholderized
-        # body (substituted by the walker).
+        # MATH + INLINE_IMAGE + the BODY spans between/around them
+        assert "MATH" in labels
+        assert "IMAGE" in labels or "INLINE_IMAGE" in labels
+        assert labels.count("BODY") >= 1
         for ph in registry:
             assert ph in placeholderized
 
     def test_empty_text(self):
+        # Plain prose is now itself a BODY element (task #14:
+        # SHAPE_BODY).  Pre-SHAPE_BODY this returned an empty registry;
+        # the new architecture's owner-of-output principle is that EVERY
+        # span of source maps to one producer, including residual prose.
         placeholderized, registry = classify_article("just plain prose")
-        assert registry == {}
-        assert placeholderized == "just plain prose"
+        assert len(registry) == 1
+        (ce,) = registry.values()
+        assert ce.label == "BODY"
+        assert ce.raw == "just plain prose"
+        # The single placeholder replaces the original text.
+        (ph,) = registry.keys()
+        assert placeholderized == ph
