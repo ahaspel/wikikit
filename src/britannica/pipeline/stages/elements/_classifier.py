@@ -109,7 +109,7 @@ def _derive_double_bracket_label(raw: str) -> str:
     raise ValueError(f"Unknown DOUBLE_BRACKET prefix: {raw[:40]!r}")
 
 
-def _derive_double_brace_label(raw: str) -> str:
+def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # Standalone `{{Css image crop|…}}` — the producer (`_process_djvu_crop`)
     # crops the DjVu page + folds an optional `{{center|cap}}`/`{{csc|cap}}`.
     if re.match(r"\{\{\s*Css image crop\b", raw, re.IGNORECASE):
@@ -131,6 +131,24 @@ def _derive_double_brace_label(raw: str) -> str:
         return "IMAGE_FLOAT"
     if name == "hieroglyph":
         return "HIEROGLYPH"
+    # `{{dual line|A|B}}` — pure layout primitive (two-line stack).
+    # CONTENT-AWARE sub-classification: chem-shaped (element-formula
+    # clusters) → CHEM_DUAL, owned by chem; math-shaped (italic
+    # variables, sub/sup on non-element content) → MATH_DUAL, owned by
+    # math; else plain DUAL_LINE (table headers, hyphenations, figure-
+    # caption splits).  Chem first because chem signature can overlap
+    # math markers (sub/sup) — chem catches the chem case before the
+    # looser math predicate sees it.
+    if name == "dual":
+        from britannica.pipeline.stages.elements._chem import (
+            is_chem_dual_line)
+        from britannica.pipeline.stages.elements._math import (
+            is_math_dual_line)
+        if is_chem_dual_line(inner_text):
+            return "CHEM_DUAL"
+        if is_math_dual_line(inner_text):
+            return "MATH_DUAL"
+        return "DUAL_LINE"
     raise ValueError(f"Unknown DOUBLE_BRACE template: {name!r}")
 
 
@@ -268,7 +286,7 @@ def _derive_label(
     if shape == SHAPE_INLINE_IMAGE:
         return "INLINE_IMAGE"
     if shape == SHAPE_DOUBLE_BRACE:
-        return _derive_double_brace_label(raw)
+        return _derive_double_brace_label(raw, inner_text)
     if shape == SHAPE_CHART2:
         return "CHART2"
     if shape == SHAPE_OUTLINE:

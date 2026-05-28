@@ -37,6 +37,9 @@ from britannica.pipeline.stages.elements._image import (
     _process_image_from_raw,
     _process_raw_image,
 )
+from britannica.pipeline.stages.elements._dual_line import _process_dual_line
+from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
+from britannica.pipeline.stages.elements._math import _process_math_dual_line
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
     _is_structural_formula,
@@ -328,6 +331,24 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _process_raw_image(raw, tt),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
         _process_image_float(inner, tt),
+    # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
+    # stack) with PLAIN content (table headers, hyphenations, figure-
+    # caption splits).  Chem-shaped / math-shaped variants reclassify
+    # as CHEM_DUAL / MATH_DUAL and route to their family producers.
+    "DUAL_LINE": lambda raw, inner, tt, ctx, reg:
+        _process_dual_line(inner, tt),
+    # CHEM_DUAL — a dual_line whose content is element-formula shaped.
+    # Routed to chem's inline producer; renders byte-identical with the
+    # layout DUAL_LINE today, but the home is right for future chem-
+    # specific work (formula validation, structural-formula layout).
+    "CHEM_DUAL": lambda raw, inner, tt, ctx, reg:
+        _process_chem_dual_line(inner, tt),
+    # MATH_DUAL — a dual_line whose content has math signature (italic
+    # variables, sub/sup on non-element content).  Routed to math's
+    # inline producer; same byte-output as DUAL_LINE today, but lives
+    # in math's home for future math-specific rendering.
+    "MATH_DUAL": lambda raw, inner, tt, ctx, reg:
+        _process_math_dual_line(inner, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",

@@ -138,6 +138,21 @@ _IMAGE_FLOAT_RE = re.compile(
 )
 _HIEROGLYPH_TMPL_RE = re.compile(
     r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
+# `{{dual line|A|B}}` — pure layout primitive that stacks two lines
+# (`A<br>B`).  Args A and B can carry any inline content including
+# nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
+# refs `<ref>…</ref>`).  Up to four levels of `{{…}}` nesting, matching
+# `_IMAGE_FLOAT_RE`'s depth — covers every observed case in 611 corpus
+# instances.  Lifting this template at the walker level gives the
+# classifier a bounded unit to inspect; if its content is chem/math-
+# shaped, the classifier will route accordingly (future predicate),
+# instead of body-text smuggling the rendering in via a regex pass.
+_DUAL_LINE_RE = re.compile(
+    r"\{\{\s*dual\s+line\s*\|"
+    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
+    r"\}\}",
+    re.DOTALL | re.IGNORECASE,
+)
 # `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params), optionally
 # followed by a `{{center|cap}}` / `{{csc|cap}}` caption.  Recognized as one
 # DOUBLE_BRACE image element (→ DJVU_CROP); the producer crops + captions it.
@@ -251,6 +266,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
     (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
+    (SHAPE_DOUBLE_BRACE,      _DUAL_LINE_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
 ]
 
@@ -272,7 +288,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image)\b",  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line)\b",  # DOUBLE_BRACE templates
     re.IGNORECASE,
 )
 
