@@ -138,6 +138,29 @@ _IMAGE_FLOAT_RE = re.compile(
 )
 _HIEROGLYPH_TMPL_RE = re.compile(
     r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
+# Contributor-footer templates — the source's structural declaration
+# "this is article-attribution metadata, not body content."  Two
+# canonical shapes plus the bare-initials shortcuts:
+#   * `{{EB1911 footer initials|Full Name|Initials[|name2=…]}}`
+#   * `{{EB1911 footer double initials|N1|I1|N2|I2}}`
+#   * `{{EB1911 XYZ}}` — bare-initials shortcut (template-name IS the
+#     initials reference; ~20 distinct names in corpus: TAs, WABC,
+#     WAP, MG, LD, JF-K, DH, RNB, DMn, LJS, JHlR, AMC, AWH, FJH, AN,
+#     AFP, JE, HWR*, …).  Caps-leading 1-5 chars distinguishes these
+#     from `EB1911 sfrac`/`tfrac` (lowercase) and `EB1911 Coordinates`/
+#     `Intra-Article Link`/`Fine Print` (longer than 5 chars).
+#
+# `extract_contributors` reads these directly from raw page text in
+# its own pipeline stage; the producer here returns empty so body
+# renders nothing — replaces the `_strip_templates` catch-all path
+# that silently dropped them.
+_CONTRIBUTOR_FOOTER_RE = re.compile(
+    r"\{\{\s*EB1911\s+footer(?:\s+double)?\s+initials\s*\|"
+    r"(?:[^{}]|\{\{[^{}]*\}\})*"
+    r"\}\}"
+    r"|\{\{\s*EB1911\s+[A-Z][A-Za-z*\-]{0,4}\s*\}\}",
+    re.IGNORECASE | re.DOTALL,
+)
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
@@ -344,6 +367,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
     (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
+    (SHAPE_DOUBLE_BRACE,      _CONTRIBUTOR_FOOTER_RE),
     (SHAPE_DOUBLE_BRACE,      _DUAL_LINE_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
 ]
@@ -366,7 +390,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
 )

@@ -160,6 +160,15 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "MATH_FORMULA_LABELED"
     if name == "ne":
         return "MATH_NE"
+    # `{{EB1911 footer initials|...}}`, `{{EB1911 footer double initials|...}}`,
+    # bare-initials shortcuts (`{{EB1911 TAs}}` etc.).  The walker's
+    # `_CONTRIBUTOR_FOOTER_RE` only matches these specific shapes, so
+    # any SHAPE_DOUBLE_BRACE whose first-token name is `eb1911` is by
+    # construction a contributor-footer template; producer renders
+    # nothing (`extract_contributors` reads the same raw template in
+    # its own pipeline stage to populate the contributors table).
+    if name == "eb1911":
+        return "CONTRIBUTOR_FOOTER"
     # Inline typography (sfrac/frac/mfrac/over/sfracN/EB1911 variants/
     # sub/sup) stays in body-text — the source doesn't declare those
     # as math via the template name; they're rendered as typography

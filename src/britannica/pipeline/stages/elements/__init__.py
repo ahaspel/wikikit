@@ -369,6 +369,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_math_equation(inner, tt),
     "MATH_NE": lambda raw, inner, tt, ctx, reg:
         _process_math_equation(inner, tt),
+    # CONTRIBUTOR_FOOTER — `{{EB1911 footer initials|...}}` and its
+    # variants.  Captured by `extract_contributors` reading raw page
+    # text in its own pipeline stage; the body output renders nothing.
+    # Replaces the silent `_strip_templates` deletion path with an
+    # explicit producer contract.
+    "CONTRIBUTOR_FOOTER": lambda raw, inner, tt, ctx, reg: "",
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
