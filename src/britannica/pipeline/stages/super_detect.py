@@ -35,7 +35,7 @@ _DROPINITIAL = re.compile(
     r"\{\{\s*(?:drop\s*initial|di)\s*[|}]", re.IGNORECASE)
 
 
-def super_detect_boundaries(volume: int) -> list[DetectedArticle]:
+def detect_boundaries(volume: int) -> list[DetectedArticle]:
     session = SessionLocal()
     try:
         pages = (session.query(SourcePage)
@@ -116,11 +116,17 @@ def super_detect_boundaries(volume: int) -> list[DetectedArticle]:
         end = bounds[i + 1][0] if i + 1 < len(bounds) else len(raw_stream)
         content = raw_stream[bpos:end]               # the article's raw content
         pstart = page_of(bpos)
-        title, _body, title_raw = produce_title(content)
-        # Segments fall out by splitting content on «PAGE» markers.
+        title, body, title_raw = produce_title(content)
+        # Segments fall out by splitting the title-STRIPPED body on
+        # «PAGE» markers.  Splitting raw `content` instead would put
+        # the title-bold back into segs[0].text, duplicating it (since
+        # `title` is already stored in Article.title): downstream
+        # consumers would then see both the bold and the title field
+        # and we'd be tempted to reach for a sweeper.  The title is
+        # the chop-up's product — never re-pack it into the body.
         segs: list[SegmentInfo] = []
         seq = 0
-        parts = _PAGE_RE.split(content)              # [t0, pn1, t1, pn2, t2, …]
+        parts = _PAGE_RE.split(body)                 # [t0, pn1, t1, pn2, t2, …]
         if parts[0].strip():
             segs.append(SegmentInfo(pid[pstart], pstart, seq, parts[0]))
             seq += 1

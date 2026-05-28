@@ -152,8 +152,15 @@ def _looks_like_title_glue(text: str) -> bool:
     if len(stripped) > 60:
         return False
     # Reject sentence breaks (`x. Y...`) — those are body content.
-    if re.search(r"[a-z]\.\s+[A-Z]", stripped):
-        return False
+    # A `[a-z]\.\s+[A-Z]` pattern INSIDE balanced parens is an
+    # abbreviation in a parenthetical translation/note, NOT a
+    # sentence break: ACCURSIUS's `(Ital. Accorso),` is a title-glue
+    # parenthetical, not body prose.  Reject only when the sentence-
+    # break pattern is outside any open paren.
+    for m in re.finditer(r"[a-z]\.\s+[A-Z]", stripped):
+        depth = stripped[:m.start()].count("(") - stripped[:m.start()].count(")")
+        if depth <= 0:
+            return False
     return True
 
 
@@ -2035,314 +2042,68 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
     return plates, rest
 
 
-def detect_boundaries(volume: int) -> list[DetectedArticle]:
-    """Detect article boundaries from raw wikitext.
+# Legacy per-page detect_boundaries(volume) — superseded by
+# super_detect_boundaries (super_walker → article slices).
+# Deleted 2026-05-27 per "one detect_boundaries function in the
+# codebase".  Remaining helpers in this file are utilities still
+# used by super_detect / super_walker / cli; the wholesale dead-
+# helper cleanup is a separate pass.
 
-    Reads SourcePages from the database but writes nothing.
-    Returns a list of DetectedArticle with titles, page ranges, and
-    raw wikitext segments.
+def wipe_articles(volume: int) -> int:
+    """Delete every Article in ``volume`` and all FK-dependent rows
+    (ArticleSegment, ArticleImage, ArticleContributor, CrossReference).
+    Returns the count of articles deleted.
 
-    Two passes: ``_split_out_plates`` lifts every (self-contained)
-    plate page out first; the streaming article state machine below then
-    runs over the remaining pages and never sees a plate.
+    SourcePages are kept (they're owned by the import stage).  Callers
+    that want a fully-deterministic re-detect call this before
+    ``persist_articles``.
+
+    X-refs that target one of these articles from ANOTHER volume are
+    UNLINKED (target_article_id ← None, status ← "unresolved") rather
+    than deleted, so the originating volume's resolution work survives.
     """
+    from britannica.db.models import (
+        ArticleImage, ArticleContributor, CrossReference)
     session = SessionLocal()
-
     try:
-        all_pages = (
-            session.query(SourcePage)
-            .filter(SourcePage.volume == volume)
-            .order_by(SourcePage.page_number)
-            .all()
-        )
-
-        # PASS 1 — pull out every plate (each is one self-contained page).
-        plate_articles, pages = _split_out_plates(all_pages)
-
-        # PASS 2 — article boundaries over the remaining (plate-free) pages.
-        articles: list[DetectedArticle] = []
-        open_article: DetectedArticle | None = None
-
-        for page in pages:
-            # Read raw wikitext and preprocess minimally.
-            # Corrections from data/corrections.json have already been
-            # applied to `wikitext` during clean_pages.
-            raw = (page.wikitext or "").strip()
-            if not raw:
-                continue
-            text = _preprocess_wikitext(raw)
-
-            # Try to parse article boundaries from this page.
-            parsed = _parse_page_by_sections(text)
-            if parsed is None:
-                parsed = _split_on_bold_headings(text)
-
-            # Prefix text belongs to the currently open article — unless
-            # it starts with a bold ALL-CAPS heading, which signals a new
-            # article placed before the first section marker on this page.
-            # Only all-caps titles are treated as articles; mixed-case bold
-            # text is a subsection heading within the current article.
-            if parsed.prefix_text:
-                _prefix_art_match = re.match(
-                    r"\u00ABB\u00BB([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE\u00AB\u00BB/IB\u2019\s,.\-]+)\u00AB/B\u00BB",
-                    parsed.prefix_text,
-                )
-                if (_prefix_art_match and parsed.candidates
-                        and _has_valid_title_content(
-                            _normalize_title(_prefix_art_match.group(1).strip().rstrip(",.")))):
-                    # Split the prefix: text before bold heading → open article,
-                    # bold heading onward → new candidate prepended to the list.
-                    prefix_parsed = _split_on_bold_headings(parsed.prefix_text)
-                    if prefix_parsed.prefix_text and open_article is not None:
-                        next_seq = len(open_article.segments) + 1
-                        open_article.segments.append(SegmentInfo(
-                            source_page_id=page.id,
-                            page_number=page.page_number,
-                            sequence=next_seq,
-                            text=prefix_parsed.prefix_text,
-                        ))
-                        open_article.page_end = page.page_number
-                    parsed.candidates = prefix_parsed.candidates + parsed.candidates
-                elif open_article is not None:
-                    next_seq = len(open_article.segments) + 1
-                    open_article.segments.append(SegmentInfo(
-                        source_page_id=page.id,
-                        page_number=page.page_number,
-                        sequence=next_seq,
-                        text=parsed.prefix_text,
-                    ))
-                    open_article.page_end = page.page_number
-
-            # If there are no headings on the page, the whole page is continuation.
-            if not parsed.candidates:
-                if parsed.prefix_text and open_article is not None:
-                    open_article.page_end = page.page_number
-                continue
-
-            # Process headings found on the page.
-            # Running-head titles from {{EB1911 Page Heading|...}} —
-            # used below to disambiguate tentative candidates.
-            # Template shape: {{EB1911 Page Heading|L#|LTITLE|RTITLE|R#}}
-            _raw_head = (page.wikitext or "")[:400]
-            _hm = re.search(
-                r"Page Heading\|[^|]*\|([^|]*)\|([^|]*)\|", _raw_head)
-            _heading_titles: set[str] = set()
-            if _hm:
-                for t in (_hm.group(1), _hm.group(2)):
-                    t = t.strip().upper().rstrip(",.")
-                    if t:
-                        _heading_titles.add(t)
-
-            for candidate in parsed.candidates:
-                body_text = (candidate.body or "").strip()
-
-                # Cross-article section redirect.  A Title Case
-                # ``<section begin="Charles X."/>`` on a continuation
-                # page would normally be absorbed as a subsection of the
-                # currently open article by the Title-Case heuristic
-                # below.  But if a real article with that section name
-                # already exists and is closed — an interspersed
-                # continuation page (CHARLES X., DICTIONARY,
-                # HENRY VI./VII.) — the content belongs to THAT article:
-                # route it there instead of absorbing.  (Plate pages are
-                # lifted out by ``_split_out_plates`` before this loop
-                # runs, so the old plate branch here is gone.)
-                _redirect = None
-                if candidate.is_tentative and candidate.raw_sec_id:
-                    _cand_sec = candidate.raw_sec_id.casefold()
-                    for _a in articles:
-                        if (_a.section_name
-                                and _a.section_name.casefold() == _cand_sec
-                                and _a is not open_article):
-                            _redirect = _a
-                            break
-                if _redirect is not None:
-                    if body_text:
-                        _next_seq = len(_redirect.segments) + 1
-                        _redirect.segments.append(SegmentInfo(
-                            source_page_id=page.id,
-                            page_number=page.page_number,
-                            sequence=_next_seq,
-                            text=body_text,
-                        ))
-                        _redirect.page_end = page.page_number
-                    continue
-
-                # Wikisource repeats <section begin="X"> on continuation pages.
-                # If the currently open article has the same title, this is
-                # continuation — append rather than creating a duplicate.
-                exact_match = (
-                    open_article is not None
-                    and open_article.title == candidate.title
-                )
-                _open_base = re.sub(r"\d+$", "", open_article.title) if open_article else ""
-                _cand_base = re.sub(r"\d+$", "", candidate.title)
-                fuzzy_match = (
-                    open_article is not None
-                    and candidate.is_tentative
-                    and (
-                        _open_base.startswith(_cand_base)
-                        or _cand_base.startswith(_open_base)
-                    )
-                    and _cand_base
-                )
-                # A tentative candidate (named section without a bold
-                # heading) is a subsection of the currently open article
-                # when the page's running head (from {{Page Heading|…}})
-                # matches the open article's title AND does NOT match
-                # the candidate's own title. Pages that transition
-                # between two real articles carry BOTH titles in the
-                # heading ({left | right}); in that case the candidate
-                # is a legitimate new article, not a subsection, so we
-                # must not absorb it.
-                _open_root = open_article.title.upper().split(",")[0] if open_article else ""
-                _cand_root = candidate.title.upper().split(",")[0]
-                _heading_roots = {h.split(",")[0] for h in _heading_titles}
-                heading_says_continuation = (
-                    candidate.is_tentative
-                    and open_article is not None
-                    and _open_root in _heading_roots
-                    and _cand_root not in _heading_roots
-                )
-                # First-word fallback: if the tentative candidate and
-                # the open article share their first word (e.g.
-                # "CLEMENT (POPES)" vs "CLEMENT VI" or "CLEMENT XII"),
-                # treat the candidate as a subsection. Real article
-                # transitions always have different first words
-                # (ROORKEE → ROOSEVELT, THEODORE). Applies even when
-                # a running header names a LATER article on the page —
-                # that header belongs to the *next* article, not the
-                # tentative continuation.
-                _open_firstword = _open_root.split()[0] if _open_root else ""
-                _cand_firstword = _cand_root.split()[0] if _cand_root else ""
-                firstword_says_continuation = (
-                    candidate.is_tentative
-                    and open_article is not None
-                    and _open_firstword
-                    and _open_firstword == _cand_firstword
-                )
-                # Title Case <section begin="Foo"/> names (those with any
-                # lowercase letter) are usually subsection continuations
-                # by Wikisource convention — EB1911 real article titles
-                # are ALL CAPS. ALGAE's "Benthos" continuation and
-                # "Occurrence in the rocks" get carved off as spurious
-                # articles without this guard.
-                #
-                # Exception: biographical articles follow "Surname,
-                # Firstname" (or "Surname, Firstname (Qualifier)") form,
-                # which has lowercase letters but is always a real
-                # article — Angelico/Fra, Comte/Auguste, Cervantes, etc.
-                _sec_id = candidate.raw_sec_id or ""
-                _is_bio_section = bool(re.match(
-                    r"^[A-Z][a-zA-ZÀ-ÿ'\- ]+,\s+[A-Z]",
-                    _sec_id,
-                ))
-                section_name_says_continuation = (
-                    candidate.is_tentative
-                    and open_article is not None
-                    and _sec_id
-                    and _sec_id != _sec_id.upper()
-                    and any(c.islower() for c in _sec_id)
-                    and not _is_bio_section
-                )
-                if body_text and candidate.is_tentative and (
-                    exact_match or fuzzy_match
-                    or heading_says_continuation
-                    or firstword_says_continuation
-                    or section_name_says_continuation
-                ):
-                    next_seq = len(open_article.segments) + 1
-                    # If this is a subsection absorption (name differs
-                    # from the open article), emit a «SEC:name» marker
-                    # so the viewer can render it as a navigable heading
-                    # and xrefs can link to it as #section-<slug>.
-                    # Skip pure Wikisource continuations (same name as
-                    # open article, or same name as an already-emitted
-                    # SEC marker earlier in the article — Wikisource
-                    # repeats `<section begin="Clement XII"/>` on each
-                    # continuation page).
-                    _sec_name = candidate.title.strip()
-                    _already_seen = False
-                    if _sec_name:
-                        # Normalize by stripping trailing "(qualifier)" so
-                        # a bare "CLEMENT VII" on a continuation page is
-                        # recognized as a dup of an earlier
-                        # "Clement VII (pope)" / "Clement VII (Antipope)".
-                        def _norm_sec(n: str) -> str:
-                            n = re.sub(r"\s*\([^)]*\)\s*$", "", n).strip()
-                            return n.upper()
-                        _cand_norm = _norm_sec(_sec_name)
-                        _existing = "\n".join(s.text or "" for s in open_article.segments)
-                        for _m in re.finditer(
-                            r"\u00abSEC:([^\u00ab]+)\u00ab/SEC\u00bb", _existing
-                        ):
-                            if _norm_sec(_m.group(1)) == _cand_norm:
-                                _already_seen = True
-                                break
-                    if (not exact_match
-                            and not fuzzy_match
-                            and _sec_name
-                            and not _already_seen):
-                        marker_body = (
-                            f"\u00abSEC:{candidate.title.strip()}\u00ab/SEC\u00bb"
-                            "\n\n" + body_text
-                        )
-                    else:
-                        marker_body = body_text
-                    open_article.segments.append(SegmentInfo(
-                        source_page_id=page.id,
-                        page_number=page.page_number,
-                        sequence=next_seq,
-                        text=marker_body,
-                    ))
-                    open_article.page_end = page.page_number
-                    continue
-
-                # New article
-                detected = DetectedArticle(
-                    title=candidate.title,
-                    volume=page.volume,
-                    page_start=page.page_number,
-                    page_end=page.page_number,
-                    article_type="article",
-                    section_name=candidate.raw_sec_id or "",
-                    title_raw=candidate.title_raw,
-                )
-                if body_text:
-                    detected.segments.append(SegmentInfo(
-                        source_page_id=page.id,
-                        page_number=page.page_number,
-                        sequence=1,
-                        text=body_text,
-                    ))
-                articles.append(detected)
-                open_article = detected
-
-        # Post-process: fix pages whose heading indicates they belong to
-        # a different article.  Walk through detected articles and check
-        # each page's heading.  If a run of consecutive pages has a heading
-        # that matches a LATER article (by section marker), move those pages.
-        articles = _fix_swallowed_pages(articles, pages)
-
-        # Merge the PASS-1 plates back in, in page order.  When a plate
-        # and an article share a page_start (a plate insert can fall on
-        # the same printed page where an article continues), the article
-        # — which "owns" that page range — sorts first.
-        articles.extend(plate_articles)
-        articles.sort(key=lambda a: (
-            a.page_start, 0 if a.article_type == "article" else 1, a.title))
-
-        return articles
-
+        art_ids = [a[0] for a in session.query(Article.id).filter(
+            Article.volume == volume).all()]
+        if not art_ids:
+            return 0
+        session.query(CrossReference).filter(
+            CrossReference.target_article_id.in_(art_ids)
+        ).update({"target_article_id": None,
+                  "status": "unresolved"},
+                 synchronize_session=False)
+        session.query(CrossReference).filter(
+            CrossReference.article_id.in_(art_ids)
+        ).delete(synchronize_session=False)
+        session.query(ArticleContributor).filter(
+            ArticleContributor.article_id.in_(art_ids)
+        ).delete(synchronize_session=False)
+        session.query(ArticleImage).filter(
+            ArticleImage.article_id.in_(art_ids)
+        ).delete(synchronize_session=False)
+        session.query(ArticleSegment).filter(
+            ArticleSegment.article_id.in_(art_ids)
+        ).delete(synchronize_session=False)
+        session.query(Article).filter(
+            Article.id.in_(art_ids)
+        ).delete(synchronize_session=False)
+        session.commit()
+        return len(art_ids)
     finally:
         session.close()
 
 
-# ── Persistence ────────────────────────────────────────────────────────
-
-
 def persist_articles(detected: list[DetectedArticle]) -> int:
-    """Create Article and ArticleSegment records from detected boundaries."""
+    """Create Article and ArticleSegment records from detected boundaries.
+
+    Pure insertion — no implicit wipe.  Callers that want a full
+    re-detect call ``wipe_articles(volume)`` first.  Both the CLI
+    `detect-boundaries` and `tools/pipeline/rebuild_volume.py` do
+    exactly that.
+    """
     session = SessionLocal()
     try:
         for det in detected:

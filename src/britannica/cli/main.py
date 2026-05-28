@@ -5,9 +5,11 @@ import typer
 from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.prepare_wikitext import prepare_wikitext
-from britannica.db.models import Article, CrossReference, SourcePage
-from britannica.pipeline.stages.detect_boundaries import persist_articles
-from britannica.pipeline.stages.super_detect import super_detect_boundaries
+from britannica.db.models import (
+    Article, ArticleSegment, CrossReference, SourcePage)
+from britannica.pipeline.stages.detect_boundaries import (
+    persist_articles, wipe_articles)
+from britannica.pipeline.stages.super_detect import detect_boundaries
 from britannica.pipeline.stages.transform_articles import transform_articles
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
@@ -112,10 +114,8 @@ def list_pages(volume: int = typer.Option(None)) -> None:
         
 @app.command("detect-boundaries")
 def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
-    # Honest article detection: the super-walker consumes nothing (works on raw
-    # source); super_detect assembles raw article slices.  Replaces the legacy
-    # per-page detect_boundaries.  See super_detect.py / super_walker.py.
-    detected = super_detect_boundaries(volume)
+    wipe_articles(volume)
+    detected = detect_boundaries(volume)
     count = persist_articles(detected)
     print(f"Detected and created {count} articles for volume {volume}.")
 

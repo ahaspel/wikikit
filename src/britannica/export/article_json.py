@@ -17,7 +17,6 @@ from britannica.export.body_postprocess import (
     _clean_surface_for_matching,
     _looks_bibliographic,
     _protected_ranges,
-    _strip_redundant_title,
 )
 from britannica.export.pages import (
     _LEAF_OFFSET,
@@ -635,14 +634,10 @@ def export_articles_to_json(
             # (MediaWiki `alt=` params, partial `Fig` strings, etc.), so
             # deletion improved output on those.  See
             # `[[total-functions-not-cleanup-passes]]`.
-            # Title-bold strip is now done at producer time inside
-            # `_transform_text_v2`.  This export-side call remains as a
-            # transitional safety net for stale `article.body` rows in
-            # the DB (the producer change only takes effect on the next
-            # `transform_articles` rebuild).  After the rebuild this
-            # call is a no-op and can be deleted; until then it keeps
-            # exports clean.  See task #43.
-            body = _strip_redundant_title(body, article.title)
+            # (Title chop-up happens at source in detect_boundaries —
+            # `_extract_bold_delimited_title` + `produce_title`.  No
+            # downstream sweeper.  Stale DB rows from before the chop-up
+            # fix will display the leading title-bold until re-detected.)
 
             # No clean_body: each element is responsible for emitting
             # clean output (split_wiki_row / parse_wiki_table /
@@ -750,9 +745,7 @@ def export_articles_to_json(
                 .count()
             )
             body = _body_for(article)
-            # Transitional safety net (see comment at the other strip
-            # call site above) — delete after the next transform rebuild.
-            body = _strip_redundant_title(body, article.title)
+            # (Chop-up at source — no title strip here.)
             # First ~10 words of body for disambiguation in the index.
             # Skip any leading paragraphs that are just image / table /
             # verse markers — the preview should be TEXT, not raw markup
