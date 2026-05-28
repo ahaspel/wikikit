@@ -38,7 +38,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
     SHAPE_MIRROR_GLYPH,
-    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
 )
@@ -83,6 +82,13 @@ _CHART2_RE = re.compile(
 # self-closing has the `/>` terminator with no `</ref>` to find.
 _REF_SELF_RE = re.compile(r"<ref\s[^>]*/\s*>", re.IGNORECASE)
 
+# Wikisource `<pagequality level="N" user="X" />` — page-quality metadata,
+# previously inside `<noinclude>` and swept by NOINCLUDE.  With noinclude
+# tags wiped upstream, this self-closing tag sits naked in body raw.
+# Lifted as its own HTML_SELF_CLOSING element; producer returns "".
+_PAGEQUALITY_RE = re.compile(
+    r"<pagequality\b[^>]*/\s*>", re.IGNORECASE)
+
 # HTML tag recognizers — each one specific to a single tag name.
 # `<ref>` placed AFTER `<ref…/>` (specificity: longer match preferred
 # means we try self-closing first; only fall through to the
@@ -105,13 +111,11 @@ _HIEROGLYPH_TAG_RE = re.compile(r"<hiero>[^<]*</hiero>", re.IGNORECASE)
 # than being swept by the text producer's catch-all HTML strip.
 _SECTION_RE = re.compile(r"<section\s+(?:begin|end)\b[^>]*>", re.IGNORECASE)
 
-# Wikisource page container `<noinclude>…</noinclude>` — page-quality/header
-# chrome, occasionally a cross-page `{|`/`|}` table marker.  Recognized so it
-# becomes an owned NOINCLUDE element carried raw; the producer decides chrome
-# (drop) vs. structural content (keep) — a content decision that belongs in a
-# producer, not a pre-walk strip.
-_NOINCLUDE_RE = re.compile(r"<noinclude>.*?</noinclude>",
-                           re.DOTALL | re.IGNORECASE)
+# `<noinclude>` tags are stripped upstream in `_transform_text_v2`
+# before the article walker runs — see the comment there.  The article
+# pipeline therefore never sees them.  The plate pipeline still uses
+# noinclude as a structural anchor for plate-title extraction and is
+# unaffected (it has its own walker).
 
 # Wikisource `<span style="…{{mirrorH}}…">content</span>` — a horizontally
 # mirrored glyph (used in ALPHABET to show left-right-flipped letters of
@@ -354,9 +358,9 @@ def _is_inline_image_position(text: str, pos: int) -> bool:
 _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_CHART2,            _CHART2_RE),
     (SHAPE_SECTION,           _SECTION_RE),
-    (SHAPE_NOINCLUDE,         _NOINCLUDE_RE),
     (SHAPE_MIRROR_GLYPH,      _MIRROR_GLYPH_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
+    (SHAPE_HTML_SELF_CLOSING, _PAGEQUALITY_RE),
     (SHAPE_HTML_TAG,          _REF_RE),
     (SHAPE_HTML_TAG,          _HTML_TABLE_RE),
     (SHAPE_HTML_TAG,          _POEM_RE),
@@ -383,8 +387,8 @@ _OPENER_HINT_RE = re.compile(
     r"\{\{chart2/start"             # CHART2
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
+    r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
-    r"|<noinclude\b"                # NOINCLUDE page container
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
@@ -399,8 +403,7 @@ _OPENER_HINT_RE = re.compile(
 # Spans whose `{|` / `|}` are NOT wiki-table syntax: LaTeX inside
 # `<math>`, verbatim `<nowiki>`, HTML comments.  Masked off before the
 # balanced-table scanner runs so a stray `\frac{|…}` in math doesn't
-# read as a table opener.  See `_NON_TABLE_BRACE_SPAN_RE` in
-# `__init__.py` for the same masking against today's extract().
+# read as a table opener.
 _NON_TABLE_BRACE_SPAN_RE = re.compile(
     r"<math\b[^>]*>.*?</math\s*>"
     r"|<nowiki\b[^>]*>.*?</nowiki\s*>"

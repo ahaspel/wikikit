@@ -19,7 +19,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
     SHAPES,
@@ -32,7 +31,6 @@ class TestShapeVocabulary:
         # 7 delimiter-balanced/text shapes + structural extras:
         #   FIGURE (image + structural caption run),
         #   SECTION (``<section begin/end/>``),
-        #   NOINCLUDE (``<noinclude>…</noinclude>`` page container),
         #   INLINE_IMAGE (``[[File:…]]`` in inline-prose context —
         #     more specific than DOUBLE_BRACKET so producers don't
         #     re-recognise),
@@ -40,11 +38,14 @@ class TestShapeVocabulary:
         #     SHAPE_BODY, owner-of-output principle says every span
         #     maps to one producer),
         #   MIRROR_GLYPH (``<span style="{{mirrorH}}">…</span>``).
+        # NOINCLUDE was removed when the article pipeline started
+        # wiping `<noinclude>` tags upstream in `_transform_text_v2`
+        # — chrome content owned by explicit template recognizers,
+        # plate pipeline uses its own walker.
         # Bump this count alongside ``_shapes.SHAPES``.
-        assert len(SHAPES) == 13
+        assert len(SHAPES) == 12
         assert SHAPE_FIGURE in SHAPES
         assert SHAPE_SECTION in SHAPES
-        assert SHAPE_NOINCLUDE in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)

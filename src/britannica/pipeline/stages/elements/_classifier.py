@@ -54,7 +54,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
     SHAPE_MIRROR_GLYPH,
-    SHAPE_NOINCLUDE,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
     strip_outer,
@@ -98,7 +97,8 @@ def _derive_html_tag_label(raw: str) -> str:
 
 
 def _derive_html_self_closing_label(raw: str) -> str:
-    # Today only `<ref name=X/>` is extracted as HTML_SELF_CLOSING.
+    if raw[:13].lower().startswith("<pagequality"):
+        return "PAGEQUALITY"
     return "REF_SELF"
 
 
@@ -319,8 +319,6 @@ def _derive_label(
         return "FIGURE"
     if shape == SHAPE_SECTION:
         return "SECTION"
-    if shape == SHAPE_NOINCLUDE:
-        return "NOINCLUDE"
     if shape == SHAPE_BODY:
         return "BODY"
     if shape == SHAPE_MIRROR_GLYPH:
@@ -452,7 +450,7 @@ def produce_tree(
         # Empty markers SUBSTITUTE NORMALLY — they're legitimate
         # producer output (`_process_ref_self` returns "" when a ref
         # name isn't resolved per its drop-silently contract; SECTION /
-        # NOINCLUDE / `<ref follow=>` continuations return "" too).
+        # `<ref follow=>` continuations return "" too).
         # The previous `if child_ce.marker and ...` check short-
         # circuited on empty markers and leaked the placeholder
         # bytes (`\x03ELEM:N\x03`) into output — AFRICA's territorial

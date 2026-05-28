@@ -230,6 +230,48 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # internally; Layer-A utilities remain available for producers /
     # classifiers to call privately, but the pipeline-style chain that
     # used to thread their outputs across stages here has been deleted.
+    # Strip `<noinclude>…</noinclude>` BLOCKS (tags + content), but
+    # preserve any `{|` / `|}` wikitable markers that live inside —
+    # EB1911 pages routinely put the table opener `{|<attrs>` in the
+    # trailing noinclude of one page and the closer `|}` in the leading
+    # noinclude of the next, so each page renders standalone.  Wiping
+    # the block wholesale would orphan the cell rows that sit between;
+    # preserving the markers lets the walker's BRACE_PIPE scanner pair
+    # them as one table.
+    #
+    # Why strip the block content (not just the tags): chrome templates
+    # `{{rh|…}}`, `{{RunningHeader|…}}`, `{{EB1911 Page Heading|…}}` are
+    # DUAL-USE in source — page chrome lives inside `<noinclude>`,
+    # inline content layout uses the same template names OUTSIDE
+    # noinclude (STEAM_ENGINE has `{{rh|or|equation|}}` as a centred
+    # equation continuation, NOT a page header).  If we strip only the
+    # noinclude TAGS and the chrome contents become naked, an inline-
+    # content `{{rh|...}}` and a page-chrome `{{rh|...}}` look identical
+    # downstream — no discriminator.  Wiping the whole noinclude block
+    # preserves the in-source distinction: chrome (inside noinclude) is
+    # dropped along with the noinclude wrapping; inline content (outside
+    # noinclude) survives.
+    #
+    # The PLATE pipeline (`parsers/plate/`) reads raw bytes through its
+    # OWN walker and uses `<noinclude>` as a structural anchor for plate-
+    # title extraction (`{{x-larger|TITLE}}` inside the noinclude header).
+    # That path is untouched — this strip operates only on the article
+    # transform body.
+    _TABLE_OPEN_LINE = re.compile(r"(?:^|\n)\s*\{\|[^\n<]*")
+    _TABLE_CLOSE_LINE = re.compile(r"(?:^|\n)\s*\|\}(?!\})")
+
+    def _strip_noinclude_keep_table_markers(m: re.Match) -> str:
+        block = m.group(0)
+        kept = [om.group(0).strip() for om in _TABLE_OPEN_LINE.finditer(block)]
+        if _TABLE_CLOSE_LINE.search(block):
+            kept.append("|}")
+        return ("\n" + "\n".join(kept) + "\n") if kept else ""
+
+    raw_wikitext = re.sub(
+        r"<noinclude>.*?</noinclude>",
+        _strip_noinclude_keep_table_markers,
+        raw_wikitext, flags=re.DOTALL | re.IGNORECASE,
+    )
     context = ElementContext(volume=volume, page_number=page_number)
     text = process_elements(raw_wikitext, _apply_markup, context)
 

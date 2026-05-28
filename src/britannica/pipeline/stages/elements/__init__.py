@@ -78,9 +78,6 @@ from britannica.pipeline.stages.elements._outline import (
 from britannica.pipeline.stages.elements._section import (
     _process_section,
 )
-from britannica.pipeline.stages.elements._noinclude import (
-    _process_noinclude,
-)
 from britannica.pipeline.stages.elements._layout import (
     _append_attribution,
     _ascii_fold_label,
@@ -385,10 +382,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
     "SECTION": lambda raw, inner, tt, ctx, reg: _process_section(raw),
-    # NOINCLUDE — `<noinclude>…</noinclude>` page container; producer drops
-    # chrome, keeps cross-page `{|`/`|}`.  Owned element instead of a pre-walk
-    # strip; the catcher for the honest super-walker (B3).
-    "NOINCLUDE": lambda raw, inner, tt, ctx, reg: _process_noinclude(raw),
+    # PAGEQUALITY — `<pagequality level=N user=X />` Wikisource metadata.
+    # Previously inside a `<noinclude>` block claimed by NOINCLUDE.  With
+    # noinclude wiped in `_transform_text_v2`, this self-closing tag sits
+    # naked in body raw; producer renders nothing.
+    "PAGEQUALITY": lambda raw, inner, tt, ctx, reg: "",
     # BODY — article-level prose run between extracted elements; the body
     # producer applies markup conversion + body-only finishing.  With BODY
     # owning its bytes as a normal element, article assembly collapses to

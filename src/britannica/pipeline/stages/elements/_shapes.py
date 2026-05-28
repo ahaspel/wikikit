@@ -32,7 +32,6 @@ SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shape
 SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}} region
 SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
-SHAPE_NOINCLUDE         = "NOINCLUDE"          # <noinclude>…</noinclude> page container
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
 
@@ -48,7 +47,6 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_CHART2,
     SHAPE_FIGURE,
     SHAPE_SECTION,
-    SHAPE_NOINCLUDE,
     SHAPE_BODY,
     SHAPE_MIRROR_GLYPH,
 })
@@ -77,10 +75,6 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # SECTION — a `<section begin/end/>` transclusion marker; no inner content,
     # the producer reads the raw tag (its name is boundary metadata).
     SHAPE_SECTION,
-    # NOINCLUDE — a `<noinclude>…</noinclude>` page container.  Heterogeneous
-    # (page-chrome vs. a cross-page `{|` table marker), so disposition is a
-    # CONTENT decision the producer makes from `raw` — not walked here.
-    SHAPE_NOINCLUDE,
     # BODY — article-level prose run between other elements.  The body
     # producer owns it end-to-end (markup conversion + body finishing);
     # the walker does NOT recurse into it (any extractable shape would
@@ -121,10 +115,6 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_SECTION:
         # No inner content — the whole tag is the marker; the producer
         # reads `raw`.
-        return ""
-    if shape == SHAPE_NOINCLUDE:
-        # Not walked — the producer reads `raw` and makes the chrome-vs-
-        # content (keep `{|`/`|}`) decision itself.
         return ""
     if shape == SHAPE_DOUBLE_BRACKET or shape == SHAPE_INLINE_IMAGE:
         s = re.sub(r"^\[\[", "", raw)
