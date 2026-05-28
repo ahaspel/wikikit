@@ -284,7 +284,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
                 text = text.replace(marker, f"{marker}\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n", 1)
 
     # Cross-page sentence reflow: a segment ending mid-sentence (no
-    # terminator) followed by `\x01PAGE:N\x01` and a lowercase
+    # terminator) followed by `\x01PAGE:N\x01` and a letter
     # continuation is a column-wrap at the page edge, not a paragraph
     # break.  The segment-end `\n` plus the join `\n` between
     # `<noinclude>` chrome that the walker strips, leaves `\n+` here.
@@ -292,9 +292,23 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # page marker stays inline at the wrap point.  Must run before
     # `reflow_paragraphs` (which splits on `\n\n`) so the `\n+` doesn't
     # become a paragraph break first.
+    #
+    # The `\s*` AFTER the page marker is essential — when a `<section
+    # end>` tag and an empty `<noinclude>…</noinclude>` block sit
+    # between the page marker and the continuation word (the EB1911
+    # cross-page convention puts `<section end>` at the trailing edge
+    # of one page and `<noinclude>{{rh|…}}</noinclude>` at the leading
+    # edge of the next), the chrome producers strip those to "" but
+    # leave the surrounding `\n` behind.  Without `\s*` the regex
+    # required the letter to sit at byte position immediately after
+    # `\x01`, missing every cross-page break that had any chrome
+    # between it and the continuation (COPTS p.131 `they\n\n\x01PAGE:131
+    # \x01\nwere`, hundreds of similar).
     text = re.sub(
-        r"(\w)\s*\n+\s*(\x01PAGE:\d+\x01)([a-zA-Z])",
-        r"\1 \2\3", text,
+        r"(\w)\s*\n+\s*(\x01PAGE:\d+\x01)(\s*)([a-zA-Z])",
+        lambda m: (f"{m.group(1)} {m.group(2)}"
+                   f"{' ' if m.group(3) else ''}{m.group(4)}"),
+        text,
     )
 
     # Rejoin words split by line-break hyphenation (`trans- \nlation` →
