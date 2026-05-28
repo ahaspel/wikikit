@@ -153,6 +153,84 @@ _DUAL_LINE_RE = re.compile(
     r"\}\}",
     re.DOTALL | re.IGNORECASE,
 )
+# Labeled display-equation templates — `{{equation|content}}`,
+# `{{MathForm1|label|content}}`, `{{ne|content}}`.  These are
+# structurally declared as math by their template name — the source's
+# own assertion "this is a math expression with its own paragraph
+# context."  Walker bounds the template (purely structural); classifier
+# applies a math label; producer emits `«EQN:LABEL»content«/EQN»` with
+# `\n\n` paragraph margins.
+#
+# Inline-typography templates (`{{sfrac|...}}`, `{{sub|...}}`,
+# `{{sup|...}}`, the fraction variants) are NOT walker chunks even
+# though their content is mathematical — they're typography whose
+# rendered output flows back into prose, and body-text owns rendering.
+# See the chunk-vs-typography principle: the source must declare math
+# via the template name itself for the walker to recognize it.
+#
+# Closer is found via `_find_balanced_template_end` — a depth-counting
+# scanner that masks `<math>`/`<nowiki>`/HTML-comment spans so the
+# literal `{`/`}` inside LaTeX (e.g. `\text{A}` in `{{ne|<math>…}}`)
+# don't trip brace depth.  Regex with `[^{}]` would lose those.
+_LABELED_EQUATION_TEMPLATE_NAMES_PATTERN = (
+    r"equation"
+    r"|MathForm1"
+    r"|ne"
+)
+_LABELED_EQUATION_TEMPLATE_OPENER_RE = re.compile(
+    r"\{\{\s*(" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",
+    re.IGNORECASE,
+)
+
+
+def _find_balanced_template_end(text: str, start: int) -> int | None:
+    """Find the position one past the balanced ``}}`` closing the
+    `{{...}}` template that begins at ``start``.
+
+    Returns None if no balanced close exists.
+
+    Treats ``<math>…</math>``, ``<nowiki>…</nowiki>`` and ``<!--…-->``
+    as opaque atoms — `{`/`}` inside them don't count toward brace
+    depth.  Needed for `{{ne|<math>\\text{A}</math>}}` and similar
+    where LaTeX content carries literal braces a regex `[^{}]` would
+    refuse to cross.
+    """
+    if text[start:start + 2] != "{{":
+        return None
+    n = len(text)
+    depth = 1
+    i = start + 2
+    while i < n:
+        ch = text[i]
+        if ch == "<":
+            tail = text[i:i + 6].lower()
+            if tail.startswith("<math"):
+                end = text.lower().find("</math>", i + 5)
+                if end >= 0:
+                    i = end + 7
+                    continue
+            elif tail.startswith("<nowik"):
+                end = text.lower().find("</nowiki>", i + 6)
+                if end >= 0:
+                    i = end + 9
+                    continue
+            elif text[i:i + 4] == "<!--":
+                end = text.find("-->", i + 4)
+                if end >= 0:
+                    i = end + 3
+                    continue
+            i += 1
+        elif ch == "{" and i + 1 < n and text[i + 1] == "{":
+            depth += 1
+            i += 2
+        elif ch == "}" and i + 1 < n and text[i + 1] == "}":
+            depth -= 1
+            i += 2
+            if depth == 0:
+                return i
+        else:
+            i += 1
+    return None
 # `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params), optionally
 # followed by a `{{center|cap}}` / `{{csc|cap}}` caption.  Recognized as one
 # DOUBLE_BRACE image element (→ DJVU_CROP); the producer crops + captions it.
@@ -288,7 +366,8 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line)\b",  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
 )
 
@@ -439,6 +518,18 @@ def _walk_balanced_shapes(
                     and matched[2].endswith("]]")
                     and _is_inline_image_position(text, matched[0])):
                 matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
+
+        # Labeled-display-equation templates use a balanced-brace
+        # scanner (not a regex) because `{{ne|<math>...</math>}}`
+        # carries LaTeX with literal `{`/`}` (`\text{A}` etc.) that a
+        # `[^{}]`-based regex can't span.  The scanner masks
+        # `<math>`/`<nowiki>`/comment spans before counting braces.
+        if matched is None and _LABELED_EQUATION_TEMPLATE_OPENER_RE.match(
+                text, opener_pos):
+            end = _find_balanced_template_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE,
+                           text[opener_pos:end])
 
         # BRACE_PIPE doesn't have a regex pattern — its closer
         # requires balanced depth tracking.  Try it last (lowest

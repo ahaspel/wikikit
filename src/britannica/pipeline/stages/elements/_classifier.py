@@ -149,6 +149,21 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         if is_math_dual_line(inner_text):
             return "MATH_DUAL"
         return "DUAL_LINE"
+    # Labeled-display-equation templates — declared as math by their
+    # template name.  All three labels dispatch to one producer
+    # (`_process_math_equation`) which selects the per-template arg
+    # convention and emits the shared `«EQN:LABEL»content«/EQN»`
+    # marker with `\n\n` paragraph margins.
+    if name == "equation":
+        return "MATH_EQUATION"
+    if name == "mathform1":
+        return "MATH_FORMULA_LABELED"
+    if name == "ne":
+        return "MATH_NE"
+    # Inline typography (sfrac/frac/mfrac/over/sfracN/EB1911 variants/
+    # sub/sup) stays in body-text — the source doesn't declare those
+    # as math via the template name; they're rendered as typography
+    # whose output flows back into prose.  Walker doesn't lift them.
     raise ValueError(f"Unknown DOUBLE_BRACE template: {name!r}")
 
 

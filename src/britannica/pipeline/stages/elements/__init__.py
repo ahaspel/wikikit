@@ -39,7 +39,10 @@ from britannica.pipeline.stages.elements._image import (
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
-from britannica.pipeline.stages.elements._math import _process_math_dual_line
+from britannica.pipeline.stages.elements._math import (
+    _process_math_dual_line,
+    _process_math_equation,
+)
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
     _is_structural_formula,
@@ -349,6 +352,23 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # in math's home for future math-specific rendering.
     "MATH_DUAL": lambda raw, inner, tt, ctx, reg:
         _process_math_dual_line(inner, tt),
+    # MATH family — walker lifts labeled-display-equation templates
+    # because they're declared as math by their template name and
+    # have their own paragraph context.  One producer covers all
+    # three labels:
+    #   * `_process_math_equation` — labeled display equations
+    #     (equation / MathForm1 / ne all share the `«EQN:…»` contract;
+    #     producer selects per-template arg parsing keyed on name)
+    # Inline `{{sfrac|...}}` fractions and `{{sub|x}}` / `{{sup|x}}`
+    # stay in body-text — they're typography whose output flows back
+    # into prose, and body-text's `_convert_sfrac` / `_convert_sub_sup`
+    # own them.
+    "MATH_EQUATION": lambda raw, inner, tt, ctx, reg:
+        _process_math_equation(inner, tt),
+    "MATH_FORMULA_LABELED": lambda raw, inner, tt, ctx, reg:
+        _process_math_equation(inner, tt),
+    "MATH_NE": lambda raw, inner, tt, ctx, reg:
+        _process_math_equation(inner, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
