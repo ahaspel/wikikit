@@ -45,6 +45,7 @@ from britannica.pipeline.stages.elements._figure import (
     figure_tail_end,
     figure_wrapper_end,
     html_float_figure_end,
+    html_ts_figure_end,
 )
 
 # An image whose trailing caption run the figure rule may absorb: a bracket
@@ -392,6 +393,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
+    r"|<div\s+\{\{[Tt]s\|"  # FIGURE HTML Ts-wrapper variant
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|EB1911)\b"  # DOUBLE_BRACE templates
@@ -517,6 +519,8 @@ def _walk_balanced_shapes(
             w = figure_wrapper_end(text, opener_pos)
             if w is None:
                 w = html_float_figure_end(text, opener_pos)
+            if w is None:
+                w = html_ts_figure_end(text, opener_pos)
             if w is not None:
                 matched = (w, SHAPE_FIGURE, text[opener_pos:w])
 
