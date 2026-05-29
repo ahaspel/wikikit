@@ -310,10 +310,10 @@ For further information on the routine and details of farming, reference may be 
 «CTR»«I»British Live Stock«/I».«/CTR»
 
 The numbers of live stock in the United Kingdom are shown at five-yearly intervals in Table XII. Under horses are embraced only unbroken horses and horses used solely for agriculture (including mares kept for breeding). The highest and lowest annual totals for the United Kingdom in the period 1875–1905 were the following: PAGE:444{{TABLE:Highest. | Lowest. |  Difference. 
-Horses  | 2,116,800 in 1905 | 1,819,687 in 1875 | 295,113
-Cattle | 11,674,019 ″ 1905 | 9,731,537 ″ 1877 | 1,942,482
-Sheep |  33,642,808 ″ 1892 |  27,448,220 ″ 1882 | 6,194,588
-Pigs | 4,362,040 ″ 1890 | 2,863,488 ″ 1880 | 1,498,552}TABLE}
+Horses  | ⟦r⟧2,116,800 in 1905 | ⟦r⟧1,819,687 in 1875 | ⟦r⟧295,113
+Cattle | ⟦r⟧11,674,019 ″ 1905 | ⟦r⟧9,731,537 ″ 1877 | ⟦r⟧1,942,482
+Sheep | ⟦r⟧ 33,642,808 ″ 1892 | ⟦r⟧ 27,448,220 ″ 1882 | ⟦r⟧6,194,588
+Pigs | ⟦r⟧4,362,040 ″ 1890 | ⟦r⟧2,863,488 ″ 1880 | ⟦r⟧1,498,552}TABLE}
 
 After 1892 cattle, which in that year numbered 11,519,417, and sheep declined continuously for three years to the totals of 1895, the diminution being mainly the result of the memorable drought of 1893. Sheep, which numbered 32,571,018 in 1878, declined continuously to 27,448,220 in 1882—a loss of over five million head in five years. This was chiefly attributable to the ravages of the liver fluke which began in the disastrously wet season of 1879. Pigs, being prolific breeders, fluctuate more widely in numbers than cattle or sheep, for the difference of 1,498,552 in their case represents one-third of the highest total, whereas the difference is less than one-seventh for horses, less than one-sixth for cattle, and less than one-fifth for sheep.
 
@@ -327,12 +327,12 @@ After 1892 cattle, which in that year numbered 11,519,417, and sheep declined co
 1905 | 2,116,800 | 11,674,019 | 29,076,777 | 3,601,659}TABLE}
 
 The relative proportions as distinguished from the actual numbers—in which stock are distributed over the several sections of the United Kingdom do not vary greatly from year to year. Table XIII., in which the totals for the United Kingdom include those for the Channel Islands and Isle of Man, illustrates the preponderance of the sheep-breeding industry in the drier climate of Great Britain, and of the cattle-breeding industry in the more humid atmosphere of Ireland. In Great Britain in 1905, for every head of cattle there were about four head of sheep, whereas in Ireland the cattle outnumbered the sheep. «CTR»«SC»Table«/SC» XIII.—«I»Numbers of Horses, Cattle, Sheep and Pigs in the United Kingdom in«/I» 1905.«/CTR» {{TABLE:1905. | Horses. | Cattle. | Sheep. | Pigs.
-England | 1,204,124 | 5,020,936 | 14,698,018 | 2,083,226
-Wales | 161,923 | 738,789 | 3,534,967 | 211,479
-Scotland | 206,386 | 1,227,295 | 7,024,211 | 130,214
-Great Britain | 1,572,433 | 6,987,020 | 25,257,196 | 2,424,919
-Ireland | 534,875 | 4,645,215 | 3,749,352 | 1,164,316
-United <br>Kingdom«FN:Including Channel Islands and Isle of Man.«/FN» «BRACE2[2 | r]» | 2,116,800 | 11,674,019 | 29,076,777 | 3,601,659}TABLE} Again, whilst Great Britain possessed only half as many cattle more than Ireland, she possessed six times as many sheep. The cattle population of England alone slightly exceeded that of Ireland, but cattle are more at home on the broad plains of England than amongst the hills and mountains of Wales and Scotland, which are suitable for sheep. Hence, whilst in England sheep were not three times as numerous as cattle, in Wales they were nearly five times, and in Scotland nearly six times as many. Great Britain had twice as many pigs as Ireland, but the swine industry is mainly. English and Irish, and England possessed more than six times as many pigs as Wales and Scotland together, the number in the last-named country being particularly small. One English county alone, Suffolk, maintained more pigs than the whole of Scotland.
+England | ⟦r⟧1,204,124 | ⟦r⟧5,020,936 | ⟦r⟧14,698,018 | ⟦r⟧2,083,226
+Wales | ⟦r⟧161,923 | ⟦r⟧738,789 | ⟦r⟧3,534,967 | ⟦r⟧211,479
+Scotland | ⟦r⟧206,386 | ⟦r⟧1,227,295 | ⟦r⟧7,024,211 | ⟦r⟧130,214
+Great Britain | ⟦r⟧1,572,433 | ⟦r⟧6,987,020 | ⟦r⟧25,257,196 | ⟦r⟧2,424,919
+Ireland | ⟦r⟧534,875 | ⟦r⟧4,645,215 | ⟦r⟧3,749,352 | ⟦r⟧1,164,316
+United <br>Kingdom«FN:Including Channel Islands and Isle of Man.«/FN» «BRACE2[2 | r]» | ⟦r⟧2,116,800 | ⟦r⟧11,674,019 | ⟦r⟧29,076,777 | ⟦r⟧3,601,659}TABLE} Again, whilst Great Britain possessed only half as many cattle more than Ireland, she possessed six times as many sheep. The cattle population of England alone slightly exceeded that of Ireland, but cattle are more at home on the broad plains of England than amongst the hills and mountains of Wales and Scotland, which are suitable for sheep. Hence, whilst in England sheep were not three times as numerous as cattle, in Wales they were nearly five times, and in Scotland nearly six times as many. Great Britain had twice as many pigs as Ireland, but the swine industry is mainly. English and Irish, and England possessed more than six times as many pigs as Wales and Scotland together, the number in the last-named country being particularly small. One English county alone, Suffolk, maintained more pigs than the whole of Scotland.
 
 «CTR»«I»British Imports of Live Animals and Meat.«/I»«/CTR»
 

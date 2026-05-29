@@ -1814,85 +1814,108 @@ def _unwrap_html_illustration(
     return "\n\n".join(parts) if parts else ""
 
 
+def _html_cell_clean(content: str) -> str:
+    """HTML cell-content normalisation: join soft-hyphen ``<br>`` breaks,
+    convert inline ``<sub>``/``<sup>`` to Unicode, strip remaining HTML
+    tags, collapse whitespace.
+
+    Producer-specific pre-``text_transform`` step; the canonical
+    ``produce_cell`` then runs body-text on the cleaned content while
+    ``_cell_styles`` consumes the cell's attribute slot independently.
+    """
+    c = _strip_wiki_cell_attr_in_html(content)
+    c = _strip_br(c)
+    c = _convert_inline_sub_sup(c)
+    c = re.sub(r"<[^>]+>", " ", c)
+    c = re.sub(r"\s+", " ", c).strip()
+    return c
+
+
 def _process_html_table(
     raw: str,
     inner: str,
     text_transform,
     inner_registry: ElementRegistry | None,
 ) -> str:
-    """Convert HTML table content to either an unwrapped illustration,
-    a {{TABLE:...}TABLE} data table, or an HTMLTABLE marker when
-    rowspan/colspan need to be preserved."""
-    # Strip HTML comments before any row/cell parsing — matches what the
+    """Render an HTML ``<table>`` element via the canonical recursive
+    decomposition (``extract_html_rows`` -> ``produce_cell`` ->
+    ``assemble_wiki_marker``).
+
+    Three output paths, selected per cell-span / row-structure shape:
+
+    * Illustration wrapper (image + caption inside ``<tr>``/``<td>``
+      for layout) -> unwrap to ``{{IMG:...}}`` via
+      ``_unwrap_html_illustration``.
+    * ``rowspan``/``colspan`` present -> emit
+      ``«HTMLTABLE:<table>...</table>«/HTMLTABLE»`` with
+      full per-cell ``style="..."`` preserved (the wiki
+      ``{{TABLE:}TABLE}`` marker can carry only align + colspan).
+    * No spans -> emit canonical ``{{TABLE:}TABLE}`` /
+      ``{{TABLEH:}TABLE}`` via the shared assembler.
+
+    HYDRAULICS-shape ``<table><td>...</td></table>`` (no ``<tr>``
+    wrapper) renders as plain ``" | "``-joined prose, NOT a table
+    marker -- the source's lack of row structure signals flowing-text
+    intent.
+    """
+    from britannica.pipeline.stages.elements._table_decompose import (
+        assemble_wiki_marker, extract_html_rows, produce_cell,
+    )
+
+    # Strip HTML comments before any row/cell parsing -- matches what the
     # bypassed Layer-A ``html_comments`` pass did; without this, comments
     # between ``<tr>``s leak as bogus content (cf. the chem producer).
     inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
-    if "Oriental Railways" in inner and "Mustafa-Pasha" in inner:
-        import sys as _sys
-        _sys.stderr.write("DEBUG: _process_html_table called for TURKEY\n")
-    # Illustration wrapper — unwrap to IMG + caption
+    # Illustration wrapper -- unwrap to IMG + caption
     if _is_html_illustration_wrapper(raw, inner_registry):
         return _unwrap_html_illustration(inner, text_transform, inner_registry)
 
-    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", inner, re.DOTALL | re.IGNORECASE)
-    if not rows:
-        # No <tr> wrappers (e.g. HYDRAULICS: `<table><td>...</td></table>`
-        # with td directly under table). Try to pull out <td> cells; if
-        # none, strip and run the plain content through text_transform so
-        # italic/bold/entities get converted.
+    # HYDRAULICS shape: ``<table><td>...</td></table>`` with ``<td>``
+    # directly under ``<table>`` (no ``<tr>``).  Source intent is
+    # flowing prose, not a tabular grid -- render as ``" | "``-joined
+    # cells, no marker.
+    has_tr = bool(re.search(r"<tr\b", inner, re.IGNORECASE))
+    if not has_tr:
         cells = re.findall(
             r"<t[dh][^>]*>(.*?)</t[dh]>",
             inner, re.DOTALL | re.IGNORECASE)
         if cells:
             parts = []
             for c in cells:
-                c = _strip_wiki_cell_attr_in_html(c)
-                c = _strip_br(c)
-                c = _convert_inline_sub_sup(c)
-                c = re.sub(r"<[^>]+>", " ", c)
-                c = re.sub(r"\s+", " ", c).strip()
-                if c:
-                    parts.append(text_transform(c))
+                cleaned = _html_cell_clean(c)
+                if cleaned:
+                    parts.append(text_transform(cleaned))
             return " | ".join(parts)
         text = re.sub(r"<[^>]+>", " ", inner)
         text = re.sub(r"\s+", " ", text).strip()
-        if text:
-            text = text_transform(text)
-        return text
+        return text_transform(text) if text else ""
 
-    parsed_rows = []
+    # Canonical decomposition: rows -> cells.  Row-level attribute
+    # styling is extracted but not yet carried in the marker format
+    # (the data is available for future marker-format extension).
+    _caption, rows = extract_html_rows(inner)
+
     has_header = False
     has_span = False
-    for row in rows:
-        if "<th" in row.lower():
-            has_header = True
-        matches = re.findall(
-            r"<(t[dh])([^>]*)>(.*?)</\1>",
-            row, re.DOTALL | re.IGNORECASE)
-        if not matches:
-            continue
-        parsed = []
-        for tag, attrs, cell in matches:
-            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attrs, re.IGNORECASE)
-            cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attrs, re.IGNORECASE)
+    # parsed_rows: list[list[(tag, rowspan, colspan, body, styles)]]
+    parsed_rows: list[list[tuple[str, int, int, str, list[str]]]] = []
+    for _row_attrs, cells in rows:
+        parsed: list[tuple[str, int, int, str, list[str]]] = []
+        for sep, cell_attrs, cell_content in cells:
+            tag = "th" if sep == "!" else "td"
+            if sep == "!":
+                has_header = True
+            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?',
+                           cell_attrs, re.IGNORECASE)
+            cs = re.search(r'colspan\s*=\s*"?(\d+)"?',
+                           cell_attrs, re.IGNORECASE)
             rowspan = int(rs.group(1)) if rs else 1
             colspan = int(cs.group(1)) if cs else 1
             if rowspan > 1 or colspan > 1:
                 has_span = True
-            # Full Ts + align/valign + inline style= extraction via
-            # `_cell_styles`.  Previously dropped entirely \u2014 HTMLTABLE
-            # cells emitted as `<td>` with NO styling regardless of
-            # source intent.  Now the full CSS rule list flows through
-            # to `emit_html_cell`'s `styles=` param.
-            styles = _cell_styles(attrs, cell)
-            c = _strip_wiki_cell_attr_in_html(cell)
-            c = _strip_br(c)
-            c = _convert_inline_sub_sup(c)
-            c = re.sub(r"<[^>]+>", " ", c)
-            c = re.sub(r"\s+", " ", c).strip()
-            if c:
-                c = text_transform(c)
-            parsed.append((tag.lower(), rowspan, colspan, c, styles))
+            cleaned = _html_cell_clean(cell_content)
+            styles, body = produce_cell(cell_attrs, cleaned, text_transform)
+            parsed.append((tag, rowspan, colspan, body, styles))
         if parsed:
             parsed_rows.append(parsed)
 
@@ -1956,13 +1979,22 @@ def _process_html_table(
         if only_cell in poem_phs:
             return only_cell
 
-    text_rows = []
-    for parsed in parsed_rows:
-        cells = [content for _, _, _, content, _ in parsed if content]
-        if cells:
-            text_rows.append(" | ".join(cells))
-    if text_rows:
-        return _emit_table_marker(text_rows, header=bool(has_header))
-    return ""
+    # No spans, no special case -> canonical ``{{TABLE:}TABLE}`` /
+    # ``{{TABLEH:}TABLE}`` marker via the shared assembler.  Each cell's
+    # styles list is carried so the assembler can encode alignment
+    # (``align=`` -> ``text-align:`` style).  Row-styles are passed
+    # through (currently dropped at the marker boundary; future-extension
+    # slot).
+    produced_rows: list[tuple[str, list[tuple[list[str], str]]]] = [
+        ("", [(styles, body) for _, _, _, body, styles in parsed if body])
+        for parsed in parsed_rows
+    ]
+    # Drop fully-empty rows after the filter.
+    produced_rows = [(a, c) for a, c in produced_rows if c]
+    if not produced_rows:
+        return ""
+    return assemble_wiki_marker(
+        produced_rows, caption="", header=has_header, table_styles=[],
+    )
 
 
