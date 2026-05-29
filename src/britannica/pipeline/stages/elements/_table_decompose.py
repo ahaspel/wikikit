@@ -36,6 +36,12 @@ from typing import Callable
 
 TextTransform = Callable[[str], str]
 
+# A nested-table producer: raw ``{|…|}`` bytes -> produced marker string.
+# Passed into :func:`produce_cell` by a caller that owns recursion; the
+# cell extractor hands it each raw nested table it finds in cell content.
+# See the module note on producer-owned recursion below.
+NestedTableProducer = Callable[[str], str]
+
 
 # ── Canonical data shapes ───────────────────────────────────────────────
 #
@@ -56,6 +62,92 @@ TextTransform = Callable[[str], str]
 
 Cell = tuple[str, str, str]
 Row = tuple[str, list[Cell]]
+
+
+# ── Nested-table recognition (producer-owned recursion) ─────────────────
+#
+# The flat-walker contract: the walker bounds only the OUTERMOST shapes
+# and never descends into element bodies; each producer owns its own
+# recursion privately.  For tables that means the cell extractor must
+# recognize a raw nested ``{|…|}`` sitting in cell content and recurse on
+# it, rather than relying on the walker to have lifted it into a
+# placeholder + ``inner_registry`` first.
+#
+# THIS PATH IS DORMANT TODAY.  The walker still placeholderizes nested
+# tables during classification, so in production a cell's content carries
+# a ``\x03ELEM:N\x03`` placeholder, never raw ``{|`` bytes — the masking
+# below matches nothing and :func:`produce_cell`'s recursion (opt-in via
+# ``recurse``) is never wired by a caller.  It wakes up only when the
+# walker stops descending into ``SHAPE_BRACE_PIPE`` (the eventual flip),
+# at which point a nested table reaches the cell raw and the producer
+# recurses.  Until then it is exercised only by direct-feed unit tests.
+
+# Nested-table mask token: ``\x03``-delimited so ``split_wiki_row``'s
+# existing placeholder protection treats it as opaque content (it carries
+# no ``|`` / newline, so the row/cell splitters can't fragment it).  The
+# ``NT`` infix keeps it distinct from the walker's ``ELEM:`` placeholders.
+_NESTED_SENTINEL = "\x03"
+
+
+def _nested_token(i: int) -> str:
+    return f"{_NESTED_SENTINEL}NT{i}{_NESTED_SENTINEL}"
+
+
+def find_nested_table_spans(text: str) -> list[tuple[int, int]]:
+    """Return ``(start, end)`` for each top-level balanced ``{|…|}`` span.
+
+    Depth-counted over ``{|`` / ``|}`` token pairs, so a table nested
+    inside a nested table is wholly contained within the OUTER span (the
+    outer span alone is returned; whatever produces that span finds the
+    inner one on its own next descent — recursion at the right layer).
+    A degenerate unclosed ``{|`` runs the span to end-of-string.
+    """
+    spans: list[tuple[int, int]] = []
+    i, n = 0, len(text)
+    while i < n:
+        if text.startswith("{|", i):
+            depth, j = 1, i + 2
+            while j < n and depth:
+                if text.startswith("{|", j):
+                    depth += 1
+                    j += 2
+                elif text.startswith("|}", j):
+                    depth -= 1
+                    j += 2
+                else:
+                    j += 1
+            spans.append((i, j))
+            i = j
+        else:
+            i += 1
+    return spans
+
+
+def _mask_nested_tables(text: str) -> tuple[str, list[str]]:
+    """Replace each top-level balanced ``{|…|}`` with an opaque one-line
+    token.  Returns ``(masked_text, raw_spans)`` where ``raw_spans[i]`` is
+    the original bytes for ``_nested_token(i)``.  No-op (returns the input
+    and an empty list) when there is no nested table — the production case.
+    """
+    spans = find_nested_table_spans(text)
+    if not spans:
+        return text, []
+    raw_spans: list[str] = []
+    out: list[str] = []
+    last = 0
+    for start, end in spans:
+        out.append(text[last:start])
+        out.append(_nested_token(len(raw_spans)))
+        raw_spans.append(text[start:end])
+        last = end
+    out.append(text[last:])
+    return "".join(out), raw_spans
+
+
+def _restore_nested(text: str, raw_spans: list[str]) -> str:
+    for i, raw in enumerate(raw_spans):
+        text = text.replace(_nested_token(i), raw)
+    return text
 
 
 # ── Wiki-side row extractor ─────────────────────────────────────────────
@@ -80,29 +172,46 @@ def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
     """
     from britannica.pipeline.stages.elements._tables import split_wiki_row
 
-    cap_m = _WIKI_CAPTION_RE.search(inner)
+    # Protect balanced nested ``{|…|}`` spans before row-splitting: the
+    # outer ``|-`` row key and ``|+`` caption key would otherwise match a
+    # nested table's own rows and fragment it.  Each span becomes one
+    # opaque token, restored into the owning cell after splitting.  In
+    # production ``masked == inner`` (no raw ``{|`` — see module note), so
+    # this is byte-identical to the un-masked path.
+    masked, raw_spans = _mask_nested_tables(inner)
+
+    cap_m = _WIKI_CAPTION_RE.search(masked)
     caption = cap_m.group(1).strip() if cap_m else ""
 
-    pieces = _WIKI_ROW_SEP_RE.split(inner)
+    pieces = _WIKI_ROW_SEP_RE.split(masked)
     rows: list[Row] = []
 
     if len(pieces) == 1:
         cells = split_wiki_row(_drop_caption_lines(pieces[0]))
         if cells:
             rows.append(("", cells))
-        return caption, rows
+    else:
+        preamble = _drop_caption_lines(pieces[0])
+        if _has_cell_lines(preamble):
+            cells = split_wiki_row(preamble)
+            if cells:
+                rows.append(("", cells))
+        for i in range(1, len(pieces), 2):
+            row_attrs = pieces[i].strip()
+            body = pieces[i + 1] if i + 1 < len(pieces) else ""
+            cells = split_wiki_row(_drop_caption_lines(body))
+            if cells:
+                rows.append((row_attrs, cells))
 
-    preamble = _drop_caption_lines(pieces[0])
-    if _has_cell_lines(preamble):
-        cells = split_wiki_row(preamble)
-        if cells:
-            rows.append(("", cells))
-    for i in range(1, len(pieces), 2):
-        row_attrs = pieces[i].strip()
-        body = pieces[i + 1] if i + 1 < len(pieces) else ""
-        cells = split_wiki_row(_drop_caption_lines(body))
-        if cells:
-            rows.append((row_attrs, cells))
+    if raw_spans:
+        caption = _restore_nested(caption, raw_spans)
+        rows = [
+            (attrs, [
+                (sep, attr, _restore_nested(content, raw_spans))
+                for sep, attr, content in cells
+            ])
+            for attrs, cells in rows
+        ]
     return caption, rows
 
 
@@ -168,6 +277,7 @@ def _html_cells(body: str) -> list[Cell]:
 
 def produce_cell(
     attr_part: str, content: str, text_transform: TextTransform,
+    recurse: NestedTableProducer | None = None,
 ) -> tuple[list[str], str]:
     """Produce one cell: extract its styles, run its content through
     body-text.  Returns `(styles, body)`.
@@ -181,10 +291,27 @@ def produce_cell(
     (`{{sc|…}}`, `{{sup|…}}`, foreign-script wrappers, …) and inline
     HTML (`<span>`, `<i>`, etc.).  These are body-text's concern;
     `text_transform` handles them uniformly with article prose.
+
+    ``recurse`` enables producer-owned recursion: when supplied AND the
+    content carries a raw nested ``{|…|}`` table, each nested table is
+    masked out, the surrounding content is run through body-text, then
+    each nested table's marker — produced by ``recurse(raw)`` — is
+    substituted back in.  Masking keeps the marker clear of body-text's
+    template/markup handling.  ``recurse=None`` (the default, and every
+    production caller today) leaves content untouched; combined with the
+    fact that production cell content never carries raw ``{|`` (it's a
+    placeholder — see module note), this path is dormant until the flip.
     """
     from britannica.pipeline.stages.elements._tables import _cell_styles
     styles = _cell_styles(attr_part, content)
-    body = text_transform(content).strip(" \t") if content else ""
+    if not content:
+        return styles, ""
+    raw_spans: list[str] = []
+    if recurse is not None and "{|" in content:
+        content, raw_spans = _mask_nested_tables(content)
+    body = text_transform(content).strip(" \t")
+    for i, raw in enumerate(raw_spans):
+        body = body.replace(_nested_token(i), recurse(raw))
     return styles, body
 
 

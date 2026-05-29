@@ -464,6 +464,58 @@ _DATA_TABLE_HEADER_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Image namespace link.  The `File:`/`Image:` namespace disambiguates an
+# image from an ordinary `[[wikilink]]`, so a match is reliably an image.
+# (Same pattern recurs in ~6 places across the package — `_layout`'s
+# `_PROSE_FIG_IMG_RE` etc.; consolidating those is its own cleanup.)
+_IMAGE_NS_LINK_RE = re.compile(r"\[\[(?:File|Image):[^\]]*\]\]", re.IGNORECASE)
+
+
+def _raw_inner(raw: str) -> str:
+    """Peel a wikitable / HTML-table's OWN outer delimiters, returning the
+    raw inner bytes (un-placeholderized).  Mirrors ``strip_outer`` for the
+    two table flavors the ICL gate sees, kept local so the gate needs no
+    shape argument.  Used to compute "at my own level" signals from raw."""
+    s = raw.strip()
+    if s.startswith("{|"):
+        s = re.sub(r"^\{\|[^\n]*\n?", "", s)
+        return re.sub(r"\n?\|\}\s*$", "", s)
+    m = re.match(r"<table\b[^>]*>", s, re.IGNORECASE)
+    if m:
+        return re.sub(r"</table>\s*$", "", s[m.end():], flags=re.IGNORECASE)
+    return s
+
+
+def _mask_nested_tables_all(text: str) -> str:
+    """Mask BOTH nested-table flavors — wiki ``{|…|}`` AND HTML
+    ``<table>…</table>`` — so a predicate's "at my own level" scan can't
+    pick up content that belongs to a nested table.  Masking only the wiki
+    form let a nested ``<table><poem>…</poem></table>`` leak its ``<poem>``
+    into the poem-wrapper gate (INTERPOLATION, vol 14 — the bug this
+    prevents).  Every this-level predicate scan must use this, not the
+    wiki-only ``_mask_nested_tables``."""
+    from britannica.pipeline.stages.elements._table_decompose import (
+        _mask_nested_tables,
+    )
+    masked, _ = _mask_nested_tables(text)                        # nested {|…|}
+    return re.sub(r"<table\b[\s\S]*?</table>", "", masked,
+                  flags=re.IGNORECASE)                            # nested <table>
+
+
+def _top_level_image_present(raw: str) -> bool:
+    """True iff an image namespace link (``[[File:…]]`` / ``[[Image:…]]``)
+    sits at the table's OWN level — not inside a nested table.
+
+    Reproduces the inner_registry's ``has_image`` (a direct IMAGE /
+    INLINE_IMAGE child) from raw alone: peel the outer, mask nested tables
+    (so a nested figure's image doesn't count as ours), then look for the
+    image namespace.  ``[[File:`` / ``[[Image:`` is unambiguous — no
+    wikilink collision — so a surviving top-level match is a direct image
+    child.  This is what lets the ICL gate's single-figure signal stop
+    reading the registry (the locality invariant for the predicate)."""
+    return bool(_IMAGE_NS_LINK_RE.search(
+        _mask_nested_tables_all(_raw_inner(raw))))
+
 
 def _is_icl_family(raw: str, inner: str,
                     registry: ElementRegistry | None) -> bool:
@@ -510,9 +562,19 @@ def _is_icl_family(raw: str, inner: str,
     if re.search(r"\\left\s*\\?\{", raw):
         return False
     # 2. Figure carrier present.
-    labels = registry.labels.values()
-    has_image = any(lbl in IMAGE_LABELS for lbl in labels)
-    figure_child_count = sum(1 for lbl in labels if lbl in _FIGURE_LABELS)
+    # has_image — a `[[File:…]]` at THIS element's own level (a direct
+    # IMAGE/INLINE_IMAGE child) — now read from raw, not the registry.
+    has_image = _top_level_image_present(raw)
+    # figure_child_count — the multi-figure GROUP signal — is left on the
+    # registry ON PURPOSE.  This branch is flip-coupled: a container of
+    # figures isn't itself a figure, so once the children can recurse out
+    # (Step C) the outer needn't claim them.  At the flip the walker stops
+    # descending, the registry empties, this count → 0, the branch falls
+    # through, and the group outers reclassify automatically (the dead
+    # branch is then swept).  Keeping it registry-backed preserves today's
+    # labels exactly until that deliberate, diffed flip.
+    figure_child_count = sum(
+        1 for lbl in registry.labels.values() if lbl in _FIGURE_LABELS)
     return has_image or figure_child_count >= 2
 
 
@@ -886,26 +948,30 @@ def _is_poem_wrapper_pred(raw: str, inner: str,
     (BELL/BOAT), verse not a table.  STRUCTURAL: ≥1 POEM child, no IMAGE, no
     data-table header (`!` / `<th>` / `<caption>`).  Placed BEFORE
     `_is_layout_wrapper_pred` so poem-wrappers route to VERSE_TABLE rather than
-    being swept into the LAYOUT_WRAPPER catch-all."""
-    if registry is None:
+    being swept into the LAYOUT_WRAPPER catch-all.
+
+    Reads RAW, not the registry/placeholders: peel the outer, mask nested
+    tables (so only THIS table's own cells are inspected), then look for a
+    `<poem>` at this level and require no image and no data-table header.
+    Registry-free per the locality invariant, and flip-ready (works the
+    same whether `inner` arrives placeholderized or raw)."""
+    masked_inner = _mask_nested_tables_all(_raw_inner(raw))
+    if "<poem" not in masked_inner.lower():
         return False
-    poem_phs = [ph for ph, lbl in registry.labels.items() if lbl == "POEM"]
-    if not poem_phs:
+    if _top_level_image_present(raw):
         return False
-    if any(lbl in IMAGE_LABELS for lbl in registry.labels.values()):
+    if (re.search(r"^\s*!", masked_inner, re.MULTILINE)
+            or re.search(r"<(?:th|caption)\b", masked_inner, re.IGNORECASE)):
         return False
-    if (re.search(r"^\s*!", inner, re.MULTILINE)
-            or re.search(r"<(?:th|caption)\b", inner, re.IGNORECASE)):
-        return False
-    # Every cell must be JUST a poem placeholder (+ layout noise) — NO
-    # substantive non-poem text.  A caption/legend cell ("Figs. 1-11.—…",
-    # BRACHIOPODA) means this is a figure-legend table, not a verse wrapper;
-    # routing it here would drop that caption.
-    for cells in _table_grid(inner):
+    # Every cell must be JUST a `<poem>` (+ layout noise) — NO substantive
+    # non-poem text.  A caption/legend cell ("Figs. 1-11.—…", BRACHIOPODA)
+    # means this is a figure-legend table, not a verse wrapper; routing it
+    # here would drop that caption.
+    for cells in _table_grid(masked_inner):
         for content in cells:
-            for ph in poem_phs:
-                content = content.replace(ph, "")
-            content = re.sub(r"\{\{[^{}]*\}\}", "", content)   # Ts / sc / etc.
+            content = re.sub(r"<poem\b[^>]*>[\s\S]*?</poem>", "", content,
+                             flags=re.IGNORECASE)               # poem body
+            content = re.sub(r"\{\{[^{}]*\}\}", "", content)    # Ts / sc / etc.
             content = re.sub(r"«/?[A-Z]+»|&[a-zA-Z]+;|&#\d+;", "", content)
             if re.search(r"[A-Za-z0-9]", content):
                 return False
