@@ -164,21 +164,32 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
 _HTML_TABLE_TAG_RE = re.compile(r"<t[rdh]\b", re.IGNORECASE)
 
 
-def _html_table_grid(inner: str) -> list[list[str]]:
-    """Rows × raw cell-content for an HTML `<table>` inner.
+def _html_table_grid(inner: str) -> list[list[tuple[str, str, str]]]:
+    """Rows × ``(sep, attr_part, content)`` for an HTML `<table>` inner —
+    the canonical cell shape `split_wiki_row` returns, so HTML and wiki cells
+    are the same triple.  ``sep`` is ``'!'`` for a header cell (`<th>`),
+    ``'|'`` for a data cell (`<td>`).
 
     Robust to the unclosed `</td>`/`</tr>` the source sometimes emits
     (the malformed markup that zeroed MAGNETISM / SATURN): cells are the
     text after each `<td>`/`<th>` opener, cut at the next cell/row/table
-    boundary whether or not a closing tag is present."""
-    rows: list[list[str]] = []
+    boundary whether or not a closing tag is present.
+
+    Every cell carries its sep AND its attr — they are part of the cell, and
+    the surest way to keep them is never to drop them.  A consumer that wants
+    content only discards them at the point of use; the extractor never
+    pre-empts that choice."""
+    rows: list[list[tuple[str, str, str]]] = []
     for row in re.split(r"<tr\b[^>]*>", inner, flags=re.IGNORECASE):
-        cells: list[str] = []
-        for piece in re.split(r"<t[dh]\b[^>]*>", row, flags=re.IGNORECASE)[1:]:
+        cells: list[tuple[str, str, str]] = []
+        # Capturing split: parts = [pre, tag1, attr1, content1, tag2, …].
+        parts = re.split(r"<(t[dh])\b([^>]*)>", row, flags=re.IGNORECASE)
+        for i in range(1, len(parts), 3):
             content = re.split(
-                r"</t[dh]>|</tr>|</table>|<tr\b", piece,
-                maxsplit=1, flags=re.IGNORECASE)[0]
-            cells.append(content.strip())
+                r"</t[dh]>|</tr>|</table>|<tr\b", parts[i + 2],
+                maxsplit=1, flags=re.IGNORECASE)[0].strip()
+            sep = "!" if parts[i].lower() == "th" else "|"
+            cells.append((sep, parts[i + 1], content))
         if cells:
             rows.append(cells)
     return rows
@@ -192,7 +203,10 @@ def _table_grid(inner: str) -> list[list[str]]:
     primitive is label-preserving by construction; the `<table>` path
     delegates to `_html_table_grid`."""
     if _HTML_TABLE_TAG_RE.search(inner):
-        return _html_table_grid(inner)
+        # Content-only view: drop sep+attr at point of use, exactly as the
+        # wiki branch below drops them from `split_wiki_row`.
+        return [[content for _sep, _attr, content in row]
+                for row in _html_table_grid(inner)]
     grid: list[list[str]] = []
     for row in re.split(r"\|-[^\n]*", inner):
         cells = [content for _sep, _attr, content in split_wiki_row(row)]
