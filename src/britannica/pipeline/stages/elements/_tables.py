@@ -1315,7 +1315,10 @@ def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
     text_lines = []
     if _HTML_TABLE_TAG_RE.search(inner):
         for cells in _html_table_grid(inner):
-            content = [c for c in (text_transform(x) for x in cells)
+            # `_html_table_grid` yields `(sep, attr, content)` triples;
+            # transform the content slot only (the same content-only view
+            # `_table_grid` takes), not the whole tuple.
+            content = [c for c in (text_transform(cell[2]) for cell in cells)
                        if c.strip()]
             if content:
                 text_lines.append(content[0])
