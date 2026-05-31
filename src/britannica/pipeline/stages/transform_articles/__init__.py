@@ -29,7 +29,6 @@ from britannica.pipeline.stages.transform_articles.body_text import (
     _convert_hieroglyphs,
     _convert_links,
     _convert_shoulder_headings,
-    _convert_small_caps,
     _convert_sub_sup,
     _decode_entities,
     _finalize_markers,
