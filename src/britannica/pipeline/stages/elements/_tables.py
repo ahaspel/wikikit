@@ -519,6 +519,13 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     table_styles = _table_opener_styles(raw)
     table_style_attr = (f' style="{";".join(table_styles)}"'
                         if table_styles else "")
+    # Preserve the source's `class="…"` (e.g. `wikitable`) — a carried signal
+    # the viewer decodes via its OWN `.wikitable` CSS.  The scans show wikitable
+    # tables ARE bordered and class-less ones borderless (AUSTRIA: 5/5), so the
+    # class faithfully tracks borders; we carry the class, not MediaWiki's CSS.
+    cls_m = re.search(r'class\s*=\s*(?:"([^"]*)"|([^\s|{}]+))', raw)
+    cls = ((cls_m.group(1) or cls_m.group(2) or "").strip()) if cls_m else ""
+    table_class_attr = f' class="{cls}"' if cls else ""
     caption_html = ""
     if caption_raw:
         cap_text = text_transform(caption_raw)
@@ -622,7 +629,8 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     for p in preamble:
         parts.append(p)
     if html_rows:
-        parts.append("\u00abHTMLTABLE:<table" + table_style_attr + ">" +
+        parts.append("\u00abHTMLTABLE:<table" + table_class_attr +
+                     table_style_attr + ">" +
                      caption_html +
                      "".join(html_rows) + "</table>\u00ab/HTMLTABLE\u00bb")
     return "\n\n".join(parts)
