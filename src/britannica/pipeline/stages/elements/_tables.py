@@ -236,7 +236,7 @@ def _strip_wiki_cell_attr_in_html(text: str) -> str:
 
 def parse_wiki_table(
     text: str,
-) -> tuple[str, str, list[list[tuple[str, str, str]]]]:
+) -> tuple[str, str, list[list[tuple[str, str, str]]], list[str]]:
     """Parse a wiki-table's structure into ``(opener_attrs, caption, rows)``.
 
     The whole-table counterpart to :func:`split_wiki_row` (which
@@ -281,13 +281,23 @@ def parse_wiki_table(
     if cap_match:
         caption = cap_match.group(1).strip()
 
-    raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", text)
+    # Capturing split keeps each row's `|-<attr>` styling (e.g. `|-{{Ts|ac}}`)
+    # so producers can emit `<tr style=…>` — that row's cells inherit it (the
+    # middle rung of the table/row/cell cascade), previously dropped on the
+    # floor.  `parts` = [row0, attr1, row1, attr2, row2, …]; row0 precedes the
+    # first `|-` and so has no row attr.
+    parts = re.split(r"(?:^|\n)\|-([^\n]*)", text)
+    pending: list[tuple[str, str]] = [("", parts[0])]
+    for k in range(1, len(parts), 2):
+        pending.append((parts[k], parts[k + 1]))
     rows: list[list[tuple[str, str, str]]] = []
-    for raw_row in raw_rows:
+    row_attrs: list[str] = []
+    for attr, raw_row in pending:
         cells = split_wiki_row(raw_row)
         if cells:
             rows.append(cells)
-    return opener_attrs, caption, rows
+            row_attrs.append(attr.strip())
+    return opener_attrs, caption, rows, row_attrs
 
 
 def emit_html_cell(
@@ -501,7 +511,7 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     # Use the shared `parse_wiki_table` for table parsing — gets us
     # caption extraction + row split + cell parsing in one call,
     # consistent with every other wiki-table path.
-    _, caption_raw, parsed_rows = parse_wiki_table(inner)
+    _, caption_raw, parsed_rows, row_attrs = parse_wiki_table(inner)
     # Whole-table styling extracted from `raw` (not `inner`, which has the
     # ``{|<attrs>\n`` opener already stripped by `strip_outer`):
     # `{|{{Ts|ma|bc|fwb}}` → `<table style="margin:0 auto;…">` so the
@@ -527,7 +537,7 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
 
     html_rows = []
 
-    for parsed_row in parsed_rows:
+    for parsed_row, row_attr in zip(parsed_rows, row_attrs):
         cells_html = []
         for sep, attr_part, content in parsed_row:
             tag = "th" if sep == "!" else "td"
@@ -580,7 +590,14 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
             ))
 
         if cells_html:
-            html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
+            # Carry the row's `|-{{Ts|…}}` styling onto `<tr>` — that row's
+            # cells inherit it (the middle rung of the cascade); cells with
+            # their own ts override it.  AUSTRIA's `|-{{Ts|ac}}` header row.
+            row_styles = _cell_styles(row_attr, "") if row_attr else None
+            row_style_attr = (f' style="{";".join(row_styles)}"'
+                              if row_styles else "")
+            html_rows.append(f"<tr{row_style_attr}>"
+                             + "".join(cells_html) + "</tr>")
 
     if not html_rows:
         return ""
