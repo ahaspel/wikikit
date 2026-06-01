@@ -30,6 +30,7 @@ from britannica.pipeline.stages.elements._registry import (
 from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
+    SHAPE_CENTER,
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
@@ -396,6 +397,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<div\s+\{\{[Tt]s\|"  # FIGURE HTML Ts-wrapper variant
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
+    r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
@@ -483,6 +485,43 @@ def _new_placeholder() -> str:
     return f"{_PH}ELEM:{_next_placeholder_id()}{_PH}"
 
 
+# Paired-wrapper spans `{{NAME/s}}…{{NAME/e}}` (centring / small-type block
+# wrappers).  Recognized as the CENTER shape — ONE balanced node whose inner
+# is recursively classified — so a figure/table/math/nested-pair inside
+# becomes its CHILD instead of being carved out from under it (which orphaned
+# the `/s`-`/e` halves under the old `.*?` overlay).  Per-name DEPTH counting
+# matches the correct `/e` (nested c-in-c; c-wrapping-fine-print).
+# Center-family ONLY — these produce the «CTR» marker, so they must be nodes.
+# The print-economy small-type families (EB1911 fine print / fine block /
+# smaller block) are TRANSPARENT (strip-keep-content, no marker) and are
+# deleted as noise tokens pre-walker (see `_transform_text_v2`), letting their
+# block inner (figures/tables) flow into the normal walk — making them CENTER
+# elements re-processed the block inner badly and dropped those children.
+_CENTER_PAIRED_NAMES: tuple[str, ...] = (
+    "center block", "block center", "c",
+)
+_PAIRED_OPENER_RE = re.compile(
+    r"\{\{\s*(" + "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
+    + r")\s*/s\s*\}\}", re.IGNORECASE)
+
+
+def _paired_wrapper_end(text: str, pos: int) -> int | None:
+    """If a registered ``{{NAME/s}}`` opens at ``pos``, return the byte
+    position one past its depth-balanced ``{{NAME/e}}`` (same-name counting);
+    else ``None`` (no opener, or unbalanced → left for fall-through)."""
+    m = _PAIRED_OPENER_RE.match(text, pos)
+    if m is None:
+        return None
+    esc = re.escape(m.group(1))
+    tok = re.compile(r"\{\{\s*" + esc + r"\s*/([se])\s*\}\}", re.IGNORECASE)
+    depth = 0
+    for tm in tok.finditer(text, pos):
+        depth += 1 if tm.group(1).lower() == "s" else -1
+        if depth == 0:
+            return tm.end()
+    return None
+
+
 def _walk_balanced_shapes(
     text: str, _allow_figure: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
@@ -523,6 +562,15 @@ def _walk_balanced_shapes(
                 w = html_ts_figure_end(text, opener_pos)
             if w is not None:
                 matched = (w, SHAPE_FIGURE, text[opener_pos:w])
+
+        # Paired-wrapper span `{{NAME/s}}…{{NAME/e}}` → one CENTER node.
+        # Before the regex recognizers (so `{{c/s}}` isn't mis-read as a bare
+        # template) AND before the inner figure/table is carved out — the
+        # inner becomes a recursively-classified child of this node.
+        if matched is None:
+            pe = _paired_wrapper_end(text, opener_pos)
+            if pe is not None:
+                matched = (pe, SHAPE_CENTER, text[opener_pos:pe])
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
@@ -653,19 +701,10 @@ _HTML_WRAPPER_TAGS: tuple[str, ...] = (
     "div", "span", "small", "big", "p", "ins",
 )
 
-# Paired begin/end markers — `{{NAME/s}}…{{NAME/e}}` — that span body
-# content (potentially with embedded element placeholders).  The body
-# producer's regex needs to see the whole pair to emit a marker; if
-# body-wrap fragments the span at a placeholder boundary, the regex
-# can't match across body runs.  Listed here so atomic-span finder
-# keeps them whole.  Match-text built dynamically (no `|` arg syntax
-# like the brace-counted wrappers above).
-_PAIRED_WRAPPER_NAMES: tuple[str, ...] = (
-    "EB1911 fine print",
-    "c",
-    "block center",
-    "center block",
-)
+# (Paired `{{NAME/s}}…{{NAME/e}}` wrappers are now recognized as the CENTER
+# shape in `_walk_balanced_shapes` via `_paired_wrapper_end` — extracted as a
+# balanced node, not kept-atomic-then-unwrapped.  Former `_PAIRED_WRAPPER_NAMES`
+# removed with the atomic-span paired loop.)
 
 
 def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:
@@ -724,14 +763,8 @@ def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:
             re.IGNORECASE | re.DOTALL)
         for m in pattern.finditer(text):
             spans.append((m.start(), m.end()))
-    for name in _PAIRED_WRAPPER_NAMES:
-        esc = re.escape(name)
-        pattern = re.compile(
-            rf"\{{\{{\s*{esc}\s*/s\s*\}}\}}.*?"
-            rf"\{{\{{\s*{esc}\s*/e\s*\}}\}}",
-            re.IGNORECASE | re.DOTALL)
-        for m in pattern.finditer(text):
-            spans.append((m.start(), m.end()))
+    # (Paired `{{NAME/s}}…{{NAME/e}}` spans are no longer kept atomic here —
+    # they're extracted upstream as the CENTER element, step 2.)
     spans.sort()
     return spans
 

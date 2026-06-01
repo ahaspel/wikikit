@@ -46,6 +46,7 @@ from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
+    SHAPE_CENTER,
     SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
@@ -323,6 +324,8 @@ def _derive_label(
         return "BODY"
     if shape == SHAPE_MIRROR_GLYPH:
         return "MIRROR_GLYPH"
+    if shape == SHAPE_CENTER:
+        return "CENTER"  # only the c-family reaches SHAPE_CENTER (walker)
     raise ValueError(f"Unknown shape: {shape!r}")
 
 

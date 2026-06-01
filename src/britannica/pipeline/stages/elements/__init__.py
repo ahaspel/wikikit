@@ -224,6 +224,32 @@ def _produce_figure(raw, inner, text_transform, context, inner_registry):
     return _process_prose_figure(raw, text_transform)
 
 
+_CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
+
+
+def _center_wrap(text: str) -> str:
+    """Wrap each non-placeholder paragraph of centred content in «CTR».
+    Pure block-placeholder paragraphs stay unwrapped (the block centres
+    itself).  Mirrors the former body_text `_wrap_ctr`."""
+    content = text.strip()
+    if not content:
+        return ""
+    out: list[str] = []
+    for p in re.split(r"\n\n+", content):
+        p = p.strip()
+        if not p:
+            continue
+        out.append(p if _CTR_PURE_PH_RE.match(p) else f"«CTR»{p}«/CTR»")
+    return "\n\n".join(out)
+
+
+def _process_center(raw, inner, text_transform, context, inner_registry):
+    """CENTER paired-wrapper (`{{c/s}}…{{c/e}}` etc.) → «CTR» around the
+    transformed inner.  Child placeholders (a figure/table inside the span)
+    are preserved for the framework's marker substitution."""
+    return _center_wrap(text_transform(inner))
+
+
 # ── Producer dispatch ─────────────────────────────────────────────────
 #
 # Flat label → producer table.  Both wikitable sub-kinds (returned by
@@ -232,6 +258,8 @@ def _produce_figure(raw, inner, text_transform, context, inner_registry):
 # two-level dispatch (`_ELEMENT_HANDLERS` → `_dispatch_table` →
 # `_TABLE_KIND_HANDLERS`).
 _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
+    # Paired-wrapper span (walker SHAPE_CENTER) → «CTR».
+    "CENTER": _process_center,
     # Wikitable sub-kinds.
     "MATH_LAYOUT_TOKENS": lambda raw, inner, tt, ctx, reg:
         _process_math_layout_table(raw),

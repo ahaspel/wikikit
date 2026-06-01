@@ -34,6 +34,7 @@ SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
+SHAPE_CENTER            = "CENTER"             # {{NAME/s}}…{{NAME/e}} paired-wrapper span
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -49,6 +50,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_SECTION,
     SHAPE_BODY,
     SHAPE_MIRROR_GLYPH,
+    SHAPE_CENTER,
 })
 
 
@@ -148,5 +150,14 @@ def strip_outer(shape: str, raw: str) -> str:
         s = re.sub(r"^<span\s+style\s*=\s*\"[^\"]*\"\s*>", "", raw,
                    flags=re.IGNORECASE)
         s = re.sub(r"</span>\s*$", "", s, flags=re.IGNORECASE)
+        return s
+    if shape == SHAPE_CENTER:
+        # Peel the paired `{{NAME/s}}` opener and `{{NAME/e}}` closer.
+        # Name-agnostic (the label-deriver reads the name for the family);
+        # `[^{}]*?` spans a multi-word name (`EB1911 fine print`) but not
+        # braces, and the closer is anchored at end so a NESTED same-name
+        # pair inside survives into the inner for the recursive walk.
+        s = re.sub(r"^\{\{\s*[^{}]*?/s\s*\}\}", "", raw, flags=re.IGNORECASE)
+        s = re.sub(r"\{\{\s*[^{}]*?/e\s*\}\}\s*$", "", s, flags=re.IGNORECASE)
         return s
     raise ValueError(f"Unknown shape: {shape!r}")

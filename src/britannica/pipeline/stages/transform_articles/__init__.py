@@ -271,20 +271,19 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
         _strip_noinclude_keep_table_markers,
         raw_wikitext, flags=re.DOTALL | re.IGNORECASE,
     )
-    # Print-economy small-type BLOCKS — {{EB1911 fine print/s}}…/e}}, {{fine
-    # block/s}}…, {{smaller block/s}}… — are OVERLAPPING markup, not nested: the
-    # `/s` and `/e` routinely straddle element boundaries the walker divides on,
-    # so per-element handling downstream sees orphaned halves it can't pair (a
-    # span that crosses subtrees can't be a tree node).  Flatten the overlap HERE,
-    # on the whole raw article BEFORE the walker, so the recursion only ever sees
-    # well-nested structure.  Strip the wrapper, KEEP the inner content (the small
-    # type is a page-economy artifact we don't reproduce; the text survives — same
-    # call as the inline {{EB1911 fine print|…}} strip).  Name backref pairs /s↔/e.
+    # Print-economy small-type BLOCK wrappers ({{EB1911 fine print/s}}…/e}},
+    # {{fine block/s}}…, {{smaller block/s}}…) are TRANSPARENT — we don't render
+    # the small type, we keep the content.  DELETE the delimiter tokens
+    # individually (leaf-token deletion, NOT a `.*?` pair-strip that mis-pairs
+    # nested/orphaned halves), so the inner block content (figures, tables,
+    # formulas) flows into the normal walk and renders as body.  Making these a
+    # FINE_PRINT *element* instead re-processed the block inner with the inline
+    # transform + figures-off and DROPPED those children (the step-2 regression
+    # — MENSURATION et al.).  Center-family `/s`-`/e` is different: it produces
+    # the «CTR» marker, so it stays a walker CENTER node.
     raw_wikitext = re.sub(
-        r"\{\{\s*(EB1911\s+fine\s+print|fine\s+block|smaller\s+block)\s*/s\s*\}\}"
-        r"(.*?)\{\{\s*\1\s*/e\s*\}\}",
-        lambda m: m.group(2),
-        raw_wikitext, flags=re.IGNORECASE | re.DOTALL)
+        r"\{\{\s*(?:EB1911\s+fine\s+print|fine\s+block|smaller\s+block)\s*/[se]\s*\}\}",
+        "", raw_wikitext, flags=re.IGNORECASE)
     context = ElementContext(volume=volume, page_number=page_number)
     text = process_elements(raw_wikitext, _apply_markup, context)
 
