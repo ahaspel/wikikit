@@ -156,6 +156,32 @@ _WIKI_ROW_SEP_RE = re.compile(r"(?:^|\n)\s*\|-([^\n]*)")
 _WIKI_CAPTION_RE = re.compile(r"(?:^|\n)\s*\|\+\s*([^\n]+)")
 
 
+def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
+    r"""Split a wikitable's inner text into ``[(row_attr, raw_row_body)]`` on
+    the canonical ``|-`` row separator — the SINGLE row-splitter the wiki
+    producers share.
+
+    The separator is line-anchored AND indent-tolerant (``(?:^|\n)\s*\|-``):
+    it splits a ``|-`` (or ``  |-``) that begins a line and captures that
+    line's tail as the row attribute, but does NOT split on a ``|-`` that
+    appears mid-content.  This replaces the divergent per-producer regexes
+    (``parse_wiki_table``'s line-anchored-no-indent form, ``_process_table``'s
+    unanchored over-splitting one) with one correct shared form.
+
+    The pre-first-``|-`` segment is the first entry, with empty ``row_attr``.
+    Caption (``|+``) lines are NOT dropped here — each caller applies its own
+    ``|+`` policy.  Nested ``{|…|}`` are NOT masked here (in production cells
+    carry placeholders, never raw ``{|`` — see the module note); callers that
+    need masking (``extract_wiki_rows``) mask before calling.
+    """
+    parts = _WIKI_ROW_SEP_RE.split(inner)  # [pre, attr1, body1, attr2, body2…]
+    rows: list[tuple[str, str]] = [("", parts[0])]
+    for k in range(1, len(parts), 2):
+        body = parts[k + 1] if k + 1 < len(parts) else ""
+        rows.append((parts[k], body))
+    return rows
+
+
 def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
     """Decompose a wikitable's inner text into `(caption, rows)`.
 

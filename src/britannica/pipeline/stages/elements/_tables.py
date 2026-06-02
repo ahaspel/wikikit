@@ -234,78 +234,6 @@ def _strip_wiki_cell_attr_in_html(text: str) -> str:
     )
 
 
-def parse_wiki_table(
-    text: str,
-) -> tuple[str, str, list[list[tuple[str, str, str]]], list[str]]:
-    """Parse a wiki-table's structure into ``(opener_attrs, caption, rows)``.
-
-    The whole-table counterpart to :func:`split_wiki_row` (which
-    operates on one row at a time).  Steps:
-
-    1. Capture the outer ``{|<attrs>\\n`` opener's attribute string
-       (whole-table styling: ``{{Ts|ma|bc|fwb}}``, ``class="…"``,
-       ``style="…"``, etc.) — previously dropped on the floor, now
-       returned so producers can apply the styling to the rendered
-       ``<table>``.  Strip outer ``\\n?|}`` closer.  Accepts either
-       form (``raw`` or ``inner``) for caller convenience.
-    2. Strip ``<br>`` tags (soft-hyphen-aware via :func:`_strip_br`:
-       a ``-<br>`` line-break drops both halves so ``Circum-<br>ference``
-       renders as ``Circumference``; plain ``<br>`` becomes a space).
-    3. Extract the first ``|+ caption`` line as the table caption.
-    4. Split on ``|-`` row separators (line-anchored).
-    5. Run each row through :func:`split_wiki_row`; drop empty rows.
-
-    Returns:
-    * ``opener_attrs`` — whole-table attribute string (empty if no
-      opener present, ``raw``-form callers).
-    * ``caption`` — caption text (empty if no ``|+`` line).
-    * ``rows`` — list of rows, each a list of
-      ``(sep, attr_part, content)`` cells.
-
-    Limitations: ``|-`` splitting is NOT depth-aware — it splits on
-    ``|-`` inside nested ``{|…|}`` blocks too.  Callers that need to
-    preserve nested-table structure (currently only
-    ``_process_compound_table``) must do their own depth-tracking
-    row split and call :func:`split_wiki_row` per row directly."""
-    opener_attrs = ""
-    opener_m = re.match(r"^\{\|([^\n]*)\n?", text)
-    if opener_m:
-        opener_attrs = opener_m.group(1).strip()
-        text = text[opener_m.end():]
-    text = re.sub(r"\n?\|\}\s*$", "", text)
-
-    # Lossless `<br>` fidelity: keep the source/print's deliberate line breaks
-    # (stacked-list data rows, wrapped multi-line headers) as breaks rather than
-    # flattening to a space — the transcriber hand-aligns columns FOR break
-    # rendering, so this is what makes them line up.  `-<br>` soft-hyphen joins
-    # still apply.  `<br>` is not a row/cell delimiter, so it doesn't disturb the
-    # `|+`/`|-`/`|` splitting below.
-    text = _strip_br(text, "<br>")
-
-    caption = ""
-    cap_match = re.search(r"^\|\+\s*(.+?)$", text, re.MULTILINE)
-    if cap_match:
-        caption = cap_match.group(1).strip()
-
-    # Capturing split keeps each row's `|-<attr>` styling (e.g. `|-{{Ts|ac}}`)
-    # so producers can emit `<tr style=…>` — that row's cells inherit it (the
-    # middle rung of the table/row/cell cascade), previously dropped on the
-    # floor.  `parts` = [row0, attr1, row1, attr2, row2, …]; row0 precedes the
-    # first `|-` and so has no row attr.
-    parts = re.split(r"(?:^|\n)\|-([^\n]*)", text)
-    pending: list[tuple[str, str]] = [("", parts[0])]
-    for k in range(1, len(parts), 2):
-        pending.append((parts[k], parts[k + 1]))
-    rows: list[list[tuple[str, str, str]]] = []
-    row_attrs: list[str] = []
-    for attr, raw_row in pending:
-        cells = split_wiki_row(raw_row)
-        if cells:
-            rows.append(cells)
-            row_attrs.append(attr.strip())
-    return opener_attrs, caption, rows, row_attrs
-
-
 def emit_html_cell(
     tag: str,
     content: str,
@@ -924,10 +852,11 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
     table chrome.
 
     Self-contained parser \u2014 does NOT delegate to ``_process_complex_table``
-    or ``parse_wiki_table``.  Going through the general data-table path
-    introduced too many side effects for spatial diagrams:
+    or the shared ``extract_wiki_rows`` decomposition.  Going through the
+    general data-table path introduced too many side effects for spatial
+    diagrams:
 
-      * ``parse_wiki_table``'s ``^\\|\\+`` caption regex misfires on
+      * the general path's ``^\\|\\+`` caption regex misfires on
         any chem cell whose content starts with ``+`` after the upstream
         ``replace_print_artifacts`` pass converts ``\uff0b`` (FULLWIDTH PLUS)
         \u2192 ``+`` \u2014 e.g. ALDEHYDES' first equation, where the third cell
@@ -1141,7 +1070,7 @@ def _table_opener_styles(text: str) -> list[str]:
 
     Source ``{|<attrs>\\n…`` carries whole-table styling (``{|{{Ts|ma|bc|fwb}}``
     centers the table, ``{|class="data-table"`` adds a class, etc.) that
-    was previously discarded — ``parse_wiki_table`` strips the opener
+    was previously discarded — the row decomposition strips the opener
     line wholesale.  We extract via the same ``_cell_styles`` shape as
     cells, so e.g. a ``{{Ts|ma|sm92}}`` opener emits
     ``['margin:0 auto', 'font-size:92%']`` for the ``<table>`` element's
@@ -1512,8 +1441,19 @@ def _process_table(raw: str, inner: str, text_transform,
     # line breaks, e.g. "Circum-<br>ference" → "Circumference").
     inner = _strip_br(inner)
 
+    from britannica.pipeline.stages.elements._table_decompose import (
+        split_wiki_rows_raw,
+    )
+
     def _extract_cells(row_text, with_attrs=False):
         return _extract_table_cells(row_text, text_transform, with_attrs)
+
+    def _row_bodies(text: str) -> list[str]:
+        # Shared, line-anchored + indent-tolerant `|-` split (replaces this
+        # producer's old unanchored `\|-[^\n]*`, which over-split on any
+        # mid-content `|-`).  The wiki marker is align-only, so the captured
+        # row attribute is dropped here.
+        return [body for _attr, body in split_wiki_rows_raw(text)]
 
     # Tiny inline tables (few cells, short content) → unwrap to inline text.
     # Only for single-row tables with no row separators and no block-level
@@ -1535,7 +1475,7 @@ def _process_table(raw: str, inner: str, text_transform,
     # attribution rows (typically beginning "From …" / "After …").
     if "|-" in inner and inner_registry is not None:
         ph_re = re.compile(re.escape(_PH) + r"ELEM:\d+" + re.escape(_PH))
-        rows_filtered = [r for r in re.split(r"\|-[^\n]*", inner) if r.strip()]
+        rows_filtered = [r for r in _row_bodies(inner) if r.strip()]
         if len(rows_filtered) >= 2:
             row1_cells = _extract_cells(rows_filtered[0])
             if (len(row1_cells) == 1
@@ -1595,8 +1535,8 @@ def _process_table(raw: str, inner: str, text_transform,
     if cap_match:
         caption = text_transform(cap_match.group(1).strip()).strip()
 
-    # Split into rows on |- separators
-    raw_rows = re.split(r"\|-[^\n]*", inner)
+    # Split into rows on |- separators (shared splitter).
+    raw_rows = _row_bodies(inner)
 
     # Header table = the FIRST data row uses `!` header cells (the real source
     # signal).  Replaces the old `header=bool(caption)` guess, which both missed

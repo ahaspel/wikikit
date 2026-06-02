@@ -640,7 +640,7 @@ def export_articles_to_json(
             # fix will display the leading title-bold until re-detected.)
 
             # No clean_body: each element is responsible for emitting
-            # clean output (split_wiki_row / parse_wiki_table /
+            # clean output (split_wiki_row / extract_wiki_rows /
             # emit_html_cell consolidation made this possible).  Any
             # remaining stray-pipe artifact is a producer bug to fix
             # at source, not patch over downstream.
