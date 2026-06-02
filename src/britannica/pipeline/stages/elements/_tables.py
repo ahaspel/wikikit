@@ -198,17 +198,21 @@ def _html_table_grid(inner: str) -> list[list[tuple[str, str, str]]]:
 def _table_grid(inner: str) -> list[list[str]]:
     """Rows × cell-content-strings for a wiki OR HTML table, syntax-detected.
 
-    The `{|` path uses the same `|-` row split + `split_wiki_row` cells the
-    ICL helpers already inline, so converting those helpers to this
-    primitive is label-preserving by construction; the `<table>` path
-    delegates to `_html_table_grid`."""
+    The `{|` path uses the shared `split_wiki_rows_raw` row split (the same
+    line-anchored, indent-tolerant separator the producers use) + the shared
+    `split_wiki_row` cells, so this recognition primitive sees exactly the
+    rows/cells the producers will; the `<table>` path delegates to
+    `_html_table_grid`."""
+    from britannica.pipeline.stages.elements._table_decompose import (
+        split_wiki_rows_raw,
+    )
     if _HTML_TABLE_TAG_RE.search(inner):
         # Content-only view: drop sep+attr at point of use, exactly as the
         # wiki branch below drops them from `split_wiki_row`.
         return [[content for _sep, _attr, content in row]
                 for row in _html_table_grid(inner)]
     grid: list[list[str]] = []
-    for row in re.split(r"\|-[^\n]*", inner):
+    for _attr, row in split_wiki_rows_raw(inner):
         cells = [content for _sep, _attr, content in split_wiki_row(row)]
         if cells:  # drop empty segments (e.g. a leading `|-` row separator)
             grid.append(cells)
@@ -1356,11 +1360,14 @@ def _is_verse_table(inner: str) -> bool:
     single-cell quoted poem (`_single_cell_verse_cell`).  Both are
     content-recognition — VERSE is content-defined.
     """
+    from britannica.pipeline.stages.elements._table_decompose import (
+        split_wiki_rows_raw,
+    )
     if _single_cell_verse_cell(inner) is not None:
         return True
     saw_punct_col1 = False
     saw_verse_row = False
-    for rv in re.split(r"\|-[^\n]*", inner):
+    for _attr, rv in split_wiki_rows_raw(inner):
         cells = [c for _s, _a, c in split_wiki_row(rv) if c not in ("}", "{|")]
         if not cells:
             continue
