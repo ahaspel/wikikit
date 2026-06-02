@@ -274,7 +274,13 @@ def parse_wiki_table(
         text = text[opener_m.end():]
     text = re.sub(r"\n?\|\}\s*$", "", text)
 
-    text = _strip_br(text)
+    # Lossless `<br>` fidelity: keep the source/print's deliberate line breaks
+    # (stacked-list data rows, wrapped multi-line headers) as breaks rather than
+    # flattening to a space — the transcriber hand-aligns columns FOR break
+    # rendering, so this is what makes them line up.  `-<br>` soft-hyphen joins
+    # still apply.  `<br>` is not a row/cell delimiter, so it doesn't disturb the
+    # `|+`/`|-`/`|` splitting below.
+    text = _strip_br(text, "<br>")
 
     caption = ""
     cap_match = re.search(r"^\|\+\s*(.+?)$", text, re.MULTILINE)
@@ -572,7 +578,13 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
                 content = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "\u2033",
                                  content, flags=re.IGNORECASE)
                 content = re.sub(r"\{\{\.\.\.\}\}", "...", content)
-                content = _strip_br(content)
+                # Lossless `<br>` fidelity (see _html_cell_clean): keep the
+                # source/print's deliberate line breaks (stacked-list rows,
+                # wrapped headers) instead of flattening to a space, so columns
+                # align and headers wrap as printed.  `-<br>` soft-hyphen joins
+                # still apply.  emit_html_cell outputs literal HTML, so the
+                # `<br>` renders as a break.
+                content = _strip_br(content, "<br>")
                 content = content.strip()
                 # Run text_transform FIRST so it can convert
                 # templates it knows about (``{{sfrac|…}}``,
@@ -1866,9 +1878,22 @@ def _html_cell_clean(content: str) -> str:
     ``_cell_styles`` consumes the cell's attribute slot independently.
     """
     c = _strip_wiki_cell_attr_in_html(content)
-    c = _strip_br(c)
+    # Lossless `<br>` fidelity: a `<br>` in a table cell is the source/print's
+    # DELIBERATE line break (data-row delimiters in stacked-list columns, wrapped
+    # multi-line headers, legend line breaks) — keep it as a break instead of
+    # flattening to a space, so hand-aligned columns line up and headers wrap as
+    # printed.  We do NOT classify what each `<br>` "means"; rendering the break
+    # is faithful in every structural case (the only cost is the rare incidental
+    # narrow-column wrap, which shows a harmless extra line — no misalignment, no
+    # content loss).  The `-<br>` soft-hyphen join is still applied (a real print
+    # artifact, not a break).
+    c = _strip_br(c, "<br>")
     c = _convert_inline_sub_sup(c)
-    c = re.sub(r"<[^>]+>", " ", c)
+    # Strip remaining HTML tags but PRESERVE `<br>` (else the line break we just
+    # kept would be stripped here).
+    c = re.sub(r"<(?!br\s*/?>)[^>]+>", " ", c, flags=re.IGNORECASE)
+    # Collapse whitespace (incl. source newlines) to single spaces; `<br>` is
+    # not whitespace, so the preserved breaks survive.
     c = re.sub(r"\s+", " ", c).strip()
     return c
 
