@@ -88,8 +88,7 @@ were provided for firing 48 arrows, or about seven-tenths of an ounce for each c
 {{Fs|92%|{{sc|Fig}}. 1. — Dulle Griete, Ghent.}}}}
 
 The great Bombarde of Ghent, called “Dulle Griete” (fig. 1) is believed to belong to the end of the century, probably about
-1382, and, according to the «I»Guide des voyageurs dans la ville de Gand«/I» (Voisin) the people of Ghent used it in 1411. This gun,
-PAGE:216which weighs about 13&nbsp;tons, is formed of an inner lining of
+1382, and, according to the «I»Guide des voyageurs dans la ville de Gand«/I» (Voisin) the people of Ghent used it in 1411. This gun,<section end="s3" />PAGE:216which weighs about 13&nbsp;tons, is formed of an inner lining of
 wrought iron longitudinal bars arranged like the staves of a
 cask and welded together, surrounded by rings of wrought iron
 driven or shrunk on. The chamber portion is of smaller diameter,
@@ -170,7 +169,6 @@ often compounded from separate ingredients on the spot at the
 time of loading, burnt slowly without strength and naturally varied
 from round to round. The more fiercely burning granulated
 or corned powder, introduced into Germany about 1429, and
-<!-- col. 2 -->
 into England shortly after, was too strong for the larger pieces
 of that date, and could be used only for small firearms for more
 than a century after. These small guns were often loaded with
@@ -241,8 +239,7 @@ cradle.
 |-
 |{{Ts|ac}}|{{sc|Fig}}. 3. — Primitive Gun-mounting.
 |}
-It is by no means certain when wheeled carriages were
-PAGE:217introduced. They must have gradually appeared as a means of
+It is by no means certain when wheeled carriages werePAGE:217introduced. They must have gradually appeared as a means of
 surmounting the difficulties engendered by the recoil of the piece
 and of transport of the early guns and their cradles. Andrea
 Redusio mentions in «I»Chronicon Tarvisinum«/I» the use of two
@@ -361,8 +358,7 @@ obtaining the heights of buildings, and is still much employed
 for elevating guns in its clinometer form, in which a level takes
 the place of the plummet.
 
-For short range firing a dispart sight was in use early in the 17th century. A notch was cut on the top of the breech or base ring, and on the muzzle ring a notched fore sight (called the dispart sight) was placed in the same vertical plane as the notch, and of such a height that a line stretched from the top of the breech ring notch to the notch of the foresight was parallel to the axis of the bore. These sights were well enough for close, horizontal fire and so long as the enemy were within what was called “point blank” range; that is the range to the first graze, on a horizontal plane, of the shot when fired from a gun the axis of which is horizontal. As this range depends entirely, other things being equal, on the height of the gun’s axis above the horizontal plane, it is not very definite. When, however, the enemy were at a greater distance, elevation had to be given to the gun and, as a quadrant was slow and not easy to use, there was introduced an instrument, called a Gunner’s Rule (see «I»The Art of Gunnery«/I», by Nathanael Nye, 1670), which was really a primitive form of tangent sight. This was a flat brass
-PAGE:218scale 12 or 14&nbsp;in. long divided on its flat surface into divisions
+For short range firing a dispart sight was in use early in the 17th century. A notch was cut on the top of the breech or base ring, and on the muzzle ring a notched fore sight (called the dispart sight) was placed in the same vertical plane as the notch, and of such a height that a line stretched from the top of the breech ring notch to the notch of the foresight was parallel to the axis of the bore. These sights were well enough for close, horizontal fire and so long as the enemy were within what was called “point blank” range; that is the range to the first graze, on a horizontal plane, of the shot when fired from a gun the axis of which is horizontal. As this range depends entirely, other things being equal, on the height of the gun’s axis above the horizontal plane, it is not very definite. When, however, the enemy were at a greater distance, elevation had to be given to the gun and, as a quadrant was slow and not easy to use, there was introduced an instrument, called a Gunner’s Rule (see «I»The Art of Gunnery«/I», by Nathanael Nye, 1670), which was really a primitive form of tangent sight. This was a flat brassPAGE:218scale 12 or 14&nbsp;in. long divided on its flat surface into divisions
 proportional to the tangents of angles with a base equal to the
 distance from the notch on the base ring to the dispart notch. A
 slit was made along the rule, and a thread with a bead on it was
@@ -439,7 +435,6 @@ by dropping the breech or chamber of the weapon into a receptacle,
 solidly forged on or fastened by lugs to the rear end
 of the gun (fig.&nbsp;7). This system was used for small guns only,
 such as wall pieces, &c., which could not be easily loaded at the
-<!-- col. 2 -->
 muzzle owing to the position in which they were placed, and in
 order to obtain rapidity each gun was furnished with several
 chambers.
@@ -489,8 +484,7 @@ Cavalli gun. In addition to the breech plug and horizontal
 wedge there was an iron door, hinged to the breech face of the
 gun, which carried a rod attached to the rear of the breech plug.
 The horizontal wedge had a slot cut from its right side to the
-centre, so that it might freely pass this rod. After loading,
-PAGE:219the hinged door, with the breech plug resting against its front
+centre, so that it might freely pass this rod. After loading,PAGE:219the hinged door, with the breech plug resting against its front
 face, was swung into the breech opening, and the plug was
 pushed forward to its position in the chamber of the gun; the
 wedge was then pushed across to prevent the plug being blown
@@ -498,13 +492,13 @@ back, and, finally, a nut screwed to the rear end of the plug
 rod was given a couple of turns so that all was made tight and
 secure. After firing, the breech was opened by reversing these
 operations.
-{{EB1911 fine print/s}}
+
 [[File:EB1911 - Ordnance - Fig. 9.png|center|390px|Wahrendorff Gun, 1846.]]
 {{center|{{sc|Fig}}. 9.—Wahrendorff Gun, 1846.}}
 
 [[File:EB1911 - Ordnance - Fig. 10.png|center|350px|Armstrong B.L. Arrangement.]]
 {{center|{{sc|Fig}}. 10.—Armstrong B.L. Arrangement.}}
-{{EB1911 fine print/e}}
+
 The Armstrong system of breech-loading introduced in 1854
 was the first to give satisfactory results; its simple design and
 few parts produced a favourable effect in the minds of artillerists,
@@ -600,8 +594,7 @@ engineer, also had similar plans; to Longridge, however, belongs
 the credit of pointing out the proper mode of winding on the
 wire with initial tension so adjusted as to make the firing tension
 («I»i.e.«/I» the tension which exists when the gun is fired) of the
-wire uniform for the maximum proof powder pressure. Great
-PAGE:220success attended the early introduction of the coil system.
+wire uniform for the maximum proof powder pressure. GreatPAGE:220success attended the early introduction of the coil system.
 Large numbers (about 3500) of breech-loading Armstrong guns
 from 2·5&nbsp;in. to 7&nbsp;in. calibre were manufactured for England
 alone; most of these had barrels of coiled iron, but solid forged
@@ -619,7 +612,7 @@ order to cheapen manufacture the coils were
 thickened, by Mr Fraser of Woolwich Arsenal,
 so that a few thick coils were used instead of
 a number of thin ones (fig.&nbsp;13).
-{{EB1911 fine print/s}}
+
 In the Fraser system an attempt was made to
 obtain rigidity of construction and additional
 longitudinal strength by interlocking the various
@@ -637,7 +630,7 @@ conducive to strength and durability, but it is essential that massive
 tubes of the highest quality of steel should be employed.
 [[File:EB1911 - Ordnance - Fig. 12.png|center|400px|M.L. Gun Construction.]]
 {{center|{{sc|Fig}}. 12.—M.L. Gun Construction.}}
-{{EB1911 fine print/e}}
+
 The actual building up of a gun entails operations which are
 exactly similar, whether it be of the M.L. or B.L. system; and
 the hardening treatment of the steel is also the same—the coiled
@@ -648,7 +641,7 @@ iron hoops when welded, of course, received no such treatment.
 Fig. 14 shows the various stages of building up a B.L. gun and
 illustrates at the same time the principle of the interlocking
 system.
-{{EB1911 fine print/s}}
+
 The steel barrels of the M.L. guns were forged solid; the material
 was then tested so as to determine the most suitable temperature at
 which the oil hardening treatment should be carried out after the
@@ -742,8 +735,7 @@ but this practice, although allowing of the production of an inexpensive
 gun, is not followed by other nations.
 
 After the forging is completed, it is annealed by reheating and
-cooling slowly, and test pieces are cut from each end tangentially
-PAGE:223to the circumference of the bore; these are tested to ascertain the
+cooling slowly, and test pieces are cut from each end tangentiallyPAGE:223to the circumference of the bore; these are tested to ascertain the
 quality of the steel in the soft state.
 
 It is found that the quality of the steel is greatly improved by
@@ -879,8 +871,7 @@ muzzle to breech. Thus, the chase hoop hooks on to the barrel by
 a step, and the succeeding hoops hook on to each other until the
 jacket is reached which is then secured to the breech piece by a
 strong screwed ring. In all the latest patterns of English guns
-there is a single chase hoop covering the forward portion of the
-PAGE:224gun and a jacket covering the breech portion, an arrangement which simplifies the design but increases the difficulties of manufacture.
+there is a single chase hoop covering the forward portion of thePAGE:224gun and a jacket covering the breech portion, an arrangement which simplifies the design but increases the difficulties of manufacture.
 
 
 [[File:EB1911 - Ordnance - Fig. 19.png|center|400px|Wire Fastening.]]
@@ -911,8 +902,7 @@ the wire is extremely strong and the moderate stress of from 35 to 50 tons per s
 safety.
 [[File:EB1911 - Ordnance - Fig. 20.png|center|800px|Wire-winding Machine.]]
 {{center|{{sc|Fig}}. 20.—Wire-winding Machine.}}
-The wire after being manufactured is made up into hanks for storage purposes; but when required for gun construction it is thoroughly cleaned and wound on a drum R about 3&nbsp;ft. 6&nbsp;in. in diameter, which is placed in one portion of the machine in connexion, with a powerful band friction brake&nbsp;M. The wire is then led to the gun&nbsp;A placed between centres or on rollers B.B. parallel to the axis of the wire drum. By rotating the gun the wire is drawn off from the drum against the resistance of the band brake, which is so designed that, by adjusting the weight&nbsp;S suspended from the brake strap, any desired resistance can be given in order to produce the necessary tension in the wire as it is being wound on the gun. The stress on
-PAGE:225the wire is indicated on a dial, and the headstock, containing the drum of wire, is capable of being moved along the bed G by a leading screw H, driven by a belt through variable speed cones I; the belt is moved along the cones by forks J, traversed by screws K, which in their turn are actuated by chain belts from the hand wheel L. The traversing speed is regulated to suit the speed of winding by moving the belt along the speed cones.
+The wire after being manufactured is made up into hanks for storage purposes; but when required for gun construction it is thoroughly cleaned and wound on a drum R about 3&nbsp;ft. 6&nbsp;in. in diameter, which is placed in one portion of the machine in connexion, with a powerful band friction brake&nbsp;M. The wire is then led to the gun&nbsp;A placed between centres or on rollers B.B. parallel to the axis of the wire drum. By rotating the gun the wire is drawn off from the drum against the resistance of the band brake, which is so designed that, by adjusting the weight&nbsp;S suspended from the brake strap, any desired resistance can be given in order to produce the necessary tension in the wire as it is being wound on the gun. The stress onPAGE:225the wire is indicated on a dial, and the headstock, containing the drum of wire, is capable of being moved along the bed G by a leading screw H, driven by a belt through variable speed cones I; the belt is moved along the cones by forks J, traversed by screws K, which in their turn are actuated by chain belts from the hand wheel L. The traversing speed is regulated to suit the speed of winding by moving the belt along the speed cones.
 
 The wire is rectangular in section, 0·25 in. wide and 0·06 in. thick, and after it has been wound on to the gun it presents a very even surface which requires little further preparation. The diameter over the wire is gauged and the jacket or other covering hoop is carefully bored equal to this, if no shrinkage is to be allowed; or the dimension is diminished in accordance with the amount of shrinkage to be arranged for.
 
@@ -922,17 +912,15 @@ The machine arranged for rifling modern guns is very similar to that employed fo
 made. The copying bar—which is straight if the rifling is to be uniform{{EB1911 Shoulder HeadingFine|Rifling operation.}} but curved if it is to be increasing—is fixed, inclined at the proper angle, to standards K on the machine. The cutting tool is carried at one end C of a strong hollow cylindrical rifling bar B, the other end of which is fixed to a saddle M. This is moved along the bed of the machine by a long screw N, and the rifling bar is consequently either pushed into the gun or withdrawn by the motion of the saddle along the machine. During this motion it is made to rotate slowly by being connected to the copying bar by suitable gearing&nbsp;I. It will thus be seen that the cutting tool will cut a spiral groove along the bore of the gun in strict conformity with the copy. In most English machines the cutting tool cuts only as the rifling bar is drawn out of the gun; during the reverse motion the cutter F is withdrawn out of action by means of a wedge arrangement actuated by a rod passing through the centre of the rifling bar, which also pushes forward the cutter at the proper time for cutting. One, two or more grooves may be cut at one time, the full depth being attained by slowly feeding the tool after each stroke. After each set of grooves is cut the rifling bar or the gun is rotated so as to bring the cutters to a new position. In some foreign machines the cut is taken as the rifling bar is pushed into the gun.
 [[File:EB1911 - Ordnance - Fig. 21.png|center|800px|Rifling Machine.]]
 {{center|{{sc|Fig}}. 21.—Rifling Machine.}}
-{{EB1911 fine print/e}}
+
 Rifling is the term given to the numerous shallow grooves cut spirally along the bore of a gun; the rib between two grooves is called the “land.” Rifling has been known for many years; it was supposed to increase the range, and no doubt did so, owing to the fact that the bullet having
 to be forced into the gun during the loading operation became{{EB1911 Shoulder HeadingSmall|Rifling.}} a mechanical fit and prevented to a great extent the loss of gas by windage which occurred with ordinary weapons. Kotter (1520) and Danner (1552), both of Nuremberg, are respectively credited as being the first to rifle gun barrels; and there is at the Rotunda, Woolwich, a muzzle-loading barrel dated 1547 rifled with six fine grooves. At this early period, rifling was applied only to small arms, usually for sporting purposes. The disadvantage of having, during loading, to force a soft lead (or lead-covered) ball down a bore of smaller diameter prevented its general employment for military use. In 1661 Prussia experimented with a gun rifled in thirteen shallow grooves, and in 1696 the elliptical bore—similar to the Lancaster—had been tried in Germany. In 1745 Robins was experimenting with rifled guns and elongated shot in England. During the Peninsular War about 1809, the only regiment (the “Rifle Brigade,” formerly called the 95th) equipped with rifled arms, found considerable difficulty in loading them with the old spherical lead
-<!-- col. 2 -->
 bullet, from the muzzle. In 1836 Russia made a large number of experiments with a rifled gun invented by Montigny, a Belgian; this was not a success, but in England the guns invented by Major Cavalli, in 1845, and by Baron Wahrendorff in 1846, obtained some measure of favour. Both these guns were breech-loaders. The Cavalli gun had a bore of 6·5&nbsp;in. diameter; it was rifled in two grooves having a uniform twist of 1 in 25 calibres, and the elongated projectile had two ribs cast with it to fit the grooves, but no means were taken to prevent windage. The Wahrendorff gun had an enlarged chamber and the bore of 6·37&nbsp;in. diameter was rifled in 2&nbsp;grooves; the projectile had ribs similar to that for the Cavalli gun; but Wahrendorff had also tried lead-coated projectiles, the coating being attached by grooves undercut in the outside of the shell. In 1854 Lancaster submitted his plan of rifling; in this (fig.&nbsp;22) the bore was made of an oval section which twisted round the axis of the gun from the breech to the muzzle; a projectile having an oval section was fired. Several old cast-iron guns bored on this system burst in the Crimean War from the projectile wedging in the gun. In 1855 Armstrong experimented with a breech-loading rifled gun, firing a lead-coated projectile. The rifling consisted of a large number of shallow grooves having a uniform twist of 1 in 38 calibres. When the gun was fired the lead-coated projectile, which was slightly larger in diameter than the bore of the gun, was forced into the rifling and so gave rotation to the elongated projectile.
 
 {{center|[[File:EB1911 - Ordnance - Fig. 22.png|400px|Sections of Rifling.]]<br>
 {{Fine block|{{sc|Fig}}. 22.—Sections of Rifling.}}}}
 
-Whitworth in 1857 brought out his hexagonal bore method of rifling and a projectile which was a good mechanical fit to the bore. Good results were obtained,
-PAGE:226but although this system had certain advantages it did not fulfil all requirements.
+Whitworth in 1857 brought out his hexagonal bore method of rifling and a projectile which was a good mechanical fit to the bore. Good results were obtained,PAGE:226but although this system had certain advantages it did not fulfil all requirements.
 
 In 1863, England re-opened the whole question, and after
 exhaustive trials of various inventions decided on the adoption
@@ -1010,7 +998,6 @@ In the compression class the coating or rings on the projectile
 are larger in diameter than the bore and when fired the coating
 (or rings) is squeezed or engraved by the rifling to fit the bore—the
 projectile is consequently also centred. The old-fashioned
-<!-- col. 2 -->
 lead-coated shell (fig.&nbsp;25), and the modern system of plain copper
 driving bands (fig.&nbsp;26), come under this class. Most variety
 exists in the expansion type, where the pressure of the powder
@@ -1070,14 +1057,13 @@ giving rotation, and it was argued that the gun would remain
 efficient for a longer period. The defect in this system is that
 when the projectile arrives at the end of the straight rifling it
 has a considerable forward velocity and no rotation. Rotation
-is then imparted by the increasing twist of rifling, and the
-PAGE:227resulting pressure on the engraved ribs of the driving band rises
+is then imparted by the increasing twist of rifling, and thePAGE:227resulting pressure on the engraved ribs of the driving band rises
 suddenly to a maximum which, in high velocity guns, the
 driving band is unable to resist. For this reason the straight
 portion at the commencement of the rifling has been discarded,
 and with high power guns firing a slow burning propellant uniform
 rifling has again found favour.
-{{EB1911 fine print/s}}
+
 It is evident that in order that a projectile may have a definite
 amount of spin as it leaves the gun a determinate amount of work
 must be imparted to rotate it during its passage along the rifled
@@ -1228,9 +1214,8 @@ a number of shots are fired at various ranges. The results obtained
 are plotted on paper, and a straight line is then drawn from the point
 representing the muzzle through the mean value of the plotted
 curve.
-{{EB1911 fine print/e}}
-The early guns were fired by inserting a red-hot wire into the vent, or by filling the vent with powder and firing it by a red-hot iron. Slow match held in a cleft stick afterwards took the place of the hot iron, and this again was replaced by a port-fire. Filling the vent with loose powder was inconvenient and slow, and to improve {{EB1911 Shoulder Heading|width=6.6|Firing arrangements.}}matters the powder was placed in a paper, tin or quill tube
-PAGE:228which was simply pushed into the vent and fired by the slow
+
+The early guns were fired by inserting a red-hot wire into the vent, or by filling the vent with powder and firing it by a red-hot iron. Slow match held in a cleft stick afterwards took the place of the hot iron, and this again was replaced by a port-fire. Filling the vent with loose powder was inconvenient and slow, and to improve {{EB1911 Shoulder Heading|width=6.6|Firing arrangements.}}matters the powder was placed in a paper, tin or quill tubePAGE:228which was simply pushed into the vent and fired by the slow
 match or port-fire.
 
 {|class=_tablecolhdborder {{Ts|sm92|lh110|ac}}
@@ -1358,10 +1343,9 @@ eroded the vents so quickly by the escape of the gases that vent
 sealing tubes became a necessity.
 
 In all other breech-loading ordnance and with the latest
-<!--col.-->
 pattern field guns the firing gear forms part of the breech
 mechanism.
-{{EB1911 fine print/s}}
+
 All modern breech mechanisms form two groups («I»a«/I») the sliding
 type as with the Krupp wedge system, («I»b«/I») the swinging type as in
 the interrupted screw system. Either type may be
@@ -1459,8 +1443,7 @@ of a supplementary mechanism and strong spring actuated by the
 recoil of the gun, and on pushing a new cartridge into the gun the
 breech which was retained by the extractor is released and closes
 automatically.
-{{nop}}
-PAGE:229The Nordenfelt mechanism consists of a breech block (fig. 35)
+{{nop}}PAGE:229The Nordenfelt mechanism consists of a breech block (fig. 35)
 and a wedge to secure it. A hand lever on the shaft is pulled to
 the rear, and this works the action cam, which pulls down the
 wedge; the breech block is then caused to rotate and falls back to
@@ -1537,7 +1520,6 @@ The screw may be of the cylindric interrupted, Welin and coned
 types; these, or their modifications, practically embrace the various
 forms used. The cylindric form (fig.&nbsp;37) is the simplest; it consists
 of a strong screwed plug engaging with a corresponding screw
-<!--col.-->
 thread cut on the interior of the breech opening of the gun. The
 screw surface of the breech plug is cut away in sections equally
 divided and alternating with the threaded portions. The screw
@@ -1606,8 +1588,7 @@ the gun these various operations must be reversed, and to open or close
 the gun would certainly occupy at least half a minute with trained men.
 
 To compare with this a modern 12-in. breech mechanism is shown
-in fig.&nbsp;41. In order to open this breech it is only necessary to turn
-PAGE:230the handwheel continuously in one direction, and to close it again
+in fig.&nbsp;41. In order to open this breech it is only necessary to turnPAGE:230the handwheel continuously in one direction, and to close it again
 the motion of the handwheel is simply reversed; either closing or
 opening the breech by hand occupies about 6&nbsp;seconds. Supposing
 the breech closed, the handwheel when rotated gives motion to the
@@ -1631,7 +1612,6 @@ obturation, with the pad only slightly coned, is used.
 {{sc|Fig}}. 35.—Nordenfeldt Q.F. Breech Mechanism.}}
 
 With smaller guns the mechanism is simpler, as less power is
-<!--col.-->
 required for opening the breech. Thus, with the 6-in. B.L. gun Mark&nbsp;IV.,
 introduced about 1885 (fig.&nbsp;42) the breech is opened in three
 separate operations—(«I»a«/I») the cam lever, which also locks the breech,
@@ -1658,8 +1638,7 @@ same time and ejects the fired tube&nbsp;G. A new tube is inserted while
 the gun is being loaded, so that immediately the breech is closed the
 charge can be fired without loss of time. In the old mechanisms the
 breech had to be closed first, and the firing tube inserted after.
-{{nop}}
-PAGE:231The breech mechanism for Q.F. guns firing metallic cartridge
+{{nop}}PAGE:231The breech mechanism for Q.F. guns firing metallic cartridge
 cases is worked on similar principles, but is somewhat simpler than
 that for the de&nbsp;Bange obturation, due principally to the fact of the
 firing primer being already contained in the cartridge case when this
@@ -1762,13 +1741,11 @@ mechanism. They are all designed on the same principle, with
 a view to safety and rapidity, and may be regarded as a miniature
 sliding breech mechanism. In the older types the lock or its substitute
 was manipulated by hand, and with electric firing the wires
-from the tubes were joined up to the loose ends of the firing circuit;
-PAGE:232safety depended therefore on everything being in order and all operations correctly performed.
+from the tubes were joined up to the loose ends of the firing circuit;PAGE:232safety depended therefore on everything being in order and all operations correctly performed.
 {{center|[[File:EB1911 - Ordnance Fig 41.png|746px|]]<br>
    {{sc|Fig}}. 41.—12-in. Gun, Breech Mechanism.}}
 
-The gun could, however, be fired before the breech was properly secured and a serious accident caused; to prevent this all the movements of modern locks are arranged to be automatic, and wireless electric tubes are used so that immediately the breech mechanism commences to open, the lock itself is moved in the box slide so as to uncover the vent opening. During the first part of this movement a foot on the
-PAGE:233striker rides up an incline&nbsp;I (fig.&nbsp;45) on the box slide and thus
+The gun could, however, be fired before the breech was properly secured and a serious accident caused; to prevent this all the movements of modern locks are arranged to be automatic, and wireless electric tubes are used so that immediately the breech mechanism commences to open, the lock itself is moved in the box slide so as to uncover the vent opening. During the first part of this movement a foot on thePAGE:233striker rides up an incline&nbsp;I (fig.&nbsp;45) on the box slide and thus
 pushes back the striker from contact with the tube. The extractor
 described above is actuated at the same time. Most locks
 consist of a steel frame with a socket for containing the striker
@@ -1832,7 +1809,6 @@ in rear of the gun, and should wind be blowing down the gun the
 action is more intense. By looking into the gun from the muzzle,
 before the breech is opened, the gas can often be seen burning
 with a pale-blue flame as it slowly mixes with air and a
-<!--col.2-->
 curious singing noise is heard at the same time. It is now usual to
 fit a special apparatus on the gun, so that directly the breech is
 partly opened a blast of compressed air is allowed to enter the
@@ -1891,8 +1867,7 @@ Broadwell gas ring is still in use in the French naval service, where
 it is made of copper (fig.&nbsp;50), and also of steel in a modified form
 (Piorkowski) in the German service (fig.&nbsp;51); in the last-named service,
 owing to the defect already named, all the latest guns, both light
-and heavy, use metal cartridge cases. In the French navy, as in
-PAGE:234most other services, cartridge cases are used for the smaller and medium guns only.
+and heavy, use metal cartridge cases. In the French navy, as inPAGE:234most other services, cartridge cases are used for the smaller and medium guns only.
 {{center|[[File:EB1911 - Ordnance Fig 44.png|600px]]<br>
 {{Fs|92%|{{sc|Fig}}. 44.—English modern Breech Mechanism, for heavy and medium guns.}}}}
 
@@ -2018,10 +1993,9 @@ guns they will not, of course, fire so many. Cartridge cases are
 an expensive addition to the ammunition, so that there should be
 no doubt about the advantages they offer before they are definitely
 adopted for heavy guns.
-{{EB1911 fine print/e}}
+
 The rapidity with which modern guns can be fired and the
-enormous energy they develop is especially striking when one
-PAGE:235considers the same facts in connexion with the early guns.
+enormous energy they develop is especially striking when onePAGE:235considers the same facts in connexion with the early guns.
 Favé states in his «I»Histoire et tactique des trois armes«/I» (p.&nbsp;23)
 that during the invasion of Italy in 1494 by Charles&nbsp;VIII.
 the guns were so unwieldy and the firing so slow{{EB1911 Shoulder HeadingSmall|Range and power.}}
@@ -2121,8 +2095,7 @@ and rendered other advantages impossible; even the 24,000-ton
 battleships are none too large to carry the number of heavy guns
 now required to form the main armament.
 
-The weight and size of the old brown prismatic charges had also reached huge dimensions; thus, while with heavy M.L. guns the weight of the full charge was about one-fourth that of the projectile, it had with heavy B.L. guns become one-half of the weight of the shell or even a greater proportion. The introduction of smokeless powder about 1890, having more than three times the amount of energy for the same weight of the older powders, allowed longer guns to be used, which fired a much smaller weight of charge but gave higher velocities; the muzzle or striking energy demanded for piercing hard-faced armour could consequently be obtained from guns of more moderate calibre. The 13·5-in. and 16·25-in. guns were therefore gradually discarded and new ships were armed with 12-in. guns of greater power. As the ballistic requirements are increased the weight of the charge becomes proportionately greater; thus for the
-PAGE:236present high velocity guns it has reached a ratio of about 0·4
+The weight and size of the old brown prismatic charges had also reached huge dimensions; thus, while with heavy M.L. guns the weight of the full charge was about one-fourth that of the projectile, it had with heavy B.L. guns become one-half of the weight of the shell or even a greater proportion. The introduction of smokeless powder about 1890, having more than three times the amount of energy for the same weight of the older powders, allowed longer guns to be used, which fired a much smaller weight of charge but gave higher velocities; the muzzle or striking energy demanded for piercing hard-faced armour could consequently be obtained from guns of more moderate calibre. The 13·5-in. and 16·25-in. guns were therefore gradually discarded and new ships were armed with 12-in. guns of greater power. As the ballistic requirements are increased the weight of the charge becomes proportionately greater; thus for thePAGE:236present high velocity guns it has reached a ratio of about 0·4
 of the weight of the projectile.
 
 {{center|[[File:EB1911 - Ordnance Fig 46.png|700px]]<br>
@@ -2146,7 +2119,6 @@ subsequently of steel plates has increased, so the penetrative
 force or quality of the projectile has advanced. Often, after a
 period of apparent inactivity, fresh ideas or new metallurgical
 processes have enabled further progress to be made; this is
-<!--col.2-->
 the case at the present time as regards both projectiles
 and armour. As a matter of fact, armour, at the present-day
 fighting ranges, is
@@ -2206,8 +2178,7 @@ bursting charge being comparatively small. Again, many
 foreign gunmakers claim that their guns are, in comparison
 with English guns of the same power, of less weight. This is
 true in a limited sense, but such guns have nothing like the same
-factor of resistance as English guns, or, in other words, the English
-PAGE:237guns are much stronger. This is an obvious advantage, but an
+factor of resistance as English guns, or, in other words, the EnglishPAGE:237guns are much stronger. This is an obvious advantage, but an
 equally solid one is the fact that owing to the greater weight of
 the home-made weapon the recoil energy is less and consequently
 the mounting can be made of a lighter pattern. Besides, the
@@ -2369,8 +2340,7 @@ only lost their velocity slowly, while the
 spherical shot lost their velocity so rapidly
 that at 2000&nbsp;yds. range only about one-third
 of the initial velocity was retained.}}
-{{nop}}
-PAGE:238{|class=_tablecolhdborder {{Ts||ac|sm92|lh120}}
+{{nop}}PAGE:238{|class=_tablecolhdborder {{Ts||ac|sm92|lh120}}
 |+{{sc|Table}} VI. — «I»British Rifled Ordnance«/I», «I»1890«/I».
 |-{{Ts|ba}}
 |Official Designation&nbsp;<br>of Gun.||{{{Ts|pl15|pr15}}|Calibre.||Weight of&nbsp;<br>Gun.||Weight of&nbsp;<br>Charge.||Weight of&nbsp;<br>Projectile.||Muzzle<br>Velocity.||Muzzle<br>Energy.||Perforation<br>of Wrought<br>Iron.||Rate of<br>Firing<br>Rounds.||Propellant.
@@ -2593,16 +2563,14 @@ Q.F. system.}}
 |,,
 |}
 {{center|{{Fine block|Q.F. guns as in 1900.}}}}
-{{EB1911 fine print/s}}
-The tabulated armour-piercing value of a gun is based on the
-PAGE:239results given by various formulas. These often vary considerably,
+
+The tabulated armour-piercing value of a gun is based on thePAGE:239results given by various formulas. These often vary considerably,
 so in order that a direct comparison in the tables may be made,
 this value is obtained for wrought iron plate only, using Tresidder’s
 formula, which is one of the most trustworthy. The equivalent
 thickness of Krupp cemented steel armour can be obtained
 immediately by dividing the tabulated value for wrought iron by a
 “factor of effect” of 2·3 to 2·4 for uncapped armour piercing
-<!-- column 2 -->
 shot, and about 2·0 for capped armour piercing shell. These
 factors are dependent on the nature of the projectile and must
 therefore be taken as approximate.
@@ -2611,7 +2579,7 @@ Tables VIII.-XXII. are obtained from trustworthy sources,
 but as great secrecy is now observed in many countries there may
 be a few inaccuracies; in some cases the whole of the data are not
 available.
-{{EB1911 fine print/e}}
+
 {|class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
 |+{{sc|Table}} IX. — «I»French Naval Ordnance«/I», «I»1910«/I».
 |-{{Ts|ba}}
@@ -2726,8 +2694,7 @@ available.
 |&nbsp;2·9 ,,||..||0·87||&numsp;3·53||10·8||2700||&numsp; 546||10·3||..||,,
 |-
 |&emsp;1·81 ,,||&emsp;1·81||0·323||..||&numsp;3·3||2003||91·8||&numsp;4·6||..||,,
-|}
-PAGE:240{|class=_tablecolhdborder {{Ts|sm92|lh12|ac}}
+|}PAGE:240{|class=_tablecolhdborder {{Ts|sm92|lh12|ac}}
 |+{{sc|Table}} XIII. — Austrian Naval Ordnance, 1910.
 |-{{Ts|ba}}
 |Official Designation<br>of Gun.||Calibre.||Weight of<br>Gun.||Weight of<br>Charge.||Weight of<br>Projectile.||Muzzle<br>Velocity.||Muzzle<br>Energy.||Perforation<br>of Wrought<br>Iron.||Rate of<br>firing<br>Rounds.||Propellant.
@@ -2863,8 +2830,7 @@ available.
 Note.—The Japanese fleet has mainly been armed by Armstrong’s Works, but the “Katori” was armed by Vickers’, and those
 ships taken from the Russians during the late war are armed with guns from Krupp or Obuchoff. Guns of all sizes are now,
 however, being constructed in Japan, so that the country is no longer dependent on foreign factories.
-{{nop}}
-PAGE:241{| class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
+{{nop}}PAGE:241{| class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
 |+{{sc|Table}} XVIII.—«I»Sir W. G. Armstrong«/I», «I»Whitworth & Co.’s Guns. Abridged Table«/I».  
 |-{{Ts|ba|ac}}
 |Official Designation<br>of Gun.||Calibre.||Weight of<br>Gun.||Weight of<br>Charge.||Weight of<br>Projectile.||Muzzle<br>Velocity.||Muzzle<br>Energy.||Perforation<br>of Wrought<br>Iron.||Rate Of<br>firing<br>Rounds.||Propellant.
@@ -2969,10 +2935,9 @@ however, being constructed in Japan, so that the country is no longer dependent 
 |-
 |·248||1·37||{{em|1.1}}3·42<br>{{em|1.1}}4·3||3242<br>2890||249||&numsp;9·0<br>&numsp;8·75||40–50||
 |}
-{{EB1911 fine print/s}}
+
 «I»Note«/I». The above table includes a light and heavy type of gun, but for each the length of bore is 50 calibres; in the unabridged
-table guns of 40 and 45 calibres are included. The particulars of the shorter pieces can be easily obtained from Table XX., as the
-PAGE:242construction of Krupp’s complete table is based on very simple rules. Thus, for the same relative length of gun, the weight of the
+table guns of 40 and 45 calibres are included. The particulars of the shorter pieces can be easily obtained from Table XX., as thePAGE:242construction of Krupp’s complete table is based on very simple rules. Thus, for the same relative length of gun, the weight of the
 projectile and of the charge are, with few exceptions, in proportion to the cube of the calibre. Again, the weight of the gun varies as
 the cube of the calibre multiplied by the length. The muzzle velocity is practically identical for guns of the same relative length,
 and varies as the square root of the length; consequently the muzzle energy varies directly as the length. Two weights of projectile
@@ -3076,7 +3041,7 @@ Field Howitzer batteries abroad have pieces of from 10 to 12
 centimetres calibre and a low velocity; in England a 5-in.
 howitzer is at present used, but it is intended to adopt a
 4·5-in. howitzer of 17 calibres in length for future manufacture.
-{{EB1911 fine print/e}}
+
 Heavy shell power and long range fighting render the work of
 the gun designer particularly difficult, especially when this is
 combined with conditions restricting length and
@@ -3117,8 +3082,7 @@ higher must be the temperature to which it is heated before shrinking.
 This is necessary in order that the dilatation may allow
 sufficient clearance to place the hoop correctly in position on the
 gun, without the possibility of its contracting and gripping before
-being so placed. Should it warp while being heated or while
-PAGE:243being placed in position the hoop may prematurely grip on the
+being so placed. Should it warp while being heated or whilePAGE:243being placed in position the hoop may prematurely grip on the
 gun and may consequently have to be sacrificed by cutting it off
 and shrinking on another.
 
@@ -3170,7 +3134,7 @@ course consists of several tubes shrunk on to the barrel the additional
 strength, obtained by the initial tension of the shrunk
 tubes, is sometimes taken account of in the calculation, or the
 two may be treated as one thick tube.
-{{EB1911 fine print/s}}
+
 The gunmakers’ formulas for the strength of the gun are obtained
 from considering the strength of a thick cylinder exposed
 to unequal internal and external pressures. Supposing
@@ -3201,7 +3165,6 @@ Equation (4) is usually known as the «I»Gunmakers’ formula«/I» and
 from it, when P<sub>𝑛</sub> and T<sub>𝑛−1</sub>, T<sub>𝑛−2</sub> {{...}} are known the other pressures
 can be found. The proof tension of the material is kept well below
 the yielding stress. For ordinary carbon gun steel it is usual to
-<!--col.2-->
 consider that the proof tension of the barrel should not exceed 15
 tons and of the outer hoops 18 tons per square inch; with nickel
 gun steel these become 20 tons and 24 tons respectively. If the
@@ -3303,8 +3266,7 @@ seen that the fibres of the barrel must be compressed while the
 fibres of the superimposed hoop are extended, and thus produce
 the «I»Initial Stress«/I». The shrinkage S may be defined as the excess
 of the external diameter of the tube over the internal diameter of
-the hoop, when separate and both are in the cold state. Then
-PAGE:244ii. <sub>𝑛</sub>S<sub>𝑛+1</sub> denotes the shrinkage between the 𝑛<sup>𝑡ℎ</sup> and (𝑛 + 1)<sup>𝑡ℎ</sup>
+the hoop, when separate and both are in the cold state. ThenPAGE:244ii. <sub>𝑛</sub>S<sub>𝑛+1</sub> denotes the shrinkage between the 𝑛<sup>𝑡ℎ</sup> and (𝑛 + 1)<sup>𝑡ℎ</sup>
 hoops.
 
 {|width=100%
@@ -3515,8 +3477,7 @@ obturator area; V or buttress shaped threads are always used
 as they are stronger than other forms, but V threads have the great
 advantage of centring the breech screw when under pressure.
 
-In most modern B.L. guns fitted with de Bange obturation the
-PAGE:245diameter of the seating is made just large enough to freely admit
+In most modern B.L. guns fitted with de Bange obturation thePAGE:245diameter of the seating is made just large enough to freely admit
 the projectile; this is usually considerably smaller than the maximum
 diameter of the chamber, consequently a less area is exposed to the
 gas pressure and less screw thread section is required.
@@ -3629,8 +3590,7 @@ the advantage of the less erosive action is lost owing to the greater
 weight of pure nitro-cellulose explosive required to obtain the same
 ballistics.
 
-The effect of erosion on large high-power guns is serious, for in a
-PAGE:24612-in. gun after some 150 or fewer rounds are fired with a full charge
+The effect of erosion on large high-power guns is serious, for in aPAGE:24612-in. gun after some 150 or fewer rounds are fired with a full charge
 the barrel is worn so much as to need replacing. In the British
 service it is considered that the wear produced by firing sixteen half
 charges is equivalent to that of one full charge.
@@ -3695,7 +3655,7 @@ Kaiser, «I»Konstruktion der gezogenen Geschützröhre«/I» (Vienna, 1900);
 Indra, «I»Die wahre Gestalt der Spannungskurve«/I» (Vienna, 1901).
 Italian: Tartaglia, «I»La Nuova Scienta«/I» (Venice, 1562); Bianchi,
 «I»Materiale d’artiglieria«/I» (Turin, 1905). {{Fs|108%|{{EB1911 footer initials|Albert George Hadcock|A. G. H.}}}}
-{{EB1911 fine print/e}}
+
 {{clear}}
 {{csc|II. Field Artillery Equipments}}
 
@@ -3720,7 +3680,6 @@ gun wheels must not greatly exceed that on the limber wheels.
 It is still usual to carry two gunners on seats on the gun axletree,
 and two on the limber. But a Q.F. gun capable of firing 20
 rounds a minute requires to be constantly accompanied by an
-<!--col.2-->
 ammunition wagon, and the modern tendency is to take advantage
 of this to carry some of the gunners on the wagon. Thus in
 the British field artillery two gunners are carried on the gun
@@ -3796,8 +3755,7 @@ knows that the gun cannot go off till he is ready. A field gun
 has to be sighted (see {{EB1911 article link|Sights}}) for laying («I»a«/I») by direct vision
 («I»b«/I») by clinometer and aiming-point (see {{EB1911 article link|Artillery}}). The first
 purpose is served by the ordinary and telescopic sights; the
-second by the goniometric sight or the panorama sight. The
-PAGE:247{|class=_tablecolhdborder {{Ts|sm90|lh12|ac}}
+second by the goniometric sight or the panorama sight. ThePAGE:247{|class=_tablecolhdborder {{Ts|sm90|lh12|ac}}
 |+TABLE A.—FIELD GUNS<br> («I»Corrected to May 1«/I», «I»1910«/I», «I»in accordance with Bethell’s«/I» “«I»Modern Guns and Gunnery«/I»,” «I»3rd edition«/I».)
 |-{{Ts|ba}}
 |||Austria<br>1905.||Belgium<br>1905.||Brazil<br>1904.||Denmark<br>1902.||France<br>1898–<br>1902.||Germany<br>1906.||Great<br>Britain<br>F.A·<br>1903.||Great<br>Britain<br>H.A·<br>1903.||Italy<br>1906.||Japan<br>1905.||Rumania<br>1904.||Russia<br>1903.||Spain<br>1906.||Switzer-<br>land<br>1903.||United<br>States<br>1902.
@@ -3858,12 +3816,12 @@ second by the goniometric sight or the panorama sight. The
 |-{{Ts|bt}}
 |{{Ts|al}}|Maker.||State, Skoda<br>&Ehrhardt||Krupp<br>&<br>Cockerill||Krupp||Krupp||State||State|| colspan="2"|State, Elswick<br>Ordnance Co.,<br>Vickers, Maxim and<br>Coventry Ordnance<br>Works||Krupp||State<br>and<br>Krupp||Krupp||Putilov||Schneider||Krupp||State<br>and<br>Ehrhardt
 |}
-{{center|{{Fs|90%|These weights do not include the gunners.{{em|9}}Doubtful figures are marked thus.*<br><sup>1</sup>In addition to the wagons with light ammunition column, now raised to 62 per battery.{{em|9}}<sup>2</sup>Including four rounds with gun.}}}}
-PAGE:248independent line of sight is an arrangement of sights and elevating
+{{center|{{Fs|90%|These weights do not include the gunners.{{em|9}}Doubtful figures are marked thus.*<br><sup>1</sup>In addition to the wagons with light ammunition column, now raised to 62 per battery.{{em|9}}<sup>2</sup>Including four rounds with gun.}}}}PAGE:248<section begin="s1" />independent line of sight is an arrangement of sights and elevating
 gear found in many modern field guns, which divides between
 two gunners the work of aiming (called «I»laying«/I») the gun, and of
 giving it the elevation required to hit the target.
-
+<section end="s1" />
+<section begin="s2" />
 {|style=margin:auto
 |-
 |[[File:EB1911 - Ordnance - Fig. 59.png|400px]]
@@ -3910,7 +3868,7 @@ that it can be cross-levelled. The sight itself is connected to the
 elevating gear, and is screwed out of its socket as the breech
 of the gun is depressed, so that the sight remains in the same
 place.
-{{EB1911 fine print/s}}
+
 «I»Construction of the Gun«/I».—Field guns are made of steel, usually
 containing a small percentage of nickel or chromium, or both, and
 having a tensile breaking strain of about 50&nbsp;tons per square inch.
@@ -4033,7 +3991,7 @@ gradually absorbs the recoil of the gun and brings it gently to a
 standstill. As the gun recoils the centre of gravity of the gun and
 carriage shifts to the rear, reducing the stability. The buffer-resistance
 has to be gradually reduced proportionately to the reduced
-PAGE:251stability. To allow the liquid to flow past the piston, grooves
+<section end="s2" />PAGE:251stability. To allow the liquid to flow past the piston, grooves
 (called «I»ports«/I») are formed in the sides of the cylinder, and by varying
 the depth of the grooves at different points the resistance can be
 adjusted as required.
@@ -4129,7 +4087,6 @@ as in ordinary Q.F. guns, absorbed by the friction in the buffer,
 but that part of it is stored up and used to counteract the recoil
 of the next round. If the hydraulic buffer be dispensed with, and
 the whole of the recoil taken on the springs or compressed air gear.
-<!--col.2-->
 the overturning stress is reduced to one-fourth of its normal amount.
 One practical difficulty in the way of applying the differential
 system to field guns lies in the vibration and slight lateral motion
@@ -4225,8 +4182,7 @@ stands perfectly steady on discharge.
 «I»The Russian Q.F. Field Gun«/I» («I»1903«/I») is intended as an improvement
 on the French gun, being of even greater power. Springs are used
 for running-up instead of compressed air. To ensure steadiness the
-gun is kept very low on the carriage; this is effected by the use of
-PAGE:252a cranked axletree. The gun has not the independent line of sight,
+gun is kept very low on the carriage; this is effected by the use ofPAGE:252a cranked axletree. The gun has not the independent line of sight,
 but has a panorama sight. It traverses on the axletree.
 
 «I»The Danish Q.F. Field Gun«/I» (fig. 64, Plate IV.) is a good example
@@ -4272,7 +4228,7 @@ only; the brake-wheel is seen in front of the shield. The panorama
 telescope is mounted on top of the arc sight; no foresight is used.
 There are no axletree seats, the gunners being carried on the gun
 limber and wagon limber. The wagon body (fig.&nbsp;66) is tipped beside
-the gun in action.<!--col.2-->
+the gun in action.
 
 «I»Horse Artillery Guns«/I».—A horse artillery gun must be mobile
 enough to accompany cavalry. This is secured partly by the
@@ -4309,8 +4265,7 @@ The construction of the howitzer is much the same as that of a
 gun. The calibre is usually between 4·3 and 4·7 in., and the length
 does not much exceed 12 calibres. Case ammunition is used, and
 the breech action is similar to that of a Q.F. gun. Howitzers are
-usually provided with shields in order to enable them to come into
-PAGE:253action in the open when necessary. At short ranges, with full charge, they make very powerful guns.
+usually provided with shields in order to enable them to come intoPAGE:253action in the open when necessary. At short ranges, with full charge, they make very powerful guns.
 
 «I»Construction of the Carriage«/I».—The gun-recoil system is used as in a gun equipment. There is however one important difference. If the recoil allowed be sufficient to keep the carriage steady at low elevations, then when fired at an elevation of 45° the breech will strike the ground. This may be to some extent avoided by placing
 the trunnions of the cradle which supports the howitzer at the extreme rear end, so that when elevated the breech of the howitzer is not brought any nearer the ground (Krupp). One objection to
@@ -4457,7 +4412,7 @@ and «I»Der Erfolg des stdndigen Rohrn'icklaufs bei Feldhaubitzen«/I»
 1905). «I»Shrapnels et boucliers«/I» and «I»L’Obusier de campagne moderne«/I»
 (Lucerne, 1906), Bahn. «I»Die Entwicklung der Rohrrücklauf-Feldhaubitze«/I»
 (Berlin, 1907), {{Fs|108%|{{EB1911 footer initials|Henry Arthur Bethell|H. A. B.}}}}
-{{EB1911 fine print/e}}
+
 {{clear}}
 {{csc|III. Heavy Field and Siege Equipments}}
 
@@ -4466,8 +4421,7 @@ the value of heavy metal in the field has been recognized,
 at all events in theory, but it was mainly due to the South African
 war that “heavy” batteries have become a component part of
 modern armies. Guns heavier than field guns have formed
-part of the equipment of the Indian army for many years.
-PAGE:254but they have existed for a specific purpose, and ordnance
+part of the equipment of the Indian army for many years.PAGE:254but they have existed for a specific purpose, and ordnance
 originally designed for quite other functions has, from the
 exigencies of war, been occasionally utilized in the field, as was
 the case in South Africa and Manchuria, but the heavy field
@@ -4482,7 +4436,7 @@ will separate these field equipments from those of the light units
 of a siege train It will be convenient to consider in turn the
 three natures of ordnance (guns, howitzers and mortars) employed
 and to quote some typical instances of each kind.
-{{EB1911 fine print/s}}
+
 «I»The United States 60 pr. Gun«/I».—This gun and its equipment are
 of modern type (1904) Its general appearance is shown in figs.&nbsp;69
 and 70, Plate&nbsp;V. The calibre is 4·7″; the charge 5·94&nbsp;℔
@@ -4607,8 +4561,7 @@ and the tail rod F is drawn in, and from its larger diameter causes
 a pressure of oil against the floating piston&nbsp;G, which slides forward
 and compresses the springs which are prevented moving by the
 rods H. The action is the same in each buffer. After recoil the
-springs expand and return the howitzer into the firing position.
-PAGE:255The floating pistons are tapered slightly inside towards the front
+springs expand and return the howitzer into the firing position.PAGE:255The floating pistons are tapered slightly inside towards the front
 to prevent violence in the running out action. The elevating gear,
 which can be placed on the left side of either the trail or the top
 carriage, actuates the arc&nbsp;K, bolted to the left side of the cradle.
@@ -4727,7 +4680,7 @@ army to penetrate into the enemy’s country. After this has been
 done, a small portion of this artillery will be employed in connexion
 with the siege of fortresses, while another, by far the more considerable
 portion, will accompany the advance of the field army.
-{{EB1911 fine print/e}}
+
 «I»Heavy Siege Units«/I».—When a serious siege has to be undertaken
 it is necessary to organize one or more siege trains in
 addition to the troops of the field army. Both heavy and light
@@ -4752,9 +4705,7 @@ British pieces are a 6″ gun and a 9·4″ howitzer. Generally
 speaking, whereas the most suitable armament of the light units
 can as a rule be foreseen, that of the heavy would depend very
 much on circumstances.
-{{nop}}
-PAGE:256{{EB1911 fine print/s}}
-«I»The French 10·7«/I»&#8202;″ «I»Howitzer«/I».—As a typical piece the 10·7″ howitzer
+{{nop}}PAGE:256«I»The French 10·7«/I»&#8202;″ «I»Howitzer«/I».—As a typical piece the 10·7″ howitzer
 may be taken, which the French transported by special horse
 draught, as it was found too heavy for the type of siege railway
 made use of at the mock siege of Langres in 1907. Its total equipment
@@ -4771,7 +4722,6 @@ having lateral movement around the aforesaid pivot; its
 rear portion is provided with rollers to facilitate its movement on
 the platform. Its upper portion consists of two inclined rails along
 which the bed or carriage of the howitzer slides. To check recoil a
-<!--col.-->
 hydraulic buffer is attached to the front of the slide and also to the
 bed.
 {|style=margin:auto
@@ -4802,7 +4752,7 @@ each siege train consists of three divisions.
 A division is divided into groups
 and comprises some 50 pieces of ordnance,
 heavy and light. {{Fs|108%|{{EB1911 footer initials|Julian Robert John Jocelyn|J. R. J. J.}}}}
-{{EB1911 fine print/e}}
+
 {{clear}}
 {{csc|IV. Garrison Mountings}}
 
@@ -4845,7 +4795,7 @@ bullets.
 
 The methods of mounting of coast ordnance are many; space
 only permits of referring to certain typical arrangements.
-{{EB1911 fine print/s}}
+
 1. «I»The Moncrieff Principle«/I».—The disappearing carriage originated,
 at all events in England, with Colonel Sir&nbsp;A. Moncrieff, who, about
 1864, proposed to utilize the energy of recoil to bring a
@@ -4867,8 +4817,7 @@ a large volume of liquid through a narrow opening or recoil valve,
 and also by further compressing a large volume of already highly
 compressed air; when recoil was completed the recoil valve closed and the air was retained at very high pressure: the energy thus stored up returned the gun to the firing position. The action will be understood from the following example.
 
-«I»The British 6«/I»&#8202;″ «I»B.L. Gun on H.P. Mounting«/I», «I»Mark IV«/I».—Fig. 78 shows a general view of the mounting; fig.&nbsp;79 is a vertical and
-PAGE:257{{Css image crop
+«I»The British 6«/I»&#8202;″ «I»B.L. Gun on H.P. Mounting«/I», «I»Mark IV«/I».—Fig. 78 shows a general view of the mounting; fig.&nbsp;79 is a vertical andPAGE:257{{Css image crop
 |Image   = EB1911 - Volume 20.djvu
 |Page    = 257
 |bSize   = 820
@@ -4983,8 +4932,7 @@ in the outer cylinder and the gun is brought down to the loading
 position; the release of the counterweight will cause it to
 rise again. The gun has the usual motion of traverse round the
 common axis of the two cylinders.
-{{nop}}
-PAGE:258{{Css image crop
+{{nop}}PAGE:258{{Css image crop
 |Image   = EB1911 - Volume 20.djvu
 |Page    = 258
 |bSize   = 820
@@ -5014,7 +4962,6 @@ A Krupp cupola of chilled cast-iron for two 28-cm. (11″) is shown
 in fig.&nbsp;82. These are designed principally for coast defence in low
 sites. The cupola, which is built up like a Gruson cupola of several
 heavy iron masses, is resolved and the guns laid by hydraulic power.
-<!--col.2-->
 A heavy chilled cast-iron collar protects the under side of the
 armoured structure and the working mechanism of the guns. Fig.&nbsp;83,
 Plate&nbsp;VI., represents a
@@ -5075,8 +5022,7 @@ gun, while the piston rod&nbsp;L is attached to the front of the cradle:
 engaging with the buffer cylinder and in the same axial line is a
 bronze casting containing two air chambers&nbsp;F and G: the casting is
 attached to the rear of the cradle, which is supported by trunnions
-E in the lower carriage. Thus on firing, the gun carries the buffer
-PAGE:261cylinder backwards with it, draws it off its piston rod L and forces
+E in the lower carriage. Thus on firing, the gun carries the bufferPAGE:261cylinder backwards with it, draws it off its piston rod L and forces
 it into the air chamber F. The air in the chambers&nbsp;F and G is at a
 high initial tension and, on recoil, the air in F is further compressed
 and forced through the valve&nbsp;H into the chamber&nbsp;G. At the conclusion
@@ -5169,8 +5115,7 @@ of the lower carriage, cradle and gun is taken by a horizontal ring of
 hard steel balls resting on the top of a massive forged steel “pivot”&nbsp;U,
 the lower portion of which is shown supported in the cast-iron
 pedestal. The elevation indicator consists of a sector&nbsp;Q bolted to
-the cradle trunnions; to its edge is attached a metal tape, the
-PAGE:262other end of which is fixed to the spindle supporting a pointer,
+the cradle trunnions; to its edge is attached a metal tape, thePAGE:262other end of which is fixed to the spindle supporting a pointer,
 reading angles of elevation on the drum R. As the gun elevates
 the tape is paid out, the slack being taken in and the pointer revolved
 by the action of a clock spring.<ref name=230f1/> The mounting carries an
@@ -5241,7 +5186,7 @@ captain, a gun group commander a subaltern or senior N.C. officer.
 In connexion with coast artillery {{EB1911 lkpl|range-finder}}s («I»q.v.«/I») and electric
 lights (see {{1911link|Coast Defence}}) are installed and electric communications
 established for the chain of command. {{Fs|108%|{{EB1911 footer initials|Julian Robert John Jocelyn|J. R. J. J.}}}}
-{{EB1911 fine print/e}}
+
 {{clear}}
 {{csc|V. Naval Guns and Gunnery}}
 
@@ -5266,8 +5211,7 @@ guns forward and a pair aft, each pair enclosed in a hooded
 barbette, which was more commonly designated a turret. The
 turrets were on the midship line, and the guns in each commanded
 an arc of fire of 240°, «I»i.e.«/I» from right ahead to 30° abaft
-the beam on either side in the case of the fore turret, and from
-PAGE:263astern to 30° before either beam in the case of the after turret.
+the beam on either side in the case of the fore turret, and fromPAGE:263astern to 30° before either beam in the case of the after turret.
 The secondary armament, consisting of twelve 6-in. guns, was
 also symmetrically disposed. Two guns on either side (four in the
 “Majestic” class) were mounted with arcs of fire of from 60°
@@ -5295,7 +5239,6 @@ functions of the respective divisions of the armament was that
 the 12-in. guns were to injure the enemy’s vitals by piercing
 his armour with armour-piercing shot or shell, while the business
 of the 6-in. guns was to cover him with a hail of shells of large
-<!--col.-->
 capacity which were to kill and demoralize his personnel, pierce
 his funnels, destroy any navigational or sighting appliances
 which were exposed, set his woodwork on fire and render extinction
@@ -5342,8 +5285,7 @@ times, respectively, faster. The rate of fire of guns in action
 depends upon a variety of conditions, an important one being
 that of smoke interference, which tends to reduce the maximum
 rate of fire of the smaller guns nearer to that practicable with the
-heavier guns, but the rate of fire of the three guns in question,
-PAGE:264under battle conditions, is in the approximate proportions of
+heavier guns, but the rate of fire of the three guns in question,PAGE:264under battle conditions, is in the approximate proportions of
 1:&#x202f;1·5:&#x202f;4, which would thus produce a shell effect (supposing
 the hits made by each type of gun to bear a fixed proportion to
 the rounds fired), in the proportions of 72:&#x202f;22:&#x202f;4, for the 12-in.,
@@ -5452,8 +5394,7 @@ natures. Consequently guns of each nature must be spotted for
 independently, and it is obvious that this adds considerably
 to the elaboration and complication of the fire control system.
 
-This constitutes one of the reasons for the adoption of the uniform armament in the “Dreadnought” and her successors; another important reason lies in the fact that with the weight available for the heavy gun armament disposed of in a small number of very large guns, a greater proportion of these guns can be mounted on the midship line, and consequently be available for fire on either side of the ship (see fig.&nbsp;90). Thus in the “Dreadnought,” eight of her ten 12-in. guns can bear through a considerable arc on either beam, while in the “Lord Nelson,” although all her four 12-in. guns can bear on either beam, half at least of her 9·2-in. armament («I»i.e.«/I» that half on the opposite side to the enemy) will be at any moment out of bearing, and consequently be for the time a useless weight. The same principle of a uniform armament of 12-in. guns has been adopted in the “Invincible” type, the only large cruisers designed since the inception of the “Dreadnought.” Thus the 12-in. gun forms the sole heavy gun armament of all battleships and large cruisers of the “Dreadnought” era. The gun so carried is known as the Mark&nbsp;X., it is 45 calibres in length, and fires a projectile weighing 850&nbsp;℔ with a charge of cordite of 260&nbsp;℔, resulting in a muzzle velocity of 2700&nbsp;ft. per second. The Mark&nbsp;XI. gun was designed to be mounted in the later “Dreadnoughts.” Following the same line of development as resulted in the Mark&nbsp;X. gun, it is longer, heavier, fires an increased charge of cordite, and has a higher muzzle velocity, viz. of 2960&nbsp;ft. per second. This gun appears to mark the climax of development along the present lines, since the price to be paid in greater weight, length and diminished durability of rifling is out of all proportion to the small increase in muzzle velocity. Further developments would therefore be looked for in some other direction, such as the adoption either of a new form of propellant or of a gun of larger calibre. A modern gun of 10-in. calibre is found in the battleships “Triumph” and “Swiftsure.” The next gun in importance to the 12-in. is the 9·2-in., which forms part of the armament of the “Lord Nelson” and “King Edward&nbsp;VII.” classes of battleships, and the principal armament of all armoured cruisers (excepting the “County” class) antecedent to the “Invincibles.” The latest gun of this calibre has developed from earlier types in a similar manner to the 12-in., that is to say, it has experienced a gradual increase in length, weight, and weight of charge, with
-PAGE:265a consequently increased muzzle velocity. The latest type,
+This constitutes one of the reasons for the adoption of the uniform armament in the “Dreadnought” and her successors; another important reason lies in the fact that with the weight available for the heavy gun armament disposed of in a small number of very large guns, a greater proportion of these guns can be mounted on the midship line, and consequently be available for fire on either side of the ship (see fig.&nbsp;90). Thus in the “Dreadnought,” eight of her ten 12-in. guns can bear through a considerable arc on either beam, while in the “Lord Nelson,” although all her four 12-in. guns can bear on either beam, half at least of her 9·2-in. armament («I»i.e.«/I» that half on the opposite side to the enemy) will be at any moment out of bearing, and consequently be for the time a useless weight. The same principle of a uniform armament of 12-in. guns has been adopted in the “Invincible” type, the only large cruisers designed since the inception of the “Dreadnought.” Thus the 12-in. gun forms the sole heavy gun armament of all battleships and large cruisers of the “Dreadnought” era. The gun so carried is known as the Mark&nbsp;X., it is 45 calibres in length, and fires a projectile weighing 850&nbsp;℔ with a charge of cordite of 260&nbsp;℔, resulting in a muzzle velocity of 2700&nbsp;ft. per second. The Mark&nbsp;XI. gun was designed to be mounted in the later “Dreadnoughts.” Following the same line of development as resulted in the Mark&nbsp;X. gun, it is longer, heavier, fires an increased charge of cordite, and has a higher muzzle velocity, viz. of 2960&nbsp;ft. per second. This gun appears to mark the climax of development along the present lines, since the price to be paid in greater weight, length and diminished durability of rifling is out of all proportion to the small increase in muzzle velocity. Further developments would therefore be looked for in some other direction, such as the adoption either of a new form of propellant or of a gun of larger calibre. A modern gun of 10-in. calibre is found in the battleships “Triumph” and “Swiftsure.” The next gun in importance to the 12-in. is the 9·2-in., which forms part of the armament of the “Lord Nelson” and “King Edward&nbsp;VII.” classes of battleships, and the principal armament of all armoured cruisers (excepting the “County” class) antecedent to the “Invincibles.” The latest gun of this calibre has developed from earlier types in a similar manner to the 12-in., that is to say, it has experienced a gradual increase in length, weight, and weight of charge, withPAGE:265a consequently increased muzzle velocity. The latest type,
 which is known as the Mark&nbsp;XI., and is mounted in the “Lord
 Nelson” and “Agamemnon,” is 50 calibres in length, weighs 28
 tons, and with a charge of cordite of 130&nbsp;℔ gives to a projectile
@@ -5577,7 +5518,7 @@ could be obtained by the use of this “all round” loading position,
 as it was termed, and in the latest ships of the “Majestic”
 class, and in subsequent battleships, the fixed loading position
 has been abandoned.
-{{EB1911 fine print/s}}
+
 The details of recent 12-in. mountings vary considerably, a
 drawing of one of the most recent being shown in fig. 91, for which
 thanks are due to Messrs Vickers, Sons & Maxim, but in the majority
@@ -5609,8 +5550,7 @@ and turning gear such as will enable the turret or gun to respond
 instantly to the wish of the gun-layer, and to move either with considerable
 rapidity, or very slowly and steadily as would be the case
 when following a target at long range and with but little motion on
-the ship. The breech is opened and closed by hand or by hydraulic
-PAGE:266power, and a douche of water or blast of air, or a combination of
+the ship. The breech is opened and closed by hand or by hydraulicPAGE:266power, and a douche of water or blast of air, or a combination of
 both, removes any smouldering fragments of cordite or cartridge
 material before a fresh round is loaded.
 
@@ -5703,10 +5643,9 @@ with the 12-pounder, as with the earlier Q.F. guns.
 Firing is by electricity, percussion being available as an alternative
 if required, and the current is usually taken off the dynamo mains
 of the ship.
-{{EB1911 fine print/e}}
+
 «I»Sighting«/I».—The great advances recently made in accuracy
-of fire have been rendered possible, to a very great extent, by, the use of telescopic sighting apparatus. Arrangements are made in all modern sights for the bars or disks which carry the range graduations to be of considerable length or diameter respectively, in order that no difficulty may be found in adjusting the sights for every 25 or 50&nbsp;yds. of range. In the larger hand-worked mountings, where the laying of the gun for elevation and for direction is effected by two men on opposite sides of the gun, the sights used by them are “cross-connected,” «I»i.e.«/I» connected by rods and gearing to one another in such a way that, initial parallelism of the axes of the two telescopes having
-PAGE:267been secured, the adjustments to one sight made by the sight setter
+of fire have been rendered possible, to a very great extent, by, the use of telescopic sighting apparatus. Arrangements are made in all modern sights for the bars or disks which carry the range graduations to be of considerable length or diameter respectively, in order that no difficulty may be found in adjusting the sights for every 25 or 50&nbsp;yds. of range. In the larger hand-worked mountings, where the laying of the gun for elevation and for direction is effected by two men on opposite sides of the gun, the sights used by them are “cross-connected,” «I»i.e.«/I» connected by rods and gearing to one another in such a way that, initial parallelism of the axes of the two telescopes havingPAGE:267been secured, the adjustments to one sight made by the sight setter
 are simultaneously effected at the sight on the opposite
 of the gun.
 {{Css image crop
@@ -5821,4 +5760,4 @@ exist in this respect between opposing navies, success at sea will be
 the lot of the nation whose officers are the coolest and most intelligent,
 whose men are the best disciplined and best trained, and
 whose navy is in all respects the most imbued mth the habits and
-traditions of the sea. {{Fs|108%|{{EB1911 footer initials|Sydney Robert Fremantle|S. Fr.}}}}}}
+traditions of the sea. {{Fs|108%|{{EB1911 footer initials|Sydney Robert Fremantle|S. Fr.}}}}}}PAGE:268<section begin="s1" />

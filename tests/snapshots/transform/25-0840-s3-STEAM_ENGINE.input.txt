@@ -132,7 +132,7 @@ by allowing a jet of cold water from a cistern above to stream
 over the outer surface of the vessel. This produces a vacuum
 and causes water to be sucked up through the pipe C and
 the valve D. Meanwhile steam has been displacing water
-PAGE:841{{Img float
+<section end="s3" />PAGE:841{{Img float
  | style    = font-size:92%
  | file     = EB1911 Steam Engine - Fig. 2.jpg
  | width    = 245px
@@ -284,8 +284,7 @@ the atmosphere and did
 work on the pump. The
 next entry of steam
 expelled the condensed
-water from the cylinder
-PAGE:842through an escape valve. The piston was kept tight by a
+water from the cylinderPAGE:842through an escape valve. The piston was kept tight by a
 layer of water on its upper surface. Condensation was at first
 effected by cooling the outside of the cylinder, but the accidental
 leakage of the packing water past the piston showed the advantage
@@ -462,8 +461,7 @@ discharges into the hot well «I»H«/I», whence the supply of the feed-pump
 «I»F«/I» is drawn.}}
 
 13. In a second patent (1781) Watt describes the “sun-and-planet”
-wheels and other methods of making the engine give
-PAGE:843continuous revolving motion to a shaft provided with a
+wheels and other methods of making the engine givePAGE:843continuous revolving motion to a shaft provided with a
 flywheel. He had invented the crank and connecting-rod for
 this purpose, but it had meanwhile been patented
 by one Pickard, and Watt, rather than make terms
@@ -613,8 +611,7 @@ Watt successfully opposed them as infringing Watt’s patents.
 To Trevithick belongs the distinguished honour of being the
 first to use a steam carriage on a railway; in 1804 he built a
 locomotive in the modern sense, to run on what had formerly
-been a horse-tramway, in Wales, and it is noteworthy that the
-PAGE:844exhaust steam was discharged into the funnel to force the furnace
+been a horse-tramway, in Wales, and it is noteworthy that thePAGE:844exhaust steam was discharged into the funnel to force the furnace
 draught, a device which, twenty-five years later, in the hands
 of George Stephenson, went far to make the locomotive what
 it is to-day. In this connexion it may be added that as early
@@ -750,8 +747,7 @@ cylinders. In locomotive engines, where other considerations
 are of more moment than the saving of coal, compound expansion
 has found some application, but its use there is comparatively
 rare.
-{{nop}}
-PAGE:84520. The adaptation of the steam engine to railways, begun by
+{{nop}}PAGE:84520. The adaptation of the steam engine to railways, begun by
 Trevithick, became a success in the hands of George Stephenson,
 whose engine, the “Rocket,” when tried along
 with others, in 1829, not only distanced its competitors
@@ -904,8 +900,7 @@ velocity of these blades inconveniently high. Moreover, in
 Parsons’s compound turbine the range of pressure through which
 the steam expands in each separate step is too small to give
 rise to any difficulty in the formation of the jets. The guide
-blades, which form the jets, are distributed round the whole
-PAGE:846circumference of the revolving wheel, and all the revolving blades
+blades, which form the jets, are distributed round the wholePAGE:846circumference of the revolving wheel, and all the revolving blades
 are consequently in action at once. The steam streams from
 end to end through an annular space between a revolving drum
 and the casing which surrounds it. Parallel rings of fixed guide
@@ -1033,7 +1028,7 @@ of submitting them to any comprehensive theoretical treatment,
 and information is rather to be sought from the scientific analysis
 of experiments with actual machines.
 
-{{EB1911 fine print/s}}
+
 27. «I»Formation of Steam under Constant Pressure«/I».—In attempting
 a brief sketch of steam engine theory it is necessary to begin by giving
 some account of the properties of steam, so far as they are relevant.
@@ -1060,8 +1055,7 @@ the piston.
 2. Steam is formed, more heat being taken in. The piston (which
 is supposed to exert a constant pressure) rises. No further increase
 of temperature occurs during this stage, which continues until all
-the water is converted into steam. During this stage the steam
-PAGE:847which is formed is said to be saturated. The volume which the piston
+the water is converted into steam. During this stage the steamPAGE:847which is formed is said to be saturated. The volume which the piston
 encloses at the end of this stage—the volume, namely, of 1&nbsp;℔ of
 saturated steam at pressure 𝑝 (and temperature 𝑡)—will be denoted
 by 𝑣 in cubic feet.
@@ -1540,8 +1534,7 @@ of water I<sub>𝑤</sub> we add 𝑝𝑤/J to ℎ, and this quantity is also gi
 32. «I»Internal Energy«/I».—Of the heat of steam the part 𝑝𝑣/J is spent in doing external work. The remainder has gone to increase the stock of internal energy which the substance possesses.
 
 In dealing with the heat required to produce steam we adopted
-the state of water at 0°C. as an arbitrary starting-point from which to reckon the reception of heat. In the same way it is convenient
-PAGE:848to use this arbitrary starting-point in reckoning what may be called
+the state of water at 0°C. as an arbitrary starting-point from which to reckon the reception of heat. In the same way it is convenientPAGE:848to use this arbitrary starting-point in reckoning what may be called
 the «I»internal energy«/I» of the substance, which is the excess of the heat
 taken in over the external work done by the substance during its
 reception of heat. Thus the internal energy E of 1&nbsp;℔ of saturated
@@ -1805,8 +1798,7 @@ To the higher temperature {{Greek|τ}}<sub>1</sub> a practical limit is set by t
 mechanical difficulties, with regard to strength and to lubrication,
 which attend the use of high-pressure steam. In engines of ordinary
 construction the pressure is rarely so much as 250&nbsp;℔ per sq.&nbsp;in.
-{{nop}}
-PAGE:849It must not be supposed that the efficiency ({{Greek|τ}}<sub>1</sub>−{{Greek|τ}}<sub>2</sub>)/{{Greek|τ}}<sub>1</sub> is actually 
+{{nop}}PAGE:849It must not be supposed that the efficiency ({{Greek|τ}}<sub>1</sub>−{{Greek|τ}}<sub>2</sub>)/{{Greek|τ}}<sub>1</sub> is actually 
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
 the causes of imperfection cannot be removed.
@@ -1904,7 +1896,6 @@ The experiments of Regnault show that {{Greek|σ}}, within the limits of
 temperature that obtain in boilers, is a nearly constant quantity,
 and no serious error will be introduced in this integration by
 treating it as a constant, with a value equal to the mean value, as
-<!--col.2-->
 determined by Regnault, between the limits of {{Greek|τ}}<sub>1</sub> and {{Greek|τ}}<sub>2</sub>. On this
 basis
 
@@ -2004,8 +1995,7 @@ and taking {{Greek|σ}} as sensibly constant,
 During evaporation at {{Greek|τ}}<sub>1</sub> a quantity of heat L<sub>1</sub> is taken in at
 temperature {{Greek|τ}}<sub>1</sub>, and hence the entropy of the steam
 
-{{center|<math>\phi_s = \phi_w + \text{L}_1/\tau_1 = \sigma(\log_\epsilon \tau_1 - \log_\epsilon \tau_0) + \text{L}_1/\tau_1.</math>}}
-PAGE:850Values of the entropy of water and steam are given in the table. 
+{{center|<math>\phi_s = \phi_w + \text{L}_1/\tau_1 = \sigma(\log_\epsilon \tau_1 - \log_\epsilon \tau_0) + \text{L}_1/\tau_1.</math>}}PAGE:850Values of the entropy of water and steam are given in the table. 
 The entropy-temperature diagram for a Rankine cycle is illustrated 
 in fig.&nbsp;11, where 𝑎𝑏, a 
 logarithmic curve, represents
@@ -2184,8 +2174,7 @@ reduction in the area of the diagram.
 
 46. «I»Exchanges of Heat between the Steam and the Metal«/I».—The
 exchanges of heat between steam and metal in the engine cylinder 
-have been made the subject of an elaborate experimental examination
-PAGE:851by Professors Callendar and Nicolson («I»Proc. Inst. C.E.«/I»
+have been made the subject of an elaborate experimental examinationPAGE:851by Professors Callendar and Nicolson («I»Proc. Inst. C.E.«/I»
 cxxxi.&nbsp;147), who studied the cyclic variations of temperature 
 throughout the metal by means of thermo-electric junctions set
 at various depths. They found that the range of temperature
@@ -2350,8 +2339,7 @@ the consumption of coal was {{lb-|1·31}} per indicated horse-power-hour.
 In another trial, of a larger engine with steam superheated to 425°&nbsp;C,
 the consumption of steam per horse-power-hour was only {{lb-|9·0}}.
 
-49. «I»The Indicator«/I».—The actual behaviour of steam in the cylinder of a steam engine is studied by means of the indicator, which serves not only to measure the work done but to examine the operation of the valves and generally to give much useful information regarding the action of the engine. The indicator, which was invented by Watt, and improved by Richards, is a device for automatically drawing a diagram showing the pressure at all points of the piston’s stroke. In its most usual form it consists of a small steam cylinder fitted with a piston which slides easily within it and is pressed down by a spiral spring of steel wire. The cylinder of the indicator is connected by a pipe below this piston to one or other end of the cylinder of the engine, so that the piston of the indicator rises and falls in response to the fluctuations of pressure which occur in the engine cylinder. The indicator piston actuates a pencil, which rises and falls with it and traces the diagram on a sheet of paper fixed to a drum that is caused to rotate back and forth through a certain arc, in unison with the motion of the engine piston. In
-PAGE:852M‘Naught’s indicator the pencil is directly attached to the indicator 
+49. «I»The Indicator«/I».—The actual behaviour of steam in the cylinder of a steam engine is studied by means of the indicator, which serves not only to measure the work done but to examine the operation of the valves and generally to give much useful information regarding the action of the engine. The indicator, which was invented by Watt, and improved by Richards, is a device for automatically drawing a diagram showing the pressure at all points of the piston’s stroke. In its most usual form it consists of a small steam cylinder fitted with a piston which slides easily within it and is pressed down by a spiral spring of steel wire. The cylinder of the indicator is connected by a pipe below this piston to one or other end of the cylinder of the engine, so that the piston of the indicator rises and falls in response to the fluctuations of pressure which occur in the engine cylinder. The indicator piston actuates a pencil, which rises and falls with it and traces the diagram on a sheet of paper fixed to a drum that is caused to rotate back and forth through a certain arc, in unison with the motion of the engine piston. InPAGE:852M‘Naught’s indicator the pencil is directly attached to the indicator 
 piston, in Richards’s the pencil is moved by means of a system of 
 links so that it copies the motion of the piston on a magnified scale. 
 This has the advantage that an equally large diagram is drawn with 
@@ -2418,7 +2406,6 @@ should be drawn midway between the crests and hollows of the
 undulations. To keep them within reasonable compass in high-speed
 work a stiff spring must be used and an indicator with light 
 parts should be selected. Care must be taken that the spring is 
-<!-- col. -->
 graduated to suit the temperature (about 100°&nbsp;C.) to which it is 
 exposed when in use;. its stiffness at this temperature is about 3% 
 less than when cold. 
@@ -2481,8 +2468,7 @@ together, as in engines of the “tandem” type, whose high and low
 pressure cylinders are in one line, with one piston-rod common to 
 both pistons. Engines in which the high and low pressure cylinders 
 are placed side by side, and act either on the same crank or on 
-cranks set at 180° apart, may also discharge steam directly from one to the other cylinder; the same remark applies to beam engines, whether of the class in which both pistons act on one end of the beam, or of the class introduced by M‘Naught, in which the high and low pressure cylinders stand on opposite sides of the centre. By a
-PAGE:853convenient usage which is now pretty general the name “Woolf 
+cranks set at 180° apart, may also discharge steam directly from one to the other cylinder; the same remark applies to beam engines, whether of the class in which both pistons act on one end of the beam, or of the class introduced by M‘Naught, in which the high and low pressure cylinders stand on opposite sides of the centre. By aPAGE:853convenient usage which is now pretty general the name “Woolf 
 engine” is restricted to those compound engines which discharge 
 steam directly from the high to the low pressure cylinders without 
 the use of an intermediate receiver. 
@@ -2656,8 +2642,7 @@ is credited to Murdock, an assistant of Watt, came into general
 use with the introduction of locomotives, and is now employed, in 
 one or other of many forms, in the great majority of engines. 
 
-The common slide-valve is illustrated in fig. 18, which also shows
-PAGE:854the cylinder and the ports and passages leading to its ends. The 
+The common slide-valve is illustrated in fig. 18, which also showsPAGE:854the cylinder and the ports and passages leading to its ends. The 
 seat, or surface on which the valve slides, is a plane surface formed 
 on or fixed to the side of the cylinder, with three ports or openings 
 which extend across the greater part of the cylinder’s width. The
@@ -2805,8 +2790,7 @@ to a larger scale in fig.&nbsp;26.
 This makes the direction of CQ (the 
 eccentric) coincide on the paper with the simultaneous direction of<ref follow=832f1>
 Zeuner, «I»Treatise on Valve Gears«/I», trans, by M. Müller (1868).
-</ref>
-PAGE:855the crank, and hence to find the displacement of the valve at any 
+</ref>PAGE:855the crank, and hence to find the displacement of the valve at any 
 position of the crank we have only to draw CQ in fig.&nbsp;26 parallel
 to the crank, when CQ represents the{{img float|file=EB1911 Steam Engine Fig. 27.png |width=160px|cap={{sc|Fig}}. 27.}}
 displacement of the valve to the scale
@@ -2956,8 +2940,7 @@ crank. Thus, in fig.&nbsp;32, two circular arcs passing through 𝑒 and 𝑒′
 are drawn with E and E′ as centres and the eccentric rods are radii.
 These are loci of two known points of the link, and a third locus is
 the circle 𝑎 in which the point of suspension must lie. By placing
-on the paper a template of the link, with these three points marked
-PAGE:856on it, the position of the link is readily found, and by repeating the 
+on the paper a template of the link, with these three points markedPAGE:856on it, the position of the link is readily found, and by repeating the 
 process for other positions of the eccentrics a diagram of positions 
 (fig.&nbsp;32) is drawn for the assigned state of the gear. A line AB 
 drawn across this diagram in the path of the valve’s travel determines
@@ -3078,8 +3061,7 @@ CR drawn equal and parallel to ME is the
 «I»resultant«/I» eccentric which determines the 
 motion of the expansion-valve relatively 
 to the main-valve. Cut-off occurs at Q, 
-when the shaft has turned through an
-PAGE:857angle {{Greek|φ}}, which brings the resultant eccentric into the direction CQ 
+when the shaft has turned through anPAGE:857angle {{Greek|φ}}, which brings the resultant eccentric into the direction CQ 
 and makes the relative displacement of the two valves equal to 
 the distance 𝑙. 
 
@@ -3277,8 +3259,7 @@ equilibrium when F＝4{{Greek|π}}<sup>2</sup>𝑛<sup>2</sup>𝑟M (in absolute
 {{center|𝑛＝{{sfrac|font-size=100%|1|2{{Greek|π}}}}{{xx-larger|√}}{{sfrac|font-size=100%|F|M𝑟}}.}}
 
 In order that the configuration of the governor should be stable, F must increase more rapidly than 𝑟, as the balls move outwards. 
-It is obvious that no stable governor maintains a strictly constant speed in the engine which it controls. If the boiler pressure or the demand for work is changed, a certain amount of permanent displacement of the balls is necessary to alter the steam-supply, and the balls can retain their displaced position only by virtue of a permanent change in the speed. The maximum range of speed depends on that amount of change of 𝑛 which suffices to alter the configuration
-PAGE:858of the governor from the position which gives no steam-supply to 
+It is obvious that no stable governor maintains a strictly constant speed in the engine which it controls. If the boiler pressure or the demand for work is changed, a certain amount of permanent displacement of the balls is necessary to alter the steam-supply, and the balls can retain their displaced position only by virtue of a permanent change in the speed. The maximum range of speed depends on that amount of change of 𝑛 which suffices to alter the configurationPAGE:858of the governor from the position which gives no steam-supply to 
 the position which gives full steam-supply, and the governor is said to be sensitive if this range is a small fraction of 𝑛. 
 
 To find the configuration which the governor will assume at any 
@@ -3304,7 +3285,6 @@ preventing violent change in the supply of steam, especially when
 there is much frictional resistance to be overcome by the governor, or where the influence of the governor takes much time to be felt by the engine. An over-sensitive governor is liable to fall into a state of oscillation called «I»hunting«/I». When an alteration of speed begins to be felt, however readily the governor alters its form, the engine’s response is more or less delayed. If the governor acts by 
 closing a throttle-valve, the engine has still a capacious valve-chest 
 on which to draw for steam. If it acts by changing the cut-off, its
-<!--col.-->
 opportunity is passed if the cut-off has already occurred, and the 
 control only begins with the next stroke. 
 
@@ -3335,8 +3315,7 @@ has a nearly horizontal admission-line and a sharply defined cut-off.
 Generally the valves of Corliss engines are cylindrical plates turning 
 in hollow cylindrical seats which extend across the width of the 
 cylinder. Often, however, the admission-valves in trip-gear engines 
-are of the disk or double-beat type, and spring into their seats when
-PAGE:859the trip-gear acts. Messrs Sulzer have developed, this type with 
+are of the disk or double-beat type, and spring into their seats whenPAGE:859the trip-gear acts. Messrs Sulzer have developed, this type with 
 much success. Many forms of trip-gear have been invented by 
 Corliss himself and by others. One of these, the Spencer Inglis 
 trip-gear, by Messrs Hick, Hargreaves & Co., is shown in figs.&nbsp;45 and 
@@ -3464,8 +3443,7 @@ with vibrations so violent as to be inconvenient and even dangerous.
 Even in land engines a want of balance causes enough vibration 
 to constitute a serious nuisance in the neighbourhood. 
 
-85. In considering the question of balance, the system of eccentrically revolving masses and the system of reciprocating masses have to be considered separately. A reciprocating mass such as a piston cannot be balanced by the use of revolving masses, for the forces which are due to the inertia of the piston necessarily act along the line of its stroke, while those due to revolving masses are continually changing their direction. The inertia of each connecting-rod may be approximately treated by resolving its mass into two constituents, one of which moves with the crank-pin, and is therefore an addition to the revolving system, while the other moves with the cross-head, and is therefore an addition to the reciprocating system. The mass of the rod may be divided for this purpose into parts which are inversely proportional to the distances of its centre of gravity from the crank-pin and the cross-head respectively. Let M<sub>1</sub>, M<sub>2</sub>, M<sub>3</sub>, &c., represent the various revolving masses 𝑟<sub>1</sub>,  𝑟<sub>1</sub>,  𝑟<sub>1</sub>, &c, their effective radii of rotation, and 𝑎<sub>1</sub>, 𝑎<sub>2</sub>, 𝑎<sub>3</sub>, &c, their distances from any assumed plane of reference taken perpendicular to the shaft. Then the conditions necessary for balance amongst them are that the vector sum of M&nbsp;𝑎&nbsp;𝑟 shall vanish, and also that the vector sum of M&nbsp;𝑟 shall vanish, this latter quantity being the resultant of the moments of the centrifugal forces with respect to the plane of reference. In a four-crank engine there is no serious difficulty in arranging the revolving masses in such a manner that these conditions shall be satisfied, so far as those masses are concerned. The problem, as Professor W.&nbsp;E. Dalby has shown, lends itself readily to graphical treatment (see his treatise on «I»Balancing of Engines«/I»). With respect to the reciprocating masses, a first approximation towards balance is attained by satisfying the conditions which would secure balance if the motions were simply harmonic. These conditions are identical with those which have just been stated for the revolving masses, when 𝑟 is interpreted as the semi-amplitude of the harmonic motion. When the conditions in question are satisfied, the only remaining source of disturbance is that which comes from the fact that the reciprocating masses are connected to the cranks by rods of finite length; in other words, that the motions are not simply harmonic. For this reason the force required to accelerate each piston is greater when the piston is at the end of the stroke farthest from the shaft than when it is at the other end, and consequently the balance, which would be perfect if the connecting-rods were
-PAGE:860indefinitely long, is disturbed by the presence of forces which vary periodically with a frequency twice that of the rotation. When three cranks, 120° apart, are employed, it will be found that the effect of the shortness of the connecting-rods in causing forces to act in the line of the stroke is reduced to a couple tending to tilt the engine in a fore and aft direction, which may in its turn be balanced by using a second set of three cranks on the same shaft, the second set being so arranged that the couple to which it gives rise neutralizes the couple due to the first set. A six-crank engine may be arranged in this way to secure an extremely close approximation to perfect balance, and the same state of balance can be secured when the number of cranks is reduced to five.
+85. In considering the question of balance, the system of eccentrically revolving masses and the system of reciprocating masses have to be considered separately. A reciprocating mass such as a piston cannot be balanced by the use of revolving masses, for the forces which are due to the inertia of the piston necessarily act along the line of its stroke, while those due to revolving masses are continually changing their direction. The inertia of each connecting-rod may be approximately treated by resolving its mass into two constituents, one of which moves with the crank-pin, and is therefore an addition to the revolving system, while the other moves with the cross-head, and is therefore an addition to the reciprocating system. The mass of the rod may be divided for this purpose into parts which are inversely proportional to the distances of its centre of gravity from the crank-pin and the cross-head respectively. Let M<sub>1</sub>, M<sub>2</sub>, M<sub>3</sub>, &c., represent the various revolving masses 𝑟<sub>1</sub>,  𝑟<sub>1</sub>,  𝑟<sub>1</sub>, &c, their effective radii of rotation, and 𝑎<sub>1</sub>, 𝑎<sub>2</sub>, 𝑎<sub>3</sub>, &c, their distances from any assumed plane of reference taken perpendicular to the shaft. Then the conditions necessary for balance amongst them are that the vector sum of M&nbsp;𝑎&nbsp;𝑟 shall vanish, and also that the vector sum of M&nbsp;𝑟 shall vanish, this latter quantity being the resultant of the moments of the centrifugal forces with respect to the plane of reference. In a four-crank engine there is no serious difficulty in arranging the revolving masses in such a manner that these conditions shall be satisfied, so far as those masses are concerned. The problem, as Professor W.&nbsp;E. Dalby has shown, lends itself readily to graphical treatment (see his treatise on «I»Balancing of Engines«/I»). With respect to the reciprocating masses, a first approximation towards balance is attained by satisfying the conditions which would secure balance if the motions were simply harmonic. These conditions are identical with those which have just been stated for the revolving masses, when 𝑟 is interpreted as the semi-amplitude of the harmonic motion. When the conditions in question are satisfied, the only remaining source of disturbance is that which comes from the fact that the reciprocating masses are connected to the cranks by rods of finite length; in other words, that the motions are not simply harmonic. For this reason the force required to accelerate each piston is greater when the piston is at the end of the stroke farthest from the shaft than when it is at the other end, and consequently the balance, which would be perfect if the connecting-rods werePAGE:860indefinitely long, is disturbed by the presence of forces which vary periodically with a frequency twice that of the rotation. When three cranks, 120° apart, are employed, it will be found that the effect of the shortness of the connecting-rods in causing forces to act in the line of the stroke is reduced to a couple tending to tilt the engine in a fore and aft direction, which may in its turn be balanced by using a second set of three cranks on the same shaft, the second set being so arranged that the couple to which it gives rise neutralizes the couple due to the first set. A six-crank engine may be arranged in this way to secure an extremely close approximation to perfect balance, and the same state of balance can be secured when the number of cranks is reduced to five.
 
 86. The most usual arrangement adopted in marine engines, when
 questions of balance are taken into account, is to have four cranks, and consequently four sets of reciprocating masses. In the “Yarrow-Schlick-Tweedy” system of balancing engines four cranks are employed, and by adjusting the relative weights of the four pistons, as well as their distances apart, and by selecting suitable angles for the relative positions of the cranks (differing somewhat from 90°), a close approximation to complete balance is obtained. In triple expansion this arrangement is readily applied when two low-pressure cylinders are used instead of one, the steam from the intermediate cylinder being divided between them, and it is also of course applicable to quadruple expansion engines.
@@ -3475,7 +3453,7 @@ which has been used in various electric power stations, especially
 in America, in which a revolving mass might be employed to balance
 completely the inertia effects of two pistons. This is a compound
 engine in which the cylinders stand at right angles to one another, one being horizontal and the other vertical. If the piston masses were made equal it is clear that the inertia effect of a revolving mass could be resolved into two components which would balance both. It does not appear, however, that advantage has been taken of this property in the design of actual engines of this type. In the London County Council power station at Greenwich, where the engines are of this class, the unbalanced effects of inertia are so considerable as to affect the instruments at the Observatory half a mile away. One of the conspicuous merits of the steam turbine is that it avoids the use of reciprocating parts and so escapes the inconveniences and limitations to which the inertia of reciprocating parts gives rise.
-{{EB1911 fine print/e}}
+
 
 88. «I»Types of Engine«/I».—In classifying engines with regard to
 their general arrangement of parts and mode of working, account
@@ -3564,8 +3542,7 @@ with Corliss or other trip-gear.
 condensation the jet form of condenser is common, but surface
 condensation is resorted to when the available water-supply is
 unsuited for boiler feed. When there is no large supply of
-condensing water a very fair vacuum can be obtained by using
-PAGE:861an «I»evaporative condenser«/I», consisting of a stack of pipes into which the exhaust steam is admitted and over which a small amount 
+condensing water a very fair vacuum can be obtained by usingPAGE:861an «I»evaporative condenser«/I», consisting of a stack of pipes into which the exhaust steam is admitted and over which a small amount 
 of cooling water is allowed to drip. This water is evaporated 
 by the heat which is extracted in condensing the steam within. 
 Such a condenser is placed in the open, generally on a roof 
@@ -3691,8 +3668,7 @@ engine two steam cylinders are placed side by side, each working
 its own pump-piston. The piston-rod of each is connected 
 by a short link to a swinging bar, which actuates the slide-valve 
 of the other steam cylinder. In this way one piston begins 
-its stroke when the motion of the other is about to cease, and a
-PAGE:862smooth and continuous action is secured. These engines have 
+its stroke when the motion of the other is about to cease, and aPAGE:862smooth and continuous action is secured. These engines have 
 been extensively applied, on a large scale, to raise water for the 
 supply of towns and to force oil through “pipe-lines” in the 
 United States. In the larger sizes they are made compound, 
@@ -3837,8 +3813,7 @@ engines are direct-acting engines of the ordinary
 connecting-rod type, with the cylinders fixed on an inclined
 bed and the guides sloping up towards the shaft. 
 
-When the screw-propeller began to take the place of paddle-wheels in ocean steamers, the increased speed which it required was at first supplied by using spur-wheel gearing in conjunction with one of the forms of engines then usual in paddle steamers.
-PAGE:863After a time types of engine better suited to the screw were 
+When the screw-propeller began to take the place of paddle-wheels in ocean steamers, the increased speed which it required was at first supplied by using spur-wheel gearing in conjunction with one of the forms of engines then usual in paddle steamers.PAGE:863After a time types of engine better suited to the screw were 
 introduced, and were driven fast enough to be connected 
 directly to the screw-shaft. The smallness of the horizontal 
 space on either side of the shaft formed an obstacle to the use 
@@ -3994,8 +3969,7 @@ has been attended with conspicuous success. <ref follow=841f1>
 «I»Proc. Inst. Civ. Eng.«/I», liii. 3, p. 50.</ref><ref follow=841f2>
 
 «I»Proc. Inst. Mech. Eng.«/I» (1883).</ref>
-{{nop}}
-PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
+{{nop}}PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
 all other types of steam engine by the fact that their action 
 involves a double transformation of energy. The heat energy 
 present in the steam is first employed to set the steam itself in 
@@ -4003,7 +3977,7 @@ motion, giving it kinetic energy, and this in turn is employed
 to do work on the turbine blades. A brief account of the main 
 principles involved will make the action of the various types of 
 steam turbine more intelligible. 
-{{EB1911 fine print/s}}
+
 106. «I»Theory of the Steam«/I»-«I»jet«/I».—Consider an element of steam, of 
 unit mass, acquiring kinetic energy in the expansion of the steam 
 through a nozzle or other channel, from a region of pressure 𝑝<sub>1</sub> to 
@@ -4178,8 +4152,7 @@ initial pressure in pounds per square foot.
 pressure is less than 0·577 times the initial pressure, the total discharge depends simply on the least area of section of the nozzle and on the initial pressure, and is independent of the final pressure. By continuing the expansion in a divergent nozzle, after the throat is passed, the amount of discharge is not increased, but the steam is caused to acquire a greater velocity of exit, namely the velocity corresponding to the augmented pressure range. 
 
 110. When the pressure drop is small (𝑝<sub>2</sub> greater than 0·577 𝑝<sub>1</sub>) 
-the full velocity due to the drop is obtained without the use of a
-PAGE:865divergent nozzle. This is the case, for instance, in the Parsons 
+the full velocity due to the drop is obtained without the use of aPAGE:865divergent nozzle. This is the case, for instance, in the Parsons 
 turbine, where the whole expansion is divided into many stages each
 of which involves only a small drop in pressure. 
 
@@ -4215,7 +4188,7 @@ adiabatic expansion the net loss resulting from friction is the area
 𝑝𝑑𝑔𝑟. The volume is increased in the ratio of 𝑎𝑔 to 𝑎𝑑, and this
 has to be taken account of in determining the proper dimensions of
 the divergent nozzle. 
-{{EB1911 fine print/e}}
+
 112. Turning now to the question of utilizing the kinetic
 energy of steam in a steam turbine, it will be clear from the
 figures that have been given that if the whole heat drop is allowed
@@ -4314,7 +4287,7 @@ Laval turbine used with a condenser, and developing about
 of about 20&nbsp;℔ per brake-horse-power-hour,
 and even better results are 
 reported in turbines of a larger size. 
-{{EB1911 fine print/s}}
+
 114. «I»Action of the Jet in De Laval’s«/I»
 «I»Turbine«/I».—In entering the turbine the jet 
 is inclined at an angle a to the plane of 
@@ -4336,8 +4309,7 @@ and consequently no acceleration of the
 steam through drop in pressure after 
 once it has left the nozzle. Hence V<sub>3</sub>, 
 the relative velocity at exit may (neglecting friction) be taken as equal to V<sub>2</sub>
-The direction of V<sub>3</sub> or BC is tangent to the exit side of the bucket.
-PAGE:866Compounding V<sub>3</sub> with 𝑢 we find V<sub>4</sub>, which is the absolute velocity 
+The direction of V<sub>3</sub> or BC is tangent to the exit side of the bucket.PAGE:866Compounding V<sub>3</sub> with 𝑢 we find V<sub>4</sub>, which is the absolute velocity 
 of the steam after exit, and this should be no greater than is required 
 to get the steam clear of the wheel. The most favourable condition 
 of running would be when the bucket velocity 𝑢 is such that V<sub>4</sub> is 
@@ -4363,7 +4335,7 @@ eddy currents set up by shock) to 21% and the losses due to the
 velocity retained by the steam at exit to nearly 5%. The losses 
 due to friction in the mechanism consume about 5% more, leaving 
 a net return of about 54% of the available energy. 
-{{EB1911 fine print/e}}
+
 115. «I»Curtis Turbine«/I».—The Curtis turbine, like that of De 
 Laval, is a pure impulse turbine, but the velocity of the jet is 
 extracted not by one ring of buckets but by a series of rings, each 
@@ -4445,8 +4417,7 @@ it expands during work. The prejudicial effect of wetness is
 chiefly that it increases friction, especially in the later stages 
 of the expansion. Tests of Curtis turbines show that they 
 maintain a very uniform efficiency throughout a wide range 
-of loads, and are capable of being much overloaded without
-PAGE:867material increase in the ratio of steam consumption to output. 
+of loads, and are capable of being much overloaded withoutPAGE:867material increase in the ratio of steam consumption to output. 
 In tests of a 9000 kilowatt Curtis turbine using steam of about 
 200 ℔ pressure and 80°&nbsp;C. superheat, with a vacuum of 295&nbsp;in. 
 the consumption of steam is reported to have been only 13&nbsp;℔ 
@@ -4556,8 +4527,7 @@ the relation of steam volume to blade-passage-area and velocity.
 |oTop    = 653
 |oLeft   = 32
 |Location = center}}<br>
-{{fine block|{{sc|Fig}}. 60.—Parsons Turbine.}}}}
-PAGE:868119. «I»Balance of longitudinal Forces: Dummies«/I».—Since the pressure of the steam falls progressively from left to right there is a resultant longitudinal thrust on the drum forcing it to the right, which is balanced by means of “dummy” rings C′ C″ C‴. These correspond in diameter with the several portions of the bladed drum and are connected with them by steam passages which secure that each dummy shall have the same pressure forcing it to the left as tends on the corresponding part of the drum to force it to the right. No steam-tight fit is practicable at the dummies, but leakage of the steam past them is minimized by the device of furnishing the circumference of each dummy with a series of rings which revolve between a corresponding series of fixed rings projecting inwards from the case. The dummy rings do not touch but the clearance spaces are made as fine as possible and the whole forms a labyrinth which offers great resistance to the escape of steam. Substantially the same device is employed to guard against leakage in the glands DD where the shaft leaves the turbine case. There is a “thrust block” E at one end of the shaft which maintains the exact longitudinal position of the revolving part and allows the fine clearances between fixed and moving dummy rings to be adjusted. 
+{{fine block|{{sc|Fig}}. 60.—Parsons Turbine.}}}}PAGE:868119. «I»Balance of longitudinal Forces: Dummies«/I».—Since the pressure of the steam falls progressively from left to right there is a resultant longitudinal thrust on the drum forcing it to the right, which is balanced by means of “dummy” rings C′ C″ C‴. These correspond in diameter with the several portions of the bladed drum and are connected with them by steam passages which secure that each dummy shall have the same pressure forcing it to the left as tends on the corresponding part of the drum to force it to the right. No steam-tight fit is practicable at the dummies, but leakage of the steam past them is minimized by the device of furnishing the circumference of each dummy with a series of rings which revolve between a corresponding series of fixed rings projecting inwards from the case. The dummy rings do not touch but the clearance spaces are made as fine as possible and the whole forms a labyrinth which offers great resistance to the escape of steam. Substantially the same device is employed to guard against leakage in the glands DD where the shaft leaves the turbine case. There is a “thrust block” E at one end of the shaft which maintains the exact longitudinal position of the revolving part and allows the fine clearances between fixed and moving dummy rings to be adjusted. 
 
 120. Lubrication.—The main bearings LL are supplied with 
 oil under pressure kept in circulation by a rotary pump F which 
@@ -4642,7 +4612,7 @@ surface, has considerable cutting effect, but this is absent at
 velocities such as are found in these turbines, and it is found 
 that even after prolonged use the blades show no signs of wear 
 and the efficiency of the turbine is unimpaired. 
-{{EB1911 fine print/s}}
+
 125. «I»Blade Velocity«/I».—Experience has shown that the most 
 economical results are obtained when the velocity of the steam 
 through the blades is about twice the velocity of the blades themselves,
@@ -4654,8 +4624,7 @@ have to be exceedingly long in order to give passage to the rarefied steam. By i
 <ref follow=846f1>
 Speakman, “The Determination of the Principal Dimensions 
 of the Steam Turbine with special reference to Marine Work,” «I»Proc.«/I» 
-«I»Inst. Engineers & Shipbuilders in Scotland«/I» (October 1905). On this subject see also Reed, “The Design of Marine Steam Turbines,” «I»Proc. Inst. Civ. Eng.«/I» (February 1909).</ref>
-PAGE:869The increased diameter at the low-pressure end not only allows 
+«I»Inst. Engineers & Shipbuilders in Scotland«/I» (October 1905). On this subject see also Reed, “The Design of Marine Steam Turbines,” «I»Proc. Inst. Civ. Eng.«/I» (February 1909).</ref>PAGE:869The increased diameter at the low-pressure end not only allows 
 the steam velocity to be increased but by enlarging the annulus 
 enables a sufficient area of passage to be provided without unduly 
 lengthening the blades. In the very last stages of the expansion, 
@@ -4745,7 +4714,7 @@ where the number of revolutions per minute is limited by considerations
 of efficiency in the action of the screw propeller, the blade 
 speeds generally range from about 120 to 150&nbsp;ft. per second, though 
 speeds as low as 80&nbsp;ft. per second have been used. 
-{{EB1911 fine print/e}}
+
 127. «I»Parsons Marine Turbines«/I».—Marine turbines are divided 
 into distinct high and low pressure parts through which the 
 steam passes in series, each in a separate casing and each driving 
@@ -4769,7 +4738,7 @@ for this purpose but making no pretensions to high efficiency.
 The astern turbine, being connected to the condenser, runs 
 «I»in vacuo«/I» when the ahead turbine is in use and consequently 
 wastes little or no power. 
-{{EB1911 fine print/s}}
+
 {{center|[[File:EB1911 Steam Engine Fig. 62.png|780px]]<br>
 {{sc|Fig}}. 62.—Parsons Marine Turbine : High Pressure Part.<br>
 Upper half : sectional elevation.{{em|17}}Lower half : external view.}}
@@ -4779,8 +4748,7 @@ for the three-shaft arrangement in which the low pressure portion
 is duplicated. In each figure A is the fixed casing and B is the 
 revolving drum. Steam enters the high pressure turbine (fig.&nbsp;62) 
 through J and passes out through H. There are 4 “expansions” 
-or steps, with 9 stages or double rows of blades in the first, 9 in the
-PAGE:870second, 8 in the third and 8 in the fourth, or 34 stages in all. The low pressure turbine (fig.&nbsp;63) comprises 28 more stages stepped as shown in the figure. The reversing turbine which is seen on the left-hand side in fig.&nbsp;63, at the place where the rotor is reduced in diameter, has 26 stages in 4 steps. These turbines have a total normal horse power of 12,500, and run at 450 revolutions per minute. 
+or steps, with 9 stages or double rows of blades in the first, 9 in thePAGE:870second, 8 in the third and 8 in the fourth, or 34 stages in all. The low pressure turbine (fig.&nbsp;63) comprises 28 more stages stepped as shown in the figure. The reversing turbine which is seen on the left-hand side in fig.&nbsp;63, at the place where the rotor is reduced in diameter, has 26 stages in 4 steps. These turbines have a total normal horse power of 12,500, and run at 450 revolutions per minute. 
 {{center|[[File:EB1911 Steam Engine Fig. 63.png|1000px]]<br>
 {{sc|Fig}}. 63.—Parsons Marine Turbine: Low Pressure and Astern Part.<br>
 Upper half: sectional elevation.{{em|38}}Lower half: external view.}}
@@ -4831,10 +4799,9 @@ are connected in series with the main turbines when the ship is to
 run at cruising speed. In the three-shaft arrangement the cruising 
 turbines are fitted on the wing propeller shafts, which carry also 
 the low pressure and astern turbines. They form a high and intermediate
-pressure pair through which the steam may pass in series
-PAGE:871before going on to the main turbines. This arrangement is shown 
+pressure pair through which the steam may pass in seriesPAGE:871before going on to the main turbines. This arrangement is shown 
 in fig.&nbsp;67, where C.H.P. and C.I.P. are the two cruising turbines. In cruising at low speeds the whole group of turbines is used in series: when the speed is increased a larger amount of power is got by admitting steam direct to the second cruiser turbine; and finally at the highest speed both cruiser turbines are cut out. The arrangement shown in fig.&nbsp;67 has been used in some torpedo-boat destroyers and small cruisers. In some large cruisers and battleships a four-shaft system is employed and a longitudinal bulkhead divides the whole group into two independent sets. On each of the outer shafts there is a high-pressure ahead and also a separate high-pressure astern turbine. On each of the inner shafts there is a combined low-pressure ahead and astern turbine and also a cruising turbine. All four shafts can be reversed. 
-{{EB1911 fine print/e}}
+
 131. «I»Application of Parsons Turbine«/I».—The Parsons was the 
 earliest steam turbine to be made commercially successful, and 
 it has found a wider range of application than any other. Its 
@@ -4920,7 +4887,7 @@ engine alone, the turbine being specially well adapted to make
 the most of the final stages of expansion, whereas the ordinary 
 reciprocating engine in such vessels makes little or no use of 
 pressure below about 7&nbsp;℔ per sq.&nbsp;in. 
-{{EB1911 fine print/s}}
+
 135. «I»Consumption of Steam in the Parsons Turbine«/I».—In large 
 sizes the Parsons turbine requires less steam per horse-power-hour 
 than any form of reciprocating engine using steam under similar 
@@ -4965,9 +4932,8 @@ in turbines of greater power. A Parsons turbine, rated as of 3500
 but working up to over 5000 kilowatts tested in 1907 at the Carville power station of the Newcastle-on-Tyne Electric Supply Company, showed a consumption of only 13·19&nbsp;℔ of steam per kilowatt-hour, with steam of 200&nbsp;℔ pressure by gauge and 67°&nbsp;C. superheat (temperature 264·7°&nbsp;C.), the vacuum being 29·04&nbsp;in. (barometer 30&nbsp;in.). It is interesting to compare this performance with the ideal amount of work obtainable per pound of steam, or in other words with the ideal “heat drop.” At the temperature and pressure of supply the total heat I<sub>1</sub> is 709. After expansion to the pressure corresponding to the stated vacuum (0·96&nbsp;in.) the total heat of the wet mixture would be 486, the dryness being then 0·792, if the expansion took place under ideal adiabatic conditions. Hence the heat drop I<sub>1</sub>−I<sub>2</sub> is 223 units, and this represents the work ideally obtainable under the actual conditions as to temperature and pressure of supply and exhaust. Since 1 kilowatt-hour is 1896 thermal units (℔–degree&nbsp;C.), each pound of steam was generating an amount of electrical energy equivalent to {{sfrac|1896|13·19|font-size=100%}} or 143·7 thermal units, and the electric
 output consequently corresponds to {{nowrap|64{{EB1911 tfrac|2}}%}} of the ideal work. If 
 we allow for the loss in the electric generator by taking the electrical output as 92% of the mechanical power, this implies that 70% of the ideal work in the steam was mechanically utilized. 
-{{EB1911 fine print/e}}
-136. «I»Torsion Meters for Power«/I».—No measurement corresponding to the “indicating” of a piston engine is possible with a
-PAGE:872steam turbine. In the tests that have been quoted the useful 
+
+136. «I»Torsion Meters for Power«/I».—No measurement corresponding to the “indicating” of a piston engine is possible with aPAGE:872<section begin="s1" />steam turbine. In the tests that have been quoted the useful 
 output was determined by electrical means. Direct measurements
 of the useful mechanical power (the “brake” power) 
 may, however, be obtained by applying a torsion dynamometer 
@@ -4981,3 +4947,6 @@ by comparing the inductive effects produced on fixed coils by
 magnets which are carried on the wheels. In Hopkinson & 
 Thring’s torsion meter a short length of shaft—a foot or so—suffices. A small mirror is carried by a collar fixed to the shaft, and a second collar fixed a little way along is geared to the mirror in such a way as to deflect the mirror to an extent proportional to the twist: the deflexion is read by means of a lamp and scale fixed alongside. As the shaft revolves the light reflected from the mirror is momentarily seen at each revolution 
 and its position along the scale is easily read. {{EB1911 footer initials|James Alfred Ewing|J. A. E.}}
+
+<section end="s1" />
+<section begin="s2" />

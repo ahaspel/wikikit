@@ -1,4 +1,5 @@
 PAGE:571a class of chemical compounds of the general formula R·CHO (R＝an alkyl or an aryl group). The name is derived from «I»alcohol dehydrogenatum«/I» in allusion to the fact that they may be prepared by the oxidation of alcohols. The lower members of the series are neutral liquids possessing a characteristic smell; they are soluble in water and are readily volatile (formaldehyde, however, is a gas at ordinary temperatures). As the carbon content of the molecule increases, they become less soluble in water, and their smell becomes less marked with the increase in boiling point, the highest members of the series being odourless solids, which can only be distilled without decomposition «I»in vacuo«/I».
+
 The aldehydes may be prepared by the careful oxidation of primary alcohols with a mixture of potassium dichromate and sulphuric acid,—3R·CH<sub>2</sub>OH＋K<sub>2</sub>Cr<sub>2</sub>O<sub>7</sub>＋4H<sub>2</sub>SO<sub>4</sub>＝K<sub>2</sub>SO<sub>4</sub>＋Cr<sub>2</sub>(SO<sub>4</sub>)<sub>3</sub>＋7H<sub>2</sub>O＋3R·CHO; by distilling the calcium salts of the fatty acids with calcium formate; and by hydrolysis of the acetals. L. Bouveault («I»Bull. soc. chim.«/I», 1904 [3], 31, p.&nbsp;1306) prepares aldehydes by the gradual addition of disubstituted formamides (dissolved in anhydrous ether) to magnesium alkyl haloids, the best yields being obtained by the use of diethyl formamide. Secondary reactions take place at the same time, yielding more particularly hydrocarbons of the paraffin series. G. Darzens («I»Comptes Rendus«/I», 1904, 139, p.&nbsp;1214) prepares esters of disubstituted glycidic acids, by condensing the corresponding ketone with monochloracetic ester, in the presence of sodium ethylate. These esters on hydrolysis yield the free acids, which readily decompose, with loss of carbon dioxide and formation of an aldehyde,
 
 {|{{Ts|ma|lh12}}
@@ -27,8 +28,7 @@ With hydrocyanic acid aldehydes form the cyanhydrins R·CH(OH)·CN. They react w
 |OZnC<sub>2</sub>H<sub>5</sub>||OH
 |}
 
-The reaction is a general one for all aldehydes with zinc methyl and zinc ethyl, but not with the higher zinc alkyls. V. Grignard («I»Comptes Rendus«/I», 1900 et seq.) showed that aldehydes combine with magnesium alkyl iodides (in absolute ether solution) to form addition products, which are decomposed by water with the
-PAGE:572formation of secondary alcohols, thus from acetaldehyde and magnesium methyl iodide, isopropyl alcohol is obtained.
+The reaction is a general one for all aldehydes with zinc methyl and zinc ethyl, but not with the higher zinc alkyls. V. Grignard («I»Comptes Rendus«/I», 1900 et seq.) showed that aldehydes combine with magnesium alkyl iodides (in absolute ether solution) to form addition products, which are decomposed by water with the<section end="s4" />PAGE:572formation of secondary alcohols, thus from acetaldehyde and magnesium methyl iodide, isopropyl alcohol is obtained.
 
 {|{{Ts|ma|lh12}}
 | || ||<span style="position: relative; top: .7em;>H<sub>2</sub>O</span>
@@ -145,11 +145,12 @@ The aromatic aldehydes resemble the aliphatic aldehydes in most respects, but in
 
 Salicylic aldehyde (ortho-hydroxybenzaldehyde), HO(1)·C<sub>6</sub>H<sub>4</sub>·CHO(2), an aromatic oxyaldehyde, is a colourless liquid of boiling point 196°&nbsp;C. and specific gravity 1·172 (15°). It is found in the volatile oils of Spiraea, and can be obtained by the oxidation of the glucoside salicin, (C<sub>13</sub>H<sub>18</sub>O<sub>7</sub>), which is found in willow bark. It is usually prepared by the so-called “Reimer” reaction («I»Ber«/I», 1876, 9, p. 1268), in which chloroform acts on phenol in the presence of a caustic alkali,
 {{center|C<sub>6</sub>H<sub>5</sub>OH＋CHCl<sub>3</sub>＋4KHO＝3KCl＋3H<sub>2</sub>O＋KO·C<sub>6</sub>H<sub>4</sub>·CHO,}}
-some para-oxybenaldehyde being formed at the same time. It
-PAGE:573is volatile (para-oxybenzaldehyde is not) and gives a violet coloration with ferric chloride. For dioxybenzaldehydes and their derivatives see {{EB1911 article link|Piperonal}} and {{EB1911 article link|Vanillin|Vanilla}}.
+some para-oxybenaldehyde being formed at the same time. ItPAGE:573<section begin="s1" />is volatile (para-oxybenzaldehyde is not) and gives a violet coloration with ferric chloride. For dioxybenzaldehydes and their derivatives see {{EB1911 article link|Piperonal}} and {{EB1911 article link|Vanillin|Vanilla}}.
 
 Cinnamic aldehyde ({{Greek|β}}-phenyl acrolein), C<sub>6</sub>H<sub>5</sub>·CH:CH·CHO, an unsaturated aromatic aldehyde, is the chief constituent of cinnamon oil. It is prepared by oxidizing cinnamyl alcohol, or by the action of sodium ethylate on a mixture of benzaldehyde and acetaldehyde. It is a colourless aromatic-smelling oily liquid, which boils at 247°&nbsp;C. and readily oxidizes on exposure.
 
 By condensation of aldehydes with pyruvic acid and naphthylamines, the {{Greek|α}}-alkyl-naphthoquinoline-{{Greek|γ}}-carboxylic acids are produced; the same reaction takes place with the aromatic amines generally (O. Doebner, «I»Ann«/I». 1894, 281, p.&nbsp;1),
 
 [[File:1911 Britannica - Aldehydes.png|center|377px|]]
+<section end="s1" />
+<section begin="s2" />

@@ -63,8 +63,7 @@ Berlin cithara see {{EB1911 article link|Lyre}}.)
 
 The number of strings with which the cithara was strung varied from 4 to 19 or 20 at different times; they were added less for the purpose of increasing the compass in the modern sense than to enable the performer to play in the different modes of the Greek musical system. Terpander is credited with having increased the number of strings to seven; Euclid, quoting him as his authority, states that “loving no more the tetrachordal chant, we will sing aloud new hymns to a seven-toned phorminx.”
 
-What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum (<span title="plē̂ktron">{{Polytonic|πλῆκτρον}}</span>, from <span title="plḗssein">{{Polytonic|πλήσσειν}}</span>, to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossible
-PAGE:412with a rigid plectrum.<ref>See Plutarch, «I»Apophthegm. Lacon.«/I»</ref> Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.
+What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum (<span title="plē̂ktron">{{Polytonic|πλῆκτρον}}</span>, from <span title="plḗssein">{{Polytonic|πλήσσειν}}</span>, to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossible<section end="Cithara" />PAGE:412with a rigid plectrum.<ref>See Plutarch, «I»Apophthegm. Lacon.«/I»</ref> Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.
 
 Quotations from the classics abound to show what was the
 practice of the Greeks and Romans in this respect. The plectrum
@@ -183,8 +182,7 @@ was so great that the Spanish citharoedi obtained a permanent
 footing in Rome. Aulus Gellius («I»Noct. Att.«/I») describes an incident
 at a banquet which corroborates this statement.
 
-The degeneration of music as an art among the Romans, and its gradual degradation by association with the sensual amusements of corrupt Rome, nearly brought about its extinction at the end of the 4th century, when the condemnation of the Church closed the theatres, and the great national games came to an end. Instrumental music was banished from civil life and from religious rites, and thenceforth the slender threads which connect the musical instruments of Greeks and Romans with those of
-PAGE:413the middle ages must be sought among the unconverted barbarians
+The degeneration of music as an art among the Romans, and its gradual degradation by association with the sensual amusements of corrupt Rome, nearly brought about its extinction at the end of the 4th century, when the condemnation of the Church closed the theatres, and the great national games came to an end. Instrumental music was banished from civil life and from religious rites, and thenceforth the slender threads which connect the musical instruments of Greeks and Romans with those ofPAGE:413<section begin="Cithara" />the middle ages must be sought among the unconverted barbarians
 of northern and western Europe, who kept alive the
 traditions taught them by conquerors and colonists; but as
 civilization was in its infancy with them the instruments sent
@@ -258,3 +256,6 @@ the pear-shaped outline of the Eastern instruments of the lute
 tribe.
 {{EB1911 footer initials|Kathleen Schlesinger|K. S.}}
 {{clear}}
+
+<section end="Cithara" />
+<section begin="s2" />

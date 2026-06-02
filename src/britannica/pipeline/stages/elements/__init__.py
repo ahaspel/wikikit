@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._image import (
     _process_image,
     _process_image_float,
     _process_image_from_raw,
+    _process_plain_image,
     _process_raw_image,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
@@ -357,6 +358,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
         _process_image_from_raw(raw, tt, inline=True),
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _process_raw_image(raw, tt),
+    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg: _process_plain_image(inner, tt),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
         _process_image_float(inner, tt),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line

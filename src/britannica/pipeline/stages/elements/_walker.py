@@ -277,6 +277,17 @@ _RAW_IMAGE_RE = re.compile(
     r"(?:\s*\{\{\s*c\s*\|(?:[^{}]|\{\{[^{}]*\}\})*\}\})?",
     re.IGNORECASE | re.DOTALL)
 
+# `{{Plain image with caption|image=File:…|align=…|width=…|caption=…|caption
+# position=…}}` — Wikisource named-parameter figure macro (MAP's cartography
+# plates).  Caption nests up to three brace levels deep
+# (`{{center|{{nowrap|{{smallcaps|…}}}}}}`) — same depth as `_IMAGE_FLOAT_RE`.
+# Recognized as one DOUBLE_BRACE image element (→ PLAIN_IMAGE).
+_PLAIN_IMAGE_RE = re.compile(
+    r"\{\{\s*plain image with caption\s*\|"
+    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
+    r"\}\}",
+    re.IGNORECASE | re.DOTALL)
+
 # DOUBLE_BRACKET image — `[[File:…]]` or `[[Image:…]]` with optional
 # trailing caption block (EXTCAP form).  The regex absorbs nothing more —
 # inline-vs-block is decided structurally by lookahead at dispatch time
@@ -371,6 +382,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
     (SHAPE_DOUBLE_BRACE,      _DJVU_CROP_RE),
     (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
+    (SHAPE_DOUBLE_BRACE,      _PLAIN_IMAGE_RE),
     (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
     (SHAPE_DOUBLE_BRACE,      _CONTRIBUTOR_FOOTER_RE),

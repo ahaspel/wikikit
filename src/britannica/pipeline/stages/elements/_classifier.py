@@ -119,6 +119,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (`_process_raw_image` normalizes a DjVu page-ref + folds a `{{c|cap}}`).
     if re.match(r"\{\{\s*raw\s+image\b", raw, re.IGNORECASE):
         return "RAW_IMAGE"
+    # `{{Plain image with caption|image=…|caption=…}}` — named-parameter figure
+    # macro (`_process_plain_image` builds the {{IMG:…}} from the named params).
+    if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
+        return "PLAIN_IMAGE"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(

@@ -64,8 +64,7 @@ since the freshly-liberated, immature medusa may differ greatly
 from the full-grown, sexually-mature medusa after several
 months of life on the high seas (see figs. 11, B, C, and 59, «I»a«/I», «I»b«/I», «I»c«/I»).
 To establish the exact relationship it is necessary not only to
-breed but to rear the medusa, which cannot always be done in
-PAGE:148confinement. The alternative is to fish all stages of the medusa
+breed but to rear the medusa, which cannot always be done in<section end="Hydromedusae" />PAGE:148confinement. The alternative is to fish all stages of the medusa
 in its growth in the open sea, a slow and laborious method in
 which the chance of error is very great, unless the series of stages
 is very complete.
@@ -83,7 +82,7 @@ The following is the main outline of the classification that is
 Adopted in the present article. Groups founded on polyp-characters
 are printed in ordinary type, those founded on medusa-characters
 in italics. For definitions of the groups see below.
-{{EB1911 fine print/s}}
+
 {{c|Sub-class Hydromedusae («I»Hydrozoa Craspedota«/I»).}}
 {{block center|
 :Order I.  Eleutheroblastea.
@@ -101,9 +100,9 @@ in italics. For definitions of the groups see below.
 ::Sub-order 3. Physophorida.
 ::Sub-order 4. Cystophorida.
 }}
-{{EB1911 fine print/e}}
+
 {{c|«I»Organization and Morphology of the Hydromedusae.«/I»}}
-{{EB1911 fine print/s}}
+
 {|{{Ts|fll|width:150px|pr1}}
 |[[Image:EB1911 Hydromedusae - Diagram of a typical Hydropolyp.jpg|150px]]
 |-
@@ -127,7 +126,7 @@ however, is only
 found in polyps of the
 order Calyptoblastea.
 |}
-{{EB1911 fine print/e}}
+
 As already stated, there occur in the Hydromedusae two
 distinct types of person, the polyp and the medusa; and either
 of them is capable of non-sexual reproduction by budding, a
@@ -153,7 +152,7 @@ here in a general way, and the
 morphology of the Siphonophora
 will be considered under the heading
 of the group itself.
-{{EB1911 fine print/s}}
+
 1. «I»The Hydropolyp«/I» (fig. 1)—The
 general characters of this organism
 are described above and in the
@@ -174,7 +173,6 @@ stages (planula), and may be naked, or clothed in a cuticle or exoskeleton,
 the perisarc («I»ps«/I»), which in its simplest condition is a
 chitinous membrane secreted by the ectoderm. The perisarc when
 present invests the hydrorhiza and hydrocaulus; it may stop short
-<!-- column 2 -->
 below the hydranth, or it may extend farther. In general there are
 two types of exoskeleton, characteristic of the two principal divisions
 of the Hydroidea. In the Gymnoblastea the perisarc either stops
@@ -266,8 +264,7 @@ in «I»Corymorpha«/I» (fig. 3) and «I»Tubularia«/I»
 scattered irregularly over the elongated hydranth.
 
 As regards form, the tentacles show a number of types, of which
-the most important are (1) filiform, «I»i.e.«/I» cylindrical or tapering from
-PAGE:149base to extremity, as in «I»Clava«/I» (fig. 5); (2) capitate, «I»i.e.«/I» knobbed
+the most important are (1) filiform, «I»i.e.«/I» cylindrical or tapering fromPAGE:149base to extremity, as in «I»Clava«/I» (fig. 5); (2) capitate, «I»i.e.«/I» knobbed
 at the extremity, as in «I»Coryne«/I» (see Allman, «I»loc. cit.«/I» pl. iv.); (3)
 branched, a rare form in the polyp, but seen in «I»Cladocoryne«/I» (see
 Allman, «I»loc. cit.«/I» p. 380, fig. 82). Sometimes more than one type of
@@ -336,7 +333,7 @@ hydrorhiza.
 |}
 
 The sub-epithelial layer consists primarily of the so-called
-inter<!-- column 2 -->stitial
+inter stitial
 cells, lodged between the narrowed basal portions of the
 epithelial cells. From them are developed two distinct types of
 histological elements; the genital cells and the cnidoblasts or mother-cells
@@ -421,8 +418,7 @@ show discharged capsules to be on the average slightly larger than
 undischarged ones. He believes that the capsule contains a substance
 which swells very rapidly when brought into contact with
 water, and that in the undischarged condition the capsule has its
-opening closed by a plug of protoplasm («I»x«/I», fig. 7) which prevents
-PAGE:150access of water to the contents; when the cnidocil is stimulated it
+opening closed by a plug of protoplasm («I»x«/I», fig. 7) which preventsPAGE:150access of water to the contents; when the cnidocil is stimulated it
 sets in action a mechanism or perhaps a series of chemical changes
 by which the plug is dissolved or removed; as a result water penetrates
 into the capsule and causes its contents to swell, with the
@@ -670,8 +666,7 @@ The coenosarc constitutes a system by which the
 digestive cavity of any one polyp is put into communication with
 that of any other individual either of the trophosome or gonosome.
 In this manner the food absorbed by one individual contributes
-to the welfare of the whole colony, and the coenosarc has the
-PAGE:151function of circulating and distributing nutriment through the
+to the welfare of the whole colony, and the coenosarc has thePAGE:151function of circulating and distributing nutriment through the
 colony.
 
 The hydroid colony shows many variations in form and architecture
@@ -821,8 +816,7 @@ In the sympodial method of budding, on the other hand, the
 founder-polyp is of limited growth, and forms a bud from its side,
 which is also of limited growth, and forms a bud in its turn, and so on
 (figs. 15, 16). Hence, in a colony of calyptoblastic hydroids, the
-oldest polyp of a system is the lowest; the youngest polyp is the {{hws|top|topmost}}
-PAGE:152{{hwe|most|topmost}} one; and the axis of the system is a false axis composed of
+oldest polyp of a system is the lowest; the youngest polyp is the {{hws|top|topmost}}PAGE:152{{hwe|most|topmost}} one; and the axis of the system is a false axis composed of
 portions of each of the consecutive polyps. In this method of budding
 there are two
 types. In one, the
@@ -1067,8 +1061,7 @@ structure and characteristics of the medusa are described elsewhere
 (see articles {{EB1911 article link|Hydrozoa}} and {{EB1911 article link|Medusa}}), and it is only necessary here to
 deal with the peculiarities of the Hydromedusa.
 
-As regards habit of life the vast majority of Hydromedusae are
-PAGE:153pelagic organisms, floating on the surface of the open sea, propelling
+As regards habit of life the vast majority of Hydromedusae arePAGE:153pelagic organisms, floating on the surface of the open sea, propelling
 themselves feebly by the pumping movements of the umbrella
 produced by contraction of the sub-umbral musculature, and
 capturing their prey with their tentacles. The genera «I»Cladonema«/I»
@@ -1298,8 +1291,7 @@ and run in a radial direction towards the centre of the umbrella
 (fig. 26).
 
 «I»Histology of the Hydromedusa.«/I»—The histology described above
-for the polyp may be taken as the primitive type, from which that
-PAGE:154of the medusa differs only in greater elaboration and differentiation
+for the polyp may be taken as the primitive type, from which thatPAGE:154of the medusa differs only in greater elaboration and differentiation
 of the cell-elements, which are also more concentrated to form
 distinct tissues.
 
@@ -1509,8 +1501,7 @@ they are covered over by flaps of the umbrellar margin
 
 The «I»statocysts«/I» present in general the structure of either a knob
 or a closed vesicle, composed of (1) indifferent supporting epithelium:
-(2) sensory, so-called auditory epithelium of slender cells, each
-PAGE:155bearing at its free upper end a stiff bristle and running out at its base
+(2) sensory, so-called auditory epithelium of slender cells, eachPAGE:155bearing at its free upper end a stiff bristle and running out at its base
 into a nerve-fibre; (3) concrement-cells, which produce intercellular
 concretions, so-called otoliths.
 By means of
@@ -1805,8 +1796,7 @@ which is not yet quite closed in at the top.
 
 The simple form of ocellus described in the foregoing paragraph
 may become folded into a pit or cup, the interior of which becomes
-filled with a clear gelatinous secretion forming a sort of vitreous
-PAGE:156body. The distal portion of the vitreous body may project from the
+filled with a clear gelatinous secretion forming a sort of vitreousPAGE:156body. The distal portion of the vitreous body may project from the
 cavity of the cup, forming a non-cellular lens as in «I»Lizzia«/I» (fig. 28).
 Beyond this simple condition the visual organs of the Hydromedusae
 do not advance, and are far from reaching the wonderful development
@@ -1937,7 +1927,6 @@ canals, in Trachomedusae; under the gastral pouches or radial
 canals, in Narcomedusae. When ripe, the germ-cells are dehisced
 directly to the exterior.
 
-<!-- column 2 -->
 {|align="left" width="275" style="margin-right: 1em"
 |colspan="2"|[[Image:EB1911 Hydromedusae - a Cordylus of Laodice.jpg|275px]]
 |-
@@ -2069,8 +2058,7 @@ In some cases both free medusae and gonophores may be produced
 from the same hydroid colony. This is the case in «I»Syncoryne mirabilis«/I»
 (Allman [«B»1«/B»], p. 278) and in «I»Campanularia volubilis«/I»; in the latter,
 free medusae are produced in summer, gonophores in winter
-(Duplessis [«B»14«/B»]). Again in «I»Pennaria«/I», the male medusae are set free
-PAGE:157in a state of maturity, and have ocelli; the female medusae remain
+(Duplessis [«B»14«/B»]). Again in «I»Pennaria«/I», the male medusae are set freePAGE:157in a state of maturity, and have ocelli; the female medusae remain
 attached and have no sense organs.
 
 {|align="center" width="400"
@@ -2255,15 +2243,14 @@ termed it, producing by budding medusoid gonophores. As medusae
 are known to bud medusae from the radial canals there is nothing
 impossible in Allman’s theory, but it cannot be said to have received
 satisfactory proof.
-{{EB1911 fine print/e}}
+
 {{c|«I»Reproduction and Ontogeny of the Hydromedusae.«/I»}}
 
 Nearly every possible method of reproduction occurs amongst
 the Hydromedusae. In classifying methods of generation it is
 usual to make use of the sexual or non-sexual nature of the
 reproduction as a primary difference, but a more scientific
-classification is afforded by the distinction between tissue-cells
-PAGE:158(histocytes) and germinal cells, actual or potential (archaeocytes),
+classification is afforded by the distinction between tissue-cellsPAGE:158(histocytes) and germinal cells, actual or potential (archaeocytes),
 amongst the constituent cells of the animal body. In
 this way we may distinguish, first, «I»vegetative«/I» reproduction, the
 result of discontinuous growth of the tissues and cell-layers
@@ -2298,7 +2285,7 @@ portions of the hydrocaulus are cut off to form so-called “spores,”
 which grow into new
 individuals (see
 Allman [«B»1«/B»]).
-{{EB1911 fine print/s}}
+
 {|align="right" width="300" style="margin-left: 1em"
 |colspan="2"|[[Image:EB1911 Hydromedusae - Direct Budding of Cunina.jpg|300px]]
 |-
@@ -2326,7 +2313,7 @@ Bronn’s «I»Tierreich«/I».
 |-valign="top"
 |«I»n.s«/I»,&nbsp;||Nervous system.
 |}
-{{EB1911 fine print/e}}
+
 (3) «I»Vegetative budding«/I»
 is almost universal
 in the Hydromedusae.
@@ -2341,7 +2328,7 @@ buds that
 give rise to polyps
 from those that form
 medusae.
-{{EB1911 fine print/s}}
+
 («I»a«/I») «I»The Polyp.«/I»—The
 buds that form polyps
 are very simple in
@@ -2405,7 +2392,6 @@ The direct type of budding is rare, but is seen in «I»Cunina«/I» and
 «I»Millepora«/I». In «I»Cunina«/I» there arises, first, a simple outgrowth of both
 layers, as in a polyp-bud (fig. 43, A); in this the mouth is formed
 distally as a perforation (B); next the sides of the tube so formed
-<!-- column 2 -->
 bulge out laterally near the attachment to form the umbrella, while
 the distal undilated portion of the tube represents the manubrium
 (C); the umbrella
@@ -2505,8 +2491,7 @@ by concrescence to
 form the radial
 canals («I»r.c.«/I»), ring-canal («I»c.c.«/I»), and endoderm-lamella («I»e.l.«/I», fig. 44, E),
 and at the same time the base of the cup is thrust upwards to form
-the manubrium («I»m«/I»), converting the cavity of the entocodon into a
-PAGE:159space which is crescentic or horse-shoe-like in section. Next tentacles
+the manubrium («I»m«/I»), converting the cavity of the entocodon into aPAGE:159space which is crescentic or horse-shoe-like in section. Next tentacles
 («I»t«/I», fig. 44, F) grow out from the ring-canal, and the double
 plate of ectoderm on the distal side of the entocodon becomes
 perforated, leaving a circular rim composed of two layers of ectoderm,
@@ -2658,7 +2643,7 @@ sporosac, however, the medusa-individual has become so degenerate
 that even the documentary proof, so to speak, of its medusoid
 nature may have been destroyed, and only circumstantial evidence
 of its nature can be produced.
-{{EB1911 fine print/e}}
+
 4. «I»Germinal Budding.«/I»—This method of budding is commonly
 described as budding from a single body-layer, instead of from
 both layers. The layer that produces the bud is invariably the
@@ -2668,7 +2653,7 @@ exact spot in which later the gonads appear. From these facts,
 and from those of the sporogony, to be described below, we may
 regard budding to this type as taking place from the germinal
 epithelium rather than from ordinary ectoderm.
-{{EB1911 fine print/s}}
+
 («I»a«/I») «I»The Polyp.«/I»—Budding from the ectoderm alone has been
 described by A. Lang [«B»29«/B»] in «I»Hydra«/I» and other polyps. The tissues
 of the bud become differentiated into ectoderm and endoderm, and
@@ -2715,11 +2700,10 @@ is just as described above for the indirect method of medusa-budding
 the parent immediately below it becomes perforated, placing the
 coelenteric cavity of the parent in secondary communication with
 that of the bud (H), doubtless for the better nutrition of the latter.
-{{nop}}
-PAGE:160Especially noteworthy in the germinal budding of «I»Margellium«/I»
+{{nop}}PAGE:160Especially noteworthy in the germinal budding of «I»Margellium«/I»
 is the formation of the entocodon, as in the vegetative budding of
 the indirect type.
-{{EB1911 fine print/e}}
+
 5. «I»Sporogony.«/I»—This method of reproduction has been described
 by E. Metchnikoff in «I»Cunina«/I» and allied genera. In individuals
 either of the male or female sex, germ-cells which are quite undifferentiated
@@ -2741,7 +2725,7 @@ In «I»Hydra«/I» the oöcyte is a large amoeboid cell, which sends out
 pseudopodia amongst the oögonia and absorbs nutriment from
 them. When the oöcyte is full grown, the residual oögonia
 die off and disintegrate.
-{{EB1911 fine print/s}}
+
 {|align="center" width="400"
 |colspan="2"|[[Image:EB1911 Hydromedusae - Budding from the Ectoderm in Margellium.jpg|400px]]
 |-
@@ -2769,12 +2753,12 @@ die off and disintegrate.
 |-
 |«I»t«/I»,||Tentacle.
 |}
-{{EB1911 fine print/e}}
+
 The spermatogenesis and maturation and fertilization of the
 germ-cells present nothing out of the common and need not be
 described here. These processes have been studied in detail
 by A. Brauer [«B»2«/B»] for «I»Hydra«/I».
-{{EB1911 fine print/s}}
+
 The general course of the development is described in the article
 {{EB1911 article link|Hydrozoa}}. We may distinguish the following series of stages:
 (1) ovum; (2) cleavage, leading to formation of a blastula; (3)
@@ -2899,8 +2883,7 @@ we suppose that neither the parent-actinula («I»i.e.«/I» founder-polyp) nor
 its offspring by budding (polyps of the colony) have the power of
 becoming medusae, but only of producing medusae by budding.
 For further arguments and illustrations the reader must be referred
-to Brooks’s most interesting memoir. The whole theory is one most
-PAGE:161intimately connected with the question of the relation between polyp
+to Brooks’s most interesting memoir. The whole theory is one mostPAGE:161intimately connected with the question of the relation between polyp
 and medusa, to be discussed presently. It will be seen elsewhere,
 however, that whatever view may be held as to the origin of metagenesis
 in Hydromedusae, in the case of {{EB1911 lkpl|Scyphomedusae}} («I»q.v.«/I») no
@@ -2922,7 +2905,7 @@ itself, to move to a new situation, and to fix itself again. There is no
 difficulty whatever in regarding «I»Hydra«/I» as bearing the same relation
 to the actinula-stage of other Hydromedusae that a Rotifer bears to
 a trochophore-larva or a fish to a tadpole.
-{{EB1911 fine print/e}}
+
 «I»The Relation of Polyp and Medusa.«/I»—Many views have been put
 forward as to the morphological relationship between the two
 types of person in the Hydromedusae. For the most part,
@@ -2964,7 +2947,7 @@ The question is one intimately connected with the view taken
 as to the nature and individuality of polyp, medusa and gonophore
 respectively. On this point the following theories have
 been put forward.
-{{EB1911 fine print/s}}
+
 1. The theory that the medusa is simply an organ, which has
 become detached and has acquired a certain degree of independence,
 like the well-known instance of the hectocotyle of the cuttle-fish.
@@ -2983,7 +2966,7 @@ and «I»Podocoryne«/I» (medusae), «I»Tubularia«/I» (gonophores) and «I»
 (medusae), «I»Coryne«/I» (gonophores) and «I»Syncoryne«/I» (medusae), and so on.
 If it is assumed that all these genera bore gonophores ancestrally,
 then medusa of similar type must have been evolved quite
-inde<!-- column 2 -->pendently
+inde pendently
 in a great number of cases. Secondly, there is the evidence
 from the development, namely, the presence of the entocodon in the
 medusa-bud, a structure which, as explained above, can only be
@@ -3023,7 +3006,7 @@ primitively any intervening polyp-stage, such as has been introduced
 secondarily into the development of the Leptolinae and represents a
 revival, so to speak, of an ancestral form or larval stage, which has
 taken on a special role in the economy of the species.
-{{EB1911 fine print/e}}
+
 {{csc|Systematic Review of the Hydromedusae}}
 
 {{sc|Order I.}} «B»Eleutheroblastea.«/B»—Simple polyps which become
@@ -3034,7 +3017,7 @@ The sub-order includes the family «I»Hydridae«/I», containing the
 common fresh-water polyps of the genus «I»Hydra«/I». Certain other
 forms of doubtful affinities have also been referred provisionally
 to this section.
-{{EB1911 fine print/s}}
+
 «I»Hydra.«/I»—This genus comprises fresh-water polyps of simple structure.
 The body bears tentacles, but shows no division into hydrorhiza,
 hydrocaulus or hydranth; it is temporarily fixed and has no perisarc.
@@ -3078,8 +3061,7 @@ instance. It would be particularly interesting to ascertain how the
 nematocysts of a polyp are related to those possessed by the medusa
 budded from it, and it is possible that in this manner obscure questions
 of relationship might be cleared up.
-{{nop}}
-PAGE:162«I»Protohydra«/I» is a marine genus characterized by the absence of
+{{nop}}PAGE:162«I»Protohydra«/I» is a marine genus characterized by the absence of
 tentacles, by a great similarity to «I»Hydra«/I» in histological structure, and
 by reproduction by transverse fission. It was found originally in an
 oyster-farm at Ostend. The sexual reproduction is unknown. For
@@ -3163,7 +3145,7 @@ Eleutheroblastea. The
 phylogenetic position
 of this genus has been
 discussed above.
-{{EB1911 fine print/e}}
+
 {{sc|Order II.}} «B»Hydroidea«/B»
 «B»seu Leptolinae.«/B»—Hydromedusae
 with alternation
@@ -3187,7 +3169,7 @@ a gonophore. When fully developed the medusa is characterized
 by the sense organs being composed entirely of ectoderm,
 developed independently of the tentacles, and innervated from
 the sub-umbral nerve-ring.
-{{EB1911 fine print/s}}
+
 The two kinds of persons present in the typical Hydroidea make
 the classification of the group extremely difficult, for reasons explained
 above. Hence the systematic arrangement that follows
@@ -3204,7 +3186,7 @@ that in some cases the production of medusae or gonophores varies
 with the season or the sex. Moreover, P. Hallez [«B»22«/B»] has recently
 shown that hydroids hitherto regarded as distinct species are only
 forms of the same species grown under different conditions.
-{{EB1911 fine print/e}}
+
 {{sc|Sub-Order 1. Hydroidea Gymnoblastea (Anthomedusae).}}—Trophosome without hydrothecae or gonothecae, with monopodial
 type of budding. Gonosome with free medusae or
 gonophores; medusae usually with ocelli, never with otocysts.
@@ -3223,7 +3205,7 @@ in special gonothecae as in the next sub-order. In this sub-order
 the characters of the hydranth are very variable, probably owing
 to the fact that it is exposed and not protected by a hydrotheca,
 as in Calyptoblastea.
-{{EB1911 fine print/s}}
+
 
 {|align="center"
 |-valign="bottom"
@@ -3277,9 +3259,8 @@ of tentacles, oral and aboral.
 
 4. Hydranth with tentacles reduced below four; type of «I»Lar«/I»
 (fig. 11), «I»Monobrachium«/I», &c.
-{{EB1911 fine print/e}}
-{{nop}}
-PAGE:163The «I»Anthomedusa«/I» in form is generally deep, bell-shaped.
+
+{{nop}}PAGE:163The «I»Anthomedusa«/I» in form is generally deep, bell-shaped.
 The sense organs are typically ocelli, never otocysts. The gonads
 are borne on the manubrium, either forming a continuous ring
 (Codonid type), or four masses or pairs of masses (Oceanid type).
@@ -3289,7 +3270,7 @@ in form they may be simple or branched (Cladonemid
 type); in structure they may be hollow (“coelomerinthous”);
 or solid (“pycnomerinthous”). When sessile gonophores are
 produced, they may show all stages of degeneration.
-{{EB1911 fine print/s}}
+
 «I»Classification.«/I»—Until quite recently the hydroids (Gymnoblastea)
 and the medusae (Anthomedusae) have been classified separately,
 since the connexion between them was insufficiently known. Delage
@@ -3379,7 +3360,6 @@ common Mediterranean form. «I»Stauridium«/I» (fig. 2) is a British hydroid.
 both filiform. «I»Tubularia«/I» (fig. 4), a well-known British hydroid,
 bears gonophores.
 
-<!-- column 2 -->
 7. «I»Corymorphidae«/I» (including the medusa-family «I»Hybocodonidae«/I»).—Trophosome
 solitary polyps, with two whorls of tentacles; gonosome,
 free medusae or gonophores. «I»Corymorpha«/I» (fig. 3), a well-known
@@ -3491,8 +3471,7 @@ ordinary hydroid, has the aboral portion modified into a float, from
 which hangs down a proboscis bearing the mouth. The float is
 covered with long tentacles and bears the medusa-buds. The
 proboscis bears at its extremity a circlet of smaller oral tentacles.
-Thus the affinities of the hydranth are clearly, as Dendy points out,
-PAGE:164with a form such as «I»Corymorpha«/I», which also is not fixed but only
+Thus the affinities of the hydranth are clearly, as Dendy points out,PAGE:164with a form such as «I»Corymorpha«/I», which also is not fixed but only
 rooted in the mud. The medusae, on the other hand, have the
 tentacles in four tufts of (in the buds) five each, and thus resemble
 the medusae of the
@@ -3530,7 +3509,7 @@ the tentative
 character of even the
 most modern classifications
 of this order.
-{{EB1911 fine print/e}}
+
 {{sc|Sub-order II.
 Hydroidea Calyptoblastea
 (Leptomedusae).}}—Trophosome
@@ -3551,7 +3530,7 @@ with otocysts,
 sometimes with cordyli
 or ocelli (figs.
 54, 55).
-{{EB1911 fine print/s}}
+
 {|align="right" width="250" style="margin-left: 1em"
 |[[Image:EB1911 Hydromedusae - Oral Surface of one of the Leptomedusae.jpg|250px]]
 |-
@@ -3575,7 +3554,7 @@ tentacles and the otocysts.
 «I»Ve«/I», The velum.
 |}
 |}
-{{EB1911 fine print/e}}
+
 The calyptoblastic
 polyp of the nutritive
 type is very uniform in character, its tendency to variation
@@ -3620,7 +3599,7 @@ in a common perisarc (“polysiphonic”). An important variation
 is seen, in the form of the hydrotheca itself, which may come
 off from the main stem by a stalk, as in «I»Obelia«/I», or may be
 sessile, without a stalk, as in «I»Sertularia«/I».
-{{EB1911 fine print/s}}
+
 {|align="left" width="300" style="margin-right: 1em"
 |[[Image:EB1911 Hydromedusae - formation of the Hydrotheca and Gonotheca in Calyptoblastic Hydroids.jpg|300px]]
 |-
@@ -3637,7 +3616,7 @@ common to both; from D arises the hydrotheca
 «I»st«/I», stomach; «I»t«/I», tentacles; «I»m«/I», mouth; «I»mb«/I»,
 medusa-buds.
 |}
-{{EB1911 fine print/e}}
+
 In many Calyptoblastea there occur also reduced defensive
 polyps or dactylozoids, which in this sub-order have received
 the special name of «I»sarcostyles«/I». Such are the “snake-like zoids”
@@ -3683,7 +3662,7 @@ gonotheca is formed in its early stage in the same way as the
 hydrotheca, but the remains of the hydranth persists as an
 operculum closing the capsule, to be withdrawn when the
 medusae or genital products are set free (fig. 56).
-{{EB1911 fine print/s}}
+
 The blastostyles, gonophores and gonothecae furnish a series of variations
 which can best be considered as so many stages of evolution.
 
@@ -3709,8 +3688,7 @@ processes growing out from the blastostyle to enclose the acrocyst,
 each such process being covered by perisarc like a glove-finger
 secreted by it (fig. 57, C). (Allman [«B»1«/B»], pp. 50, 51, figs. 21-24;
 Weismann [«B»58«/B»], p. 170, pl. ix., figs. 7, 8.)
-{{nop}}
-PAGE:165Stage 4, seen in «I»Plumularidae«/I».—The generative elements are
+{{nop}}PAGE:165Stage 4, seen in «I»Plumularidae«/I».—The generative elements are
 produced in structures termed corbulae, formed by reduction
 and modification of branches of the colony. Each corbula
 contains a central row of blastostyles enclosed and protected
@@ -3737,7 +3715,7 @@ process from the summit of the blastostyle, enclosing
 the acrocyst; «I»b«/I», medusa-buds on the
 blastostyle.
 |}
-{{EB1911 fine print/e}}
+
 The «I»Leptomedusa«/I» in form is generally shallow, more or less
 saucer-like, with velum less developed than in Anthomedusae
 (fig. 55). The characteristic sense-organs are ectodermal otocysts,
@@ -3784,7 +3762,7 @@ each radius, in all
 eight separate gonad-masses, as the name implies. In some
 Leptomedusae excretory “marginal tubercles” are developed
 on the ring-canal.
-{{EB1911 fine print/s}}
+
 «I»Classification.«/I»—As in the Gymnoblastea, the difficulty of uniting
 the hydroid and medusan systems into one scheme of classification
 is very great in the present state of our knowledge. In a great many
@@ -3814,7 +3792,6 @@ similar to that of the «I»Eucopidae«/I»; gonosome, free medusae
 with otocysts inconspicuous or absent, with usually four, sometimes
 eight, rarely more than eight, radial canals, simple and unbranched,
 along which the gonads are developed, with numerous tentacles
-<!-- column 2 -->
 bearing ocelli and with marginal sense-clubs. «I»Laodice«/I» and «I»Thaumantias«/I»
 are representative genera.
 
@@ -3866,7 +3843,7 @@ colony, so that only the characters of the trophosome need be considered.)
 |
 {{sc|Fig. 59.}}—Three stages in the development of «I»Phialidium temporarium«/I».
 «I»a«/I», The youngest stage, is magnified about 22 diam.; «I»b«/I»,
-older, is magnified about 8 diam.; «I»c«/I», the adult medusa, is magnified.
+older, is magnified about 8 diam.; «I»c«/I», the adult medusa, is magnified 6 diameters.
 |}
 
 8. «I»Sertularidae.«/I»—Hydrothecae sessile, biserial, alternating or
@@ -3880,8 +3857,7 @@ abundant and prolific family; well-known British genera are
 «I»Plumularia«/I», «I»Antennularia«/I» and «I»Aglaophenia«/I».
 
 10. «I»Hydroceratinidae«/I».—This family contains the single Australian
-species «I»Clathrozoon wilsoni«/I» Spencer, in which a massive hydrorhiza
-PAGE:166bears sessile hydrothecae, containing hydranths each with a single
+species «I»Clathrozoon wilsoni«/I» Spencer, in which a massive hydrorhizaPAGE:166bears sessile hydrothecae, containing hydranths each with a single
 tentacle, and numerous nematophores. See W. B. Spencer [«B»53«/B»].
 
 11. «I»Dendrograptidae«/I», containing fossil (Silurian) genera, such as
@@ -3900,7 +3876,7 @@ or hydranths. About
 twice the natural size. (From
 Moseley.)
 |}
-{{EB1911 fine print/e}}
+
 {{sc|Order III.}} «B»Hydrocorallinae.«/B»—Metagenetic colony-forming
 Hydromedusae, in which the polyp-colony forms a massive,
 calcareous «I»corallum«/I» into which the polyps can be retracted;
@@ -3938,7 +3914,7 @@ broken across, each pore-canal (perhaps better termed a polyp-canal)
 is seen to be interrupted by a series of transverse
 partitions, representing successive periods of growth with
 separation from the underlying dead portions.
-{{EB1911 fine print/s}}
+
 {|align="center" width="400"
 |align="center"|[[Image:EB1911 Hydromedusae - Millepora showing five dactylozooids surrounding a central gastrozooid.jpg|300px]]
 |-
@@ -3947,7 +3923,7 @@ separation from the underlying dead portions.
 showing five dactylozooids surrounding a central gastrozooid. (From
 Moseley.)
 |}
-{{EB1911 fine print/e}}
+
 Besides the wider vertical pore-canals and the narrower,
 irregular coenosarcal canals, the coenosteum may contain, in its
 superficial portion, chambers or «I»ampullae«/I», in which the reproductive
@@ -3967,7 +3943,7 @@ a madreporarian
 coral with its radiating
 septa (figs. 62
 and 63).
-{{EB1911 fine print/s}}
+
 {|align="right" width="300" style="margin-left: 1em"
 |align="center" colspan="2"|[[Image:EB1911 Hydromedusae - development of the cyclosystems of the Stylasteridae.jpg|300px]]
 |-
@@ -3997,7 +3973,7 @@ Moseley.)
 |-valign="top"
 |«I»b«/I»,||In fig. 6, inner horseshoe-shaped mouth of gastropore.
 |}
-{{EB1911 fine print/e}}
+
 The gastrozoids
 usually bear short
 capitate tentacles,
@@ -4034,7 +4010,7 @@ from the coenosarc. In «I»Distichopora«/I» the
 gonophores have radial canals, but in
 other genera they are sporosacs with no
 trace of medusoid structure.
-{{EB1911 fine print/s}}
+
 {|align="left" width="100" style="margin-right: 1em"
 |[[Image:EB1911 Hydromedusae - corallum of Astylus subviridis.jpg|100px]]
 |-
@@ -4086,8 +4062,7 @@ may be regarded as a form of
 hydroid colony in which the coenosarc
 forms a felt-work ramifying in all planes, and in which the
 chitinous perisarc is replaced by a massive calcareous skeleton. So
-far as the trophosome is concerned, the step from an encrusting
-PAGE:167hydroid such as «I»Hydractinia«/I» to the hydrocoralline «I»Millepora«/I» is not
+far as the trophosome is concerned, the step from an encrustingPAGE:167hydroid such as «I»Hydractinia«/I» to the hydrocoralline «I»Millepora«/I» is not
 great.
 
 Hickson considers that the families «I»Milleporidae«/I» and «I»Stylasteridae«/I»
@@ -4100,7 +4075,7 @@ relation to the «I»Stylasteridae«/I» that «I»Hydractinia«/I» does to the
 in both cases the chitinous perisarc being replaced by the
 solid coenosteum to which the hydrocorallines owe the second half
 of their name.
-{{EB1911 fine print/e}}
+
 {{sc|Order IV.}} «B»Graptolitoidea«/B» (Rhabdophora, Allman).—This
 order has been constituted for a peculiar group of palaeozoic
 fossils, which have been interpreted as the remains of the skeletons
@@ -4128,10 +4103,10 @@ their organization, so far as the state of their preservation
 permits it to be ascertained, offers closer analogies with the
 Hydrozoa, especially the Calyptoblastea, than with any other
 existing group of the animal kingdom.
-{{EB1911 fine print/s}}
+
 See the treatise of Delage and Hérouard ({{EB1911 article link|Hydrozoa}}, [«B»4«/B»]), and the
 article {{EB1911 article link|Graptolites}}.
-{{EB1911 fine print/e}}
+
 {{sc|Order V.}} «B»Trachylinea.«/B»—Hydromedusae without alternation
 of generations, «I»i.e.«/I» without a hydroid phase; the medusa
 develops directly from the actinula larva, which may, however,
@@ -4181,7 +4156,7 @@ In «I»Gonionemus«/I» the actinula
 becomes attached
 and polyp-like and reproduces
 by budding.
-{{EB1911 fine print/s}}
+
 {|align="right" width="250" style="margin-left: 1em"
 |[[Image:EB1911 Hydromedusae - Olindias mülleri.jpg|250px]]
 |-
@@ -4277,15 +4252,13 @@ radial canals; ex-umbrella often provided
 with lateral outgrowths; tentacles
 differing in size, but in a single row.
 «I»Halicreas«/I».
-{{EB1911 fine print/e}}
+
 {{sc|Sub-order 2. Narcomedusae.}}—Margin of the umbrella-lobed,
 tentacles arising from the ex-umbrella at some distance
 from the margin; tentaculocysts exposed, not enclosed in
 vesicles; gonads on the sub-umbral floor of the stomach or of
 the gastric pouches.
-{{nop}}
-PAGE:168{{EB1911 fine print/s}}
-{|align="left" width="250" style="margin-right: 1em"
+{{nop}}PAGE:168{|align="left" width="250" style="margin-right: 1em"
 |colspan="2"|[[Image:EB1911 Hydromedusae - Cunina rhododactyla.jpg|250px]]
 |-
 |colspan="2"|
@@ -4306,7 +4279,7 @@ of the «I»Narcomedusae«/I». (After Haeckel.)
 |-valign="top"
 |«I»tw«/I»,&nbsp;||Tentacle root.
 |}
-{{EB1911 fine print/e}}
+
 The Narcomedusae exhibit peculiarities of form and structure
 which distinguish them at once from all other Hydromedusae.
 The umbrella is shallow and has the margin supported by a
@@ -4381,7 +4354,6 @@ a lodgment in the host either by invading it as a free-swimming
 planula, or, apparently, in other cases, as a spore-embryo which is
 captured and swallowed as food by the host. The parasitic actinula
 is found attached to the proboscis of the medusa; it thrusts its
-<!-- column 2 -->
 greatly elongated hypostome into the mouth of the medusa
 and nourishes itself upon the food in the digestive cavity of
 its host. At the same time it produces buds from an aboral
@@ -4400,7 +4372,7 @@ above.
 In other Narcomedusae, «I»e.g.«/I» «I»Cunoctantha fowleri«/I» Browne,
 buds are formed from the sub-umbrella on the under side of the
 stomach pouches, where later the gonads are developed.
-{{EB1911 fine print/s}}
+
 «I»Classification.«/I»—Three families of Narcomedusae are recognized
 (see O. Maas [«B»40«/B»]):
 {|align="right" width="225" style="margin-left: 1em"
@@ -4487,8 +4459,7 @@ known.
 
 Both these medusae have sense-organs of a peculiar type, which
 are said to contain an endodermal axis like the sense-organs of
-Trachylinae, but the fact has recently been called in question for
-PAGE:169«I»Limnocodium«/I» by S. Goto, who considers the genus to be allied to
+Trachylinae, but the fact has recently been called in question forPAGE:169«I»Limnocodium«/I» by S. Goto, who considers the genus to be allied to
 «I»Olindias«/I». Allman, on the other hand, referred «I»Limnocodium«/I» to the
 Leptomedusae.
 
@@ -4510,13 +4481,13 @@ amongst medusae. The possession of a polyp-stage by «I»Limnocodium«/I»
 and «I»Microhydra«/I» furnishes an argument against placing them in the
 Trachylinae. Their sense-organs require renewed investigations.
 (Browne [«B»10«/B»] and [«B»10a«/B»].)
-{{EB1911 fine print/e}}
+
 {{sc|Order VI.}} «B»Siphonophora.«/B»—Pelagic floating Hydrozoa with
 great differentiation of parts, each performing a special function;
 generally regarded as colonies showing differentiation of individuals
 in correspondence with a physiological division of
 labour.
-{{EB1911 fine print/s}}
+
 {|align="left" width="225" style="margin-right: 1em"
 |[[Image:EB1911 Hydromedusae - modifications of a colony of Siphonophora.jpg|225px]]
 |-
@@ -4543,7 +4514,7 @@ line ectoderm. (After Allman.)
 
 «I»m«/I», Stem.
 |}
-{{EB1911 fine print/e}}
+
 A typical Siphonophore is a stock or «I»cormus«/I» consisting of a
 number of «I»appendages«/I» placed in organic connexion with one
 another by means of a «I»coenosarc«/I». The coenosarc does not
@@ -4594,9 +4565,8 @@ Divergent views have been held by different authors both as
 regards the nature of the cormus as a whole, and as regards
 the homologies of the different types of appendages borne
 by it.
-{{EB1911 fine print/s}}
+
 The general theories of Siphonophoran morphology are discussed
-<!-- column 2 -->
 below, but in enumerating the various types of appendages it is
 convenient to discuss their morphological interpretation at the same
 time.
@@ -4707,8 +4677,7 @@ Physonectae; similar to the siphons but without a mouth, and purely
 tactile in function, hence sometimes termed dactylozoids. If a
 distal pore or aperture is present, it is excretory in function; such
 varieties have been termed “cystons” by Haeckel.
-{{nop}}
-PAGE:1703. «I»Tentacles«/I» (“«I»Fangfäden«/I»”), always present, and implanted one
+{{nop}}PAGE:1703. «I»Tentacles«/I» (“«I»Fangfäden«/I»”), always present, and implanted one
 at the base of each siphon (fig. 68, «I»f«/I»). The tentacles of siphonophores
 may reach a great length and have a complex structure. They may
 bear accessory filaments or «I»tentilla«/I» («I»f«/I»′), covered thickly with batteries
@@ -4923,8 +4892,7 @@ broader portion, and gives rise, not to a pneumatophore, but to a
 nectocalyx, the primary swimming bell or «I»protocodon«/I» (“«I»Fallschirm«/I»”)
 which is later thrown off and replaced by secondary swimming bells,
 «I»metacodons«/I», budded from the coenosarc.
-{{nop}}
-PAGE:171From a comparison of the two embryological types there can be no
+{{nop}}PAGE:171From a comparison of the two embryological types there can be no
 doubt on two points; first, that the pneumatophore and the protocodon
 are strictly homologous, and, therefore if the nectocalyx is
 comparable to the umbrella of a medusa, as seems obvious, the
@@ -5107,7 +5075,7 @@ pointed out, is all against any homology between the stem and a
 manubrium, since the primary siphon does not become the stem,
 which arises from the ex-umbral side of the protocodon and is
 strictly comparable to a stolon.
-{{EB1911 fine print/e}}
+
 «I»Classification.«/I»—The Siphonophora may be divided, following
 Delage and Hérouard, into four sub-orders:
 
@@ -5115,19 +5083,18 @@ I. {{sc|Chondrophorida}} («I»Disconectae«/I» Haeckel, «I»Tracheophysae«/I
 Chun). With an apical chambered pneumatophore, from which
 tracheal tubes may take origin (fig. 70); no nectocalyces or
 bracts; appendages all on the lower side of the pneumatophore
-arising from a compact coenosarc, and consisting of a central
-PAGE:172principal siphon, surrounded by gonosiphons, and these again
+arising from a compact coenosarc, and consisting of a centralPAGE:172principal siphon, surrounded by gonosiphons, and these again
 by tentacles.
-{{EB1911 fine print/s}}
+
 Three families: (1) «I»Discalidae«/I», for «I»Discalia«/I» and allied genera, deep-sea
 forms not well known; (2) «I»Porpitidae«/I» for the familiar genus
 «I»Porpita«/I» (fig. 69) and its allies; and (3) «I»Velellidae«/I», represented by the
 well-known genus «I»Velella«/I» (figs. 70, 71), common in the Mediterranean
 and other seas.
-{{EB1911 fine print/e}}
+
 II. {{sc|Calycophorida}} («I»Calyconectae«/I», Haeckel). Without pneumatophore,
 with one, two, rarely more nectocalyces.
-{{EB1911 fine print/s}}
+
 Three families: (1) «I»Monophyidae«/I», with a single nectocalyx;
 examples «I»Muggiaea«/I», sometimes found in British seas, «I»Sphaeronectes«/I»,
 &c.; (2) «I»Diphyidae«/I», with two nectocalyces; examples «I»Diphyes«/I» (fig.
@@ -5147,11 +5114,11 @@ of Physalia; D, palpon; T, palpacle; G, siphon; GP,
 gonopalpon; M&nbsp;♂, male gonophore; M&nbsp;♀, female gonophore, ultimately
 set free.
 |}
-{{EB1911 fine print/e}}
+
 III. {{sc|Physophorida}} («I»Physonectae«/I» + «I»Auronectae«/I», Haeckel).
 With an apical pneumatophore, not divided into chambers,
 followed by a series of nectocalyces or bracts.
-{{EB1911 fine print/s}}
+
 A great number of families and genera are referred to this group,
 amongst which may be mentioned specially—(1) «I»Agalmidae«/I», containing
 the genera «I»Stephanomia«/I», «I»Agalma«/I», «I»Anthemodes«/I», «I»Halistemma«/I»,
@@ -5164,14 +5131,14 @@ of Haeckel. The Auronectae are peculiar deep-sea forms, little known
 except from Haeckel’s descriptions, in which the large pneumatophore
 has a peculiar duct, termed the aurophore, placed on its lower
 side in the midst of a circle of swimming-bells.
-{{EB1911 fine print/e}}
+
 IV. {{sc|Cystophorida}} («I»Cystonectae«/I», Haeckel). With a very large
 pneumatophore not divided into chambers, but without nectocalyces
 or bracts. Two sections can be distinguished, the
 Rhizophysina, with long tubular coenosarc-bearing ordinate
 cormidia, and Physalina, with compact coenosarc-bearing
 scattered cormidia.
-{{EB1911 fine print/s}}
+
 A type of the Rhizophysina is the genus «I»Rhizophysa«/I». The
 Physalina comprise the families «I»Physalidae«/I» and «I»Epibulidae«/I», of
 which the types are «I»Physalia«/I» (figs. 74, 75) and «I»Epibulia«/I», respectively.
@@ -5258,8 +5225,7 @@ Medusen,” in «I»Ergebn. Plankton Expedition«/I», ii. (Kiel and Leipzig,
 appartenant aux familles des «I»Cunanthidae«/I» et des «I»Aeginidae«/I», et
 groupement nouveau des genres,” «I»Bull. Mus. Monaco«/I», v. (1904),
 8 pp.; «B»37.«/B» “Revision der Cannotiden Haeckels,” «I»SB. K. Bayer.«/I»
-«I»Akad.«/I» xxxiv. (1904), pp. 421-445; «B»38.«/B» “Meduses,” «I»Result. Camp.«/I»
-PAGE:173«I»Sci. Monaco«/I», xxviii. (1904), 71 pp., 6 pls.; «B»39.«/B» “Die craspedoten
+«I»Akad.«/I» xxxiv. (1904), pp. 421-445; «B»38.«/B» “Meduses,” «I»Result. Camp.«/I»PAGE:173<section begin="Hydromedusae" />«I»Sci. Monaco«/I», xxviii. (1904), 71 pp., 6 pls.; «B»39.«/B» “Die craspedoten
 Medusen der Siboga-Expedition,” «I»Uitkomst. Siboga-Exped.«/I» x. (1905),
 84 pp., 14 pls.; «B»40.«/B» “Die arktischen Medusen (ausschliesslich der
 Polypomedusen),” «I»Fauna arctica«/I», iv. (1906), pp. 479-526; «B»41.«/B» C.
@@ -5307,4 +5273,7 @@ pp. 273-309, pls. viii. ix.; «B»58.«/B» A. Weismann, «I»Die Entstehung der
 loveni Allm.,” «I»Zeitschr. f. wiss. Zool.«/I» lxxi. (1902), pp. 296-326, pls.
 xvi.-xviii.
 {{Fs|108%|{{EB1911 footer initials|Edward Alfred Minchin|E. A. M.}}}}
-{{EB1911 fine print/e}}
+
+
+<section end="Hydromedusae" />
+<section begin="Hydrometer" />

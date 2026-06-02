@@ -10,6 +10,7 @@ import re
 from britannica.image_assets import CHART2_IMAGES
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
+from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 from britannica.captions import clean_caption
 
 
@@ -263,6 +264,38 @@ def _process_raw_image(raw: str, text_transform) -> str:
     cap_m = _RAW_CAPTION_RE.search(raw, m.end())
     caption = text_transform(cap_m.group(1).strip()) if cap_m else ""
     return build_img_marker(filename, caption or None)
+
+
+# `{{Plain image with caption|image=File:…|align=…|width=…px|caption=…|caption
+# position=…}}` — a Wikisource named-parameter figure macro (MAP, vol 17, uses
+# ~17 of them for its historical-cartography plates).  Same destination as every
+# other image producer — a `{{IMG:…}}` marker — parsed from the named params:
+# `image=` is the File ref (drop the `File:`/`Image:` prefix), `align`/`width`
+# map straight onto the marker's layout metadata, `caption` is a normal inline
+# caption run.  `caption position` is layout-only (our caption always renders
+# under the image) and ignored.  Without this the walker doesn't recognize the
+# macro and all ~17 figures fall to body-text's catch-all and vanish.
+def _process_plain_image(inner: str, text_transform) -> str:
+    params: dict[str, str] = {}
+    # inner is `Plain image with caption|key=val|key=val…`; segment 0 is the
+    # template name, the rest are named params (split at depth-0 pipes so a
+    # nested `caption={{center|…|…}}` value stays whole).
+    for seg in _split_top_level_pipe(inner)[1:]:
+        if "=" not in seg:
+            continue
+        key, val = seg.split("=", 1)
+        params[key.strip().lower()] = val.strip()
+    filename = re.sub(r"^\s*(?:File|Image):", "", params.get("image", ""),
+                      flags=re.IGNORECASE).strip()
+    if not filename:
+        return ""
+    align = _ALIGN_KEYWORDS.get(params.get("align", "").lower())
+    width, height = _parse_image_size(params.get("width", ""))
+    caption = params.get("caption", "")
+    if caption:
+        caption = text_transform(caption)
+    return build_img_marker(filename, caption or None,
+                            align=align, width=width, height=height)
 
 
 def _process_chart2(raw: str, context: ElementContext) -> str:
