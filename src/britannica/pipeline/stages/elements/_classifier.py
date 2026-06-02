@@ -55,6 +55,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
     SHAPE_MIRROR_GLYPH,
+    SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
     strip_outer,
@@ -322,6 +323,8 @@ def _derive_label(
         return _derive_double_brace_label(raw, inner_text)
     if shape == SHAPE_CHART2:
         return "CHART2"
+    if shape == SHAPE_ORDERED_LIST:
+        return "ORDERED_LIST"
     if shape == SHAPE_OUTLINE:
         return "OUTLINE"
     if shape == SHAPE_FIGURE:

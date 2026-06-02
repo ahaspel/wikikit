@@ -38,13 +38,14 @@ class TestShapeVocabulary:
         #     SHAPE_BODY, owner-of-output principle says every span
         #     maps to one producer),
         #   MIRROR_GLYPH (``<span style="{{mirrorH}}">…</span>``),
-        #   CENTER (``{{NAME/s}}…{{NAME/e}}`` paired-wrapper span).
+        #   CENTER (``{{NAME/s}}…{{NAME/e}}`` paired-wrapper span),
+        #   ORDERED_LIST (nested ``{{ordered list|…}}`` classification, a leaf).
         # NOINCLUDE was removed when the article pipeline started
         # wiping `<noinclude>` tags upstream in `_transform_text_v2`
         # — chrome content owned by explicit template recognizers,
         # plate pipeline uses its own walker.
         # Bump this count alongside ``_shapes.SHAPES``.
-        assert len(SHAPES) == 13
+        assert len(SHAPES) == 14
         assert SHAPE_FIGURE in SHAPES
         assert SHAPE_SECTION in SHAPES
 

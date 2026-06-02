@@ -39,6 +39,7 @@ from britannica.pipeline.stages.elements._image import (
     _process_raw_image,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
+from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
 from britannica.pipeline.stages.elements._math import (
     _process_math_dual_line,
@@ -405,6 +406,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CONTRIBUTOR_FOOTER": lambda raw, inner, tt, ctx, reg: "",
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
+    "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
     "HTML_TABLE": lambda raw, inner, tt, ctx, reg:

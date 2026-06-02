@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 
 from britannica.cleaners.hyphenation import fix_hyphenation
-from britannica.image_assets import CHART2_IMAGES
+from britannica.image_assets import CHART2_IMAGES, TREE_IMAGES
 from britannica.pipeline.stages.source_cleanup import (
     strip_html_comments,
     strip_noinclude_blocks,
@@ -40,6 +40,30 @@ from britannica.pipeline.stages.source_cleanup import (
 # loop in ``_transform_text_v2``.
 _CHART2_BLOCK = re.compile(
     r"\{\{\s*chart2\s*/\s*start[\s\S]*?\{\{\s*chart2\s*/\s*end\s*\}\}", re.IGNORECASE)
+
+# Sibling genealogical-tree macros (``{{familytree/start}}…{{familytree/end}}``,
+# ``{{Tree chart/start}}…{{Tree chart/end}}``) — same crop-to-image treatment as
+# chart2, keyed via ``TREE_IMAGES``.  NOTE: a familytree node can carry an inner
+# ``<ref>`` footnote (COWPER's Alderman-Cooper name note); replacing the whole
+# block drops that footnote text — a known minor loss, acceptable since the tree
+# itself is the content and the alternative is the catch-all deleting everything.
+# TODO(cleanup): chart2 + tree are one class — unify the two dicts + block regexes
+# into a single genealogy-image substitution, and delete the now-dead
+# ``_process_chart2`` / SHAPE_CHART2 walker path (preprocess preempts it).
+_TREE_BLOCK = re.compile(
+    r"\{\{\s*(?:familytree|tree\s*chart)\s*/\s*start[\s\S]*?"
+    r"\{\{\s*(?:familytree|tree\s*chart)\s*/\s*end\s*\}\}", re.IGNORECASE)
+# A familytree node can annotate itself with an inner ``<ref>…</ref>`` footnote
+# (COWPER's "Alderman Cooper thus spelt his name…" note).  Preserve it across the
+# crop-to-image replacement: re-emit the ref after the IMG so the footnote
+# producer renders it as a normal article footnote rather than losing it with the
+# rest of the grid macro.
+_TREE_INNER_REF = re.compile(r"<ref\b[^>]*>[\s\S]*?</ref>", re.IGNORECASE)
+
+
+def _tree_to_img(block: str, fn: str) -> str:
+    refs = "".join(_TREE_INNER_REF.findall(block))
+    return f"{{{{IMG:{fn}|Genealogical table}}}}{refs}"
 
 # Page chrome inside ``<noinclude>`` (running headers, pagequality, smallrefs,
 # rules) is furniture — but a noinclude block can ALSO carry the ONLY ``{|``/
@@ -134,6 +158,10 @@ def make_stream(pages) -> str:
         if fn:
             raw = _CHART2_BLOCK.sub(
                 f"{{{{IMG:{fn}|Genealogical table}}}}", raw, count=1)
+        fn = TREE_IMAGES.get((p.volume, p.page_number))
+        if fn:
+            raw = _TREE_BLOCK.sub(
+                lambda m: _tree_to_img(m.group(0), fn), raw, count=1)
         parts.append(f"\x01PAGE:{p.page_number}\x01{raw}")
     return "\n".join(parts)
 

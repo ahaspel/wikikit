@@ -94,3 +94,16 @@ CHART2_IMAGES: dict[tuple[int, int], str] = {
     (24, 271): "chart2_vol24_page0271.jpg",
     (28, 952): "chart2_vol28_page0952.jpg",
 }
+
+# Sibling tree macros of chart2 — same treatment (unrenderable grid macro →
+# manually-cropped page scan).  ``{{familytree/start}}…{{familytree/end}}`` and
+# ``{{Tree chart/start}}…{{Tree chart/end}}``.  Keyed by ``(volume, page_number)``.
+#   * COWPER, WILLIAM (vol 7, p369) — the Cowper-family genealogy.
+#   * SOLOMON, PSALMS OF (vol 25, p382) — the manuscript stemma.
+# TODO(crops): produce these two .jpg crops from the DjVu scans (as for chart2);
+# until then the substitution emits an IMG marker pointing at the pending file
+# (a visible placeholder) instead of the catch-all silently deleting the tree.
+TREE_IMAGES: dict[tuple[int, int], str] = {
+    (7, 369): "familytree_vol07_page0369.jpg",
+    (25, 382): "treechart_vol25_page0382.jpg",
+}

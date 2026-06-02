@@ -29,6 +29,7 @@ SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
 SHAPE_INLINE_IMAGE      = "INLINE_IMAGE"      # [[File:...]] in inline-prose context
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
+SHAPE_ORDERED_LIST      = "ORDERED_LIST"      # nested {{ordered list|…}} classification
 SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}} region
 SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
 SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
@@ -45,6 +46,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_INLINE_IMAGE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_OUTLINE,
+    SHAPE_ORDERED_LIST,
     SHAPE_CHART2,
     SHAPE_FIGURE,
     SHAPE_SECTION,
@@ -70,6 +72,11 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_CHART2,
     SHAPE_OUTLINE,
+    # ORDERED_LIST — a nested `{{ordered list|…}}` classification.  The producer
+    # owns the recursion (parses the whole nested template into ONE depth-encoded
+    # OUTLINE marker); the classifier must NOT extract nested same-shape children,
+    # else each level would become a separate marker.
+    SHAPE_ORDERED_LIST,
     # FIGURE — the producer owns the whole image+caption span: it re-processes
     # a copy with figure-recognition off and assembles, so the main walk must
     # NOT recurse into the raw here.
@@ -129,6 +136,10 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_OUTLINE:
         # No delimiters — the raw bytes ARE the indented-line ladder.
         return raw
+    if shape == SHAPE_ORDERED_LIST:
+        # Leaf — the producer reads `raw` and recursively parses the nested
+        # `{{ordered list|…}}` itself; no inner content to hand back.
+        return ""
     if shape == SHAPE_CHART2:
         # CHART2's bytes are chart-grammar templates; we never walk
         # inside.  Return empty so a downstream `walker.walk("")`

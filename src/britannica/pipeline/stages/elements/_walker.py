@@ -39,6 +39,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
     SHAPE_MIRROR_GLYPH,
+    SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
 )
@@ -220,6 +221,11 @@ _LABELED_EQUATION_TEMPLATE_OPENER_RE = re.compile(
     r"\{\{\s*(" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",
     re.IGNORECASE,
 )
+
+# `{{ordered list|…}}` opener — matched with the balanced-brace scanner (not a
+# fixed-depth regex) because the classification nests several levels deep
+# (GEOGRAPHY: 4).  → SHAPE_ORDERED_LIST (a leaf; the producer owns the recursion).
+_ORDERED_LIST_OPENER_RE = re.compile(r"\{\{\s*ordered\s+list\b", re.IGNORECASE)
 
 
 def _find_balanced_template_end(text: str, start: int) -> int | None:
@@ -421,7 +427,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|EB1911)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
 )
@@ -620,6 +626,14 @@ def _walk_balanced_shapes(
                     and matched[2].endswith("]]")
                     and _is_inline_image_position(text, matched[0])):
                 matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
+
+        # Ordered-list classification — own LEAF shape, balanced-brace
+        # scanner (handles the arbitrary nesting depth a fixed-depth regex
+        # would miss; the producer parses the whole nested template).
+        if matched is None and _ORDERED_LIST_OPENER_RE.match(text, opener_pos):
+            end = _find_balanced_template_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_ORDERED_LIST, text[opener_pos:end])
 
         # Labeled-display-equation templates use a balanced-brace
         # scanner (not a regex) because `{{ne|<math>...</math>}}`
