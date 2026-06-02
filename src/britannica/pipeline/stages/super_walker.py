@@ -35,6 +35,7 @@ from britannica.pipeline.stages.detect_boundaries import (
     _split_out_plates,
 )
 from britannica.pipeline.stages.elements._title import clean_title
+from britannica.pipeline.stages.preprocess import make_stream, preprocess
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
@@ -168,14 +169,15 @@ def _page_before(stream: str, pos: int) -> int:
 
 
 def volume_stream(volume: int) -> str:
-    """Concatenate a volume's plate-free pages into one RAW stream, page breaks
-    riding along as `\\x01PAGE:N\\x01`.
+    """The clean, frozen continuous stream for ``volume`` — the single input
+    to boundary detection AND the element walker.
 
-    No preprocessing — the super-walker consumes nothing.  Page chrome
-    (`<noinclude>`, `<section …>`) is RECOGNIZED and skipped at the heading
-    search (see ``_LEAD``), not stripped from the stream, so every boundary and
-    every article body carries the original bytes.  (Corrections, if any, are a
-    source-layer concern applied before this — the one transform step 2 allows.)
+    Plate-free pages are assembled (``make_stream``) and run through the
+    whole-volume ``preprocess`` (source cleaning + page-transition healing),
+    so every boundary and every article body is sliced from clean source with
+    cross-page tables/hyphens/sentences already healed at the seam.  Section
+    tags survive (detect consumes ``<section begin>``); the ``\\x01PAGE:N\\x01``
+    markers survive as page-number bookkeeping.
     """
     session = SessionLocal()
     try:
@@ -185,13 +187,7 @@ def volume_stream(volume: int) -> str:
         # Mirror the current pipeline: plates are lifted first; article
         # detection runs over the plate-free pages.
         _plates, pages = _split_out_plates(all_pages)
-        parts = []
-        for p in pages:
-            raw = (p.wikitext or "").strip()
-            if not raw:
-                continue
-            parts.append(f"\x01PAGE:{p.page_number}\x01{raw}")
-        return "\n".join(parts)
+        return preprocess(make_stream(pages))
     finally:
         session.close()
 

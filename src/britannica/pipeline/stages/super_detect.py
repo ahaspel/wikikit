@@ -31,6 +31,14 @@ from britannica.pipeline.stages.elements._title import produce_title
 
 _PAGE_RE = re.compile(r"\x01PAGE:(\d+)\x01")
 _SECBEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
+# Section tags drop AFTER detection (the spec): detection has already read
+# `<section begin>` for the stable-ID name (`section_at`), so the tags are now
+# consumed transclusion chrome.  Drop each tag WITH its own line — a chrome
+# construct on its own line takes its trailing newline with it, so removing it
+# can't leave a blank line behind.  (Dropping only the tag is the bug that
+# strands the newline as a `\n\n` once the empty SECTION element renders.)
+_SECTAG_DROP = re.compile(
+    r"[ \t]*<section\s+(?:begin|end)\b[^>]*?/?>[ \t]*\n?", re.IGNORECASE)
 _DROPINITIAL = re.compile(
     r"\{\{\s*(?:drop\s*initial|di)\s*[|}]", re.IGNORECASE)
 
@@ -47,14 +55,13 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
     art_pages = [p for p in art_pages if (p.wikitext or "").strip()]
     pid = {p.page_number: p.id for p in art_pages}
 
-    # The RAW stream: raw pages joined with «PAGE» markers.  This IS the article
+    # The CLEAN stream: preprocess(make_stream(...)) — the SAME single stream
+    # super_walk slices (no second independent assembly).  This IS the article
     # content; boundaries slice it, segments fall out of the markers.
-    raw_stream = "\n".join(
-        f"\x01PAGE:{p.page_number}\x01{(p.wikitext or '').strip()}"
-        for p in art_pages)
+    raw_stream = SW.volume_stream(volume)
+    stream = raw_stream                      # section_at reads the same stream
     pagepos = {int(m.group(1)): m.end() for m in _PAGE_RE.finditer(raw_stream)}
 
-    stream = SW.volume_stream(volume)        # raw view — only for section_at
     arts = SW.super_walk(volume)
     sec_tags = [(m.start(), (m.group(1) or "").strip())
                 for m in _SECBEGIN.finditer(stream)]
@@ -115,6 +122,7 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
     for i, (bpos, sec) in enumerate(bounds):
         end = bounds[i + 1][0] if i + 1 < len(bounds) else len(raw_stream)
         content = raw_stream[bpos:end]               # the article's raw content
+        content = _SECTAG_DROP.sub("", content)      # drop consumed section chrome
         pstart = page_of(bpos)
         title, body, title_raw = produce_title(content)
         # Segments fall out by splitting the title-STRIPPED body on

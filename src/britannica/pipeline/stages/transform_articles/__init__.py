@@ -17,8 +17,6 @@ import re
 from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 
-from britannica.cleaners.hyphenation import fix_hyphenation
-from britannica.cleaners.reflow import reflow_paragraphs
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
 from britannica.pipeline.stages.transform_articles.body_text import (
     _FMT,
@@ -229,113 +227,33 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # internally; Layer-A utilities remain available for producers /
     # classifiers to call privately, but the pipeline-style chain that
     # used to thread their outputs across stages here has been deleted.
-    # Strip `<noinclude>…</noinclude>` BLOCKS (tags + content), but
-    # preserve any `{|` / `|}` wikitable markers that live inside —
-    # EB1911 pages routinely put the table opener `{|<attrs>` in the
-    # trailing noinclude of one page and the closer `|}` in the leading
-    # noinclude of the next, so each page renders standalone.  Wiping
-    # the block wholesale would orphan the cell rows that sit between;
-    # preserving the markers lets the walker's BRACE_PIPE scanner pair
-    # them as one table.
-    #
-    # Why strip the block content (not just the tags): chrome templates
-    # `{{rh|…}}`, `{{RunningHeader|…}}`, `{{EB1911 Page Heading|…}}` are
-    # DUAL-USE in source — page chrome lives inside `<noinclude>`,
-    # inline content layout uses the same template names OUTSIDE
-    # noinclude (STEAM_ENGINE has `{{rh|or|equation|}}` as a centred
-    # equation continuation, NOT a page header).  If we strip only the
-    # noinclude TAGS and the chrome contents become naked, an inline-
-    # content `{{rh|...}}` and a page-chrome `{{rh|...}}` look identical
-    # downstream — no discriminator.  Wiping the whole noinclude block
-    # preserves the in-source distinction: chrome (inside noinclude) is
-    # dropped along with the noinclude wrapping; inline content (outside
-    # noinclude) survives.
-    #
-    # The PLATE pipeline (`parsers/plate/`) reads raw bytes through its
-    # OWN walker and uses `<noinclude>` as a structural anchor for plate-
-    # title extraction (`{{x-larger|TITLE}}` inside the noinclude header).
-    # That path is untouched — this strip operates only on the article
-    # transform body.
-    _TABLE_OPEN_LINE = re.compile(r"(?:^|\n)\s*\{\|[^\n<]*")
-    _TABLE_CLOSE_LINE = re.compile(r"(?:^|\n)\s*\|\}(?!\})")
-
-    def _strip_noinclude_keep_table_markers(m: re.Match) -> str:
-        block = m.group(0)
-        kept = [om.group(0).strip() for om in _TABLE_OPEN_LINE.finditer(block)]
-        if _TABLE_CLOSE_LINE.search(block):
-            kept.append("|}")
-        return ("\n" + "\n".join(kept) + "\n") if kept else ""
-
-    raw_wikitext = re.sub(
-        r"<noinclude>.*?</noinclude>",
-        _strip_noinclude_keep_table_markers,
-        raw_wikitext, flags=re.DOTALL | re.IGNORECASE,
-    )
-    # Print-economy small-type BLOCK wrappers ({{EB1911 fine print/s}}…/e}},
-    # {{fine block/s}}…, {{smaller block/s}}…) are TRANSPARENT — we don't render
-    # the small type, we keep the content.  DELETE the delimiter tokens
-    # individually (leaf-token deletion, NOT a `.*?` pair-strip that mis-pairs
-    # nested/orphaned halves), so the inner block content (figures, tables,
-    # formulas) flows into the normal walk and renders as body.  Making these a
-    # FINE_PRINT *element* instead re-processed the block inner with the inline
-    # transform + figures-off and DROPPED those children (the step-2 regression
-    # — MENSURATION et al.).  Center-family `/s`-`/e` is different: it produces
-    # the «CTR» marker, so it stays a walker CENTER node.
-    raw_wikitext = re.sub(
-        r"\{\{\s*(?:EB1911\s+fine\s+print|fine\s+block|smaller\s+block)\s*/[se]\s*\}\}",
-        "", raw_wikitext, flags=re.IGNORECASE)
+    # Source cleaning (noinclude strip, fine-print token strip) now happens
+    # ONCE in `preprocess` on the whole volume stream, before slicing — so the
+    # segments reaching here arrive clean.  Verified no-op for the article path:
+    # 0 `<noinclude>` and 0 fine-print tokens in article segments (the only
+    # residual fine-print tokens are in PLATE segments, which go through
+    # `parse_plate`, not this function).
     context = ElementContext(volume=volume, page_number=page_number)
     text = process_elements(raw_wikitext, _apply_markup, context)
 
-    # Inject chart images for pages where chart2 markup was lost during import
-    from britannica.image_assets import CHART2_IMAGES
-    for (v, p), filename in CHART2_IMAGES.items():
-        if v == volume and f"IMG:{filename}" not in text:
-            marker = f"\x01PAGE:{p}\x01"
-            if marker in text:
-                text = text.replace(marker, f"{marker}\n\n{{{{IMG:{filename}|Genealogical table}}}}\n\n", 1)
+    # (chart2 genealogical-tree images are substituted at source in
+    # `make_stream`/preprocess now — the old post-walker injection loop is gone.)
 
-    # Cross-page sentence reflow: a segment ending mid-sentence (no
-    # terminator) followed by `\x01PAGE:N\x01` and a letter
-    # continuation is a column-wrap at the page edge, not a paragraph
-    # break.  The segment-end `\n` plus the join `\n` between
-    # `<noinclude>` chrome that the walker strips, leaves `\n+` here.
-    # Collapse to a single space so the prose stays one paragraph; the
-    # page marker stays inline at the wrap point.  Must run before
-    # `reflow_paragraphs` (which splits on `\n\n`) so the `\n+` doesn't
-    # become a paragraph break first.
-    #
-    # The `\s*` AFTER the page marker is essential — when a `<section
-    # end>` tag and an empty `<noinclude>…</noinclude>` block sit
-    # between the page marker and the continuation word (the EB1911
-    # cross-page convention puts `<section end>` at the trailing edge
-    # of one page and `<noinclude>{{rh|…}}</noinclude>` at the leading
-    # edge of the next), the chrome producers strip those to "" but
-    # leave the surrounding `\n` behind.  Without `\s*` the regex
-    # required the letter to sit at byte position immediately after
-    # `\x01`, missing every cross-page break that had any chrome
-    # between it and the continuation (COPTS p.131 `they\n\n\x01PAGE:131
-    # \x01\nwere`, hundreds of similar).
-    text = re.sub(
-        r"(\w)\s*\n+\s*(\x01PAGE:\d+\x01)(\s*)([a-zA-Z])",
-        lambda m: (f"{m.group(1)} {m.group(2)}"
-                   f"{' ' if m.group(3) else ''}{m.group(4)}"),
-        text,
-    )
+    # Page-transition seams are healed ONCE, in `preprocess`, on the continuous
+    # stream; the article body is a faithful slice of that clean stream, so the
+    # text reaching here is already clean.  No seam handling between preprocess
+    # and the walker; the former post-producer reflow/hyphenation passes (illegal
+    # — producer output is the final body) are deleted.
 
-    # Rejoin words split by line-break hyphenation (`trans- \nlation` →
-    # `translation`).  Must run before reflow_paragraphs, which would
-    # otherwise convert the line break to a space and freeze the broken
-    # form in place.
-    text, _ = fix_hyphenation(text)
+    # (No paragraph reflow: a hard-wrapped single \n is already a space to the
+    # viewer's `<p>` (white-space:normal), \n\n is preserved as a real break, and
+    # block-marker internal whitespace is ignored by KaTeX/HTML.  reflow_paragraphs
+    # was therefore render-neutral and is deleted — verify at the rebuild sweep.)
 
-    # Reflow paragraphs — join lines that were hard-wrapped in the source
-    text = reflow_paragraphs(text)
-
-
-    # Strip leading comma/space left after title+descriptor stripping
-    # (e.g. "'''BISMARCK,''' {{sc|Prince}}, duke..." → ", duke..." after transform)
-    text = re.sub(r"^[\s,]+", "", text)
+    # (No leading-comma strip: the title cut owns its trailing comma —
+    # `produce_title` already lstrips `" \t,."` off the body at the cut — and the
+    # body now begins with a `\x01PAGE\x01` marker anyway, so a `^[\s,]+` strip
+    # could never match.  Verified dead (0 articles) and deleted.)
 
     # Defensive cleanup for orphan punctuation left when a template
     # gets stripped without its display text (e.g. a malformed
@@ -347,12 +265,10 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     text = re.sub(r",(\s+,)+", ",", text)
     text = re.sub(r",\s*([;.])", r"\1", text)
 
-    # Final blank-line collapse.  Element-marker insertions
-    # (`{{IMG:…}}`, `{{LEGEND:…}LEGEND}`, etc.) each wrap themselves in
-    # `\n\n…\n\n`, so two adjacent blocks can produce 3+ consecutive
-    # newlines.  Collapsing here means the transform produces its
-    # body cleanly in isolation, no downstream cleanup needed.
-    text = re.sub(r"\n{3,}", "\n\n", text)
+    # (No blank-line collapse: the viewer splits on `\n\n`, so it already treats
+    # `\n\n\n+` as a single paragraph break — the surplus newline becomes an empty
+    # paragraph that's dropped.  `\n{3,}`->`\n\n` was render-neutral and is
+    # deleted; verify at the rebuild sweep.)
 
     return text
 
@@ -471,40 +387,31 @@ def transform_articles(volume: int) -> int:
                 from britannica.parsers.plate import parse_plate
                 article.body = parse_plate(raw) if raw else ""
             else:
-                # Join raw segments with page markers, then transform once.
-                raw_parts = []
-                for seg, page_number in segments:
-                    raw = seg.segment_text or ""
-                    # Always emit the page marker, even for empty/untranscribed pages
-                    raw_parts.append(f"\x01PAGE:{page_number}\x01{raw}")
-                joined_raw = "\n".join(raw_parts)
-
-                # Fix cross-page hyphenation: con-\n\x01PAGE:N\x01tinuation
-                joined_raw = re.sub(
-                    r"(\w)-\n(\x01PAGE:\d+\x01)(\w)",
-                    r"\1\2\3", joined_raw,
-                )
+                # Re-assemble the article body from its per-page segments.
+                # FAITHFULLY: each segment is a slice of the clean stream cut at a
+                # `\x01PAGE\x01` marker, so concatenating `marker+segment` with NO
+                # separator reproduces exactly that stream slice.  The old
+                # `"\n".join` inserted a newline the stream never had — at a page
+                # seam that became the second half of a `\n\n`, a spurious
+                # paragraph split.  Concatenate as-is; the slice IS the body.
+                # The body IS the article's slice of the clean (preprocessed)
+                # stream — word-joins and seam healing already happened there.
+                # Reproduce the slice faithfully: each segment is the text
+                # between page markers, so concatenating `marker+segment` with NO
+                # separator rebuilds exactly that stream slice.  No transform
+                # between preprocess and the walker.
+                joined_raw = "".join(
+                    f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
+                    for seg, page_number in segments)
 
                 article.body = _transform_text_v2(
                     joined_raw, volume,
                     segments[0][1] if segments else 0,
                 ) if joined_raw else ""
-                # Strip redundant title qualifier from body start.
-                # e.g. title "YORK, HOUSE OF" → body starts "(House of),"
-                if article.body and ", " in article.title:
-                    qualifier = article.title.split(", ", 1)[1]
-                    # Strip formatting markers for matching
-                    body_clean = re.sub(
-                        r"[\u00ab\u00bb](?:SC|/SC|I|/I|B|/B)[\u00ab\u00bb]",
-                        "", article.body[:200],
-                    )
-                    paren_q = f"({qualifier})"
-                    if body_clean.lstrip("\x01PAGE:0123456789").lstrip().lower().startswith(paren_q.lower()):
-                        # Strip the parenthetical qualifier from actual body
-                        article.body = re.sub(
-                            r"^(\x01PAGE:\d+\x01)?\s*\([^)]*\)[,;\s]*",
-                            r"\1", article.body,
-                        )
+                # (No redundant-title-qualifier strip: the title-formation keeps
+                # the title bare ("YORK") with the qualifier in the body paren,
+                # the old pattern (title "X, Q" + body "(Q)") no longer occurs.
+                # Verified dead (0 of 743 comma-titles) and deleted.)
             # Title producer: run the carved title span (markers/footnote
             # intact) through the SAME transform as the body — «B»/«I»/«SC»
             # are kept and a title <ref> becomes «FN» (the footnote
