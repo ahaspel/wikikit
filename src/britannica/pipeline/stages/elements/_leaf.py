@@ -11,6 +11,7 @@ import html as html_mod
 import re
 
 from britannica.image_assets import SCORE_IMAGES, normalize_score_content
+from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 
 
 def _process_score(inner: str) -> str:
@@ -67,6 +68,35 @@ def _process_poem(inner: str, text_transform) -> str:
     """
     content = text_transform(inner)
     return "{{VERSE:" + content + "}VERSE}"
+
+
+# `{{ppoem|…}}` — Wikisource preformatted-poem template, the verse analog of
+# `<poem>`.  Its pipe-separated args carry optional control params
+# (`start=`/`end=` stanza-frame hints, `class=`/`style=`) plus the verse itself
+# (a bare positional arg, or the `1=…` named arg).  Strip the control params,
+# take the verse, and route it through the SAME ``{{VERSE:…}VERSE}`` producer as
+# `<poem>`.  Without this the whole template falls to body-text's catch-all and
+# the verse content vanishes (SHAKESPEARE sonnet, VILLANELLE, HUCHOWN, …).
+_PPOEM_CTRL_RE = re.compile(r"^\s*(?:start|end|class|style)\s*=", re.IGNORECASE)
+_PPOEM_NUMBERED_RE = re.compile(r"^\s*1\s*=")
+
+
+def _process_ppoem(inner: str, text_transform) -> str:
+    segs = _split_top_level_pipe(inner)[1:]   # drop the "ppoem" template name
+    verse: list[str] = []
+    for seg in segs:
+        if _PPOEM_CTRL_RE.match(seg):
+            continue                          # stanza-frame control param — drop
+        m = _PPOEM_NUMBERED_RE.match(seg)
+        if m:
+            seg = seg[m.end():]               # `1=<verse>` → take the verse
+        verse.append(seg)
+    # Rejoin on `|` in the rare case a verse line legitimately held a top-level
+    # pipe (split above would have severed it); strip the frame newlines.
+    content = "|".join(verse).strip("\n")
+    if not content.strip():
+        return ""
+    return _process_poem(content, text_transform)
 
 
 def _is_structural_formula(text: str) -> bool:

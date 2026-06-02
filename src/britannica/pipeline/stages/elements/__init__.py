@@ -49,6 +49,7 @@ from britannica.pipeline.stages.elements._leaf import (
     _is_structural_formula,
     _process_math,
     _process_poem,
+    _process_ppoem,
     _process_score,
 )
 from britannica.pipeline.stages.elements._registry import (
@@ -403,6 +404,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # explicit producer contract.
     "CONTRIBUTOR_FOOTER": lambda raw, inner, tt, ctx, reg: "",
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
+    "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
     "HTML_TABLE": lambda raw, inner, tt, ctx, reg:

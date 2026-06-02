@@ -12,6 +12,8 @@ explicitly:
 
 from __future__ import annotations
 
+import pytest
+
 from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BRACE_PIPE,
     SHAPE_DOUBLE_BRACE,
@@ -78,6 +80,31 @@ class TestWalkOutput:
         assert len(extracts) == 1
         _ph, shape, _raw = extracts[0]
         assert shape == SHAPE_HTML_TAG
+
+    # GUARDRAIL: a recognizer can be registered in `_REGEX_RECOGNIZERS` yet
+    # silently inert because its template name is missing from the walker's
+    # `_OPENER_HINT_RE` (the efficiency gate deciding which positions the scan
+    # even examines) — the walker then never tries it and the element falls to
+    # body-text's catch-all and is deleted.  This bit `{{Plain image with
+    # caption}}` and `{{ppoem}}` (recognizers added, opener hint not).  One
+    # representative instance per DOUBLE_BRACE template, asserted to extract.
+    @pytest.mark.parametrize("instance", [
+        "{{img float|file=X.jpg}}",
+        "{{figure|file=X.jpg}}",
+        "{{hieroglyph|A1-B2}}",
+        "{{raw image|EB1911 - Volume 01.djvu/5}}",
+        "{{Css image crop\n|Image=X.jpg\n}}",
+        "{{dual line|A|B}}",
+        "{{Plain image with caption|image=File:X.png|caption=Fig. 1}}",
+        "{{ppoem|Verse line one\nVerse line two}}",
+        "{{EB1911 footer initials|Full Name|F. N.}}",
+    ])
+    def test_double_brace_template_is_recognized(self, instance):
+        _t, extracts = walk(instance)
+        assert any(shape == SHAPE_DOUBLE_BRACE for _ph, shape, _raw in extracts), (
+            f"{instance[:40]!r} was NOT extracted — likely missing from "
+            "_OPENER_HINT_RE (recognizer registered but the scan never reaches it)"
+        )
 
     def test_multiple_top_level_extracts(self):
         text_out, extracts = walk(

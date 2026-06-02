@@ -136,6 +136,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "IMAGE_FLOAT"
     if name == "hieroglyph":
         return "HIEROGLYPH"
+    # `{{ppoem|…}}` — preformatted-poem template; the verse analog of `<poem>`.
+    # `_process_ppoem` strips the stanza-frame control params and emits VERSE.
+    if name == "ppoem":
+        return "PPOEM"
     # `{{dual line|A|B}}` — pure layout primitive (two-line stack).
     # CONTENT-AWARE sub-classification: chem-shaped (element-formula
     # clusters) → CHEM_DUAL, owned by chem; math-shaped (italic

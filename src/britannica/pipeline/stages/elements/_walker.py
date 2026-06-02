@@ -182,6 +182,16 @@ _DUAL_LINE_RE = re.compile(
     r"\}\}",
     re.DOTALL | re.IGNORECASE,
 )
+# `{{ppoem|…}}` — Wikisource preformatted-poem template (verse analog of
+# `<poem>`).  Multiline verse with shallow inline templates (`{{fqm|"}}` quote
+# marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); same 3-level nesting
+# depth as DUAL_LINE covers them.  → PPOEM, extracted + emitted as VERSE.
+_PPOEM_RE = re.compile(
+    r"\{\{\s*ppoem\s*\|"
+    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
+    r"\}\}",
+    re.DOTALL | re.IGNORECASE,
+)
 # Labeled display-equation templates — `{{equation|content}}`,
 # `{{MathForm1|label|content}}`, `{{ne|content}}`.  These are
 # structurally declared as math by their template name — the source's
@@ -386,6 +396,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
     (SHAPE_DOUBLE_BRACE,      _CONTRIBUTOR_FOOTER_RE),
+    (SHAPE_DOUBLE_BRACE,      _PPOEM_RE),
     (SHAPE_DOUBLE_BRACE,      _DUAL_LINE_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
 ]
@@ -410,7 +421,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|EB1911)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
 )
