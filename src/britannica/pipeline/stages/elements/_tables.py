@@ -1307,6 +1307,38 @@ def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
     return "\n".join(text_lines)
 
 
+def _process_inline_glyph_wrapper(
+        inner: str, text_transform,
+        inner_registry: ElementRegistry | None = None) -> str:
+    """Render an inline-glyph wrapper as the inline prose it actually is.
+
+    EB1911 transcribers wrapped runs of `<hiero>` glyphs (and the odd
+    glyph-IMAGE — e.g. EGYPT's Neith sign, which has no WikiHiero code, so an
+    image stands in for it) in a `{|{{Ts|ma}}…|}` table purely to centre/flow
+    them inside a sentence.  That is not a table: rendering it as one shatters
+    the sentence and sprays the cell pipes into the prose.  Selected by
+    `_is_inline_glyph_wrapper` (0 `|-` rows + a `<hiero>`); genuine multi-row
+    hieroglyph reference grids never reach here (they keep ≥1 `|-` row).
+
+    The cells are joined back into one run — cell separators and `{{Ts|…}}`
+    styling dropped (layout, never content) — then run through body-text, so
+    `{{nowrap}}` / `«I»` / `&nbsp;` resolve.  Each `<hiero>` child renders
+    inline (`[hieroglyph: …]`); a glyph IMAGE child is re-emitted in INLINE
+    form (the block `{{IMG:…}}` produce_tree would otherwise substitute renders
+    as a figure and breaks the flow).  No table marker → no pipe leak.
+    """
+    parts = [content for _sep, _attr, content in split_wiki_row(inner)]
+    prose = text_transform("".join(parts)).strip()
+    if inner_registry is not None:
+        for ph, label in list(inner_registry.labels.items()):
+            if label in IMAGE_LABELS and ph in prose:
+                eraw = inner_registry.elements[ph][1]
+                prose = prose.replace(
+                    ph, _process_image_from_raw(eraw, text_transform,
+                                                inline=True))
+    return prose
+
+
 # col1 of a verse quotation: only quotation/whitespace punctuation (the
 # hanging opening quote). Read on RAW col1 (no transform), so template/label
 # cells like `{{em|N}}` / `{{Dotted TOC line|…}}` / `{{nowrap|B.}}` are NOT

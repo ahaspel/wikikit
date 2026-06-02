@@ -128,6 +128,7 @@ from britannica.pipeline.stages.elements._tables import (
     _process_complex_table,
     _process_compound_table,
     _process_html_table,
+    _process_inline_glyph_wrapper,
     _process_single_column_table,
     _process_table,
     _process_verse_table,
@@ -328,6 +329,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # FIGURE — a bare image + its structural caption run, carved as one span
     # by the walker.  Producer re-processes + assembles (see `_produce_figure`).
     "FIGURE": _produce_figure,
+    # INLINE_GLYPHS — a `{|…|}` with no `|-` rows that flows `<hiero>` glyphs
+    # (and the odd glyph-image) inline in a sentence; the transcriber's table
+    # is layout scaffolding, not data.  Producer joins the cells back into
+    # inline prose, glyphs inline, no table marker (kills the pipe leak).
+    "INLINE_GLYPHS": lambda raw, inner, tt, ctx, reg:
+        _process_inline_glyph_wrapper(inner, tt, reg),
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
         _process_complex_table(raw, inner, tt),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
@@ -920,6 +927,28 @@ def _is_brace_table(raw: str, inner: str,
     return bool(re.search(r"\{\{brace(?:\s*\||\s*\})", raw, re.IGNORECASE))
 
 
+_INLINE_GLYPH_ROW_RE = re.compile(r"(?:^|\n)\s*\|-")  # shared row separator
+_HIERO_TAG_RE = re.compile(r"<hiero\b", re.IGNORECASE)
+
+
+def _is_inline_glyph_wrapper(raw: str, inner: str,
+                             registry: ElementRegistry | None) -> bool:
+    """A `{|…|}` with NO `|-` row separators that carries a `<hiero>` glyph —
+    transcriber scaffolding used purely to flow hieroglyphs (and the odd
+    glyph-image) inline inside a sentence, not a table.
+
+    STRUCTURAL: the only facts consulted are "has a `<hiero>`" and "has zero
+    `|-` rows".  Genuine multi-row hieroglyph reference grids (transliteration,
+    acrophony, Hebrew-spelling charts) keep ≥1 `|-` row and are NOT caught.
+    Verified corpus-wide 2026-06-02: 93 hiero-bearing tables across EGYPT /
+    PHARAOH / SCARAB split cleanly by row count — 88 with 0 rows (all
+    inline-flow wrappers), 5 with ≥2 rows (all real grids), nothing with
+    exactly 1 (clean gap).  See [[project_inline_glyph_wrapper]]."""
+    if not _HIERO_TAG_RE.search(raw):
+        return False
+    return not _INLINE_GLYPH_ROW_RE.search(inner)
+
+
 def _is_math_dominant_pred(raw: str, inner: str,
                             registry: ElementRegistry | None) -> bool:
     """≥75% of children are MATH placeholders, no disqualifying child
@@ -1062,6 +1091,7 @@ def _always_true(raw: str, inner: str,
 #      classifications.
 _PRE_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
+    (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
     (_is_djvu_crop_table,        "DJVU_CROP"),
     (_is_compound_table_pred,    "COMPOUND_TABLE"),
     (_is_chemistry_layout_pred,  "CHEMISTRY_LAYOUT"),
