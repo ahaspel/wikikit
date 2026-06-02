@@ -497,6 +497,52 @@ def _process_compound_table(raw: str, text_transform) -> str:
             + "</table>\u00ab/HTMLTABLE\u00bb")
 
 
+def _complex_cell_body(attr_part: str, content: str,
+                       text_transform) -> tuple[list[str], str]:
+    """Cell-body strategy for `_process_complex_table` (the `cell_body`
+    hook of `produce_table_rows`).
+
+    Reproduces the producer's image-vs-text BRANCH: a cell that is
+    wholly an `[[Image:…]]`/`[[File:…]]` becomes a `{{IMG:filename}}`
+    marker, skipping `text_transform` AND the leftover-`{{}}` strip that
+    would otherwise delete the marker.  Non-image cells run the bespoke
+    clean: drop stray image links, `{{ditto}}`→″, `{{…}}`→…, lossless
+    `<br>`, body-text, strip leftover templates, strip wrapper tags.
+
+    TRANSITIONAL (see `CellBody` in `_table_decompose`): the end-state
+    moves the `{{ditto}}`/`{{…}}`/image template handling into body-text
+    so this branch dissolves and the producer reverts to the default
+    `produce_cell`.  `_cell_styles` is scoped to `attr_part` only (it
+    ignores `content`), so the cell's full styling is independent of the
+    body clean above.
+    """
+    styles = _cell_styles(attr_part, content)
+    img_m = re.match(r"\s*\[\[(?:Image|File):([^|\]]+)[^\]]*\]\]\s*$",
+                     content, re.IGNORECASE)
+    if img_m:
+        return styles, f"{{{{IMG:{img_m.group(1).strip()}}}}}"
+    c = re.sub(r"\[\[(?:Image|File):[^\]]*\]\]", "", content,
+               flags=re.IGNORECASE)
+    c = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "″", c, flags=re.IGNORECASE)
+    c = re.sub(r"\{\{\.\.\.\}\}", "...", c)
+    # Lossless `<br>` fidelity (see _html_cell_clean): keep the
+    # source/print's deliberate line breaks (stacked-list rows, wrapped
+    # headers); `-<br>` soft-hyphen joins still apply.  emit_html_cell
+    # outputs literal HTML, so the `<br>` renders as a break.
+    c = _strip_br(c, "<br>")
+    c = c.strip()
+    # Run text_transform FIRST so it converts templates it knows about
+    # (`{{sfrac|…}}`, `{{hi|…}}`, `{{sc|…}}`) before the catch-all strip
+    # below eats every unlabelled template.
+    if c:
+        c = text_transform(c)
+    c = re.sub(r"\{\{[^{}]*\}\}", "", c)
+    # Cell-content wrapper-strip: enumerated HTML tags whose inner content
+    # the cell renders directly (AFRICA's transcriber-annotation spans).
+    c = strip_known_wrapper_tags(c)
+    return styles, c
+
+
 def _process_complex_table(raw: str, inner: str, text_transform) -> str:
     """Convert a wiki table with rowspan/colspan to HTML.
 
@@ -514,10 +560,16 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
       placeholders, so nested elements like <math> are preserved.
     """
 
-    # Use the shared `parse_wiki_table` for table parsing — gets us
-    # caption extraction + row split + cell parsing in one call,
-    # consistent with every other wiki-table path.
-    _, caption_raw, parsed_rows, row_attrs = parse_wiki_table(inner)
+    # Decompose via the shared `produce_table_rows` (the one row/cell
+    # split + span detection loop), supplying the complex producer's own
+    # image-vs-text cell strategy.  Replaces the bespoke
+    # `parse_wiki_table` + inline cell loop this producer used to carry —
+    # the duplicated decomposition now lives in one place.
+    from britannica.pipeline.stages.elements._table_decompose import (
+        produce_table_rows,
+    )
+    caption_raw, produced_rows, _has_header, _has_span = produce_table_rows(
+        inner, text_transform, flavor="wiki", cell_body=_complex_cell_body)
     # Whole-table styling extracted from `raw` (not `inner`, which has the
     # ``{|<attrs>\n`` opener already stripped by `strip_outer`):
     # `{|{{Ts|ma|bc|fwb}}` → `<table style="margin:0 auto;…">` so the
@@ -550,63 +602,12 @@ def _process_complex_table(raw: str, inner: str, text_transform) -> str:
 
     html_rows = []
 
-    for parsed_row, row_attr in zip(parsed_rows, row_attrs):
-        cells_html = []
-        for sep, attr_part, content in parsed_row:
-            tag = "th" if sep == "!" else "td"
-
-            # Extract structural attributes
-            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
-            cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part, re.IGNORECASE)
-            rowspan = int(rs.group(1)) if rs else 1
-            colspan = int(cs.group(1)) if cs else 1
-            # Full Ts styling extraction via `_cell_styles` — handles
-            # alignment + vertical-align + padding + border + width +
-            # size + line-height + margin + font-weight (the whole
-            # known shorthand-code set).  Previously inline-ad-hoc and
-            # alignment-only, dropping the rest into the catch-all.
-            styles = _cell_styles(attr_part, content)
-
-            # Clean content
-            # Convert [[Image:...|params]] to {{IMG:filename}}
-            img_m = re.match(r"\s*\[\[(?:Image|File):([^|\]]+)[^\]]*\]\]\s*$",
-                             content, re.IGNORECASE)
-            if img_m:
-                content = f"{{{{IMG:{img_m.group(1).strip()}}}}}"
-            else:
-                content = re.sub(r"\[\[(?:Image|File):[^\]]*\]\]", "", content, flags=re.IGNORECASE)
-                content = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "\u2033",
-                                 content, flags=re.IGNORECASE)
-                content = re.sub(r"\{\{\.\.\.\}\}", "...", content)
-                # Lossless `<br>` fidelity (see _html_cell_clean): keep the
-                # source/print's deliberate line breaks (stacked-list rows,
-                # wrapped headers) instead of flattening to a space, so columns
-                # align and headers wrap as printed.  `-<br>` soft-hyphen joins
-                # still apply.  emit_html_cell outputs literal HTML, so the
-                # `<br>` renders as a break.
-                content = _strip_br(content, "<br>")
-                content = content.strip()
-                # Run text_transform FIRST so it can convert
-                # templates it knows about (``{{sfrac|…}}``,
-                # ``{{hi|…}}``, ``{{sc|…}}``, etc.) into their
-                # marker form.  Previously the catch-all
-                # ``\{\{[^{}]*\}\}`` strip ran first and ate every
-                # unlabelled template, dropping SHIPBUILDING's
-                # ``{{sfrac|…|Volume of Displacement|Length × …}}``
-                # entirely from the "Block coefficients or" cell.
-                if content:
-                    content = text_transform(content)
-                # Strip any templates text_transform didn't handle.
-                content = re.sub(r"\{\{[^{}]*\}\}", "", content)
-                # Cell-content wrapper-strip: enumerated HTML tags
-                # whose inner content the cell renders directly (AFRICA's
-                # `<span title="amended from 'Sierre'">Sierra</span>`
-                # transcriber-annotation spans).  Shared toolkit utility.
-                content = strip_known_wrapper_tags(content)
-            cells_html.append(emit_html_cell(
-                tag, content,
-                rowspan=rowspan, colspan=colspan, styles=styles,
-            ))
+    for row_attr, parsed in produced_rows:
+        cells_html = [
+            emit_html_cell(tag, content,
+                           rowspan=rowspan, colspan=colspan, styles=styles)
+            for tag, rowspan, colspan, content, styles in parsed
+        ]
 
         if cells_html:
             # Carry the row's `|-{{Ts|…}}` styling onto `<tr>` — that row's

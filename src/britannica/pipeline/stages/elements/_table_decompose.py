@@ -362,3 +362,193 @@ def _align_of(styles: list[str]) -> str | None:
             v = r.split(":", 1)[1].strip()
             return v if v in ("right", "center", "left") else None
     return None
+
+
+# ── Shared leaf: decompose → produce → assemble ─────────────────────────
+#
+# These three functions are the single recursive-decomposition leaf that
+# every table producer collapses onto (the ICL-family model: many labels,
+# one engine).  They are lifted verbatim from the canonical
+# ``_process_html_table`` spine so a producer that delegates here is
+# byte-identical to that spine for the same logical input.
+#
+# A `ParsedCell` is `(tag, rowspan, colspan, body, styles)`:
+#   * `tag` — `'td'`/`'th'` (header-ness already resolved from `sep`).
+#   * `rowspan`/`colspan` — integer span counts (1 when absent).
+#   * `body` — the produced cell content (`text_transform` already run).
+#   * `styles` — CSS declarations from `_cell_styles` (full per-cell list).
+# A `ParsedRow` is `list[ParsedCell]`.
+#
+# Status: ADDITIVE / INERT.  No producer dispatches here yet; exercised
+# only by the byte-identity unit test against ``_process_html_table``.
+# Producers migrate one per phase (see the table-collapse plan).
+
+ParsedCell = tuple[str, int, int, str, list[str]]
+ParsedRow = list[ParsedCell]
+
+_ROWSPAN_RE = re.compile(r'rowspan\s*=\s*"?(\d+)"?', re.IGNORECASE)
+_COLSPAN_RE = re.compile(r'colspan\s*=\s*"?(\d+)"?', re.IGNORECASE)
+_HTML_FLAVOR_RE = re.compile(r"<table\b|<tr\b|<t[dh]\b", re.IGNORECASE)
+
+
+# A producer-supplied cell-body strategy: `(attr_part, content,
+# text_transform) -> (styles, body)`.  Lets a producer keep a genuinely
+# irreducible per-cell branch (e.g. `_process_complex_table`'s image cell,
+# which becomes `{{IMG:…}}` and must skip both `text_transform` AND the
+# leftover-`{{}}` strip) while still sharing this one decomposition loop.
+# Default `None` uses the canonical `produce_cell` (= `_cell_styles` +
+# body-text), the uniform leaf.  A `cell_body` strategy is TRANSITIONAL:
+# the end-state moves its template handling into body-text so the branch
+# dissolves and the producer reverts to the default.
+CellBody = Callable[[str, str, TextTransform], "tuple[list[str], str]"]
+
+ProducedRow = tuple[str, ParsedRow]  # (row_attr_part, cells)
+
+
+def produce_table_rows(
+    inner: str,
+    text_transform: TextTransform,
+    *,
+    flavor: str | None = None,
+    cell_preclean: TextTransform | None = None,
+    recurse: NestedTableProducer | None = None,
+    cell_body: CellBody | None = None,
+) -> tuple[str, list[ProducedRow], bool, bool]:
+    """Decompose a table's inner source into produced rows — the single
+    row/cell split + span/header detection loop every table producer
+    shares (lifted from `_process_html_table:1963-1990`).
+
+    Returns `(caption, rows, has_header, has_span)` where `rows` is a
+    list of `(row_attr_part, ParsedRow)` — the row attribute slot is
+    carried so a producer can emit `<tr style=…>` (the spine-facing
+    assemblers ignore it and emit a bare `<tr>`).
+
+    `flavor` selects the row extractor: `"wiki"` (`{|…|}`) or `"html"`
+    (`<table>…</table>`).  `None` auto-detects from HTML table tags.
+
+    `cell_preclean`, when given, runs on each cell's raw content BEFORE
+    `text_transform` (the HTML spine uses `_html_cell_clean` — the
+    lossless-`<br>` + tag-strip step).  Ignored when `cell_body` is
+    supplied (that strategy owns its own cleaning).
+
+    `recurse` is forwarded to `produce_cell` for producer-owned
+    nested-table recursion (dormant in production — see module note).
+
+    `cell_body`, when given, computes `(styles, body)` for each cell
+    instead of the default `produce_cell` path — see `CellBody`.
+    """
+    if flavor is None:
+        flavor = "html" if _HTML_FLAVOR_RE.search(inner) else "wiki"
+    caption, rows = (
+        extract_html_rows(inner) if flavor == "html"
+        else extract_wiki_rows(inner))
+
+    has_header = False
+    has_span = False
+    produced: list[ProducedRow] = []
+    for row_attr, cells in rows:
+        parsed: ParsedRow = []
+        for sep, cell_attrs, cell_content in cells:
+            tag = "th" if sep == "!" else "td"
+            if sep == "!":
+                has_header = True
+            rs = _ROWSPAN_RE.search(cell_attrs)
+            cs = _COLSPAN_RE.search(cell_attrs)
+            rowspan = int(rs.group(1)) if rs else 1
+            colspan = int(cs.group(1)) if cs else 1
+            if rowspan > 1 or colspan > 1:
+                has_span = True
+            if cell_body is not None:
+                styles, body = cell_body(cell_attrs, cell_content, text_transform)
+            else:
+                cleaned = (cell_preclean(cell_content) if cell_preclean
+                           else cell_content)
+                styles, body = produce_cell(
+                    cell_attrs, cleaned, text_transform, recurse=recurse)
+            parsed.append((tag, rowspan, colspan, body, styles))
+        if parsed:
+            produced.append((row_attr, parsed))
+    return caption, produced, has_header, has_span
+
+
+def assemble_html_rows(
+    parsed_rows: list[ProducedRow],
+    inner_registry=None,
+) -> str:
+    """Compose `«HTMLTABLE:<table>…</table>«/HTMLTABLE»` from parsed rows.
+
+    Used when any cell carries a `rowspan`/`colspan` — the wiki
+    `{{TABLE:}TABLE}` marker can carry only align + colspan, so spanned
+    tables emit literal HTML with full per-cell `style="…"` preserved.
+
+    `inner_registry`, when given, pre-substitutes DATA_TABLE child
+    markers as inline `<table>` HTML so a nested wiki table inside an
+    HTML cell renders rather than leaking its `{{TABLE:…}TABLE}` text.
+
+    The per-row attribute slot is IGNORED here (bare `<tr>`), matching the
+    spine; producers that carry row styling assemble their own rows.
+    Lifted verbatim from `_process_html_table:1992-2024`.
+    """
+    from britannica.pipeline.stages.elements._tables import (
+        _inline_table_marker_as_html, emit_html_cell,
+    )
+    html_rows: list[str] = []
+    for _row_attr, parsed in parsed_rows:
+        cells_html = [
+            emit_html_cell(tag, content,
+                           rowspan=rowspan, colspan=colspan, styles=styles)
+            for tag, rowspan, colspan, content, styles in parsed
+        ]
+        html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
+    output = ("«HTMLTABLE:<table>" +
+              "".join(html_rows) +
+              "</table>«/HTMLTABLE»")
+    if inner_registry is not None:
+        for ph, label in list(inner_registry.labels.items()):
+            if label != "DATA_TABLE":
+                continue
+            if ph not in output:
+                continue
+            child_marker = inner_registry.markers.get(ph, "")
+            output = output.replace(
+                ph, _inline_table_marker_as_html(child_marker))
+    return output
+
+
+def assemble_table_marker(
+    caption: str,
+    parsed_rows: list[ProducedRow],
+    has_header: bool,
+    has_span: bool,
+    *,
+    inner_registry=None,
+    table_styles: list[str] | None = None,
+) -> str:
+    """Form chooser: pick the marker form from the parsed-row shape.
+
+    * `has_span` → `assemble_html_rows` (`«HTMLTABLE»`, full per-cell
+      style).
+    * otherwise → `assemble_wiki_marker` (`{{TABLE:}TABLE}` /
+      `{{TABLEH:}TABLE}`, align-only).
+
+    Empty input (no rows, or all-empty rows after the body filter)
+    returns `""`.  Mirrors `_process_html_table:1992-2065`; `caption` is
+    passed through to the wiki marker (the HTML spine passes `""`).  The
+    per-row attribute slot is dropped at the marker boundary (today's
+    format carries no row-style slot).
+    """
+    if not parsed_rows:
+        return ""
+    if has_span:
+        return assemble_html_rows(parsed_rows, inner_registry)
+    produced_rows: list[tuple[str, list[tuple[list[str], str]]]] = [
+        ("", [(styles, body) for _, _, _, body, styles in parsed if body])
+        for _row_attr, parsed in parsed_rows
+    ]
+    produced_rows = [(a, c) for a, c in produced_rows if c]
+    if not produced_rows:
+        return ""
+    return assemble_wiki_marker(
+        produced_rows, caption=caption, header=has_header,
+        table_styles=table_styles or [],
+    )
