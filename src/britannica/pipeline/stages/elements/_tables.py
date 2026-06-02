@@ -1278,6 +1278,9 @@ def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
     markers in cell content.  Marker dropped per
     [[preserved-markup-is-a-contract]].
     """
+    from britannica.pipeline.stages.elements._table_decompose import (
+        split_wiki_rows_raw,
+    )
     inner = _strip_br(inner)
     text_lines = []
     if _HTML_TABLE_TAG_RE.search(inner):
@@ -1290,7 +1293,7 @@ def _process_single_column_table(raw: str, inner: str, text_transform) -> str:
             if content:
                 text_lines.append(content[0])
     else:
-        for raw_row in re.split(r"\|-[^\n]*", inner):
+        for _attr, raw_row in split_wiki_rows_raw(inner):
             content = [c for c in _extract_table_cells(raw_row, text_transform)
                        if c.strip()]
             if content:
@@ -1410,9 +1413,12 @@ def _process_verse_table(raw: str, inner: str, text_transform,
                  for ln in _VERSE_BR_RE.split(sc) if ln.strip()]
         return "{{VERSE:" + "\n".join(lines) + "}VERSE}"
 
+    from britannica.pipeline.stages.elements._table_decompose import (
+        split_wiki_rows_raw,
+    )
     inner = _strip_br(inner)
     lines = []
-    for rv in re.split(r"\|-[^\n]*", inner):
+    for _attr, rv in split_wiki_rows_raw(inner):
         cells = _extract_table_cells(rv, text_transform)
         if len(cells) == 2:
             col1, col2 = cells[0].strip(), cells[1].strip()
