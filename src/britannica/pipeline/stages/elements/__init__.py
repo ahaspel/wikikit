@@ -254,6 +254,16 @@ def _process_center(raw, inner, text_transform, context, inner_registry):
     return _center_wrap(text_transform(inner))
 
 
+def _faithful_figure(raw: str) -> str:
+    """The role-free recursive figure producer (Phase-1 cutover target).
+    Lazy import — `_figure_faithful` pulls body-text, which would cycle at
+    package-import time."""
+    from britannica.pipeline.stages.elements._figure_faithful import (
+        produce_faithful_figure,
+    )
+    return produce_faithful_figure(raw)
+
+
 # ── Producer dispatch ─────────────────────────────────────────────────
 #
 # Flat label → producer table.  Both wikitable sub-kinds (returned by
@@ -287,8 +297,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # its own focused producer; falls back to `_unwrap_layout_table`
     # for shapes it doesn't yet handle (baked captions in image raw,
     # nested wikitables, POEM cells).
+    # Phase-1 cutover: faithful recursive producer (was _process_captioned_figure).
     "CAPTIONED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _process_captioned_figure(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # CAPTIONED_FIGURE_INLINE — image and caption share one cell,
     # `<br>`-separated, often wrapped in `{{center|…}}` or a
     # `<span style="…">…</span>` styling element.  Producer strips
@@ -327,8 +338,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
         _unwrap_layout_table(inner, tt, reg),
     # FIGURE — a bare image + its structural caption run, carved as one span
-    # by the walker.  Producer re-processes + assembles (see `_produce_figure`).
-    "FIGURE": _produce_figure,
+    # by the walker.  Cut over to the faithful producer (was `_produce_figure`,
+    # which folded the caption into `{{IMG:|caption}}` — flattening `{{sc|Fig.}}`
+    # to plain text, dropping the carried px, and breaking multi-line `<br />`
+    # captions).  Faithful keeps image + caption as separate source-order blocks.
+    "FIGURE": lambda raw, inner, tt, ctx, reg:
+        _faithful_figure(raw),
     # INLINE_GLYPHS — a `{|…|}` with no `|-` rows that flows `<hiero>` glyphs
     # (and the odd glyph-image) inline in a sentence; the transcriber's table
     # is layout scaffolding, not data.  Producer joins the cells back into
