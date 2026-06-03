@@ -71,7 +71,7 @@ was held in the right hand, with elbow outstretched and palm
 bent inwards, and the strings were plucked with the straightened
 fingers of the left hand.«FN:Philostratus the Elder, «I»Imagines«/I», No. 10, “Amphion,” and Philostratus the Younger, «I»Imagines«/I», No. 7, “Orpheus,” p. 403.«/FN» Both methods were used with intention according to the dictates of art for the sake of the variation in tone colour obtainable thereby.«FN:Tibullus, «I»Eleg.«/I» iii. 4. 39.«/FN»
 
-{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265|Fig. 3.—Apollo Citharoedus, showing Cithara with box tail-pieces.}}
+«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265}}</td></tr><tr><td style="font-size:92%;line-height:130%;padding-left:3em">«SC»Fig«/SC». 3.—Apollo Citharoedus, showing«BR»Cithara with box tail-pieces.</td></tr></table>«/HTMLTABLE»
 
 The strings of the cithara were either knotted round the
 transverse tuning bar itself («I»zugon«/I») or to rings threaded over
@@ -145,7 +145,7 @@ of the defeat of the
 monster.«FN:For a description of the «I»Nomos Pythikos«/I» in its relation to Greek
 music see Kathleen Schlesinger, “Researches into the Origin of the Organs of the Ancients,” «I»Intern. Mus. Ges.«/I» Sbd. ii. (1901), 2, p. 177, and Strabo ix. p. 421.«/FN»
 
-{{IMG:Britannica Cithara Phorminx.jpg|width=300|Fig. 4.—Cithara or Phorminx, from a vase in the British Museum.}}
+«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Phorminx.jpg|width=300}}</td></tr><tr><td style="font-size:92%;line-height:130%;text-align:center">«SC»Fig«/SC». 4.—Cithara or Phorminx, from a vase«BR»in the British Museum.</td></tr></table>«/HTMLTABLE»
 
 The Pythian Games
 survived the classic
@@ -189,9 +189,7 @@ the cithara in transition during the middle ages, and the question
 of the origin of the Utrecht Psalter, in which the evolution of the
 cithara is traced at some length.«/FN» («I»q.v.«/I») took place.
 
-{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176|Fig. 5.—Asiatic Cithara in transition (or rotta). From a fresco at Beni-Hasan (c. 1700 B.C.).}}
-
-{{IMG:Britannica Cithara Roman Cithara.jpg|width=111|Fig. 6.—Roman Cithara in transition, of the Lycian Apollo (Rome Mus. Capit.).}}
+«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr><td>«SC»Fig«/SC». 5.—Asiatic Cithara in«BR»transition (or rotta). From a«BR»fresco at Beni-Hasan«BR»(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in«BR»transition, of the Lycian«BR»Apollo (Rome Mus. Capit.).«BR»</td></tr></table>«/HTMLTABLE»
 
 The first of these steps produced the «LN:rotta|Rotta«/LN» («I»q.v.«/I»), by the
 construction of body, arms and transverse bar in one piece.
@@ -245,6 +243,5 @@ descendant of the cithara, although preserving the characteristic
 features of the cithara, the shallow sound-chest with ribs, adopted
 the pear-shaped outline of the Eastern instruments of the lute
 tribe.
-
 
 

@@ -351,7 +351,7 @@ diameters of the molecules of six substances with which it is
 easy to experiment in the gaseous state, these values being
 calculated in different ways from formulae supplied by the
 kinetic theory.
-«HTMLTABLE:<table class="_tablecolhdborder" style="margin-right:auto;margin-left:auto;text-align:center;font-size:92%;line-height:120%"><tr><td rowspan="2">Gas</td><td colspan="5">Diameter calculated by the kinetic theory of gases.</td></tr><tr style="border:1px solid;font-size:92%"><td>From devia- <br>tions from <br>Boyle’s law.</td><td>From co efficient of <br>viscosity.</td><td>From coefficient of<br>conduction of <br>heat.</td><td>From coefficient of<br>conduction of <br>diffusion.</td><td>Mean value.</td></tr><tr><td style="text-align:left">Hydrogen</td><td>2·05×10−⁸</td><td>2·05×10−⁸</td><td>1·99×10−⁸</td><td>2·02×10−⁸</td><td>2·03×10−⁸</td></tr><tr><td style="text-align:left">Carbon monoxide </td><td>—</td><td>2·90×10−⁸</td><td>2·74×10−⁸</td><td>2·92×10−⁸</td><td>2·85×10−⁸</td></tr><tr><td style="text-align:left">Nitrogen</td><td>3·12×10−⁸</td><td>2·90×10−⁸</td><td>2·74×10−⁸</td><td>—</td><td>2·92×10−⁸</td></tr><tr><td style="text-align:left">Air</td><td>2·90×10−⁸</td><td>2·86×10−⁸</td><td>2·72×10−⁸</td><td>—</td><td>2·83×10−⁸</td></tr><tr><td style="text-align:left">Oxygen</td><td>—</td><td>2·81×10−⁸</td><td>2·58×10−⁸</td><td>2·70×10−⁸</td><td>2·70×10−⁸</td></tr><tr><td style="text-align:left">Carbon dioxide</td><td>3·00×10−⁸</td><td>3·47×10−⁸</td><td>3·58×10−⁸</td><td>3·28×10−⁸</td><td>3·33×10−⁸</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="margin-right:auto;margin-left:auto;text-align:center;font-size:92%;line-height:120%"><tr><td rowspan="2">Gas</td><td colspan="5">Diameter calculated by the kinetic theory of gases.</td></tr><tr><td>From devia- <br>tions from <br>Boyle’s law.</td><td>From co-<br> efficient of <br>viscosity.</td><td>From co-<br>efficient of<br>conduction of <br>heat.</td><td>From co-<br>efficient of<br>conduction of <br>diffusion.</td><td>Mean value.</td></tr><tr><td style="text-align:left">Hydrogen</td><td>2·05×10−⁸</td><td>2·05×10−⁸</td><td>1·99×10−⁸</td><td>2·02×10−⁸</td><td>2·03×10−⁸</td></tr><tr><td style="text-align:left">Carbon monoxide </td><td>—</td><td>2·90×10−⁸</td><td>2·74×10−⁸</td><td>2·92×10−⁸</td><td>2·85×10−⁸</td></tr><tr><td style="text-align:left">Nitrogen</td><td>3·12×10−⁸</td><td>2·90×10−⁸</td><td>2·74×10−⁸</td><td>—</td><td>2·92×10−⁸</td></tr><tr><td style="text-align:left">Air</td><td>2·90×10−⁸</td><td>2·86×10−⁸</td><td>2·72×10−⁸</td><td>—</td><td>2·83×10−⁸</td></tr><tr><td style="text-align:left">Oxygen</td><td>—</td><td>2·81×10−⁸</td><td>2·58×10−⁸</td><td>2·70×10−⁸</td><td>2·70×10−⁸</td></tr><tr><td style="text-align:left">Carbon dioxide</td><td>3·00×10−⁸</td><td>3·47×10−⁸</td><td>3·58×10−⁸</td><td>3·28×10−⁸</td><td>3·33×10−⁸</td></tr></table>«/HTMLTABLE»
 
 The agreement of the values obtained for the same quantity
 by different methods provides valuable confirmation of the
@@ -902,9 +902,7 @@ substituting experimentally determined pairs of values of «I»p«/I» and ρ
 we can calculate C for different gases, and so obtain a knowledge
 of the magnitudes of the molecular velocities. For instance, it is
 found that
-{{TABLE[style:margin-right:auto;margin-left:auto]:for hydrogen at |  0° Cent. C=183,900 cms. per sec.
-for air ,, | 15° Cent. C= 49,800 cms. per sec.
-for mercury vapour at |  0° Cent. C= 18,500 cms. per sec.}TABLE}
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td> 0° Cent. C=183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C= 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td> 0° Cent. C= 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
 and other velocities can readily be calculated.
 
 From the value R=1·35×10−¹⁶ it is readily calculated that a molecule,
@@ -1070,17 +1068,12 @@ has so far had to encounter.
 
 On giving different values to «I»n«/I» in formula (21), we obtain the
 values for γ:
-{{TABLE[style:margin-right:auto;margin-left:auto;text-align:center;width:300px]:«I»n«/I» = | 0, | 1, | 2, | 3, | 4, | 5, | 
-γ = | 1·66, | 1·5, | 1·4, | 1·33, | 1·28, | 1·25, | &c.}TABLE}
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;width:300px"><tr><td>«I»n«/I» =</td><td>0,</td><td>1,</td><td>2,</td><td>3,</td><td>4,</td><td>5,</td><td></td></tr><tr><td>γ =</td><td>1·66,</td><td>1·5,</td><td>1·4,</td><td>1·33,</td><td>1·28,</td><td>1·25,</td><td>&c.</td></tr></table>«/HTMLTABLE»
 Thus, to within the degree of approximation to which our theory
 is accurate, the value of γ for every gas ought to be one of this series.
 The following are the values of γ for gases for which γ can be observed
 with some accuracy:—
-{{TABLE[style:margin-right:auto;margin-left:auto]:Mercury | 1·66 | Nitrogen | 1·40
-Krypton | 1·66 | Carbon monoxide | 1·41
-Helium | 1·65 | Hydrogen | 1·40
-Argon | 1·62 | Oxygen | 1·40
-Air | 1·40 | Hydrochloric acid | 1·39}TABLE}
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>Mercury</td><td>1·66</td><td>Nitrogen</td><td>1·40</td></tr><tr><td>Krypton</td><td>1·66</td><td>Carbon monoxide</td><td>1·41</td></tr><tr><td>Helium</td><td>1·65</td><td>Hydrogen</td><td>1·40</td></tr><tr><td>Argon</td><td>1·62</td><td>Oxygen</td><td>1·40</td></tr><tr><td>Air</td><td>1·40</td><td>Hydrochloric acid</td><td>1·39</td></tr></table>«/HTMLTABLE»
 It is clear that for the first four gases «I»n«/I»=0, while for the remainder
 «I»n«/I»=2. To examine what is meant by a zero value of «I»n«/I» we refer to
 formula (15). The value of «I»n«/I» is the number of terms in the energy
@@ -1100,7 +1093,7 @@ conjecture, until the contrary is proved, that the atoms of all
 elements are spherical.«FN[660f1]:Very significant confirmation of this conjecture is obtained
 from a study of the specific heats of the elements in the solid
 state. If a solid body is regarded as an aggregation of similar atoms
-each of mass «I»m«/I», its specific heat C is given, as in formula (19) by
+each of mass «I»m«/I», its specific heat C is given, as in formula (19) by
 C=½(«I»n«/I»+3)R/J«I»m«/I». From Dulong and Petit’s law that C«I»m«/I» is the same
 for all elements, it follows that «I»n«/I»+3 must be the same for all atoms.
 Moreover, the value of C«I»m«/I» shows that «I»n«/I»+3 must be equal to six.
@@ -1164,4 +1157,5 @@ is only one aspect of a wider difficulty which cannot be lightly
 passed over; Maxwell himself regarded it as the principal obstacle
 in the way of the full acceptance of the theory of which he was so
 largely the author. 
-{{Fs|108%|
+
+
