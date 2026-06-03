@@ -182,6 +182,33 @@ def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
     return rows
 
 
+# Rows and cells have two/three interchangeable spellings: a ROW is `|-` or
+# `<tr>`; a CELL is `|` (data), `!` (header), or `<td>`/`<th>`.  Source mixes
+# them inside one `{|` table (CEMENT: an HTML `<td>` header above wiki `|`
+# rows).  Rather than flavor-route (single-syntax) and lose one spelling, we
+# canonicalise the HTML spellings to their wiki equivalents up front, so the
+# ONE wiki decomposer sees a uniform table.  No-op when no HTML tokens are
+# present (pure-wiki path stays byte-identical).
+_HTML_CELL_OPEN_RE = re.compile(r"<(t[dh])\b([^>]*)>", re.IGNORECASE)
+
+
+def _canonicalize_html_cells_to_wiki(inner: str) -> str:
+    """`<tr>`→`|-`, `<td attr>`→`|attr|`, `<th attr>`→`!attr|`, closers dropped.
+    Wiki cells self-close at the next cell/row token, so `</td>`/`</tr>` carry
+    no information once the openers are wiki."""
+    if "<t" not in inner.lower():
+        return inner
+    inner = re.sub(r"</t[dh]>|</tr>|</table>|<table\b[^>]*>", "",
+                   inner, flags=re.IGNORECASE)
+    inner = re.sub(r"<tr\b[^>]*>", "\n|-\n", inner, flags=re.IGNORECASE)
+
+    def _cell(m: "re.Match") -> str:
+        mark = "!" if m.group(1).lower() == "th" else "|"
+        attr = m.group(2).strip()
+        return f"\n{mark}{attr}|" if attr else f"\n{mark}"
+    return _HTML_CELL_OPEN_RE.sub(_cell, inner)
+
+
 def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
     """Decompose a wikitable's inner text into `(caption, rows)`.
 
@@ -192,11 +219,18 @@ def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
     `|-<attrs>` separators; each row's cells come from
     :func:`split_wiki_row`.
 
+    HTML cell/row spellings (`<td>`/`<th>`/`<tr>`) inside the wikitable are
+    canonicalised to their wiki equivalents first (see
+    :func:`_canonicalize_html_cells_to_wiki`) so a mixed table decomposes
+    through this one path.
+
     The pre-`|-` segment is included as a row only when it contains
     cell content (`|`/`!`-anchored lines).  A bare preamble (caption +
     blank space) becomes the empty rows list with the caption surfaced.
     """
     from britannica.pipeline.stages.elements._tables import split_wiki_row
+
+    inner = _canonicalize_html_cells_to_wiki(inner)
 
     # Protect balanced nested ``{|…|}`` spans before row-splitting: the
     # outer ``|-`` row key and ``|+`` caption key would otherwise match a

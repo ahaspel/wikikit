@@ -1199,9 +1199,16 @@ def _process_table_unified(
     refs / nested tables ride through as placeholdered children (`produce_tree`
     substitutes their markers), so this path never calls the image producers."""
     from britannica.pipeline.stages.elements._table_decompose import (
-        assemble_html_rows, produce_table_rows, _HTML_FLAVOR_RE,
+        assemble_html_rows, produce_table_rows,
     )
-    flavor = "html" if _HTML_FLAVOR_RE.search(inner) else "wiki"
+    # Flavor is decided by the OPENER, not by the presence of HTML tags in the
+    # body: a `{|` table that mixes in `<td>`/`<tr>` cells (CEMENT) is still a
+    # wikitable — the wiki decomposer canonicalises those HTML spellings.  Only
+    # a table that OPENS with `<table>` is the HTML path.  (Was
+    # `_HTML_FLAVOR_RE.search(inner)`, which mis-routed mixed `{|` tables to the
+    # single-syntax HTML extractor — it saw only the `<td>` cells and dropped
+    # the wiki `|` rows, spilling their `{{Ts}}` to body-text.)
+    flavor = "html" if raw.lstrip().startswith("<table") else "wiki"
     if flavor == "html":
         inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
     caption_raw, rows, _has_header, _has_span = produce_table_rows(

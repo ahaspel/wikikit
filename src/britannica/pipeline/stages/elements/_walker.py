@@ -493,17 +493,33 @@ def _construct_end(text: str, start: int) -> int | None:
             return None
     two = text[start:start + 2]
     if two in _BRACKET_CLOSE:
-        return _scan_balanced(text, start + 2, _BRACKET_CLOSE[two], tag=False)
+        # Table notation is equivalent at the delimiter level: a `{|` table may
+        # be closed by a wiki `|}` OR an HTML `</table>` — source mixes the
+        # spellings (LAMPROPHYRES/POST open `{|`, close `</table>`).  The alt
+        # closer is only ever seen at depth 0 (nested constructs are skipped
+        # whole), so a nested table's closer can't truncate the outer span.
+        # (The reverse — `<table>` closed by `|}` — does not occur in the
+        # corpus, so it is not accepted: a stray `|}` must not end a `<table>`.)
+        alt = ("</table", True) if two == "{|" else None
+        return _scan_balanced(
+            text, start + 2, _BRACKET_CLOSE[two], tag=False, alt=alt)
     return None
 
 
-def _scan_balanced(text: str, i: int, closer: str, *, tag: bool) -> int | None:
+def _scan_balanced(
+    text: str, i: int, closer: str, *, tag: bool,
+    alt: tuple[str, bool] | None = None,
+) -> int | None:
     """Scan from ``i`` for ``closer``, skipping every nested construct whole
     (``_construct_end`` recursion).  ``tag`` closers (``</name``) tolerate
     attributes/space before ``>``; literal closers (``}}`` / ``|}`` / ``]]``)
-    match exactly."""
+    match exactly.  ``alt`` is an optional second acceptable closer
+    ``(string, is_tag)`` for the table delimiter equivalence (`{|`↔`</table>`);
+    because nested constructs are skipped whole, ``alt`` is only ever tested at
+    depth 0, so a nested table's closer can't end the outer span."""
     n = len(text)
     cl = closer.lower()
+    alt_cl = alt[0].lower() if alt else None
     while i < n:
         if tag:
             if text[i:i + len(closer)].lower() == cl:
@@ -512,6 +528,15 @@ def _scan_balanced(text: str, i: int, closer: str, *, tag: bool) -> int | None:
                     return gt + 1
         elif text.startswith(closer, i):
             return i + len(closer)
+        if alt is not None:
+            a_str, a_tag = alt
+            if a_tag:
+                if text[i:i + len(a_str)].lower() == alt_cl:
+                    gt = text.find(">", i)
+                    if gt >= 0:
+                        return gt + 1
+            elif text.startswith(a_str, i):
+                return i + len(a_str)
         j = _construct_end(text, i)               # skip any nested construct
         if j is not None and j > i:
             i = j
