@@ -16,11 +16,9 @@ Planté made excellent cells by this method, yet three objections were urged aga
 
 For many years the battle between the “Planté” type and PAGE:158the Faure or “pasted” type has been one in which the issue was doubtful, but the general tendency is towards a mixed type at the present time. There are many good cells, the value of all resting on the care exercised during the manufacture and also in the choice of pure materials. Increasing emphasis is laid on the purity of the water used to replace that lost by evaporation, distilled water generally being specified. The following descriptions will give a good idea of modern practice.
 
-<div style="float:right;">
+«DIV[style:float:right]»{{IMG:EB1911 Accumulator - Fig 3. Tudor negative plate.png|width=250}}
 
-{{IMG:EB1911 Accumulator - Fig 3. Tudor negative plate.png|width=250}}
-
-«BR» «FS[92%]»«SC»Fig.«/SC» 3.—Tudor negative plate.«/FS»</div>
+«BR» «FS[92%]»«SC»Fig.«/SC» 3.—Tudor negative plate.«/FS»«/DIV»
 The “chloride cell” has a Planté positive with a pasted negative. For the positive a lead casting is made, about 0·4 inch thick pierced by a number of circular holes about half an inch in diameter. Into each of these holes is thrust a roll or rosette of lead ribbon, which has been cut to the right breadth (equal to the thickness of the «SH»Chloride cell.«/SH» plate), then ribbed or gimped, and finally coiled into a rosette. The rosettes have sufficient spring to fix themselves in the holes of the lead plate, but are keyed in position by a hydraulic press. The plates are then “formed” by passing a current for a long time. In a later pattern a kind of discontinuous longitudinal rib is put in the ribbon, and increases the capacity and life by strengthening the mass 
 without interfering with the diffusion of acid. The negative plate was formerly obtained by reducing pastilles of lead chloride, but by a later mode of construction it is made by casting a grid with thin vertical ribs, connected horizontally by small bars of triangular section. The bars on the two faces are “staggered,” that is, those on one face are not opposite those on the other. The grid is pasted with a lead oxide paste and afterwards reduced; this is known as the “exide” negative. 
 
@@ -38,15 +36,11 @@ The Tudor cell has positives formed of lead plates cast in one piece with a larg
 
 Many of the E.P.S. cells, made by the Electrical Power Storage Company, are of the Faure or pasted type, but the Planté formation is used for the positives of two kinds of cell. The paste for the positive plates is a mixture of red lead with sulphuric acid; for the negative plates, litharge is substituted for red lead. Figs. 4 and «SH»E.P.S. cell.«/SH» 5 roughly represent the grids employed for the negative and positive plates respectively of a type used for lighting. Fig. 6 is the cross section of the casting used for the Planté positive of the larger cells for rapid discharge. Finer indentations on the side expose a large surface. Fig. 7 shows a complete cell.
 
-<div style="float:right;">
-
-{{IMG:EB1911 Accumulator - Fig 8. - Hart Accumulator.png|width=190}}
+«DIV[style:float:right]»{{IMG:EB1911 Accumulator - Fig 8. - Hart Accumulator.png|width=190}}
 
 «BR»
 
-«CTR»«FS[92%]»«SC»Fig.«/SC» 8.—Hart Accumulator.«/FS»«/CTR»
-
-</div>
+«CTR»«FS[92%]»«SC»Fig.«/SC» 8.—Hart Accumulator.«/FS»«/CTR»«/DIV»
 The Hart cell, as used for lighting, is a combination of the Planté and Faure (pasted) types. The plates hang by side lugs on glass slats, and are separated by three rows of glass tubes ⅜ inch diameter (fig. 8). The tubes rest in grooved teak wood blocks placed at the bottom of the glass boxes. The blocks also serve as base for a skeleton framework of the «SH»Hart cell.«/SH» same material which surrounds and supports the section. Of course the wood has to be specially treated to withstand the acid. A special non-corrosive terminal is used. A coned bolt draws the lug ends of adjacent cells together, fitting in a corresponding tapered hole in the lugs, and thus increasing the contact area. The positive and negative tapers being different, a cell cannot be connected up in the wrong way.
 
 In America, in addition to some of the cells already described, there are types which are not found in England. Two may be described. The Gould cell is of the Planté type. A special effort is made to reduce local and other deleterious action by starting with perfectly homogeneous plates. They are «SH»Gould cell.«/SH» formed from sheet lead blanks by suitable machines, which gradually raise the surface into a series of ribs and grooves. The sides and middle of the blank are left untouched and amply suffice to distribute the current over the surface of the plate. The grooves are very fine, and when the active material is formed in them by electro-chemical action, they hold it very securely.

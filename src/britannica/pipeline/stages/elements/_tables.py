@@ -796,36 +796,39 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
     rules: list[str] = []
     if not codes_str:
         return rules
-    for code in re.split(r"[|\s]+", codes_str.strip()):
-        if not code:
+    # Split on the `|` arg separator ONLY.  Shorthand codes may be space-
+    # separated WITHIN an arg (`ma sm92`), but an inline-CSS pass-through
+    # carries a value that can contain spaces (`text-indent: -2em`) — splitting
+    # on whitespace too would shear the value off (`text-indent:` + `-2em`).
+    for arg in codes_str.strip().split("|"):
+        arg = arg.strip()
+        if not arg:
             continue
-        # Inline CSS style passed through as-is: `width:50px`,
-        # `margin-left:1em`, `text-align:center`, etc.  Drop trailing `;`.
-        if ":" in code:
-            rules.append(code.rstrip(";"))
+        # Inline CSS passed through as-is (`width:50px`, `text-indent: -2em;`).
+        # Keep WHOLE; drop a trailing `;`.
+        if ":" in arg:
+            rules.append(arg.rstrip(";").strip())
             continue
-        c = code.lower()
-        # Alias → canonical (wikisource resolves these first).
-        c = TS_ALIASES.get(c, c)
-        # Direct Module lookup (covers ~262 canonical codes).
-        style = TS_STYLES.get(c)
-        if style is None:
-            # Missing-period decoding: `pl15` is wikitext shorthand for
-            # `pl1.5` (the period was dropped editing).  Try inserting
-            # one and re-looking-up.  Restricted to known prefixes
-            # (`p[lrtb]`, `plr`, `m[lrtb]`) so we don't synthesise codes
-            # that happen to match the pattern but aren't real.
-            if m := re.match(r"^(p[lrtb]|plr|m[lrtb])(\d)(\d+)$", c):
-                guess = f"{m.group(1)}{m.group(2)}.{m.group(3)}"
-                style = TS_STYLES.get(guess)
-        if style:
-            # Split semicolon-joined Module entries (`'ma' ↔
-            # 'margin-right:auto; margin-left:auto'`) into individual
-            # rules so downstream property-dedup works.
-            for decl in style.split(";"):
-                d = decl.strip()
-                if d:
-                    rules.append(d)
+        for code in arg.split():
+            c = code.lower()
+            # Alias → canonical (wikisource resolves these first).
+            c = TS_ALIASES.get(c, c)
+            # Direct Module lookup (covers ~262 canonical codes).
+            style = TS_STYLES.get(c)
+            if style is None:
+                # Missing-period decoding: `pl15` is wikitext shorthand for
+                # `pl1.5` (the period was dropped editing).  Restricted to
+                # known prefixes so we don't synthesise spurious codes.
+                if m := re.match(r"^(p[lrtb]|plr|m[lrtb])(\d)(\d+)$", c):
+                    guess = f"{m.group(1)}{m.group(2)}.{m.group(3)}"
+                    style = TS_STYLES.get(guess)
+            if style:
+                # Split semicolon-joined Module entries (`'ma'` ↔
+                # `'margin-right:auto; margin-left:auto'`) into individual rules.
+                for decl in style.split(";"):
+                    d = decl.strip()
+                    if d:
+                        rules.append(d)
     return rules
 
 

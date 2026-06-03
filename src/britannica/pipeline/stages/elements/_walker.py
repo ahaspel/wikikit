@@ -415,7 +415,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
-    r"|<div\s+\{\{[Tt]s\|"  # FIGURE HTML Ts-wrapper variant
+    r"|<div\b"  # any <div> — styled ones lift to faithful, bare ones fall through
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
@@ -450,6 +450,17 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
 _ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score"})
+# Tags the one matcher will BOUND by depth (superset of the auto-extracted
+# elements).  `div` is boundable so a styled `<div>` can be matched to its
+# right `</div>` and nested divs skipped — but it is NOT auto-extracted (bare
+# layout divs stay transparent; only a *styled* div is lifted, via the gated
+# recognizer below).
+_BALANCED_TAGS = _ELEMENT_TAGS | {"div"}
+# A `<div>` that carries styling ({{Ts}} shorthand, inline style=, or align=)
+# — the gate that distinguishes a meaningful styled block (lift → faithful)
+# from a bare layout div (transparent unwrap).  Structural, not a guess.
+_STYLED_DIV_RE = re.compile(
+    r"<div\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)", re.IGNORECASE)
 
 
 def _construct_end(text: str, start: int) -> int | None:
@@ -473,7 +484,7 @@ def _construct_end(text: str, start: int) -> int | None:
                 close = f"</{name}>"
                 e = text.lower().find(close, gt + 1)
                 return e + len(close) if e >= 0 else None
-            if name in _ELEMENT_TAGS:             # balanced block element
+            if name in _BALANCED_TAGS:            # balanced block element
                 return _scan_balanced(text, gt + 1, f"</{name}", tag=True)
             # Any OTHER tag (`<td>`/`<tr>`/`<div>`/`<i>`/…) is NOT a construct
             # the walker bounds — return None so the scanner steps over the
@@ -612,6 +623,19 @@ def _walk_balanced_shapes(
                     end = _construct_end(text, opener_pos)
                     if end is not None:
                         matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
+
+        # Styled `<div …>` (carries `{{Ts}}` / `style=` / `align=`) → faithful,
+        # which carries the block style and recurses the content.  A BARE
+        # `<div>` is layout noise and stays transparent (body-text unwrap).
+        # Bounded by the one matcher (depth-aware over nested divs); unbalanced
+        # → None → falls through, no swallow.  Image-bearing styled divs are
+        # already claimed above by the figure recognizers; this catches the
+        # styled-TEXT divs (centered captions/titles, small-print credits,
+        # indented keys) that were leaking their `{{Ts}}` to `_strip_templates`.
+        if matched is None and _STYLED_DIV_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_FIGURE, text[opener_pos:end])
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
