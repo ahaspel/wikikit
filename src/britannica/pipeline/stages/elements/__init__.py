@@ -131,6 +131,7 @@ from britannica.pipeline.stages.elements._tables import (
     _process_inline_glyph_wrapper,
     _process_single_column_table,
     _process_table,
+    _process_table_unified,
     _process_verse_table,
     _table_grid,
     _unwrap_html_illustration,
@@ -351,27 +352,27 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "INLINE_GLYPHS": lambda raw, inner, tt, ctx, reg:
         _process_inline_glyph_wrapper(inner, tt, reg),
     "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
-        _process_complex_table(raw, inner, tt),
+        _process_table_unified(raw, inner, tt, reg),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_chemistry_layout(raw, inner, tt, reg),
     "DATA_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table(raw, inner, tt, reg),
+        _process_table_unified(raw, inner, tt, reg),
     # SINGLE_COLUMN_TABLE — a `{|…|}` boxing a run of text (one content
     # cell per row), not a grid.  Carved out of `_process_table`'s hidden
     # dispatch; rendered as a `«PRE:` text block.
     "SINGLE_COLUMN_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_single_column_table(raw, inner, tt),
+        _process_table_unified(raw, inner, tt, reg),
     # VERSE_TABLE — a 2-column quotation layout (hanging-quote col1 + verse
     # lines col2).  Carved out of `_process_table`'s hidden dispatch;
     # rendered as `{{VERSE:}VERSE}`.
     "VERSE_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_verse_table(raw, inner, tt, reg),
+        _process_table_unified(raw, inner, tt, reg),
     # Single-label kinds — element_type == label.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
         _process_djvu_crop(raw, tt, ctx),
     "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
     "COMPOUND_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_compound_table(raw, tt),
+        _process_table_unified(raw, inner, tt, reg),
     "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
     "REF_SELF": lambda raw, inner, tt, ctx, reg:
@@ -436,7 +437,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
     "HTML_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_html_table(raw, inner, tt, reg),
+        _process_table_unified(raw, inner, tt, reg),
     "OUTLINE": lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt),
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all

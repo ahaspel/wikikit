@@ -1884,6 +1884,69 @@ def _html_cell_clean(content: str) -> str:
     return c
 
 
+def _process_table_unified(
+    raw: str,
+    inner: str,
+    text_transform,
+    inner_registry: "ElementRegistry | None" = None,
+) -> str:
+    """The ONE table producer: `table → row → cell → body-text`, emitting
+    full-style ``«HTMLTABLE»`` for every grid label (DATA_TABLE / COMPLEX_HTML /
+    HTML_TABLE — and, deliberately, the layout-`{|` shapes SINGLE_COLUMN /
+    VERSE / COMPOUND, which are rendered as the tables they literally are rather
+    than re-interpreted as PRE/verse/zip).
+
+    Decompose via the shared `produce_table_rows` (auto-detects `{|` vs
+    `<table>`); assemble via the shared `assemble_html_rows` (carries the FULL
+    per-cell `_cell_styles`, so every `{{Ts|…}}` code rides through — the EUROPE
+    cell styling that the align-only `«TABLE»` marker used to drop).  The bare
+    `<table>` it emits is then stamped with the source `class=` (or `data-table`)
+    and the opener's whole-table styles, and any `|+` / `<caption>` is recursed
+    back in.  Replaces the six bespoke `_process_*table` producers; cell images /
+    refs / nested tables ride through as placeholdered children (`produce_tree`
+    substitutes their markers), so this path never calls the image producers."""
+    from britannica.pipeline.stages.elements._table_decompose import (
+        assemble_html_rows, produce_table_rows, _HTML_FLAVOR_RE,
+    )
+    flavor = "html" if _HTML_FLAVOR_RE.search(inner) else "wiki"
+    if flavor == "html":
+        inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
+    caption_raw, rows, _has_header, _has_span = produce_table_rows(
+        inner, text_transform, flavor=flavor,
+        cell_preclean=_html_cell_clean if flavor == "html" else None)
+    if not rows:
+        return ""
+    body = assemble_html_rows(rows, inner_registry)  # «HTMLTABLE:<table>…»
+    # Stamp class + whole-table styling onto the (bare) outer <table>.
+    # Class tracks BORDERS from the source (the scans show wikitable/ruled
+    # tables bordered, class-less ones borderless — AUSTRIA 5/5): a real grid
+    # (`class=wikitable` / `border=N` / `rules=`) → bordered `data-table`;
+    # everything else (layout `{|`, verse / single-column quotes) → borderless
+    # `figtable`.  We carry the source's verdict, not a default — same rule
+    # faithful's own table branch uses.
+    if flavor == "html":
+        om = re.match(r"\s*<table\b([^>]*)>", raw, re.I)
+    else:
+        om = re.match(r"\s*\{\|([^\n]*)", raw)
+    opener_attrs = om.group(1) if om else ""
+    src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
+    src_cls = src_cls_m.group(1) if src_cls_m else ""
+    bordered = re.search(
+        r"wikitable|border\s*=\s*[\"']?[1-9]|rules\s*=", opener_attrs, re.I)
+    cls = (("data-table " + src_cls).strip() if (bordered or src_cls)
+           else "figtable")
+    styles = _table_opener_styles(raw)
+    attrs = f' class="{cls}"' + (f' style="{";".join(styles)}"' if styles else "")
+    caption_html = ""
+    if caption_raw:
+        ct = strip_cell_attrs(text_transform(caption_raw))
+        if ct:
+            caption_html = f"<caption>{ct}</caption>"
+    return body.replace(
+        "«HTMLTABLE:<table>",
+        f"«HTMLTABLE:<table{attrs}>{caption_html}", 1)
+
+
 def _process_html_table(
     raw: str,
     inner: str,
