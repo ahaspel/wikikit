@@ -378,7 +378,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, tt, ctx, reg:
         _process_ref(raw, inner, tt, ctx.ref_bodies),
-    "IMAGE": lambda raw, inner, tt, ctx, reg: _process_image_from_raw(raw, tt),
+    # IMAGE is just a figure whose raw the old `_process_image` folded (caption
+    # into the marker) and refused to recurse (dropping sibling blocks like a
+    # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
+    # faithful recursive producer: image → leaf, caption → its own «CTR» block.
+    "IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
         _process_image_from_raw(raw, tt, inline=True),
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _process_raw_image(raw, tt),
@@ -460,6 +464,27 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "MIRROR_GLYPH": lambda raw, inner, tt, ctx, reg:
         f"«MIRROR:{tt(inner).strip()}«/MIRROR»",
 }
+
+
+# ── ONE figure/image producer ─────────────────────────────────────────────
+# Route the ENTIRE figure/image family through the single faithful recursive
+# producer.  With one producer, the classifier's figure-label distinctions
+# (LAYOUT_WRAPPER vs LEGENDED vs CAPTIONED_FIGURE_INLINE vs IMAGE vs …) no longer
+# change the output — every one decomposes to the ground identically — so a
+# mis-classification (e.g. CHESS's diagram blocks falling into LAYOUT_WRAPPER)
+# is harmless: the catch-all can't botch anything when it's wired where
+# everything else is.  The old per-label producers (_unwrap_layout_table,
+# _process_legended_*, _process_unpaired_figure_group,
+# _process_captioned_figure_inline, _process_image*, _process_raw_image,
+# _process_plain_image, _process_image_float, _produce_figure) are now dead.
+for _fig_label in (
+    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "FIGURE", "FIGURE_GROUP",
+    "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE", "LEGENDED_FIGURE_CHILD",
+    "UNPAIRED_FIGURE_GROUP", "LAYOUT_WRAPPER",
+    "IMAGE", "INLINE_IMAGE", "RAW_IMAGE", "PLAIN_IMAGE", "IMAGE_FLOAT",
+):
+    _PRODUCER_DISPATCH[_fig_label] = (
+        lambda raw, inner, tt, ctx, reg: _faithful_figure(raw))
 
 
 

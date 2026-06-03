@@ -231,6 +231,19 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # residual fine-print tokens are in PLATE segments, which go through
     # `parse_plate`, not this function).
     context = ElementContext(volume=volume, page_number=page_number)
+    # Author signature footer ({{EB1911 footer [double] initials|…}}, usually
+    # wrapped in {{Fs|108%|…}}) is REDUNDANT in the body: the author is shown in
+    # the top attribution line, built from the three contributor sources (this
+    # line + the volume index + the corpus index).  Consume it here as a NAMED
+    # removal — draining it out of the `_strip_templates` catch-all that mangled
+    # the {{Fs}} wrapper (the `{{Fs|108%|` leak / empty «FS» across 2800+ arts).
+    # SAFE for author determination: extract_contributors reads the signature
+    # from segment_text / the raw files, NOT from this transformed body.
+    raw_wikitext = re.sub(
+        r"\{\{Fs\|[^{}|]*\|\s*"
+        r"\{\{EB1911 footer(?: double)? initials\|[^{}]*\}\}\s*\}+"
+        r"|\{\{EB1911 footer(?: double)? initials\|[^{}]*\}\}",
+        "", raw_wikitext, flags=re.IGNORECASE)
     text = process_elements(raw_wikitext, _apply_markup, context)
 
     # (chart2 genealogical-tree images are substituted at source in
