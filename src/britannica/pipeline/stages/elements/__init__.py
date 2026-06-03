@@ -32,6 +32,7 @@ from britannica.pipeline.stages.elements._image import (
     _parse_crop_param,
     _process_chart2,
     _process_djvu_crop,
+    _process_image_from_raw,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
@@ -351,8 +352,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
     # faithful recursive producer: image → leaf, caption → its own «CTR» block.
     "IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    # INLINE_IMAGE is the one image label faithful can't own: an inline glyph
+    # needs `align=inline` (so the viewer renders it at source size in the
+    # prose flow), and faithful's leaf is label-blind — it works from raw and
+    # can't know the walker classified this one inline.  Keep the inline-aware
+    # producer (a retained leaf utility) for it.
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_image_from_raw(raw, tt, inline=True),
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:

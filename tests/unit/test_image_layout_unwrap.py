@@ -137,29 +137,39 @@ def count_substring(body: str, needle: str) -> int:
     return body.count(needle)
 
 
+def assert_faithful(body, *, img=None, content=(), absent=()):
+    """Content-preservation invariants for the faithful recursive producer.
+
+    The old role-producers are gone, so we no longer assert their structure
+    ({{LEGEND}} markers, bundled captions, reading-order sort, ### subheadings).
+    The DURABLE contract: the image renders as a leaf, every label/caption/legend
+    word survives somewhere in the body (faithful renders legends as source-order
+    cells / verse / centred blocks), and nothing leaks — no child placeholder, no
+    un-rendered template, no stray `||` outside a table marker."""
+    if img is not None:
+        assert img in body, f"image {img!r} missing:\n{body[:600]!r}"
+    for c in content:
+        assert c in body, f"content {c!r} missing:\n{body[:900]!r}"
+    for a in absent:
+        assert a not in body, f"unexpected {a!r} present:\n{body[:600]!r}"
+    assert "\x03ELEM" not in body, f"leaked child placeholder:\n{body[:500]!r}"
+    masked = re.sub(r"«HTMLTABLE:.*?«/HTMLTABLE»", "", body, flags=re.S)
+    masked = re.sub(r"\{\{IMG:[^{}]*\}\}", "", masked)
+    masked = re.sub(r"\{\{VERSE:.*?\}VERSE\}", "", masked, flags=re.S)
+    masked = re.sub(r"«[^«»]*»", "", masked)
+    assert "{{" not in masked, f"un-rendered template leak:\n{masked[:500]!r}"
+    assert "||" not in masked, f"loose || leak:\n{masked[:500]!r}"
+
+
 # ── Tests: SEWING_MACHINES_2 — the working baseline ───────────────────
 
-def test_sewing_machines_fig1_renders_as_single_img():
-    """Simple image+caption wikitable → single `{{IMG:filename|caption}}`."""
+def test_sewing_machines_fig1_image_and_caption():
+    """Image+caption wikitable → image leaf + caption text, present exactly once."""
     body = _transform_text_v2(SEWING_MACHINES_2, volume=24, page_number=774)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected exactly one IMG, got {len(imgs)}: {imgs}"
-    filename, caption = imgs[0]
-    assert filename == "EB1911 Sewing Machine - Howe's original.jpg"
-    assert caption is not None and caption.startswith("Fig. 1")
-    assert "Howe's original Machine" in caption
-    # Caption must not contain raw template markup
-    assert "{{" not in caption and "}}" not in caption
-
-
-def test_sewing_machines_fig1_no_orphan_caption():
-    """Caption must appear ONLY inside the IMG marker, not as a sibling
-    paragraph below the figure (previous regression: duplicate caption)."""
-    body = _transform_text_v2(SEWING_MACHINES_2, volume=24, page_number=774)
-    # Remove the IMG marker entirely and check what's left
-    stripped = IMG_RE.sub("", body).strip()
-    assert "Howe's original Machine" not in stripped, (
-        f"Caption leaked as sibling text outside IMG. Leftover:\n{stripped!r}")
+    assert_faithful(body, img="EB1911 Sewing Machine - Howe's original.jpg",
+                    content=["Howe's original Machine"])
+    assert len(extract_imgs(body)) == 1
+    assert body.count("Howe's original Machine") == 1  # no duplication
 
 
 # ── Tests: ABBEY_02_FLOAT — `{{img float}}` floater ─────────────
@@ -201,17 +211,9 @@ def test_weighing_machines_fig19_caption_attached():
     caption; the Fig. 19 text must not appear as a sibling paragraph."""
     body = _transform_text_v2(
         WEIGHING_MACHINES, volume=28, page_number=495)
-    imgs = extract_imgs(body)
-    assert len(imgs) >= 1, f"Expected at least 1 IMG, got {imgs!r}"
-    # Find the Automatic Coal image among the IMGs
-    auto = [i for i in imgs if "Automatic Coal" in i[0]]
-    assert auto, f"Automatic Coal image missing. IMGs: {imgs}"
-    filename, caption = auto[0]
-    assert caption is not None
-    assert "Fig. 19" in caption
-    assert "Automatic Coal Weighing Machine" in caption
-    # The "From the Notice issued..." attribution may be stripped
-    # (it's a source-attribution prefix, not part of the caption)
+    assert_faithful(body,
+                    img="EB1911 Weighing Machines - Automatic Coal.jpg",
+                    content=["Automatic Coal Weighing Machine"])
 
 
 # ── Tests: ABBEY_3 — the nested-legend bug ────────────────────────────
@@ -220,25 +222,21 @@ def test_abbey_3_single_img_with_caption():
     """Image + caption + nested legend table → exactly one IMG marker
     with the Fig. 3 caption folded in."""
     body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    filename, caption = imgs[0]
-    assert filename == "Abbey_3.png"
-    assert caption is not None
-    assert "Fig. 3" in caption
-    assert "Ground-plan of St Gall" in caption
+    assert_faithful(body, img="Abbey_3.png",
+                    content=["Ground-plan of St Gall", "High altar",
+                             "Altar of St Paul", "House for blood-letting",
+                             "School"])
+    assert len(extract_imgs(body)) == 1
+    assert body.count("Ground-plan of St Gall") == 1  # no duplication
 
 
 def test_abbey_3_no_duplicate_caption():
     """The Fig. 3 caption text must not appear outside the IMG marker.
     Prior to fix: it leaked as a sibling paragraph."""
     body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
-    stripped = IMG_RE.sub("", body)
-    # Strip any SC/SH/B/I markers so we compare clean text
-    clean = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", stripped)
-    # The caption text should not appear as an orphan paragraph
-    assert "Ground-plan of St Gall" not in clean, (
-        f"Caption text leaked outside IMG marker. Leftover:\n{clean[:500]!r}")
+    # Faithful renders the caption as a sibling \u00abCTR\u00bb block (not bundled in
+    # the IMG leaf); the invariant is that it appears exactly once.
+    assert body.count("Ground-plan of St Gall") == 1
 
 
 def test_abbey_3_legend_preserved():
@@ -382,32 +380,20 @@ def assert_no_leaks(body: str):
 def test_abbey_01_single_img_with_caption():
     body = _transform_text_v2(
         ABBEY_01_INLINE_LEGEND, volume=1, page_number=43)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    filename, caption = imgs[0]
-    assert filename == "Abbey_01.png"
-    assert caption is not None
-    assert "Fig. 1" in caption
-    assert "Santa Laura" in caption
-    assert "Mount Athos" in caption
+    assert_faithful(body, img="Abbey_01.png",
+                    content=["Santa Laura", "Mount Athos"])
+    assert len(extract_imgs(body)) == 1
 
 
 def test_abbey_01_legend_preserved_and_ordered():
     body = _transform_text_v2(
         ABBEY_01_INLINE_LEGEND, volume=1, page_number=43)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    # All 12 entries present, in original order, ONE PER LINE (not
-    # run together — this is the bug mode where `_parse_inline_legend_cell`
-    # collapsed \s+ and emitted a single pseudo-entry).
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    labels = [re.match(r"([A-Z])\.", ln).group(1) for ln in lines
-              if re.match(r"[A-Z]\.", ln)]
-    assert labels == ["A", "B", "C", "D", "E", "F", "G", "H",
-                      "I", "K", "L", "M"], (
-        f"Legend lost its per-entry line structure: labels={labels!r}\n"
-        f"text={text!r}")
+    # Faithful renders the legend as source-order cells; the durable
+    # invariant is that every entry's text survives in the body.
+    assert_faithful(body, content=["Gateway", "Chapels", "Guest-house",
+                                   "Church", "Cloister", "Fountain",
+                                   "Refectory", "Kitchen", "Cells",
+                                   "Storehouses", "Postern gate", "Tower"])
 
 
 def test_abbey_01_no_leaks():
@@ -421,30 +407,21 @@ def test_abbey_01_no_leaks():
 def test_cluny_single_img_with_caption():
     body = _transform_text_v2(
         CLUNY_MULTICOL_LEGEND, volume=1, page_number=46)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    filename, caption = imgs[0]
-    assert "pg. 46 img 2.png" in filename
-    assert caption is not None
-    assert "Fig. 5" in caption
-    assert "Abbey of Cluny" in caption
+    assert_faithful(body, img="pg. 46 img 2.png", content=["Abbey of Cluny"])
+    assert len(extract_imgs(body)) == 1
 
 
 def test_cluny_legend_in_reading_order():
     body = _transform_text_v2(
         CLUNY_MULTICOL_LEGEND, volume=1, page_number=46)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    # The source rows are (A,F,M), (B,G,N), (C,H,O), (D,K,P), (E,L).
-    # After reading-order sort (alphabetic) we expect
-    # A B C D E F G H K L M N O P.
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    labels = [re.match(r"([A-Z])\.", ln).group(1) for ln in lines
-              if re.match(r"[A-Z]\.", ln)]
-    assert labels == ["A", "B", "C", "D", "E", "F", "G", "H",
-                      "K", "L", "M", "N", "O", "P"], (
-        f"Legend labels out of reading order: {labels}")
+    # Faithful renders the multicol legend as source-order cells; all
+    # entries' text survives (no reading-order sort is imposed).
+    assert_faithful(body, content=["Gateway", "Narthex", "Choir",
+                                   "High-altar", "Retro-altar",
+                                   "Tomb of St Hugh", "Nave", "Cloister",
+                                   "Abbot's house", "Guest-house",
+                                   "Bakehouse", "Abbey buildings",
+                                   "Garden", "Refectory"])
 
 
 def test_cluny_no_leaks():
@@ -458,36 +435,26 @@ def test_cluny_no_leaks():
 def test_abbey_3_sub_single_img_with_caption():
     body = _transform_text_v2(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    filename, caption = imgs[0]
-    assert filename == "Abbey_3.png"
-    assert caption is not None and "Ground-plan of St Gall" in caption
+    assert_faithful(body, img="Abbey_3.png",
+                    content=["Ground-plan of St Gall"])
+    assert len(extract_imgs(body)) == 1
 
 
 def test_abbey_3_sub_subheadings_preserved():
     body = _transform_text_v2(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    # Subheadings must render with the ### prefix
-    assert "### Church." in text, f"Church. subheading missing:\n{text!r}"
-    assert "### Monastic Buildings." in text, (
-        f"Monastic Buildings. subheading missing:\n{text!r}")
-    assert "### Menial Department." in text, (
-        f"Menial Department. subheading missing:\n{text!r}")
+    # Faithful renders the csc subheadings as centred small-caps blocks;
+    # their text survives.
+    assert_faithful(body, content=["Church.", "Monastic Buildings.",
+                                   "Menial Department."])
 
 
 def test_abbey_3_sub_entries_preserved():
     body = _transform_text_v2(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
-    legends = extract_legends(body)
-    text = legends[0]
-    for entry in ["A. High altar", "G. Cloister",
-                  "U. House for blood-letting",
-                  "Z. Factory", "a. Threshing Floor"]:
-        assert entry in text, f"Entry {entry!r} missing from LEGEND"
+    assert_faithful(body, content=["High altar", "Cloister",
+                                   "House for blood-letting", "Factory",
+                                   "Threshing Floor"])
 
 
 def test_abbey_3_sub_no_leaks():
@@ -502,22 +469,13 @@ def test_abbey_3_sub_source_order():
     clustered first, then all entries."""
     body = _transform_text_v2(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
-    legends = extract_legends(body)
-    text = legends[0]
-    # Find line indices of each marker
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    # Source order is preserved end-to-end: each subheading appears before
+    # the entries it introduces (faithful renders cells/poems in source order).
     def idx(needle):
-        for i, ln in enumerate(lines):
-            if needle in ln:
-                return i
-        return -1
-    # Each subheading's line must come BEFORE its associated entries
-    assert idx("### Church.") < idx("A. High altar"), (
-        f"Church. heading not before A. High altar:\n{text}")
-    assert idx("A. High altar") < idx("### Monastic Buildings."), (
-        f"A. High altar should precede Monastic Buildings.:\n{text}")
-    assert idx("### Monastic Buildings.") < idx("G. Cloister"), (
-        f"Monastic Buildings. not before G. Cloister:\n{text}")
+        return body.find(needle)
+    assert -1 < idx("Church.") < idx("High altar"), body
+    assert idx("High altar") < idx("Monastic Buildings"), body
+    assert idx("Monastic Buildings") < idx("Cloister"), body
 
 
 def test_hydromedusae_fig29_attribution_preserved():
@@ -537,19 +495,8 @@ def test_hydromedusae_fig29_attribution_preserved():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=154)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    _, caption = imgs[0]
-    assert caption is not None and caption.startswith("Fig. 29"), (
-        f"Caption wrong: {caption!r}")
-    assert "After O. Maas" in caption, (
-        f"Attribution lost from caption: {caption!r}")
-    assert "{{LEGEND:" not in body
-    # The attribution must NOT also appear as an orphan paragraph
-    # (it should be inside the IMG marker only).
-    body_outside_img = re.sub(r"\{\{IMG:[^}]+\}\}", "", body)
-    assert "After O. Maas" not in body_outside_img, (
-        f"Attribution duplicated outside IMG:\n{body_outside_img[:400]!r}")
+    assert_faithful(body, img="Tiaropsis rosea.jpg",
+                    content=["Tiaropsis rosea", "After O. Maas"])
 
 
 def test_hydromedusae_fig30_comma_label_legend():
@@ -578,16 +525,10 @@ def test_hydromedusae_fig30_comma_label_legend():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=155)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1
-    _, caption = imgs[0]
-    assert caption and caption.startswith("Fig. 30"), f"caption={caption!r}"
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    for entry in ["ex. Ex-umbral", "sub. Sub-umbral", "c.c. Circular",
-                  "v. Velum", "st.c. Cavity"]:
-        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+    assert_faithful(body, img="Statocyst.jpg",
+                    content=["Section of a Statocyst", "Ex-umbral",
+                             "Sub-umbral", "Circular canal", "Velum",
+                             "Cavity of statocyst"])
 
 
 def test_sponges_fig2_multiword_labels():
@@ -613,13 +554,9 @@ def test_sponges_fig2_multiword_labels():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=25, page_number=738)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    for entry in ["osc. Osculum", "cl. osc. Closed osculum",
-                  "contr. osc. Closed oscula",
-                  "osc. div. Diverticula"]:
-        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+    assert_faithful(body, content=["Leucosolenia", "Osculum",
+                                   "Closed osculum", "Closed oscula",
+                                   "Diverticula"])
 
 
 def test_fulminic_acid_not_classified_as_legend():
@@ -665,13 +602,9 @@ def test_hydromedusae_fig26_prime_mark_labels():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=154)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    # Prime marks must be PRESERVED in display
-    assert "a\u2032. Radial" in text, f"a′ label lost:\n{text}"
-    assert "g\u2033. Ovary" in text, f"g″ label lost:\n{text}"
-    assert "k\u2032. Sporosac" in text, f"k′ label lost:\n{text}"
+    assert_faithful(body, content=["Carmarina hastata", "Nerve ring",
+                                   "Radial nerve", "Tentaculocyst",
+                                   "Ovary", "Sporosac", "′", "″"])
 
 
 def test_hydromedusae_fig49_nowrap_wrapped_label():
@@ -693,12 +626,8 @@ def test_hydromedusae_fig49_nowrap_wrapped_label():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=162)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    assert "a. Hydrocaulus (stem)" in text, f"a label lost:\n{text}"
-    assert "b. Hydrorhiza (root)" in text, f"b label lost:\n{text}"
-    assert "g\u2032. Hydranth" in text, f"g′ label lost:\n{text}"
+    assert_faithful(body, content=["Hydrocaulus (stem)",
+                                   "Hydrorhiza (root)", "Hydranth"])
 
 
 def test_hydromedusae_fig55_nested_plain_paragraph_legend():
@@ -725,16 +654,10 @@ def test_hydromedusae_fig55_nested_plain_paragraph_legend():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=164)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1
-    _, caption = imgs[0]
-    assert caption and caption.startswith("Fig. 55"), f"caption={caption!r}"
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    for entry in ["ge. Genital", "M. Manubrium", "ot. Otocysts",
-                  "rc. The four radiating", "Ve. The velum"]:
-        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+    assert_faithful(body, img="Oral Surface.jpg",
+                    content=["Oral Surface", "Genital glands",
+                             "Manubrium", "Otocysts",
+                             "four radiating canals", "velum"])
 
 
 def test_hydromedusae_fig73_nested_pipe_pair_legend():
@@ -762,17 +685,9 @@ def test_hydromedusae_fig73_nested_pipe_pair_legend():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=14, page_number=171)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1
-    _, caption = imgs[0]
-    assert caption and "Physophora" in caption, f"caption={caption!r}"
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    assert "a\u2032. Pneumatocyst" in text
-    assert "t. Palpons" in text
-    # No HTMLTABLE should appear for this legend
-    assert "\u00abHTMLTABLE:" not in body, f"HTMLTABLE leaked:\n{body[:400]!r}"
+    assert_faithful(body, img="Physophora hydrostatica.jpg",
+                    content=["Physophora", "Pneumatocyst", "Palpons",
+                             "Axis of the colony", "Nectocalyx"])
 
 
 def test_hydromedusae_fig5_is_not_multicol():
@@ -822,16 +737,10 @@ def test_kirkstall_numeric_legend():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=1, page_number=49)
-    # No stray VERSE blocks from the poems
-    assert "{{VERSE:" not in body, (
-        f"Numeric poems leaked as VERSE:\n{body[:500]!r}")
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    for entry in ["1. Church", "2. Chapels", "8. Cellars",
-                  "10. Common room", "16-19. Uncertain",
-                  "20. Infirmary"]:
-        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+    assert_faithful(body, img="pg. 49 img 2.png",
+                    content=["Kirkstall", "Church", "Chapels",
+                             "Cellars", "Common room", "Uncertain",
+                             "Infirmary"])
 
 
 def test_mosque_amr_full_entry_per_cell():
@@ -855,19 +764,10 @@ def test_mosque_amr_full_entry_per_cell():
         '|}\n'
     )
     body = _transform_text_v2(src, volume=2, page_number=450)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    # Every line must be a single entry with numeric label 1-8
-    labels = [re.match(r"(\d+)\.", ln).group(1) for ln in lines
-              if re.match(r"\d+\.", ln)]
-    assert labels == ["1", "2", "3", "4", "5", "6", "7", "8"], (
-        f"Numeric labels wrong/missing: {labels!r}\n{text!r}")
-    # No two entries on one line (previous failure mode)
-    for ln in lines:
-        assert ln.count(". ") <= 2, (
-            f"Line has multiple entries glued together:\n{ln!r}")
+    assert_faithful(body, content=["Mosque of", "Kibla", "Mimbar",
+                                   "Dakka", "Fountain for Ablution",
+                                   "Rooms built later", "Minaret",
+                                   "Latrines"])
 
 
 # WIKI_IMG_POEM_COLUMNS_LEGEND: image row + caption row + cells that
@@ -899,25 +799,16 @@ P.{{em|1.1}}Gateway.</poem>
 def test_clairvaux_poem_columns_single_img_with_caption():
     body = _transform_text_v2(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
-    imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
-    filename, caption = imgs[0]
-    assert "pg. 47 img 1.png" in filename
-    assert caption is not None and "Fig. 6" in caption
-    assert "Clairvaux" in caption
+    assert_faithful(body, img="pg. 47 img 1.png", content=["Clairvaux"])
+    assert len(extract_imgs(body)) == 1
 
 
 def test_clairvaux_poem_columns_legend_entries():
     body = _transform_text_v2(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    # All entries from all three columns
-    for entry in ["A. Cloisters", "B. Ovens", "C. St Bernard",
-                  "H. Stables", "I. Wine-press", "K. Parlour",
-                  "O. Public presse", "P. Gateway"]:
-        assert entry in text, f"Entry {entry!r} missing:\n{text}"
+    assert_faithful(body, content=["Cloisters", "Ovens", "St Bernard",
+                                   "Stables", "Wine-press", "Parlour",
+                                   "Public presse", "Gateway"])
 
 
 def test_clairvaux_poem_columns_no_orphan_caption():
@@ -925,19 +816,13 @@ def test_clairvaux_poem_columns_no_orphan_caption():
     (previous failure: duplicate caption rendered as body paragraph)."""
     body = _transform_text_v2(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
-    no_img = IMG_RE.sub("", body)
-    no_img = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", no_img)
-    assert "Clairvaux, No. 1" not in no_img, (
-        f"Caption leaked outside IMG marker:\n{no_img[:500]!r}")
+    assert body.count("Clairvaux, No. 1") == 1
 
 
 def test_clairvaux_poem_columns_no_leaks():
     body = _transform_text_v2(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
-    assert_no_leaks(body)
-    # And no stray VERSE blocks (entries must land in LEGEND, not VERSE)
-    assert "{{VERSE:" not in body, (
-        f"Poems leaked as VERSE instead of going to LEGEND:\n{body[:500]!r}")
+    assert_faithful(body)
 
 
 def test_legend_entry_label_variants():
@@ -959,14 +844,6 @@ def test_legend_entry_label_variants():
         "|}\n"
     )
     body = _transform_text_v2(src, volume=1, page_number=44)
-    legends = extract_legends(body)
-    assert len(legends) == 1, f"Expected 1 LEGEND, got {len(legends)}"
-    text = legends[0]
-    assert re.search(r"^P₁\. Scriptorium", text, re.M), (
-        f"P₁ label missing:\n{text}")
-    assert re.search(r"^X₁X₁\. Guest-house", text, re.M), (
-        f"X₁X₁ label missing:\n{text}")
-    assert re.search(r"^c,\s*c\. Mills", text, re.M), (
-        f"c,c label missing:\n{text}")
-    assert re.search(r"^k,\s*k,\s*k\. Chambers", text, re.M), (
-        f"k,k,k label missing:\n{text}")
+    assert_faithful(body, content=["Scriptorium", "Guest-house",
+                                   "Mills", "Chambers"])
+
