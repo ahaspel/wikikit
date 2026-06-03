@@ -92,20 +92,12 @@ _REF_SELF_RE = re.compile(r"<ref\s[^>]*/\s*>", re.IGNORECASE)
 _PAGEQUALITY_RE = re.compile(
     r"<pagequality\b[^>]*/\s*>", re.IGNORECASE)
 
-# HTML tag recognizers — each one specific to a single tag name.
-# `<ref>` placed AFTER `<ref…/>` (specificity: longer match preferred
-# means we try self-closing first; only fall through to the
-# `<TAG>…</TAG>` form when self-closing doesn't match).
-_REF_RE         = re.compile(r"<ref(?:\s[^>]*)?>.*?</ref>",
-                              re.DOTALL | re.IGNORECASE)
-_HTML_TABLE_RE  = re.compile(r"<table\b[^>]*>.*?</table>",
-                              re.DOTALL | re.IGNORECASE)
-_POEM_RE        = re.compile(r"<poem>.*?</poem>",
-                              re.DOTALL | re.IGNORECASE)
-_MATH_RE        = re.compile(r"<math[^>]*>.*?</math>",
-                              re.DOTALL | re.IGNORECASE)
-_SCORE_RE       = re.compile(r"<score[^>]*>.*?</score>",
-                              re.DOTALL)
+# `<ref>`/`<table>`/`<poem>`/`<math>`/`<score>` no longer have per-tag
+# recognizer regexes — they are bounded by the one balanced `_construct_end`
+# rule (see `_ELEMENT_TAGS`).  The old `<tag\b[^>]*>.*?</tag>` non-greedy
+# forms each embedded a false no-nesting assumption and have been deleted.
+# `<hiero>` keeps a regex only because its content alphabet is `[^<]` (glyph
+# codes, no nesting) — a genuine leaf, not a balanced container.
 _HIEROGLYPH_TAG_RE = re.compile(r"<hiero>[^<]*</hiero>", re.IGNORECASE)
 
 # Wikisource transclusion marker `<section begin="X"/>` / `<section end/>`.
@@ -390,11 +382,11 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_MIRROR_GLYPH,      _MIRROR_GLYPH_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
     (SHAPE_HTML_SELF_CLOSING, _PAGEQUALITY_RE),
-    (SHAPE_HTML_TAG,          _REF_RE),
-    (SHAPE_HTML_TAG,          _HTML_TABLE_RE),
-    (SHAPE_HTML_TAG,          _POEM_RE),
-    (SHAPE_HTML_TAG,          _MATH_RE),
-    (SHAPE_HTML_TAG,          _SCORE_RE),
+    # `<table>`/`<ref>`/`<poem>`/`<math>`/`<score>` are bounded by the one
+    # balanced `_construct_end` rule (see the `_ELEMENT_TAGS` handler in
+    # `_walk_balanced_shapes`), NOT by per-tag non-greedy regexes — those
+    # embedded a false no-nesting assumption (table-in-table orphaned the
+    # outer tail into body-text).
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
     (SHAPE_DOUBLE_BRACE,      _DJVU_CROP_RE),
     (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
@@ -433,78 +425,85 @@ _OPENER_HINT_RE = re.compile(
 )
 
 
-# Spans whose `{|` / `|}` are NOT wiki-table syntax: LaTeX inside
-# `<math>`, verbatim `<nowiki>`, HTML comments.  Masked off before the
-# balanced-table scanner runs so a stray `\frac{|…}` in math doesn't
-# read as a table opener.
-_NON_TABLE_BRACE_SPAN_RE = re.compile(
-    r"<math\b[^>]*>.*?</math\s*>"
-    r"|<nowiki\b[^>]*>.*?</nowiki\s*>"
-    r"|<!--.*?-->",
-    re.DOTALL | re.IGNORECASE,
-)
+# ── The one balanced-span matcher (syntactic; shape-blind) ──────────────
+#
+# The walker's ONLY span-bounding rule.  It knows bracket SYNTAX and nothing
+# else — not "table", not "ref", not "figure".  An opener is matched to its
+# closer by scanning forward and SKIPPING every nested construct whole
+# (recursively, via the same function); the first closer not inside a nested
+# span is ours.  Because the skip is uniform over every bracket kind, nesting
+# of ANY construct inside ANY other (table-in-table, table-in-ref,
+# poem-in-table, …) is bounded correctly by this one rule — there are no
+# per-shape bounders left to whack.  Balanced-matching IS the leaf/recurse
+# decision: a span with nested brackets recurses, one without is a leaf.
+#
+# OPAQUE tags (`<math>`/`<nowiki>`/`<score>`/comments) carry verbatim content
+# — LaTeX braces, lilypond `<c e g>` chords — that are NOT wiki brackets, so
+# their interior is skipped without interpretation.
+_BRACKET_CLOSE = {"{{": "}}", "{|": "|}", "[[": "]]"}
+_OPAQUE_TAGS = frozenset({
+    "math", "nowiki", "score", "pre", "syntaxhighlight", "source", "timeline"})
+_TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
+# The block-level HTML tags the walker lifts as their own SHAPE_HTML_TAG
+# element (every one bounded by the same `_construct_end` rule; the old
+# per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
+# NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
+# SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
+_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score"})
 
 
-def _find_brace_pipe_end(text: str, start: int) -> int | None:
-    """Find the byte position one past the balanced ``|}`` (or
-    ``</table>``) closing the wikitable that begins at ``start``.
+def _construct_end(text: str, start: int) -> int | None:
+    """Byte position one past the close of the bracket construct opening at
+    ``start`` (HTML element, ``{{…}}``, ``{|…|}``, ``[[…]]``, or an opaque /
+    self-closing / comment atom), or None if ``start`` is not an opener or
+    the construct is unbalanced.  The single span-bounding primitive."""
+    if text.startswith("<!--", start):
+        e = text.find("-->", start + 4)
+        return e + 3 if e >= 0 else None
+    if start < len(text) and text[start] == "<":
+        m = _TAG_START_RE.match(text, start)
+        if m:
+            gt = text.find(">", start)
+            if gt < 0:
+                return None
+            if text[gt - 1] == "/":               # self-closing → atomic
+                return gt + 1
+            name = m.group(1).lower()
+            if name in _OPAQUE_TAGS:              # verbatim interior → no scan
+                close = f"</{name}>"
+                e = text.lower().find(close, gt + 1)
+                return e + len(close) if e >= 0 else None
+            if name in _ELEMENT_TAGS:             # balanced block element
+                return _scan_balanced(text, gt + 1, f"</{name}", tag=True)
+            # Any OTHER tag (`<td>`/`<tr>`/`<div>`/`<i>`/…) is NOT a construct
+            # the walker bounds — return None so the scanner steps over the
+            # `<` as a literal char.  (Chasing a `</td>` that the source often
+            # omits would run to end-of-text, per cell — quadratic.)
+            return None
+    two = text[start:start + 2]
+    if two in _BRACKET_CLOSE:
+        return _scan_balanced(text, start + 2, _BRACKET_CLOSE[two], tag=False)
+    return None
 
-    Returns None if no balanced close exists.
 
-    Mirrors the legacy balanced scanner's depth tracking: ``{{…}}``
-    template blocks are skipped wholesale, nested ``{|…|}`` increment
-    depth, ``<table>…</table>`` HTML pairs maintain their own depth
-    counter so a ``</table>`` inside a nested HTML table doesn't
-    masquerade as a wiki-table close.
-    """
-    masked = _NON_TABLE_BRACE_SPAN_RE.sub(
-        lambda m: " " * len(m.group(0)), text)
-    if masked[start:start+2] != "{|":
-        return None
-    depth = 0
-    html_depth = 0
-    i = start
+def _scan_balanced(text: str, i: int, closer: str, *, tag: bool) -> int | None:
+    """Scan from ``i`` for ``closer``, skipping every nested construct whole
+    (``_construct_end`` recursion).  ``tag`` closers (``</name``) tolerate
+    attributes/space before ``>``; literal closers (``}}`` / ``|}`` / ``]]``)
+    match exactly."""
     n = len(text)
-    while i < n - 1:
-        if masked[i:i+2] == "{{":
-            tdepth = 1
-            j = i + 2
-            while j < n - 1 and tdepth > 0:
-                if masked[j:j+2] == "{{":
-                    tdepth += 1
-                    j += 2
-                elif masked[j:j+2] == "}}":
-                    tdepth -= 1
-                    j += 2
-                else:
-                    j += 1
-            if tdepth == 0:
-                i = j
-            else:
-                # Malformed `{{` without matching `}}` — treat as
-                # literal and keep scanning for the table close.
-                i += 2
-            continue
-        if (i + 7 < n and masked[i:i+6].lower() == "<table"
-                and masked[i+6] in (" ", ">", "\t", "\n")):
-            html_depth += 1
-            j = text.find(">", i)
-            i = j + 1 if j >= 0 else i + 6
-            continue
-        if masked[i:i+8].lower() == "</table>" and html_depth > 0:
-            html_depth -= 1
-            i += 8
-            continue
-        if masked[i:i+2] == "{|":
-            depth += 1
-            i += 2
-        elif (masked[i:i+2] == "|}"
-              or (masked[i:i+8].lower() == "</table>" and depth > 0)):
-            depth -= 1
-            closer_len = 2 if masked[i:i+2] == "|}" else 8
-            if depth == 0:
-                return i + closer_len
-            i += closer_len
+    cl = closer.lower()
+    while i < n:
+        if tag:
+            if text[i:i + len(closer)].lower() == cl:
+                gt = text.find(">", i)
+                if gt >= 0:
+                    return gt + 1
+        elif text.startswith(closer, i):
+            return i + len(closer)
+        j = _construct_end(text, i)               # skip any nested construct
+        if j is not None and j > i:
+            i = j
         else:
             i += 1
     return None
@@ -601,6 +600,19 @@ def _walk_balanced_shapes(
             if pe is not None:
                 matched = (pe, SHAPE_CENTER, text[opener_pos:pe])
 
+        # Block HTML element (`<table>`/`<ref>`/`<poem>`/`<math>`/`<score>`)
+        # — bounded by the one balanced rule, so a nested construct can't
+        # truncate the span.  Self-closing forms fall through to the
+        # SHAPE_HTML_SELF_CLOSING recognizers below.
+        if matched is None and opener_pos < n and text[opener_pos] == "<":
+            tm = _TAG_START_RE.match(text, opener_pos)
+            if tm and tm.group(1).lower() in _ELEMENT_TAGS:
+                gt = text.find(">", opener_pos)
+                if gt > opener_pos and text[gt - 1] != "/":
+                    end = _construct_end(text, opener_pos)
+                    if end is not None:
+                        matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
+
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
                 m = pattern.match(text, opener_pos)
@@ -651,7 +663,7 @@ def _walk_balanced_shapes(
         # requires balanced depth tracking.  Try it last (lowest
         # specificity) only if no regex recognizer fired.
         if matched is None and text[opener_pos:opener_pos+2] == "{|":
-            end = _find_brace_pipe_end(text, opener_pos)
+            end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_BRACE_PIPE, text[opener_pos:end])
 
