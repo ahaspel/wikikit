@@ -80,19 +80,25 @@ def _process_ref(raw, inner, text_transform, ref_bodies=None):
     return f"«FN:{content}«/FN»"
 
 
-def resolve_ref_bodies(tree, text_transform) -> dict[str, str]:
+def resolve_ref_bodies(tree, text_transform, context=None) -> dict[str, str]:
     """Article-scoped resolution of named / continuation footnotes.
 
     ref and note are SPLIT by necessity: a ``<ref name=X/>`` reuse, the
     ``<ref name=X>body</ref>`` definition, and any ``<ref follow=X>…``
     continuation can each live anywhere in the article.  This reunites
-    them into NAME → body.  It is footnote-owned (it used to live in the
-    classifier) and, like the producer, KEEPS the body's markers — no
-    flatten — so footnote formatting / links / glyphs survive.
+    them into NAME → body.
 
-    Walks the tree's top-level entries only — under today's walker, refs
-    inside poems / tables surface as flat top-level extracts, so a
-    top-level scan suffices.
+    Each contributing body is RECURSED to the ground through the element
+    pipeline (``process_elements``) — a table / figure / poem inside a
+    named or ``follow`` footnote becomes a real nested element, not
+    flattened prose.  The plain ``<ref>`` path already recurses (its inner
+    is classified and ``produce_tree`` substitutes the child markers); this
+    brings name/follow into line, instead of running ``text_transform`` over
+    the concatenated RAW bodies (which dropped a ``<table>`` to ``<td …>``
+    debris — the MACHINE-GUN table-in-ref leak).  [[project_walker_one_matcher]]
+
+    Falls back to the old flatten only when no ``context`` is supplied
+    (``process_elements`` needs it); production always passes one.
     """
     parts: dict[str, list[str]] = {}
     for _ph, ce in tree.items():
@@ -111,5 +117,11 @@ def resolve_ref_bodies(tree, text_transform) -> dict[str, str]:
         parts.setdefault(target, []).append(body)
     resolved: dict[str, str] = {}
     for nm, bodies in parts.items():
-        resolved[nm] = text_transform(" ".join(bodies)).strip()
+        if context is not None:
+            from britannica.pipeline.stages.elements import process_elements
+            produced = [process_elements(b, text_transform, context)
+                        for b in bodies]
+        else:
+            produced = [text_transform(b) for b in bodies]
+        resolved[nm] = " ".join(p.strip() for p in produced).strip()
     return resolved

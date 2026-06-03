@@ -22,18 +22,24 @@ import re
 from typing import NamedTuple
 
 
-_FILE_RE = re.compile(r"\|\s*file\s*=\s*([^|}\n]+)", re.IGNORECASE)
+# ``{{img float}}`` uses ``file=``/``cap=``/``align=``; the ``{{figure}}``
+# variant uses the synonyms ``image=``/``caption=``/``position=`` (and an
+# ``image=`` value may carry a ``File:``/``Image:`` prefix).  Accepting both
+# vocabularies here recovers the ~50 ``{{figure|image=…}}`` figures the
+# ``file=``-only pattern dropped (silently, in the old producer too).
+_FILE_RE = re.compile(
+    r"\|\s*(?:file|image)\s*=\s*(?:(?:File|Image):\s*)?([^|}\n]+)", re.IGNORECASE)
 
 # Caption value can include nested ``{{…{{…}}…}}`` up to two levels.
 _CAPTION_RE = re.compile(
-    r"\|\s*cap\s*=\s*((?:[^|{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})+)",
+    r"\|\s*(?:caption|cap)\s*=\s*((?:[^|{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})+)",
     re.IGNORECASE,
 )
-# ``width=Npx`` (the only size form ``{{img float}}`` uses); capture the
+# ``width=Npx`` (the only size form these templates use); capture the
 # leading width, tolerate a trailing ``xMpx`` height defensively.
 _WIDTH_RE = re.compile(r"\|\s*width\s*=\s*(\d+)(?:x\d+)?px", re.IGNORECASE)
 _ALIGN_RE = re.compile(
-    r"\|\s*align\s*=\s*(center|centre|left|right)\b", re.IGNORECASE)
+    r"\|\s*(?:align|position)\s*=\s*(center|centre|left|right)\b", re.IGNORECASE)
 
 
 class ImgFloat(NamedTuple):

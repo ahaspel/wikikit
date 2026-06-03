@@ -1313,7 +1313,7 @@ def process_elements(text: str, markup_transform,
     # merged body.  Threaded into `context` so the REF producer can
     # read it.  Copy the caller's context so we don't mutate it.
     context = _dc_replace(context)
-    context.ref_bodies = resolve_ref_bodies(tree, markup_transform)
+    context.ref_bodies = resolve_ref_bodies(tree, markup_transform, context)
 
     # Produce: bottom-up over the tree.  Each element's producer
     # runs after its children's markers exist; child markers are
