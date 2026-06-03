@@ -36,9 +36,6 @@ from britannica.pipeline.stages.transform_articles.body_text import (
     _unwrap_content_templates,
     _unwrap_layout_templates,
 )
-from britannica.pipeline.stages.transform_articles.plate_legacy import (
-    _transform_plate,
-)
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,
@@ -382,10 +379,17 @@ def transform_articles(volume: int) -> int:
             is_plate = article.article_type == "plate"
 
             if is_plate:
-                # Plates are single pages — process directly
+                # Plates go through the SAME faithful recursive producer as
+                # in-article figures (the plate playbook).  The old `parse_plate`
+                # flattened the image grid to a vertical stack of caption-folded
+                # `{{IMG:|cap}}` and destroyed every `«SC»`/`«I»`/`«BR»`; the
+                # faithful producer preserves the header, the `{|`-grid (→
+                # figtable), and the marked-up captions.
                 raw = segments[0][0].segment_text if segments else ""
-                from britannica.parsers.plate import parse_plate
-                article.body = parse_plate(raw) if raw else ""
+                from britannica.pipeline.stages.elements._figure_faithful import (
+                    produce_faithful_figure,
+                )
+                article.body = produce_faithful_figure(raw) if raw else ""
             else:
                 # Re-assemble the article body from its per-page segments.
                 # FAITHFULLY: each segment is a slice of the clean stream cut at a
