@@ -1,0 +1,989 @@
+PAGE:737(from Lat. «I»interpolare«/I», to alter, or insert
+something fresh, connected with «I»polire«/I», a polish), in mathematics,
+the process of obtaining intermediate terms of a series
+of which particular terms only are given. The cubes, for instance,
+shown in the second column of the accompanying table, may
+be regarded as terms of a series, and the cube of a fractional
+number, not exceeding the last number in the first column,
+may be found by interpolation. The process of obtaining the
+cube of a number exceeding the last number in the first column
+would be «I»extrapolation«/I»; the formulae which apply to interpolation
+apply in theory to extrapolation, but in practice
+special precautions as to accuracy are necessary. The present
+article deals only with interpolation.
+
+<table align=center {{Ts|sm92|lh13|ba|bc}} rules=cols>
+<tr align=center><td {{Ts|pl.5|pr.5|ba}}>Number.</td> <td {{Ts|pl.5|pr.5|ba}}>Cube of Number.</td></tr>
+
+<tr align=center><td>0</td> <td>&emsp;0</td></tr>
+<tr align=center><td>1</td> <td>&emsp;1</td></tr>
+<tr align=center><td>2</td> <td>&emsp;8</td></tr>
+<tr align=center><td>3</td> <td>&ensp;27</td></tr>
+<tr align=center><td>4</td> <td>&ensp;64</td></tr>
+<tr align=center><td>5</td> <td>125</td></tr>
+<tr align=center><td>6</td> <td>216</td></tr>
+<tr align=center><td>.</td> <td>.</td></tr>
+<tr align=center><td>.</td> <td>.</td></tr>
+<tr align=center><td>.</td> <td>.</td></tr>
+</table>
+
+The term is usually limited to those cases in which there
+are two quantities, «I»x«/I» and «I»u«/I», which are so related that when «I»x«/I»
+has any arbitrary value, lying perhaps between certain limits,
+the value of «I»u«/I» is determinate. There is a given series of associated
+values of «I»u«/I» and of «I»x«/I», and interpolation consists in determining
+the value of «I»u«/I» for any arbitrary value of «I»x«/I», or the value of «I»x«/I» for
+any arbitrary value of «I»u«/I», lying between two of the values in the
+series. Either of the two quantities may be regarded as a function
+of the other; it is convenient to treat one, «I»x«/I», as the “independent
+variable,” the other, «I»u«/I», being treated as the “dependent variable,”
+«I»i.e.«/I» as a function of «I»x«/I». If, as is usually the case, the successive
+values of one of the quantities proceed by a constant increment,
+this quantity is to be regarded as the independent variable.
+The two series of values may be tabulated, those of «I»x«/I» being
+placed in a column (or row), and those of «I»u«/I» in a parallel column
+(or row); «I»u«/I» is then said to be «I»tabulated in terms of x«/I». The independent
+variable «I»x«/I» is called the «I»argument«/I», and the dependent
+variable «I»u«/I» is called the «I»entry«/I». Interpolation, in the ordinary
+sense, consists in determining the value of «I»u«/I» for a value of «I»x«/I»
+intermediate between two values appearing in the table. This
+may be described as «I»direct interpolation«/I», to distinguish it from
+«I»inverse interpolation«/I», which consists in determining the value of
+«I»x«/I» for a value of «I»u«/I» intermediate between two in the table. The
+methods employed can be extended to cases in which the value
+of «I»u«/I» depends on the values of two or more independent quantities
+«I»x«/I», «I»y«/I»,...
+
+
+In the ordinary case we may regard the values of «I»x«/I» as measured
+along a straight line OX from a fixed point O, so that to any value
+of «I»x«/I» there corresponds a point on the line. If we represent the
+corresponding value of «I»u«/I» by an ordinate drawn from the line, the
+extremities of all such ordinates will lie on a curve which will be the
+graph of «I»u«/I» with regard to «I»x«/I». Interpolation therefore consists in
+determining the length of the ordinate of a curve occupying a
+particular position, when the lengths of ordinates occupying certain
+specified positions are known. If «I»u«/I» is a function of two variables,
+«I»x«/I» and «I»y«/I», we may similarly represent it by the ordinate of a surface,
+the position of the ordinate being determined by the values of «I»x«/I»
+and of «I»y«/I» jointly.
+
+The series or tables to which interpolation has to be applied may
+for convenience be regarded as falling into two main groups. The
+first group comprises mathematical tables, «I»i.e.«/I» tables of mathematical
+functions; in the case of such a table the value of the function u
+for each tabulated value of «I»x«/I» is calculated to a known degree of
+accuracy, and the degree of accuracy of an interpolated value of u
+can be estimated. The second group comprises tables of values
+which are found experimentally, «I»e.g.«/I» values of a physical quantity
+or of a statistical ratio; these values are usually subject to certain
+“errors” of observation or of random selection (see {{EB1911 article link|Probability}}).
+The methods of interpolation are usually the same in the two groups
+of cases, but special considerations have to be taken into account
+in the second group. The line of demarcation of the two groups is
+not absolutely fixed; the tables used by actuaries, for instance,
+which are of great importance in practical life, are based on statistical
+observations, but the tables formed directly from the observations
+have been “smoothed” so as to obtain series which correspond in
+form to the series of values of mathematical functions.
+
+It must be assumed, at any rate in the case of a mathematical
+function, that the “entry” «I»u«/I» varies continuously with the “argument”
+«I»x«/I», «I»i.e.«/I» that there are no sudden breaks, changes of direction,
+&c., in the curve which is the graph of «I»u«/I».
+
+Various methods of interpolation are described below. The
+simplest is that which uses the «I»principle of proportional parts«/I»;
+and mathematical tables are usually arranged so as to enable this
+method to be employed. Where this is not possible, the methods are
+based either on the use of Taylor’s Theorem, which gives a formula
+involving differential coefficients (see {{EB1911 article link|Infinitesimal Calculus}}),
+or on the properties of finite differences (see {{EB1911 article link|Differences, Calculus of}}).
+Taylor’s Theorem can only be applied directly to a known
+mathematical function; but it can be applied indirectly, by means
+of finite differences, in various cases where the form of the function
+expressing «I»u«/I» in terms of «I»x«/I» is unknown; and even where the form
+of this function is known it is sometimes more convenient to determine
+the differential coefficients by means of the differences than
+to calculate them directly from their mathematical expressions.
+Finally, there are cases where we cannot even employ finite-difference
+formulae directly. In these cases we must adopt some special
+method; «I»e.g.«/I» we may instead of «I»u«/I» tabulate some function of «I»u«/I»,
+such as its logarithm, which is found to be amenable to ordinary
+processes, then determine the value of this function corresponding
+to the particular value of «I»x«/I», and thence determine the corresponding
+value of «I»u«/I» itself.
+
+In considering methods of interpolation, it will be assumed,
+unless the contrary is stated, that the values of «I»x«/I» proceed by a
+constant increment, which will be denoted by «I»h«/I».
+
+In order to see what method is to be employed, it is usually
+necessary to arrange the given series of values of «I»u«/I» in the form of a
+table, as explained above, and then to take the successive «I»differences«/I»
+of «I»u«/I». The differences of the successive values of «I»u«/I» are called its
+«I»first differences«/I»; these form a new series, the first differences of
+which are the «I»second differences«/I» of «I»u«/I»; and so on. The systems of
+notation of the differences are explained briefly below. For the
+fuller discussion, reference should be made to {{EB1911 article link|Differences, Calculus of}}.
+
+{{center|{{sc|I. Interpolation from Mathematical Tables}}}}
+
+{{center|A. Direct Interpolation.}}
+
+1. «I»Interpolation by First Differences.«/I»—The simplest cases are
+those in which the first difference in «I»u«/I» is constant, or nearly so.
+{{nowrap|For example:—}}
+
+<table align=center {{Ts|sm92|lh13|bc}}>
+<tr rules="cols"><td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 1.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td> <td>&emsp;&emsp;</td> <td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 2.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td></tr>
+
+<tr align=center><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|vtp|ac|ba}}>1st Diff.</td> <td>&emsp;&emsp;&emsp;</td> <td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>1st Diff.</td></tr>
+
+<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}><big>+</big></td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}><big>+</big></td></tr>
+<tr align=center><td {{Ts|bl|br}}>&thinsp;4.341&thinsp;</td> <td {{Ts|br}}>&thinsp;.6375898&thinsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.40</td> <td {{Ts|br}}>.86923</td> <td {{Ts|br}}>&nbsp;</td></tr>
+<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>59</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.342</td> <td {{Ts|br}}>.6376898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.41</td> <td {{Ts|br}}>.86982</td> <td {{Ts|br}}>&nbsp;</td></tr>
+<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>58</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.343</td> <td {{Ts|br}}>.6377898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.42</td> <td {{Ts|br}}>.87040</td> <td {{Ts|br}}>&nbsp;</td></tr>
+<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>59</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.344</td> <td {{Ts|br}}>.6378898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.43</td> <td {{Ts|br}}>.87099</td> <td {{Ts|br}}>&nbsp;</td></tr>
+<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>58</td></tr>
+<tr align=center><td {{Ts|bl|br|bb}}>4.345</td> <td {{Ts|br|bb}}>.6379898</td> <td {{Ts|br|bb}}>&nbsp;</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td {{Ts|br|bb}}>7.44</td> <td {{Ts|br|bb}}>.87157</td> <td {{Ts|br|bb}}>&nbsp;</td></tr>
+</table>
+In Example 1 the first difference of «I»u«/I» corresponding to a difference
+of «I»h«/I» ≡ .001 in «I»x«/I» is .0001000; but, since we are working throughout
+to seven places of decimals, it is more convenient to write it 1000.
+This system of ignoring the decimal point in dealing with differences
+will be adopted throughout this article. To find «I»u«/I» for an intermediate
+value of «I»x«/I» we assume the principle of proportional parts,
+«I»i.e.«/I» we assume that the difference in «I»u«/I» is proportional to the difference
+in «I»x«/I». Thus for «I»x«/I» = 4.342945 the difference in «I»u«/I» is .945 of 1000 = 945,
+so that «I»u«/I» is .6376898 + .0000945 = .6377843. For «I»x«/I» = 4.34294482
+the difference in «I»u«/I» would be 944.82, so that the value of «I»u«/I» would
+apparently be .6376898 + .000094482 = .637784282. This, however,
+would be incorrect. It must be remembered that the values of
+«I»u«/I» are only given “correct to seven places of decimals,” «I»i.e.«/I» eachPAGE:738tabulated value differs from the corresponding true value by a «I»tabular«/I»
+«I»error«/I» which may have any value up to ± {{EB1911 tfrac|1|2}} of .0000001; and we
+cannot therefore by interpolation obtain a result which is correct
+to nine places. If the interpolated value of «I»u«/I» has to be used in
+calculations for which it is important that this value should be as
+accurate as possible, it may be convenient to retain it temporarily
+in the form .6376898 + 944 82 = .6377842 82 or .6376898 + 944<sup>82</sup> =
+.6377842<sup>82</sup>; but we must ultimately return to the seven-place
+arrangement and write it as .6377843. The result of interpolation
+by first difference is thus usually subject to two inaccuracies, the
+first being the tabular error of «I»u«/I» itself, and the second being due to
+the necessity of adjusting the final figure of the added (proportional)
+difference. If the tabulated values are correct to seven places of
+decimals, the interpolated value, with the final figure adjusted, will
+be within .0000001 of its true value.
+
+In Example 2 the differences do not at first sight appear to run
+regularly, but this is only due to the fact that the final figure in
+each value of «I»u«/I» represents, as explained in the last paragraph, an
+approximation to the true value. The general principle on which
+we proceed is the same; but we use the actual difference corresponding
+to the interval in which the value of «I»x«/I» lies. Thus for «I»x«/I» = 7.41373
+we should have «I»u«/I» = .86982 + (.373 of 58) = .87004; this result
+being correct within .00001.
+
+2. «I»Interpolation by Second Differences.«/I»—If the consecutive first
+differences of «I»u«/I» are not approximately equal, we must take account
+of the next order of differences. For {{nowrap|example:—}}
+
+{{center|«I»Example«/I» 3.—(«I»u«/I» {{=}} log <sub>10</sub>«I»x«/I»).}}
+
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr><td {{Ts|ac|ba}}>«I»x«/I».</td> <td {{Ts|ac|ba}}>«I»u«/I».</td> <td {{Ts|ac|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ac|ba}}>&ensp;2nd Diff.&ensp;</td></tr>
+
+<tr  align=center><td>&emsp;6.0&emsp;</td> <td {{Ts|bl|br}}>&ensp;.77815&ensp;</td> <td {{Ts|br}}>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td> </td> <td {{Ts|bl|br}}>+718</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>6.1</td> <td {{Ts|br}}>.78533</td> <td {{Ts|br}}>&nbsp;</td> <td>−12</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+706</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.2</td> <td {{Ts|br}}>.79239</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+695</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>6.3</td> <td {{Ts|br}}>.79934</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+684</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>6.4</td> <td {{Ts|br}}>.80618</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+673</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>6.5</td> <td {{Ts|br}}>.81291</td> <td {{Ts|br}}>&nbsp;</td> <td>&nbsp;</td></tr>
+</table>
+
+In such a case the «I»advancing-difference«/I» formula is generally used.
+The notation is as follows. The series of values of «I»x«/I» and of «I»u«/I» are
+respectively «I»x«/I»<sub>0</sub>, «I»x«/I»<sub>1</sub>, «I»x«/I»<sub>2</sub>, {{...}} and «I»u«/I»<sub>0</sub>, «I»u«/I»<sub>1</sub>, «I»u«/I»<sub>2</sub>, {{...}} ; and the successive
+differences of «I»u«/I» are denoted by {{Polytonic|Δ}}«I»u«/I», {{Polytonic|Δ}}<sup>2</sup>u, {{...}} Thus {{Polytonic|Δ}}«I»u«/I»<sub>0</sub>
+denotes «I»u«/I»<sub>1</sub> − «I»u«/I»<sub>0</sub>, and {{Polytonic|Δ}}<sup>2</sup>«I»u«/I»<sub>0</sub> denotes {{Polytonic|Δ}}«I»u«/I»<sub>1</sub> −
+{{Polytonic|Δ}}«I»u«/I»<sub>0</sub> = «I»u«/I»<sub>2</sub> − 2«I»u«/I»<sub>1</sub> + «I»u«/I»<sub>0</sub>. The
+value of «I»x«/I» for which «I»u«/I» is sought is supposed to lie between «I»x«/I»<sub>0</sub> and «I»x«/I»<sub>1</sub>.
+If we write it equal to «I»x«/I»<sub>0</sub> + {{Polytonic|θ}}(«I»x«/I»<sub>1</sub> − «I»x«/I»<sub>0</sub>) = «I»x«/I»<sub>0</sub> + {{Polytonic|θ}}«I»h«/I», so that {{Polytonic|θ}} lies between
+0 and 1, we may denote it by «I»x«/I»<sub>{{Polytonic|θ}}</sub>, and the corresponding value of
+«I»u«/I» by «I»u«/I»<sub>{{Polytonic|θ}}</sub>. We have then
+
+<table {{ts|mc}}>
+<tr><td rowspan="2">«I»u«/I»{{Polytonic|θ}} = «I»u«/I»<sub>0</sub> + {{Polytonic|θΔ}}«I»u«/I»<sub>0</sub> −</td> <td>{{Polytonic|θ}} (1 − {{Polytonic|θ}})</td>
+<td rowspan="2">{{Polytonic|Δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> +</td> <td>{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}})</td>
+<td rowspan="2">{{Polytonic|Δ}}<sup>3</sup> «I»u«/I»<sub>0</sub> − {{...}}</td></tr>
+<tr><td {{Ts|bt|ac}}>2!</td> <td {{Ts|bt|ac}}>3!</td></tr></table>
+<div style="text-align: right; margin-top: -2.6em; margin-right: 1.5em;">(1).</div>
+
+
+Tables of the values of the coefficients of {{Polytonic|Δ}}<sup>2</sup>«I»u«/I»<sub>0</sub> and {{Polytonic|Δ}}<sup>3</sup>«I»u«/I»<sub>0</sub> to three
+places of decimals for various values of {{Polytonic|θ}} from 0 to 1 are given in
+the ordinary collections of mathematical tables; but the formula
+is not really convenient if we have to go beyond {{Polytonic|Δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>, or if {{Polytonic|Δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>
+itself contains more than two significant figures.
+
+To apply the formula to Example 3 for «I»x«/I» = 6.277, we have
+{{Polytonic|θ}} = .77, so that «I»u«/I»<sub>{{Polytonic|θ}}</sub> = .79239 + (.77 of 695) − (.089 of −11) = .79239 +
+535 15 + 0 98 = .79775.
+
+Here, as elsewhere, we use two extra figures in the intermediate
+calculations, for the purpose of adjusting the final figure in the
+ultimate result.
+
+3. «I»Taylor’s Theorem.«/I»—Where differences beyond the second
+are involved, Taylor’s Theorem is useful. This theorem (see {{EB1911 article link|Infinitesimal Calculus}})
+gives the formula
+
+<table {{ts|mc}}>
+<tr><td rowspan="2">«I»u«/I»<sub>{{Polytonic|θ}}</sub> = «I»u«/I»<sub>0</sub> + «I»c«/I»<sub>1</sub>{{Polytonic|θ}} + «I»c«/I»<sub>2</sub></td> <td>{{Polytonic|θ}}<sup>2</sup></td>
+<td rowspan="2">+</td> <td>{{Polytonic|θ}}<sup>3</sup></td>
+<td rowspan="2">+ {{...}}</td></tr>
+<tr><td {{Ts|bt|ac}}>2!</td> <td {{Ts|bt|ac}}>3!</td></tr></table>
+<div style="text-align: right; margin-top: -2.6em; margin-right: 1.5em;">(2),</div>
+
+
+where, «I»c«/I»<sub>1</sub>, «I»c«/I»<sub>2</sub>, «I»c«/I»<sub>3</sub>, {{...}} are the values for «I»x«/I» = «I»x«/I»<sub>0</sub> of the first, second,
+third, {{...}} differential coefficients of «I»u«/I» with regard to «I»x«/I». The values
+of «I»c«/I»<sub>1</sub>, «I»c«/I»<sub>2</sub>, {{...}} can occasionally be calculated from the analytical
+expressions for the differential coefficients of «I»u«/I»; but more generally
+they have to be calculated from the tabulated differences. For this
+purpose «I»central-difference«/I» formulae are the best. If we write
+
+<table {{ts|mc}}>
+<tr><td align=right>{{Polytonic|μδ}}«I»u«/I»<sub>0</sub></td> <td>= {{EB1911 tfrac|1|2}} ({{Polytonic|Δ}}«I»u«/I»<sub>0</sub> + {{Polytonic|Δ}}«I»u«/I»<sub>−1</sub>)</td><td rowspan=4>{{brace2|5|r}}</td></tr>
+<tr><td align=right>{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub></td> <td>= {{Polytonic|Δ}}<sup>2</sup>«I»u«/I»<sub>−1</sub></td></tr>
+<tr><td align=right>{{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub></td> <td>= {{EB1911 tfrac|1|2}} ({{Polytonic|Δ}}<sup>3</sup>«I»u«/I»<sub>−1</sub> + {{Polytonic|Δ}}<sup>3</sup>«I»u«/I»<sub>−2</sub>)</td></tr>
+<tr><td align=center colspan="2">&c.</td></tr>
+</table>
+<div style="text-align: right; margin-top: -4.2em; margin-right: 1.5em;">(3),</div>
+
+
+
+so that, if (as in §§ 1 and 2) each difference is placed opposite the
+space between the two quantities of which it is the difference, the
+expressions {{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>, {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub>, {{...}} denote the differences of even order in
+a horizontal line with «I»u«/I»<sub>0</sub>, and {{Polytonic|μδ}}«I»u«/I»<sub>0</sub>, {{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub>, {{...}} denote the means
+of the differences of odd order immediately below and above this
+line, then (see {{EB1911 article link|Differences, Calculus of}}) the values of «I»c«/I»<sub>1</sub>, «I»c«/I»<sub>2</sub>, {{...}}
+are given by
+{| width=100%
+|- {{ts|ac}}
+|<table align=center><tr><td> <poem>
+«I»c«/I»<sub>1</sub> = {{Polytonic|μδ}}«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|6}}{{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub> + {{EB1911 tfrac|1|30}}{{Polytonic|μδ}}<sup>5</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|140}}{{Polytonic|μδ}}<sup>7</sup>«I»u«/I»<sub>0</sub> + {{...}}
+«I»c«/I»<sub>2</sub> = {{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|12}}{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> + {{EB1911 tfrac|1|90}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|560}}{{Polytonic|δ}}<sup>8</sup>«I»u«/I»<sub>0</sub> + {{...}}
+«I»c«/I»<sub>3</sub> = {{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|4}}{{Polytonic|μδ}}<sup>5</sup>«I»u«/I»<sub>0</sub> + {{EB1911 tfrac|7|120}}{{Polytonic|μδ}}<sup>7</sup>«I»u«/I»<sub>0</sub> − {{...}}
+«I»c«/I»<sub>4</sub> = {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|6}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>0</sub> + {{EB1911 tfrac|7|240}}{{Polytonic|δ}}<sup>8</sup>«I»u«/I»<sub>0</sub> − {{...}}
+«I»c«/I»<sub>5</sub> = {{Polytonic|μδ}}<sup>5</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|3}}{{Polytonic|μδ}}<sup>7</sup>«I»u«/I»<sub>0</sub> + {{...}}
+«I»c«/I»<sub>6</sub> = {{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|4}}{{Polytonic|δ}}<sup>8</sup>«I»u«/I»<sub>0</sub> + {{...}}
+&ensp;. &emsp;&emsp; .
+&ensp;. &emsp;&emsp; .
+&ensp;. &emsp;&emsp; .
+</poem> </td><td align=left>{{brace2|10|r}}</td></tr></table>
+|-
+|width=5%|(4).&ensp;
+|}
+
+If a calculating machine is used, the formula (2) is most conveniently
+written
+
+{| width=100%
+|-align=center
+|<table><tr><td><poem>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = «I»u«/I»<sub>0</sub> + P<sub>1</sub>{{Polytonic|θ}}
+P<sub>1</sub>       = «I»c«/I»<sub>1</sub> + {{EB1911 tfrac|1|2}}P<sub>2</sub>{{Polytonic|θ}}
+P<sub>2</sub>       = «I»c«/I»<sub>2</sub> + {{EB1911 tfrac|1|3}}P<sub>3</sub>{{Polytonic|θ}}
+&ensp;. &emsp; .
+&ensp;. &emsp; .
+&ensp;. &emsp; .
+</poem> </td><td align=left>{{brace2|7|r}}</td></tr></table>
+|-
+|width=5%|(5).&ensp;
+|}
+Using {{Polytonic|θ}} as the multiplicand in each case, the successive expressions
+... P<sub>3</sub>, P<sub>2</sub>, P<sub>1</sub>, «I»u«/I»<sub>{{Polytonic|θ}}</sub> are easily calculated.
+
+As an example, take «I»u«/I» = tan «I»x«/I» to five places of decimals, the
+values of «I»x«/I» proceeding by a difference of 1°. It will be found that
+the following is part of the {{nowrap|table:—}}
+
+{{center|«I»Example«/I» 4.—(«I»u«/I» {{=}} tan «I»x«/I»).}}
+
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr  align=center><td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;3rd Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;4th Diff.&ensp;</td></tr>
+
+<tr  align=center><td>&nbsp;</td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>+</td> <td>+</td> <td {{Ts|bl|br}}>+</td> <td>+</td></tr>
+<tr  align=center><td {{Ts|br}}>&emsp;65°&emsp;</td> <td {{Ts|br}}>&ensp;2.14451&ensp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>732</td> <td {{Ts|br}}>&nbsp;</td> <td>16</td></tr>
+<tr  align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>10153</td> <td> </td> <td {{Ts|bl|br}}>96</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>66°</td> <td {{Ts|br}}>2.24604</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>828</td> <td {{Ts|br}}>&nbsp;</td> <td>19</td></tr>
+<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>10981</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>115</td> <td>&nbsp;</td></tr>
+<tr  align=center><td {{Ts|br}}>67°</td> <td {{Ts|br}}>2.35585</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>943</td> <td {{Ts|br}}>&nbsp;</td> <td>18</td></tr>
+</table>
+
+To find «I»u«/I» for «I»x«/I» = 66° 23′, we have {{Polytonic|θ}} = 23/60 = .3833333. The following
+shows the full working: in actual practice it would be abbreviated.
+The operations commence on the right-hand side. It will be noticed
+that two extra figures are retained throughout.
+
+<table align=center>
+<tr><td {{Ts|ar|pb1}}>«I»u«/I»<sub>0</sub>.&emsp;</td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}«I»u«/I»<sub>0</sub>.&emsp;</td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub>.</td></tr>
+<tr><td {{Ts|ar}}>2.24604&ensp;</td> <td {{Ts|ar}}>+10567<sup>00</sup></td> <td {{Ts|ar}}>+828<sup>00</sup></td> <td {{Ts|ar}}>+105<sup>50</sup></td> <td {{Ts|ar}}>+19<sup>00</sup></td></tr>
+<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>− &emsp; 17<sup>58</sup></td> <td {{Ts|ar}}>− &ensp; 1<sup>58</sup></td> <td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>&nbsp;</td></tr>
+<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td></tr>
+<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>«I»c«/I»<sub>1</sub> = +10549<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>2</sub> = +826<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>3</sub> = +105<sup>50</sup></td> <td {{Ts|ar}}>&emsp; «I»c«/I»<sub>4</sub> = +19<sup>00</sup></td></tr>
+<tr align=right><td>P<sub>1</sub>{{Polytonic|θ}} =  +4105<sup>67</sup></td> <td>&emsp;{{EB1911 tfrac|1|2}}P<sub>2</sub>{{Polytonic|θ}} = +{{em|1.1}}161<sup>02</sup></td> <td>&emsp;{{EB1911 tfrac|1|3}}P<sub>3</sub>{{Polytonic|θ}} = +&ensp;13<sup>71</sup></td> <td>&emsp;{{EB1911 tfrac|1|8}} «I»c«/I»<sub>4</sub>{{Polytonic|θ}} = + &ensp; 1<sup>82</sup></td> <td> </td></tr>
+<tr align=right><td>———</td> <td>———&ensp;</td> <td>———</td> <td>———</td> <td> </td></tr>
+<tr><td {{Ts|ar}}>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = 2.28710&ensp;</td> <td {{Ts|ar}}>P<sub>1</sub> = +10710<sup>44</sup></td> <td {{Ts|ar}}>P<sub>2</sub> = +840<sup>13</sup></td> <td {{Ts|ar}}>P<sub>3</sub> = +107<sup>32</sup></td> <td {{Ts|ar}}>&nbsp;</td></tr>
+</table>
+
+The value 2.2870967, obtained by retaining the extra figures, is
+correct within .7 of .00001 (§ 8), so that 2.28710 is correct within
+.00001 1.
+
+In applying this method to mathematical tables, it is desirable,
+on account of the tabular error, that the differences taken into
+account in (4) should end with a difference of even order. If, «I»e.g.«/I»
+we use {{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub> in calculating «I»c«/I»<sub>1</sub> and «I»c«/I»<sub>3</sub>, we ought also to use {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> for
+calculating «I»c«/I»<sub>2</sub> and «I»c«/I»<sub>4</sub>, even though the term due to
+{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> would be
+negligible if {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> were known exactly.
+
+4. «I»Geometrical and Algebraical Interpretation.«/I»—In applying the
+principle of proportional parts, in such a case as that of Example 1,
+we in effect treat the graph of «I»u«/I» as a straight line. We see that the
+extremities of a number of consecutive ordinates lie approximately
+in a straight line: «I»i.e.«/I» that, if the values are correct within ±{{EB1911 tfrac|1|2}}{{Polytonic|ρ}},
+a straight line passes through points which are within a corresponding
+distance of the actual extremities of the ordinates; and we assume
+that this is true for intermediate ordinates. Algebraically we treat
+«I»u«/I» as being of the form A + B«I»x«/I», where A and B are constants determined
+by the values of «I»u«/I» at the extremities of the interval through
+which we interpolate. In using first and second differences we treat
+«I»u«/I» as being of the form A + B«I»x«/I» + C«I»x«/I»<sup>2</sup>; «I»i.e.«/I» we pass a parabola (with
+axis vertical) through the extremities of three consecutive ordinates,
+and consider that this is the graph of «I»u«/I», to the degree of accuracy
+given by the data. Similarly in using differences of a higher order
+we replace the graph by a curve whose equation is of the form
+«I»u«/I» = A + B«I»x«/I» + C«I»x«/I»<sup>2</sup> + D«I»x«/I»<sup>3</sup> + {{...}} The various forms that interpolation-formulae
+take are due to the various principles on which ordinates
+are selected for determining the values of A, B, C {{...}}
+
+{{center|B. «I»Inverse Interpolation.«/I»}}
+
+5. To find the value of «I»x«/I» when «I»u«/I» is given, «I»i.e.«/I» to find the value of
+{{Polytonic|θ}} when «I»u«/I»<sub>{{Polytonic|θ}}</sub> is given, we use the same formula as for direct interpolation,
+but proceed (if differences beyond the first are involved)
+by successive approximation. Taylor’s Theorem, for instance,
+gives
+
+<table align=center>
+<tr><td rowspan="2">{{Polytonic|θ}} = («I»u«/I»<sub>{{Polytonic|θ}}</sub> − «I»u«/I»<sub>0</sub>) ÷ («I»c«/I»<sub>1</sub> + «I»c«/I»<sub>2</sub></td> <td>{{Polytonic|θ}}</td>
+<td rowspan="2">+ {{...}})</td></tr>
+<tr><td {{Ts|bt|ac}}>2!</td></tr></table>
+
+{{ne|| {{=}} («I»u«/I»<sub>{{Polytonic|θ}}</sub> − «I»u«/I»<sub>0</sub>) ÷ P<sub>1</sub>&emsp;|&ensp;(6).}}PAGE:739We first find an approximate value for {{Polytonic|θ}}: then calculate P<sub>1</sub>, and
+find by (6) a more accurate value of {{Polytonic|θ}}; then, if necessary, recalculate
+P<sub>1</sub>, and thence {{Polytonic|θ}}, and so on.
+
+{{center|{{sc|II. Construction of Tables by Subdivision of Intervals}}}}
+
+6. When the values of «I»u«/I» have been tabulated for values of «I»x«/I»
+proceeding by a difference h, it is often desirable to deduce a table
+in which the differences of «I»x«/I» are «I»h«/I»/«I»n«/I», where «I»n«/I» is an integer.
+
+If «I»n«/I» is even it may be advisable to form an intermediate table in
+which the intervals are {{EB1911 tfrac|1|2}}«I»h«/I». For this purpose we have
+
+{{ne||«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> {{=}} {{EB1911 tfrac|1|2}} (U<sub>0</sub> + U<sub>1</sub>)|&ensp;(7)}}
+
+where
+
+{{ne||U {{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}{{Polytonic|δ}}<sup>2</sup>«I»u«/I» + {{EB1911 tfrac|3|128}}{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|1024}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I» + {{...}}&ensp;<br />&ensp;{{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}[{{Polytonic|δ}}<sup>2</sup>«I»u«/I» − {{EB1911 tfrac|3|16}} {{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|24}} ({{Polytonic|δ}}<sup>6</sup>«I»u«/I» − {{...}}) } ]|&ensp;(8)}}
+
+The following is an example; the data are the values of tan «I»x«/I» to
+five places of decimals, the interval in «I»x«/I» being 1°. The differences
+of odd order are omitted for convenience of printing.
+
+{{center|«I»Example«/I» 5.}}
+
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr align=center><td {{Ts|pl.5|pr.5|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» &equiv; tan «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td> <td {{Ts|ba}}>U.</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» = mean of<br />values of U.</td> <td {{Ts|ba}}>«I»x«/I».</td></tr>
+
+<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°</td> <td {{Ts|pl.5|pr.5|br}}>3.27085</td> <td {{Ts|pl.5|pr.5|br}}>2339</td> <td {{Ts|pl.5|pr.5|br}}>100</td> <td {{Ts|pl.5|pr.5|br}}>5</td> <td {{Ts|pl.5|pr.5|br}}>3.26794 95</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
+<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.37594</td> <td {{Ts|pl.5|pr.5|br}}>73{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°</td> <td {{Ts|pl.5|pr.5|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|br}}>2808</td> <td {{Ts|pl.5|pr.5|br}}>132</td> <td {{Ts|pl.5|pr.5|br}}>23</td> <td {{Ts|pl.5|pr.5|br}}>3.48392 98</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
+<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td {{Ts|pl.5|pr.5|br}}>74{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>75°</td> <td {{Ts|pl.5|pr.5|br}}>3.73205</td> <td {{Ts|pl.5|pr.5|br}}>3409</td> <td {{Ts|pl.5|pr.5|br}}>187</td> <td {{Ts|pl.5|pr.5|br}}>18</td> <td {{Ts|pl.5|pr.5|br}}>3.72783 17</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
+<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.86671</td> <td {{Ts|pl.5|pr.5|br}}>75{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>76°</td> <td {{Ts|pl.5|pr.5|br}}>4.01078</td> <td {{Ts|pl.5|pr.5|br}}>4197</td> <td {{Ts|pl.5|pr.5|br}}>260</td> <td {{Ts|pl.5|pr.5|br}}>51</td> <td {{Ts|pl.5|pr.5|br}}>4.00559 22</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
+<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>4.16530</td> <td {{Ts|pl.5|pr.5|br}}>76{{EB1911 tfrac|1|2}}°</td></tr>
+<tr><td {{Ts|pl.5|pr.5|bl|br}}>77°</td> <td {{Ts|pl.5|pr.5|br}}>4.33148</td> <td {{Ts|pl.5|pr.5|br}}>5245</td> <td {{Ts|pl.5|pr.5|br}}>384</td> <td {{Ts|pl.5|pr.5|br}}>64</td> <td {{Ts|pl.5|pr.5|br}}>4.32501 07</td> <td {{Ts|pl.5|pr.5|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>&emsp;</td></tr>
+</table>
+
+If a new table is formed from these values, the intervals being {{EB1911 tfrac|1|2}}°,
+it will be found that differences beyond the fourth are negligible.
+
+To subdivide h into smaller intervals than {{EB1911 tfrac|1|2}}«I»h«/I», various methods
+may be used. One is to calculate the sets of quantities which in
+the new table will be the successive differences, corresponding to «I»u«/I»<sub>0</sub>,
+u<sub>1</sub>, {{...}} and to find the intermediate terms by successive additions.
+A better method is to use a formula due to J. D. Everett. If we
+write {{Polytonic|φ}} = 1 − {{Polytonic|θ}}, Everett’s formula is, in its most symmetrical form,
+
+{|width="100%"
+|-
+|<table align=center>
+<tr><td rowspan="2">«I»u«/I»<sub>{{Polytonic|θ}}</sub> = {{Polytonic|θ}}«I»u«/I»<sub>1</sub> +</td> <td>({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>1</sub> +</td> <td>({{Polytonic|θ}} + 2) ({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1) ({{Polytonic|θ}} − 2)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>1</sub> + {{...}}</td><td rowspan=4>{{brace2|4|r}}</td></tr>
+<tr><td {{Ts|bt|ac}}>3!</td> <td {{Ts|bt|ac}}>5!</td></tr>
+<tr><td rowspan="2">+ {{Polytonic|φ}}«I»u«/I»<sub>0</sub> +</td> <td>({{Polytonic|φ}} + 1) {{Polytonic|φ}} ({{Polytonic|φ}} − 1)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub> +</td> <td>({{Polytonic|φ}} + 2) ({{Polytonic|φ}} + 1) {{Polytonic|φ}} ({{Polytonic|φ}} − 1) ({{Polytonic|φ}} − 2)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>3!</td> <td {{Ts|bt|ac|pl.5|pr.5}}>5!</td></tr></table>
+|-
+|width=5%|&ensp; (9).
+|}
+
+For actual calculations a less symmetrical form may be used.
+Denoting
+
+<table align=center>
+<tr><td>({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>1</sub> +</td> <td>({{Polytonic|θ}} + 2) ({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1) ({{Polytonic|θ}} − 2)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>1</sub> + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>3!</td> <td {{Ts|bt|ac|pl.5|pr.5}}>5!</td></tr></table>
+<div style="text-align: right; margin-top: -1em; margin-right: 1.5em;">(10)</div>
+
+by <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>, we have, for interpolation between «I»u«/I»<sub>0</sub> and «I»u«/I»<sub>1</sub>,
+
+<div align=center>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = «I»u«/I»<sub>0</sub> + {{Polytonic|θΔ}}«I»u«/I»<sub>0</sub> + <sub>{{Polytonic|θ}}</sub>V<sub>1</sub> + <sub>1−{{Polytonic|θ}}</sub>V<sub>0</sub></div>
+<div style="text-align: right; margin-top: -1em; margin-right: 1.3em;">(11),</div>
+
+the successive values of {{Polytonic|θ}} being 1/«I»n«/I» , 2/«I»n«/I» , {{...}} («I»n«/I» − 1)/«I»n«/I» . For
+interpolation between «I»u«/I»<sub>1</sub> and «I»u«/I»<sub>2</sub> we have, with the same succession
+of values of {{Polytonic|θ}},
+
+<div align=center>«I»u«/I»<sub>1+{{Polytonic|θ}}</sub> = «I»u«/I»<sub>1</sub> + <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>, &emsp; V<sub>2</sub> + <sub>1−{{Polytonic|θ}}</sub>V<sub>1</sub></div>
+<div style="text-align: right; margin-top: -1em; margin-right: 1.3em;">(12).</div>
+
+The values of <sub>1−{{Polytonic|θ}}</sub>V<sub>1</sub> in (12) are exactly the same as those of <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>
+in (11), but in the reverse order. The process is therefore that (i.)
+we find the successive values of «I»u«/I»<sub>0</sub> + {{Polytonic|θΔ}}«I»u«/I»<sub>0</sub>, &c., «I»i.e.«/I» we construct a
+table, with the required intervals of «I»x«/I», as if we had only to take
+first differences into account; (ii.) we construct, in a parallel column,
+a table giving the values of <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>, &c.; (iii.) we repeat these latter
+values, placing the set belonging to each interval h in the interval
+next following it, and writing the values in the reverse order; and
+(iv.) by adding horizontally we get the final values for the new table.
+
+As an example, take the values of tan «I»x«/I» by intervals of {{EB1911 tfrac|1|2}}° in «I»x«/I»,
+as found above (Ex. 5). The first diagram below is a portion of this
+table, with the differences, and the second shows the calculation of
+the terms of (11) so as to get a table in which the intervals are 0.1
+of 1°. The last column but one in the second diagram is introduced
+for convenience of calculation.
+
+{{center|«I»Example«/I» 6.}}
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I» = tan «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}u.</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>3</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td></tr>
+
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>11147</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>62</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>74°.0</td> <td {{Ts|pl.5|pr.5|ac|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>700</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>8</td></tr>
+<tr align=center><td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>11847</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl|br}}>70</td> <td>&nbsp;</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.5</td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl|br}}>770</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl}}>9</td></tr>
+<tr align=center><td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>12617</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>79</td> <td>&nbsp;</td></tr>
+</table>
+
+
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I»</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I»<sub>0</sub> + {{Polytonic|θΔ}}«I»u«/I»<sub>0</sub>.</td> <td {{Ts|pl.5|pr.5|ac|ba}}><sub>{{Polytonic|θ}}</sub>V<sub>1</sub>.</td> <td {{Ts|pl.5|pr.5|ac|ba}}><sub>1−{{Polytonic|θ}}</sub>V<sub>0</sub>.</td> <td {{Ts|pl.5|pr.5|ac|ba}}><sub>{{Polytonic|θ}}</sub>V<sub>1</sub> + <sub>1−{{Polytonic|θ}}</sub>V<sub>0</sub>.</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I».</td></tr>
+
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°.6</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>−22 35</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°.7</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>−39 11</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°.8</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>−44 71</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°.9</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>−33 54</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.0</td> <td {{Ts|pl.5|pr.5|br}}>3.48741 00</td> <td> </td> <td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|pl.5|pr.5|bl|br}}>3.48741</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.1</td> <td {{Ts|pl.5|pr.5|br}}>3.51110 40</td> <td {{Ts|pl.5|pr.5|br}}>−24 58</td> <td {{Ts|pl.5|pr.5|br}}>−33 54</td> <td {{Ts|pl.5|pr.5|br}}>−58 12</td> <td {{Ts|pl.5|pr.5|br}}>3.51052</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.2</td> <td {{Ts|pl.5|pr.5|br}}>3.53479 80</td> <td {{Ts|pl.5|pr.5|br}}>−43 02</td> <td {{Ts|pl.5|pr.5|br}}>−44 71</td> <td {{Ts|pl.5|pr.5|br}}>−87 73</td> <td {{Ts|pl.5|pr.5|br}}>3.53392</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.3</td> <td {{Ts|pl.5|pr.5|br}}>3.55849 20</td> <td {{Ts|pl.5|pr.5|br}}>−49 18</td> <td {{Ts|pl.5|pr.5|br}}>−39 11</td> <td {{Ts|pl.5|pr.5|br}}>−88 29</td> <td {{Ts|pl.5|pr.5|br}}>3.55761</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.4</td> <td {{Ts|pl.5|pr.5|br}}>3.58218 60</td> <td {{Ts|pl.5|pr.5|br}}>−36 89</td> <td {{Ts|pl.5|pr.5|br}}>−22 35</td> <td {{Ts|pl.5|pr.5|br}}>−59 24</td> <td {{Ts|pl.5|pr.5|br}}>3.58159</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.5</td> <td {{Ts|pl.5|pr.5|br}}>3.60588 00</td> <td> </td> <td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|pl.5|pr.5|bl|br}}>3.60588</td></tr>
+</table>
+
+The following are the values of the coefficients of «I»u«/I»<sub>1</sub>, {{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>1</sub>, {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>1</sub>,
+and {{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>1</sub> in (9) for certain values of «I»n«/I». For calculating the four
+terms due to {{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>1</sub> in the case of «I»n«/I» = 5 it should be noticed that the
+third term is twice the first, the fourth is the mean of the first and
+the third, and the second is the mean of the third and the fourth.
+In table 3, and in the last column of table 2, the coefficients are
+corrected in the last figure.
+
+{{c/s}}{{sc|Table 1.}}—«I»n«/I» = 5.{{c/e}}
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr><td {{Ts|pl.5|pr.5|ac|ba}}>co. «I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
+<tr align=center><td {{Ts|br}}>+</td> <td>−</td> <td {{Ts|bl|br}}>+</td> <td>−</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.2</td> <td {{Ts|pl.5|pr.5|ac|br}}>.032</td> <td {{Ts|pl.5|pr.5|ac|br}}>.006336</td> <td {{Ts|pl.5|pr.5|al|br}}>.00135168 = 1/740 approx.</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.4</td> <td {{Ts|pl.5|pr.5|ac|br}}>.056</td> <td {{Ts|pl.5|pr.5|ac|br}}>.010752</td> <td {{Ts|pl.5|br}}>.00226304 = 1/442 &emsp;”</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.6</td> <td {{Ts|pl.5|pr.5|ac|br}}>.064</td> <td {{Ts|pl.5|pr.5|ac|br}}>.011648</td> <td {{Ts|pl.5|br}}>.00239616 = 1/417 &emsp;”</td></tr>
+<tr><td {{Ts|ac|br}}>.8</td> <td {{Ts|ac|br}}>.048</td> <td {{Ts|ac|br}}>.008064</td> <td {{Ts|pl.5}}>.00160512 = 1/623 &emsp;”</td></tr>
+</table>
+
+
+{{c/s}}{{sc|Table 2.}}—«I»n«/I» = 10.{{c/e}}
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr><td {{Ts|pl.5|pr.5|ac|ba}}>co. «I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
+<tr align=center><td {{Ts|br}}>+</td> <td>−</td> <td {{Ts|bl|br}}>+</td> <td>−</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.1</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0165</td> <td {{Ts|pl.5|pr.5|ac|br}}>.00329175</td> <td {{Ts|pl.5|pr.5|ac|br}}>.000704591</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|br}}>.2</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0320</td> <td {{Ts|pl.5|pr.5|ac|br}}>.00633600</td> <td {{Ts|pl.5|pr.5|ac|br}}>.001351680</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|br}}>.3</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0455</td> <td {{Ts|pl.5|pr.5|ac|br}}>.00889525</td> <td {{Ts|pl.5|pr.5|ac|br}}>.001887064</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.4</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0560</td> <td {{Ts|pl.5|pr.5|ac|br}}>.01075200</td> <td {{Ts|pl.5|pr.5|ac|br}}>.002263040</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.5</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0625</td> <td {{Ts|pl.5|pr.5|ac|br}}>.01171875</td> <td {{Ts|pl.5|pr.5|ac|br}}>.002441406</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.6</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0640</td> <td {{Ts|pl.5|pr.5|ac|br}}>.01164800</td> <td {{Ts|pl.5|pr.5|ac|br}}>.002396160</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.7</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0595</td> <td {{Ts|pl.5|pr.5|ac|br}}>.01044225</td> <td {{Ts|pl.5|pr.5|ac|br}}>.002115799</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.8</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0480</td> <td {{Ts|pl.5|pr.5|ac|br}}>.00806400</td> <td {{Ts|pl.5|pr.5|ac|br}}>.001605120</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.9</td> <td {{Ts|pl.5|pr.5|ac|br}}>.0285</td> <td {{Ts|pl.5|pr.5|ac|br}}>.00454575</td> <td align=center>.000886421</td></tr>
+</table>
+
+
+{{c/s}}{{sc|Table 3.}}—«I»n«/I» = 12.{{c/e}}
+<table align=center style="border: 1px solid; border-collapse: collapse;">
+<tr align=center><td {{Ts|ba}}>co. «I»u«/I».</td> <td {{Ts|ba}}>co. {{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|ba}}>co. {{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|ba}}>co. {{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
+<tr align=center><td {{Ts|br}}>+</td> <td>−</td> <td {{Ts|bl|br}}>+</td> <td>−</td></tr>
+<tr align=center><td {{Ts|br}}>1/12</td> <td>.013792438</td> <td {{Ts|bl|br}}>.002753699</td> <td>.000589623</td></tr>
+<tr align=center><td {{Ts|br}}>2/12</td> <td>.027006173</td> <td {{Ts|bl|br}}>.005363726</td> <td>.001145822</td></tr>
+<tr align=center><td {{Ts|br}}>3/12</td> <td>.039062500</td> <td {{Ts|bl|br}}>.007690430</td> <td>.001636505</td></tr>
+<tr align=center><td {{Ts|br}}>4/12</td> <td>.049382716</td> <td {{Ts|bl|br}}>.009602195</td> <td>.002032211</td></tr>
+<tr align=center><td {{Ts|br}}>5/12</td> <td>.057388117</td> <td {{Ts|bl|br}}>.010979463</td> <td>.002307357</td></tr>
+<tr align=center><td {{Ts|br}}>6/12</td> <td>.062500000</td> <td {{Ts|bl|br}}>.011718750</td> <td>.002441406</td></tr>
+<tr align=center><td {{Ts|br}}>7/12</td> <td>.064139660</td> <td {{Ts|bl|br}}>.011736667</td> <td>.002419911</td></tr>
+<tr align=center><td {{Ts|br}}>8/12</td> <td>.061728395</td> <td {{Ts|bl|br}}>.010973937</td> <td>.002235432</td></tr>
+<tr align=center><td {{Ts|br}}>9/12</td> <td>.054687500</td> <td {{Ts|bl|br}}>.009399414</td> <td>.001888275</td></tr>
+<tr align=center><td {{Ts|pl.5|pr1|ac|br}}>10/12</td> <td>.042438272</td> <td {{Ts|bl|br}}>.007014103</td> <td>.001387048</td></tr>
+<tr><td {{Ts|pl.5|pr1|ac|bl|br}}>11/12</td> <td {{Ts|pl.5|pr.5|ac|br}}>.024402006</td> <td {{Ts|pl.5|pr.5|ac|br}}>.003855178</td> <td {{Ts|pl.5|pr.5|ac}}>.000748981</td></tr>
+</table>
+
+
+{{center|{{sc|III. General Observations}}}}
+
+7. «I»Derivation of Formulae.«/I»—The advancing-difference formula
+(1) may be written, in the symbolical notation of finite differences,
+
+<div align=center>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = (1 + {{Polytonic|Δ}})<sup>{{Polytonic|θ}}</sup> «I»u«/I»<sub>0</sub> = E<sup>{{Polytonic|θ}}</sup> «I»u«/I»<sub>0</sub></div>
+<div style="text-align: right; margin-top: -1em; margin-right: 1.3em;">(13);</div>
+
+and it is an extension of the theorem that if «I»n«/I» is a positive integer
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I»<sub>«I»n«/I»</sub> = «I»u«/I»<sub>0</sub> + «I»n«/I»{{Polytonic|Δ}}«I»u«/I»<sub>0</sub> +</td> <td>«I»n«/I» («I»n«/I» − 1)</td>
+<td rowspan="2">{{Polytonic|Δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>2!</td></tr></table>
+<div style="text-align: right; margin-top: -2em; margin-right: 1.3em;">(14),</div>
+
+the series being continued until the terms vanish. The formula
+(14) is identically true: the formula (13) or (1) is only formally true,
+but its applicability to concrete cases is due to the fact that the
+series in (1), when taken for a definite number of terms, differs
+from the true value of «I»u«/I»<sub>{{Polytonic|θ}}</sub> by a “remainder” which in most cases is
+very small when this definite number of terms is properly chosen.
+
+Everett’s formula (9), and the central-difference formula obtained
+by substituting from (4) in (2), are modifications of a standard
+formula
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I»<sub>{{Polytonic|θ}}</sub> = «I»u«/I»<sub>0</sub> + {{Polytonic|θ}}{{Polytonic|δ}}«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> +</td> <td>{{Polytonic|θ}} ({{Polytonic|θ}} − 1)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> +</td> <td>({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>3</sup> «I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> +</td> <td>({{Polytonic|θ}} + 1) {{Polytonic|θ}} ({{Polytonic|θ}} − 1) ({{Polytonic|θ}} − 2)</td>
+<td rowspan="2">{{Polytonic|δ}}<sup>4</sup> «I»u«/I»<sub>0</sub> + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>2!</td> <td {{Ts|bt|ac|pl.5|pr.5}}>3!</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>4!</td></tr></table>
+<div style="text-align: right; margin-top: -2em; margin-right: 1.3em;">(15),</div>PAGE:740which may similarly be regarded as an extension of the theorem
+that, if «I»n«/I» is a positive integer,
+
+{{ne||«I»u«/I»<sub>«I»n«/I»</sub> {{=}} «I»u«/I»<sub>0</sub> + n{{Polytonic|δ}}«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> +{{sfrac|font-size=100%|«I»n«/I» («I»n«/I» − 1)|2!}}{{Polytonic|δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> +{{sfrac|font-size=100%|(«I»n«/I» + 1)«I»n«/I»(«I»n«/I» − 1)|3!}}{{Polytonic|δ}}<sup>3</sup> «I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> + {{...}}|&ensp;(16).}}
+
+There are other central-difference formulae besides those mentioned
+above; the general symbolical expression is
+
+{{ne||«I»u«/I»<sub>{{Polytonic|θ}}</sub> {{=}} (cosh {{Polytonic|θ}}«I»h«/I»D + sinh {{Polytonic|θ}}«I»h«/I»D) «I»u«/I»<sub>0</sub>|&ensp;(17).}}
+
+where
+
+{{ne||cosh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{Polytonic|μ}}, sinh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{EB1911 tfrac|1|2}}{{Polytonic|δ}}|&ensp;(18).}}
+
+8. «I»Comparative Accuracy.«/I»—Central-difference formulae are usually
+more accurate than advancing-difference formulae, whether we
+consider the inaccuracy due to omission of the “remainder”
+mentioned in the last paragraph or the error due to the approximative
+character of the tabulated values. The latter is the more
+important. If each tabulated value of «I»u«/I» is within ±{{EB1911 tfrac|1|2}}{{Polytonic|ρ}} of the
+corresponding true value, and if the differences used in the formulae
+are the «I»tabular«/I» differences, «I»i.e.«/I» the actual successive differences of
+the tabulated values of «I»u«/I», then the ratio of the limit of error of «I»u«/I»<sub>{{Polytonic|θ}}</sub>,
+as calculated from the first «I»r«/I» terms of the series in (1), to {{EB1911 tfrac|1|2}}{{Polytonic|ρ}} is the
+sum of the first «I»r«/I» terms of the series
+
+<div align=center>1 + 0 + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) + {{EB1911 tfrac|7|12}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) +<br />&emsp;&emsp; {{EB1911 tfrac|1|4}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) (4 − {{Polytonic|θ}}) + {{EB1911 tfrac|31|360}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) {{...}} (5 − {{Polytonic|θ}}) + {{...}},</div>
+
+while the corresponding ratio for the use of differences up to {{Polytonic|δ}}<sup>2«I»p«/I»</sup>«I»u«/I»<sub>0</sub>
+inclusive in (4) or up to {{Polytonic|δ}}<sup>2«I»p«/I»</sup> «I»u«/I»<sub>1</sub> and «I»o«/I»<sup>2«I»p«/I»</sup> «I»u«/I»<sub>0</sub> in (9) («I»i.e.«/I» in effect, up to
+{{Polytonic|δ}}<sup>2«I»p«/I»+1</sup> «I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub>) is the sum of the first «I»p«/I» + 1 terms of the series
+
+<table align=center>
+<tr><td rowspan="2">1 +</td> <td>{{Polytonic|θ}} (1 − {{Polytonic|θ}})</td>
+<td rowspan="2">+</td> <td>(1 + {{Polytonic|θ}}) {{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}})</td>
+<td rowspan="2">+</td> <td>(2 + {{Polytonic|θ}}) (1 + {{Polytonic|θ}}) {{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}})</td>
+<td rowspan="2">+ {{...}},</td></tr>
+<tr align=center><td style="border-top: 1px solid;">1.1</td> <td style="border-top: 1px solid;">(2!)<sup>2</sup></td>
+<td style="border-top: 1px solid;">(3!)<sup>2</sup></td></tr></table>
+
+it being supposed in each case that {{Polytonic|θ}} lies between 0 and 1. The
+following table gives a comparison of the respective limits of error;
+the lines I. and II. give the errors due to the advancing-difference
+and the central-difference formulae, and the coefficient {{Polytonic|ρ}} is omitted
+throughout.
+
+{{center|{{sc|Table 4.}}}}
+
+<table align=center style="border: 1px solid; border-collapse: collapse; line-height:105%" cellpadding=4>
+<tr align=center><td rowspan="2" colspan="2" style="border: 1px solid;">&nbsp;</td> <td style="border: 1px solid;" colspan="7">&nbsp;Error due to use of Differences up to and&nbsp;<br />including</td></tr>
+
+<tr align=center><td style="border: 1px solid;">1st.</td> <td style="border: 1px solid;">2nd.</td> <td style="border: 1px solid;">3rd.</td> <td style="border: 1px solid;">4th.</td> <td style="border: 1px solid;">5th.</td> <td style="border: 1px solid;">6th.</td> <td style="border: 1px solid;">7th.</td></tr>
+
+<tr align=right><td align=center rowspan="2">&ensp;.5<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.813</td> <td style="border-right: 1px solid;">1.086</td> <td style="border-right: 1px solid;">1.497</td> <td style="border-right: 1px solid;">2.132</td> <td>3.147</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.745</td> <td>.745</td></tr>
+<tr align=right><td align=center rowspan="2">.2<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.724</td> <td style="border-right: 1px solid;">.960</td> <td style="border-right: 1px solid;">1.343</td> <td style="border-right: 1px solid;">1.976</td> <td>3.042</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
+<tr align=right><td align=center rowspan="2">.4<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.812</td> <td style="border-right: 1px solid;">1.104</td> <td style="border-right: 1px solid;">1.553</td> <td style="border-right: 1px solid;">2.265</td> <td>3.422</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
+<tr align=right><td align=center rowspan="2">.6<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.788</td> <td style="border-right: 1px solid;">1.024</td> <td style="border-right: 1px solid;">1.366</td> <td style="border-right: 1px solid;">1.886</td> <td>2.700</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
+<tr align=right><td align=center rowspan="2">.8<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.676</td> <td style="border-right: 1px solid;">.800</td> <td style="border-right: 1px solid;">.969</td> <td style="border-right: 1px solid;">1.213</td> <td>1.582</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
+</table>
+
+In some cases the differences tabulated are not the tabular differences,
+but the corrected differences; «I»i.e.«/I» each difference, like each
+value of «I»u«/I», is correct within ±{{EB1911 tfrac|1|2}}{{Polytonic|ρ}}. It does not follow that these
+differences should be used for interpolation. Whatever formula
+is employed, the first difference should always be the tabular first
+difference, not the corrected first difference; and, further, if a central-difference
+formula is used, each difference of odd order should be the
+tabular difference of the corrected differences of the next lower
+order. (This last result is indirectly achieved if Everett’s formula is
+used.) With these precautions (i.) the central-difference formula is
+slightly improved by using corrected instead of tabular differences,
+and (ii.) the advancing-difference formula is greatly improved, being
+better than the central-difference formula with tabular differences,
+but still not so good as the latter with corrected differences. For
+{{Polytonic|θ}} = .5, for instance, supposing we have to go to fifth differences, the
+limits ±1.497 and ±.696, as given above, become ±.627 and
+±.575 respectively.
+
+9. «I»Completion of Table of Differences.«/I»—If no values of «I»u«/I» outside
+the range within which we have to interpolate are given, the series
+of differences will be incomplete at both ends. It may be continued
+in each direction by treating as constant the extreme
+difference of the highest order involved; and central-difference
+formulae can then be employed uniformly throughout the whole
+range.
+
+Suppose, for instance, that the values of tan «I»x«/I» in § 6 extended
+only from «I»x«/I» = 60° to «I»x«/I» = 80°, we could then complete the table of
+differences by making the entries shown in italics below.
+
+{{center|«I»Example«/I» 7.}}
+
+<table align=center style="border: 1px solid; border-collapse: collapse;" rules=cols>
+<tr align=center><td style="border: 1px solid;">«I»x«/I».</td> <td style="border: 1px solid;">&thinsp;«I»u«/I» = tan «I»x«/I».&thinsp;</td> <td style="border: 1px solid;">{{Polytonic|δ}}«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>3</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>5</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
+
+<tr align=center><td> </td> <td> </td> <td>+</td> <td>+</td> <td>+</td> <td>+</td> <td>+</td> <td>+</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»6775«/I»</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»34«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>&emsp;60°&emsp;</td> <td>1.73205</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»425«/I»</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>7200</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»43«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>61°</td> <td>1.80405</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>468</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>7668</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>52</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>62°</td> <td>1.88073</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>520</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>9</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>8188</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>61</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>63°</td> <td>1.96261</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>581</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>10</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>8769</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>71</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>64°</td> <td>2.05030</td> <td>.</td> <td {{Ts|ar|pr.5}}>652</td> <td>.</td> <td {{Ts|ar|pr.5}}>9</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
+<tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
+<tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
+<tr align=center><td>75°</td> <td>3.73205</td> <td>.</td> <td>3409</td> <td>.</td> <td>187</td> <td>.</td> <td>18</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>27873</td> <td>&nbsp;</td> <td>788</td> <td>&nbsp;</td> <td>73</td> <td>&nbsp;</td></tr>
+<tr align=center><td>76°</td> <td>4.01078</td> <td>&nbsp;</td> <td>4197</td> <td>&nbsp;</td> <td>260</td> <td>&nbsp;</td> <td>51</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>32070</td> <td>&nbsp;</td> <td>1048</td> <td>&nbsp;</td> <td>124</td> <td>&nbsp;</td></tr>
+<tr align=center><td>77°</td> <td>4.33148</td> <td>&nbsp;</td> <td>5245</td> <td>&nbsp;</td> <td>384</td> <td>&nbsp;</td> <td>64</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>37315</td> <td>&nbsp;</td> <td>1432</td> <td>&nbsp;</td> <td>188</td> <td>&nbsp;</td></tr>
+<tr align=center><td>78°</td> <td>4.70463</td> <td>&nbsp;</td> <td>6677</td> <td>&nbsp;</td> <td>572</td> <td>&nbsp;</td> <td>«I»64«/I»</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>43992</td> <td>&nbsp;</td> <td>2004</td> <td>&nbsp;</td> <td>«I»252«/I»</td> <td>&nbsp;</td></tr>
+<tr align=center><td>79°</td> <td>5.14455</td> <td>&nbsp;</td> <td>8681</td> <td>&nbsp;</td> <td>«I»824«/I»</td> <td>&nbsp;</td> <td>«I»64«/I»</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>52673</td> <td>&nbsp;</td> <td>«I»2828«/I»</td> <td>&nbsp;</td> <td>«I»316«/I»</td> <td>&nbsp;</td></tr>
+<tr align=center><td>80°</td> <td>5.67128</td> <td>&nbsp;</td> <td>&ensp;«I»11509«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp;«I»1140«/I»&ensp;</td> <td>&nbsp;</td> <td>&emsp;«I»64«/I»&emsp;</td></tr>
+<tr align=center><td {{Ts|ac|bb}}>&nbsp;</td> <td {{Ts|ac|bb}}>&nbsp;</td> <td>&ensp;«I»64182«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp;«I»3968«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp; «I»380«/I» &ensp;</td> <td>&nbsp;</td></tr>
+</table>
+
+For interpolating between «I»x«/I» = 60° and «I»x«/I» = 61° we should obtain the
+same result by applying Everett’s formula to this table as by using
+the advancing-difference formula; and similarly at the other end
+for the receding differences.
+
+{{center|«I»Interpolation by Substituted Tabulation.«/I»}}
+
+10. The relation of «I»u«/I» to «I»x«/I» may be such that the successive differences
+of «I»u«/I» increase rapidly, so that interpolation-formulae cannot
+be employed directly. Other methods have then to be used. The
+best method is to replace «I»u«/I» by some expression v which is a function
+of «I»u«/I» such that (i.) the value of v or of «I»u«/I» can be determined for any
+given value of «I»u«/I» or of v, and (ii.) when v is tabulated in terms of «I»x«/I»
+the differences decrease rapidly. We can then calculate v, and
+thence «I»u«/I», for any intermediate value of «I»x«/I».
+
+If, for instance, we require tan «I»x«/I» for a value of «I»x«/I» which is nearly
+90°, it will be found that the table of tangents is not suitable for
+interpolation. We can, however, convert it into a table of cotangents
+to about the same number of significant figures; from this we can
+easily calculate cot «I»x«/I», and thence tan «I»x«/I».
+
+11. This method is specially suitable for statistical data, where
+the successive values of «I»u«/I» represent the area of a figure of frequency
+up to successive ordinates. We have first to determine, by inspection,
+a curve which bears a general similarity to the unknown
+curve of frequency, and whose area and abscissa are so related that
+either can be readily calculated <span style="border-bottom: 1px dashed red;" title="amended from with">when</span> the other is known. This
+may be called the «I»auxiliary curve«/I». Denoting by {{Polytonic|ξ}} the abscissa
+of this curve which corresponds to area «I»u«/I», we find the value of {{Polytonic|ξ}}
+corresponding to each of the given values of «I»u«/I». Then, tabulating
+{{Polytonic|ξ}} in terms of «I»x«/I», we have a table in which, if the auxiliary curve
+has been well chosen, differences of {{Polytonic|ξ}} after the first or second are
+negligible. We can therefore find {{Polytonic|ξ}}, and thence «I»u«/I», for any intermediate
+value of «I»x«/I».
+
+{{center|«I»Extensions.«/I»}}
+
+12. «I»Construction of Formulae.«/I»—Any difference of «I»u«/I» of the «I»r«/I»&#8202;th
+order involves «I»r«/I» + 1 consecutive values of «I»u«/I», and it might be expressed
+by the suffixes which indicate these values. Thus we might
+write the table of differences
+
+<table align=center style="border: 1px solid; border-collapse: collapse;" rules=cols>
+<tr align=center><td style="border: 1px solid;">&emsp;«I»x«/I».&emsp;</td> <td style="border: 1px solid;">&emsp;«I»u«/I».&emsp;</td> <td style="border: 1px solid;">&ensp;1st Diff.&ensp;</td> <td style="border: 1px solid;>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>3rd Diff.</td> <td style="border: 1px solid;>4th Diff.</td></tr>
+
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>(−1, 0)</td> <td>·</td> <td>&thinsp;(−2, −1, 0, 1)&thinsp;</td> <td>·</td></tr>
+<tr align=center><td>«I»x«/I»<sub>0</sub></td> <td>«I»u«/I»<sub>0</sub></td> <td>&nbsp;</td> <td>(−1, 0, 1)</td> <td>&nbsp;</td> <td>&thinsp;(−2, −1, 0, 1, 2)&thinsp;</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>(0, 1)</td> <td>&nbsp;</td> <td>(−1, 0, 1, 2)</td> <td>&nbsp;</td></tr>
+<tr align=center><td>«I»x«/I»<sub>1</sub></td> <td>«I»u«/I»<sub>1</sub></td> <td>&nbsp;</td> <td>(0, 1, 2)</td> <td>&nbsp;</td> <td>(−1, 0, 1, 2, 3)</td></tr>
+<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>(1, 2)</td> <td>&nbsp;</td> <td>(0, 1, 2, 3)</td> <td>&nbsp;</td></tr>
+<tr align=center><td>«I»x«/I»<sub>2</sub></td> <td>«I»u«/I»<sub>2</sub></td> <td>&nbsp;</td> <td>(1, 2, 3)</td> <td>&nbsp;</td> <td>(0, 1, 2, 3, 4)</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>(2, 3)</td> <td>·</td> <td>(1, 2, 3, 4)</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
+</table>PAGE:741The formulae (1) and (15) might then be written
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» = «I»u«/I»<sub>0</sub> +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">(0, 1) +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>1</sub></td>
+<td rowspan="2">(0, 1, 2) +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>1</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>2</sub></td>
+<td rowspan="2">(0, 1, 2, 3) + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>2«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>2«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>3«I»h«/I»</td></tr></table>
+<div style="text-align: right; margin-top: -2.6em; margin-right: 1.5em;">(19),</div>
+
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» = «I»u«/I»<sub>0</sub></td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">(0, 1) +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>1</sub></td>
+<td rowspan="2">(−1, 0, 1) +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>1</sub></td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»x«/I»<sub>−1</sub></td>
+<td rowspan="2">(−1, 0, 1, 2) + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>2«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>2«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>3«I»h«/I»</td></tr></table>
+<div style="text-align: right; margin-top: -2.6em; margin-right: 1.5em;">(20).</div>
+
+
+The general principle on which these formulae are constructed,
+and which may be used to construct other formulae, is that (i.)
+we start with any tabulated value of «I»u«/I», (ii.) we pass to the successive
+differences by steps, each of which may be either downwards or
+upwards, and (iii.) the new suffix which is introduced at each step
+determines the new factor (involving «I»x«/I») for use in the next term.
+For any particular value of «I»x«/I», however, all formulae which end with
+the same difference of the «I»r«/I»th order give the same result, provided
+tabular differences are used. If, for instance, we go only to first
+differences, we have
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I»<sub>0</sub> +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
+<td rowspan="2">(0, 1) = «I»u«/I»<sub>1</sub> +</td> <td>«I»x«/I» − «I»x«/I»<sub>1</sub></td>
+<td rowspan="2">(0, 1)</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td></tr></table>
+
+identically.
+
+13. «I»Ordinates not Equidistant.«/I»—When the successive ordinates in
+the graph of «I»u«/I» are not equidistant, «I»i.e.«/I» when the differences of
+successive values of «I»x«/I» are not equal, the above principle still applies,
+provided the differences are adjusted in a particular way. Let the
+values of «I»x«/I» for which «I»u«/I» is tabulated be «I»a«/I» = «I»x«/I»<sub>0</sub> + {{Polytonic|α}}«I»h«/I», «I»b«/I» = «I»x«/I»<sub>0</sub> + {{Polytonic|β}}«I»h«/I», «I»c«/I» = «I»x«/I»<sub>0</sub> +
+{{Polytonic|γ}}«I»h«/I», {{...}} Then the table becomes
+
+<table align=center style="border: 1px solid black; border-collapse: collapse;">
+<tr align=center><td {{Ts|ba}} rowspan="2">«I»x«/I».</td> <td {{Ts|ba}} rowspan="2"> &emsp; «I»u«/I». &emsp; </td> <td {{Ts|ba}} colspan="3">Adjusted Differences.</td></tr>
+<tr><td {{Ts|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>&emsp; &emsp;&c.&emsp; &emsp;</td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>«I»a«/I» = «I»x«/I»<sub>{{Polytonic|α}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>«I»u«/I»<sub>{{Polytonic|α}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td> </td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β}})</td> <td {{Ts|br}}>&nbsp;</td> <td></td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|bl|br}}>«I»b«/I» = «I»x«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>«I»u«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β, γ}})</td> <td> </td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|β, γ}})</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td>«I»c«/I» = «I»x«/I»<sub>{{Polytonic|γ}}</sub></td> <td {{Ts|bl|br}}>«I»u«/I»<sub>{{Polytonic|γ}}</sub></td> <td {{Ts|br}}>·</td> <td {{Ts|br}}>·</td> <td> </td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+<tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
+</table>
+
+In this table, however, ({{Polytonic|α}}, {{Polytonic|β}}) does not mean «I»u«/I»<sub>{{Polytonic|β}}</sub> −
+«I»u«/I»<sub>{{Polytonic|α}}</sub>, but «I»u«/I»<sub>{{Polytonic|β}}</sub> − «I»u«/I»<sub>{{Polytonic|α}}</sub> ÷
+({{Polytonic|β}} − {{Polytonic|α}}); ({{Polytonic|α}}, {{Polytonic|β}}, {{Polytonic|γ}}) means {({{Polytonic|β}}, {{Polytonic|γ}}) − ({{Polytonic|α}}, {{Polytonic|β}})} ÷ {{EB1911 tfrac|1|2}}({{Polytonic|γ}} − {{Polytonic|α}}); and, generally
+any quantity ({{Polytonic|η}}, {{...}} {{Polytonic|φ}}) in the column headed “«I»r«/I»th diff.” is
+obtained by dividing the difference of the adjoining quantities in
+the preceding column by ({{Polytonic|φ}} − {{Polytonic|η}})/«I»r«/I». If the table is formed in this
+way, we may apply the principle of § 12 so as to obtain formulae
+such as
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» = «I»u«/I»<sub>{{Polytonic|α}}</sub> +</td> <td>«I»x«/I» − «I»a«/I»</td>
+<td rowspan="2">· ({{Polytonic|α}}, {{Polytonic|β}}) +</td> <td>«I»x«/I» − «I»a«/I»</td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»b«/I»</td>
+<td rowspan="2">· ({{Polytonic|α}}, {{Polytonic|β}}, {{Polytonic|γ}}) + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac}}>«I»h«/I»</td> <td {{Ts|bt|ac}}>«I»h«/I»</td>
+<td {{Ts|bt|ac}}>2«I»h«/I»</td></tr></table>
+<div style="text-align: right; margin-top: -2.4em; margin-right: 1.5em;">(21),</div>
+
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» = «I»u«/I»<sub>{{Polytonic|γ}}</sub> +</td> <td>«I»x«/I» − «I»c«/I»</td>
+<td rowspan="2">· ({{Polytonic|β}}, {{Polytonic|γ}}) +</td> <td>«I»x«/I» − «I»c«/I»</td>
+<td rowspan="2">·</td> <td>«I»x«/I» − «I»b«/I»</td>
+<td rowspan="2">· ({{Polytonic|α}}, {{Polytonic|β}}, {{Polytonic|γ}}) + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td> <td {{Ts|bt|ac|pl.5|pr.5}}>«I»h«/I»</td>
+<td {{Ts|bt|ac|pl.5|pr.5}}>2«I»h«/I»</td></tr></table>
+<div style="text-align: right; margin-top: -2.4em; margin-right: 1.5em;">(22).</div>
+
+
+The following example illustrates the method, «I»h«/I» being taken
+to be 1°:—
+
+<div align=center>«I»Example 8.«/I»</div>
+
+<table align=center style="border: 1px solid black; border-collapse: collapse;">
+<tr><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I» = sin «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>1st Diff.<br />(adjusted).</td> <td {{Ts|pl.5|pr.5|ac|ba}}>2nd Diff.<br />(adjusted).</td> <td {{Ts|pl.5|pr.5|ac|ba}}>3rd Diff.<br />(adjusted).</td></tr>
+
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+</td> <td {{Ts|br}}>−</td> <td>−</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>20°</td> <td {{Ts|pl.5|pr.5|br}}>.3420201</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>162932 50</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>22°</td> <td {{Ts|pl.5|pr.5|br}}>.3746066</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1125 00</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>161245 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>48 75</td></tr>
+<tr align=center><td {{Ts|br}}>23°</td> <td {{Ts|pl.5|pr.5|br}}>.3907311</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1222 50</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>158800 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>48 30</td></tr>
+<tr align=center><td {{Ts|br}}>26°</td> <td {{Ts|pl.5|pr.5|br}}>.4383711</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1303 00</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>156194 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>47 49</td></tr>
+<tr align=center><td {{Ts|br}}>27°</td> <td {{Ts|pl.5|pr.5|br}}>.4539905</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1445 47</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>151857 60</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>46 00</td></tr>
+<tr align=center><td {{Ts|br}}>32°</td> <td {{Ts|pl.5|pr.5|br}}>.5299193</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1583 48</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>145523 67</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>35°</td> <td {{Ts|pl.5|pr.5|br}}>.5735764</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
+</table>
+
+To find «I»u«/I» for «I»x«/I» = 31°, we use the values for 26°, 27°, 32° and 35°,
+and obtain
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» = .4383711 00 +</td> <td>5</td>
+<td rowspan="2">(156194 00) +</td> <td>5</td>
+<td rowspan="2">·</td> <td>4</td>
+<td rowspan="2">(−1445 47) +</td> <td>5</td>
+<td rowspan="2">·</td> <td>4</td>
+<td rowspan="2">·</td> <td>−1</td>
+<td rowspan="2">(−46 00) = .5150380,</td></tr>
+<tr><td {{Ts|bt|ac}}>1</td> <td {{Ts|bt}}>1</td>
+<td {{Ts|bt|ac}}>2</td> <td {{Ts|bt|ac}}>1</td>
+<td {{Ts|bt|ac}}>2</td> <td {{Ts|bt|ac}}>3</td></tr></table>
+
+which is only wrong in the last figure.
+
+If the values of «I»u«/I» occurring in (21) or (22) are «I»u«/I»<sub>{{Polytonic|α}}</sub>, «I»u«/I»<sub>{{Polytonic|β}}</sub>, «I»u«/I»<sub>{{Polytonic|γ}}</sub>, {{...}} «I»u«/I»<sub>{{Polytonic|λ}}</sub>,
+corresponding to values «I»a«/I», «I»b«/I», «I»c«/I», {{...}} «I»l«/I» of «I»x«/I», the formula may be
+more symmetrically written
+
+<table align=center>
+<tr><td rowspan="2">«I»u«/I» =</td> <td>(«I»x«/I» − «I»b«/I») («I»x«/I» − «I»c«/I») {{...}} («I»x«/I» − «I»l«/I»)</td>
+<td rowspan="2">«I»u«/I»<sub>{{Polytonic|α}}</sub> +</td> <td>(«I»x«/I» − «I»a«/I») («I»x«/I» − «I»c«/I») {{...}} («I»x«/I» − «I»l«/I»)</td>
+<td rowspan="2">«I»u«/I»<sub>{{Polytonic|β}}</sub> + {{...}}</td></tr>
+<tr><td {{Ts|bt|ac}}>(«I»a«/I» − «I»b«/I») («I»a«/I» − «I»c«/I») {{...}} («I»a«/I» − «I»l«/I»)</td> <td {{Ts|bt|ac}}>(«I»b«/I» − «I»a«/I») («I»b«/I» − «I»c«/I») {{...}} («I»b«/I» − «I»l«/I»)</td></tr></table>
+
+<table align=center>
+<tr><td rowspan="2">{{...}} +</td> <td>(«I»x«/I» − «I»a«/I») («I»x«/I» − «I»b«/I») («I»x«/I» − «I»c«/I») {{...}}</td>
+<td rowspan="2">«I»u«/I»<sub>{{Polytonic|λ}}</sub></td></tr>
+<tr><td {{Ts|bt|ac}}>(«I»l«/I» − «I»a«/I») («I»l«/I» − «I»b«/I») («I»l«/I» − «I»c«/I») {{...}}</td></tr></table>
+<div style="text-align: right; margin-top: -2.4em; margin-right: 1.5em;">(23).</div>
+
+
+This is known as «I»Lagrange’s formula«/I», but it is said to be due to
+Euler. It is not convenient for practical use, since it does not show
+how many terms have to be taken in any particular case.
+
+14. «I»Interpolation from Tables of Double Entry.«/I»—When «I»u«/I» is a
+function of «I»x«/I» and «I»y«/I», and is tabulated in terms of «I»x«/I» and of «I»y«/I» jointly,
+its calculation for a pair of values not given in the table may be
+effected either directly or by first forming a table of values of u
+in terms of «I»y«/I» for the particular value of «I»x«/I» and then determining u
+from this table for the particular value of y. For direct interpolation,
+consider that {{Polytonic|Δ}} represents differencing by changing «I»x«/I» into «I»x«/I» + 1,
+and {{Polytonic|Δ}}′ differencing by changing «I»y«/I» into «I»y«/I» + 1. Then the formula is
+
+<div align=center>«I»u«/I»<sub>«I»x«/I», «I»y«/I»</sub> = (1 + {{Polytonic|Δ}})<sup>«I»x«/I»</sup> (1 + {{Polytonic|Δ}}′)<sup>«I»y«/I»</sup> «I»u«/I»<sub>0,0</sub>;</div>
+
+and the right-hand side can be developed in whatever form is most
+convenient for the particular case.
+
+{{sc|References.}}—For general formulae, with particular applications,
+see the «I»Text-book of the Institute of Actuaries«/I», part ii. (1st ed. 1887,
+2nd ed. 1902), p. 434; H. L. Rice, «I»Theory and Practice of Interpolation«/I»
+(1899). Some historical references are given by C. W.
+Merrifield, “On Quadratures and Interpolation,” «I»Brit. Assoc.«/I»
+«I»Report«/I» (1880), p. 321; see also «I»Encycl. der math. Wiss.«/I» vol. i. pt. 2,
+pp. 800-819. For J. D. Everett’s formula, see «I»Quar. Jour. Pure«/I»
+«I»and Applied Maths.«/I», No. 128 (1901), and «I»Jour. Inst. Actuaries«/I»,
+vol. xxxv. (1901), p. 452. As to relative accuracy of different
+formulae, see «I»Proc. Lon. Math. Soc.«/I» (2) vol. iv. p. 320. Examples
+of interpolation by means of auxiliary curves will be found in
+«I»Jour. Royal Stat. Soc.«/I» vol. lxiii. pp. 433, 637. See also {{EB1911 article link|Differences, Calculus of}}. {{Fs|108%|{{EB1911 footer initials|William Fleetwood Sheppard|W. F. Sh.}}}}

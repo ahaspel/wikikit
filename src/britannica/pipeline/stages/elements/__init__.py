@@ -319,28 +319,21 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # inline prose, glyphs inline, no table marker (kills the pipe leak).
     "INLINE_GLYPHS": lambda raw, inner, tt, ctx, reg:
         _process_inline_glyph_wrapper(inner, tt, reg),
-    "COMPLEX_HTML": lambda raw, inner, tt, ctx, reg:
+    # TABLE — every wikitable (`{|`) and HTML `<table>`, whatever its
+    # source sub-shape (data grid, single-column text box, verse-quotation,
+    # compound/nested, rowspan-complex), decomposes through the ONE
+    # recursive table engine.  The classifier's table predicates gate only
+    # table-vs-(math/chem/figure/glyph); among themselves they make no
+    # distinction the producer cares about, so there is one label and one
+    # dispatch entry.
+    "TABLE": lambda raw, inner, tt, ctx, reg:
         _process_table_unified(raw, inner, tt, reg),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_chemistry_layout(raw, inner, tt, reg),
-    "DATA_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
-    # SINGLE_COLUMN_TABLE — a `{|…|}` boxing a run of text (one content
-    # cell per row), not a grid.  Carved out of `_process_table`'s hidden
-    # dispatch; rendered as a `«PRE:` text block.
-    "SINGLE_COLUMN_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
-    # VERSE_TABLE — a 2-column quotation layout (hanging-quote col1 + verse
-    # lines col2).  Carved out of `_process_table`'s hidden dispatch;
-    # rendered as `{{VERSE:}VERSE}`.
-    "VERSE_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
     # Single-label kinds — element_type == label.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
         _process_djvu_crop(raw, tt, ctx),
     "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
-    "COMPOUND_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
     "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
     "REF_SELF": lambda raw, inner, tt, ctx, reg:
@@ -409,8 +402,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),
     "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
         f"[hieroglyph: {inner}]",
-    "HTML_TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
     "OUTLINE": lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt),
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
@@ -1096,24 +1087,34 @@ _PRE_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
     (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
     (_is_djvu_crop_table,        "DJVU_CROP"),
-    (_is_compound_table_pred,    "COMPOUND_TABLE"),
+    (_is_compound_table_pred,    "TABLE"),
     (_is_chemistry_layout_pred,  "CHEMISTRY_LAYOUT"),
 ]
 
 
 _POST_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
-    (_is_poem_wrapper_pred,          "VERSE_TABLE"),
+    # The table-family predicates (poem-wrapper / brace-table / data-
+    # signal+ts / rowspan / verse / single-column / catch-all) ALL emit
+    # the one "TABLE" label — the producer (`_process_table_unified`)
+    # decomposes every table shape identically, so the sub-distinction is
+    # meaningless downstream.  They keep their ORDER and identity because
+    # the order is what gates table-vs-(layout/math): e.g. `_is_brace_table`
+    # claims a real `{|` as TABLE before `_is_math_dominant_pred` can grab
+    # it, while `_has_data_signal_and_ts` runs AFTER it so a math-dominant
+    # table still reaches math.  Relabelling the outcomes doesn't touch
+    # that gating; it only stops minting sub-labels nothing consumes.
+    (_is_poem_wrapper_pred,          "TABLE"),
     (_is_layout_wrapper_pred,        "LAYOUT_WRAPPER"),
-    (_is_brace_table,                "DATA_TABLE"),
+    (_is_brace_table,                "TABLE"),
     (_is_math_dominant_pred,         "MATH_LAYOUT_EQUATIONS"),
-    (_has_data_signal_and_ts,        "COMPLEX_HTML"),
-    (_has_rowspan_or_colspan,        "COMPLEX_HTML"),
+    (_has_data_signal_and_ts,        "TABLE"),
+    (_has_rowspan_or_colspan,        "TABLE"),
     (_is_math_layout_tokens_pred,    "MATH_LAYOUT_TOKENS"),
     (_is_math_layout_equations_pred, "MATH_LAYOUT_EQUATIONS"),
-    (_is_verse_table_pred,           "VERSE_TABLE"),
-    (_is_single_column_table_pred,   "SINGLE_COLUMN_TABLE"),
-    (_always_true,                   "DATA_TABLE"),
+    (_is_verse_table_pred,           "TABLE"),
+    (_is_single_column_table_pred,   "TABLE"),
+    (_always_true,                   "TABLE"),
 ]
 
 
@@ -1146,7 +1147,7 @@ def _classify_table(raw: str, inner: str,
         if predicate(raw, inner, inner_registry):
             return label
     # Unreachable — `_always_true` catches everything not matched above.
-    return "DATA_TABLE"
+    return "TABLE"
 
 
 # ── Image-layout subclassification ────────────────────────────────────

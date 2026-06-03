@@ -541,9 +541,14 @@ def assemble_html_rows(
     `{{TABLE:}TABLE}` marker can carry only align + colspan, so spanned
     tables emit literal HTML with full per-cell `style="…"` preserved.
 
-    `inner_registry`, when given, pre-substitutes DATA_TABLE child
+    `inner_registry`, when given, pre-substitutes nested TABLE child
     markers as inline `<table>` HTML so a nested wiki table inside an
     HTML cell renders rather than leaking its `{{TABLE:…}TABLE}` text.
+    (`_inline_table_marker_as_html` only transforms `{{TABLE}}` markers
+    and passes any other marker through unchanged, so widening the key
+    from DATA_TABLE to TABLE is a no-op for non-`{{TABLE}}` children and
+    a leak-fix for the `{{TABLE}}`-emitting ones — a complex/single-col
+    child that used to leak its marker now inlines.)
 
     The per-row attribute slot is IGNORED here (bare `<tr>`), matching the
     spine; producers that carry row styling assemble their own rows.
@@ -565,7 +570,7 @@ def assemble_html_rows(
               "</table>«/HTMLTABLE»")
     if inner_registry is not None:
         for ph, label in list(inner_registry.labels.items()):
-            if label != "DATA_TABLE":
+            if label != "TABLE":
                 continue
             if ph not in output:
                 continue

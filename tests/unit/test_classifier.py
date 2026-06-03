@@ -5,7 +5,7 @@ yet — so these tests exercise it standalone.  They cover:
 
   * Atomic-shape label derivation (MATH / POEM / IMAGE / …)
   * Recursive descent that builds nested inner_registries
-  * Composite BRACE_PIPE wikitable classification (DATA_TABLE /
+  * Composite BRACE_PIPE wikitable classification (TABLE /
     MATH_LAYOUT_EQUATIONS / LAYOUT_WRAPPER)
   * The top-level `classify_article` entry point
 """
@@ -49,18 +49,17 @@ class TestAtomicLabels:
         assert ce.label == "SCORE"
 
     def test_html_table(self):
-        # A genuine multi-column grid stays HTML_TABLE.  (Post-flip, `<table>`
-        # is routed through the shape classifiers, so a ONE-cell-per-row table
-        # is now SINGLE_COLUMN_TABLE — see test_html_table_single_column.)
+        # Every table — `<table>` or `{|`, grid or single-column — collapses
+        # to the one TABLE label and the one unified table producer.
         ce = classify(SHAPE_HTML_TAG,
                        "<table><tr><td>a</td><td>b</td></tr></table>")
-        assert ce.label == "HTML_TABLE"
+        assert ce.label == "TABLE"
 
     def test_html_table_single_column(self):
-        # One cell per row → not a grid → routed out of the table path.
+        # One cell per row is still just a TABLE (the producer decomposes it).
         ce = classify(SHAPE_HTML_TAG,
                        "<table><tr><td>a</td></tr><tr><td>b</td></tr></table>")
-        assert ce.label == "SINGLE_COLUMN_TABLE"
+        assert ce.label == "TABLE"
 
     def test_hieroglyph_tag(self):
         ce = classify(SHAPE_HTML_TAG, "<hiero>A1-B2</hiero>")
@@ -112,13 +111,13 @@ class TestNestedClassification:
 
     def test_simple_data_table(self):
         ce = classify(SHAPE_BRACE_PIPE, "{|\n|cell\n|}")
-        assert ce.label == "DATA_TABLE"
+        assert ce.label == "TABLE"
         assert ce.inner_registry == {}
 
     def test_table_with_one_math_child_is_data(self):
-        # One math child isn't math-dominant (predicate needs ≥2).
+        # One math child isn't math-dominant (predicate needs ≥2) → plain TABLE.
         ce = classify(SHAPE_BRACE_PIPE, "{|\n|<math>x</math>\n|}")
-        assert ce.label == "DATA_TABLE"
+        assert ce.label == "TABLE"
         assert len(ce.inner_registry) == 1
         child = next(iter(ce.inner_registry.values()))
         assert child.label == "MATH"

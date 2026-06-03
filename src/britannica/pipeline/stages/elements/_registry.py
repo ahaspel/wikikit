@@ -86,20 +86,20 @@ class ElementRegistry:
 # bridge maps it to its own name rather than "TABLE", and parent
 # wikitables miss it when checking for nested-table children.
 TABLE_LABELS: frozenset[str] = frozenset({
-    "LAYOUT_WRAPPER", "DATA_TABLE", "COMPLEX_HTML",
+    "LAYOUT_WRAPPER", "TABLE",
     "MATH_LAYOUT_TOKENS", "MATH_LAYOUT_EQUATIONS",
-    "CHEMISTRY_LAYOUT", "COMPOUND_TABLE", "DJVU_CROP",
+    "CHEMISTRY_LAYOUT", "DJVU_CROP",
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
     "FIGURE_GROUP", "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE",
     "LEGENDED_FIGURE_CHILD",
-    "SINGLE_COLUMN_TABLE", "VERSE_TABLE",
 })
 
 # Block-level child labels — anything that renders as its own
 # paragraph.  Used by table producers to decide whether to unwrap a
-# single-row table to inline text.
-BLOCK_LABELS: frozenset[str] = frozenset({"POEM", "HTML_TABLE"}) | TABLE_LABELS
+# single-row table to inline text.  ("TABLE" arrives via TABLE_LABELS
+# and covers both `{|` and `<table>` — the old HTML_TABLE label is gone.)
+BLOCK_LABELS: frozenset[str] = frozenset({"POEM"}) | TABLE_LABELS
 
 # Image-shaped child labels — File-bracket image elements regardless of
 # whether the walker recognised an inline-prose context (INLINE_IMAGE) or

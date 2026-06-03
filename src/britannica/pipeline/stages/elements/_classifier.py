@@ -81,7 +81,7 @@ _HTML_TAG_LABEL: dict[str, str] = {
     "poem":  "POEM",
     "ref":   "REF",
     "score": "SCORE",
-    "table": "HTML_TABLE",
+    "table": "TABLE",
     "hiero": "HIEROGLYPH",
 }
 
@@ -248,22 +248,18 @@ def _classify_brace_pipe(
     return _classify_table(raw, inner_text, legacy)
 
 
-# ── `<table>` flip (Phase 2 step 3) ───────────────────────────────────
+# ── `<table>` routing ─────────────────────────────────────────────────
 #
-# Route a `<table>` through the SAME shape classifiers a `{|` wikitable gets
-# (`_classify_table`), so disguised non-tables (figures) leave the table path
-# instead of being flatly labelled HTML_TABLE.  But two constraints keep the
-# blast radius to exactly the non-tables we can handle:
-#   * a genuine `<table>` grid must stay on the span-preserving
-#     `_process_html_table` producer — the DATA_TABLE catch-all's producer
-#     `_process_table` is wiki-only and would break it; and
-#   * the not-yet-`<table>`-ready non-table producers (math/chem/verse/
-#     single-column still parse wiki `|`/`|-`) would also break on `<table>`.
-# So ONLY the figure-family labels — whose producers were made syntax-neutral
-# via `_table_grid` in step 2 and verified to render `<table>` figures content-
-# preserved — leave the table path; every other label falls back to HTML_TABLE,
-# byte-identical to today.  Grow `_HTML_TABLE_ROUTE_AWAY` as each producer
-# family is converted (math/chem/verse next).
+# A `<table>` is classified by the SAME `_classify_table` ladder a `{|`
+# wikitable gets, so a disguised non-table (figure/math/chem) leaves the
+# table path onto its own producer.  Everything the ladder calls a table is
+# just "TABLE": the unified table engine (`_process_table_unified`) is
+# syntax-neutral — it renders `<table>` and `{|` alike by opener — so the
+# else-branch IS "TABLE", not a separate HTML_TABLE label.  Only labels whose
+# own producer is verified `<table>`-ready (figure/math/chem) route away; any
+# other label (incl. a `<table>` the ladder calls LAYOUT_WRAPPER / DJVU_CROP)
+# stays on the table engine — exactly as before the collapse, when the
+# else-branch was HTML_TABLE → the same unified engine.
 _HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
@@ -273,13 +269,6 @@ _HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
     # CHEM — `_process_chemistry_layout` made `<table>`-aware (`_split_html_chem_row`
     # + `<tr>` split); classifier (`_is_chemistry_layout_pred`) already recognizes.
     "CHEMISTRY_LAYOUT",
-    # SINGLE-COLUMN — detector (`_is_single_column_table`) + producer
-    # (`_process_single_column_table`) both made `<table>`-aware (one cell per
-    # row → `«PRE:` text block).
-    "SINGLE_COLUMN_TABLE",
-    # VERSE — poem-wrapper (`_is_poem_wrapper_pred`: a table that just centres
-    # `<poem>` child(ren)) → `_process_verse_table` emits each as `{{VERSE:}`.
-    "VERSE_TABLE",
 })
 
 
@@ -288,13 +277,14 @@ def _classify_html_table(
     inner_text: str,
     inner_registry: dict[str, ClassifiedElement],
 ) -> str:
-    """Classify a `<table>` element via the shared table classifier, letting
-    only `<table>`-ready figure shapes leave the table path; genuine grids and
-    not-yet-ready shapes stay HTML_TABLE."""
+    """Classify a `<table>` element via the shared table classifier.  A
+    non-table producer family (figure/math/chem) keeps its own label and
+    leaves the table path; every genuine table is "TABLE" and renders through
+    the unified, syntax-neutral table engine."""
     from britannica.pipeline.stages.elements import _classify_table
     legacy = _to_legacy_registry(inner_registry)
     label = _classify_table(raw, inner_text, legacy)
-    return label if label in _HTML_TABLE_ROUTE_AWAY else "HTML_TABLE"
+    return label if label in _HTML_TABLE_ROUTE_AWAY else "TABLE"
 
 
 # ── Top-level label dispatcher ────────────────────────────────────────
