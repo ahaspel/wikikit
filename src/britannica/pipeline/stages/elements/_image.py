@@ -137,28 +137,6 @@ def _process_image(inner: str, text_transform, default_align: str | None = None)
         width=width, height=height)
 
 
-def _process_image_float(inner: str, text_transform) -> str:
-    """Convert img float content to {{IMG:filename|caption}}.
-
-    Inner is the content between {{ and }}, e.g.:
-    'img float |file=Foo.jpg |cap=A caption |width=240px'
-    or the BOILER multi-line form with whitespace around equals:
-    '''img float
-     | file = Foo.jpg
-     | cap = {{sc|Fig.}} 4.—…
-     | width = 200px'''
-    """
-    parsed = _img_float_parser.parse(inner)
-    if parsed is None:
-        return ""
-    caption = parsed.caption
-    if caption:
-        caption = text_transform(caption)
-    return build_img_marker(
-        parsed.filename, caption or None,
-        align=parsed.align, width=parsed.width)
-
-
 _CSS_CROP_RE = re.compile(
     r"\{\{Css image crop\s*\n(.*?)\}\}", re.DOTALL | re.IGNORECASE
 )
@@ -245,27 +223,6 @@ _RAW_CAPTION_RE = re.compile(
     r"\{\{\s*c\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}", re.IGNORECASE)
 
 
-def _process_raw_image(raw: str, text_transform) -> str:
-    """`{{raw image|…}}` → `{{IMG:…}}`.  A DjVu page-ref arg becomes the local
-    full-page render; any other arg passes through as a filename.  Folds an
-    optional trailing `{{c|caption}}` the walker carried along."""
-    m = _RAW_IMAGE_ARG_RE.match(raw)
-    if not m:
-        return raw
-    arg = m.group(1).strip()
-    dref = _RAW_DJVU_REF_RE.match(arg)
-    if dref:
-        filename = f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
-    else:
-        # Keep spaces — a plain filename resolves as-is, like every other IMAGE
-        # producer (MediaWiki treats space/underscore alike; spaces match the
-        # regular [[File:…]] output and the old bundler).
-        filename = arg
-    cap_m = _RAW_CAPTION_RE.search(raw, m.end())
-    caption = text_transform(cap_m.group(1).strip()) if cap_m else ""
-    return build_img_marker(filename, caption or None)
-
-
 # `{{Plain image with caption|image=File:…|align=…|width=…px|caption=…|caption
 # position=…}}` — a Wikisource named-parameter figure macro (MAP, vol 17, uses
 # ~17 of them for its historical-cartography plates).  Same destination as every
@@ -275,29 +232,6 @@ def _process_raw_image(raw: str, text_transform) -> str:
 # caption run.  `caption position` is layout-only (our caption always renders
 # under the image) and ignored.  Without this the walker doesn't recognize the
 # macro and all ~17 figures fall to body-text's catch-all and vanish.
-def _process_plain_image(inner: str, text_transform) -> str:
-    params: dict[str, str] = {}
-    # inner is `Plain image with caption|key=val|key=val…`; segment 0 is the
-    # template name, the rest are named params (split at depth-0 pipes so a
-    # nested `caption={{center|…|…}}` value stays whole).
-    for seg in _split_top_level_pipe(inner)[1:]:
-        if "=" not in seg:
-            continue
-        key, val = seg.split("=", 1)
-        params[key.strip().lower()] = val.strip()
-    filename = re.sub(r"^\s*(?:File|Image):", "", params.get("image", ""),
-                      flags=re.IGNORECASE).strip()
-    if not filename:
-        return ""
-    align = _ALIGN_KEYWORDS.get(params.get("align", "").lower())
-    width, height = _parse_image_size(params.get("width", ""))
-    caption = params.get("caption", "")
-    if caption:
-        caption = text_transform(caption)
-    return build_img_marker(filename, caption or None,
-                            align=align, width=width, height=height)
-
-
 def _process_chart2(raw: str, context: ElementContext) -> str:
     """Replace a chart2 genealogical tree with a pre-cropped page scan image.
 

@@ -32,11 +32,6 @@ from britannica.pipeline.stages.elements._image import (
     _parse_crop_param,
     _process_chart2,
     _process_djvu_crop,
-    _process_image,
-    _process_image_float,
-    _process_image_from_raw,
-    _process_plain_image,
-    _process_raw_image,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
@@ -103,32 +98,22 @@ from britannica.pipeline.stages.elements._layout import (
     _parse_inline_legend_cell,
     _parse_multicol_legend_row,
     _parse_prose_legend_rows,
-    _process_captioned_figure,
-    _process_captioned_figure_inline,
-    _process_legended_figure,
-    _process_legended_figure_beside,
-    _process_legended_figure_child,
     _process_prose_figure,
-    _process_unpaired_figure_group,
     _row_has_legend_multicol_cells,
     _simple_table_text,
     _strip_cell_attributes,
     _try_image_layout_subclass,
-    _unwrap_layout_table,
 )
 from britannica.pipeline.stages.elements._tables import (
-    _extract_subtable_values,
     _has_chem_brackets,
     _has_chem_equation_content,
     _has_chem_reaction_content,
-    _is_html_illustration_wrapper,
     _is_single_column_table,
     _is_verse_table,
     _process_chemistry_layout,
     _process_inline_glyph_wrapper,
     _process_table_unified,
     _table_grid,
-    _unwrap_html_illustration,
     split_wiki_row,
 )
 
@@ -211,18 +196,6 @@ def _produce_body(raw, inner, text_transform, context, inner_registry):
     return _transform_body_text(raw)
 
 
-def _produce_figure(raw, inner, text_transform, context, inner_registry):
-    """Assemble a figure (one or more images + structural caption run).
-
-    Total over SHAPE_FIGURE: ``_process_prose_figure`` parses the span,
-    folds caption/attribution into the ``{{IMG:…}}`` marker(s) and emits
-    any legend separately — consuming the caption so it never renders
-    twice.  No post-pass, no fallback; the producer is the final word on
-    this span.
-    """
-    return _process_prose_figure(raw, text_transform)
-
-
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
 
 
@@ -275,7 +248,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "MATH_LAYOUT_EQUATIONS": lambda raw, inner, tt, ctx, reg:
         _process_equation_layout(inner, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
-        _unwrap_layout_table(inner, tt, reg),
+        _faithful_figure(raw),
     # UNPAIRED_FIGURE_GROUP — ≥2 images in a wikitable / `<table>` grid
     # that the classifier hands off as a group; the producer partitions
     # cells per image (vertical-stack OR parallel-row column-slice) and
@@ -286,7 +259,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # passthrough was silently under-bundling).  Collapses the old
     # SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels into one.
     "UNPAIRED_FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _process_unpaired_figure_group(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
     # in row 0, alone in cell, no data-table header signal).  Has
     # its own focused producer; falls back to `_unwrap_layout_table`
@@ -301,14 +274,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # the image placeholder + wrapper templates from the cell, the
     # remaining text is the caption.
     "CAPTIONED_FIGURE_INLINE": lambda raw, inner, tt, ctx, reg:
-        _process_captioned_figure_inline(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # LEGENDED_FIGURE — single-image figure carrying legend material
     # (multicol `|LABEL.||text|…`, prose `LABEL. text` cells, POEM
     # placeholder, or nested wikitable).  Producer finds + extracts
     # the legend first, then runs the same one-pass extract on the
     # caption/attribution remainder, then assembles.
     "LEGENDED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _process_legended_figure(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # LEGENDED_FIGURE_BESIDE — single-image figure whose legend sits
     # in a sibling cell on the image's row, separated by `||`
     # (ABBEY Fig 1 Santa Laura).  Producer parses the sibling cell's
@@ -316,7 +289,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # raw row text (so paragraph-`\n\n` breaks survive), then finds
     # the caption in a subsequent colspan row.
     "LEGENDED_FIGURE_BESIDE": lambda raw, inner, tt, ctx, reg:
-        _process_legended_figure_beside(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # LEGENDED_FIGURE_CHILD — single-image figure whose legend lives
     # in a POEM placeholder or a nested wikitable child.  Producer
     # finds the child, calls the appropriate raw-parser
@@ -324,14 +297,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # nested TABLE), excises the placeholder, and runs one-pass
     # extraction on the remainder.
     "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
-        _process_legended_figure_child(raw, inner, tt, reg),
+        _faithful_figure(raw),
     # (SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels removed — multi-image
     # figures now classify as UNPAIRED_FIGURE_GROUP, above.)
     # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
     # wikitables (HYDROMEDUSAE-style composite).  No direct images
     # at this level.  Initially shared with LAYOUT_WRAPPER.
     "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _unwrap_layout_table(inner, tt, reg),
+        _faithful_figure(raw),
     # FIGURE — a bare image + its structural caption run, carved as one span
     # by the walker.  Cut over to the faithful producer (was `_produce_figure`,
     # which folded the caption into `{{IMG:|caption}}` — flattening `{{sc|Fig.}}`
@@ -379,11 +352,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # faithful recursive producer: image → leaf, caption → its own «CTR» block.
     "IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
-        _process_image_from_raw(raw, tt, inline=True),
-    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _process_raw_image(raw, tt),
-    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg: _process_plain_image(inner, tt),
+        _faithful_figure(raw),
+    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
-        _process_image_float(inner, tt),
+        _faithful_figure(raw),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack) with PLAIN content (table headers, hyphenations, figure-
     # caption splits).  Chem-shaped / math-shaped variants reclassify
@@ -472,17 +445,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
 # _process_legended_*, _process_unpaired_figure_group,
 # _process_captioned_figure_inline, _process_image*, _process_raw_image,
 # _process_plain_image, _process_image_float, _produce_figure) are now dead.
-for _fig_label in (
-    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "FIGURE", "FIGURE_GROUP",
-    "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE", "LEGENDED_FIGURE_CHILD",
-    "UNPAIRED_FIGURE_GROUP", "LAYOUT_WRAPPER",
-    "IMAGE", "INLINE_IMAGE", "RAW_IMAGE", "PLAIN_IMAGE", "IMAGE_FLOAT",
-):
-    _PRODUCER_DISPATCH[_fig_label] = (
-        lambda raw, inner, tt, ctx, reg: _faithful_figure(raw))
-
-
-
 
 
 # ── Independent wikitable predicates ──────────────────────────────────
@@ -1181,7 +1143,6 @@ def _classify_table(raw: str, inner: str,
     return "DATA_TABLE"
 
 
-
 # ── Image-layout subclassification ────────────────────────────────────
 #
 # Layout wikitables wrapping a single image fall into a few structural
@@ -1239,8 +1200,6 @@ def _classify_table(raw: str, inner: str,
 # ae in taxonomic names) — fold to ASCII so legend-label validation
 # accepts them (TUNICATA Fig. 5: `œ` for Oesophagus, `œa` for
 # Oesephageal aperture).
-
-
 
 
 # Matches a `Fig. N.` / `Plate N.` caption anywhere in a string.
