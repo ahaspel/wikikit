@@ -50,6 +50,17 @@ _CELL_ATTR_RE = re.compile(
 # `|` at the end of `split_wiki_row`.
 _PIPE_ESCAPE = "\x04"
 
+# Internal sentinel delimiting a masked newline-significant block (`<poem>`
+# / `<pre>`) while `split_wiki_row` re-merges a cell's spilled physical
+# lines.  The merge joins continuation lines with a SPACE — right for prose
+# that merely wrapped, but it flattens a `<poem>` legend's one-entry-per-
+# line structure into a run-on (St Gall's Fig. 3 ground-plan key).  Masking
+# to a newline-/pipe-free token survives the merge; restored verbatim into
+# the cell content before return.  Distinct from `_PH` (\x03) / `_PIPE_ESCAPE`
+# (\x04).
+_NLBLOCK = "\x02"
+_NLBLOCK_RE = re.compile(r"<(poem|pre)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
+
 
 def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
     """Split a wiki-table row into ``(sep, attr_part, content)`` cells.
@@ -83,6 +94,25 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
        empty / pure ``{{Ts|…}}`` styling).  Otherwise the entire body
        is content with empty attrs.
     """
+    # 0. Mask newline-significant blocks (`<poem>`/`<pre>`) so step 1's
+    # space-join doesn't flatten their internal line breaks.  In the
+    # production data-table path cells carry child elements as `\x03`
+    # placeholders (never raw `<poem>`), so this matches nothing there —
+    # byte-identical; it bites only the faithful-figure path, which feeds
+    # raw source through here and owns a `<poem>` legend's per-entry lines.
+    nlblocks: list[str] = []
+
+    def _mask_nlblock(m: "re.Match[str]") -> str:
+        nlblocks.append(m.group(0))
+        return f"{_NLBLOCK}{len(nlblocks) - 1}{_NLBLOCK}"
+
+    row_text = _NLBLOCK_RE.sub(_mask_nlblock, row_text)
+
+    def _restore_nlblocks(s: str) -> str:
+        for i, blk in enumerate(nlblocks):
+            s = s.replace(f"{_NLBLOCK}{i}{_NLBLOCK}", blk)
+        return s
+
     # 1. Merge continuation lines AND skip `|+` caption lines (which
     # are extracted at the table-processor level before this function
     # is called).  The `|+` filter MUST run before `||` normalisation
@@ -144,7 +174,7 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
         cells.append((
             sep,
             attr_part.replace(_PIPE_ESCAPE, "|").strip(),
-            content.replace(_PIPE_ESCAPE, "|").strip(),
+            _restore_nlblocks(content).replace(_PIPE_ESCAPE, "|").strip(),
         ))
     return cells
 

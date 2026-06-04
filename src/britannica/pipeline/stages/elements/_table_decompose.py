@@ -280,10 +280,29 @@ def _drop_caption_lines(text: str) -> str:
 
 
 def _has_cell_lines(text: str) -> bool:
-    for ln in text.split("\n"):
-        s = ln.lstrip()
-        if s.startswith(("|", "!")) and s.strip() not in ("|", "!", "{|"):
+    lines = text.split("\n")
+    # Any non-bare `|`/`!` line is a definite cell.
+    for ln in lines:
+        s = ln.strip()
+        if s.startswith(("|", "!")) and s not in ("|", "!", "{|"):
             return True
+    # FALLBACK (only when there's no non-bare cell above): a bare `|`/`!`
+    # opener whose content sits on the following continuation line(s) —
+    # wikitext's `|`⏎`content` spelling.  St Mary's Abbey Fig. 4 writes its
+    # `[[File:…]]` image cell this way; treating the bare `|` as no-cell
+    # silently DROPPED the whole image row.  Must NOT short-circuit the loop
+    # above (a bare `|` followed by `|rowspan=…|…` is an EMPTY cell then a
+    # real one — AGRICULTURE's stats header, which the early return dropped).
+    for idx, ln in enumerate(lines):
+        if ln.strip() not in ("|", "!"):
+            continue
+        for nxt in lines[idx + 1:]:
+            t = nxt.strip()
+            if not t:
+                continue
+            if not t.startswith(("|", "!", "{|")):
+                return True
+            break  # next is a cell/row marker, not this cell's content
     return False
 
 

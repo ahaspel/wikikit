@@ -37,7 +37,7 @@ apparatus which employed
 the kinetic energy of jets of
 steam.
 
-{{IMG:EB1911 Steam Engine - Fig. 1.jpg|align=right|width=300|Fig. 1.—Hero’s Apparatus, 130 B.C.}}
+«HTMLTABLE:<table class="figtable" style="float:right;width:300px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 1.jpg|width=300}}</td></tr><tr><td>«SC»Fig.«/SC» 1.—Hero’s Apparatus, 130 «SC»B.C.«/SC»</td></tr></table>«/HTMLTABLE»
 
 2. One of these, indeed, is
 mentioned amongst the earliest
@@ -117,7 +117,7 @@ steam is stopped, and the steam already there is condensed
 by allowing a jet of cold water from a cistern above to stream
 over the outer surface of the vessel. This produces a vacuum
 and causes water to be sucked up through the pipe C and
-the valve D. Meanwhile steam has been displacing waterPAGE:841{{IMG:EB1911 Steam Engine - Fig. 2.jpg|align=right|width=245|Fig. 2.—Savery’s Pumping Engine, 1698.}}
+the valve D. Meanwhile steam has been displacing waterPAGE:841«HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 2.jpg|width=245}}</td></tr><tr><td>«SC»Fig.«/SC» 2.—Savery’s Pumping Engine, 1698.</td></tr></table>«/HTMLTABLE»
 
 from the other vessel, and is ready to be condensed there.
 The valves B and D open only upwards. The supplementary
@@ -230,7 +230,7 @@ of a piston engine to Savery’s cruder type, a new inventor
 had appeared who made the piston engine a practical
 success by separating the boiler from the cylinder
 and by using (as Savery had done) artificial means
-to condense the steam. This was Thomas Newcomen, «SH»Newcomen’s Atmospheric Engine, 1705.«/SH» {{IMG:EB1911 Steam Engine - Fig. 4.jpg|align=right|width=230|Fig. 4.—Newcomen’s Atmospheric Engine, 1705.}}
+to condense the steam. This was Thomas Newcomen, «SH»Newcomen’s Atmospheric Engine, 1705.«/SH» «HTMLTABLE:<table class="figtable" style="float:right;width:230px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 4.jpg|width=230}}</td></tr><tr><td>«SC»Fig«/SC». 4.—Newcomen’s Atmospheric Engine, 1705.</td></tr></table>«/HTMLTABLE»
 who in 1705, with his assistant, John Cawley,
 gave the steam engine
 the form shown in fig. 4.
@@ -302,7 +302,7 @@ organ—an empty vessel separate from the cylinder, into which
 the steam should be allowed to escape from the cylinder, to be
 condensed there by the application of cold water either outside
 or as a jet. To preserve the vacuum in his condenser he added
-{{IMG:EB1911 Steam Engine - Fig. 5.jpg|align=right|width=145|Fig. 5.—Watt’s Experi­mental Apparatus.}}
+«HTMLTABLE:<table class="figtable" style="float:right;width:145px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 5.jpg|width=145}}</td></tr><tr><td>«SC»Fig«/SC». 5.—Watt’s Experi­mental Apparatus.</td></tr></table>«/HTMLTABLE»
 a pump called the air-pump, whose
 function was to pump from it the
 condensed steam and water of condensation,
@@ -428,7 +428,7 @@ was attached to the far end of the beam, and that carried
 a counterpoise which served to raise the piston when steam
 was admitted below it.
 
-{{IMG:EB1911 Steam Engine - Fig. 6.jpg|align=center|width=300|Fig. 6.—Watt’s Single- Acting Engine, 1769.}}
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:300px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 6.jpg|width=300}}</td></tr><tr><td>«SC»Fig«/SC». 6.—Watt’s Single- Acting Engine, 1769.</td></tr></table>«/HTMLTABLE»
 
 14. In 1782 Watt patented two further improvements of the
 first importance, both of which he had invented some years
@@ -437,7 +437,7 @@ to say, the application of steam and vacuum to
 each side of the piston alternately. The other
 (invented as early as 1769) was the use of steam expansively, «SH»Other Inventions of Watt.«/SH» in other words the plan (now used in all engines that
 aim at economy of fuel) of stopping the admission of steam
-{{IMG:EB1911 Steam Engine - Fig. 7.jpg|align=right|width=235|Fig. 7.—Watt’s Double-Acting Engine, 1782.}}
+«HTMLTABLE:<table class="figtable" style="float:right;width:235px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 7.jpg|width=235}}</td></tr><tr><td>«SC»Fig«/SC». 7.—Watt’s Double-Acting«BR»Engine, 1782.</td></tr></table>«/HTMLTABLE»
 when the piston had
 made only a part of its
 stroke, and allowing the
@@ -494,7 +494,7 @@ required steam of a higher pressure. This, however,
 was a line of invention which Watt did not
 follow up, perhaps because so early as 1725 a
 non-condensing engine had been described by Jacob Leupold «SH»Non-condensing Engine.«/SH» in his «I»Theatrum machinarum«/I». Leupold’s proposed engine
-{{IMG:EB1911 Steam Engine - Fig. 8.jpg|align=right|width=215|Fig. 8.—Leupold’s Non-Condensing Engine, 1725.}}
+«HTMLTABLE:<table class="figtable" style="float:right;width:215px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 8.jpg|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 8.—Leupold’s Non-Condensing Engine, 1725.</td></tr></table>«/HTMLTABLE»
 is shown in fig. 8, which
 makes its action sufficiently
 clear. Watt’s aversion to
@@ -1620,7 +1620,7 @@ contact with metal which has been chilled by evaporation during
 the preceding exhaust stroke, and then evaporation, when the
 pressure has fallen sufficiently, during the later stage of expansion, 
 as well as during exhaust. The consequence is that the steam 
-though supplied in a dry {{IMG:EB1911 Steam Engine Fig. 14.png|width=215|Fig. 14}}
+though supplied in a dry «HTMLTABLE:<table class="figtable" style="float:left;width:215px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 14.png|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 14</td></tr></table>«/HTMLTABLE»
 state, may contain some 20 
 or 30% of moisture when 
 admission to the cylinder is 
@@ -1988,7 +1988,7 @@ and the same expansion, inasmuch as it reduces the exchange of
 heat between the working substance and the cylinder walls and so 
 makes the process of expansion more nearly adiabatic. The compound
 engine has also a mechanical advantage which will be presently
-described. The ultimate ratio of expansion in any compound {{IMG:EB1911 Steam Engine Fig. 16.png|width=250|Fig. 16.—Compound Diagrams: Woolf type.}}
+described. The ultimate ratio of expansion in any compound «HTMLTABLE:<table class="figtable" style="float:left;width:250px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 16.png|width=250}}</td></tr><tr><td>«SC»Fig«/SC». 16.—Compound Diagrams:«BR»Woolf type.</td></tr></table>«/HTMLTABLE»
 engine is the ratio of the volume of the low-pressure cylinder to the 
 volume of steam admitted to 
 the high-pressure cylinder. 
@@ -2023,7 +2023,7 @@ receiver type the diagrams resemble
 those shown in fig. 17. During CD 
 (which corresponds to FG) expansion 
 is taking place into the large or low-pressure 
-{{IMG:EB1911 Steam Engine Fig. 17.png|width=200|Fig. 17.—Compound Dia­grams: Receiver type.}}
+«HTMLTABLE:<table class="figtable" style="float:left;width:200px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 17.png|width=200}}</td></tr><tr><td>«SC»Fig«/SC». 17.—Compound Dia­grams: Receiver type.</td></tr></table>«/HTMLTABLE»
 cylinder. D and G mark
 the point of cut-off in the large cylinder, after which GH shows the
 independent expansion of the steam now shut within the large 
@@ -2122,7 +2122,7 @@ side of the central position, steam enters one end of the cylinder
 from the valve-chest and escapes from the other end of the cylinder 
 through the cavity of the valve into the exhaust port. The valve 
 is generally moved by an eccentric on the engine shaft, which is 
-mechanically equivalent to a crank whose radius is equal to the {{IMG:EB1911 Steam Engine Fig. 19.png|width=120|Fig. 19.}}
+mechanically equivalent to a crank whose radius is equal to the «HTMLTABLE:<table class="figtable" style="float:left;width:120px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 19.png|width=120}}</td></tr><tr><td>«SC»Fig«/SC». 19.</td></tr></table>«/HTMLTABLE»
 eccentricity, or distance from the centre of the shaft to the centre 
 of the eccentric sheave. The eccentric rod is generally so long that 
 the motion of the valve is sensibly the same as that which it would 
@@ -2158,7 +2158,7 @@ Further, exhaust begins only when the valve has moved past the
 middle by a distance equal to 𝑖, and continues until the valve has
 again returned to a distance 𝑖 from its middle position. Thus on
 the diagram of the eccentric’s travel
-(fig. 22) we find, by setting off 𝑜 and 𝑖 {{IMG:EB1911 Steam Engine Fig. 22.png|width=140|Fig. 22.}}
+(fig. 22) we find, by setting off 𝑜 and 𝑖 «HTMLTABLE:<table class="figtable" style="float:left;width:140px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 22.png|width=140}}</td></tr><tr><td>«SC»Fig«/SC». 22.</td></tr></table>«/HTMLTABLE»
 on the two sides of the centre, the positions
 𝑎, 𝑏, 𝑐 and 𝑑 of the eccentric radius
 at which the four events of admission, 
@@ -2252,7 +2252,7 @@ to a larger scale in fig. 26.
 This makes the direction of CQ (the 
 eccentric) coincide on the paper with the simultaneous direction ofPAGE:855the crank, and hence to find the displacement of the valve at any 
 position of the crank we have only to draw CQ in fig. 26 parallel
-to the crank, when CQ represents the{{IMG:EB1911 Steam Engine Fig. 27.png|width=160|Fig. 27.}}
+to the crank, when CQ represents the«HTMLTABLE:<table class="figtable" style="float:left;width:160px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 27.png|width=160}}</td></tr><tr><td>«SC»Fig«/SC». 27.</td></tr></table>«/HTMLTABLE»
 displacement of the valve to the scale
 on which the diameter of each valve
 circle represents the half-travel of the
@@ -2333,7 +2333,7 @@ valves are often used. An example is shown below in fig. 39.
 67. «I»Reversal of Motion with Slide«/I»-«I»Valve«/I».—The eccentric must
 stand in advance of the crank by the angle 90° + θ, as in fig. 28, where CK is the crank, and CE the corresponding
 position of the eccentric when the engine is running
-in the direction of the arrow 𝑎. To set the engine{{IMG:EB1911 Steam Engine Fig. 28.png|width=80|Fig. 28.}}
+in the direction of the arrow 𝑎. To set the engine«HTMLTABLE:<table class="figtable" style="float:left;width:80px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 28.png|width=80}}</td></tr><tr><td>«SC»Fig«/SC». 28.</td></tr></table>«/HTMLTABLE»
 in gear to run in the opposite direction (𝑏) it is
 only necessary to shift the eccentric into the position
 CE′ when it will still be 90° + θ in advance of the
@@ -2429,7 +2429,7 @@ connected to the link at the end of the link next the forward eccentric,
 to reduce this sliding when the engine is in forward gear. 
 
 70.—«I»Radial Gears«/I».—Many forms of gear for reversing and for 
-Varying expansion have been devised with the object of escaping the {{IMG:EB1911 Steam Engine Fig. 33.png|width=225|Fig. 33.—Hackworth’s Valve-Gear.}}
+Varying expansion have been devised with the object of escaping the «HTMLTABLE:<table class="figtable" style="float:left;width:225px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 33.png|width=225}}</td></tr><tr><td>«SC»Fig«/SC». 33.—Hackworth’s Valve-Gear.</td></tr></table>«/HTMLTABLE»
 use of two eccentrics, and in some both eccentrics are dispensed with. 
 Hackworth’s gear, the parent of several others, to which the general 
 name of radial gears is 
@@ -2524,7 +2524,7 @@ In which the main valve works.
 «BR»
 «SC»Fig«/SC». 37.—Expansion-Valve on back of Main Slide-Valve.«/CTR»
 
-In the other the expansion-valve slides on the back of the main {{IMG:EB1911 Steam Engine Fig. 38.png|width=125|Fig. 38.}}
+In the other the expansion-valve slides on the back of the main «HTMLTABLE:<table class="figtable" style="float:left;width:125px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 38.png|width=125}}</td></tr><tr><td>«SC»Fig«/SC». 38.</td></tr></table>«/HTMLTABLE»
 slide-valve, which is provided with through ports which the expansion-valve
 opens and closes. Fig. 37 shows 
 one form of this type. Here the resultant 
@@ -2723,7 +2723,7 @@ the position which gives full steam-supply, and the governor is said to be sensi
 
 To find the configuration which the governor will assume at any 
 particular speed, or the speed corresponding to a particular configuration, it is only necessary to determine the whole 
-controlling force F per ball acting along the radius towards the axis for various values of 𝑟. Let a curve 𝑎𝑏 (fig. 44) be drawn{{IMG:EB1911 Steam Engine Fig. 44.png|width=100|Fig. 44.}} showing the relation of F to 𝑟. At any assigned value of 𝑟 set up an ordinate QC = 4π²𝑛²𝑟M. Join OC. The point 𝑐, in which OC cuts the curve, determines the value of 𝑟 at which the balls will revolve at the assigned speed 𝑛. Or, if that is given, and the value of 𝑛
+controlling force F per ball acting along the radius towards the axis for various values of 𝑟. Let a curve 𝑎𝑏 (fig. 44) be drawn«HTMLTABLE:<table class="figtable" style="float:left;width:100px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 44.png|width=100}}</td></tr><tr><td>«SC»Fig«/SC». 44.</td></tr></table>«/HTMLTABLE» showing the relation of F to 𝑟. At any assigned value of 𝑟 set up an ordinate QC = 4π²𝑛²𝑟M. Join OC. The point 𝑐, in which OC cuts the curve, determines the value of 𝑟 at which the balls will revolve at the assigned speed 𝑛. Or, if that is given, and the value of 𝑛
 is to be found, the line O𝑐 produced will determine 
 C, and then 𝑛² = 4π²𝑛²𝑟M. The sensibility of the governor is 
 determined by taking points 𝑎 and 𝑏 corresponding to full steam 
@@ -2866,7 +2866,7 @@ diagrams of the steam
 thrust and of the forces due to 
 inertia a diagram is obtained 
 showing the true thrust throughout
-the stroke. Fig. 47 gives an{{IMG:EB1911 Steam Engine Fig. 47.png|width=185|Fig 47.}}
+the stroke. Fig. 47 gives an«HTMLTABLE:<table class="figtable" style="float:left;width:185px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 47.png|width=185}}</td></tr><tr><td>«SC»Fig«/SC» 47.</td></tr></table>«/HTMLTABLE»
 example: there the line 𝑎𝑏 is 
 drawn to show the inertia forces 
 for an engine in which the connecting-rod
@@ -3137,7 +3137,7 @@ been extensively applied, on a large scale, to raise water for the
 supply of towns and to force oil through “pipe-lines” in the 
 United States. In the larger sizes they are made compound, 
 each high-pressure cylinder having a low-pressure cylinder 
-tandem with it on the same rod. To allow of expansive working {{IMG:EB1911 Steam Engine Fig. 49.png|width=165|Fig. 49.}}
+tandem with it on the same rod. To allow of expansive working «HTMLTABLE:<table class="figtable" style="float:left;width:165px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 49.png|width=165}}</td></tr><tr><td>«SC»Fig«/SC». 49.</td></tr></table>«/HTMLTABLE»
 a device is added which compensates for the inequality of effort
 resulting from an early cut-off. A 
 cross-head A (fig. 40) fixed to each 
@@ -3170,7 +3170,7 @@ engine of Savery. The sectional view,
 fig. 50, shows its principal parts. There
 are two chambers A, A′, narrowing
 towards the top, where the steam-pipe
-B enters. A ball-valve C allows steam to {{IMG:EB1911 Steam Engine Fig. 50.png|width=130|Fig. 50. Pulsometer.}}
+B enters. A ball-valve C allows steam to «HTMLTABLE:<table class="figtable" style="float:left;width:130px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 50.png|width=130}}</td></tr><tr><td>«SC»Fig«/SC». 50. Pulsometer.</td></tr></table>«/HTMLTABLE»
 pass into one of the chambers and closes
 the other. Steam entering (say) the
 right-hand chamber forces water out of it
@@ -3392,7 +3392,7 @@ crank axle is peculiarly liable to rupture, and has to be removed
 after a certain amount of use. 
 
 The outside-cylinder type is adopted by several British makers;
-in America it is almost universal. {{IMG:EB1911 Steam Engine Fig. 51.png|width=134|Fig. 51.—American Outside-Cylinder Loco­motive.}}
+in America it is almost universal. «HTMLTABLE:<table class="figtable" style="float:left;width:134px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 51.png|width=134}}</td></tr><tr><td>«SC»Fig«/SC». 51.—American Outside-Cylinder Loco­motive.</td></tr></table>«/HTMLTABLE»
 There the cylinders are in castings which
 are bolted together to form a saddle on
 which the bottom of the smoke-box sits.
@@ -3484,7 +3484,7 @@ the co-ordinates are the entropy and the total heat (see Mollier,
 «I»loc. cit.«/I», or Ewing’s «I»Steam Engine«/I»). 
 
 The pressure-volume diagram gives a very useful alternative 
-means of finding the heat drop {{IMG:EB1911 Steam Engine Fig. 52.png|width=215|Fig. 52}}
+means of finding the heat drop «HTMLTABLE:<table class="figtable" style="float:left;width:215px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 52.png|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 52</td></tr></table>«/HTMLTABLE»
 or energy available for transformation.
 Consider steam or 
 any other gas supplied at 
@@ -3553,7 +3553,7 @@ velocity of 3980 ft. per second, and consequently the area of the
 stream is 0·0396 sq. ft. per pound of flow. 
 
 108. «I»De Laval’s Divergent Nozzle«/I».—It is on this basis that De 
-Laval’s divergent nozzle is designed. The “throat” or smallest {{IMG:EB1911 Steam Engine Fig. 53.png|width=215|Fig. 53}}
+Laval’s divergent nozzle is designed. The “throat” or smallest «HTMLTABLE:<table class="figtable" style="float:left;width:215px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 53.png|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 53</td></tr></table>«/HTMLTABLE»
 section is approached by a more or less rounded entrance, allowing 
 the stream-lines to converge, and from the throat outwards the nozzle 
 expands in any gradual manner, generally in fact as a simple cone 
@@ -3619,7 +3619,7 @@ as expansion proceeds the steam loses part of its kinetic energy
 which is restored to it as heat. Thus, at every stage in the process
 the velocity acquired is less than it would be in frictionless adiabatic expansion,
 but the steam is drier and its volume is greater in consequence
-of the restored heat. Referring to the entropy-temperature diagram{{IMG:EB1911 Steam Engine Fig. 54.png|width=150|Fig. 54.}}
+of the restored heat. Referring to the entropy-temperature diagram«HTMLTABLE:<table class="figtable" style="float:left;width:150px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 54.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 54.</td></tr></table>«/HTMLTABLE»
 (fig. 54) the process of expansion under
 conditions involving friction is represented 
 not by the adiabatic line 𝑐𝑑 but by some
@@ -3691,7 +3691,7 @@ carries them is so great that gearing down is resorted to before
 the motion is applied to useful purposes. The general arrangement
 of the steam nozzle and turbine blades is illustrated
 in fig. 55. The blades project from the circumference of
-a disk-shaped wheel and {{IMG:EB1911 Steam Engine Fig. 55.png|width=225|Fig. 55.}}
+a disk-shaped wheel and «HTMLTABLE:<table class="figtable" style="float:left;width:225px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 55.png|width=225}}</td></tr><tr><td>«SC»Fig«/SC». 55.</td></tr></table>«/HTMLTABLE»
 form a complete ring round
 it, only a few of the blades 
 being shown in the sketch.
@@ -3734,7 +3734,7 @@ withstand the high stresses arising from its rotation. Turbines
 of this class in sizes up to 300 or 400 h.p. are now in extensive 
 use for driving dynamos, fans and centrifugal pumps. Compared
 with the Parsons turbine, De Laval’s lends itself well 
-to work where small amounts of power are wanted, and there {{IMG:EB1911 Steam Engine Fig. 56.png|width=150|Fig. 56.}}
+to work where small amounts of power are wanted, and there «HTMLTABLE:<table class="figtable" style="float:left;width:150px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 56.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 56.</td></tr></table>«/HTMLTABLE»
 it achieves a higher efficiency, but in large sizes the Parsons
 turbine is much the more efficient of the two. Trials of a De
 Laval turbine used with a condenser, and developing about
@@ -4210,7 +4210,7 @@ form shown in fig. 65 where the fine clearance is round the circumference
 of the brass rings set in the rotor and stator alternately. The 
 whole dummy includes about sixteen of these rings. 
 
-129. «I»Shaft Arrangement of Marine Turbines«/I».—Fig. 66 shows the {{IMG:EB1911 Steam Engine Fig. 66.png|width=260|Fig. 66.}}
+129. «I»Shaft Arrangement of Marine Turbines«/I».—Fig. 66 shows the «HTMLTABLE:<table class="figtable" style="float:left;width:260px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 66.png|width=260}}</td></tr><tr><td>«SC»Fig«/SC». 66.</td></tr></table>«/HTMLTABLE»
 usual three-shaft arrangement, with two low pressure turbines in 
 parallel on the wing 
 shafts, and one high 

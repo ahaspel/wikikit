@@ -115,7 +115,7 @@ in «I»Terebratulina«/I» becomes annular in the adult by the union of
 its crural processes (fig. 16). In «I»Magellania«/I» [«I»Waldheimia«/I»] it
 is elongated and reflected; the hinge-plate large, with four
 depressions, under which originates a median septum, which
-extends more or less into the interior of the shell (figs. 13 and 14).<section end="Brachiopoda" />PAGE:376In «I»Terebratella«/I» the loop is attached to the hinge-plate and to the septum (fig. 17). In «I»Megerlia«/I» it is three times attached, first to the hinge-plate, and then to the septum by processes from the diverging and reflected positions of the loop. In «I»Magas«/I» the brachial skeleton is composed of an elevated longitudinal septum reaching from one valve to the other, to which are affixed two pairs of calcareous lamellae, the lower ones riband-shaped; attached first to the hinge-plate, they afterwards proceed by a gentle curve near to the anterior portion of the septum, to the sides of which they are affixed; the second pair originate on both sides of the upper edge of the septum, extending in the form of two triangular anchor-shaped lamellae (fig. 18). In «I»Bouchardia«/I» the septum only is furnished with two short anchor-shaped lamellae. Many more modifications are observable in different groups of which the great family «I»Terebratulidae«/I» is composed. In «I»Thecidium«/I» (figs. 3,4) the interior of the dorsal valve is variously furrowed to receive the lophophore folded in two or more lobes.
+extends more or less into the interior of the shell (figs. 13 and 14).PAGE:376In «I»Terebratella«/I» the loop is attached to the hinge-plate and to the septum (fig. 17). In «I»Megerlia«/I» it is three times attached, first to the hinge-plate, and then to the septum by processes from the diverging and reflected positions of the loop. In «I»Magas«/I» the brachial skeleton is composed of an elevated longitudinal septum reaching from one valve to the other, to which are affixed two pairs of calcareous lamellae, the lower ones riband-shaped; attached first to the hinge-plate, they afterwards proceed by a gentle curve near to the anterior portion of the septum, to the sides of which they are affixed; the second pair originate on both sides of the upper edge of the septum, extending in the form of two triangular anchor-shaped lamellae (fig. 18). In «I»Bouchardia«/I» the septum only is furnished with two short anchor-shaped lamellae. Many more modifications are observable in different groups of which the great family «I»Terebratulidae«/I» is composed. In «I»Thecidium«/I» (figs. 3,4) the interior of the dorsal valve is variously furrowed to receive the lophophore folded in two or more lobes.
 
 <table style="font-size:92%; margin:auto;">
 <tr><td>[[File:EB1911 Brachiopoda Figs. 12–18.jpg]]</td></tr>
@@ -356,7 +356,7 @@ The orders Atremata and Neotremata are frequently grouped together, as the sub-c
 
 «B»ORDER I. Atremata«/B» (Beecher).—Inarticulate Brachiopoda, with the pedicle passing out between the umbones, the opening being shared by both valves. Pro-deltidium attached to dorsal valves. FAMILIES.—{{sc|Paterinidae, Obolidae, Trimerellidae, Lingulellidae, «I»Lingulidae«/I», Ligulasmatidae.}}
 
-«B»ORDER II. Neotremata«/B» (Beecher).—More or less circular, cone-shaped, inarticulate Brachiopoda. The pedicle passes out at right angles to the plane of junction of the valves of the shell; the opening is confined to the ventral valve, and may take the form of a slit, or may be closed by the development of a special plate called the listrium, or by a pseudo-deltidium. Pro-deltidium attachedPAGE:381<section begin="Brachiopoda" />to ventral valve. FAMILIES.—{{sc|Acrotretidae, Siphonotretidae, Trematidae, «I»Discinidae, Craniidae«/I».}}
+«B»ORDER II. Neotremata«/B» (Beecher).—More or less circular, cone-shaped, inarticulate Brachiopoda. The pedicle passes out at right angles to the plane of junction of the valves of the shell; the opening is confined to the ventral valve, and may take the form of a slit, or may be closed by the development of a special plate called the listrium, or by a pseudo-deltidium. Pro-deltidium attachedPAGE:381to ventral valve. FAMILIES.—{{sc|Acrotretidae, Siphonotretidae, Trematidae, «I»Discinidae, Craniidae«/I».}}
 
 {{center|Class II. {{sc|Testicardines (Articulata)}}}}
 
@@ -372,7 +372,3 @@ Undue stress is often laid on the fact that «I»Lingula«/I» has come down to 
 
 A full bibliography of Brachiopoda (recent and fossil) is to be found in Davidson’s Monograph of British Fossil Brachiopods, «I»Pal. Soc. Mon.«/I» vi., 1886. The Monograph on Recent Brachiopoda, by the same author, «I»Tr. Linn. Soc. London«/I», Zool. ser. ii. vol. iv., 1886–1888, must on no account be omitted.
 {{Fs|108%|{{EB1911 footer initials|Arthur Everett Shipley|A. E. S.}}}}
-
-
-<section end="Brachiopoda" />
-<section begin="Brachistochrone" />

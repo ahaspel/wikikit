@@ -3,7 +3,7 @@ Heb. «I»kinura, kinnor«/I»), one of the most ancient stringed
 instruments, traced back to 1700 «SC»B.C.«/SC» among the Semitic races,
 in Egypt, Assyria, Asia Minor, Greece and the Roman empire,
 whence the use of it spread over Europe. The main feature of
-the Greek «I»kithara«/I», its shallow sound-chest, being the most{{IMG:EB1911 Cithara Fig. 1.jpg|width=240|Fig. 1.—Nero Citharoedus (Mus. Pio-Clementino), showing back of a Roman Cithara.}}
+the Greek «I»kithara«/I», its shallow sound-chest, being the most«HTMLTABLE:<table class="figtable" style="float:left;width:240px"><tr><td>{{IMG:EB1911 Cithara Fig. 1.jpg|width=240}}</td></tr><tr><td>«SC»Fig.«/SC» 1.—Nero Citharoedus («I»Mus.«BR» Pio-Clementino«/I»), showing back of a «BR» Roman Cithara.</td></tr></table>«/HTMLTABLE»
 important part of it, is also that in which developments are most
 noticeable; its contour varied considerably during the many
 musical ages, but the characteristic in respect of which it fore-shadowed
@@ -28,7 +28,7 @@ preservation. The sound-chest,
 in the form of an
 irregular square (17 cm. × 17
 cm.), is hollowed out of a
-solid block of wood from{{IMG:EB1911 Cithara Fig. 2.jpg|align=left|width=180|Fig. 2.—Ancient Egyptian Cithara from Thebes. Museum of Antiquities, Leiden.}}
+solid block of wood from«HTMLTABLE:<table class="figtable" style="float:left;width:180px"><tr><td>{{IMG:EB1911 Cithara Fig. 2.jpg|width=180}}</td></tr><tr><td>«SC»Fig«/SC». 2.—Ancient Egyptian Cithara from Thebes. Museum of Antiquities, Leiden.</td></tr></table>«/HTMLTABLE»
 the base, which is open;
 the little bar, seen through
 the open base and measuring
@@ -71,7 +71,7 @@ was held in the right hand, with elbow outstretched and palm
 bent inwards, and the strings were plucked with the straightened
 fingers of the left hand.«FN:Philostratus the Elder, «I»Imagines«/I», No. 10, “Amphion,” and Philostratus the Younger, «I»Imagines«/I», No. 7, “Orpheus,” p. 403.«/FN» Both methods were used with intention according to the dictates of art for the sake of the variation in tone colour obtainable thereby.«FN:Tibullus, «I»Eleg.«/I» iii. 4. 39.«/FN»
 
-«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265}}</td></tr><tr><td style="font-size:92%;line-height:130%;padding-left:3em">«SC»Fig«/SC». 3.—Apollo Citharoedus, showing«BR»Cithara with box tail-pieces.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float: left; width: 270px; padding-right:0.5em"><tr><td>{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265}}</td></tr><tr><td style="font-size:92%;line-height:130%;padding-left:3em">«SC»Fig«/SC». 3.—Apollo Citharoedus, showing«BR»Cithara with box tail-pieces.</td></tr></table>«/HTMLTABLE»
 
 The strings of the cithara were either knotted round the
 transverse tuning bar itself («I»zugon«/I») or to rings threaded over
@@ -145,7 +145,7 @@ of the defeat of the
 monster.«FN:For a description of the «I»Nomos Pythikos«/I» in its relation to Greek
 music see Kathleen Schlesinger, “Researches into the Origin of the Organs of the Ancients,” «I»Intern. Mus. Ges.«/I» Sbd. ii. (1901), 2, p. 177, and Strabo ix. p. 421.«/FN»
 
-«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Phorminx.jpg|width=300}}</td></tr><tr><td style="font-size:92%;line-height:130%;text-align:center">«SC»Fig«/SC». 4.—Cithara or Phorminx, from a vase«BR»in the British Museum.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float: right; width: 300px"><tr><td>{{IMG:Britannica Cithara Phorminx.jpg|width=300}}</td></tr><tr><td style="font-size:92%;line-height:130%;text-align:center">«SC»Fig«/SC». 4.—Cithara or Phorminx, from a vase«BR»in the British Museum.</td></tr></table>«/HTMLTABLE»
 
 The Pythian Games
 survived the classic
@@ -189,7 +189,7 @@ the cithara in transition during the middle ages, and the question
 of the origin of the Utrecht Psalter, in which the evolution of the
 cithara is traced at some length.«/FN» («I»q.v.«/I») took place.
 
-«HTMLTABLE:<table class="data-table"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr><td>«SC»Fig«/SC». 5.—Asiatic Cithara in«BR»transition (or rotta). From a«BR»fresco at Beni-Hasan«BR»(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in«BR»transition, of the Lycian«BR»Apollo (Rome Mus. Capit.).«BR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float: left; width: 480px"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr><td>«SC»Fig«/SC». 5.—Asiatic Cithara in«BR»transition (or rotta). From a«BR»fresco at Beni-Hasan«BR»(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in«BR»transition, of the Lycian«BR»Apollo (Rome Mus. Capit.).«BR»</td></tr></table>«/HTMLTABLE»
 
 The first of these steps produced the «LN:rotta|Rotta«/LN» («I»q.v.«/I»), by the
 construction of body, arms and transverse bar in one piece.
@@ -243,5 +243,4 @@ descendant of the cithara, although preserving the characteristic
 features of the cithara, the shallow sound-chest with ribs, adopted
 the pear-shaped outline of the Eastern instruments of the lute
 tribe.
-
 

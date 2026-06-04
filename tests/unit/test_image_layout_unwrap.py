@@ -174,34 +174,39 @@ def test_sewing_machines_fig1_image_and_caption():
 
 # ── Tests: ABBEY_02_FLOAT — `{{img float}}` floater ─────────────
 
-def test_abbey_02_float_caption_is_clean():
-    """`{{img float|cap=...}}` with {{sc|}} / {{em|}} / <br> / &thinsp;
-    in caption → caption in IMG marker is plain prose."""
+def test_abbey_02_float_is_faithful_figtable():
+    """`{{img float|cap=…}}` is a FLOATED faithful figtable, not a captioned
+    IMG.  The image is a pure leaf (caption None); the cap text rides in a
+    cell with its «SC»/«BR» markup intact — there is no "caption" concept on
+    images and no clean_caption flattening."""
     body = _transform_text_v2(ABBEY_02_FLOAT, volume=1, page_number=44)
+    assert 'class="figtable"' in body and "float:" in body
     imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
+    assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
     assert filename == "Abbey_02.png"
-    assert caption is not None
-    # Must start with Fig. 2 and contain the key phrase
-    assert caption.startswith("Fig. 2"), f"caption={caption!r}"
-    assert "Plan of Coptic Monastery" in caption
-    # No raw template or entity leaks
-    assert "{{" not in caption
-    assert "&thinsp;" not in caption
-    assert "<br" not in caption.lower()
+    assert caption is None, f"image must be a pure leaf, got caption {caption!r}"
+    # Caption is a cell with markup preserved (NOT flattened to prose).
+    assert "«SC»Fig. 2.«/SC»" in body
+    assert "Plan of Coptic Monastery" in body
+    assert "«BR»" in body  # the source <br>s survive as line breaks
 
 
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────
 
-def test_air_engine_fig1_img_present_with_caption():
+def test_air_engine_fig1_faithful_figtable():
+    """AIR_ENGINE Fig 1 `{{Img float}}` → floated figtable: a pure image leaf
+    plus the caption carried in a cell (markup intact, not an IMG caption)."""
     body = _transform_text_v2(AIR_ENGINE_1, volume=1, page_number=482)
+    assert 'class="figtable"' in body and "float:" in body
     imgs = extract_imgs(body)
-    assert len(imgs) == 1, f"Expected 1 IMG, got {imgs!r}"
+    assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
     assert filename == "EB1911 Air-Engine - Fig 1. Striling's Air-Engine.jpg"
-    assert caption is not None and "Fig. 1" in caption
-    assert "Stirling" in caption and "Air-Engine" in caption
+    assert caption is None, f"image must be a pure leaf, got caption {caption!r}"
+    # Caption rides in the figure with markup preserved.
+    assert "«SC»Fig.«/SC»" in body
+    assert "Stirling" in body and "Air-Engine" in body
 
 
 # ── Tests: WEIGHING_MACHINES — `{{raw image}}` + loose wrapper ────────
