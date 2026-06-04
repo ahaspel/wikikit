@@ -258,7 +258,7 @@ axle or trunnions for the purpose. For giving elevation a wood
 arc was fixed to the trail towards the rear end, and the breech
 end could be moved up and down along this arc and fixed at
 certain positions by a pin passing through both cradle and arc.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:100%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 4.png|width=400}}</td></tr><tr><td><span style="position:relative; bottom:2em; font-size:85%;">From Clephan, «I»Early Ordnance«/I».</span></td></tr><tr><td><span style="position:relative; bottom:1.2em;>«SC»Fig«/SC». 4.—Early Field Gun.</span></td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:100%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 4.png|width=400}}</td></tr><tr><td>«SPAN[style:position:relative; bottom:2em; font-size:85%]»From Clephan, «I»Early Ordnance«/I».«/SPAN»</td></tr><tr><td>«SPAN[style:position:relative; bottom:1.2em]»«SC»Fig«/SC». 4.—Early Field Gun.«/SPAN»</td></tr></table>«/HTMLTABLE»
 About the middle of the 15th century the trunnions were
 formed with the gun—the wood cradle therefore became unnecessary
 and was discarded. The carriage was then formed of
@@ -2103,7 +2103,7 @@ extra weight of the gun is therefore
 more than compensated for.
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%"><tr><td>{{IMG:EB1911 - Ordnance Fig 54.png|width=583}}
 
-«BR» <span style="position: relative; bottom:2em>«SC»Fig«/SC». 54.—Metallic Cartridge Case.</span></td></tr></table>«/HTMLTABLE»
+«BR» «SPAN[style:position: relative; bottom:2em]»«SC»Fig«/SC». 54.—Metallic Cartridge Case.«/SPAN»</td></tr></table>«/HTMLTABLE»
 
 «HTMLTABLE:<table class="data-table _tablecolhdborder" style="font-size:92%;line-height:120%;text-align:center"><caption>«SC»Table«/SC» II.—«I»Names and Weights of English Cannon«/I», «I»1574«/I»</caption><tr style="border:1px solid"><td>Names.</td><td>Weight.</td><td>Diameter<br>of Bore.</td><td>Diameter<br>of Shot.</td><td>Weight of<br>Shot.</td><td>Weight of<br>Charge.<br>Serpentine.</td><td>Scores of<br>Paces at<br>point-blank.</td></tr><tr><td>lb</td><td>in.</td><td>in.</td><td>lb</td><td>lb</td><td></td></tr><tr><td style="text-align:left">Robinet</td><td> 200</td><td>1¼</td><td>1</td><td>1</td><td> ½</td><td>. .</td></tr><tr><td style="text-align:left">Falconet</td><td> 500</td><td>2 </td><td>1¾</td><td>2</td><td> 1¼</td><td>14</td></tr><tr><td style="text-align:left">Falcon</td><td> 800</td><td>2¾</td><td>2½</td><td> 2½</td><td> 2½</td><td>16</td></tr><tr><td style="text-align:left">Minion</td><td>1100</td><td>3¼</td><td>3</td><td> 4½</td><td> 4½</td><td>17</td></tr><tr><td style="text-align:left">Sacre</td><td>1500</td><td>3½</td><td>3½</td><td>5</td><td>5</td><td>18</td></tr><tr><td style="text-align:left">Demi-Culverin  </td><td>2500</td><td>4¼</td><td>4</td><td>9</td><td>9</td><td>20</td></tr><tr><td style="text-align:left">Culverin</td><td>4000</td><td>5¼</td><td>5</td><td>18</td><td>18</td><td>25</td></tr><tr><td style="text-align:left">Demi-Cannon</td><td>6000</td><td>6½</td><td>6¼</td><td>30</td><td>28</td><td>28</td></tr><tr><td style="text-align:left">Cannon</td><td>7000</td><td>7¾</td><td>7½</td><td>60</td><td>40</td><td>20</td></tr><tr><td style="text-align:left">Eliza-Cannon</td><td>8000</td><td>8 </td><td>7¾</td><td>63</td><td>42</td><td>20</td></tr><tr><td style="text-align:left">Basiliske</td><td>9000</td><td>8¾</td><td>8½</td><td>60</td><td>60</td><td>21</td></tr></table>«/HTMLTABLE»
 
@@ -4177,7 +4177,7 @@ the recess shown in section at O. By means of a shell barrow any
 projectile can be placed on the lift W and raised to a trolley which
 can be run round over the lift W, which raises the projectile, as
 shown at S, to a point suitable for loading.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td><span style="position:relative; bottom:2em;">«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.</span></td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td>«SPAN[style:position:relative; bottom:2em]»«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.«/SPAN»</td></tr></table>«/HTMLTABLE»
 
 «CTR»{{IMG:EB1911 - Ordnance Fig 85.png|width=540}}
 
@@ -4237,7 +4237,7 @@ by the action of a clock spring.«FN[230f1]:The elevation indicators are now rea
 a spiral groove, which guides a stud on the reader along the scale of
 graduations.«/FN» The mounting carries an
 automatic sight (see «LN:Sights|Sights«/LN», «I»Gun Sights«/I»).
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 86-7.png|width=720}}</td></tr><tr><td><span style="position: relative; bottom:6em>      «SC»Fig«/SC». 87.</span></td><td>«SC»Fig«/SC». 86.</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig«/SC». 86.—British Mark II. Barbette Mounting for 6″ B.L. Gun.«BR» «SC»Fig«/SC». 87—Longitudinal Section of Part of Cradle of Gun shown in fig. 13, through Axis of Buffer.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 86-7.png|width=720}}</td></tr><tr><td>«SPAN[style:position: relative; bottom:6em]»      «SC»Fig«/SC». 87.«/SPAN»</td><td>«SC»Fig«/SC». 86.</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig«/SC». 86.—British Mark II. Barbette Mounting for 6″ B.L. Gun.«BR» «SC»Fig«/SC». 87—Longitudinal Section of Part of Cradle of Gun shown in fig. 13, through Axis of Buffer.</td></tr></table>«/HTMLTABLE»
 
 «I»The British 12-pr. Q.F. Gun«/I». — A typical mounting for guns of
 class («I»c«/I») is the British pedestal mounting for the 12-pr. Q.F. gun.

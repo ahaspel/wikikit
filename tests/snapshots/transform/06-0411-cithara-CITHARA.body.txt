@@ -1,4 +1,4 @@
-PAGE:411(Assyrian «I»chetarah«/I»; Gr. κιθάρα; Lat. «I»cithara«/I»; perhaps
+PAGE:411(Assyrian «I»chetarah«/I»; Gr. «SPAN[title:kithára]»κιθάρα«/SPAN»; Lat. «I»cithara«/I»; perhaps
 Heb. «I»kinura, kinnor«/I»), one of the most ancient stringed
 instruments, traced back to 1700 «SC»B.C.«/SC» among the Semitic races,
 in Egypt, Assyria, Asia Minor, Greece and the Roman empire,
@@ -63,7 +63,7 @@ Berlin cithara see «LN:Lyre|Lyre«/LN».)
 
 The number of strings with which the cithara was strung varied from 4 to 19 or 20 at different times; they were added less for the purpose of increasing the compass in the modern sense than to enable the performer to play in the different modes of the Greek musical system. Terpander is credited with having increased the number of strings to seven; Euclid, quoting him as his authority, states that “loving no more the tetrachordal chant, we will sing aloud new hymns to a seven-toned phorminx.”
 
-What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum (πλῆκτρον, from πλήσσειν, to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossiblePAGE:412with a rigid plectrum.«FN:See Plutarch, «I»Apophthegm. Lacon.«/I»«/FN» Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.
+What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum («SPAN[title:plē̂ktron]»πλῆκτρον«/SPAN», from «SPAN[title:plḗssein]»πλήσσειν«/SPAN», to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossiblePAGE:412with a rigid plectrum.«FN:See Plutarch, «I»Apophthegm. Lacon.«/I»«/FN» Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.
 
 Quotations from the classics abound to show what was the
 practice of the Greeks and Romans in this respect. The plectrum
@@ -96,11 +96,11 @@ would be filled by the strings,
 which are always carved in a solid
 block.
 
-Like the lyre the cithara was made in many sizes, conditioned by the pitch and the use to which the instrument was to be put. These instruments may have been distinguished by different names; the «I»pectis«/I», for instance, is declared by Sappho (22nd fragment) to have been small and shrill; the «I»phorminx«/I», on the other hand, seems to have been identical with the cithara.«FN:See «I»Od.«/I» i. 153, 155; «I»Il.«/I» xviii. 569-570. In Homer the form is always κίθαρις.«/FN»
+Like the lyre the cithara was made in many sizes, conditioned by the pitch and the use to which the instrument was to be put. These instruments may have been distinguished by different names; the «I»pectis«/I», for instance, is declared by Sappho (22nd fragment) to have been small and shrill; the «I»phorminx«/I», on the other hand, seems to have been identical with the cithara.«FN:See «I»Od.«/I» i. 153, 155; «I»Il.«/I» xviii. 569-570. In Homer the form is always «SPAN[title:kítharis]»κίθαρις«/SPAN».«/FN»
 
 The Greek «I»kithara«/I» was the instrument of the professional singer
-or citharoedus (κιθαρῳδός) and of
-the instrumentalist or citharista (κιθαριστής), and thus served
+or citharoedus («SPAN[title:kitharōidós]»κιθαρῳδός«/SPAN») and of
+the instrumentalist or citharista («SPAN[title:kitharistḗs]»κιθαριστής«/SPAN»), and thus served
 the double purpose of (1) accompanying the voice—a use
 placed by the Greeks far above mere instrumental music—in epic recitations and rhapsodies, in odes and lyric songs;
 and (2) of accompanying the dance; it was also used for
@@ -133,7 +133,7 @@ contests of singers and instrumentalists, recitations of portions
 of the «I»Iliad«/I» and «I»Odyssey«/I», such as are represented on the frieze
 of the Parthenon (in the Elgin Room at the British Museum)
 and later on friezes by Pheidias. It was at the same period that
-the first contests for solo-playing on the cithara (κιθαριστύς)
+the first contests for solo-playing on the cithara («SPAN[title:kitharistýs]»κιθαριστύς«/SPAN»)
 and for solo «I»aulos«/I»-playing were instituted at the 8th Pythian
 Games.«FN:See Pausanias x. 7, § 4 et seq.«/FN» One of the
 principal items at these

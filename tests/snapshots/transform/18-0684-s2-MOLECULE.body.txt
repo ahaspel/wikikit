@@ -2,8 +2,8 @@
 «I»moles«/I», a mass), in chemistry and physics, the minutest particle
 of matter capable of separate existence. The word appears to
 have been invented during the 17th century, and remained
-synonymous with “atom” (Gr. ἄτομος from ἀ-, privative, and
-τέμνειν, to cut) until the middle of the 19th century, when a
+synonymous with “atom” (Gr. «SPAN[title:átomos]»ἄτομος«/SPAN» from «SPAN[title:a-]»ἀ-«/SPAN», privative, and
+«SPAN[title:témnein]»τέμνειν«/SPAN», to cut) until the middle of the 19th century, when a
 differentiation was established. “Atom” has mainly a chemical
 import, being defined as the smallest particle of matter which
 can take part in a chemical reaction; a “molecule” is composed
@@ -24,7 +24,7 @@ in the 9th edition of the «I»Ency. Brit.«/I»
 
 “Atom«FN[654f1]:It will be noted that Clerk Maxwell’s “atom” and “atomic
 theory” have the significance which we now attach to “molecule”
-and “molecular theory.”«/FN» (ἄτομος) is a body which cannot be cut in two. The
+and “molecular theory.”«/FN» («SPAN[title:átomos]»ἄτομος«/SPAN») is a body which cannot be cut in two. The
 atomic theory is a theory of the constitution of bodies which asserts
 that they are made up of atoms. The opposite theory is that of the
 homogeneity and continuity of bodies, and asserts, at least in the

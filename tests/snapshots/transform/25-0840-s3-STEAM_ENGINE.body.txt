@@ -1204,7 +1204,7 @@ Then We can perform as follows the ideal reversible cycle of operations
 first described by Carnot, which gives the highest possible efficiency
 attainable in any heat engine. To fix the ideas, suppose that there
 is 1 lb of water in the cylinder to begin with, at the temperature τ₁:—
-«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td></td><td><span style="position: relative; bottom: 2.5em;">«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.</span></td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td></td><td>«SPAN[style:position: relative; bottom: 2.5em]»«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.«/SPAN»</td></tr></table>«/HTMLTABLE»
 1. Apply A, and allow the piston to rise. The water will take
 in heat and be converted into steam, expanding isothermally at
 constant pressure 𝑝₁. This part

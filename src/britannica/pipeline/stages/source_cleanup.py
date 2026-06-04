@@ -101,6 +101,24 @@ _UNCLOSED_TEMPLATES: tuple[str, ...] = (
 )
 
 
+_TAG_RE = re.compile(r"<[a-zA-Z][^>]*>")
+
+
+def close_unclosed_attr_quotes(text: str) -> str:
+    """Repair a malformed tag whose attribute quote was never closed before the
+    `>`: `<span style="…;>` → `<span style="…;">` (363 corpus-wide; the missing
+    `"` made the figtable DOMParser swallow the rest of the cell — ABBEY Fig. 10).
+    A tag with an ODD number of `"` has an unclosed quote; close it just inside
+    the `>`.  (A literal `>` inside a quoted value would false-positive, but in
+    EB1911 those are `&gt;` — none in the corpus.)"""
+    def _fix(m: "re.Match[str]") -> str:
+        tag = m.group(0)
+        if tag.count('"') % 2 == 1:
+            return tag[:-1] + '">'
+        return tag
+    return _TAG_RE.sub(_fix, text)
+
+
 def strip_unclosed_templates(text: str) -> str:
     out: list[str] = []
     i = 0

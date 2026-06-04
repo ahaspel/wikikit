@@ -21,7 +21,7 @@ The aldehydes are characterized by their great chemical reactivity. They act as 
 With hydrocyanic acid aldehydes form the cyanhydrins R·CH(OH)·CN. They react with hydroxylamine and phenylhydrazine, with the formation of aldoximes and hydrazones. (For the isomerism of the aldoximes see {{EB1911 article link|Oximes}}). The hydrazones are crystalline substances which are of value in the characterization of the aldehydes. Both oximes and hydrazones, on boiling with dilute acid, regenerate the parent aldehyde. The hydrazones are best prepared by mixing the aldehyde with phenylhydrazine in dilute acetic acid solution, in the absence of any free mineral acid. Semioxamazid, NH<sub>2</sub>·CO·CO·NH·NH<sub>2</sub>, has also been employed for the identification of aldehydes (W. Kerp and K. Unger, «I»Berichte«/I», 1897, 30. p. 585). Aldehydes are converted into resins by the action of caustic alkalies. On heating with alcohols to 100°&nbsp;C. they form acetals, and they also form condensation products with para-amido-di-methyl-aniline (A. Calm, «I»Berichte«/I», 1884, 17, p. 2939). They react with the zinc alkyls to form addition products, which are decomposed by water with formation of secondary alcohols (K. Thurnlach, «I»Annalen«/I», 1882, 213, p. 369) thus:—
 
 {|{{Ts|ma|lh10}}
-| ||<span style="position: relative; top: .8em;>Zn(C<sub>2</sub>H<sub>5</sub>)<sub>2</sub></span>||colspan=2| ||<span style="position: relative; top: .8em;>H<sub>2</sub>O</span>
+| ||<span style="position: relative; top: .8em;">Zn(C<sub>2</sub>H<sub>5</sub>)<sub>2</sub></span>||colspan=2| ||<span style="position: relative; top: .8em;">H<sub>2</sub>O</span>
 |-
 |rowspan=2|CH<sub>3</sub>·CHO||{{Ts|ac}} rowspan=2|{{larger|→}}||rowspan=2|CH<sub>3</sub>·CH&#8202;[[File:Langle.svg|12px]]||C<sub>2</sub>H<sub>5</sub>||rowspan=2|{{larger|→}}CH<sub>3</sub>·CH&#8202;[[File:Langle.svg|12px]]||C<sub>2</sub>H<sub>5</sub>＋ZnO＋C<sub>2</sub>H<sub>6</sub>.
 |-
@@ -31,7 +31,7 @@ With hydrocyanic acid aldehydes form the cyanhydrins R·CH(OH)·CN. They react w
 The reaction is a general one for all aldehydes with zinc methyl and zinc ethyl, but not with the higher zinc alkyls. V. Grignard («I»Comptes Rendus«/I», 1900 et seq.) showed that aldehydes combine with magnesium alkyl iodides (in absolute ether solution) to form addition products, which are decomposed by water with thePAGE:572formation of secondary alcohols, thus from acetaldehyde and magnesium methyl iodide, isopropyl alcohol is obtained.
 
 {|{{Ts|ma|lh12}}
-| || ||<span style="position: relative; top: .7em;>H<sub>2</sub>O</span>
+| || ||<span style="position: relative; top: .7em;">H<sub>2</sub>O</span>
 |-
 | CH<sub>3</sub>·CHO＋CH<sub>3</sub>MgI {{larger|→}} CH<sub>3</sub>·CH[[File:Langle.svg|12px]]
 | CH<sub>3</sub><br>OMgI
@@ -118,7 +118,7 @@ Aldehydes are characterized by the reddish-violet colour which they give with a 
 |{{Ts|ar|pr.5}}| C<sub>6</sub>H<sub>5</sub>·CHO 
 |{{Ts|ac}}| 179° ||
 |-style=line:height:90%
-| {{em|7.5}}<span style="position: relative; top: .8em;>o</span><br> Toluicaldehyde<math>\Big\{</math>m&thinsp;<br>{{em|8.5}}<span style="position: relative; bottom: .9em;>p</span>
+| {{em|7.5}}<span style="position: relative; top: .8em;">o</span><br> Toluicaldehyde<math>\Big\{</math>m&thinsp;<br>{{em|8.5}}<span style="position: relative; bottom: .9em;">p</span>
 |{{Ts|ar|pr.5}}| C<sub>6</sub>H<sub>4</sub>·CH<sub>3</sub>·CHO 
 |{{Ts|ac}}| 200°<br>199°<br>204° ||
 |-

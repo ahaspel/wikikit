@@ -267,7 +267,7 @@ certain positions by a pin passing through both cradle and arc.
 |-
 |<span style="position:relative; bottom:2em; font-size:85%;">From Clephan, «I»Early Ordnance«/I».</span>
 |-{{Ts|ac}}
-|<span style="position:relative; bottom:1.2em;>{{sc|Fig}}. 4.—Early Field Gun.</span>
+|<span style="position:relative; bottom:1.2em;">{{sc|Fig}}. 4.—Early Field Gun.</span>
 |}
 About the middle of the 15th century the trunnions were
 formed with the gun—the wood cradle therefore became unnecessary
@@ -2188,7 +2188,7 @@ extra weight of the gun is therefore
 more than compensated for.
 {|{{Ts|ma|sm92|ac}}
 |[[File:EB1911 - Ordnance Fig 54.png|583px]]<br>
-<span style="position: relative; bottom:2em>{{sc|Fig}}. 54.—Metallic Cartridge Case.</span>
+<span style="position: relative; bottom:2em">{{sc|Fig}}. 54.—Metallic Cartridge Case.</span>
 |}
 
 {|class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
@@ -5114,7 +5114,7 @@ automatic sight (see {{1911link|Sights}}, «I»Gun Sights«/I»).
 {|{{Ts|ma}}
 |colspan=2|[[File:EB1911 - Ordnance Fig 86-7.png|720px]]
 |-
-|<span style="position: relative; bottom:6em>      {{sc|Fig}}. 87.</span> ||{{sc|Fig}}. 86.      
+|<span style="position: relative; bottom:6em">      {{sc|Fig}}. 87.</span> ||{{sc|Fig}}. 86.      
 |-
 |{{Ts|ac}} colspan=2|{{sc|Fig}}. 86.—British Mark II. Barbette Mounting for 6″ B.L. Gun.<br>
 {{sc|Fig}}. 87—Longitudinal Section of Part of Cradle of Gun shown in fig. 13, through Axis of Buffer.

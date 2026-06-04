@@ -379,7 +379,7 @@ X.&ensp;Guest-houses.
 Y.{{em|.7}}Mill bridge.</poem>
 |width=33%|
 <poem>Z.&ensp;Gate-house
-<span style="line-height:200%; text-align:center;>&emsp;{{sc|Abbot’s House.}}</span>
+<span style="line-height:200%; text-align:center;">&emsp;{{sc|Abbot’s House.}}</span>
 &ensp;1. Passage.
 &ensp;2. Great hall.
 &ensp;3. Refectory.

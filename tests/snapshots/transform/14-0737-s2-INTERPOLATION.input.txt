@@ -783,7 +783,7 @@ by the suffixes which indicate these values. Thus we might
 write the table of differences
 
 <table align=center style="border: 1px solid; border-collapse: collapse;" rules=cols>
-<tr align=center><td style="border: 1px solid;">&emsp;«I»x«/I».&emsp;</td> <td style="border: 1px solid;">&emsp;«I»u«/I».&emsp;</td> <td style="border: 1px solid;">&ensp;1st Diff.&ensp;</td> <td style="border: 1px solid;>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>3rd Diff.</td> <td style="border: 1px solid;>4th Diff.</td></tr>
+<tr align=center><td style="border: 1px solid;">&emsp;«I»x«/I».&emsp;</td> <td style="border: 1px solid;">&emsp;«I»u«/I».&emsp;</td> <td style="border: 1px solid;">&ensp;1st Diff.&ensp;</td> <td style="border: 1px solid;">&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>3rd Diff.</td> <td style="border: 1px solid;">4th Diff.</td></tr>
 
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>

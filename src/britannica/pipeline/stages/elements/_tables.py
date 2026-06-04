@@ -779,6 +779,21 @@ _CELL_TS_RE = re.compile(r"\{\{[Tt]s\|([^{}]*)\}\}")
 #
 # Unknown bare codes (no `:`, no Module entry, no decoding) are
 # dropped silently — they're broken on wikisource too.
+def styled_marker(tag: str, css: str, body: str) -> str:
+    """The ONE styled-wrapper marker, shared by the block `<div>` producer and
+    the inline `<span>` producer: wrap `body` in `«{TAG}[style:CSS]»…«/{TAG}»`.
+    `tag` is `DIV` (block) or `SPAN` (inline) — the viewer decodes both
+    identically, rendering `<div>` vs `<span>`.  A `<div>`/`<span>` differ ONLY
+    in display level; there is no producer reason to treat them differently, so
+    they don't.  Empty `css` (nothing of the wrapper's own survived) returns
+    `body` bare; empty `body` returns ""."""
+    if not body:
+        return ""
+    if not css:
+        return body
+    return f"«{tag}[style:{css}]»{body}«/{tag}»"
+
+
 def _parse_ts_codes(codes_str: str) -> list[str]:
     """Parse `{{Ts|code|code|...}}` arg-string into a list of CSS
     declarations like `['text-align:right', 'padding-left:0.5em']`.

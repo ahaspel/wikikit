@@ -25,6 +25,7 @@ import re
 from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.image_assets import CHART2_IMAGES, TREE_IMAGES
 from britannica.pipeline.stages.source_cleanup import (
+    close_unclosed_attr_quotes,
     strip_html_comments,
     strip_noinclude_blocks,
     strip_word_spacing_templates,
@@ -199,6 +200,7 @@ def preprocess(stream: str) -> str:
     """Source-clean + heal page transitions on the continuous stream; return
     the frozen clean stream."""
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
+    stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = _FINE_PRINT.sub("", stream)
     stream = _NOP.sub("", stream)                          # {{nop}} chrome + its line
