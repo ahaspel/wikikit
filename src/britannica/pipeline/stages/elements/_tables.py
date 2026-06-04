@@ -794,6 +794,32 @@ def styled_marker(tag: str, css: str, body: str) -> str:
     return f"«{tag}[style:{css}]»{body}«/{tag}»"
 
 
+def style_block(content: str, *, css: str = "", tag: str = "DIV",
+                ctr: bool = False, sc: bool = False) -> str:
+    """The ONE style-marker emitter: an (already-recursed) `content` + a style
+    spec → the marker the viewer decodes.  Consolidates `_ts_block`,
+    `_style_marker`, the `<div>`/`<p>` block carry, and the `<span style>` carry
+    into one place (the style layer's emit side).
+
+    * `sc` → wrap in «SC» (small-caps), innermost.
+    * pure centre — the `ctr` flag OR `css == "text-align:center"` — → «CTR», the
+      canonical centred block (keeps the viewer's `.centered`).  BLOCK ONLY: a
+      centred *span* keeps `«SPAN[style:text-align:center]»` (centring is a block
+      concept; the `«CTR»` shortcut is for `tag == "DIV"`).
+    * other `css` → «{tag}[style:CSS]» via `styled_marker`.
+    * nothing → `content` bare (the wrapper carried nothing of its own).
+
+    Byte-identical to the emitters it replaces (proven in
+    `test_style_block_byte_identity`)."""
+    if not content:
+        return ""
+    if sc:
+        content = f"«SC»{content}«/SC»"
+    if (ctr or css == "text-align:center") and tag == "DIV":
+        return f"«CTR»{content}«/CTR»"
+    return styled_marker(tag, css, content)
+
+
 def _parse_ts_codes(codes_str: str) -> list[str]:
     """Parse `{{Ts|code|code|...}}` arg-string into a list of CSS
     declarations like `['text-align:right', 'padding-left:0.5em']`.
