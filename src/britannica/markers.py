@@ -197,18 +197,6 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
 TABLE_CELL_RE = _re.compile(r"^⟦([rc]?)(\d*)⟧")
 
 _TABLE_ALIGN_DECODE = {"r": "right", "c": "center"}
-_TABLE_ALIGN_ENCODE = {"right": "r", "center": "c"}
-
-
-def build_table_cell(content: str, *, align: str | None = None,
-                     colspan: int = 1) -> str:
-    """Emit one ``{{TABLE:}}`` cell with its resolved layout encoded as the
-    ``⟦code⟧`` prefix.  Default (left / colspan 1) → no prefix, so the cell is
-    identical to the bare-content form."""
-    code = _TABLE_ALIGN_ENCODE.get(align or "", "")
-    if colspan and colspan > 1:
-        code += str(colspan)
-    return f"⟦{code}⟧{content}" if code else content
 
 
 def parse_table_cell(cell: str) -> tuple[str | None, int, str]:

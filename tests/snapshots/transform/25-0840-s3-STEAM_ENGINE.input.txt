@@ -131,8 +131,7 @@ steam is stopped, and the steam already there is condensed
 by allowing a jet of cold water from a cistern above to stream
 over the outer surface of the vessel. This produces a vacuum
 and causes water to be sucked up through the pipe C and
-the valve D. Meanwhile steam has been displacing water
-<section end="s3" />PAGE:841{{Img float
+the valve D. Meanwhile steam has been displacing waterPAGE:841{{Img float
  | style    = font-size:92%
  | file     = EB1911 Steam Engine - Fig. 2.jpg
  | width    = 245px
@@ -746,8 +745,7 @@ the steam is made to expand successively in three or in four
 cylinders. In locomotive engines, where other considerations
 are of more moment than the saving of coal, compound expansion
 has found some application, but its use there is comparatively
-rare.
-{{nop}}PAGE:84520. The adaptation of the steam engine to railways, begun by
+rare.PAGE:84520. The adaptation of the steam engine to railways, begun by
 Trevithick, became a success in the hands of George Stephenson,
 whose engine, the “Rocket,” when tried along
 with others, in 1829, not only distanced its competitors
@@ -1797,8 +1795,7 @@ the available water-supply.
 To the higher temperature {{Greek|τ}}<sub>1</sub> a practical limit is set by the
 mechanical difficulties, with regard to strength and to lubrication,
 which attend the use of high-pressure steam. In engines of ordinary
-construction the pressure is rarely so much as 250&nbsp;℔ per sq.&nbsp;in.
-{{nop}}PAGE:849It must not be supposed that the efficiency ({{Greek|τ}}<sub>1</sub>−{{Greek|τ}}<sub>2</sub>)/{{Greek|τ}}<sub>1</sub> is actually 
+construction the pressure is rarely so much as 250&nbsp;℔ per sq.&nbsp;in.PAGE:849It must not be supposed that the efficiency ({{Greek|τ}}<sub>1</sub>−{{Greek|τ}}<sub>2</sub>)/{{Greek|τ}}<sub>1</sub> is actually 
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
 the causes of imperfection cannot be removed.
@@ -3968,8 +3965,7 @@ has been attended with conspicuous success. <ref follow=841f1>
 
 «I»Proc. Inst. Civ. Eng.«/I», liii. 3, p. 50.</ref><ref follow=841f2>
 
-«I»Proc. Inst. Mech. Eng.«/I» (1883).</ref>
-{{nop}}PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
+«I»Proc. Inst. Mech. Eng.«/I» (1883).</ref>PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
 all other types of steam engine by the fact that their action 
 involves a double transformation of energy. The heat energy 
 present in the steam is first employed to set the steam itself in 
@@ -4933,7 +4929,7 @@ but working up to over 5000 kilowatts tested in 1907 at the Carville power stati
 output consequently corresponds to {{nowrap|64{{EB1911 tfrac|2}}%}} of the ideal work. If 
 we allow for the loss in the electric generator by taking the electrical output as 92% of the mechanical power, this implies that 70% of the ideal work in the steam was mechanically utilized. 
 
-136. «I»Torsion Meters for Power«/I».—No measurement corresponding to the “indicating” of a piston engine is possible with aPAGE:872<section begin="s1" />steam turbine. In the tests that have been quoted the useful 
+136. «I»Torsion Meters for Power«/I».—No measurement corresponding to the “indicating” of a piston engine is possible with aPAGE:872steam turbine. In the tests that have been quoted the useful 
 output was determined by electrical means. Direct measurements
 of the useful mechanical power (the “brake” power) 
 may, however, be obtained by applying a torsion dynamometer 
@@ -4947,6 +4943,3 @@ by comparing the inductive effects produced on fixed coils by
 magnets which are carried on the wheels. In Hopkinson & 
 Thring’s torsion meter a short length of shaft—a foot or so—suffices. A small mirror is carried by a collar fixed to the shaft, and a second collar fixed a little way along is geared to the mirror in such a way as to deflect the mirror to an extent proportional to the twist: the deflexion is read by means of a lamp and scale fixed alongside. As the shaft revolves the light reflected from the mirror is momentarily seen at each revolution 
 and its position along the scale is easily read. {{EB1911 footer initials|James Alfred Ewing|J. A. E.}}
-
-<section end="s1" />
-<section begin="s2" />

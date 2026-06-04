@@ -375,55 +375,6 @@ def produce_cell(
     return styles, body
 
 
-# ── Assemblers ─────────────────────────────────────────────────────────
-
-def assemble_wiki_marker(
-    produced_rows: list[tuple[str, list[tuple[list[str], str]]]],
-    caption: str,
-    header: bool,
-    table_styles: list[str],
-) -> str:
-    """Compose canonical `{{TABLE…:…}TABLE}` (or `{{TABLEH…:…}TABLE}`)
-    marker output from the per-row produced cells.
-
-    `produced_rows`: list of `(row_attr_part, list[(cell_styles,
-    cell_body)])` — `row_attr_part` is preserved for future row-style
-    carriage in the marker (today's format has no row-style slot, so it
-    is currently dropped).  Each cell becomes one
-    :func:`build_table_cell` token in the row string.
-
-    `caption` is transformed-ready text or empty.  `header=True` selects
-    the `TABLEH` variant.  `table_styles` populate the `[style:…]` slot.
-
-    Style → alignment narrowing: the wiki marker format encodes only
-    `align` (no full CSS per cell).  We extract the alignment from the
-    cell-style list and pass it as `align=`; the rest of the styles
-    list is currently dropped at the marker boundary (the renderer can
-    only honour what the format carries).  HTML emission uses the full
-    styles list via :func:`assemble_html_rows`.
-    """
-    from britannica.markers import build_table_cell
-    from britannica.pipeline.stages.elements._tables import _emit_table_marker
-
-    text_rows: list[str] = []
-    if caption:
-        text_rows.append("⟦+⟧" + caption)
-    for _row_attrs, cells in produced_rows:
-        text_rows.append(" | ".join(
-            build_table_cell(body, align=_align_of(styles))
-            for styles, body in cells
-        ))
-    return _emit_table_marker(text_rows, header=header, styles=table_styles)
-
-
-def _align_of(styles: list[str]) -> str | None:
-    for r in styles:
-        if r.startswith("text-align:"):
-            v = r.split(":", 1)[1].strip()
-            return v if v in ("right", "center", "left") else None
-    return None
-
-
 # ── Shared leaf: decompose → produce → assemble ─────────────────────────
 #
 # These three functions are the single recursive-decomposition leaf that
@@ -584,42 +535,3 @@ def assemble_html_rows(
             output = output.replace(
                 ph, _inline_table_marker_as_html(child_marker))
     return output
-
-
-def assemble_table_marker(
-    caption: str,
-    parsed_rows: list[ProducedRow],
-    has_header: bool,
-    has_span: bool,
-    *,
-    inner_registry=None,
-    table_styles: list[str] | None = None,
-) -> str:
-    """Form chooser: pick the marker form from the parsed-row shape.
-
-    * `has_span` → `assemble_html_rows` (`«HTMLTABLE»`, full per-cell
-      style).
-    * otherwise → `assemble_wiki_marker` (`{{TABLE:}TABLE}` /
-      `{{TABLEH:}TABLE}`, align-only).
-
-    Empty input (no rows, or all-empty rows after the body filter)
-    returns `""`.  Mirrors `_process_html_table:1992-2065`; `caption` is
-    passed through to the wiki marker (the HTML spine passes `""`).  The
-    per-row attribute slot is dropped at the marker boundary (today's
-    format carries no row-style slot).
-    """
-    if not parsed_rows:
-        return ""
-    if has_span:
-        return assemble_html_rows(parsed_rows, inner_registry)
-    produced_rows: list[tuple[str, list[tuple[list[str], str]]]] = [
-        ("", [(styles, body) for _, _, _, body, styles in parsed if body])
-        for _row_attr, parsed in parsed_rows
-    ]
-    produced_rows = [(a, c) for a, c in produced_rows if c]
-    if not produced_rows:
-        return ""
-    return assemble_wiki_marker(
-        produced_rows, caption=caption, header=has_header,
-        table_styles=table_styles or [],
-    )

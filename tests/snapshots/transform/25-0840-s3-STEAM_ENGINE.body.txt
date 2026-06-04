@@ -117,8 +117,7 @@ steam is stopped, and the steam already there is condensed
 by allowing a jet of cold water from a cistern above to stream
 over the outer surface of the vessel. This produces a vacuum
 and causes water to be sucked up through the pipe C and
-the valve D. Meanwhile steam has been displacing water
-PAGE:841{{IMG:EB1911 Steam Engine - Fig. 2.jpg|align=right|width=245|Fig. 2.—Savery’s Pumping Engine, 1698.}}
+the valve D. Meanwhile steam has been displacing waterPAGE:841{{IMG:EB1911 Steam Engine - Fig. 2.jpg|align=right|width=245|Fig. 2.—Savery’s Pumping Engine, 1698.}}
 
 from the other vessel, and is ready to be condensed there.
 The valves B and D open only upwards. The supplementary
@@ -666,8 +665,7 @@ the steam is made to expand successively in three or in four
 cylinders. In locomotive engines, where other considerations
 are of more moment than the saving of coal, compound expansion
 has found some application, but its use there is comparatively
-rare.
-PAGE:84520. The adaptation of the steam engine to railways, begun by
+rare.PAGE:84520. The adaptation of the steam engine to railways, begun by
 Trevithick, became a success in the hands of George Stephenson,
 whose engine, the “Rocket,” when tried along
 with others, in 1829, not only distanced its competitors
@@ -1130,7 +1128,7 @@ in the superheated state, we have
 
 The following are values of κ:—
 
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr><td rowspan="2" style="border:1px solid">Temperature of<br>Superheat 𝑡′ in °C. </td><td colspan="5">Temperature of Saturation 𝑡 in °C.</td></tr><tr><td>80°</td><td>120°</td><td>160°</td><td>180°</td><td>200°</td></tr><tr><td>100°</td><td>0·49</td><td></td><td></td><td></td><td></td></tr><tr><td>150°</td><td>0·49</td><td>0·51</td><td></td><td></td><td></td></tr><tr><td>200°</td><td>0·49</td><td>0·51</td><td>0·54</td><td>0·57</td><td></td></tr><tr><td>250°</td><td>0·48</td><td>0·50</td><td>0·53</td><td>0·56</td><td>0·59</td></tr><tr><td>300°</td><td>0·48</td><td>0·50</td><td>0·52</td><td>0·54</td><td>0·57</td></tr><tr><td>350°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·53</td><td>0·56</td></tr><tr><td>400°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·55</td></tr><tr><td>450°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·54</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr style="border:1px solid"><td rowspan="2" style="border:1px solid">Temperature of<br>Superheat 𝑡′ in °C. </td><td colspan="5">Temperature of Saturation 𝑡 in °C.</td></tr><tr style="border:1px solid"><td>80°</td><td>120°</td><td>160°</td><td>180°</td><td>200°</td></tr><tr><td>100°</td><td>0·49</td><td></td><td></td><td></td><td></td></tr><tr><td>150°</td><td>0·49</td><td>0·51</td><td></td><td></td><td></td></tr><tr><td>200°</td><td>0·49</td><td>0·51</td><td>0·54</td><td>0·57</td><td></td></tr><tr><td>250°</td><td>0·48</td><td>0·50</td><td>0·53</td><td>0·56</td><td>0·59</td></tr><tr><td>300°</td><td>0·48</td><td>0·50</td><td>0·52</td><td>0·54</td><td>0·57</td></tr><tr><td>350°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·53</td><td>0·56</td></tr><tr><td>400°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·55</td></tr><tr><td>450°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·54</td></tr></table>«/HTMLTABLE»
 
 35. «I»Isothermal Expansion of Steam«/I».—The expansion of volume
 which occurs during the conversion of water into steam under
@@ -1260,8 +1258,7 @@ the available water-supply.
 To the higher temperature τ₁ a practical limit is set by the
 mechanical difficulties, with regard to strength and to lubrication,
 which attend the use of high-pressure steam. In engines of ordinary
-construction the pressure is rarely so much as 250 lb per sq. in.
-PAGE:849It must not be supposed that the efficiency (τ₁−τ₂)/τ₁ is actually 
+construction the pressure is rarely so much as 250 lb per sq. in.PAGE:849It must not be supposed that the efficiency (τ₁−τ₂)/τ₁ is actually 
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
 the causes of imperfection cannot be removed.
@@ -3431,8 +3428,7 @@ locomotive engines, but without much advantage. On this
 subject the reader should refer to the article «LN:Railway|Railways/Locomotive Power«/LN»: 
 § «I»Locomotive Power«/I». A more important modern departure is 
 the use of highly superheated steam, which in many locomotives 
-has been attended with conspicuous success. 
-PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
+has been attended with conspicuous success. PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
 all other types of steam engine by the fact that their action 
 involves a double transformation of energy. The heat energy 
 present in the steam is first employed to set the steam itself in 
@@ -4380,5 +4376,3 @@ by comparing the inductive effects produced on fixed coils by
 magnets which are carried on the wheels. In Hopkinson & 
 Thring’s torsion meter a short length of shaft—a foot or so—suffices. A small mirror is carried by a collar fixed to the shaft, and a second collar fixed a little way along is geared to the mirror in such a way as to deflect the mirror to an extent proportional to the twist: the deflexion is read by means of a lamp and scale fixed alongside. As the shaft revolves the light reflected from the mirror is momentarily seen at each revolution 
 and its position along the scale is easily read. 
-
-

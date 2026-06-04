@@ -111,9 +111,7 @@ Principium quoniam cedendi nulla daret res.’
 “The opposite school maintained then, as they have always done,<ref follow=654f1>
 It will be noted that Clerk Maxwell’s “atom” and “atomic
 theory” have the significance which we now attach to “molecule”
-and “molecular theory.”</ref>
-
-<section end="s2" />PAGE:685that there is no vacuum—that every part of space is full of matter,
+and “molecular theory.”</ref>PAGE:685that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
@@ -1012,7 +1010,7 @@ heat of the gas at constant volume and J is the mechanical equivalent of heat. W
 
 {{ne||C<sub>«I»v«/I»</sub>＝{{EB1911 tfrac|2}}(«I»n«/I»+3)R/J«I»m«/I» |(19)}}
 
-On the other hand, if the pressure of the gas is kept constantPAGE:690<section begin="s1" />throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
+On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
 {{ne||C<sub>«I»p«/I»</sub>＝{{EB1911 tfrac|2}}(«I»n«/I»+5) R/J«I»m«/I».|(20)}}
 
 By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for {{Greek|γ}}, the ratio of the specific heats.
@@ -1131,7 +1129,3 @@ passed over; Maxwell himself regarded it as the principal obstacle
 in the way of the full acceptance of the theory of which he was so
 largely the author. 
 {{Fs|108%|{{EB1911 footer initials|James Hopwood Jeans|J. H. Je.}}}}
-
-
-<section end="s1" />
-<section begin="Mole-Rat" />

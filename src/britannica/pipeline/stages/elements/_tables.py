@@ -13,7 +13,6 @@ from __future__ import annotations
 import re
 
 from britannica.captions import clean_caption, strip_cell_attrs
-from britannica.markers import build_table_cell
 from britannica.pipeline.stages.elements._image import _process_image_from_raw
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
@@ -30,9 +29,9 @@ from britannica.pipeline.stages.transform_articles.body_text import (
 )
 
 
-# Wiki cell-attribute keywords — used in three places (here, _layout,
-# _emit_table_marker) to identify the `attr=value | content` prefix on
-# a cell.  Centralised here so every caller agrees on what counts as an
+# Wiki cell-attribute keywords — used in two places (here, _layout) to
+# identify the `attr=value | content` prefix on a cell.  Centralised so
+# every caller agrees on what counts as an
 # attribute vs body content.  The trailing `[\s=|]` is load-bearing —
 # bare keywords (no `=`) collide with English words like "Classics",
 # "border-line", etc., which would eat real content.
@@ -271,42 +270,6 @@ def emit_html_cell(
     if styles:
         attrs += f' style="{";".join(styles)}"'
     return f"<{tag}{attrs}>{content}</{tag}>"
-
-
-def _emit_table_marker(
-    text_rows: list[str], header: bool = False,
-    styles: list[str] | None = None,
-) -> str:
-    """Join row strings into a ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` marker.
-
-    Data tables (``header=False``): canonical form — one space on each
-    side of every ``|`` separator, multi-space runs collapsed (an empty
-    cell renders as ``a | | b`` not ``a |   | b``), blank rows removed.
-    The renderer emits canonical output directly so no downstream
-    pipe-normalisation pass is needed.
-
-    Header tables (``header=True``): rows are joined raw.  Normalizing
-    header tables is a deliberate-change item (burndown) — would change
-    shipped output for ``{{TABLEH:`` tables that haven't been touched
-    since the historical ``\\{\\{TABLE:`` cleanup regex (which never
-    matched the ``H`` suffix) was deleted.
-
-    Whole-table styling (``styles``) — when the source ``{|<attrs>``
-    opener carries ``{{Ts|ma|sm92|…}}`` etc., it is extracted by
-    :func:`_table_opener_styles` and emitted as
-    ``{{TABLE[style:margin:0 auto;font-size:92%]:rows}TABLE}``.  The
-    renderer reads the optional ``[style:…]`` slot and applies it to the
-    ``<table>`` element.  Absent / empty ``styles`` → unchanged marker.
-    """
-    content = "\n".join(text_rows)
-    if not header:
-        content = re.sub(r"(?<! )\|", " |", content)
-        content = re.sub(r"\|(?! )", "| ", content)
-        content = re.sub(r"  +", " ", content)
-        content = re.sub(r"\n\s*\n", "\n", content)
-    tag = "TABLEH" if header else "TABLE"
-    style_slot = (f"[style:{';'.join(styles)}]" if styles else "")
-    return "{{" + tag + style_slot + ":" + content + "}TABLE}"
 
 
 def _complex_cell_body(attr_part: str, content: str,

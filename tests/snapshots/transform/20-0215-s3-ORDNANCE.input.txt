@@ -88,7 +88,7 @@ were provided for firing 48 arrows, or about seven-tenths of an ounce for each c
 {{Fs|92%|{{sc|Fig}}. 1. — Dulle Griete, Ghent.}}}}
 
 The great Bombarde of Ghent, called “Dulle Griete” (fig. 1) is believed to belong to the end of the century, probably about
-1382, and, according to the «I»Guide des voyageurs dans la ville de Gand«/I» (Voisin) the people of Ghent used it in 1411. This gun,<section end="s3" />PAGE:216which weighs about 13&nbsp;tons, is formed of an inner lining of
+1382, and, according to the «I»Guide des voyageurs dans la ville de Gand«/I» (Voisin) the people of Ghent used it in 1411. This gun,PAGE:216which weighs about 13&nbsp;tons, is formed of an inner lining of
 wrought iron longitudinal bars arranged like the staves of a
 cask and welded together, surrounded by rings of wrought iron
 driven or shrunk on. The chamber portion is of smaller diameter,
@@ -1442,8 +1442,7 @@ as the gun runs up after recoil and extracts the fired case by means
 of a supplementary mechanism and strong spring actuated by the
 recoil of the gun, and on pushing a new cartridge into the gun the
 breech which was retained by the extractor is released and closes
-automatically.
-{{nop}}PAGE:229The Nordenfelt mechanism consists of a breech block (fig. 35)
+automatically.PAGE:229The Nordenfelt mechanism consists of a breech block (fig. 35)
 and a wedge to secure it. A hand lever on the shaft is pulled to
 the rear, and this works the action cam, which pulls down the
 wedge; the breech block is then caused to rotate and falls back to
@@ -1637,8 +1636,7 @@ thus clears the breech opening. The firing lock&nbsp;F is actuated at the
 same time and ejects the fired tube&nbsp;G. A new tube is inserted while
 the gun is being loaded, so that immediately the breech is closed the
 charge can be fired without loss of time. In the old mechanisms the
-breech had to be closed first, and the firing tube inserted after.
-{{nop}}PAGE:231The breech mechanism for Q.F. guns firing metallic cartridge
+breech had to be closed first, and the firing tube inserted after.PAGE:231The breech mechanism for Q.F. guns firing metallic cartridge
 cases is worked on similar principles, but is somewhat simpler than
 that for the de&nbsp;Bange obturation, due principally to the fact of the
 firing primer being already contained in the cartridge case when this
@@ -2339,8 +2337,7 @@ the last-named, however, during flight
 only lost their velocity slowly, while the
 spherical shot lost their velocity so rapidly
 that at 2000&nbsp;yds. range only about one-third
-of the initial velocity was retained.}}
-{{nop}}PAGE:238{|class=_tablecolhdborder {{Ts||ac|sm92|lh120}}
+of the initial velocity was retained.}}PAGE:238{|class=_tablecolhdborder {{Ts||ac|sm92|lh120}}
 |+{{sc|Table}} VI. — «I»British Rifled Ordnance«/I», «I»1890«/I».
 |-{{Ts|ba}}
 |Official Designation&nbsp;<br>of Gun.||{{{Ts|pl15|pr15}}|Calibre.||Weight of&nbsp;<br>Gun.||Weight of&nbsp;<br>Charge.||Weight of&nbsp;<br>Projectile.||Muzzle<br>Velocity.||Muzzle<br>Energy.||Perforation<br>of Wrought<br>Iron.||Rate of<br>Firing<br>Rounds.||Propellant.
@@ -2829,8 +2826,7 @@ available.
 |}
 Note.—The Japanese fleet has mainly been armed by Armstrong’s Works, but the “Katori” was armed by Vickers’, and those
 ships taken from the Russians during the late war are armed with guns from Krupp or Obuchoff. Guns of all sizes are now,
-however, being constructed in Japan, so that the country is no longer dependent on foreign factories.
-{{nop}}PAGE:241{| class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
+however, being constructed in Japan, so that the country is no longer dependent on foreign factories.PAGE:241{| class=_tablecolhdborder {{Ts|sm92|lh120|ac}}
 |+{{sc|Table}} XVIII.—«I»Sir W. G. Armstrong«/I», «I»Whitworth & Co.’s Guns. Abridged Table«/I».  
 |-{{Ts|ba|ac}}
 |Official Designation<br>of Gun.||Calibre.||Weight of<br>Gun.||Weight of<br>Charge.||Weight of<br>Projectile.||Muzzle<br>Velocity.||Muzzle<br>Energy.||Perforation<br>of Wrought<br>Iron.||Rate Of<br>firing<br>Rounds.||Propellant.
@@ -3816,12 +3812,10 @@ second by the goniometric sight or the panorama sight. ThePAGE:247{|class=_tab
 |-{{Ts|bt}}
 |{{Ts|al}}|Maker.||State, Skoda<br>&Ehrhardt||Krupp<br>&<br>Cockerill||Krupp||Krupp||State||State|| colspan="2"|State, Elswick<br>Ordnance Co.,<br>Vickers, Maxim and<br>Coventry Ordnance<br>Works||Krupp||State<br>and<br>Krupp||Krupp||Putilov||Schneider||Krupp||State<br>and<br>Ehrhardt
 |}
-{{center|{{Fs|90%|These weights do not include the gunners.{{em|9}}Doubtful figures are marked thus.*<br><sup>1</sup>In addition to the wagons with light ammunition column, now raised to 62 per battery.{{em|9}}<sup>2</sup>Including four rounds with gun.}}}}PAGE:248<section begin="s1" />independent line of sight is an arrangement of sights and elevating
+{{center|{{Fs|90%|These weights do not include the gunners.{{em|9}}Doubtful figures are marked thus.*<br><sup>1</sup>In addition to the wagons with light ammunition column, now raised to 62 per battery.{{em|9}}<sup>2</sup>Including four rounds with gun.}}}}PAGE:248independent line of sight is an arrangement of sights and elevating
 gear found in many modern field guns, which divides between
 two gunners the work of aiming (called «I»laying«/I») the gun, and of
 giving it the elevation required to hit the target.
-<section end="s1" />
-<section begin="s2" />
 {|style=margin:auto
 |-
 |[[File:EB1911 - Ordnance - Fig. 59.png|400px]]
@@ -3990,8 +3984,7 @@ liquid is forced to flow past the piston. The friction thus caused
 gradually absorbs the recoil of the gun and brings it gently to a
 standstill. As the gun recoils the centre of gravity of the gun and
 carriage shifts to the rear, reducing the stability. The buffer-resistance
-has to be gradually reduced proportionately to the reduced
-<section end="s2" />PAGE:251stability. To allow the liquid to flow past the piston, grooves
+has to be gradually reduced proportionately to the reducedPAGE:251stability. To allow the liquid to flow past the piston, grooves
 (called «I»ports«/I») are formed in the sides of the cylinder, and by varying
 the depth of the grooves at different points the resistance can be
 adjusted as required.
@@ -4704,8 +4697,7 @@ by their 6·1″ gun and their 10·7″ howitzer. The official
 British pieces are a 6″ gun and a 9·4″ howitzer. Generally
 speaking, whereas the most suitable armament of the light units
 can as a rule be foreseen, that of the heavy would depend very
-much on circumstances.
-{{nop}}PAGE:256«I»The French 10·7«/I»&#8202;″ «I»Howitzer«/I».—As a typical piece the 10·7″ howitzer
+much on circumstances.PAGE:256«I»The French 10·7«/I»&#8202;″ «I»Howitzer«/I».—As a typical piece the 10·7″ howitzer
 may be taken, which the French transported by special horse
 draught, as it was found too heavy for the type of siege railway
 made use of at the mock siege of Langres in 1907. Its total equipment
@@ -4931,8 +4923,7 @@ cylinder can be made to sink
 in the outer cylinder and the gun is brought down to the loading
 position; the release of the counterweight will cause it to
 rise again. The gun has the usual motion of traverse round the
-common axis of the two cylinders.
-{{nop}}PAGE:258{{Css image crop
+common axis of the two cylinders.PAGE:258{{Css image crop
 |Image   = EB1911 - Volume 20.djvu
 |Page    = 258
 |bSize   = 820
@@ -5169,8 +5160,7 @@ horizontal for loading.
 The elevation indicators are now read on a plate provided with
 a spiral groove, which guides a stud on the reader along the scale of
 graduations.</ref><ref follow=230f2>
-In a later mark there is no holding-down screw for pivot.</ref>
-The fighting units of coast artillery in the British service are the
+In a later mark there is no holding-down screw for pivot.</ref>The fighting units of coast artillery in the British service are the
 fire command, the battery command and the group. The limits of
 a fire command are governed by the possibility of efficient surveillance
 and control that can be exercised by an individual, and these
@@ -5760,4 +5750,4 @@ exist in this respect between opposing navies, success at sea will be
 the lot of the nation whose officers are the coolest and most intelligent,
 whose men are the best disciplined and best trained, and
 whose navy is in all respects the most imbued mth the habits and
-traditions of the sea. {{Fs|108%|{{EB1911 footer initials|Sydney Robert Fremantle|S. Fr.}}}}}}PAGE:268<section begin="s1" />
+traditions of the sea. {{Fs|108%|{{EB1911 footer initials|Sydney Robert Fremantle|S. Fr.}}}}}}
