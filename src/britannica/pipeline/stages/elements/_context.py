@@ -8,10 +8,6 @@ Carries the small amount of cross-element state a handler may need:
   * ``ref_bodies`` — name → resolved-footnote-body map, built once per
     article by ``resolve_ref_bodies`` and consumed by ``<ref name=X/>``
     anchors.
-  * ``djvu_crop_counters`` — per ``(volume, page)`` running index so
-    successive ``{{Css image crop}}`` templates get distinct local
-    filenames matching ``download_djvu_crops.py`` ordering.  Mutated
-    in place by ``_process_djvu_crop``.
 """
 
 from __future__ import annotations
@@ -24,4 +20,3 @@ class ElementContext:
     volume: int = 0
     page_number: int = 0
     ref_bodies: dict[str, str] = field(default_factory=dict)
-    djvu_crop_counters: dict[tuple[int, int], int] = field(default_factory=dict)

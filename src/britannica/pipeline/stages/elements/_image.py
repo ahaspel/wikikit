@@ -5,6 +5,7 @@ All emit ``{{IMG:filename|caption}}`` or ``{{IMG:filename}}`` markers.
 
 from __future__ import annotations
 
+import hashlib
 import re
 
 from britannica.image_assets import CHART2_IMAGES
@@ -137,81 +138,48 @@ def _process_image(inner: str, text_transform, default_align: str | None = None)
         width=width, height=height)
 
 
-_CSS_CROP_RE = re.compile(
-    r"\{\{Css image crop\s*\n(.*?)\}\}", re.DOTALL | re.IGNORECASE
-)
-
-
 def _parse_crop_param(body: str, name: str) -> str:
-    m = re.search(rf"\|{name}\s*=\s*([^\n|]*)", body, re.IGNORECASE)
+    # Value runs to the next `\n`, `|`, or `}` — the last matters once the crop
+    # is newline-collapsed (the final `|oLeft=10}}` must yield `10`, not `10}}`).
+    m = re.search(r"\|" + re.escape(name) + r"\s*=\s*([^\n|}]*)",
+                  body, re.IGNORECASE)
     return m.group(1).strip() if m else ""
 
 
-def _process_djvu_crop(raw: str, text_transform, context: ElementContext) -> str:
-    """Process a table containing a {{Css image crop}} template.
+# Crop geometry defaults — must match the download tool's scan defaults so the
+# producer, the tool, and the rename all derive byte-identical filenames.
+_CROP_GEOM = (("bSize", 600), ("cWidth", 600), ("cHeight", 600),
+              ("oTop", 0), ("oLeft", 0))
 
-    Extracts the crop filename and caption from the table, producing
-    {{IMG:djvu_volNN_pageNNNN_cropN.jpg|caption}}.
 
-    Crop indices are tracked in context.djvu_crop_counters to match
-    the order used by tools/download_djvu_crops.py.
-    """
-    crop_m = _CSS_CROP_RE.search(raw)
-    if not crop_m:
-        return ""
+def crop_filename(image: str, page, bsize, cwidth, cheight, otop, oleft) -> str:
+    """STATELESS crop filename from EXPLICIT params — a pure function of the
+    crop's IDENTITY (DjVu volume + page + geometry rectangle).  No positional
+    counter, no document order, no context.  THE one filename authority, called
+    by both `djvu_crop_filename` (body-parsing, for the producer) and
+    `download_djvu_crops.py` — so they agree by construction."""
+    vm = re.search(r"Volume\s+(\d+)", str(image), re.IGNORECASE)
+    vol = int(vm.group(1)) if vm else 0
+    geom = "|".join(str(int(x)) for x in (bsize, cwidth, cheight, otop, oleft))
+    h = hashlib.sha1(geom.encode("utf-8")).hexdigest()[:8]
+    return f"djvu_vol{vol:02d}_page{int(page):04d}_{h}.jpg"
 
-    body = crop_m.group(1)
-    image = _parse_crop_param(body, "Image")
-    if not image:
-        return ""
 
-    # Build the local filename
-    if image.endswith(".djvu"):
-        page_str = _parse_crop_param(body, "Page")
-        if not page_str:
-            return ""
-        page = int(page_str)
-        vol_m = re.search(r"Volume (\d+)", image)
-        vol = int(vol_m.group(1)) if vol_m else context.volume
-        counters = context.djvu_crop_counters
-        key = (vol, page)
-        idx = counters.get(key, 0)
-        counters[key] = idx + 1
-        filename = f"djvu_vol{vol:02d}_page{page:04d}_crop{idx}.jpg"
-    else:
-        filename = image.replace(" ", "_")
+def djvu_crop_filename(crop_body: str) -> str | None:
+    """Body-parsing wrapper: the inside of a ``{{Css image crop … }}`` template →
+    `crop_filename`, or ``None`` for a non-DjVu ``Image=`` source."""
+    image = _parse_crop_param(crop_body, "Image")
+    if not image.lower().endswith(".djvu"):
+        return None
+    page = _parse_crop_param(crop_body, "Page")
+    if not page:
+        return None
 
-    # Extract caption from the table (everything that isn't the crop template
-    # or wiki table markup)
-    caption_text = raw[:crop_m.start()] + raw[crop_m.end():]
-    # Strip table delimiters and markup
-    caption_text = re.sub(r"^\{\|[^\n]*\n?", "", caption_text)
-    caption_text = re.sub(r"\n?\|\}\s*$", "", caption_text)
-    caption_text = re.sub(r"^\|[\-\+].*$", "", caption_text, flags=re.MULTILINE)
-    # Strip cell-attribute prefix on each cell line: any leading run of
-    # `attr=value` pairs (quoted or unquoted) followed by the cell-content
-    # pipe.  ALPHABET uses `|rowspan=4|`, BANTU `|colspan=2|`, plate pages
-    # `|align="center" valign="top"|`.  The previous pattern handled only
-    # `colspan=...` — broader leak surface than expected.
-    caption_text = re.sub(
-        r'^\|\s*(?:(?:align|valign|colspan|rowspan|width|style|class|'
-        r'cellpadding|cellspacing|bgcolor|border|nowrap|height|id|scope)'
-        r'\s*=\s*(?:"[^"]*"|\S+)\s*)+\|\s*',
-        "", caption_text, flags=re.MULTILINE,
-    )
-    # Plain `|` cell-opener (no attrs) — strip the leading pipe.
-    caption_text = re.sub(r"^\|\s*", "", caption_text, flags=re.MULTILINE)
-    caption_text = re.sub(r"^\!", "", caption_text, flags=re.MULTILINE)
-    # Collapse to single line
-    caption_text = re.sub(r"\s*<br\s*/?>", " ", caption_text, flags=re.IGNORECASE)
-    caption_text = re.sub(r"\s*\n\s*", " ", caption_text)
-    caption_text = re.sub(r"  +", " ", caption_text).strip()
+    def _g(name: str, default: int) -> int:
+        v = _parse_crop_param(crop_body, name)
+        return int(v) if v else default
 
-    if caption_text:
-        caption_text = text_transform(caption_text)
-        caption_text = clean_caption(caption_text)
-        return f"{{{{IMG:{filename}|{caption_text}}}}}"
-    return f"{{{{IMG:{filename}}}}}"
+    return crop_filename(image, page, *(_g(n, d) for n, d in _CROP_GEOM))
 
 
 # `{{raw image|EB1911 - Volume N.djvu/PPP}}` — EB1911 alternate image syntax for

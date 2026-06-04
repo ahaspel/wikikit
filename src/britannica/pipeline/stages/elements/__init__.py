@@ -28,10 +28,7 @@ from britannica.pipeline.stages.elements._ref import (
     _ref_attrs,
 )
 from britannica.pipeline.stages.elements._image import (
-    _CSS_CROP_RE,
-    _parse_crop_param,
     _process_chart2,
-    _process_djvu_crop,
     _process_image_from_raw,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
@@ -331,8 +328,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_chemistry_layout(raw, inner, tt, reg),
     # Single-label kinds — element_type == label.
-    "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
-        _process_djvu_crop(raw, tt, ctx),
+    # DJVU_CROP — a `{{Css image crop}}` is just another image; the faithful
+    # figure producer recognizes it as an image leaf (stateless filename) and,
+    # for the `{|`-wrapped form, recurses the caption/attribution cells.
+    "DJVU_CROP": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
     "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
     "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
@@ -456,13 +455,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
 # the registry.  Removing one is one delete in each.  No edits to
 # other predicates.  Entanglement is the source of bugs here, so
 # entanglement is what the architecture refuses.
-def _is_djvu_crop_table(raw: str, inner: str,
-                         registry: ElementRegistry | None) -> bool:
-    """Table wraps a `{{Css image crop}}` template — the crop's
-    producer parses the raw wikitext directly."""
-    return bool(re.search(r"\{\{Css image crop", raw, re.IGNORECASE))
-
-
 def _is_compound_table_pred(raw: str, inner: str,
                              registry: ElementRegistry | None) -> bool:
     """Data table (header has `border`/`rules`/`class=wikitable`) with
@@ -1086,7 +1078,6 @@ def _always_true(raw: str, inner: str,
 _PRE_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
     (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
-    (_is_djvu_crop_table,        "DJVU_CROP"),
     (_is_compound_table_pred,    "TABLE"),
     (_is_chemistry_layout_pred,  "CHEMISTRY_LAYOUT"),
 ]

@@ -3976,7 +3976,9 @@ a large volume of liquid through a narrow opening or recoil valve,
 and also by further compressing a large volume of already highly
 compressed air; when recoil was completed the recoil valve closed and the air was retained at very high pressure: the energy thus stored up returned the gun to the firing position. The action will be understood from the following example.
 
-«I»The British 6«/I» ″ «I»B.L. Gun on H.P. Mounting«/I», «I»Mark IV«/I».—Fig. 78 shows a general view of the mounting; fig. 79 is a vertical andPAGE:257{{IMG:djvu_vol20_page0257_crop0.jpg|Fig. 78.—British 6″ B.L. Gun on H.P. Mounting, Mark IV.}}
+«I»The British 6«/I» ″ «I»B.L. Gun on H.P. Mounting«/I», «I»Mark IV«/I».—Fig. 78 shows a general view of the mounting; fig. 79 is a vertical andPAGE:257{{IMG:djvu_vol20_page0257_63912a13.jpg}}
+
+«CTR»«SC»Fig«/SC». 78.—British 6″ B.L. Gun on H.P. Mounting, Mark IV.«/CTR»
 
 fig. 80 a transverse section through the recoil cylinder. The gun
 trunnions (fig. 78) are supported by the two arms of the elevator A,
@@ -4052,10 +4054,10 @@ a counterweight. After the
 gun is fired it can be brought
 with its length parallel to the
 parapet.
-{{IMG:djvu_vol20_page0257_crop1.jpg}}
+{{IMG:djvu_vol20_page0257_dbee2f95.jpg}}
 :«SC»Fig«/SC». 79.—Vertical Section through Recoil Cylinder of Gun shown in fig. 78.
 
-{{IMG:djvu_vol20_page0257_crop2.jpg}}
+{{IMG:djvu_vol20_page0257_3abee03d.jpg}}
 :«SC»Fig«/SC». 80.—Transverse Section through Recoil Cylinder of Gun shown in fig. 78.
 
 Then by the action
@@ -4064,7 +4066,9 @@ cylinder can be made to sink
 in the outer cylinder and the gun is brought down to the loading
 position; the release of the counterweight will cause it to
 rise again. The gun has the usual motion of traverse round the
-common axis of the two cylinders.PAGE:258{{IMG:djvu_vol20_page0258_crop0.jpg|Fig. 81.—Buffington-Crozier Disappearing Carriage for 10″ B.L. .Gun, U.S.A.}}
+common axis of the two cylinders.PAGE:258{{IMG:djvu_vol20_page0258_32394d3e.jpg}}
+
+«CTR»«SC»Fig«/SC». 81.—Buffington-Crozier Disappearing Carriage for 10″ B.L. .Gun, U.S.A.«/CTR»
 
 The heavy gun cupola is found on the continent of Europe in the
 armaments of various Powers for guns of type («I»a«/I»), the German
@@ -4121,7 +4125,9 @@ modern is shown in fig. 21, where a 9·2″ B.L. gun, Mark X.,
 is placed upon a Mark V. mounting, a combination which
 admits of over five aimed rounds in two minutes. «SH»Barbette mountings.«/SH» 
 
-{{IMG:djvu_vol20_page0258_crop1.jpg|Fig. 82.—Krupp Cupola for two 28-cm. Guns.}}
+{{IMG:djvu_vol20_page0258_ff8ed9a2.jpg}}
+
+«CTR»«SC»Fig«/SC». 82.—Krupp Cupola for two 28-cm. Guns.«/CTR»
 
 «I»The British 9·2«/I»″ «I»B.L. Gun«/I».—Fig. 84 shows a general view of the
 mounting, fig. 85 a longitudinal section through the cradle on a
@@ -4655,7 +4661,7 @@ the ship. The breech is opened and closed by hand or by hydraulicPAGE:266power
 both, removes any smouldering fragments of cordite or cartridge
 material before a fresh round is loaded.
 
-{{IMG:djvu_vol20_page0266_crop0.jpg}}
+{{IMG:djvu_vol20_page0266_cceef0d5.jpg}}
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;line-height:90%"><tr><td colspan="8">«FS[83%]»From a drawing supplied by Messrs. Vickers, Sons & Maxim.«/FS»</td></tr><tr><td colspan="8" style="text-align:center">«SC»Fig«/SC». 91. — Diagram of 12-in. Gun Mounting, “Dreadnought” type.</td></tr><tr><td>A,</td><td>Roller ring.</td><td>K,</td><td>Elevating presses.</td><td>R₁,</td><td>Transferring rammer pro-</td><td>R₃,</td><td>Transferring chamber.</td></tr><tr><td>B.</td><td>Gun slide.</td><td>L.</td><td>Guide rail for loading cage.</td><td></td><td> jectiles from trunk cage to</td><td>R₄,</td><td>Training rack.</td></tr><tr><td>C,</td><td>Recoil buffer.</td><td>N,</td><td>Trunk cage.</td><td></td><td> gun-loading cage.</td><td>R₅,</td><td>Training engine.</td></tr><tr><td>D,</td><td>Gun cradle.</td><td>P₁,</td><td>Breech block in open position.</td><td>R₂,</td><td>Transferring rammer for</td><td>S,</td><td>Rotating trunk.</td></tr><tr><td>G,</td><td>Rammer.</td><td>P₂,</td><td>Breech operating hand</td><td></td><td> powder charges from trunk</td><td>T,</td><td>Turntable.</td></tr><tr><td>H,</td><td>Loading cage.</td><td></td><td>wheel.</td><td></td><td> cage to gun-loading cage.</td><td>W,</td><td>Casing for chain rammer.</td></tr></table>«/HTMLTABLE»
 
 Although there is little difference in principle between the arrangements
@@ -4725,7 +4731,7 @@ of the ship.
 of fire have been rendered possible, to a very great extent, by, the use of telescopic sighting apparatus. Arrangements are made in all modern sights for the bars or disks which carry the range graduations to be of considerable length or diameter respectively, in order that no difficulty may be found in adjusting the sights for every 25 or 50 yds. of range. In the larger hand-worked mountings, where the laying of the gun for elevation and for direction is effected by two men on opposite sides of the gun, the sights used by them are “cross-connected,” «I»i.e.«/I» connected by rods and gearing to one another in such a way that, initial parallelism of the axes of the two telescopes havingPAGE:267been secured, the adjustments to one sight made by the sight setter
 are simultaneously effected at the sight on the opposite
 of the gun.
-{{IMG:djvu_vol20_page0267_crop0.jpg}}
+{{IMG:djvu_vol20_page0267_f949145a.jpg}}
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><tr><td colspan="6">«FS[92%]»From a drawing supplied by Messrs Vickers, Sons & Maxim.«/FS»</td></tr><tr><td colspan="6">«CTR»«SC»Fig«/SC». 92.—Diagram of a 9·2-in. Gun and Mounting, “Hogue type.”«/CTR»</td></tr><tr><td>A,</td><td>Roller ring.</td><td>G,</td><td>Elevating press.</td><td>P₂,</td><td>Breech operating hand-</td></tr><tr><td>B,</td><td>Recoil buffer.</td><td>H,</td><td>Shell-lifting press.</td><td></td><td>  wheel.</td></tr><tr><td>C,</td><td>Gun cradle slide frame.</td><td>K,</td><td>Fixed armoured trunk.</td><td>R₁,</td><td>Training rack.</td></tr><tr><td>D,</td><td>Loading tray.</td><td>L,</td><td>Radial shell-lifting crane.  </td><td>R₂,</td><td>Training engine.</td></tr><tr><td>E,</td><td>Shell carrier.</td><td>M,</td><td>Axial powder hoist.</td><td>T,</td><td>Turntable.</td></tr><tr><td>F,</td><td>Pressure water pivot pipes.  </td><td>P₁,</td><td>Breech block.</td><td>U,</td><td>Powder door.</td></tr></table>«/HTMLTABLE»
 In practice with the 6-in. and 4-in. guns, one man is responsible
 for the laying of the gun for direction, and has consequently only

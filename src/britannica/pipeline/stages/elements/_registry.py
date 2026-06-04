@@ -107,7 +107,7 @@ BLOCK_LABELS: frozenset[str] = frozenset({"POEM"}) | TABLE_LABELS
 # image-counters key off the SHAPE (image element), not the alignment;
 # layout in a cell is the container's job, so both labels are equally
 # "an image child" to anything iterating children.
-IMAGE_LABELS: frozenset[str] = frozenset({"IMAGE", "INLINE_IMAGE"})
+IMAGE_LABELS: frozenset[str] = frozenset({"IMAGE", "INLINE_IMAGE", "DJVU_CROP"})
 
 
 @dataclass

@@ -112,8 +112,10 @@ def _derive_double_bracket_label(raw: str) -> str:
 
 
 def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
-    # Standalone `{{Css image crop|…}}` — the producer (`_process_djvu_crop`)
-    # crops the DjVu page + folds an optional `{{center|cap}}`/`{{csc|cap}}`.
+    # Standalone `{{Css image crop|…}}` — routed to the faithful figure
+    # producer, which treats the crop as just another image: a stateless
+    # geometry-hash filename (`djvu_crop_filename`) → `{{IMG:…}}`, the crop
+    # already rendered to disk under that name.
     if re.match(r"\{\{\s*Css image crop\b", raw, re.IGNORECASE):
         return "DJVU_CROP"
     # `{{raw image|…}}` — full-page DjVu scan or plain figure file
