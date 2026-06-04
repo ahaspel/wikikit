@@ -480,8 +480,8 @@ def produce_table_rows(
 
     Returns `(caption, rows, has_header, has_span)` where `rows` is a
     list of `(row_attr_part, ParsedRow)` — the row attribute slot is
-    carried so a producer can emit `<tr style=…>` (the spine-facing
-    assemblers ignore it and emit a bare `<tr>`).
+    carried so the assembler emits `<tr style=…>` from it (`assemble_html_rows`
+    parses the row blob via `_cell_styles`, same as a cell attr).
 
     `flavor` selects the row extractor: `"wiki"` (`{|…|}`) or `"html"`
     (`<table>…</table>`).  `None` auto-detects from HTML table tags.
@@ -550,21 +550,27 @@ def assemble_html_rows(
     a leak-fix for the `{{TABLE}}`-emitting ones — a complex/single-col
     child that used to leak its marker now inlines.)
 
-    The per-row attribute slot is IGNORED here (bare `<tr>`), matching the
-    spine; producers that carry row styling assemble their own rows.
-    Lifted verbatim from `_process_html_table:1992-2024`.
+    The per-row attribute slot (`{|`'s `|-<attrs>` / `<tr ...>`) is CARRIED
+    onto `<tr style="…">` the same way each cell carries its own styling —
+    `produce_table_rows` already captured it, and dropping it (a) lost row
+    styling the source asked for and (b) leaked its `{{Ts}}` to the catch-all.
+    Carry-by-default, matching the per-cell path (`_cell_styles` parses the row
+    blob — `{{Ts|…}}`, `style="…"`, align/valign — identically to a cell attr).
     """
     from britannica.pipeline.stages.elements._tables import (
-        _inline_table_marker_as_html, emit_html_cell,
+        _cell_styles, _inline_table_marker_as_html, emit_html_cell,
     )
     html_rows: list[str] = []
-    for _row_attr, parsed in parsed_rows:
+    for row_attr, parsed in parsed_rows:
         cells_html = [
             emit_html_cell(tag, content,
                            rowspan=rowspan, colspan=colspan, styles=styles)
             for tag, rowspan, colspan, content, styles in parsed
         ]
-        html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
+        row_styles = _cell_styles(row_attr, "") if row_attr else []
+        open_tr = (f'<tr style="{";".join(row_styles)}">'
+                   if row_styles else "<tr>")
+        html_rows.append(open_tr + "".join(cells_html) + "</tr>")
     output = ("«HTMLTABLE:<table>" +
               "".join(html_rows) +
               "</table>«/HTMLTABLE»")
