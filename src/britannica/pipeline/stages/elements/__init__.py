@@ -286,8 +286,23 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     nested where figure-recognition is off now recurses its inner through
     `process_elements`, so the image is produced rather than dropped."""
     from britannica.pipeline.stages.elements._tables import (
-        _cell_styles, style_block,
-        _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, _TEMPLATE_PARAM_STYLE_RE)
+        _cell_styles, style_block, _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS,
+        _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE)
+    # Shoulder heading — `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the
+    # `…HeadingSmall` / `{{EB9 Margin Note}}` synonyms.  A marginal SECTION label:
+    # emit «SH»…«/SH» (what `detect_sections` keys on for the TOC), recursing the
+    # LABEL (after the last top-level pipe, dropping `width=N`) so its inner
+    # `{{Fs}}` carries as the styler it is.  Replaces the flat
+    # `_convert_shoulder_headings`.
+    sh = _SHOULDER_HEADING_RE.match(raw)
+    if sh:
+        from britannica.pipeline.stages.transform_articles.body_text import (
+            _split_top_pipes)
+        rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
+        label = _styled_br_to_marker(_split_top_pipes(rest)[-1])
+        content = process_elements(
+            label, text_transform, context, _allow_figure=False).strip()
+        return f"«SH»{content}«/SH»"
     # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same
     # styler family, but the size is arg-1.  Split value | content on the first
     # pipe (content keeps its own pipes), recurse the content, carry as an INLINE
@@ -302,6 +317,9 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         content = process_elements(
             inner_raw, text_transform, context, _allow_figure=False).strip()
         size = value + "%" if value.isdigit() else value
+        # FS is just a styler — one uniform inline `«SPAN[style:font-size:…]»`,
+        # same as every other styler, NOT a special per-context marker.  Structure
+        # (a section heading) is carried by «SH», never inferred from this size.
         return style_block(content, css=f"font-size:{size}" if size else "",
                            tag="SPAN")
     # Template-form wrapper — `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / …

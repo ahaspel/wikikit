@@ -219,7 +219,9 @@ for mounting the first cannon. From illuminations in contemporary
 manuscripts it appears that the earliest
 guns, which were trunnionless, were simply laid on
 the ground and supported by a timber framing at meats.
-each side, whilst the flat breech end rested against a «SH»Old Equipments.«/SH» strong wood support let into the ground to prevent recoil. This
+each side, whilst the flat breech end rested against a
+«SH»Old Equipments.«/SH»
+strong wood support let into the ground to prevent recoil. This
 arrangement was no doubt inconvenient, and a little later small
 cannon were fastened in a wooden stock by iron bands; larger
 guns were supported in massive timber cradles (fig. 3) and
@@ -324,7 +326,8 @@ means for directing them. This was not important, as the range
 seldom exceeded 100 yds. As, however, ranges
 became longer, some means became necessary for
 giving the correct line and elevation (see also «LN:Sights|Sights«/LN»). The
-direction for line was easily obtained by looking over the gun and «SH»Sighting.«/SH» moving the carriage trail to the right or left as was necessary.
+direction for line was easily obtained by looking over the gun and«SH»Sighting.«/SH»
+moving the carriage trail to the right or left as was necessary.
 For elevation an instrument invented by Tartaglia called a
 Gunner’s Quadrant (sometimes also called a Gunner’s Square)
 was used; this was a graduated quadrant of a circle (fig. 6)
@@ -417,7 +420,8 @@ Breech-loading ordnance dates from about the end of the
 England (Brackenbury, «I»Proc. R.A.I.«/I» v. 32). The
 body, in some cases, was fixed to a wood
 cradle by iron straps and the breech portion kept in
-position between the muzzle portion and a vertical «SH»Breech-loading Ordnance.«/SH» block of wood fixed to the end of the cradle, by a wedge. Accidents
+position between the muzzle portion and a vertical«SH»Breech-loading Ordnance.«/SH»
+block of wood fixed to the end of the cradle, by a wedge. Accidents
 must have been common, and improvements were made
 by dropping the breech or chamber of the weapon into a receptacle,
 solidly forged on or fastened by lugs to the rear end
@@ -527,7 +531,9 @@ by means of empirical rules, as the real principles underlying
 the construction of ordnance had been little
 understood. It was known of course that a gun was
 subjected to two fundamental stresses—a circumferential
-tension tending to split the gun open longitudinally, and «SH»Built-up guns.«/SH» a longitudinal tension tending to pull the gun apart lengthwise;
+tension tending to split the gun open longitudinally, and
+«SH»Built-up guns.«/SH»
+a longitudinal tension tending to pull the gun apart lengthwise;
 the longitudinal strength of a gun is usually greatly in excess
 of any requirements. It is easy to demonstrate that any so-called
 homogeneous gun, «I»i.e.«/I» a gun made of solid material and not
@@ -678,7 +684,9 @@ England and most foreign countries, is prepared by the open hearth
 method in a regenerative gas furnace of the Siemens-Martin
 type (see «LN:Iron and Steel|Iron and Steel«/LN»). The steel is run from
 the furnace into a large ladle, previously heated by gas,
-and from this it is allowed to run into a cast iron ingot mould of «SH»Gun forgings.«/SH» from 10 to 12 ft. high and 2 ft. or more in diameter. With very
+and from this it is allowed to run into a cast iron ingot mould of
+«SH»Gun forgings.«/SH»
+from 10 to 12 ft. high and 2 ft. or more in diameter. With very
 large ingots two furnaces may have to be employed. The external
 shape of these ingots varies in different steel works, but they are so
 arranged that, as the ingot slowly cools, the contraction of the metal
@@ -904,13 +912,13 @@ The wire is rectangular in section, 0·25 in. wide and 0·06 in. thick, and afte
 The gun is built up, after wiring, in the same manner as a gun without wire, the jacket or other hoop being heated in the vertical gas furnace and when hot enough dropped into place over the wire, cooled by the ring of water jets at the end first required to grip and kept hot at the other, exactly as before described.
 
 The machine arranged for rifling modern guns is very similar to that employed for the old muzzle-loaders; it is a special tool used in construction only (fig. 21), and is in reality a copying machine. A steel or cast-iron bar J which forms the copy of the developed rifling curve is first
-made. The copying bar—which is straight if the rifling is to be uniform «SH»Rifling operation.«/SH» but curved if it is to be increasing—is fixed, inclined at the proper angle, to standards K on the machine. The cutting tool is carried at one end C of a strong hollow cylindrical rifling bar B, the other end of which is fixed to a saddle M. This is moved along the bed of the machine by a long screw N, and the rifling bar is consequently either pushed into the gun or withdrawn by the motion of the saddle along the machine. During this motion it is made to rotate slowly by being connected to the copying bar by suitable gearing I. It will thus be seen that the cutting tool will cut a spiral groove along the bore of the gun in strict conformity with the copy. In most English machines the cutting tool cuts only as the rifling bar is drawn out of the gun; during the reverse motion the cutter F is withdrawn out of action by means of a wedge arrangement actuated by a rod passing through the centre of the rifling bar, which also pushes forward the cutter at the proper time for cutting. One, two or more grooves may be cut at one time, the full depth being attained by slowly feeding the tool after each stroke. After each set of grooves is cut the rifling bar or the gun is rotated so as to bring the cutters to a new position. In some foreign machines the cut is taken as the rifling bar is pushed into the gun.
+made. The copying bar—which is straight if the rifling is to be uniform«SH»Rifling operation.«/SH» but curved if it is to be increasing—is fixed, inclined at the proper angle, to standards K on the machine. The cutting tool is carried at one end C of a strong hollow cylindrical rifling bar B, the other end of which is fixed to a saddle M. This is moved along the bed of the machine by a long screw N, and the rifling bar is consequently either pushed into the gun or withdrawn by the motion of the saddle along the machine. During this motion it is made to rotate slowly by being connected to the copying bar by suitable gearing I. It will thus be seen that the cutting tool will cut a spiral groove along the bore of the gun in strict conformity with the copy. In most English machines the cutting tool cuts only as the rifling bar is drawn out of the gun; during the reverse motion the cutter F is withdrawn out of action by means of a wedge arrangement actuated by a rod passing through the centre of the rifling bar, which also pushes forward the cutter at the proper time for cutting. One, two or more grooves may be cut at one time, the full depth being attained by slowly feeding the tool after each stroke. After each set of grooves is cut the rifling bar or the gun is rotated so as to bring the cutters to a new position. In some foreign machines the cut is taken as the rifling bar is pushed into the gun.
 {{IMG:EB1911 - Ordnance - Fig. 21.png|align=center|width=800}}
 
 «CTR»«SC»Fig«/SC». 21.—Rifling Machine.«/CTR»
 
 Rifling is the term given to the numerous shallow grooves cut spirally along the bore of a gun; the rib between two grooves is called the “land.” Rifling has been known for many years; it was supposed to increase the range, and no doubt did so, owing to the fact that the bullet having
-to be forced into the gun during the loading operation became «SH»Rifling.«/SH» a mechanical fit and prevented to a great extent the loss of gas by windage which occurred with ordinary weapons. Kotter (1520) and Danner (1552), both of Nuremberg, are respectively credited as being the first to rifle gun barrels; and there is at the Rotunda, Woolwich, a muzzle-loading barrel dated 1547 rifled with six fine grooves. At this early period, rifling was applied only to small arms, usually for sporting purposes. The disadvantage of having, during loading, to force a soft lead (or lead-covered) ball down a bore of smaller diameter prevented its general employment for military use. In 1661 Prussia experimented with a gun rifled in thirteen shallow grooves, and in 1696 the elliptical bore—similar to the Lancaster—had been tried in Germany. In 1745 Robins was experimenting with rifled guns and elongated shot in England. During the Peninsular War about 1809, the only regiment (the “Rifle Brigade,” formerly called the 95th) equipped with rifled arms, found considerable difficulty in loading them with the old spherical lead
+to be forced into the gun during the loading operation became«SH»Rifling.«/SH» a mechanical fit and prevented to a great extent the loss of gas by windage which occurred with ordinary weapons. Kotter (1520) and Danner (1552), both of Nuremberg, are respectively credited as being the first to rifle gun barrels; and there is at the Rotunda, Woolwich, a muzzle-loading barrel dated 1547 rifled with six fine grooves. At this early period, rifling was applied only to small arms, usually for sporting purposes. The disadvantage of having, during loading, to force a soft lead (or lead-covered) ball down a bore of smaller diameter prevented its general employment for military use. In 1661 Prussia experimented with a gun rifled in thirteen shallow grooves, and in 1696 the elliptical bore—similar to the Lancaster—had been tried in Germany. In 1745 Robins was experimenting with rifled guns and elongated shot in England. During the Peninsular War about 1809, the only regiment (the “Rifle Brigade,” formerly called the 95th) equipped with rifled arms, found considerable difficulty in loading them with the old spherical lead
 bullet, from the muzzle. In 1836 Russia made a large number of experiments with a rifled gun invented by Montigny, a Belgian; this was not a success, but in England the guns invented by Major Cavalli, in 1845, and by Baron Wahrendorff in 1846, obtained some measure of favour. Both these guns were breech-loaders. The Cavalli gun had a bore of 6·5 in. diameter; it was rifled in two grooves having a uniform twist of 1 in 25 calibres, and the elongated projectile had two ribs cast with it to fit the grooves, but no means were taken to prevent windage. The Wahrendorff gun had an enlarged chamber and the bore of 6·37 in. diameter was rifled in 2 grooves; the projectile had ribs similar to that for the Cavalli gun; but Wahrendorff had also tried lead-coated projectiles, the coating being attached by grooves undercut in the outside of the shell. In 1854 Lancaster submitted his plan of rifling; in this (fig. 22) the bore was made of an oval section which twisted round the axis of the gun from the breech to the muzzle; a projectile having an oval section was fired. Several old cast-iron guns bored on this system burst in the Crimean War from the projectile wedging in the gun. In 1855 Armstrong experimented with a breech-loading rifled gun, firing a lead-coated projectile. The rifling consisted of a large number of shallow grooves having a uniform twist of 1 in 38 calibres. When the gun was fired the lead-coated projectile, which was slightly larger in diameter than the bore of the gun, was forced into the rifling and so gave rotation to the elongated projectile.
 
 «CTR»{{IMG:EB1911 - Ordnance - Fig. 22.png|width=400}}
@@ -1207,7 +1215,7 @@ the projectile drifts to the right; if it has a left-hand twist the
 drift takes place to the left. The drift increases with
 the range but in a greater ratio; further, the greater the
 twist («I»i.e.«/I» the smaller the pitch of rifling) the greater the drift. On
-the other hand the smooth B.L. projectiles «SH»Drift.«/SH» drift less than studded
+the other hand the smooth B.L. projectiles «SH»Drift.«/SH»drift less than studded
 M.L. projectiles.
 
 To find the angle, usually called the «I»permanent angle of deflection«/I»,
@@ -1217,7 +1225,7 @@ are plotted on paper, and a straight line is then drawn from the point
 representing the muzzle through the mean value of the plotted
 curve.
 
-The early guns were fired by inserting a red-hot wire into the vent, or by filling the vent with powder and firing it by a red-hot iron. Slow match held in a cleft stick afterwards took the place of the hot iron, and this again was replaced by a port-fire. Filling the vent with loose powder was inconvenient and slow, and to improve «SH»Firing arrangements.«/SH» matters the powder was placed in a paper, tin or quill tubePAGE:228which was simply pushed into the vent and fired by the slow
+The early guns were fired by inserting a red-hot wire into the vent, or by filling the vent with powder and firing it by a red-hot iron. Slow match held in a cleft stick afterwards took the place of the hot iron, and this again was replaced by a port-fire. Filling the vent with loose powder was inconvenient and slow, and to improve «SH»Firing arrangements.«/SH»matters the powder was placed in a paper, tin or quill tubePAGE:228which was simply pushed into the vent and fired by the slow
 match or port-fire.
 
 «HTMLTABLE:<table class="data-table _tablecolhdborder" style="font-size:92%;line-height:110%;text-align:center"><caption>«CTR»«SC»Table I.«/SC»«/CTR»</caption><tr style="border:1px solid;font-size:90%"><td rowspan="2">Length of«BR»projectile«BR»in calibres.</td><td colspan="4">Minimum twist at muzzle of gun requisite to give stability of rotation«BR»=one turn in 𝑛 calibres; or a pitch of 𝑛 calibres.</td></tr><tr style="border:1px solid;font-size:90%"><td>Cast-iron common«BR»shell,«BR»cavity=8/27, vol.«BR»of shell«BR»(s.g. of iron=7·2).</td><td>Palliser shell,«BR»cavity=⅛ vol.«BR»(s.g.=8·0).</td><td>Solid steel bullet «BR»(s.g.=8·0).</td><td>Solid lead and tin«BR»bullets of similar«BR»composition«BR» to M.-H. bullets«BR»(s.g.=10·9)</td></tr><tr><td></td><td>𝑛.</td><td>𝑛.</td><td>𝑛.</td><td>𝑛.</td></tr><tr><td>2·0</td><td>63·87</td><td>71·08</td><td>72·21</td><td>84·29</td></tr><tr><td>·1</td><td>59·84</td><td>66·59</td><td>67·66</td><td>78·98</td></tr><tr><td>·2</td><td>56·31</td><td>62·67</td><td>63·67</td><td>74·32</td></tr><tr><td>·3</td><td>53·19</td><td>59·19</td><td>60·14</td><td>70·20</td></tr><tr><td>·4</td><td>50·41</td><td>56·10</td><td>57·00</td><td>66·53</td></tr><tr><td>·5</td><td>47·91</td><td>53·32</td><td>54·17</td><td>63·24</td></tr><tr><td>·6</td><td>45·65</td><td>50·81</td><td>51·62</td><td>60·26</td></tr><tr><td>·7</td><td>43·61</td><td>48·53</td><td>49·30</td><td>57·55</td></tr><tr><td>·8</td><td>41·74</td><td>46·45</td><td>47·19</td><td>55·09</td></tr><tr><td>·9</td><td>40·02</td><td>44·54</td><td>45·25</td><td>52·72</td></tr><tr><td>3·0</td><td>38·45</td><td>42·79</td><td>43·47</td><td>50·74</td></tr><tr><td>·1</td><td>36·99</td><td>41·16</td><td>41·82</td><td>48·82</td></tr><tr><td>·2</td><td>35·64</td><td>39·66</td><td>40·30</td><td>47·04</td></tr><tr><td>·3</td><td>34·39</td><td>38·27</td><td>38·84</td><td>45·38</td></tr><tr><td>·4</td><td>33·22</td><td>36·97</td><td>37·56</td><td>43·84</td></tr><tr><td>·5</td><td>32·13</td><td>35·75</td><td>36·33</td><td>42·40</td></tr><tr><td>·6</td><td>31·11</td><td>34·62</td><td>35·17</td><td>41·05</td></tr><tr><td>·7</td><td>30·15</td><td>33·55</td><td>34·09</td><td>39·79</td></tr><tr><td>·8</td><td>29·25</td><td>32·55</td><td>33·07</td><td>38·61</td></tr><tr><td>·9</td><td>28·40</td><td>31·61</td><td>32·11</td><td>37·48</td></tr><tr><td>4·0</td><td>27·60</td><td>30·72</td><td>31·21</td><td>36·43</td></tr><tr><td>·1</td><td>26·85</td><td>29·88</td><td>30·36</td><td>35·43</td></tr><tr><td>·2</td><td>26·13</td><td>29·08</td><td>29·55</td><td>34·49</td></tr><tr><td>·3</td><td>25·45</td><td>28·33</td><td>28·78</td><td>33·59</td></tr><tr><td>·4</td><td>24·81</td><td>27·61</td><td>28·05</td><td>32·74</td></tr><tr><td>·5</td><td>24·20</td><td>26·93</td><td>27·36</td><td>31·94</td></tr><tr><td>·6</td><td>23·65</td><td>26·32</td><td>26·74</td><td>31·21</td></tr><tr><td>·7</td><td>23·06</td><td>25·66</td><td>26·08</td><td>30·44</td></tr><tr><td>·8</td><td>22·53</td><td>25·08</td><td>25·48</td><td>29·74</td></tr><tr><td>·9</td><td>22·03</td><td>24·51</td><td>24·91</td><td>29·07</td></tr><tr><td>5·0</td><td>21·56</td><td>23·98</td><td>24·36</td><td>28·44</td></tr><tr><td>·1</td><td>21·08</td><td>23·46</td><td>23·84</td><td>27·83</td></tr><tr><td>·2</td><td>20·64</td><td>22·97</td><td>23·34</td><td>27·24</td></tr><tr><td>·3</td><td>20·22</td><td>22·50</td><td>22·86</td><td>26·68</td></tr><tr><td>·4</td><td>19·81</td><td>22·05</td><td>22·40</td><td>26·14</td></tr><tr><td>·5</td><td>19·42</td><td>21·61</td><td>21·96</td><td>25·63</td></tr><tr><td>·6</td><td>19·04</td><td>21·19</td><td>21·53</td><td>25·13</td></tr><tr><td>·7</td><td>18·68</td><td>20·79</td><td>21·12</td><td>24·66</td></tr><tr><td>·8</td><td>18·33</td><td>20·40</td><td>20·73</td><td>24·20</td></tr><tr><td>·9</td><td>18·00</td><td>20·03</td><td>20·35</td><td>23·75</td></tr><tr><td>6·0</td><td>17·67</td><td>19·67</td><td>19·98</td><td>23·33</td></tr><tr><td>7·0</td><td>14·99</td><td>16·68</td><td>16·95</td><td>19·78</td></tr><tr><td>8·0</td><td>13·02</td><td>14·48</td><td>14·72</td><td>17·18</td></tr><tr><td>9·0</td><td>11·50</td><td>12·80</td><td>13·00</td><td>15·18</td></tr><tr><td>10·0</td><td>10·31</td><td>11·47</td><td>11·65</td><td>13·60</td></tr></table>«/HTMLTABLE»
@@ -1255,7 +1263,7 @@ type as with the Krupp wedge system, («I»b«/I») the swinging type as in
 the interrupted screw system. Either type may be
 used with B.L. guns (i.e. those with which the charge is
 not contained in a metallic cartridge case) and Q.F. guns
-(«I»i.e.«/I» those with which a metallic cartridge «SH»Breech mechanism.«/SH» case is used).
+(«I»i.e.«/I» those with which a metallic cartridge «SH»Breech mechanism.«/SH»case is used).
 
 Sliding mechanisms may be divided into two forms: (1) those
 having the block or wedge sliding horizontally, and (2) those in
@@ -1719,7 +1727,9 @@ windward, there is a tendency, when the breech is opened
 rapidly after firing, for a sheet of flame to issue
 from the open breech. It was practically unknown
 with the old black powders, but is of
-frequent occurrence with all smokeless propellants. If «SH»Back flash.«/SH» the gun is loaded immediately after the breech is opened
+frequent occurrence with all smokeless propellants. If
+«SH»Back flash.«/SH»
+the gun is loaded immediately after the breech is opened
 the fresh charge may be ignited and an accident caused.
 Several serious accidents have already been traced to this
 cause, notably one on the United States battleship
@@ -1743,7 +1753,9 @@ end of the gun gas-tight, and to prevent any escape of
 gas past the breech mechanism. In the first 
 Armstrong B.L. gun this object was attained 
 by fitting to the breech block a copper ring coned on
-the exterior; the coned surface was forcibly pressed by «SH»Obturators.«/SH» screwing up the breech screw against a corresponding
+the exterior; the coned surface was forcibly pressed by
+«SH»Obturators.«/SH»
+screwing up the breech screw against a corresponding
 copper ring fitted at the breech opening of the gun
 chamber. It is only possible to use this method when
 the copper surfaces can be jammed together by a powerful
@@ -1923,7 +1935,8 @@ The rapidity with which modern guns can be fired and the
 enormous energy they develop is especially striking when onePAGE:235considers the same facts in connexion with the early guns.
 Favé states in his «I»Histoire et tactique des trois armes«/I» (p. 23)
 that during the invasion of Italy in 1494 by Charles VIII.
-the guns were so unwieldy and the firing so slow «SH»Range and power.«/SH» that the damage caused by one shot could be repaired
+the guns were so unwieldy and the firing so slow«SH»Range and power.«/SH»
+that the damage caused by one shot could be repaired
 before the next could be fired. The range, too, about
 100 yds. for battering purposes, now seems absurdly short;
 even at Waterloo 1200 yds. was all that separated the antagonists
@@ -2288,7 +2301,9 @@ the gun designer particularly difficult, especially when this is
 combined with conditions restricting length and
 weight; and, in addition, other considerations,
 especially for naval guns, may have to be taken into
-account such as the allowable weight of the armament, «SH»Theory of gun-making.«/SH» and the size of the gun house or turret. These and other similar
+account such as the allowable weight of the armament,
+«SH»Theory of gun-making.«/SH»
+and the size of the gun house or turret. These and other similar
 conditions are important factors in deciding on the type of design
 which embodies most advantages for a heavy gun intended for
 the main armament. For land defence more latitude is allowed
@@ -2536,7 +2551,9 @@ exactly the same principles are involved. It may be
 assumed that the tube on which the wire is wound is so
 large, in comparison to the thickness of the wire, that
 the compression of the concave surface of the wire and
-the extension of its convex surface may be neglected without «SH»Wire guns.«/SH» sensible error.
+the extension of its convex surface may be neglected without
+«SH»Wire guns.«/SH»
+sensible error.
 
 The greatest advantage is obtained from the wire coils when
 in the Firing Stress the tension T is uniform throughout the thickness
@@ -2683,7 +2700,8 @@ at the breech end; along the forward portion of the gun the thickness
 of the barrel and the interlocking of the covering hoops
 provide ample strength, but at the breech special provision
 must be made. It is usual to provide for this by
-means of a strong breech piece or jacket in small guns or «SH»Longitudinal stress.«/SH» by both combined in large ones. Its amount is easily calculated on
+means of a strong breech piece or jacket in small guns or«SH»Longitudinal stress.«/SH»
+by both combined in large ones. Its amount is easily calculated on
 the hypothesis that the stress is uniformly distributed throughout
 the thickness of the breech piece, or jacket, or of both. If 𝑟₀ is the
 largest radius of the gun chamber, 𝑟₀₁ the radius of the obturator
@@ -2746,7 +2764,9 @@ tube” is surmounted by a second layer which is either shrunk on
 in two or three pieces, as at Elswick, or is formed of one
 long piece called the “A tube,” as in the Woolwich
 system. This second layer is covered with wire, and
-over this is shrunk the chase hoop or B tube and the «SH»Systems of construction.«/SH» jacket. The breech bush is screwed into the rear end of the A tube
+over this is shrunk the chase hoop or B tube and the
+«SH»Systems of construction.«/SH»
+jacket. The breech bush is screwed into the rear end of the A tube
 so that the principal longitudinal stress is taken by this tube.
 
 Fig. 56 is the system adopted in the French service. In this the
@@ -2782,7 +2802,7 @@ by the action of the powder gases; the breech end of the rifled
 portion of the bore becomes enlarged, and the rifling
 itself partly obliterated. The ballistics suffer in consequence
 of the enlarged diameter of the bore, and the rifling may
-be worn so much as not to properly rotate the «SH»Erosion.«/SH» projectile.
+be worn so much as not to properly rotate the«SH»Erosion.«/SH» projectile.
 
 In all modern gun designs provision has, therefore, to be made
 for repairing or replacing the barrel when it is worn out. There are
@@ -3622,7 +3642,8 @@ of modern type (1904) Its general appearance is shown in figs. 69
 and 70, Plate V. The calibre is 4·7″; the charge 5·94 lb
 of smokeless powder and the muzzle velocity developed
 is 1700 f.s. Fixed ammunition is employed, and with an elevation
-of 15° the range is 7600 yds. The weight of the equipment limbered «SH»Guns.«/SH» up is given as 712/7 cwt.: it is known as a siege gun.
+of 15° the range is 7600 yds. The weight of the equipment limbered«SH»Guns.«/SH»
+up is given as 712/7 cwt.: it is known as a siege gun.
 
 In its general aspect the carriage resembles a field carriage, but of
 stronger type, with a special arrangement of cradle.
@@ -3676,7 +3697,8 @@ heavy shell with a comparatively low muzzle velocity, and changes
 in range are effected sometimes by alteration of charge
 as well as of elevation. On the continent of Europe
 howitzers are more popular than guns for heavy field batteries
-and light siege units. «SH»Howitzers.«/SH» 
+and light siege units.«SH»Howitzers.«/SH»
+
 «I»The French 15 cm«/I». («I»Rimailho«/I») «I»Howitzer«/I».—This piece is at the
 present time very popular in France, where, in 1907, some 120 batteries
 of the field army were said to be armed with it. It came into
@@ -3821,7 +3843,8 @@ made to correspond with the elevation.
 
 The mortar is a short piece of ordnance that is always fired from
 a bed. Changes in range are usually effected by varying 
-the charge. «SH»Mortars.«/SH» 
+the charge.«SH»Mortars.«/SH»
+
 «I»United States 3·6«/I» ″ «I»Mortar«/I».—This equipment is not modern; the
 piece was intended for vertical fire against troops in entrenchments;
 the mortar weighs 245 lb, and its bed, which is made in a single
@@ -3961,7 +3984,9 @@ at all events in England, with Colonel Sir A. Moncrieff, who, about
 1864, proposed to utilize the energy of recoil to bring a
 gun into a protected position and at the same time to
 store up sufficient energy to raise it to a firing position when
-loading was completed. To effect this a heavy counterweight «SH»Disappearing mountings.«/SH» was so adjusted that its tendency was to raise the
+loading was completed. To effect this a heavy counterweight
+«SH»Disappearing mountings.«/SH»
+was so adjusted that its tendency was to raise the
 gun; when the latter was fired, it raised the counterweight and a
 ratchet and pawl followed the action up: when the pawl was released
 the counterweight brought the gun back to the firing position;
@@ -4074,7 +4099,9 @@ armaments of various Powers for guns of type («I»a«/I»), the German
 practice being occasionally to mount two 11″ guns in the same cupola.
 The cast-iron cupola was introduced by Gruson of Magdeburg,
 but nickel steel is now generally employed by Krupp.
-In Gruson’s design the gun and mounting are placed «SH»Cupolas.«/SH» upon a turn-table upon which also rest the bases of a series of cast-iron
+In Gruson’s design the gun and mounting are placed
+«SH»Cupolas.«/SH»
+upon a turn-table upon which also rest the bases of a series of cast-iron
 plates; these are very massive, are curvilinear in section, and
 are built up into a shallow dome which completely covers the
 mountings as with a cap: the whole structure turns together, being
@@ -4122,7 +4149,7 @@ Mountings of the barbette type are much favoured in the British
 service for guns of types («I»a«/I») and («I»b«/I»); one of the most
 modern is shown in fig. 21, where a 9·2″ B.L. gun, Mark X.,
 is placed upon a Mark V. mounting, a combination which
-admits of over five aimed rounds in two minutes. «SH»Barbette mountings.«/SH» 
+admits of over five aimed rounds in two minutes.«SH»Barbette mountings.«/SH»
 
 {{IMG:djvu_vol20_page0258_ff8ed9a2.jpg}}
 

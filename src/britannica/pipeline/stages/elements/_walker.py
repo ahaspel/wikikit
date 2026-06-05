@@ -51,7 +51,7 @@ from britannica.pipeline.stages.elements._figure import (
     html_ts_figure_end,
 )
 from britannica.pipeline.stages.elements._tables import (
-    _TEMPLATE_STYLE_RE, _TEMPLATE_PARAM_STYLE_RE)
+    _TEMPLATE_STYLE_RE, _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE)
 
 # An image whose trailing caption run the figure rule may absorb: a bracket
 # `[[File:]]`/`[[Image:]]` or a `{{img float}}`/`{{figure}}`/`{{FI}}` template
@@ -443,7 +443,8 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|"  # labeled-equation templates
     r"|" + _TEMPLATE_STYLE_RE.pattern  # template-form style wrappers (registry-driven, auto-syncs)
-    + r"|" + _TEMPLATE_PARAM_STYLE_RE.pattern,  # param font-size stylers ({{Fs|N%|X}})
+    + r"|" + _TEMPLATE_PARAM_STYLE_RE.pattern  # param font-size stylers ({{Fs|N%|X}})
+    + r"|" + _SHOULDER_HEADING_RE.pattern,  # shoulder headings (EB9 margin note isn't covered by EB1911 above)
     re.IGNORECASE,
 )
 
@@ -723,7 +724,8 @@ def _walk_balanced_shapes(
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
                 or _TEMPLATE_STYLE_RE.match(text, opener_pos)
-                or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)):
+                or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)
+                or _SHOULDER_HEADING_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_STYLED, text[opener_pos:end])

@@ -826,6 +826,18 @@ _TEMPLATE_STYLE_RE = re.compile(
 # footer initials}}}}` holdover).  `_process_styled` reads arg-1 as the size.
 _TEMPLATE_PARAM_STYLE_RE = re.compile(
     r"\{\{\s*(fs|font\s+size|font-size)\s*\|", re.IGNORECASE)
+# Shoulder heading — `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` (+ the
+# `…HeadingSmall` and `{{EB9 Margin Note}}` synonyms): a marginal SECTION label
+# (`detect_sections` keys on the «SH» marker it produces).  Recognized at the
+# walker so its inner `{{Fs}}` recurses as the styler it is instead of being
+# pulled out and splitting the heading; producer emits «SH»…«/SH».  Replaces the
+# flat `_convert_shoulder_headings` (a never-read-flat reader that broke once
+# `{{Fs}}` became an element).
+# `heading\w*` matches every suffix the old prefix-match caught — bare `Heading`,
+# `HeadingSmall`, `HeadingFine`, … — so none fall through to the catch-all sweeper.
+_SHOULDER_HEADING_RE = re.compile(
+    r"\{\{\s*(?:EB1911\s+shoulder\s+heading\w*|EB9\s+margin\s+note)\s*\|",
+    re.IGNORECASE)
 
 
 def _parse_ts_codes(codes_str: str) -> list[str]:

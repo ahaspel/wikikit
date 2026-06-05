@@ -46,7 +46,8 @@ have of any heat
 engine. In the «I»Pneumatica«/I»
 of Hero of Alexandria («I»c.«/I»
 130 «SC»B.C.«/SC») there is described
-the aeolipile, which is a «SH»Hero, 130 B.C.«/SH» primitive steam reaction turbine,
+the aeolipile, which is a
+«SH»Hero, 130«BR»B.C.«/SH» primitive steam reaction turbine,
 consisting of a spherical
 vessel pivoted on a central
 axis and supplied with steam
@@ -66,7 +67,9 @@ expanding air is turned to account as a fountain.
 3. From the time of Hero to the 17th century there is no
 progress to record, though here and there we find evidence that
 appliances like those described by Hero were used
-for trivial purposes, such as organ-blowing and the «SH»Della Porta, 1601«/SH» turning of spits. The next distinct step was the
+for trivial purposes, such as organ-blowing and the
+«SH»Della Porta, 1601«/SH»
+turning of spits. The next distinct step was the
 publication in 1601 of a treatise on pneumatics by Giovanni
 Battista della Porta, in which he shows an apparatus similar
 to Herb’s fountain, but with steam instead of air as the displacing
@@ -93,7 +96,9 @@ Della Porta and De Caus.
 5. The next contributor is one whose place is not easily
 assigned. To Edward Somerset, second marquis of Worcester,
 appears to be due the credit of proposing, if not
-making, the first useful steam engine. Its object «SH»Marquis of Worcester, 1663.«/SH» was to raise water, and it worked probably like
+making, the first useful steam engine. Its object
+«SH»Marquis of Worcester, 1663.«/SH»
+was to raise water, and it worked probably like
 Della Porta’s model, but with a pair of displacement-chambers,
 from each of which alternately water was forced by steam from
 an independent boiler, or perhaps by applying heat to the
@@ -111,7 +116,9 @@ the hands of Thomas Savery,«FN:Savery was born probably in 1650 and died in 171
 Durning Lawrence’s presidential address to the Royal Institution
 of Cornwall («I»Journ. of the Roy. Inst, of Cornwall«/I», No. li.), republished with a reprint of Savery’s «I»Miner’s Friend«/I» of 1702, in which he discusses the originality of Savery’s invention and dismisses the claims put forward for Lord Worcester.«/FN» who, in 1698, obtained a patent for
 a water-raising engine, shown in fig. 2. Steam is
-admitted to one of the oval vessels A, displacing «SH»Savery, 1698.«/SH» water, which it drives up through the check-valve
+admitted to one of the oval vessels A, displacing
+«SH»Savery,«BR»1698.«/SH»
+water, which it drives up through the check-valve
 B. When the vessel A is emptied of water the supply of
 steam is stopped, and the steam already there is condensed
 by allowing a jet of cold water from a cistern above to stream
@@ -184,7 +191,9 @@ before known as applied to pumps) in a heat-engine had been
 suggested by Jean de Hautefeuille, who proposed
 and to use the explosion of gun-powder either to raise a
 piston or to force up water, or to produce, by the subsequent
-cooling of the gases, a partial vacuum into «SH»Cylinder and Piston Engine.«/SH» which water might be sucked up. Two years later Christian
+cooling of the gases, a partial vacuum into
+«SH»Cylinder«BR»and Piston Engine.«/SH»
+which water might be sucked up. Two years later Christian
 Huygens described an engine in which the explosion of gunpowder
 in a cylinder expelled part of the gaseous contents, after
 which the cooling of the remainder caused a piston to descend
@@ -196,7 +205,9 @@ the safety-valve as an adjunct to his “digester,” suggested that
 the condensation of steam should be employed to make a vacuum
 under a piston previously raised by the expansion
 of the steam. Papin’s was the earliest cylinder
-and piston steam engine, and his plan of using steam «SH»Papin.«/SH» was that which afterwards took practical shape in the atmospheric
+and piston steam engine, and his plan of using steam
+«SH»Papin.«/SH»
+was that which afterwards took practical shape in the atmospheric
 engine of Newcomen. But his scheme was made
 unworkable by the fact that he proposed to use but one vessel
 as both boiler and cylinder. A small quantity of water was
@@ -230,7 +241,9 @@ of a piston engine to Savery’s cruder type, a new inventor
 had appeared who made the piston engine a practical
 success by separating the boiler from the cylinder
 and by using (as Savery had done) artificial means
-to condense the steam. This was Thomas Newcomen, «SH»Newcomen’s Atmospheric Engine, 1705.«/SH» «HTMLTABLE:<table class="figtable" style="float:right;width:230px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 4.jpg|width=230}}</td></tr><tr><td>«SC»Fig«/SC». 4.—Newcomen’s Atmospheric Engine, 1705.</td></tr></table>«/HTMLTABLE»
+to condense the steam. This was Thomas Newcomen,
+«SH»Newcomen’s Atmospheric Engine, 1705.«/SH»
+«HTMLTABLE:<table class="figtable" style="float:right;width:230px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 4.jpg|width=230}}</td></tr><tr><td>«SC»Fig«/SC». 4.—Newcomen’s Atmospheric Engine, 1705.</td></tr></table>«/HTMLTABLE»
 who in 1705, with his assistant, John Cawley,
 gave the steam engine
 the form shown in fig. 4.
@@ -266,7 +279,9 @@ for pumping mines. It is doubtful whether the action was
 originally automatic, or depended on the periodical
 turning of taps by an attendant. The common story
 is that in 1713 a boy named Humphrey Potter,
-whose duty it was to open and shut the valves of an engine «SH»Self-acting Valve-gear.«/SH» he attended, made the engine self-acting by causing the beam
+whose duty it was to open and shut the valves of an engine
+«SH»Self-acting Valve-gear.«/SH»
+he attended, made the engine self-acting by causing the beam
 itself to open and close the valves by suitable cords
 and catches. This device was simplified in 1718 by Henry
 Beighton, who suspended from the beam a rod called the plug-tree,
@@ -297,7 +312,9 @@ while engaged by the university in repairing a model of Newcomen’s
 engine, was struck with the waste of steam
 to which the alternate chilling and heating of the
 cylinder gave rise. He saw that the remedy, in his
-own words, would lie in keeping the cylinder as hot as the steam «SH»Watt, 1763.«/SH» that entered it. With this view he added to the engine a new
+own words, would lie in keeping the cylinder as hot as the steam
+«SH»Watt,«BR»1763.«/SH»
+that entered it. With this view he added to the engine a new
 organ—an empty vessel separate from the cylinder, into which
 the steam should be allowed to escape from the cylinder, to be
 condensed there by the application of cold water either outside
@@ -402,7 +419,9 @@ is closed and steam has access to the upper side of the
 piston, this is done only to keep the cylinder and piston
 warm. The engine is still single-acting; the steam in
 the upper side merely plays the part which was played
-in Newcomen’s engine by the atmosphere; and it is «SH»Watt’s Pumping Engine, 1769.«/SH» the lower end of the cylinder alone that is ever put in communication
+in Newcomen’s engine by the atmosphere; and it is
+«SH»Watt’s Pumping Engine, 1769.«/SH»
+the lower end of the cylinder alone that is ever put in communication
 with the condenser. There are three valves: the “steam”
 valve 𝑎, the “equilibrium” valve 𝑏, and the “exhaust” valve
 𝑐. At the beginning of the down-stroke 𝑐 is opened to produce a
@@ -419,7 +438,9 @@ wheels and other methods of making the engine givePAGE:843continuous revolving
 flywheel. He had invented the crank and connecting-rod for
 this purpose, but it had meanwhile been patented
 by one Pickard, and Watt, rather than make terms
-with Pickard, whom he regarded as a plagiarist of «SH»Rotative Engine.«/SH» his own ideas, made use of his sun-and-planet motion until the
+with Pickard, whom he regarded as a plagiarist of
+«SH»Rotative Engine.«/SH»
+his own ideas, made use of his sun-and-planet motion until the
 patent on the crank expired. The reciprocating motion of earlier
 forms had served only for pumping; by this invention Watt
 opened up for the steam engine a thousand other channels of
@@ -435,7 +456,9 @@ first importance, both of which he had invented some years
 before. One was the use of double action, that is
 to say, the application of steam and vacuum to
 each side of the piston alternately. The other
-(invented as early as 1769) was the use of steam expansively, «SH»Other Inventions of Watt.«/SH» in other words the plan (now used in all engines that
+(invented as early as 1769) was the use of steam expansively,
+«SH»Other Inventions«BR»of Watt.«/SH»
+in other words the plan (now used in all engines that
 aim at economy of fuel) of stopping the admission of steam
 «HTMLTABLE:<table class="figtable" style="float:right;width:235px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 7.jpg|width=235}}</td></tr><tr><td>«SC»Fig«/SC». 7.—Watt’s Double-Acting«BR»Engine, 1782.</td></tr></table>«/HTMLTABLE»
 when the piston had
@@ -493,7 +516,9 @@ sentence describes a non-condensing engine, which would have
 required steam of a higher pressure. This, however,
 was a line of invention which Watt did not
 follow up, perhaps because so early as 1725 a
-non-condensing engine had been described by Jacob Leupold «SH»Non-condensing Engine.«/SH» in his «I»Theatrum machinarum«/I». Leupold’s proposed engine
+non-condensing engine had been described by Jacob Leupold
+«SH»Non-condensing Engine.«/SH»
+in his «I»Theatrum machinarum«/I». Leupold’s proposed engine
 «HTMLTABLE:<table class="figtable" style="float:right;width:215px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 8.jpg|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 8.—Leupold’s Non-Condensing Engine, 1725.</td></tr></table>«/HTMLTABLE»
 is shown in fig. 8, which
 makes its action sufficiently
@@ -524,7 +549,9 @@ time, relatively high-pressure engine was effected in England
 by Richard Trevithick and in America by Oliver
 Evans about 1800. Both Evans and Trevithick
 applied their engines to propel carriages on roads,
-and both used for boiler a cylindrical vessel with a cylindrical «SH»High-pressure Steam.«/SH» flue inside—the construction now known as the Cornish
+and both used for boiler a cylindrical vessel with a cylindrical
+«SH»High-pressure Steam.«/SH»
+flue inside—the construction now known as the Cornish
 boiler. In partnership with William Bull, Trevithick had
 previously made direct acting pumping-engines, with an inverted
 cylinder set over and in line with the pump-rod, thus dispensing
@@ -553,7 +580,9 @@ special mention. In 1781 Jonathan Carter Hornblower constructed
 and patented what would now be called
 a compound engine, with two cylinders of different
 sizes. Steam was first admitted into the smaller
-cylinder, and then passed over into the larger, doing work «SH»Compound Engine.«/SH» against a piston in each. In Hornblower’s engine the two
+cylinder, and then passed over into the larger, doing work
+«SH»Compound Engine.«/SH»
+against a piston in each. In Hornblower’s engine the two
 cylinders were placed side by side, and both pistons worked
 on the same end of a beam overhead. This Was an instance
 of the use of steam expansively, and as such was earlier
@@ -588,7 +617,9 @@ about 1814 as a pumping engine in the mines of Cornwall.
 But here it met a strong competitor in the high-pressure
 single-cylinder engine of Trevithick, which
 had the advantage of greater simplicity in construction.
-Woolf’s engine fell into comparative disuse, and the «SH»Cornish Engine.«/SH» single-cylinder type took a form which, under the name of
+Woolf’s engine fell into comparative disuse, and the
+«SH»Cornish Engine.«/SH»
+single-cylinder type took a form which, under the name of
 the Cornish pumping engine, was for many years famous for
 its great economy of fuel. In this engine the cylinder was set
 under one end of a beam, from the other end of which hung a
@@ -645,7 +676,9 @@ until about the middle of the 19th century, and then several
 agencies combined to effect it. In 1845 M‘Naught
 introduced a plan of improving beam engines of the
 original Watt type, by adding a high-pressure
-cylinder whose piston acted on the beam between the centre «SH»Compound Engine.«/SH» and the flywheel end. Steam of higher pressure than had formerly been used, after doing work in the new cylinder, passed into the old or low-pressure cylinder, where it was further expanded. Many engines whose power was proving insufficient for the extended machinery they had to drive were “M‘Naughted” in this way, and after conversion were found not only to yield more power but to show a marked economy of fuel. The compound form was selected by William Pole for
+cylinder whose piston acted on the beam between the centre
+«SH»Compound Engine.«/SH»
+and the flywheel end. Steam of higher pressure than had formerly been used, after doing work in the new cylinder, passed into the old or low-pressure cylinder, where it was further expanded. Many engines whose power was proving insufficient for the extended machinery they had to drive were “M‘Naughted” in this way, and after conversion were found not only to yield more power but to show a marked economy of fuel. The compound form was selected by William Pole for
 the pumping engines of Lambeth and other waterworks about
 1850; in 1854 John Elder began to use it in marine engines;
 in 1857 E. A. Cowper added a steam-jacketed intermediate
@@ -670,7 +703,9 @@ Trevithick, became a success in the hands of George Stephenson,
 whose engine, the “Rocket,” when tried along
 with others, in 1829, not only distanced its competitors
 but settled once and for all the question
-whether horse traction or steam traction was to be used «SH»Application to Locomotives.«/SH» on railways. The principal features of the “Rocket” were
+whether horse traction or steam traction was to be used
+«SH»Application to Locomotives.«/SH»
+on railways. The principal features of the “Rocket” were
 an improved steam-blast for urging "the combustion of
 coal and a boiler (suggested by Booth) in which a large
 heating surface was given by the use of many small tubes
@@ -690,7 +725,9 @@ Dundas,” built by William Symington, and tried in the Forth
 and Clyde Canal in 1802. A Watt double-acting
 condensing engine, placed horizontally, acted directly
 a connecting-rod on the crank of a shaft at the
-stern, which carried a revolving paddle-wheel. The trial «SH»Application to Steamboats.«/SH» was successful, but steam towing was abandoned for fear
+stern, which carried a revolving paddle-wheel. The trial
+«SH»Application to Steamboats.«/SH»
+was successful, but steam towing was abandoned for fear
 of injuring the banks of the canal. Ten years later Henry
 Bell built the “Comet,” with side paddle-wheels, which ran
 as a passenger steamer on the Clyde; but an earlier inventor
@@ -705,7 +742,9 @@ it gradually became practicable to use higher steam pressures
 and higher piston speeds, and consequently to
 obtain not only greater efficiency, but also a greater
 amount of power from engines of given bulk. In
-1872 Sir F. J. Bramwell, describing the typical «SH»Rise in Steam Pressure and in Piston Speed.«/SH» marine practice of that time, gave a list of engines,
+1872 Sir F. J. Bramwell, describing the typical
+«SH»Rise in Steam Pressure and in Piston Speed.«/SH»
+marine practice of that time, gave a list of engines,
 all compound, in which the boiler pressure ranged
 from 45 to 60 lb, the mean piston speed was 350 ft. per
 minute, and the consumption of coal 2 to 2½ lb per hour
@@ -719,7 +758,9 @@ in 1874, did not come into general use until after
 with pressures ranging, as a rule, from 150 to
 200 lb, piston speeds generally of 500 or 600 ft. per minute,
 but sometimes as high as 900 or 1000, and coal consumption
-of about 1½ lb per hour per indicated horse-power. In some «SH»Triple and Quadruple Expansion.«/SH» instances quadruple expansion has been preferred, with somewhat
+of about 1½ lb per hour per indicated horse-power. In some
+«SH»Triple and Quadruple Expansion.«/SH»
+instances quadruple expansion has been preferred, with somewhat
 higher pressures, but it can scarcely be said to be
 established that the advantage of adding a fourth stage clearly
 compensates for the extra complication. Some particulars of
@@ -743,7 +784,9 @@ marine engine practice, so far as fast vessels are concerned,
 and has supplied a formidable rival to the
 reciprocating engine for use on land. The steam
 turbine has been brought to a degree of efficiency
-which places it, in respect of economy in steam «SH»Introduction of the Steam Turbine.«/SH» than the best engines of the older type in cases where a
+which places it, in respect of economy in steam
+«SH»Introduction of the Steam Turbine.«/SH»
+than the best engines of the older type in cases where a
 large amount of power is to be generated. Its greater simplicity,
 compactness and freedom from vibration are merits which
 have already gone far to secure for it a preference, notwithstanding
@@ -887,7 +930,9 @@ Black’s doctrine of latent heat; but there was no philosophy
 of the relation of work to heat until long after the inventions
 of Watt were complete. The theory of the steam
 engine as a heat engine dates from 1824, when
-N. L. Sadi Carnot published his «I»Réflexions sur«/I» «SH»Theory of Steam Engine.«/SH» «I»la puissance motrice du feu«/I», and showed that heat does work
+N. L. Sadi Carnot published his «I»Réflexions sur«/I»
+«SH»Theory of Steam Engine.«/SH»
+«I»la puissance motrice du feu«/I», and showed that heat does work
 only by being let down from a higher to a lower temperature.
 But Carnot had no idea that any of the heat disappears
 in the process, and it was not until the doctrine of the conservation
