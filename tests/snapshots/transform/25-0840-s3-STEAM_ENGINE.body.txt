@@ -3965,7 +3965,7 @@ and so on. This is convenient for constructive reasons and gives a
 sufficiently good approximation to the ideal conditions as regards 
 the relation of steam volume to blade-passage-area and velocity. 
 
-«CTR»{{IMG:djvu_vol25_page0867_7607f412.jpg}} 
+«CTR»{{IMG:djvu_vol25_page0867_7607f412.jpg}}«BR»
 «SC»Fig«/SC». 60.—Parsons Turbine.«/CTR»PAGE:868119. «I»Balance of longitudinal Forces: Dummies«/I».—Since the pressure of the steam falls progressively from left to right there is a resultant longitudinal thrust on the drum forcing it to the right, which is balanced by means of “dummy” rings C′ C″ C‴. These correspond in diameter with the several portions of the bladed drum and are connected with them by steam passages which secure that each dummy shall have the same pressure forcing it to the left as tends on the corresponding part of the drum to force it to the right. No steam-tight fit is practicable at the dummies, but leakage of the steam past them is minimized by the device of furnishing the circumference of each dummy with a series of rings which revolve between a corresponding series of fixed rings projecting inwards from the case. The dummy rings do not touch but the clearance spaces are made as fine as possible and the whole forms a labyrinth which offers great resistance to the escape of steam. Substantially the same device is employed to guard against leakage in the glands DD where the shaft leaves the turbine case. There is a “thrust block” E at one end of the shaft which maintains the exact longitudinal position of the revolving part and allows the fine clearances between fixed and moving dummy rings to be adjusted. 
 
 120. Lubrication.—The main bearings LL are supplied with 

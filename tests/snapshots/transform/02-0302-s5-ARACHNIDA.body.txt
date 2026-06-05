@@ -7,7 +7,7 @@
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%;width:400px"><tr><td>{{IMG:1911 Britannica-Arachnida-Limulus polyphemus2.png|align=center|width=370}}</td></tr><tr><td>«SC»Fig. 2«/SC».—Ventral surface of the entosternum of «I»Limulus polyphemus«/I», Latr. Letters as in fig. 1 with the addition of NF, neural fossa protecting the aggregated ganglia of the central nervous system; PVP, left posterior ventral process; PMP, posterior median process. Natural size.«BR»
 
 «CTR»«FS[92%]»(From Lankester.)«/FS»«/CTR»</td></tr></table>«/HTMLTABLE»
- 
+«BR»
 «HTMLTABLE:<table class="figtable" style="float:right;font-size:92%;line-height:120%;width:320px"><tr><td>{{IMG:1911 Britannica-Arachnida-Palamnaeus indus.png|align=right|width=290}}</td></tr><tr><td style="padding-left:1em">«SC»Fig. 3«/SC».—Entosternum of scorpion («I»Palamnaeus indus«/I», de Geer); dorsal surface.</td></tr><tr><td style="padding-left:1em">«I»asp«/I», Paired anterior process of the sub-neural arch.«I»snp«/I», Sub-neural arch.«I»ap«/I», Anterior lateral process (same as RAP and LAP in fig. 1).«I»lmp«/I», Lateral median process (same as ALR and PLR of fig. 1).«I»pp«/I», Posterior process (same as PLP in fig. 1).«BR»«I»pf«/I», Posterior flap or diaphragm of Newport. «I»m¹«/I» and «I»m²«/I», Perforations of the diaphragm for the passage of muscles.«I»DR«/I», The paired dorsal ridges.«BR»«I»GC«/I», Gastric canal or foramen.«BR»«I»AC«/I», Arterial canal or foramen.«BR»
 
 «CTR»«FS[92%]»(After Lankester, «I»loc. cit.«/I»)«/FS»«/CTR»</td></tr></table>«/HTMLTABLE»
@@ -360,9 +360,9 @@ Family—Palaeophonidae, «I»Palaeophonus«/I» (figs. 48 and 49).
 
 Sub-order Dionychopoda.—The 3rd, 4th, 5th and 6th pairs of appendages slender, not evenly tapering, the segments longer than wide; the apical segment short, distally truncate, and provided with a pair of movable claws. Basal segments of the 5th and 6th pairs of appendages abutting against the sternum of the prosoma (see fig. 10 and figs. 51, 52 and 53).
 
-Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»). 
- ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»). 
- ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»). 
+Family—Pandinidae («I»Pandinus, Opisthophthalmus, Urodacus«/I»).«BR»
+ ”   Vejovidae («I»Vaejovis, Jurus, Euscorpius, Broteas«/I»).«BR»
+ ”   Bothriuridae («I»Bothriurus, Cercophonius«/I»).«BR»
  ”   Buthidae («I»Buthus, Centrurus«/I»).
 «HTMLTABLE:<table class="figtable" style="text-align:left"><tr><td style="text-align:left">”   *Cyclophthalmidae («I»Cyclophthalmus«/I»)<br /> ”   *Eoscorpiidae («I»Eoscorpius, Centromachus«/I»)</td><td style="text-align:right">«MATH:\left \{\begin{matrix}\mbox{ }\\\mbox{ }\end{matrix}\right .«/MATH»</td><td style="text-align:left">Carboniferous.</td></tr></table>«/HTMLTABLE»
 
@@ -523,7 +523,7 @@ Families—Hexisopodidae («I»Hexisopus«/I»). Solpugidae («I»Solpuga, Rhago
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:1911 Britannica-Arachnida-Galeodes4.png|width=360}}</td></tr><tr><td>«CTR»«SM»«SC»Fig. 69«/SC».—«I»Galeodes sp.«/I», one of the Solifugae.«/SM»«/CTR»</td></tr></table>«/HTMLTABLE»
 «HTMLTABLE:<table class="figtable" style="text-align:center"><tr><td>I to VI, The six prosomatic</td><td>«I»e«/I», Third plate of the prosoma-</td></tr><tr><td>limbs cut short.</td><td>carrying appendage VI.</td></tr><tr><td>«I»o«/I», The eyes.</td><td>The prae-genital somite is</td></tr><tr><td>«I»b, c«/I», Demarcated areae of the          </td><td>absent.</td></tr><tr><td>cephalic or first</td><td>1, First somite of the</td></tr><tr><td>prosomatic plate</td><td>opisthosoma.</td></tr><tr><td>corresponding respectively</td><td>2, Second do.</td></tr><tr><td>to appendages I, II, III,</td><td>S, Prosomatic tracheal</td></tr><tr><td>and to appendage IV (see</td><td>aperture between legs IV</td></tr><tr><td>fig. 68).</td><td>and V.</td></tr><tr><td>«I»d«/I», Second plate of the</td><td>S′ and S″, Opisthosomatic</td></tr><tr><td>prosoma-carrying</td><td>tracheal apertures.</td></tr><tr><td>appendage V.</td><td>10, Tenth opisthosomatic</td></tr><tr><td></td><td>somite.</td></tr><tr><td></td><td>«I»an«/I», Anus.</td></tr></table>«/HTMLTABLE»
 «CTR»«SM»(Original.)«/SM»«/CTR»
- 
+«BR»
 «HTMLTABLE:<table class="figtable" style="margin:0 auto 0 auto;width:860px"><tr><td style="padding-right:1em;vertical-align:top;width:50%">{{IMG:1911 Britannica-Arachnida-Garypus litoralis.png|align=center|width=220}}
 
 «BR»
