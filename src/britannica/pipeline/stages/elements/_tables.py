@@ -395,40 +395,9 @@ _CHEM_BRACKET_IMG_RE = re.compile(
     r"\[\[(?:File|Image):\s*[LR]angle[A-Za-z]*\.(?:svg|png)", re.IGNORECASE)
 
 
-def _has_chem_brackets(registry: ElementRegistry | None) -> bool:
-    """Recursively scan a registry tree for chemistry-bracket file refs
-    (``[[File:Langle*.svg]]`` / ``[[File:Rangle*.svg]]``).
-
-    A wiki table classifies as CHEMISTRY_LAYOUT when any of its
-    descendants is such a bracket \u2014 the EB1911 chemistry-reaction
-    diagrams use these images to typeset ``\u3008`` / ``\u3009`` valence
-    chevrons.  About 36 such tables corpus-wide, clustered in the
-    organic-chemistry runs (FULMINIC ACID, POLYMETHYLENES, PURIN,
-    INDAZOLES, \u2026).
-
-    Walks ``registry.elements`` for IMAGE-typed entries whose raw
-    bytes match the bracket regex, plus recurses into
-    ``inner_registries`` for nested tables.  This replaced an earlier
-    ``_is_chemistry_layout(raw)`` that regex-scanned the whole table's
-    raw bytes \u2014 that version could in principle false-match
-    Langle/Rangle text in prose; this one inspects only properly
-    extracted IMAGE elements."""
-    if registry is None:
-        return False
-    for placeholder, label in registry.labels.items():
-        if label in IMAGE_LABELS:
-            raw = registry.elements[placeholder][1]
-            if _CHEM_BRACKET_IMG_RE.search(raw):
-                return True
-        child_registry = registry.inner_registries.get(placeholder)
-        if child_registry is not None and _has_chem_brackets(child_registry):
-            return True
-    return False
-
-
 # A chemical-reaction table that typesets operators / brackets with
-# `<big>+</big>` / `<math>\Big[` instead of the Langle/Rangle SVG images
-# `_has_chem_brackets` keys on.  Signal: a `<big>` arithmetic operator AND a
+# `<big>+</big>` / `<math>\Big[` instead of the Langle/Rangle SVG bracket
+# images.  Signal: a `<big>` arithmetic operator AND a
 # chemical `<sub>` formula in the same table — e.g. ACCUMULATOR's discharge
 # (`«I»x«/I». PbO<sub>2</sub> … <big>+</big>`) and energy
 # (`PbO<sub>2</sub><big>+</big>2H<sub>2</sub>SO<sub>4</sub> ＝ …`) reactions, and
@@ -440,7 +409,7 @@ _CHEM_FORMULA_RE = re.compile(r"[A-Z][a-z]?<sub>\s*\d")
 
 def _has_chem_equation_content(raw: str) -> bool:
     """True for a chemical-reaction table that uses `<big>` operators + `<sub>`
-    formulae rather than Langle/Rangle bracket images (see `_has_chem_brackets`)."""
+    formulae rather than Langle/Rangle bracket images (`_CHEM_BRACKET_IMG_RE`)."""
     return bool(_CHEM_BIG_OP_RE.search(raw) and _CHEM_FORMULA_RE.search(raw))
 
 
@@ -448,7 +417,7 @@ def _has_chem_equation_content(raw: str) -> bool:
 # CONTENT -- real molecular formulae joined by a reaction operator -- rather
 # than by surface markup, so reactions typeset with plain =/+/-> operators and
 # {{sub}}/<sub>/unicode formulae are caught even when they carry none of the
-# Langle/Rangle SVG brackets (`_has_chem_brackets`) or <big>-operator + <sub>
+# Langle/Rangle SVG brackets (`_CHEM_BRACKET_IMG_RE`) or <big>-operator + <sub>
 # signals (`_has_chem_equation_content`).  This freezes the domain knowledge
 # (periodic table + formula grammar) those surface gates miss; without it such
 # reactions fall through to DATA_TABLE / SINGLE_COLUMN.  Validated corpus-wide:

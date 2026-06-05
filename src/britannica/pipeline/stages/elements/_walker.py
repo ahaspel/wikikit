@@ -685,21 +685,21 @@ def _walk_balanced_shapes(
         # print credits, indented keys, inline over-bar / limit-notation spans)
         # that body-text used to rewrite via `_p_ts`/`_div_ts`/`_span_ts`.
         #
-        # GATED ON `figures` (= article level only), exactly like the figure
-        # recognizers.  A styled wrapper is an ARTICLE-LEVEL structural concern;
-        # INSIDE another element (`_allow_figure=False`: table cell, CHEM/MATH
-        # layout, figure interior, or `_process_styled`'s own inner recursion) a
-        # styled `<span>`/`<div>` is INLINE content the enclosing producer reads
-        # raw — its `text_transform` carries it (`_carry_style_spans` /
-        # `_span_ts` / `_p_ts` / `_div_ts`).  Extracting it there would replace
-        # the raw span with a `\x03ELEM\x03` placeholder in the inner text the
-        # CHEM/MATH/figure predicates inspect, FLIPPING their classification
-        # (verified: ungated, it spilled CHEM/MATH/IMAGE tables to TABLE — e.g.
-        # PRIMULINE's `{| align=center` chem grid lost its `❯` glyph + leaked
-        # raw `<span style>`).  Step 4/5 (figure decomposer → process_elements)
-        # makes the inner-context safe; until then styling inside elements is
-        # the producer's job, styling at article level is the walker's.
-        if (matched is None and figures
+        # UNGATED — recognized at EVERY depth (a styled wrapper is recursive: a
+        # styled `<div>` nests inside another, a styled `<span>` sits in a table
+        # cell or a CHEM/MATH layout).  Style is orthogonal to structure, so the
+        # walker carries it uniformly and the producer recurses the content; no
+        # depth flag.  This was historically gated to `figures` (article level)
+        # because extracting a styled `<span>` inside a CHEM/MATH/figure element
+        # replaced it with a placeholder in the inner text those classifiers
+        # inspected, FLIPPING their classification (PRIMULINE's chem grid, the
+        # equation layouts).  The fix was at the root: those classifiers now read
+        # RAW, not the placeholderized inner (`_is_chemistry_layout_pred` /
+        # `_is_math_dominant_layout` count `<math>`/brackets from raw, STYLED is
+        # transparent to child-ratios) — so extraction can no longer perturb
+        # classification, and the gate is unnecessary.  Image-bearing styled
+        # wrappers are still claimed above by the figure recognizers.
+        if (matched is None
                 and _STYLED_WRAPPER_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:

@@ -103,7 +103,7 @@ from britannica.pipeline.stages.elements._layout import (
     _try_image_layout_subclass,
 )
 from britannica.pipeline.stages.elements._tables import (
-    _has_chem_brackets,
+    _CHEM_BRACKET_IMG_RE,
     _has_chem_equation_content,
     _has_chem_reaction_content,
     _is_single_column_table,
@@ -560,10 +560,18 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
     formula signal (ACCUMULATOR discharge/energy, acetone); or — the
     element-aware arm — operator-connected molecular formulae in a cell,
     which catches reactions typeset with plain =/+/-> and {{sub}} formulae
-    that otherwise fall through to DATA_TABLE / SINGLE_COLUMN."""
-    return (_has_chem_brackets(registry)
+    that otherwise fall through to DATA_TABLE / SINGLE_COLUMN.
+
+    Reads RAW (`_raw_inner`), never the placeholderized `inner`/`registry`:
+    classification must be invariant under extraction, so a styled `<span>`
+    wrapping a Langle/Rangle bracket image or a reaction formula can't blind it
+    (the flagless-recursion invariant — [[feedback_walker_on_raw_source]]).  The
+    `[[File:[LR]angle…]]` ref is unambiguous in raw, so the old registry walk
+    (chosen to avoid a prose false-match) is unnecessary."""
+    raw_inner = _raw_inner(raw)
+    return (bool(_CHEM_BRACKET_IMG_RE.search(raw_inner))
             or _has_chem_equation_content(raw)
-            or _has_chem_reaction_content(inner))
+            or _has_chem_reaction_content(raw_inner))
 
 
 _FIGURE_LABELS: frozenset[str] = frozenset({
