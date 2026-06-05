@@ -357,6 +357,7 @@ def _html_cells(body: str) -> list[Cell]:
 def produce_cell(
     attr_part: str, content: str, text_transform: TextTransform,
     recurse: NestedTableProducer | None = None,
+    cell_recurse: "Callable[[str], str] | None" = None,
 ) -> tuple[list[str], str]:
     """Produce one cell: extract its styles, run its content through
     body-text.  Returns `(styles, body)`.
@@ -385,6 +386,15 @@ def produce_cell(
     styles = _cell_styles(attr_part, content)
     if not content:
         return styles, ""
+    if cell_recurse is not None:
+        # THE collapse: the cell body recurses through the ONE dispatch
+        # (`process_elements`) — styled wrappers, fractions, nested tables, math
+        # all handled as the elements they are, instead of re-flattened by a
+        # second body-text pass.  Pre-extracted child placeholders ride through
+        # untouched (they aren't openers, and they aren't THIS recursion's own
+        # placeholders, so its `substitute_top_level_markers` leaves them for
+        # the outer assembler).
+        return styles, cell_recurse(content).strip(" \t")
     raw_spans: list[str] = []
     if recurse is not None and "{|" in content:
         content, raw_spans = _mask_nested_tables(content)
@@ -443,6 +453,7 @@ def produce_table_rows(
     cell_preclean: TextTransform | None = None,
     recurse: NestedTableProducer | None = None,
     cell_body: CellBody | None = None,
+    cell_recurse: "Callable[[str], str] | None" = None,
 ) -> tuple[str, list[ProducedRow], bool, bool]:
     """Decompose a table's inner source into produced rows — the single
     row/cell split + span/header detection loop every table producer
@@ -494,7 +505,8 @@ def produce_table_rows(
                 cleaned = (cell_preclean(cell_content) if cell_preclean
                            else cell_content)
                 styles, body = produce_cell(
-                    cell_attrs, cleaned, text_transform, recurse=recurse)
+                    cell_attrs, cleaned, text_transform, recurse=recurse,
+                    cell_recurse=cell_recurse)
             parsed.append((tag, rowspan, colspan, body, styles))
         if parsed:
             produced.append((row_attr, parsed))

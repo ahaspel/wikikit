@@ -433,7 +433,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # distinction the producer cares about, so there is one label and one
     # dispatch entry.
     "TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
         _process_chemistry_layout(raw, inner, tt, reg),
     # Single-label kinds — element_type == label.

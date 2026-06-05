@@ -1209,6 +1209,7 @@ def _process_table_unified(
     inner: str,
     text_transform,
     inner_registry: "ElementRegistry | None" = None,
+    context=None,
 ) -> str:
     """The ONE table producer: `table → row → cell → body-text`, emitting
     full-style ``«HTMLTABLE»`` for every grid label (DATA_TABLE / COMPLEX_HTML /
@@ -1238,9 +1239,21 @@ def _process_table_unified(
     flavor = "html" if raw.lstrip().startswith("<table") else "wiki"
     if flavor == "html":
         inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
+    # THE collapse: each cell's body recurses through `process_elements` (not a
+    # second body-text pass), so a styled wrapper / fraction / nested table /
+    # math in a cell is handled as the element it is.  `_allow_figure=False`: a
+    # bare `[[File:]]` in a cell is an inline image leaf, not a re-recognized
+    # figure.  Only when `context` is threaded (so far the article TABLE path);
+    # legacy callers without it keep the body-text cell path.
+    cell_recurse = None
+    if context is not None:
+        from britannica.pipeline.stages.elements import process_elements
+        cell_recurse = (lambda c: process_elements(
+            c, text_transform, context, _allow_figure=False))
     caption_raw, rows, _has_header, _has_span = produce_table_rows(
         inner, text_transform, flavor=flavor,
-        cell_preclean=_html_cell_clean if flavor == "html" else None)
+        cell_preclean=_html_cell_clean if flavor == "html" else None,
+        cell_recurse=cell_recurse)
     if not rows:
         return ""
     body = assemble_html_rows(rows, inner_registry)  # «HTMLTABLE:<table>…»
