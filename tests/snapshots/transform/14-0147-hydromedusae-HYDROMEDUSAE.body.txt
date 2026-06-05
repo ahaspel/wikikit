@@ -84,7 +84,7 @@ are printed in ordinary type, those founded on medusa-characters
 in italics. For definitions of the groups see below.
 
 «CTR»Sub-class Hydromedusae («I»Hydrozoa Craspedota«/I»).«/CTR»
-«OUTLINE:
+«CTR»«OUTLINE:
 1|Order I. Eleutheroblastea.
 1|Order II. Hydroidea («I»Leptolinae«/I»).
 2|Sub-order 1. Gymnoblastea («I»Anthomedusae«/I»).
@@ -99,7 +99,7 @@ in italics. For definitions of the groups see below.
 2|Sub-order 2. Calycophorida.
 2|Sub-order 3. Physophorida.
 2|Sub-order 4. Cystophorida.
-«/OUTLINE»
+«/OUTLINE»«/CTR»
 
 «CTR»«I»Organization and Morphology of the Hydromedusae.«/I»«/CTR»
 

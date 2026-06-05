@@ -1263,9 +1263,8 @@ attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
 the causes of imperfection cannot be removed.
 
-«HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|width=225}}
-
-«BR» «SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|align=inline|width=225}}«BR»
+«SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
 40. «I»Engine with Separate Organs«/I».—In the ideal engine represented
 in fig. 10 the functions of boiler, cylinder and condenser are combined
 in a single vessel; but, provided the working substance passes
@@ -1445,16 +1444,16 @@ when the conversion into steam has taken place. Reckoning from
 any standard temperature τ₀, in the heating of the feed-water up
 to any temperature τ, the entropy acquired is
 
-«MATH:\phi_w = \int_{\tau^0}^\tau \frac{\sigma d \tau}{\tau},«/MATH»
+«CTR»«MATH:\phi_w = \int_{\tau^0}^\tau \frac{\sigma d \tau}{\tau},«/MATH»«/CTR»
 
 and taking σ as sensibly constant,
 
-«MATH:\phi_w = \sigma (\log_\epsilon\tau - \log_\epsilon - \log_\epsilon\tau_0).«/MATH»
+«CTR»«MATH:\phi_w = \sigma (\log_\epsilon\tau - \log_\epsilon - \log_\epsilon\tau_0).«/MATH»«/CTR»
 
 During evaporation at τ₁ a quantity of heat L₁ is taken in at
 temperature τ₁, and hence the entropy of the steam
 
-«MATH:\phi_s = \phi_w + \text{L}_1/\tau_1 = \sigma(\log_\epsilon \tau_1 - \log_\epsilon \tau_0) + \text{L}_1/\tau_1.«/MATH»PAGE:850Values of the entropy of water and steam are given in the table. 
+«CTR»«MATH:\phi_s = \phi_w + \text{L}_1/\tau_1 = \sigma(\log_\epsilon \tau_1 - \log_\epsilon \tau_0) + \text{L}_1/\tau_1.«/MATH»«/CTR»PAGE:850Values of the entropy of water and steam are given in the table. 
 The entropy-temperature diagram for a Rankine cycle is illustrated 
 in fig. 11, where 𝑎𝑏, a 
 logarithmic curve, represents
@@ -1547,7 +1546,7 @@ the entropy may then be written as κ(log τ − log τ₁). This gives a
 line such as 𝑐𝑟 on the entropy diagram (fig. 13), and increases 
 the value of W by the amount 
 
-«MATH:\int_{\tau_1}^{\tau'} \frac{\kappa d\tau(\tau - \tau_2)}{\tau}«/MATH»
+«CTR»«MATH:\int_{\tau_1}^{\tau'} \frac{\kappa d\tau(\tau - \tau_2)}{\tau}«/MATH»«/CTR»
 
 which is represented on the diagram by the area 𝑑𝑐𝑟𝑠. During 
 adiabatic expansion from 𝑟 the steam remains superheated until 
@@ -1770,7 +1769,7 @@ horse-power-hour—a figure which, after allowance is made for the
 heat taken up during the process of superheating, represents a better
 performance than that of the best engines using saturated or slightly
 superheated steam. It has been found that the consumption of
-coal, in the boiler and superheater together, need not exceed 1⅓ lb
+coal, in the boiler and superheater together, need not exceed {{lb-|1⅓
 per indicated horse-power even with engines of small power. To
 attain this remarkable result it is of course necessary that, after the
 hot gases from the furnace have passed the superheater, a further
@@ -3508,7 +3507,7 @@ measures the heat drop, being equal to I₁−I₂.
 
 If the mode of expansion is such as to make 𝑝𝑣𝑛=constant, 𝑛 
 being any index, then 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>«MATH:\int_{p_1}^{p_2}vdp«/MATH»</td><td>=𝑛/𝑛−1«XXL»(«/XXL»𝑝₁𝑣₁ − 𝑝₂𝑣₂«XXL»)«/XXL»</td></tr><tr><td></td><td>=𝑛/𝑛−1«XXL»(«/XXL»1 − D𝑛−¹/𝑛«XXL»)«/XXL»𝑝₁𝑣₁,</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>«MATH:\int_{p_1}^{p_2}vdp«/MATH»</td><td>=𝑛/𝑛−1«XXL»(«/XXL»𝑝₁𝑣₁ − 𝑝₂𝑣₂«XXL»)«/XXL»</td></tr><tr><td></td><td>=𝑛/𝑛−1«XXL»(«/XXL»1 − D𝑛−1/𝑛«XXL»)«/XXL»𝑝₁𝑣₁,</td></tr></table>«/HTMLTABLE»
 
 where D is the ratio in which the pressure falls, namely 𝑝₂/𝑝₁. 
 
@@ -3580,15 +3579,15 @@ stream section, and hence to find at what point in the fall of pressure
 this discharge becomes a maximum—in other words, to determine 
 the pressure at the throat. Since 𝑝𝑣𝑛=𝑝₁𝑣₁𝑛 
 
-«CTR»𝑣=𝑣₁/D¹/𝑛 where D=𝑝/𝑝₁.«/CTR»
+«CTR»𝑣=𝑣₁/D<sup>1/𝑛</sup> where D=𝑝/𝑝₁.«/CTR»
 
 The discharge per square foot when the volume is 𝑣 is
 
-«CTR»Q=V/𝑣=VD¹/𝑛/𝑣₁=«XXL»√ {«/XXL»2𝑔𝑛/𝑛 − 1 · 𝑝₁/𝑣₁ «XXL»(«/XXL» D²/𝑛 − D𝑛⁺¹/𝑛«XXL») } «/XXL».«/CTR»
+«CTR»Q=V/𝑣=VD1/𝑛/𝑣₁=«XXL»√ {«/XXL»2𝑔𝑛/𝑛 − 1 · 𝑝₁/𝑣₁ «XXL»(«/XXL» D<sup>2/𝑛</sup> − D<sup>𝑛+1/𝑛</sup>«XXL») } «/XXL».«/CTR»
 
 Q will be a maximum when 𝑑Q/𝑑D is zero, which occurs when 
 
-«CTR»D=«XXL»(«/XXL»2/𝑛 + 1 «XXL»)«/XXL»𝑛/𝑛−¹.«/CTR»
+«CTR»D=«XXL»(«/XXL»2/𝑛 + 1 «XXL»)«/XXL»<sup>𝑛/𝑛−1</sup>.«/CTR»
 
 This result is general for any gas. With saturated steam, 𝑛 being 
 1·135, Q is a maximum when D=0·577, that is to say, the pressure 
@@ -3903,7 +3902,7 @@ one of impulse. No drop of pressure occurs while the steam is
 passing the moving blades, and its velocity relative to the blade 
 surface undergoes no change except such as is brought about by 
 friction.
-«HTMLTABLE:<table class="figtable" style="float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«SC»Fig.«/SC» 59.—Fixed and Moving Blades<br>of Parsons Turbine.«/CTR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/CTR»</td></tr></table>«/HTMLTABLE»
 In the Parsons turbine, on the other hand, there is a 
 «I»reaction«/I» effect. The steam
 acquires relative velocity 

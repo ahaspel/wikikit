@@ -285,7 +285,23 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     The `_p_ts` image-drop defect is fixed for free: an `<p {{Ts}}>[[Image]]…</p>`
     nested where figure-recognition is off now recurses its inner through
     `process_elements`, so the image is produced rather than dropped."""
-    from britannica.pipeline.stages.elements._tables import _cell_styles, style_block
+    from britannica.pipeline.stages.elements._tables import (
+        _cell_styles, style_block,
+        _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS)
+    # Template-form wrapper — `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / …
+    # The SAME producer as the HTML form: a `{{center|X}}` is handled identically
+    # whether X is text, an image, or a table (style ⊥ content).  Peel `{{name|`
+    # + the matching trailing `}}` (the walker already balanced the construct),
+    # recurse, wrap per the registry spec.
+    tm = _TEMPLATE_STYLE_RE.match(raw)
+    if tm:
+        spec = _TEMPLATE_STYLE_WRAPPERS[tm.group(1).lower()]
+        inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+        inner_raw = _styled_br_to_marker(inner_raw)
+        content = process_elements(
+            inner_raw, text_transform, context, _allow_figure=False).strip()
+        return style_block(content, css=spec.get("css", ""),
+                           ctr=spec.get("ctr", False), sc=spec.get("sc", False))
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
         return text_transform(raw)
@@ -303,6 +319,22 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     css = ";".join(_cell_styles(attrs, ""))
     marker_tag = "SPAN" if tag == "span" else "DIV"
     return style_block(content, css=css, tag=marker_tag)
+
+
+def _process_fraction(inner, text_transform):
+    """FRACTION producer: a `{{sfrac|n|d}}`-family styler (sfrac / mfrac / frac /
+    over / EB1911 tfrac / …) lifted as a bounded element so its slots RECURSE.
+    The `<math>` numerator/denominator are MATH children (the framework
+    substitutes their markers); text slots run through ``text_transform``; then
+    ``_render_fraction`` assembles num-over-den.  Replaces body-text's
+    ``_expand_fractions`` flatten, which leaked the `{{sfrac|` the moment a slot
+    held an extracted element or the template spanned a body-run `\\n\\n`."""
+    from britannica.pipeline.stages.transform_articles.body_text import (
+        _render_fraction)
+    bar = inner.find("|")                       # strip the `name` token
+    if bar < 0:
+        return text_transform(inner)
+    return _render_fraction(text_transform(inner[bar:]))
 
 
 # ── Producer dispatch ─────────────────────────────────────────────────
@@ -450,6 +482,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # in math's home for future math-specific rendering.
     "MATH_DUAL": lambda raw, inner, tt, ctx, reg:
         _process_math_dual_line(inner, tt),
+    # FRACTION — the `{{sfrac|n|d}}` family, a STYLER lifted as an element so
+    # its slots recurse (the dual-line model for a two-slot wrapper).
+    "FRACTION": lambda raw, inner, tt, ctx, reg:
+        _process_fraction(inner, tt),
     # MATH family — walker lifts labeled-display-equation templates
     # because they're declared as math by their template name and
     # have their own paragraph context.  One producer covers all

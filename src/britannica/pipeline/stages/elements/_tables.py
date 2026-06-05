@@ -789,6 +789,30 @@ def style_block(content: str, *, css: str = "", tag: str = "DIV",
     return styled_marker(tag, css, content)
 
 
+# Template-form BLOCK style wrappers: `{{name|content}}` carrying block layout
+# (centring / alignment / float).  ONE source-grounded set (audited from the raw
+# corpus, NOT decompose's partial 5-entry list) recognized by the walker as
+# SHAPE_STYLED and produced by `_process_styled` — so `{{center|X}}` is handled
+# identically whether X is text, an image, or a table (style ⊥ content).  INLINE
+# typography (`{{sc}}`/`{{sub}}`/`{{smaller}}`/`{{sans-serif}}`/…) stays in
+# body-text: it flows within prose, not a block to extract.
+_TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
+    "center":       {"ctr": True},
+    "c":            {"ctr": True},
+    "block center": {"ctr": True},
+    "center block": {"ctr": True},
+    "csc":          {"ctr": True, "sc": True},
+    "left":         {"css": "text-align:left"},
+    "right":        {"css": "text-align:right"},
+    "float right":  {"css": "float:right"},
+}
+# Longest names first so `block center` wins over `center`/`c`.
+_TEMPLATE_STYLE_RE = re.compile(
+    r"\{\{\s*(" + "|".join(re.escape(n) for n in sorted(
+        _TEMPLATE_STYLE_WRAPPERS, key=len, reverse=True)) + r")\s*\|",
+    re.IGNORECASE)
+
+
 def _parse_ts_codes(codes_str: str) -> list[str]:
     """Parse `{{Ts|code|code|...}}` arg-string into a list of CSS
     declarations like `['text-align:right', 'padding-left:0.5em']`.

@@ -75,6 +75,13 @@ from britannica.pipeline.stages.elements._walker import walk
 _HTML_TAG_NAME_RE = re.compile(r"^<\s*([A-Za-z][A-Za-z0-9]*)", re.IGNORECASE)
 _TEMPLATE_NAME_RE = re.compile(r"^\{\{\s*([^|{}<>\n\s]+)")
 _BRACKET_PREFIX_RE = re.compile(r"^\[\[\s*([A-Za-z]+)\s*:", re.IGNORECASE)
+# The fraction family — matched on the RAW opener (not the first token) so that
+# multi-word names like `EB1911 sfrac` route here rather than to the `eb1911`
+# CONTRIBUTOR_FOOTER case.  Mirrors the walker's `_FRACTION_RE`.
+_FRAC_LABEL_RE = re.compile(
+    r"\{\{\s*(?:sfrac\s+nobar|EB1911\s+sfrac|EB1911\s+tfrac"
+    r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
+    r"|sfracN|sfrac|mfrac|frac|over)\s*\|", re.IGNORECASE)
 
 
 _HTML_TAG_LABEL: dict[str, str] = {
@@ -132,6 +139,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         raise ValueError(
             f"DOUBLE_BRACE raw doesn't open with a template: {raw[:40]!r}")
     name = m.group(1).lower()
+    # Fraction family (sfrac/mfrac/frac/over/EB1911 tfrac/…) — a styler lifted
+    # as an element; the FRACTION producer recurses its slots.  Matched on the
+    # raw opener (so `{{EB1911 sfrac|…}}` routes here, not to the `eb1911`
+    # CONTRIBUTOR_FOOTER case below).
+    if _FRAC_LABEL_RE.match(raw):
+        return "FRACTION"
     # The IMAGE_FLOAT walker regex matches `{{(?:img float|figure|FI)\|…}}`.
     # `img float` tokenizes here as "img" (whitespace stop in the
     # template-name pattern).  Figure-equivalent templates with a

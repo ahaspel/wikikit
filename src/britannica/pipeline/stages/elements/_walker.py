@@ -50,6 +50,7 @@ from britannica.pipeline.stages.elements._figure import (
     html_float_figure_end,
     html_ts_figure_end,
 )
+from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_RE
 
 # An image whose trailing caption run the figure rule may absorb: a bracket
 # `[[File:]]`/`[[Image:]]` or a `{{img float}}`/`{{figure}}`/`{{FI}}` template
@@ -176,6 +177,21 @@ _DUAL_LINE_RE = re.compile(
     r"\}\}",
     re.DOTALL | re.IGNORECASE,
 )
+# The fraction family — `{{sfrac|n|d}}` / `{{mfrac|i|n|d}}` / `{{frac}}` /
+# `{{over}}` / `{{EB1911 tfrac}}` / … — is a STYLER, not body-text typography:
+# it imposes a numerator-over-denominator presentation on content that may
+# itself be structure (`<math>` numerators, nested fractions).  Lifted as a
+# bounded DOUBLE_BRACE unit (like `dual line`) so its slots RECURSE through the
+# one dispatch instead of being flattened by a body-text regex that breaks the
+# moment a slot holds an extracted element or spans a `\n\n`.  Only the OPENER is
+# a regex; the span is closed by `_construct_end` (the one balanced matcher) so a
+# `<math>\frac{a}{b}</math>` numerator — single LaTeX braces inside an OPAQUE
+# `<math>` — is skipped whole, not mis-counted by a naive brace scan.  Names
+# longest-first so `sfrac nobar` wins over `sfrac`.
+_FRACTION_OPENER_RE = re.compile(
+    r"\{\{\s*(?:sfrac\s+nobar|EB1911\s+sfrac|EB1911\s+tfrac"
+    r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
+    r"|sfracN|sfrac|mfrac|frac|over)\s*\|", re.IGNORECASE)
 # `{{ppoem|…}}` — Wikisource preformatted-poem template (verse analog of
 # `<poem>`).  Multiline verse with shallow inline templates (`{{fqm|"}}` quote
 # marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); same 3-level nesting
@@ -423,6 +439,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
     re.IGNORECASE,
 )
@@ -700,11 +717,21 @@ def _walk_balanced_shapes(
         # table is just a TABLE) — so extraction can no longer perturb
         # classification, and the gate is unnecessary.  Image-bearing styled
         # wrappers are still claimed above by the figure recognizers.
-        if (matched is None
-                and _STYLED_WRAPPER_RE.match(text, opener_pos)):
+        if matched is None and (
+                _STYLED_WRAPPER_RE.match(text, opener_pos)
+                or _TEMPLATE_STYLE_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_STYLED, text[opener_pos:end])
+
+        # Fraction family (`{{sfrac|…}}` …) — opener matched by regex, span
+        # closed by the one balanced matcher so an OPAQUE `<math>` numerator
+        # (single LaTeX braces) is skipped whole.  → DOUBLE_BRACE, classified
+        # FRACTION, slots recurse in the producer.
+        if matched is None and _FRACTION_OPENER_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:

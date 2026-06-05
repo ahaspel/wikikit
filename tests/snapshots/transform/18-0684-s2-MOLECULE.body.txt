@@ -101,22 +101,22 @@ they said, do not fill up the universe; there are void spaces between
 them. If it were not so, Lucretius tells us, there could be no motion,
 for the atom which gives way first must have some empty place to
 move into.
-{{VERSE:‘Quapropter locus est intactus, inane, vacansque
+«CTR»{{VERSE:‘Quapropter locus est intactus, inane, vacansque
 Quod si non esset, nulla ratione moveri
 Res possent; namque, officium quod corporis exstat,
 Officere atque obstare, id in omni tempore adesset
 Omnibus: haud igitur quicquam procedere posset,
 Principium quoniam cedendi nulla daret res.’
- «I»De rerum natura«/I», i. 335.}VERSE}
+ «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»
 
 “The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
-{{VERSE:‘Cedere squamigeris latices nitentibus aiunt
+«CTR»{{VERSE:‘Cedere squamigeris latices nitentibus aiunt
 Et liquidas aperire vias, quia post loca pisces
 Linquant, quo possint cedentes confluere undae.’
- Ibid. i. 373.}VERSE}
+ Ibid. i. 373.}VERSE}«/CTR»
 
 “In modern times Descartes held that, as it is of the essence of
 matter to be extended in length, breadth and thickness, so it is of
@@ -588,9 +588,9 @@ each moving solely under its own internal forces, and therefore in
 accordance with equations (1). Let us confine our attention to thosePAGE:688systems for which the initial values of «I»p«/I»₁, «I»q«/I»₁... «I»pn«/I», «I»qn«/I» lie within
 a range such that
 
-«CTR»«I»p«/I»₁ is between «I»p«/I»₁ and «I»p«/I»₁ +«I»dp«/I»₁ «/CTR»
+«CTR»«I»p«/I»₁ is between «I»p«/I»₁ and «I»p«/I»₁ +«I»dp«/I»₁ 
 
-«CTR»«I»q«/I»₁ is between «I»q«/I»₁ and «I»q«/I»₁ +«I»dq«/I»₁ and so on.«/CTR»
+«I»q«/I»₁ is between «I»q«/I»₁ and «I»q«/I»₁ +«I»dq«/I»₁ and so on.«/CTR»
 
 Let the product «I»dp«/I»₁ «I»dq«/I»₁... «I»dpn«/I», «I»dqn«/I» be spoken of as the “extension”
 of this range of values.
@@ -680,7 +680,7 @@ within ranges such that
 the «I»s«/I» molecules of the first kind according to the law of trial and error;
 and similarly of course for the molecules of other kinds:
 
-{{rh|(ii)|{{sfrac|font-size=100%|«MATH:\sum_s«/MATH»½ «I»mu«/I»²|«I»s«/I»}}= {{sfrac|font-size=100%|«MATH:\sum_s«/MATH»½ «I»mv«/I»²|«I»s«/I»}}={{sfrac|font-size=100%|«MATH:\sum_s«/MATH»½ «I»mw«/I»²|«I»s«/I»}}={{sfrac|font-size=100%|«MATH:\sum_s«/MATH»½ α₁θ₁²|«I»s«/I»}}=...| }}
+{{rh|(ii)|«MATH:\sum_s«/MATH»½ «I»mu«/I»²/«I»s«/I»= «MATH:\sum_s«/MATH»½ «I»mv«/I»²/«I»s«/I»=«MATH:\sum_s«/MATH»½ «I»mw«/I»²/«I»s«/I»=«MATH:\sum_s«/MATH»½ α₁θ₁²/«I»s«/I»=...| 
 
 
 «EQN:3»=«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′²/«I»s«/I»′=«MATH:\sum_s«/MATH»½ β₁φ₁²/«I»s«/I»′=... «/EQN»
@@ -853,12 +853,12 @@ kinds of molecules in the gas. On combining the two parts of the
 pressure which have been calculated, the aggregate impulsive
 pressure on «I»d«/I»S in time «I»dt«/I» is found to be
 
-«MATH[fs=80]:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»
+«CTR»«MATH[fs=80]:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»
 
 where Σ denotes summation over all kinds of molecules. This is
 equivalent to a steady pressure «I»p«/I»₁ per unit area where
 
-«MATH[popout]:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»
+«CTR»«MATH[popout]:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»
 
 Clearly the integral is the sum of the values of «I»mu«/I»² for all the
 molecules of the first kind in unit volume, thus
@@ -994,7 +994,7 @@ formula (2) be given by «SH»Calorimetry.«/SH»
 
 
 
-«CTR»=N(«I»n«/I»+3)/4«I»h«/I» by equation (7) «/CTR»
+«CTR»=N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»
 
 
 
