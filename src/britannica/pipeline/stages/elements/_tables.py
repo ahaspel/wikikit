@@ -805,12 +805,27 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "left":         {"css": "text-align:left"},
     "right":        {"css": "text-align:right"},
     "float right":  {"css": "float:right"},
+    # Fine-print family — a BLOCK of reduced-size type (EB1911's register for
+    # notes / derivations / citations; the scans render it smaller).  We CARRY
+    # the size (`«DIV[style:font-size:83%]»`) — the value the TS `smaller`/`sm`/
+    # `Fine` codes already resolve to — instead of body-text's old
+    # `_unwrap_layout_templates`, which dropped the styling to bare content.
+    "fine block":        {"css": "font-size:83%"},
+    "eb1911 fine print": {"css": "font-size:83%"},
+    "smaller block":     {"css": "font-size:83%"},
 }
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(
     r"\{\{\s*(" + "|".join(re.escape(n) for n in sorted(
         _TEMPLATE_STYLE_WRAPPERS, key=len, reverse=True)) + r")\s*\|",
     re.IGNORECASE)
+# Param-bearing style wrappers — `{{Fs|108%|X}}` / `{{font size|N%|X}}` — same
+# styler family, but the CSS value is the FIRST arg, not a fixed string.  Folded
+# in so an element nested inside one (a contributor footer, math) recurses
+# instead of being pulled out mid-template and splitting it (the `{{Fs|…{{EB1911
+# footer initials}}}}` holdover).  `_process_styled` reads arg-1 as the size.
+_TEMPLATE_PARAM_STYLE_RE = re.compile(
+    r"\{\{\s*(fs|font\s+size|font-size)\s*\|", re.IGNORECASE)
 
 
 def _parse_ts_codes(codes_str: str) -> list[str]:

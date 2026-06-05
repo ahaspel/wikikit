@@ -50,7 +50,8 @@ from britannica.pipeline.stages.elements._figure import (
     html_float_figure_end,
     html_ts_figure_end,
 )
-from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_RE
+from britannica.pipeline.stages.elements._tables import (
+    _TEMPLATE_STYLE_RE, _TEMPLATE_PARAM_STYLE_RE)
 
 # An image whose trailing caption run the figure rule may absorb: a bracket
 # `[[File:]]`/`[[Image:]]` or a `{{img float}}`/`{{figure}}`/`{{FI}}` template
@@ -440,7 +441,9 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
-    r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",  # labeled-equation templates
+    r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|"  # labeled-equation templates
+    r"|" + _TEMPLATE_STYLE_RE.pattern  # template-form style wrappers (registry-driven, auto-syncs)
+    + r"|" + _TEMPLATE_PARAM_STYLE_RE.pattern,  # param font-size stylers ({{Fs|N%|X}})
     re.IGNORECASE,
 )
 
@@ -719,7 +722,8 @@ def _walk_balanced_shapes(
         # wrappers are still claimed above by the figure recognizers.
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
-                or _TEMPLATE_STYLE_RE.match(text, opener_pos)):
+                or _TEMPLATE_STYLE_RE.match(text, opener_pos)
+                or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_STYLED, text[opener_pos:end])

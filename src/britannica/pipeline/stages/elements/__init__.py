@@ -287,7 +287,23 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     `process_elements`, so the image is produced rather than dropped."""
     from britannica.pipeline.stages.elements._tables import (
         _cell_styles, style_block,
-        _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS)
+        _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, _TEMPLATE_PARAM_STYLE_RE)
+    # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same
+    # styler family, but the size is arg-1.  Split value | content on the first
+    # pipe (content keeps its own pipes), recurse the content, carry as an INLINE
+    # `«SPAN[style:font-size:…]»` (font-size is inline).  A bare integer arg is a
+    # percent.
+    pm = _TEMPLATE_PARAM_STYLE_RE.match(raw)
+    if pm:
+        rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
+        bar = rest.find("|")
+        value = (rest[:bar] if bar >= 0 else "").strip()
+        inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
+        content = process_elements(
+            inner_raw, text_transform, context, _allow_figure=False).strip()
+        size = value + "%" if value.isdigit() else value
+        return style_block(content, css=f"font-size:{size}" if size else "",
+                           tag="SPAN")
     # Template-form wrapper — `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / …
     # The SAME producer as the HTML form: a `{{center|X}}` is handled identically
     # whether X is text, an image, or a table (style ⊥ content).  Peel `{{name|`

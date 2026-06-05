@@ -333,7 +333,7 @@ words, which, apart from their immense historical interest,
 deserve careful study as a statement of principles which to this
 day guide the scientific development of the steam engine:—
 
-“My method of lessening the consumption of steam, and consequently
+«DIV[style:font-size:83%]»“My method of lessening the consumption of steam, and consequently
 fuel, in fire-engines, consists of the following principles:—
 
 “«I»First«/I», That vessel in which the powers of steam are to be employed
@@ -375,7 +375,7 @@ expansion and contraction of the steam.
 “«I»Lastly«/I», Instead of using water to render the pistons and other
 parts of the engine air and steam tight, I employ oils, wax, resinous
 bodies, fat of animals, quicksilver and other metals in their fluid
-state.”
+state.”«/DIV»
 
 The fifth claim was for a rotary engine, and need not be quoted
 here.
@@ -396,7 +396,7 @@ invention was written by Watt as a note to the article “Steam
 Engine” in Robison’s «I»System of Mechanical Philosophy«/I» (1822).
 See Ewing, «I»The Steam Engine and other Heat Engines«/I», pp. 15–19.«/FN»
 
-12. Fig. 6 is an example of the Watt pumping engine of this
+«DIV[style:font-size:83%]»12. Fig. 6 is an example of the Watt pumping engine of this
 period. It should be noticed that, although the top of the cylinder
 is closed and steam has access to the upper side of the
 piston, this is done only to keep the cylinder and piston
@@ -412,7 +412,7 @@ This puts the two sides in equilibrium and allows the piston to
 be pulled up by the pump-rod «I»P«/I», which is heavy enough to serve
 as a counterpoise. «I»C«/I» is the condenser, and «I»A«/I» the air-pump, which
 discharges into the hot well «I»H«/I», whence the supply of the feed-pump
-«I»F«/I» is drawn.
+«I»F«/I» is drawn.«/DIV»
 
 13. In a second patent (1781) Watt describes the “sun-and-planet”
 wheels and other methods of making the engine givePAGE:843continuous revolving motion to a shaft provided with a
@@ -1153,7 +1153,7 @@ absolute temperature τ. Then, if it expand adiabatically until its
 temperature falls to τ, its dryness after expansion may be shown
 to be
 
-«CTR»𝑞=τ/L «FS[184%]»(«/FS»𝑞₁L₁/τ₁ + logετ₁/τ«FS[184%]»)«/FS».«/CTR»
+«CTR»𝑞=τ/L «SPAN[style:font-size:184%]»(«/SPAN»𝑞₁L₁/τ₁ + logετ₁/τ«SPAN[style:font-size:184%]»)«/SPAN».«/CTR»
 
 L₁, and L are the latent heats (in thermal units) of 1 lb of steam
 before and after expansion respectively. When the steam is dry to
@@ -3902,7 +3902,7 @@ one of impulse. No drop of pressure occurs while the steam is
 passing the moving blades, and its velocity relative to the blade 
 surface undergoes no change except such as is brought about by 
 friction.
-«HTMLTABLE:<table class="figtable" style="float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/CTR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«DIV[style:font-size:83%]»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/DIV»«/CTR»</td></tr></table>«/HTMLTABLE»
 In the Parsons turbine, on the other hand, there is a 
 «I»reaction«/I» effect. The steam
 acquires relative velocity 
@@ -3965,7 +3965,7 @@ sufficiently good approximation to the ideal conditions as regards
 the relation of steam volume to blade-passage-area and velocity. 
 
 «CTR»{{IMG:djvu_vol25_page0867_7607f412.jpg}}«BR»
-«SC»Fig«/SC». 60.—Parsons Turbine.«/CTR»PAGE:868119. «I»Balance of longitudinal Forces: Dummies«/I».—Since the pressure of the steam falls progressively from left to right there is a resultant longitudinal thrust on the drum forcing it to the right, which is balanced by means of “dummy” rings C′ C″ C‴. These correspond in diameter with the several portions of the bladed drum and are connected with them by steam passages which secure that each dummy shall have the same pressure forcing it to the left as tends on the corresponding part of the drum to force it to the right. No steam-tight fit is practicable at the dummies, but leakage of the steam past them is minimized by the device of furnishing the circumference of each dummy with a series of rings which revolve between a corresponding series of fixed rings projecting inwards from the case. The dummy rings do not touch but the clearance spaces are made as fine as possible and the whole forms a labyrinth which offers great resistance to the escape of steam. Substantially the same device is employed to guard against leakage in the glands DD where the shaft leaves the turbine case. There is a “thrust block” E at one end of the shaft which maintains the exact longitudinal position of the revolving part and allows the fine clearances between fixed and moving dummy rings to be adjusted. 
+«DIV[style:font-size:83%]»«SC»Fig«/SC». 60.—Parsons Turbine.«/DIV»«/CTR»PAGE:868119. «I»Balance of longitudinal Forces: Dummies«/I».—Since the pressure of the steam falls progressively from left to right there is a resultant longitudinal thrust on the drum forcing it to the right, which is balanced by means of “dummy” rings C′ C″ C‴. These correspond in diameter with the several portions of the bladed drum and are connected with them by steam passages which secure that each dummy shall have the same pressure forcing it to the left as tends on the corresponding part of the drum to force it to the right. No steam-tight fit is practicable at the dummies, but leakage of the steam past them is minimized by the device of furnishing the circumference of each dummy with a series of rings which revolve between a corresponding series of fixed rings projecting inwards from the case. The dummy rings do not touch but the clearance spaces are made as fine as possible and the whole forms a labyrinth which offers great resistance to the escape of steam. Substantially the same device is employed to guard against leakage in the glands DD where the shaft leaves the turbine case. There is a “thrust block” E at one end of the shaft which maintains the exact longitudinal position of the revolving part and allows the fine clearances between fixed and moving dummy rings to be adjusted. 
 
 120. Lubrication.—The main bearings LL are supplied with 
 oil under pressure kept in circulation by a rotary pump F which 

@@ -601,13 +601,13 @@ in «I»q«/I»₁, «I»p«/I»₂, «I»q«/I»₂... «I»qn«/I». Thus afte
 and momenta of the small group of systems under consideration
 will lie within a range such that
 
-«CTR»«I»p«/I»₁ is between «I»p«/I»₁ + «I»ṗ«/I»₁«I»dt«/I» and «I»p«/I»₁+«I»dp«/I»₁ +«FS[200%]»(«/FS»«I»ṗ«/I»₁+∂«I»ṗ«/I»₁/∂«I»p«/I»₁«I»dp«/I»₁«FS[200%]»)«/FS»«I»dt«/I»«/CTR»
+«CTR»«I»p«/I»₁ is between «I»p«/I»₁ + «I»ṗ«/I»₁«I»dt«/I» and «I»p«/I»₁+«I»dp«/I»₁ +«SPAN[style:font-size:200%]»(«/SPAN»«I»ṗ«/I»₁+∂«I»ṗ«/I»₁/∂«I»p«/I»₁«I»dp«/I»₁«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»
 
-«CTR»«I»q«/I»₁ is between «I»q«/I»₁ + «I»q̇«/I»₁«I»dt«/I» and «I»q«/I»₁+«I»dq«/I»₁ +«FS[200%]»(«/FS»«I»q̇«/I»₁+∂«I»q̇«/I»₁/∂«I»q«/I»₁«I»dq«/I»₁«FS[200%]»)«/FS»«I»dt«/I»«/CTR»
+«CTR»«I»q«/I»₁ is between «I»q«/I»₁ + «I»q̇«/I»₁«I»dt«/I» and «I»q«/I»₁+«I»dq«/I»₁ +«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»₁+∂«I»q̇«/I»₁/∂«I»q«/I»₁«I»dq«/I»₁«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»
 
 and so on. Thus the extension of the range after the interval «I»dt«/I» is
 
-«CTR»«I»dp«/I»₁ «FS[200%]»(«/FS»1+∂«I»ṗ«/I»₁/∂«I»p«/I»₁«I»dt«/I»«FS[200%]»)«/FS»«I»dq«/I»₁«FS[200%]»(«/FS»«I»q̇«/I»₁+∂«I»q̇«/I»₁/∂«I»q«/I»₁«I»dt«/I»«FS[200%]»)«/FS»...«/CTR»
+«CTR»«I»dp«/I»₁ «SPAN[style:font-size:200%]»(«/SPAN»1+∂«I»ṗ«/I»₁/∂«I»p«/I»₁«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN»«I»dq«/I»₁«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»₁+∂«I»q̇«/I»₁/∂«I»q«/I»₁«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN»...«/CTR»
 
 or, expanding as far as first powers of «I»dt«/I»,
 
