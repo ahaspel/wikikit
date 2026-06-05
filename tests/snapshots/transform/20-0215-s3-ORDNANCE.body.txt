@@ -2524,8 +2524,7 @@ of the external diameter of the tube over the internal diameter of
 the hoop, when separate and both are in the cold state. ThenPAGE:244ii. 𝑛S𝑛₊₁ denotes the shrinkage between the 𝑛𝑡ℎ and (𝑛 + 1)𝑡ℎ
 hoops.
 
-𝑛S𝑛₊₁ =2𝑟𝑛/M{ (𝑡𝑛 − 𝑡′𝑛)} (8)
-=2𝑟𝑛/M «XL»[«/XL»  (𝑡𝑛 − 𝑡𝑛−₁) + 𝑟𝑛² − 𝑟𝑛²−₁/𝑟𝑛² + 𝑟𝑛²−₁ {(𝑡𝑛−1) + (𝑝𝑛)} «XL»]«/XL» (9).
+«HTMLTABLE:<table class="figtable"><tr><td style="text-align:right">𝑛S𝑛₊₁</td><td>=2𝑟𝑛/M{ (𝑡𝑛 − 𝑡′𝑛)}</td><td style="text-align:right">(8)</td></tr><tr><td>=2𝑟𝑛/M «XL»[«/XL»  (𝑡𝑛 − 𝑡𝑛−₁) + 𝑟𝑛² − 𝑟𝑛²−₁/𝑟𝑛² + 𝑟𝑛²−₁ {(𝑡𝑛−1) + (𝑝𝑛)} «XL»]«/XL»</td><td style="text-align:right">(9).</td></tr></table>«/HTMLTABLE»
 Here M can be taken as 12,500 tons per square inch for
 gun steel. In the example already calculated the shrinkage
 between the jacket and barrel is 0·009 in.

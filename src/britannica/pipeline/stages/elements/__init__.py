@@ -52,15 +52,6 @@ from britannica.pipeline.stages.elements._registry import (
     TABLE_LABELS,
     _PH,
 )
-from britannica.pipeline.stages.elements._math_layout import (
-    _MATH_CELL_RE,
-    _is_math_dominant_layout,
-    _math_cell_to_latex,
-    _math_table_kind,
-    _parse_math_layout_cells,
-    _process_equation_layout,
-    _process_math_layout_table,
-)
 from britannica.pipeline.stages.elements._outline import (
     _OUTLINE_RANGE_HEADER_RE,
     _PAGE_MARKER_PREFIX_RE,
@@ -331,10 +322,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # `_span_ts` and the styled-`<div>`→figure gate.
     "STYLED": _process_styled,
     # Wikitable sub-kinds.
-    "MATH_LAYOUT_TOKENS": lambda raw, inner, tt, ctx, reg:
-        _process_math_layout_table(raw),
-    "MATH_LAYOUT_EQUATIONS": lambda raw, inner, tt, ctx, reg:
-        _process_equation_layout(inner, tt),
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
         _faithful_figure(raw),
     # UNPAIRED_FIGURE_GROUP — ≥2 images in a wikitable / `<table>` grid
@@ -1033,30 +1020,6 @@ def _is_inline_glyph_wrapper(raw: str, inner: str,
     return not _INLINE_GLYPH_ROW_RE.search(inner)
 
 
-def _is_math_dominant_pred(raw: str, inner: str,
-                            registry: ElementRegistry | None) -> bool:
-    """≥75% of children are MATH placeholders, no disqualifying child
-    types, no header (`!`) row, no data-table class, ≤1 substantive
-    prose cell.  Math-dominant tables emit MATH placeholders in cells
-    and the equation-layout producer handles them."""
-    return _is_math_dominant_layout(raw, inner, registry)
-
-
-def _is_math_layout_tokens_pred(raw: str, inner: str,
-                                 registry: ElementRegistry | None) -> bool:
-    """Cells hold raw math tokens (not `<math>` blocks).  KaTeX
-    `\\begin{aligned}` / `\\begin{vmatrix}` producer applies."""
-    return _math_table_kind(raw, inner, registry) == "tokens"
-
-
-def _is_math_layout_equations_pred(raw: str, inner: str,
-                                    registry: ElementRegistry | None) -> bool:
-    """Either `<math>`-block layout or HTML-wrapper-with-math.  Both
-    flow through the row-per-paragraph equation-layout producer."""
-    return _math_table_kind(raw, inner, registry) in ("math_blocks",
-                                                       "html_wrapper")
-
-
 def _has_data_signal_and_ts(raw: str, inner: str,
                              registry: ElementRegistry | None) -> bool:
     """Header carries a data-table signal AND any cell uses `{{Ts}}`
@@ -1187,20 +1150,18 @@ _POST_ICL_PREDS: list[tuple[Callable[
     # signal+ts / rowspan / verse / single-column / catch-all) ALL emit
     # the one "TABLE" label — the producer (`_process_table_unified`)
     # decomposes every table shape identically, so the sub-distinction is
-    # meaningless downstream.  They keep their ORDER and identity because
-    # the order is what gates table-vs-(layout/math): e.g. `_is_brace_table`
-    # claims a real `{|` as TABLE before `_is_math_dominant_pred` can grab
-    # it, while `_has_data_signal_and_ts` runs AFTER it so a math-dominant
-    # table still reaches math.  Relabelling the outcomes doesn't touch
-    # that gating; it only stops minting sub-labels nothing consumes.
+    # meaningless downstream.  Math equation layouts are NOT a special
+    # case any more: `<math>` is the raw's own self-labeling leaf, so a
+    # table of math cells is just a TABLE whose cells recurse to `<math>`
+    # — rendered with its original table structure (the fraction bars the
+    # old flattening `_process_equation_layout` silently dropped) intact.
+    # Only LAYOUT_WRAPPER keeps its own label (un-pairable multi-image
+    # figure); everything else is TABLE.
     (_is_poem_wrapper_pred,          "TABLE"),
     (_is_layout_wrapper_pred,        "LAYOUT_WRAPPER"),
     (_is_brace_table,                "TABLE"),
-    (_is_math_dominant_pred,         "MATH_LAYOUT_EQUATIONS"),
     (_has_data_signal_and_ts,        "TABLE"),
     (_has_rowspan_or_colspan,        "TABLE"),
-    (_is_math_layout_tokens_pred,    "MATH_LAYOUT_TOKENS"),
-    (_is_math_layout_equations_pred, "MATH_LAYOUT_EQUATIONS"),
     (_is_verse_table_pred,           "TABLE"),
     (_is_single_column_table_pred,   "TABLE"),
     (_always_true,                   "TABLE"),

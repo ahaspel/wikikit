@@ -266,11 +266,10 @@ def _classify_brace_pipe(
 _HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
-    # MATH — producers (`_process_equation_layout`, `_process_math_layout_table`)
-    # made `<table>`-aware via `_content_rows`; classifier already recognizes them.
-    "MATH_LAYOUT_EQUATIONS", "MATH_LAYOUT_TOKENS",
     # CHEM — `_process_chemistry_layout` made `<table>`-aware (`_split_html_chem_row`
     # + `<tr>` split); classifier (`_is_chemistry_layout_pred`) already recognizes.
+    # (MATH equation layouts are no longer routed away — `<math>` is a leaf, so a
+    # math-cell `<table>` is just a TABLE, rendered with its structure intact.)
     "CHEMISTRY_LAYOUT",
 })
 

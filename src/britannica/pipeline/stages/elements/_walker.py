@@ -693,10 +693,11 @@ def _walk_balanced_shapes(
         # because extracting a styled `<span>` inside a CHEM/MATH/figure element
         # replaced it with a placeholder in the inner text those classifiers
         # inspected, FLIPPING their classification (PRIMULINE's chem grid, the
-        # equation layouts).  The fix was at the root: those classifiers now read
-        # RAW, not the placeholderized inner (`_is_chemistry_layout_pred` /
-        # `_is_math_dominant_layout` count `<math>`/brackets from raw, STYLED is
-        # transparent to child-ratios) — so extraction can no longer perturb
+        # equation layouts).  The fix was at the root: the chem classifier now
+        # reads RAW (`_is_chemistry_layout_pred` scans raw for bracket/reaction
+        # content), and math equation layouts stopped being a special
+        # classification at all (`<math>` is a self-labeling leaf, so a math-cell
+        # table is just a TABLE) — so extraction can no longer perturb
         # classification, and the gate is unnecessary.  Image-bearing styled
         # wrappers are still claimed above by the figure recognizers.
         if (matched is None

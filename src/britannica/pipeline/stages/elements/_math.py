@@ -22,9 +22,10 @@ content-aware split established in the dual-line element-promotion
 work; the classifier inspects content to dispatch.  Predicates and
 the math-dual producer live in this module.
 
-Block-level math (``<math>``, ``MATH_LAYOUT_*`` for table-shaped
-math) lives in `_leaf.py` and `_math_layout.py` for historical
-reasons; this module is the home for inline math going forward.
+Block-level `<math>` is a self-labeling leaf produced in `_leaf.py`; a
+table of math cells is just a TABLE that recurses to those leaves (the
+old `MATH_LAYOUT_*` table classification was collapsed away).  This
+module is the home for inline math going forward.
 """
 from __future__ import annotations
 

@@ -87,7 +87,6 @@ class ElementRegistry:
 # wikitables miss it when checking for nested-table children.
 TABLE_LABELS: frozenset[str] = frozenset({
     "LAYOUT_WRAPPER", "TABLE",
-    "MATH_LAYOUT_TOKENS", "MATH_LAYOUT_EQUATIONS",
     "CHEMISTRY_LAYOUT", "DJVU_CROP",
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
     "FIGURE_GROUP", "UNPAIRED_FIGURE_GROUP",

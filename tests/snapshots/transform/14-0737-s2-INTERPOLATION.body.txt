@@ -219,7 +219,7 @@ a horizontal line with «I»u«/I»₀, and μδ«I»u«/I»₀, μδ³«I»u«/
 of the differences of odd order immediately below and above this
 line, then (see «LN:Differences, Calculus of|Differences, Calculus of«/LN») the values of «I»c«/I»₁, «I»c«/I»₂...
 are given by
-«HTMLTABLE:<table class="figtable"><tr><td>{{VERSE:«I»c«/I»₁ = μδ«I»u«/I»₀ − ⅙μδ³«I»u«/I»₀ + 1/30μδ⁵«I»u«/I»₀ − 1/140μδ⁷«I»u«/I»₀ + ...
+«HTMLTABLE:<table class="figtable"><tr style="text-align:center"><td>«HTMLTABLE:<table class="figtable"><tr><td>{{VERSE:«I»c«/I»₁ = μδ«I»u«/I»₀ − ⅙μδ³«I»u«/I»₀ + 1/30μδ⁵«I»u«/I»₀ − 1/140μδ⁷«I»u«/I»₀ + ...
 «I»c«/I»₂ = δ²«I»u«/I»₀ − 1/12δ⁴«I»u«/I»₀ + 1/90δ⁶«I»u«/I»₀ − 1/560δ⁸«I»u«/I»₀ + ...
 «I»c«/I»₃ = μδ³«I»u«/I»₀ − ¼μδ⁵«I»u«/I»₀ + 7/120μδ⁷«I»u«/I»₀ − ...
 «I»c«/I»₄ = δ⁴«I»u«/I»₀ − ⅙δ⁶«I»u«/I»₀ + 7/240δ⁸«I»u«/I»₀ − ...
@@ -227,19 +227,17 @@ are given by
 «I»c«/I»₆ = δ⁶«I»u«/I»₀ − ¼δ⁸«I»u«/I»₀ + ...
  .    .
  .    .
- .    .}VERSE}</td><td style="text-align:left">«BRACE2[10|r]»</td></tr></table>«/HTMLTABLE»
-(4). 
+ .    .}VERSE}</td><td style="text-align:left">«BRACE2[10|r]»</td></tr></table>«/HTMLTABLE»</td></tr><tr><td>(4). </td></tr></table>«/HTMLTABLE»
 
 If a calculating machine is used, the formula (2) is most conveniently
 written
 
-«HTMLTABLE:<table class="figtable"><tr><td>{{VERSE:«I»u«/I»θ = «I»u«/I»₀ + P₁θ
+«HTMLTABLE:<table class="figtable"><tr style="text-align:center"><td>«HTMLTABLE:<table class="figtable"><tr><td>{{VERSE:«I»u«/I»θ = «I»u«/I»₀ + P₁θ
 P₁       = «I»c«/I»₁ + ½P₂θ
 P₂       = «I»c«/I»₂ + ⅓P₃θ
  .   .
  .   .
- .   .}VERSE}</td><td style="text-align:left">«BRACE2[7|r]»</td></tr></table>«/HTMLTABLE»
-(5). 
+ .   .}VERSE}</td><td style="text-align:left">«BRACE2[7|r]»</td></tr></table>«/HTMLTABLE»</td></tr><tr><td>(5). </td></tr></table>«/HTMLTABLE»
 Using θ as the multiplicand in each case, the successive expressions
 ... P₃, P₂, P₁, «I»u«/I»θ are easily calculated.
 
@@ -487,18 +485,7 @@ throughout.
 
 «CTR»«SC»Table 4.«/SC»«/CTR»
 
-   Error due to use of Differences up to and <br />including
-1st. 2nd. 3rd. 4th. 5th. 6th. 7th.
- .5«MATH:\Big\{«/MATH» I. . .  .500 .625 .813 1.086 1.497 2.132 3.147
-II. . .  .500 .625 .625 .696 .696 .745 .745
-.2«MATH:\Big\{«/MATH» I. . .  .500 .580 .724 .960 1.343 1.976 3.042
-II. . .  .500 .580 .580 .624 .624 .653 .653
-.4«MATH:\Big\{«/MATH» I. . .  .500 .620 .812 1.104 1.553 2.265 3.422
-II. . .  .500 .620 .620 .688 .688 .734 .734
-.6«MATH:\Big\{«/MATH» I. . .  .500 .620 .788 1.024 1.366 1.886 2.700
-II. . .  .500 .620 .620 .688 .688 .734 .734
-.8«MATH:\Big\{«/MATH» I. . .  .500 .580 .676 .800 .969 1.213 1.582
-II. . .  .500 .580 .580 .624 .624 .653 .653
+«HTMLTABLE:<table class="figtable"><tr style="text-align:center"><td rowspan="2" colspan="2" style="border: 1px solid"> </td><td colspan="7" style="border: 1px solid"> Error due to use of Differences up to and <br>including</td></tr><tr style="text-align:center"><td style="border: 1px solid">1st.</td><td style="border: 1px solid">2nd.</td><td style="border: 1px solid">3rd.</td><td style="border: 1px solid">4th.</td><td style="border: 1px solid">5th.</td><td style="border: 1px solid">6th.</td><td style="border: 1px solid">7th.</td></tr><tr style="text-align:right"><td rowspan="2" style="text-align:center"> .5«MATH:\Big\{«/MATH»</td><td style="border-right: 1px solid">I. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.625</td><td style="border-right: 1px solid">.813</td><td style="border-right: 1px solid">1.086</td><td style="border-right: 1px solid">1.497</td><td style="border-right: 1px solid">2.132</td><td>3.147</td></tr><tr style="text-align:right"><td style="border-right: 1px solid">II. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.625</td><td style="border-right: 1px solid">.625</td><td style="border-right: 1px solid">.696</td><td style="border-right: 1px solid">.696</td><td style="border-right: 1px solid">.745</td><td>.745</td></tr><tr style="text-align:right"><td rowspan="2" style="text-align:center">.2«MATH:\Big\{«/MATH»</td><td style="border-right: 1px solid">I. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.724</td><td style="border-right: 1px solid">.960</td><td style="border-right: 1px solid">1.343</td><td style="border-right: 1px solid">1.976</td><td>3.042</td></tr><tr style="text-align:right"><td style="border-right: 1px solid">II. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.624</td><td style="border-right: 1px solid">.624</td><td style="border-right: 1px solid">.653</td><td>.653</td></tr><tr style="text-align:right"><td rowspan="2" style="text-align:center">.4«MATH:\Big\{«/MATH»</td><td style="border-right: 1px solid">I. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.812</td><td style="border-right: 1px solid">1.104</td><td style="border-right: 1px solid">1.553</td><td style="border-right: 1px solid">2.265</td><td>3.422</td></tr><tr style="text-align:right"><td style="border-right: 1px solid">II. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.688</td><td style="border-right: 1px solid">.688</td><td style="border-right: 1px solid">.734</td><td>.734</td></tr><tr style="text-align:right"><td rowspan="2" style="text-align:center">.6«MATH:\Big\{«/MATH»</td><td style="border-right: 1px solid">I. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.788</td><td style="border-right: 1px solid">1.024</td><td style="border-right: 1px solid">1.366</td><td style="border-right: 1px solid">1.886</td><td>2.700</td></tr><tr style="text-align:right"><td style="border-right: 1px solid">II. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.620</td><td style="border-right: 1px solid">.688</td><td style="border-right: 1px solid">.688</td><td style="border-right: 1px solid">.734</td><td>.734</td></tr><tr style="text-align:right"><td rowspan="2" style="text-align:center">.8«MATH:\Big\{«/MATH»</td><td style="border-right: 1px solid">I. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.676</td><td style="border-right: 1px solid">.800</td><td style="border-right: 1px solid">.969</td><td style="border-right: 1px solid">1.213</td><td>1.582</td></tr><tr style="text-align:right"><td style="border-right: 1px solid">II. . . </td><td style="border-right: 1px solid">.500</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.580</td><td style="border-right: 1px solid">.624</td><td style="border-right: 1px solid">.624</td><td style="border-right: 1px solid">.653</td><td>.653</td></tr></table>«/HTMLTABLE»
 
 In some cases the differences tabulated are not the tabular differences,
 but the corrected differences; «I»i.e.«/I» each difference, like each

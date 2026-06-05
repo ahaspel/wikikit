@@ -122,11 +122,14 @@ class TestNestedClassification:
         child = next(iter(ce.inner_registry.values()))
         assert child.label == "MATH"
 
-    def test_math_dominant_wikitable(self):
-        # Two math children, ≥75% of elements are math → math-dominant.
+    def test_math_cell_wikitable_is_plain_table(self):
+        # `<math>` is a self-labeling leaf, so a wikitable of math cells is
+        # just a TABLE whose cells recurse to MATH leaves — no special
+        # math-layout classification (that machinery was collapsed away).
         raw = "{|\n|<math>x</math>\n|<math>y</math>\n|}"
         ce = classify(SHAPE_BRACE_PIPE, raw)
-        assert ce.label == "MATH_LAYOUT_EQUATIONS"
+        assert ce.label == "TABLE"
+        assert [c.label for c in ce.inner_registry.values()] == ["MATH", "MATH"]
 
     def test_captioned_figure_image_with_caption_row(self):
         # Single-image wikitable, image alone in its row, caption
