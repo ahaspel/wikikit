@@ -221,6 +221,39 @@ def _faithful_figure(raw: str) -> str:
     return produce_faithful_figure(raw)
 
 
+def _plain_image_disentangle(raw, text_transform, context):
+    """`{{plain image with caption|image=X|align=|width=|caption=Y}}` IS a
+    figtable in template spelling — ONE column, TWO cells: the image on top, the
+    caption beneath, the whole box floated.  Reconstruct the canonical
+    `{|`-figtable and recurse it through the unified table producer, so the image
+    cell becomes an IMAGE leaf and the caption cell rides the cell-collapse — held
+    WITH the image by the table, not floated away as a loose sibling.  (The first
+    figtable routed through `_process_table_unified`.)"""
+    from britannica.pipeline.stages.transform_articles.body_text import (
+        _split_top_pipes)
+    inner = re.sub(r"\}\}\s*$", "", re.sub(
+        r"^\s*\{\{\s*plain image with caption\s*\|", "", raw, flags=re.IGNORECASE))
+    params: dict[str, str] = {}
+    for part in _split_top_pipes(inner):
+        k, eq, v = part.partition("=")
+        if eq:
+            params[k.strip().lower()] = v.strip()
+    fn = re.sub(r"^\s*(?:File|Image):\s*", "", params.get("image", ""),
+                flags=re.IGNORECASE)
+    wm = re.match(r"(\d+)", params.get("width", ""))
+    w = wm.group(1) if wm else None
+    align = params.get("align", "")
+    box = ("margin-right:auto;margin-left:auto" if align == "center"
+           else f"float:{align}" if align else "")
+    style = ";".join(x for x in (box, f"width:{w}px" if w else "") if x)
+    opener = f'{{|style="{style}"' if style else "{|"
+    img_src = f"[[File:{fn}|{w}px]]" if w else f"[[File:{fn}]]"
+    cap = params.get("caption", "")
+    body = f"|{img_src}\n|-\n|{cap}" if cap else f"|{img_src}"
+    return process_elements(f"{opener}\n{body}\n|}}",
+                            text_transform, context, _allow_figure=False)
+
+
 # `<div …>` / `<p …>` / `<span …>` opener — captures (tag, attrs).  The matching
 # close is found by the walker's one balanced matcher, so the producer peels the
 # wrapper without a second balanced scanner.
@@ -495,7 +528,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
         _process_image_from_raw(raw, tt, inline=True),
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
-    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg:
+        _plain_image_disentangle(raw, tt, ctx),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
         _faithful_figure(raw),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
