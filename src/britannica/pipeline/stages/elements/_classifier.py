@@ -58,6 +58,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
+    SHAPE_STYLED,
     strip_outer,
 )
 from britannica.pipeline.stages.elements._walker import walk
@@ -329,6 +330,8 @@ def _derive_label(
         return "MIRROR_GLYPH"
     if shape == SHAPE_CENTER:
         return "CENTER"  # only the c-family reaches SHAPE_CENTER (walker)
+    if shape == SHAPE_STYLED:
+        return "STYLED"  # styled <div>/<p>/<span> (walker); producer derives CSS
     raise ValueError(f"Unknown shape: {shape!r}")
 
 

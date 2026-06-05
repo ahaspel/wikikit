@@ -42,6 +42,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
+    SHAPE_STYLED,
 )
 from britannica.pipeline.stages.elements._figure import (
     figure_tail_end,
@@ -415,7 +416,9 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
-    r"|<div\b"  # any <div> — styled ones lift to faithful, bare ones fall through
+    r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
+    r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
+    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)"  # STYLED <span> (style attr in opener)
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
@@ -451,16 +454,35 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
 _ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score"})
 # Tags the one matcher will BOUND by depth (superset of the auto-extracted
-# elements).  `div` is boundable so a styled `<div>` can be matched to its
-# right `</div>` and nested divs skipped — but it is NOT auto-extracted (bare
-# layout divs stay transparent; only a *styled* div is lifted, via the gated
-# recognizer below).
-_BALANCED_TAGS = _ELEMENT_TAGS | {"div"}
-# A `<div>` that carries styling ({{Ts}} shorthand, inline style=, or align=)
-# — the gate that distinguishes a meaningful styled block (lift → faithful)
-# from a bare layout div (transparent unwrap).  Structural, not a guess.
-_STYLED_DIV_RE = re.compile(
-    r"<div\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)", re.IGNORECASE)
+# elements).  `div`/`p`/`span` are boundable so a styled wrapper can be matched
+# to its right `</div>`/`</p>`/`</span>` and nested same-tags skipped — but they
+# are NOT auto-extracted (bare layout `<div>`, inline `<span>`/`<p>` stay
+# transparent; only a *styled* wrapper is lifted, via the gated recognizer
+# below).  Corpus-verified balanced: `<p>` 407 open / 403 close (5 unbalanced
+# articles, all OCR-garbage `<p.u(kp)` non-tags or close-less stubs that
+# fail-close → fall through); `<span>` 15706 / 15704 (1 unbalanced article).
+_BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span"}
+# A `<div>`/`<p>`/`<span>` that carries styling ({{Ts}} shorthand, inline
+# style=, or align=) — the gate that distinguishes a meaningful styled wrapper
+# (lift → STYLED, which carries the style and recurses its content) from a bare
+# layout `<div>` / inline `<span>` / paragraph `<p>` (transparent unwrap, left
+# to body-text).  Structural, not a guess — recognition is on the PRESENCE of a
+# style attribute, never on what it means; the raw bytes pass through unchewed
+# and the CSS is derived later in the producer.
+#
+# TWO exclusions, both ownership hand-offs to a sibling recognizer (NOT meaning
+# judgments):
+#   * `{{mirrorH}}` span → its own MIRROR_GLYPH shape (recognized before this).
+#   * any `title=` span → owned by body-text's `_handle_title_spans`.  A
+#     `title=` span is a Wikisource editorial mark: 1237 corpus spans carry BOTH
+#     `style="border-bottom:1px dashed red"` AND `title="amended from …"` (the
+#     red-dashed OCR-correction highlight) — provenance, not real styling, to be
+#     UNWRAPPED (text kept, decoration dropped); plus the Greek/Hebrew
+#     transliteration tooltips `_handle_title_spans` carries as «SPAN[title:…]».
+#     Both are that function's job, so the styled gate must not claim them.
+_STYLED_WRAPPER_RE = re.compile(
+    r"<(?:div|p|span)\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*=)"
+    r"[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)", re.IGNORECASE)
 
 
 def _construct_end(text: str, start: int) -> int | None:
@@ -649,18 +671,39 @@ def _walk_balanced_shapes(
                     if end is not None:
                         matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
 
-        # Styled `<div …>` (carries `{{Ts}}` / `style=` / `align=`) → faithful,
-        # which carries the block style and recurses the content.  A BARE
-        # `<div>` is layout noise and stays transparent (body-text unwrap).
-        # Bounded by the one matcher (depth-aware over nested divs); unbalanced
-        # → None → falls through, no swallow.  Image-bearing styled divs are
-        # already claimed above by the figure recognizers; this catches the
-        # styled-TEXT divs (centered captions/titles, small-print credits,
-        # indented keys) that were leaking their `{{Ts}}` to `_strip_templates`.
-        if matched is None and _STYLED_DIV_RE.match(text, opener_pos):
+        # Styled `<div>` / `<p>` / `<span>` (carries `{{Ts}}` / `style=` /
+        # `align=`) → STYLED, the ONE styled-wrapper element: the producer
+        # carries the style as a marker and recurses the content through the
+        # main dispatch (so a table / MATH / CHEM / figure inside is handled by
+        # its own producer, not leaked).  A BARE `<div>` / inline `<span>` /
+        # paragraph `<p>` is layout noise and stays transparent (body-text
+        # unwrap).  Bounded by the one matcher (depth-aware over nested
+        # same-tags); unbalanced → None → falls through, no swallow.  Image-
+        # bearing styled wrappers are already claimed above by the figure
+        # recognizers (`html_ts_figure_end` / `html_float_figure_end`); this
+        # catches the styled-TEXT wrappers (centered captions/titles, small-
+        # print credits, indented keys, inline over-bar / limit-notation spans)
+        # that body-text used to rewrite via `_p_ts`/`_div_ts`/`_span_ts`.
+        #
+        # GATED ON `figures` (= article level only), exactly like the figure
+        # recognizers.  A styled wrapper is an ARTICLE-LEVEL structural concern;
+        # INSIDE another element (`_allow_figure=False`: table cell, CHEM/MATH
+        # layout, figure interior, or `_process_styled`'s own inner recursion) a
+        # styled `<span>`/`<div>` is INLINE content the enclosing producer reads
+        # raw — its `text_transform` carries it (`_carry_style_spans` /
+        # `_span_ts` / `_p_ts` / `_div_ts`).  Extracting it there would replace
+        # the raw span with a `\x03ELEM\x03` placeholder in the inner text the
+        # CHEM/MATH/figure predicates inspect, FLIPPING their classification
+        # (verified: ungated, it spilled CHEM/MATH/IMAGE tables to TABLE — e.g.
+        # PRIMULINE's `{| align=center` chem grid lost its `❯` glyph + leaked
+        # raw `<span style>`).  Step 4/5 (figure decomposer → process_elements)
+        # makes the inner-context safe; until then styling inside elements is
+        # the producer's job, styling at article level is the walker's.
+        if (matched is None and figures
+                and _STYLED_WRAPPER_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:
-                matched = (end, SHAPE_FIGURE, text[opener_pos:end])
+                matched = (end, SHAPE_STYLED, text[opener_pos:end])
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:

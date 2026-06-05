@@ -230,6 +230,90 @@ def _faithful_figure(raw: str) -> str:
     return produce_faithful_figure(raw)
 
 
+# `<div …>` / `<p …>` / `<span …>` opener — captures (tag, attrs).  The matching
+# close is found by the walker's one balanced matcher, so the producer peels the
+# wrapper without a second balanced scanner.
+_STYLED_OPEN_RE = re.compile(
+    r"^\s*<(div|p|span)\b([^>]*)>", re.IGNORECASE)
+_BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
+
+
+def _styled_br_to_marker(text: str) -> str:
+    """A styled wrapper is a display block (centred equations, stacked labels);
+    its OWN `<br>` is a meaningful line break, so carry it as the canonical
+    «BR» (matching the prior faithful-figure rendering).  Only TOP-LEVEL `<br>`
+    is converted — a `<br>` inside a nested balanced construct (table cell,
+    nested wrapper) belongs to that construct's own producer, so we skip every
+    nested span whole via the walker's one `_construct_end` matcher.  Without
+    this, the recursion routes the wrapper's prose to the BODY producer, which
+    renders `<br>` as a SPACE (its soft-wrap rule) and silently drops the
+    break (INTERPOLATION's multi-line centred series)."""
+    from britannica.pipeline.stages.elements._walker import _construct_end
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "<":
+            mbr = _BR_RE.match(text, i)
+            if mbr:
+                out.append("«BR»")
+                i = mbr.end()
+                continue
+            j = _construct_end(text, i)        # skip any nested construct whole
+            if j is not None and j > i:
+                out.append(text[i:j])
+                i = j
+                continue
+        elif ch in "{[":
+            j = _construct_end(text, i)        # skip `{{…}}` / `{|…|}` / `[[…]]`
+            if j is not None and j > i:
+                out.append(text[i:j])
+                i = j
+                continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _process_styled(raw, inner, text_transform, context, inner_registry):
+    """The ONE styled-wrapper producer: a `<div>`/`<p>`/`<span>` carrying style
+    (`{{Ts}}` / `style=` / `align=`).
+
+    Style is orthogonal to structure.  This producer (1) derives the wrapper's
+    CSS via the EXISTING `_cell_styles` (the same `{{Ts}}` / inline-`style` /
+    `align`/`valign` translator the table cell/opener uses — no second style
+    parser), (2) RECURSES the wrapper's inner content through the MAIN dispatch
+    (`process_elements(..., _allow_figure=False)`) so a table / MATH / CHEM /
+    nested styled-wrapper inside is handled by its OWN producer (not leaked or
+    re-classified by a partial second classifier), and (3) wraps the recursed
+    content in the marker the viewer decodes via `style_block` — `«CTR»` for a
+    pure-centred block, `«DIV[style:CSS]»` / `«SPAN[style:CSS]»` otherwise.
+
+    Subsumes body-text's `_p_ts` / `_div_ts` / `_span_ts` (the `<p>`/`<div>`/
+    `<span>` `{{Ts}}`-opener rewriters) and the styled-`<div>`→faithful gate.
+    The `_p_ts` image-drop defect is fixed for free: an `<p {{Ts}}>[[Image]]…</p>`
+    nested where figure-recognition is off now recurses its inner through
+    `process_elements`, so the image is produced rather than dropped."""
+    from britannica.pipeline.stages.elements._tables import _cell_styles, style_block
+    m = _STYLED_OPEN_RE.match(raw)
+    if not m:
+        return text_transform(raw)
+    tag = m.group(1).lower()
+    attrs = m.group(2)
+    # Peel the matching close tag off the tail (the walker already balanced the
+    # span, so the last `</tag>` is ours).
+    inner_raw = raw[m.end():]
+    inner_raw = re.sub(rf"</{tag}\s*>\s*$", "", inner_raw, flags=re.IGNORECASE)
+    # Carry the wrapper's own (top-level) `<br>` as «BR» before recursing — a
+    # styled block's line breaks are meaningful (see `_styled_br_to_marker`).
+    inner_raw = _styled_br_to_marker(inner_raw)
+    content = process_elements(
+        inner_raw, text_transform, context, _allow_figure=False).strip()
+    css = ";".join(_cell_styles(attrs, ""))
+    marker_tag = "SPAN" if tag == "span" else "DIV"
+    return style_block(content, css=css, tag=marker_tag)
+
+
 # ── Producer dispatch ─────────────────────────────────────────────────
 #
 # Flat label → producer table.  Both wikitable sub-kinds (returned by
@@ -240,6 +324,12 @@ def _faithful_figure(raw: str) -> str:
 _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # Paired-wrapper span (walker SHAPE_CENTER) → «CTR».
     "CENTER": _process_center,
+    # STYLED — `<div>`/`<p>`/`<span>` carrying style (`{{Ts}}`/`style=`/`align=`).
+    # ONE producer derives the CSS via the shared `_cell_styles`, recurses the
+    # inner through the main dispatch, and wraps via `style_block` (`«CTR»` /
+    # `«DIV[style]»` / `«SPAN[style]»`).  Subsumes body-text `_p_ts`/`_div_ts`/
+    # `_span_ts` and the styled-`<div>`→figure gate.
+    "STYLED": _process_styled,
     # Wikitable sub-kinds.
     "MATH_LAYOUT_TOKENS": lambda raw, inner, tt, ctx, reg:
         _process_math_layout_table(raw),

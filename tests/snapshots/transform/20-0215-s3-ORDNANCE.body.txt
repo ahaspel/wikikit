@@ -2488,11 +2488,11 @@ hoops, the outer radius must be written 𝑟₂); the formulas become
 
 When 𝑟=𝑟₀=2·5, 𝑡 =𝑡₀, 𝑝₀=P₀ already found and:
 
-𝑡₀=(7·5)² + (2·5)²/(7·5)² − (2·5)²×21=26·25 tons.
+«CTR»𝑡₀=(7·5)² + (2·5)²/(7·5)² − (2·5)²×21=26·25 tons.«/CTR»
 
 For the tension of the fibres at the outer circumference
 
-𝑡′₂=26·25 − 21=5·25 tons,
+«CTR»𝑡′₂=26·25 − 21=5·25 tons,«/CTR»
 
 from (3) and for a radius 𝑟₂=7·5 inches.
 
@@ -2530,7 +2530,7 @@ Here M can be taken as 12,500 tons per square inch for
 gun steel. In the example already calculated the shrinkage
 between the jacket and barrel is 0·009 in.
 
-S=2 × 4·1/12,500 «XL»[«/XL» 6·43 + 11·25 + (4·1)² − (2·5)²/(4·1)² + (2·5)²(−11·25 + 3·4) «XL»]«/XL»=0·009 in.
+«CTR»S=2 × 4·1/12,500 «XL»[«/XL» 6·43 + 11·25 + (4·1)² − (2·5)²/(4·1)² + (2·5)²(−11·25 + 3·4) «XL»]«/XL»=0·009 in.«/CTR»
 
 In that portion of the gun in which wire is used in the construction,
 exactly the same principles are involved. It may be
@@ -2633,16 +2633,16 @@ fits tightly over the wire, but has no shrinkage. Then for the
 «I»Firing Stress«/I», from (2), P₂=2·25 tons, 
 and from (9) and (10), T₁(𝑟₂-𝑟₁) = P₁𝑟₁-P₂𝑟₂
 
-P₁=14·97, say 15 tons;
+«CTR»P₁=14·97, say 15 tons;«/CTR»
 
 from (4) we can obtain T₀ and T₂ since P₀, P₁ and P₂ are known;
 from (3) T₀ = 0·6 tons. T₂ = 7·5 tons.
 
-T′₂=−5·4 tons (a compression),
+«CTR»T′₂=−5·4 tons (a compression),«/CTR»
 
 and
 
-T₃=5·25 tons.
+«CTR»T₃=5·25 tons.«/CTR»
 
 The «I»Powder Stress«/I» is obtained in the same way as in the previous
 example, so also is the «I»Initial Stress«/I»; therefore we may tabulate as
@@ -2654,24 +2654,24 @@ compress those on the interior, thus producing an extension in the
 wire which is equivalent to a reduction in the winding tension θ
 of the particular layer at radius 𝑟 considered. If τ represents this
 reduction then
-θ=(𝑡) − τ,
+«CTR»θ=(𝑡) − τ,«/CTR»
 where
 
-τ=−𝑟𝑛² + 𝑟₀²/𝑟² − 𝑟₀²(𝑝)
+«CTR»τ=−𝑟𝑛² + 𝑟₀²/𝑟² − 𝑟₀²(𝑝)«/CTR»
 
 At the interior layer of wire τ is the initial stress on the exterior
 of the barrel and the winding tension must commence at
 
-θ= 11·875 + 18·525=30·4 tons per square inch.
+«CTR»θ= 11·875 + 18·525=30·4 tons per square inch.«/CTR»
 
 As the jacket is supposed to have no shrinkage T=0 and consequently
 
-θ=(𝑡)=17·5 tons per square inch.
+«CTR»θ=(𝑡)=17·5 tons per square inch.«/CTR»
 
 These winding tensions can be found directly from formula (14)
 and then
 
-E=−149·875; F=34·875; G=264·875.
+«CTR»E=−149·875; F=34·875; G=264·875.«/CTR»
 
 Sir G. Greenhill has put these formulas, both for the built-up and
 wire-wound guns, into an extremely neat and practical geometrical
@@ -2695,11 +2695,11 @@ a longitudinal stress on the barrel at the breech end of the chamber
 due to the action of the pressure P₀ on the rear slope of the chamber,
 of
 
-π/4(𝑟₀² − 𝑟₀₁²)P₀ tons
+«CTR»π/4(𝑟₀² − 𝑟₀₁²)P₀ tons«/CTR»
 
 this is resisted by the barrel of section π/4 (𝑟₁²−𝑟₀²) so that the resistance
 
-R=𝑟₀²−𝑟₀₁²/𝑟₁²−𝑟₀² P₀ tons.
+«CTR»R=𝑟₀²−𝑟₀₁²/𝑟₁²−𝑟₀² P₀ tons.«/CTR»
 
 This portion of the longitudinal stress is not of great importance
 as the breech end of the barrel is supported in all modern designs
@@ -2709,8 +2709,8 @@ so that there is no longitudinal stress on the chamber part of the barrel.
 
 For the breech piece or outer tube of radii 𝑟₁ and 𝑟₂, the resistance
 
-R=𝑟₀₁²/𝑟₂²−𝑟₁² P₀ tons for B.L. guns 
- =𝑟₀²/𝑟₂²−𝑟₁² P₀ tons for Q.F. guns
+«CTR»R=𝑟₀₁²/𝑟₂²−𝑟₁² P₀ tons for B.L. guns«BR»
+ =𝑟₀²/𝑟₂²−𝑟₁² P₀ tons for Q.F. guns«/CTR»
 
 If the longitudinal stress is taken by a jacket only, the resistance
 is found in the same way.

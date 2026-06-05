@@ -21,6 +21,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
     SHAPE_SECTION,
+    SHAPE_STYLED,
     SHAPES,
     strip_outer,
 )
@@ -39,15 +40,18 @@ class TestShapeVocabulary:
         #     maps to one producer),
         #   MIRROR_GLYPH (``<span style="{{mirrorH}}">…</span>``),
         #   CENTER (``{{NAME/s}}…{{NAME/e}}`` paired-wrapper span),
-        #   ORDERED_LIST (nested ``{{ordered list|…}}`` classification, a leaf).
+        #   ORDERED_LIST (nested ``{{ordered list|…}}`` classification, a leaf),
+        #   STYLED (``<div>``/``<p>``/``<span>`` carrying {{Ts}}/style=/align= —
+        #     the ONE styled-wrapper element; producer derives CSS + recurses).
         # NOINCLUDE was removed when the article pipeline started
         # wiping `<noinclude>` tags upstream in `_transform_text_v2`
         # — chrome content owned by explicit template recognizers,
         # plate pipeline uses its own walker.
         # Bump this count alongside ``_shapes.SHAPES``.
-        assert len(SHAPES) == 14
+        assert len(SHAPES) == 15
         assert SHAPE_FIGURE in SHAPES
         assert SHAPE_SECTION in SHAPES
+        assert SHAPE_STYLED in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)

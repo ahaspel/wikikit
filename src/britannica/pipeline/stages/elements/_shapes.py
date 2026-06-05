@@ -36,6 +36,7 @@ SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section 
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
 SHAPE_CENTER            = "CENTER"             # {{NAME/s}}…{{NAME/e}} paired-wrapper span
+SHAPE_STYLED            = "STYLED"             # <div>/<p>/<span> carrying {{Ts}}/style=/align=
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -53,6 +54,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_BODY,
     SHAPE_MIRROR_GLYPH,
     SHAPE_CENTER,
+    SHAPE_STYLED,
 })
 
 
@@ -81,6 +83,13 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # a copy with figure-recognition off and assembles, so the main walk must
     # NOT recurse into the raw here.
     SHAPE_FIGURE,
+    # STYLED — a `<div>`/`<p>`/`<span>` carrying style (`{{Ts}}`/`style=`/
+    # `align=`).  The producer owns the whole span: it peels the wrapper, derives
+    # the CSS, and re-processes the INNER through the main dispatch
+    # (`process_elements(..., _allow_figure=False)`) so a table / MATH / CHEM /
+    # nested-wrapper inside is handled by its own producer, not leaked.  The main
+    # walk must NOT recurse into the raw here (the producer does it itself).
+    SHAPE_STYLED,
     # SECTION — a `<section begin/end/>` transclusion marker; no inner content,
     # the producer reads the raw tag (its name is boundary metadata).
     SHAPE_SECTION,
@@ -148,6 +157,11 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_FIGURE:
         # Leaf — the producer reads `raw` (re-processes + assembles it); the
         # main walk needs no inner content here.
+        return ""
+    if shape == SHAPE_STYLED:
+        # Leaf — the producer reads `raw`, peels the `<div>`/`<p>`/`<span>`
+        # wrapper itself (it needs the opener attrs for the CSS) and recurses
+        # the inner through the main dispatch.  No inner content to hand back.
         return ""
     if shape == SHAPE_BODY:
         # No delimiters — the raw bytes ARE the body prose; the producer

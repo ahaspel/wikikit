@@ -359,14 +359,14 @@ Denoting
 
 by θV₁, we have, for interpolation between «I»u«/I»₀ and «I»u«/I»₁,
 
-«DIV[style:text-align:center]»«I»u«/I»θ = «I»u«/I»₀ + θΔ«I»u«/I»₀ + θV₁ + ₁−θV₀«/DIV»
+«CTR»«I»u«/I»θ = «I»u«/I»₀ + θΔ«I»u«/I»₀ + θV₁ + ₁−θV₀«/CTR»
 «DIV[style:text-align: right;margin-top: -1em;margin-right: 1.3em]»(11),«/DIV»
 
 the successive values of θ being 1/«I»n«/I», 2/«I»n«/I»... («I»n«/I» − 1)/«I»n«/I». For
 interpolation between «I»u«/I»₁ and «I»u«/I»₂ we have, with the same succession
 of values of θ,
 
-«DIV[style:text-align:center]»«I»u«/I»₁₊θ = «I»u«/I»₁ + θV₁,   V₂ + ₁−θV₁«/DIV»
+«CTR»«I»u«/I»₁₊θ = «I»u«/I»₁ + θV₁,   V₂ + ₁−θV₁«/CTR»
 «DIV[style:text-align: right;margin-top: -1em;margin-right: 1.3em]»(12).«/DIV»
 
 The values of ₁−θV₁ in (12) are exactly the same as those of θV₁
@@ -413,7 +413,7 @@ corrected in the last figure.
 7. «I»Derivation of Formulae.«/I»—The advancing-difference formula
 (1) may be written, in the symbolical notation of finite differences,
 
-«DIV[style:text-align:center]»«I»u«/I»θ = (1 + Δ)θ «I»u«/I»₀ = Eθ «I»u«/I»₀«/DIV»
+«CTR»«I»u«/I»θ = (1 + Δ)θ «I»u«/I»₀ = Eθ «I»u«/I»₀«/CTR»
 «DIV[style:text-align: right;margin-top: -1em;margin-right: 1.3em]»(13);«/DIV»
 
 and it is an extension of the theorem that if «I»n«/I» is a positive integer
@@ -471,7 +471,7 @@ the tabulated values of «I»u«/I», then the ratio of the limit of error of «
 as calculated from the first «I»r«/I» terms of the series in (1), to ½ρ is the
 sum of the first «I»r«/I» terms of the series
 
-«DIV[style:text-align:center]»1 + 0 + θ (1 − θ) + θ (1 − θ) (2 − θ) + 7/12θ (1 − θ) (2 − θ) (3 − θ) +«BR»   ¼θ (1 − θ) (2 − θ) (3 − θ) (4 − θ) + 31/360θ (1 − θ) ... (5 − θ) + ...,«/DIV»
+«CTR»1 + 0 + θ (1 − θ) + θ (1 − θ) (2 − θ) + 7/12θ (1 − θ) (2 − θ) (3 − θ) +«BR»   ¼θ (1 − θ) (2 − θ) (3 − θ) (4 − θ) + 31/360θ (1 − θ)... (5 − θ) +...,«/CTR»
 
 while the corresponding ratio for the use of differences up to δ²p«I»u«/I»₀
 inclusive in (4) or up to δ²p «I»u«/I»₁ and «I»o«/I»²p «I»u«/I»₀ in (9) («I»i.e.«/I» in effect, up to
@@ -627,7 +627,7 @@ such as
 The following example illustrates the method, «I»h«/I» being taken
 to be 1°:—
 
-«DIV[style:text-align:center]»«I»Example 8.«/I»«/DIV»
+«CTR»«I»Example 8.«/I»«/CTR»
 
 «HTMLTABLE:<table class="figtable"><tr><td style="padding-left:0.5em;padding-right:0.5em;text-align:center;border:1px solid">«I»x«/I».</td><td style="padding-left:0.5em;padding-right:0.5em;text-align:center;border:1px solid">«I»u«/I» = sin «I»x«/I».</td><td style="padding-left:0.5em;padding-right:0.5em;text-align:center;border:1px solid">1st Diff.<br>(adjusted).</td><td style="padding-left:0.5em;padding-right:0.5em;text-align:center;border:1px solid">2nd Diff.<br>(adjusted).</td><td style="padding-left:0.5em;padding-right:0.5em;text-align:center;border:1px solid">3rd Diff.<br>(adjusted).</td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="border-right:1px solid">+</td><td style="border-right:1px solid">−</td><td>−</td></tr><tr style="text-align:center"><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">20°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.3420201</td><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">162932 50</td><td style="border-right:1px solid"> </td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid">22°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.3746066</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">1125 00</td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">161245 00</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em">48 75</td></tr><tr style="text-align:center"><td style="border-right:1px solid">23°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.3907311</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">1222 50</td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">158800 00</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em">48 30</td></tr><tr style="text-align:center"><td style="border-right:1px solid">26°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.4383711</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">1303 00</td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">156194 00</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em">47 49</td></tr><tr style="text-align:center"><td style="border-right:1px solid">27°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.4539905</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">1445 47</td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">151857 60</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em">46 00</td></tr><tr style="text-align:center"><td style="border-right:1px solid">32°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.5299193</td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">1583 48</td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">145523 67</td><td style="border-right:1px solid"> </td><td></td></tr><tr style="text-align:center"><td style="border-right:1px solid">35°</td><td style="padding-left:0.5em;padding-right:0.5em;border-right:1px solid">.5735764</td><td style="border-right:1px solid"> </td><td style="border-right:1px solid"> </td><td></td></tr></table>«/HTMLTABLE»
 
@@ -660,7 +660,7 @@ from this table for the particular value of y. For direct interpolation,
 consider that Δ represents differencing by changing «I»x«/I» into «I»x«/I» + 1,
 and Δ′ differencing by changing «I»y«/I» into «I»y«/I» + 1. Then the formula is
 
-«DIV[style:text-align:center]»«I»u«/I»x, y = (1 + Δ)x (1 + Δ′)y «I»u«/I»₀,₀;«/DIV»
+«CTR»«I»u«/I»x, y = (1 + Δ)x (1 + Δ′)y «I»u«/I»₀,₀;«/CTR»
 
 and the right-hand side can be developed in whatever form is most
 convenient for the particular case.
