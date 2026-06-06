@@ -211,16 +211,6 @@ def _process_center(raw, inner, text_transform, context, inner_registry):
     return _center_wrap(text_transform(inner))
 
 
-def _faithful_figure(raw: str) -> str:
-    """The role-free recursive figure producer (Phase-1 cutover target).
-    Lazy import — `_figure_faithful` pulls body-text, which would cycle at
-    package-import time."""
-    from britannica.pipeline.stages.elements._figure_faithful import (
-        produce_faithful_figure,
-    )
-    return produce_faithful_figure(raw)
-
-
 def _plain_image_disentangle(raw, text_transform, context):
     """`{{plain image with caption|image=X|align=|width=|caption=Y}}` IS a
     figtable in template spelling — ONE column, TWO cells: the image on top, the
@@ -341,7 +331,11 @@ def _process_lb(raw):
 
 _SUB_MAP = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
 _SUP_MAP = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾")
-_MARKER_TOKEN_RE = re.compile(r"«[^«»]*»")
+# Spans that `_process_subsup` must pass through untranslated: emitted markers
+# (`«…»`) AND walker element placeholders (`\x03ELEM:N\x03`) — translating a
+# placeholder's ID digits to sub/superscript breaks the outer marker substitution
+# (INTERPOLATION's `δu²` over a fraction placeholder).
+_MARKER_TOKEN_RE = re.compile(r"«[^«»]*»|\x03[^\x03]*\x03")
 
 
 def _process_subsup(raw, text_transform, context):
@@ -537,72 +531,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # `«DIV[style]»` / `«SPAN[style]»`).  Subsumes body-text `_p_ts`/`_div_ts`/
     # `_span_ts` and the styled-`<div>`→figure gate.
     "STYLED": _process_styled,
-    # Wikitable sub-kinds.
-    "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # UNPAIRED_FIGURE_GROUP — ≥2 images in a wikitable / `<table>` grid
-    # that the classifier hands off as a group; the producer partitions
-    # cells per image (vertical-stack OR parallel-row column-slice) and
-    # routes each image's cells through the shared figure pipeline,
-    # bundling what pairs and passing through the rest.  TOTAL: vs the
-    # generic `_unwrap_layout_table` passthrough it bundles equal-or-more
-    # in every case (0 regressions, +11 fixes incl. 4 grids the
-    # passthrough was silently under-bundling).  Collapses the old
-    # SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels into one.
-    "UNPAIRED_FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
-    # in row 0, alone in cell, no data-table header signal).  Has
-    # its own focused producer; falls back to `_unwrap_layout_table`
-    # for shapes it doesn't yet handle (baked captions in image raw,
-    # nested wikitables, POEM cells).
-    # Phase-1 cutover: faithful recursive producer (was _process_captioned_figure).
-    "CAPTIONED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # CAPTIONED_FIGURE_INLINE — image and caption share one cell,
-    # `<br>`-separated, often wrapped in `{{center|…}}` or a
-    # `<span style="…">…</span>` styling element.  Producer strips
-    # the image placeholder + wrapper templates from the cell, the
-    # remaining text is the caption.
-    "CAPTIONED_FIGURE_INLINE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # LEGENDED_FIGURE — single-image figure carrying legend material
-    # (multicol `|LABEL.||text|…`, prose `LABEL. text` cells, POEM
-    # placeholder, or nested wikitable).  Producer finds + extracts
-    # the legend first, then runs the same one-pass extract on the
-    # caption/attribution remainder, then assembles.
-    "LEGENDED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # LEGENDED_FIGURE_BESIDE — single-image figure whose legend sits
-    # in a sibling cell on the image's row, separated by `||`
-    # (ABBEY Fig 1 Santa Laura).  Producer parses the sibling cell's
-    # paragraph-separated `LABEL. text` entries directly from the
-    # raw row text (so paragraph-`\n\n` breaks survive), then finds
-    # the caption in a subsequent colspan row.
-    "LEGENDED_FIGURE_BESIDE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # LEGENDED_FIGURE_CHILD — single-image figure whose legend lives
-    # in a POEM placeholder or a nested wikitable child.  Producer
-    # finds the child, calls the appropriate raw-parser
-    # (`_emit_legend_chunk` for POEM, `_extract_poem_legend` for
-    # nested TABLE), excises the placeholder, and runs one-pass
-    # extraction on the remainder.
-    "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # (SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels removed — multi-image
-    # figures now classify as UNPAIRED_FIGURE_GROUP, above.)
-    # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
-    # wikitables (HYDROMEDUSAE-style composite).  No direct images
-    # at this level.  Initially shared with LAYOUT_WRAPPER.
-    "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    # FIGURE — a bare image + its structural caption run, carved as one span
-    # by the walker.  Cut over to the faithful producer (was `_produce_figure`,
-    # which folded the caption into `{{IMG:|caption}}` — flattening `{{sc|Fig.}}`
-    # to plain text, dropping the carried px, and breaking multi-line `<br />`
-    # captions).  Faithful keeps image + caption as separate source-order blocks.
-    "FIGURE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+    # (Figure `{|`-tables are de-recognized: LEGENDED_FIGURE / CAPTIONED_FIGURE(
+    # _INLINE) / LEGENDED_FIGURE_BESIDE/_CHILD / FIGURE_GROUP / UNPAIRED_FIGURE_GROUP
+    # / LAYOUT_WRAPPER / FIGURE classify as TABLE and dispatch to the same
+    # `_process_table_unified` below.  A plate is an article fragment, processed
+    # identically — the shadow producer they fed is gone.)
     # INLINE_GLYPHS — a `{|…|}` with no `|-` rows that flows `<hiero>` glyphs
     # (and the odd glyph-image) inline in a sentence; the transcriber's table
     # is layout scaffolding, not data.  Producer joins the cells back into
@@ -1418,9 +1351,8 @@ def _classify_table(raw: str, inner: str,
     for predicate, label in _PRE_ICL_PREDS:
         if predicate(raw, inner, inner_registry):
             return label
-    icl_label = _classify_icl_shape(raw, inner, inner_registry)
-    if icl_label is not None:
-        return icl_label
+    # (ICL sort removed — figure `{|`-tables are de-recognized; they fall through
+    # to the post-ICL predicates / TABLE, which the caller treats identically.)
     for predicate, label in _POST_ICL_PREDS:
         if predicate(raw, inner, inner_registry):
             return label
