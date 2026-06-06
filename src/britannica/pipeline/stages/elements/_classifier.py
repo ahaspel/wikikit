@@ -269,7 +269,10 @@ def _classify_brace_pipe(
     # alongside the legacy three-pass pipeline.
     from britannica.pipeline.stages.elements import _classify_table
     legacy = _to_legacy_registry(inner_registry)
-    return _classify_table(raw, inner_text, legacy)
+    label = _classify_table(raw, inner_text, legacy)
+    # Figure `{|`-tables are just tables — collapse the dead pairability labels to
+    # TABLE (same producer, no shadow recognizer).
+    return "TABLE" if label in _FIGURE_TABLE_LABELS else label
 
 
 # ── `<table>` routing ─────────────────────────────────────────────────
@@ -284,15 +287,21 @@ def _classify_brace_pipe(
 # other label (incl. a `<table>` the ladder calls LAYOUT_WRAPPER / DJVU_CROP)
 # stays on the table engine — exactly as before the collapse, when the
 # else-branch was HTML_TABLE → the same unified engine.
-_HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({
+# A figure `{|`-table is NOT a separate family: a plate is processed exactly like
+# an article (image leaves + legend prose in a table), fenced off only so the
+# page-seam joiner can treat it as one unit — which the `{|` bounding already gives.
+# So every figure label collapses to TABLE; the article walker's table path
+# (`_process_table_unified`) recurses it identically.  These labels are now dead
+# (`_classify_icl_shape` / `_layout` / `_figure_decompose` are the shadow recognizer
+# left to delete).
+_FIGURE_TABLE_LABELS: frozenset[str] = frozenset({
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE", "UNPAIRED_FIGURE_GROUP",
-    "LEGENDED_FIGURE", "LEGENDED_FIGURE_CHILD",
-    # CHEM — `_process_chemistry_layout` made `<table>`-aware (`_split_html_chem_row`
-    # + `<tr>` split); classifier (`_is_chemistry_layout_pred`) already recognizes.
-    # (MATH equation layouts are no longer routed away — `<math>` is a leaf, so a
-    # math-cell `<table>` is just a TABLE, rendered with its structure intact.)
-    "CHEMISTRY_LAYOUT",
+    "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE", "LEGENDED_FIGURE_CHILD",
+    "FIGURE_GROUP", "LAYOUT_WRAPPER",
 })
+# Only CHEM keeps its own `<table>`-aware producer (`_split_html_chem_row`); MATH
+# isn't routed away (`<math>` is a leaf, so a math-cell table is just a TABLE).
+_HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({"CHEMISTRY_LAYOUT"})
 
 
 def _classify_html_table(
