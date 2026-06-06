@@ -838,6 +838,14 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "sans-serif":   {"css": "font-family:sans-serif", "tag": "SPAN"},
     "serif":        {"css": "font-family:serif", "tag": "SPAN"},
     "overline":     {"css": "text-decoration:overline", "tag": "SPAN"},
+    # Graduated font-size family (relative scale) + nowrap variant → CSS.
+    "larger":       {"css": "font-size:120%", "tag": "SPAN"},
+    "x-larger":     {"css": "font-size:144%", "tag": "SPAN"},
+    "xx-larger":    {"css": "font-size:173%", "tag": "SPAN"},
+    "smaller":      {"css": "font-size:83%", "tag": "SPAN"},
+    "x-smaller":    {"css": "font-size:69%", "tag": "SPAN"},
+    "xx-smaller":   {"css": "font-size:58%", "tag": "SPAN"},
+    "nw":           {"css": "white-space:nowrap", "tag": "SPAN"},
 }
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(

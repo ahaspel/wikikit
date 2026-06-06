@@ -142,8 +142,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.match(r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
-    # Spacer / layout-primitive leaves — em/gap/clear/anchor/ditto/dhr/rule.
-    if re.match(r"\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b", raw, re.IGNORECASE):
+    # Spacer / rule / char-escape leaves — em/gap/clear/anchor/ditto/dhr/rule/bar/shy
+    # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).
+    if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
+                r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", raw, re.IGNORECASE):
         return "SPACER"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:

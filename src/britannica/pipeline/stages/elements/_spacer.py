@@ -1,32 +1,45 @@
-"""Spacer / layout-primitive LEAF producers — atomic glyphs and markers with no content
-to recurse.  Out of `_apply_markup`'s flat re.subs: `{{em}}`/`{{gap}}` are a space,
-`{{ditto}}` is ″, `{{dhr}}`/`{{rule}}` are horizontal-rule markers the viewer renders,
-and `{{clear}}`/`{{anchor}}` are layout/target primitives with no glyph in linear flow.
-A leaf: recognized, emit the char/marker, nothing recurses.
+"""Atomic LEAF producers — spacers, rules, and Wikisource char-escapes.  No content
+recurses; each template maps to a glyph/char or a viewer marker.  Out of `_apply_markup`'s
+flat re.subs: `{{em}}`/`{{gap}}`→space, `{{ditto}}`→″, `{{dhr}}`→«DHR»,
+`{{rule}}`/`{{bar}}`→rule marker, `{{clear}}`/`{{anchor}}`→nothing, and the char-escapes
+(`{{=}}`,`{{(}}`,`{{...}}`,`{{shy}}`, …) Wikisource uses to embed literal characters that
+would otherwise parse as markup → their literal char.  Recognized, emit, nothing recurses.
 """
 
 from __future__ import annotations
 
 import re
 
-_SPACER_RE = re.compile(
-    r"\{\{\s*([A-Za-z]+)\s*(?:\|([^{}]*))?\}\}", re.IGNORECASE | re.DOTALL)
+_LEAF_RE = re.compile(r"\{\{\s*(.*?)\s*(?:\|([^{}]*))?\}\}", re.DOTALL)
+# Literal-character escapes: template name IS the char (Wikisource convention).
+_ESCAPE = {"=": "=", "(": "(", ")": ")", "'": "'", "!": "|", "*": "*", "–": "–"}
 
 
 def process_spacer(raw: str) -> str:
-    m = _SPACER_RE.match(raw)
+    m = _LEAF_RE.match(raw)
     if not m:
         return ""
-    name = m.group(1).lower()
+    name = m.group(1).strip()
     arg = (m.group(2) or "").strip()
-    if name in ("em", "gap"):
+    low = name.lower()
+    if low in ("em", "gap"):
         return " "
-    if name == "ditto":
-        return "″"  # ″ ditto mark
-    if name == "dhr":  # display horizontal rule (vertical spacer marker)
+    if low == "ditto":
+        return "″"
+    if low == "dhr":
         return f"«DHR[{arg}]»" if arg else "«DHR»"
-    if name == "rule":
-        mn = re.match(r"(\d+)\s*em", arg)
-        return f"«BAR[{mn.group(1)}]»" if mn else "———"
-    # clear (float clear) / anchor (link target) — no glyph in linear flow.
+    if low in ("rule", "bar"):
+        mn = re.match(r"(\d+)", arg)
+        if mn:
+            return f"«BAR[{mn.group(1)}]»"
+        return "———" if low == "rule" else "«BAR»"
+    if name in ("...", "…", ". . ."):
+        return "..."
+    if name == "***":
+        return "***"
+    if low == "shy":
+        return "­"  # soft hyphen
+    if name in _ESCAPE:
+        return _ESCAPE[name]
+    # clear / anchor / unknown leaf → nothing in linear flow.
     return ""

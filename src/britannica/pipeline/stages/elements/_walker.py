@@ -160,7 +160,8 @@ _TARGET_FIRST_LINK_OPENER_RE = re.compile(
 # `{{dhr}}`/`{{rule}}` (rule markers), `{{clear}}`/`{{anchor}}` (no glyph).  Atomic;
 # the producer emits a char/marker, nothing recurses.
 _SPACER_OPENER_RE = re.compile(
-    r"\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b", re.IGNORECASE)
+    r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
+    r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", re.IGNORECASE)
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
@@ -457,7 +458,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|1911link|11link)\b"  # DOUBLE_BRACE templates
-    r"|\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b"  # SPACER leaves
+    r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
     r"|\{\{\s*lb-"  # lb- pound-weight glyph (ends in '-', no \b)
     r"|\{\{\s*(?:sub|sup)\s*\|"  # sub/sup typography
