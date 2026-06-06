@@ -2269,7 +2269,7 @@ a slide-valve whose laps, travel and
 angular advance are known, the same circle serving, on two scales, 
 to show the motion of the crank and of the eccentric. 
 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 Steam Engine Fig. 24.png|width=180}}</td><td></td><td>{{IMG:EB1911 Steam Engine Fig. 25.png|width=110}}</td></tr><tr><td>«SC»Fig«/SC». 24.</td><td></td><td>«SC»Fig«/SC». 25.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 24.png|width=180}}</td><td></td><td>{{IMG:EB1911 Steam Engine Fig. 25.png|width=110}}</td></tr><tr><td>«SC»Fig«/SC». 24.</td><td></td><td>«SC»Fig«/SC». 25.</td></tr></table>«/HTMLTABLE»
 «I»Zeuner’s Diagram«/I».—The graphic construction most usually 
 employed in slide-valve investigations is the ingenious diagram 
 published by Dr G. Zeuner in the «I»Civilingenieur«/I» in 1856.«FN[832f1]:Zeuner, «I»Treatise on Valve Gears«/I», trans, by M. Müller (1868).«/FN» On the 

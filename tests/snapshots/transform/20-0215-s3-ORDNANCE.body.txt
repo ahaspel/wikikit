@@ -2042,7 +2042,7 @@ of the weight of the projectile.
 «BR»
 «FS[92%]»«SC»Fig«/SC». 46.«/FS»«/CTR»
 «DHR[75%]»
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><tr><td>{{IMG:EB1911 - Ordnance Fig 47-48.png|width=390}}</td></tr><tr><td>«SC»Fig«/SC». 47.—French Obturator. «SC»Fig«/SC». 48.—Elswick Cup.</td></tr><tr><td></td></tr><tr><td>{{IMG:EB1911 - Ordnance Fig 49-51.png|width=400}}</td></tr><tr><td>«SC»Fig«/SC». 49. «SC»Fig«/SC». 50. «SC»Fig«/SC». 51.«BR» «SC»Figs«/SC». 49-51.—Broadwell Ring.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 47-48.png|width=390}}</td></tr><tr><td>«SC»Fig«/SC». 47.—French Obturator. «SC»Fig«/SC». 48.—Elswick Cup.</td></tr><tr><td></td></tr><tr><td>{{IMG:EB1911 - Ordnance Fig 49-51.png|width=400}}</td></tr><tr><td>«SC»Fig«/SC». 49. «SC»Fig«/SC». 50. «SC»Fig«/SC». 51.«BR» «SC»Figs«/SC». 49-51.—Broadwell Ring.</td></tr></table>«/HTMLTABLE»
 The progress of artillery and the improvements made in armour
 have been reciprocal; as the protective value of iron and
 subsequently of steel plates has increased, so the penetrative

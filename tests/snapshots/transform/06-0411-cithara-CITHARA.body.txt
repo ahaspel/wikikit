@@ -189,7 +189,7 @@ the cithara in transition during the middle ages, and the question
 of the origin of the Utrecht Psalter, in which the evolution of the
 cithara is traced at some length.«/FN» («I»q.v.«/I») took place.
 
-«HTMLTABLE:<table class="figtable" style="float: left; width: 480px"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr><td>«SC»Fig«/SC». 5.—Asiatic Cithara in«BR»transition (or rotta). From a«BR»fresco at Beni-Hasan«BR»(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in«BR»transition, of the Lycian«BR»Apollo (Rome Mus. Capit.).«BR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr style="font-size:92%;line-height:130%;padding-left:0.5em"><td>«SC»Fig«/SC». 5.—Asiatic Cithara in«BR»transition (or rotta). From a«BR»fresco at Beni-Hasan«BR»(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in«BR»transition, of the Lycian«BR»Apollo (Rome Mus. Capit.).«BR»</td></tr></table>«/HTMLTABLE»
 
 The first of these steps produced the «LN:rotta|Rotta«/LN» («I»q.v.«/I»), by the
 construction of body, arms and transverse bar in one piece.

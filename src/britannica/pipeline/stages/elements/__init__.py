@@ -531,7 +531,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "STYLED": _process_styled,
     # Wikitable sub-kinds.
     "LAYOUT_WRAPPER": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # UNPAIRED_FIGURE_GROUP — ≥2 images in a wikitable / `<table>` grid
     # that the classifier hands off as a group; the producer partitions
     # cells per image (vertical-stack OR parallel-row column-slice) and
@@ -542,7 +542,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # passthrough was silently under-bundling).  Collapses the old
     # SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels into one.
     "UNPAIRED_FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # CAPTIONED_FIGURE — single-image figure layout (one IMAGE child
     # in row 0, alone in cell, no data-table header signal).  Has
     # its own focused producer; falls back to `_unwrap_layout_table`
