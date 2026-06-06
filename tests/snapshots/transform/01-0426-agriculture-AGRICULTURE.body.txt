@@ -233,7 +233,162 @@ dividing the number of acres into the total produce, the results
 of a decade are collected in Table IX.
 
 «CTR»«DIV[style:font-size:83%]»«SC»Table«/SC» IX.—«I»Estimated Annual Average Yield per Acre of Crops in United Kingdom«/I», 1895–1904.«/DIV»«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr><td rowspan="2">Year. </td><td rowspan="2" style="border:1px solid">Wheat. </td><td rowspan="2" style="border:1px solid">Barley. </td><td rowspan="2" style="border:1px solid"> Oats.</td><td rowspan="2" style="border:1px solid">Beans. </td><td rowspan="2" style="border:1px solid"> Peas.</td><td rowspan="2" style="border:1px solid">Pota- «BR»toes.</td><td rowspan="2" style="border:1px solid;padding-left:0">Turnips«BR»and«BR» Swedes.</td><td rowspan="2" style="padding-left:0"> Mangels.</td><td colspan="2">Hay.<br>«BRACE2[6|u]»</td></tr><tr style="border-bottom:1px solid"><td style="padding-left:0"> Rota- «BR»tion.</td><td style="padding-left:0"> Permanent.</td></tr><tr><td></td><td>Bush.</td><td>Bush.</td><td>Bush.</td><td>Bush.</td><td>Bush.</td><td>Tons.</td><td>Tons.</td><td>Tons.</td><td>Cwt.</td><td>Cwt.</td></tr><tr><td>1895</td><td>26·33</td><td>32·09</td><td>38·67</td><td>22·98</td><td>22·62</td><td>5·64</td><td>13·11</td><td>16·44</td><td>29·08 </td><td>25·21</td></tr><tr><td>1896</td><td>33·63</td><td>34·16</td><td>37·97</td><td>25·69</td><td>25·34</td><td>4·93</td><td>12·79</td><td>14·99</td><td>27·95</td><td>24·14</td></tr><tr><td>1897</td><td>29·07</td><td>32·91</td><td>38·84</td><td>28·91</td><td>27·55</td><td>3·47</td><td>13·90</td><td>18·03</td><td>32·53</td><td>30·71</td></tr><tr><td>1898</td><td>34·75</td><td>36·24</td><td>42·27</td><td>31·13</td><td>27·60</td><td>5·23</td><td>12·74</td><td>17·71</td><td>36·49</td><td>34·27</td></tr><tr><td>1899</td><td>32·76</td><td>34·64</td><td>40·57</td><td>30·19</td><td>27·22</td><td>4·82</td><td> 9·97</td><td>17·41</td><td>31·04</td><td>29·11</td></tr><tr><td>1900</td><td>28·61</td><td>31·67</td><td>39·97</td><td>28·18</td><td>25·89</td><td>3·77</td><td>14·29</td><td>19·97</td><td>32·42</td><td>30·98</td></tr><tr><td>1901</td><td>30·93</td><td>31·70</td><td>39·35</td><td>24·29</td><td>25·97</td><td>5·81</td><td>12·95</td><td>19·37</td><td>28·98</td><td>23·85</td></tr><tr><td>1902</td><td>32·91</td><td>35·83</td><td>44·50</td><td>31·49</td><td>28·51</td><td>4·92</td><td>15·35</td><td>20·85</td><td>35·29</td><td>32·57</td></tr><tr><td>1903</td><td>30·15</td><td>32·38</td><td>40·81</td><td>31·27</td><td>26·56</td><td>4·45</td><td>12·44</td><td>17·19</td><td>33·07</td><td>31·27</td></tr><tr><td>1904</td><td>26·97</td><td>31·25</td><td>40·80</td><td>23·23</td><td>25·75</td><td>5·24</td><td>14·83</td><td>18·57</td><td>33·43</td><td>31·04</td></tr><tr style="border:1px solid;vertical-align:bottom"><td>Mean,«BR»10«BR»years</td><td>30·85</td><td>33·28</td><td>40·35</td><td>27·68</td><td>26·24</td><td>4·84</td><td>13·21</td><td>18·18</td><td>32·06</td><td>29·32</td></tr><tr style="border:1px solid"><td>1905</td><td>32·88</td><td>34·79</td><td>40·38</td><td>32·33</td><td>25·71</td><td>5·86</td><td>14·19</td><td>19·91</td><td>32·24</td><td>28·37</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr><td rowspan="2">Year. 
+</td><td rowspan="2" style="border:1px solid">Wheat. 
+</td><td rowspan="2" style="border:1px solid">Barley. 
+</td><td rowspan="2" style="border:1px solid"> Oats. 
+</td><td rowspan="2" style="border:1px solid">Beans. 
+</td><td rowspan="2" style="border:1px solid"> Peas. 
+</td><td rowspan="2" style="border:1px solid">Pota- «BR»toes.
+</td><td rowspan="2" style="border:1px solid;padding-left:0">Turnips«BR»and«BR» Swedes.
+</td><td rowspan="2" style="padding-left:0"> Mangels.
+</td><td colspan="2">Hay.<br>«BRACE2[6|u]»
+</td></tr><tr style="border-bottom:1px solid"><td style="padding-left:0"> Rota- «BR»tion.
+</td><td style="padding-left:0"> Permanent.
+</td></tr><tr><td>
+</td><td>Bush.
+</td><td>Bush.
+</td><td>Bush.
+</td><td>Bush.
+</td><td>Bush.
+</td><td>Tons.
+</td><td>Tons.
+</td><td>Tons.
+</td><td>Cwt.
+</td><td>Cwt.
+</td></tr><tr><td>1895
+</td><td>26·33
+</td><td>32·09
+</td><td>38·67
+</td><td>22·98
+</td><td>22·62
+</td><td>5·64
+</td><td>13·11
+</td><td>16·44
+</td><td>29·08 
+</td><td>25·21
+</td></tr><tr><td>1896
+</td><td>33·63
+</td><td>34·16
+</td><td>37·97
+</td><td>25·69
+</td><td>25·34
+</td><td>4·93
+</td><td>12·79
+</td><td>14·99
+</td><td>27·95
+</td><td>24·14
+</td></tr><tr><td>1897
+</td><td>29·07
+</td><td>32·91
+</td><td>38·84
+</td><td>28·91
+</td><td>27·55
+</td><td>3·47
+</td><td>13·90
+</td><td>18·03
+</td><td>32·53
+</td><td>30·71
+</td></tr><tr><td>1898
+</td><td>34·75
+</td><td>36·24
+</td><td>42·27
+</td><td>31·13
+</td><td>27·60
+</td><td>5·23
+</td><td>12·74
+</td><td>17·71
+</td><td>36·49
+</td><td>34·27
+</td></tr><tr><td>1899
+</td><td>32·76
+</td><td>34·64
+</td><td>40·57
+</td><td>30·19
+</td><td>27·22
+</td><td>4·82
+</td><td> 9·97
+</td><td>17·41
+</td><td>31·04
+</td><td>29·11
+</td></tr><tr><td>1900
+</td><td>28·61
+</td><td>31·67
+</td><td>39·97
+</td><td>28·18
+</td><td>25·89
+</td><td>3·77
+</td><td>14·29
+</td><td>19·97
+</td><td>32·42
+</td><td>30·98
+</td></tr><tr><td>1901
+</td><td>30·93
+</td><td>31·70
+</td><td>39·35
+</td><td>24·29
+</td><td>25·97
+</td><td>5·81
+</td><td>12·95
+</td><td>19·37
+</td><td>28·98
+</td><td>23·85
+</td></tr><tr><td>1902
+</td><td>32·91
+</td><td>35·83
+</td><td>44·50
+</td><td>31·49
+</td><td>28·51
+</td><td>4·92
+</td><td>15·35
+</td><td>20·85
+</td><td>35·29
+</td><td>32·57
+</td></tr><tr><td>1903
+</td><td>30·15
+</td><td>32·38
+</td><td>40·81
+</td><td>31·27
+</td><td>26·56
+</td><td>4·45
+</td><td>12·44
+</td><td>17·19
+</td><td>33·07
+</td><td>31·27
+</td></tr><tr><td>1904
+</td><td>26·97
+</td><td>31·25
+</td><td>40·80
+</td><td>23·23
+</td><td>25·75
+</td><td>5·24
+</td><td>14·83
+</td><td>18·57
+</td><td>33·43
+</td><td>31·04
+</td></tr><tr style="border:1px solid;vertical-align:bottom"><td>Mean,«BR»10«BR»years
+</td><td>30·85
+</td><td>33·28
+</td><td>40·35
+</td><td>27·68
+</td><td>26·24
+</td><td>4·84
+</td><td>13·21
+</td><td>18·18
+</td><td>32·06
+</td><td>29·32
+</td></tr><tr style="border:1px solid"><td>1905
+</td><td>32·88
+</td><td>34·79
+</td><td>40·38
+</td><td>32·33
+</td><td>25·71
+</td><td>5·86
+</td><td>14·19
+</td><td>19·91
+</td><td>32·24
+</td><td>28·37
+</td></tr></table>«/HTMLTABLE»
 The effects of a prolonged
 spring and summer drought, like that of 1893, are exemplified in
 the circumstance that four corn crops and the two hay crops all
@@ -435,7 +590,7 @@ carbon from the atmosphere, and produce, besides nitrogenous
 food materials, a very large amount of the carbohydrate sugar,
 as respiratory and fat-forming food for the live stock of the farm.
 
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><caption>«SC»Table«/SC» XI.—«I»The Weight and Average Composition of Ordinary Crops«/I», «I»in lb. per Acre«/I».</caption><tr style="text-align:center"><td rowspan="2" style="border: 1px solid black">Crop.</td><td colspan="2" style="border: 1px solid black">Weight of Crop.</td><td rowspan="2" style="border: 1px solid black">Total «BR»Pure «BR»Ash.</td><td rowspan="2" style="border: 1px solid black">Nitro-«BR»gen.</td><td rowspan="2" style="border: 1px solid black">Sul-«BR»phur.</td><td rowspan="2" style="border: 1px solid black">Potash.</td><td rowspan="2" style="border: 1px solid black">Soda.</td><td rowspan="2" style="border: 1px solid black">Lime.</td><td rowspan="2" style="border: 1px solid black">Mag-«BR»nesia.</td><td rowspan="2" style="border: 1px solid black">Phos-«BR»phoric «BR»Acid.</td><td rowspan="2" style="border: 1px solid black">Chlor-«BR»ine.</td><td rowspan="2" style="border: 1px solid black">Silica.</td></tr><tr><td style="border:1px solid;text-align:center;padding-left:0">At«BR» Harvest. </td><td style="border:1px solid">Dry.</td></tr><tr><td>Wheat, grain, 30 bushels</td><td>1,800</td><td>1530</td><td>30</td><td>34</td><td>2·7</td><td>9·3</td><td>0·6</td><td>1·0</td><td>3·6</td><td>14·2</td><td>0·1</td><td>0·6</td></tr><tr><td>″ straw</td><td>3,158</td><td>2653</td><td>142</td><td>16</td><td>5·1</td><td>19·5</td><td>2·0</td><td>8·2</td><td>3·5</td><td>6·9</td><td>2·4</td><td>96·3</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,958</td><td>4183</td><td>172</td><td>50</td><td>7·8</td><td>28·8</td><td>2·6</td><td>9·2</td><td>7·1</td><td>21·1</td><td>2·5</td><td>96·9</td></tr><tr><td>Barley, grain, 40 bushels</td><td>2,080</td><td>1747</td><td>46</td><td>35</td><td>2·9</td><td>9·8</td><td>1·1</td><td>1·2</td><td>4·0</td><td>16·0</td><td>0·5</td><td>11·8</td></tr><tr><td>″ straw.</td><td>2,447</td><td>2080</td><td>111</td><td>14</td><td>3·2</td><td>25·9</td><td>3·9</td><td>8·0</td><td>2·9</td><td>4·7</td><td>3·6</td><td>56·8</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,527</td><td>3827</td><td>157</td><td>49</td><td>6·1</td><td>35·7</td><td>5·0</td><td>9·2</td><td>6·9</td><td>20·7</td><td>4·1</td><td>68·6</td></tr><tr><td>Oats, grain, 45 bushels</td><td>1,890</td><td>1625</td><td>51</td><td>34</td><td>3·2</td><td>9·1</td><td>0·8</td><td>1·8</td><td>3·6</td><td>13·0</td><td>0·5</td><td>19·9</td></tr><tr><td>″ straw</td><td>2,835</td><td>2353</td><td>140</td><td>18</td><td>4·8</td><td>37·0</td><td>4·6</td><td>9·8</td><td>5·1</td><td>6·4</td><td>6·1</td><td>65·4</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,725</td><td>3978</td><td>191</td><td>52</td><td>8·0</td><td>46·1</td><td>5·4</td><td>11·6</td><td>8·7</td><td>19·4</td><td>6·6</td><td>85·3</td></tr><tr><td>Maize, grain, 30 bushels</td><td>1,680</td><td>1500</td><td>22</td><td>28</td><td>1·8</td><td>6·5</td><td>0·2</td><td>0·5</td><td>3·4</td><td>10·0</td><td>0·2</td><td>0·5</td></tr><tr><td>″ stalks, &c.</td><td>2,208</td><td>1877</td><td>99</td><td>15</td><td>..</td><td>29·8</td><td>..</td><td>..</td><td>..</td><td>8·0</td><td>..</td><td>..</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>3,888</td><td>3377</td><td>121</td><td>43</td><td>..</td><td>36·3</td><td>..</td><td>..</td><td>..</td><td>18·0</td><td>..</td><td>..</td></tr><tr style="border:1px solid"><td>Meadow hay, 1½ ton</td><td>3,360</td><td>2822</td><td>203</td><td>49</td><td>5·7</td><td>50·9</td><td>9·2</td><td>32·1</td><td>14·4</td><td>12·3</td><td>14·6</td><td>56·9</td></tr><tr style="border:1px solid"><td>Red Clover hay, 2 tons</td><td>4,480</td><td>3763</td><td>258</td><td>98</td><td>9·4</td><td>83·4</td><td>5·1</td><td>90·1</td><td>28·2</td><td>24·9</td><td>9·8</td><td>7·0</td></tr><tr><td>Beans, grain, 30 bushels</td><td>1,920</td><td>1613</td><td>58</td><td>78</td><td>4·4</td><td>24·3</td><td>0·6</td><td>2·9</td><td>4·2</td><td>22·8</td><td>1·1</td><td>0·4</td></tr><tr><td>″ straw.</td><td>2,240</td><td>1848</td><td>99</td><td>29</td><td>4·9</td><td>42·8</td><td>1·7</td><td>26·3</td><td>5·7</td><td>6·3</td><td>4·3</td><td>6·9</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,160</td><td>3461</td><td>157</td><td>107</td><td>9·3</td><td>67·1</td><td>2·3</td><td>29·2</td><td>9·9</td><td>29·1</td><td>5·4</td><td>7·3</td></tr><tr><td>Turnips, root, 17 tons</td><td>38,080</td><td>3126</td><td>218</td><td>61</td><td>15·2</td><td>108·6</td><td>17·0</td><td>5·5</td><td>5·7</td><td>22·4</td><td>10·9</td><td>2·6</td></tr><tr><td>″ leaf</td><td>11,424</td><td>1531</td><td>146</td><td>49</td><td>5·7</td><td>40·2</td><td>7·5</td><td>48·5</td><td>3·8</td><td>10·7</td><td>11·2</td><td>5·1</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>49,504</td><td>4657</td><td>364</td><td>110</td><td>20·9</td><td>148·8</td><td>24·5</td><td>74·0</td><td>9·5</td><td>33·1</td><td>22·1</td><td>7·7</td></tr><tr><td>Swedes, root, 14 tons</td><td>31,360</td><td>3349</td><td>163</td><td>70</td><td>14·6</td><td>63·3</td><td>22·8</td><td>19·7</td><td>6·8</td><td>16·9</td><td>6·8</td><td>3·1</td></tr><tr><td>″ leaf</td><td>4,704</td><td>706</td><td>75</td><td>28</td><td>3·2</td><td>16·4</td><td>9·2</td><td>22·7</td><td>2·4</td><td>4·8</td><td>8·3</td><td>3·6</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>36,064</td><td>4055</td><td>238</td><td>98</td><td>17·8*</td><td>79·7</td><td>32·0</td><td>42·4</td><td>9·2</td><td>21·7</td><td>15·1</td><td>6·7</td></tr><tr><td>Mangels, root, 22 tons</td><td>49,280</td><td>5914</td><td>426</td><td>98</td><td>4·9</td><td>222·8</td><td>69·4</td><td>15·9</td><td>18·3</td><td>36·4</td><td>42·5</td><td>8·7</td></tr><tr><td>″ leaf</td><td>18,233</td><td>1654</td><td>254</td><td>51</td><td>9·1</td><td>77·9</td><td>49·3</td><td>27·0</td><td>24·2</td><td>16·5</td><td>40·6</td><td>9·2</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>67,513</td><td>7568</td><td>680</td><td>149</td><td>14·0</td><td>300·7</td><td style="padding-left:0">118·7</td><td>42·9</td><td>42·5</td><td>52·9</td><td>83·1</td><td>17·9</td></tr><tr style="border:1px solid"><td>Potatoes, tubers, 6 tons</td><td>13,440</td><td>3360</td><td>127</td><td>46</td><td>2·7</td><td>76·5</td><td>3·8</td><td>3·4</td><td>6·3</td><td>21·5</td><td>4·4</td><td>2·6</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><caption>«SC»Table«/SC» XI.—«I»The Weight and Average Composition of Ordinary Crops«/I», «I»in lb. per Acre«/I».</caption><tr style="text-align:center"><td rowspan="2" style="border: 1px solid black">Crop.</td><td colspan="2" style="border: 1px solid black">Weight of Crop.</td><td rowspan="2" style="border: 1px solid black">Total «BR»Pure «BR»Ash.</td><td rowspan="2" style="border: 1px solid black">Nitrogen.</td><td rowspan="2" style="border: 1px solid black">Sulphur.</td><td rowspan="2" style="border: 1px solid black">Potash.</td><td rowspan="2" style="border: 1px solid black">Soda.</td><td rowspan="2" style="border: 1px solid black">Lime.</td><td rowspan="2" style="border: 1px solid black">Magnesia.</td><td rowspan="2" style="border: 1px solid black">Phosphoric «BR»Acid.</td><td rowspan="2" style="border: 1px solid black">Chlorine.</td><td rowspan="2" style="border: 1px solid black">Silica.</td></tr><tr><td style="border:1px solid;text-align:center;padding-left:0">At«BR» Harvest. </td><td style="border:1px solid">Dry.</td></tr><tr><td>Wheat, grain, 30 bushels</td><td>1,800</td><td>1530</td><td>30</td><td>34</td><td>2·7</td><td>9·3</td><td>0·6</td><td>1·0</td><td>3·6</td><td>14·2</td><td>0·1</td><td>0·6</td></tr><tr><td>″ straw</td><td>3,158</td><td>2653</td><td>142</td><td>16</td><td>5·1</td><td>19·5</td><td>2·0</td><td>8·2</td><td>3·5</td><td>6·9</td><td>2·4</td><td>96·3</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,958</td><td>4183</td><td>172</td><td>50</td><td>7·8</td><td>28·8</td><td>2·6</td><td>9·2</td><td>7·1</td><td>21·1</td><td>2·5</td><td>96·9</td></tr><tr><td>Barley, grain, 40 bushels</td><td>2,080</td><td>1747</td><td>46</td><td>35</td><td>2·9</td><td>9·8</td><td>1·1</td><td>1·2</td><td>4·0</td><td>16·0</td><td>0·5</td><td>11·8</td></tr><tr><td>″ straw.</td><td>2,447</td><td>2080</td><td>111</td><td>14</td><td>3·2</td><td>25·9</td><td>3·9</td><td>8·0</td><td>2·9</td><td>4·7</td><td>3·6</td><td>56·8</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,527</td><td>3827</td><td>157</td><td>49</td><td>6·1</td><td>35·7</td><td>5·0</td><td>9·2</td><td>6·9</td><td>20·7</td><td>4·1</td><td>68·6</td></tr><tr><td>Oats, grain, 45 bushels</td><td>1,890</td><td>1625</td><td>51</td><td>34</td><td>3·2</td><td>9·1</td><td>0·8</td><td>1·8</td><td>3·6</td><td>13·0</td><td>0·5</td><td>19·9</td></tr><tr><td>″ straw</td><td>2,835</td><td>2353</td><td>140</td><td>18</td><td>4·8</td><td>37·0</td><td>4·6</td><td>9·8</td><td>5·1</td><td>6·4</td><td>6·1</td><td>65·4</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,725</td><td>3978</td><td>191</td><td>52</td><td>8·0</td><td>46·1</td><td>5·4</td><td>11·6</td><td>8·7</td><td>19·4</td><td>6·6</td><td>85·3</td></tr><tr><td>Maize, grain, 30 bushels</td><td>1,680</td><td>1500</td><td>22</td><td>28</td><td>1·8</td><td>6·5</td><td>0·2</td><td>0·5</td><td>3·4</td><td>10·0</td><td>0·2</td><td>0·5</td></tr><tr><td>″ stalks, &c.</td><td>2,208</td><td>1877</td><td>99</td><td>15</td><td>..</td><td>29·8</td><td>..</td><td>..</td><td>..</td><td>8·0</td><td>..</td><td>..</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>3,888</td><td>3377</td><td>121</td><td>43</td><td>..</td><td>36·3</td><td>..</td><td>..</td><td>..</td><td>18·0</td><td>..</td><td>..</td></tr><tr style="border:1px solid"><td>Meadow hay, 1½ ton</td><td>3,360</td><td>2822</td><td>203</td><td>49</td><td>5·7</td><td>50·9</td><td>9·2</td><td>32·1</td><td>14·4</td><td>12·3</td><td>14·6</td><td>56·9</td></tr><tr style="border:1px solid"><td>Red Clover hay, 2 tons</td><td>4,480</td><td>3763</td><td>258</td><td>98</td><td>9·4</td><td>83·4</td><td>5·1</td><td>90·1</td><td>28·2</td><td>24·9</td><td>9·8</td><td>7·0</td></tr><tr><td>Beans, grain, 30 bushels</td><td>1,920</td><td>1613</td><td>58</td><td>78</td><td>4·4</td><td>24·3</td><td>0·6</td><td>2·9</td><td>4·2</td><td>22·8</td><td>1·1</td><td>0·4</td></tr><tr><td>″ straw.</td><td>2,240</td><td>1848</td><td>99</td><td>29</td><td>4·9</td><td>42·8</td><td>1·7</td><td>26·3</td><td>5·7</td><td>6·3</td><td>4·3</td><td>6·9</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>4,160</td><td>3461</td><td>157</td><td>107</td><td>9·3</td><td>67·1</td><td>2·3</td><td>29·2</td><td>9·9</td><td>29·1</td><td>5·4</td><td>7·3</td></tr><tr><td>Turnips, root, 17 tons</td><td>38,080</td><td>3126</td><td>218</td><td>61</td><td>15·2</td><td>108·6</td><td>17·0</td><td>5·5</td><td>5·7</td><td>22·4</td><td>10·9</td><td>2·6</td></tr><tr><td>″ leaf</td><td>11,424</td><td>1531</td><td>146</td><td>49</td><td>5·7</td><td>40·2</td><td>7·5</td><td>48·5</td><td>3·8</td><td>10·7</td><td>11·2</td><td>5·1</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>49,504</td><td>4657</td><td>364</td><td>110</td><td>20·9</td><td>148·8</td><td>24·5</td><td>74·0</td><td>9·5</td><td>33·1</td><td>22·1</td><td>7·7</td></tr><tr><td>Swedes, root, 14 tons</td><td>31,360</td><td>3349</td><td>163</td><td>70</td><td>14·6</td><td>63·3</td><td>22·8</td><td>19·7</td><td>6·8</td><td>16·9</td><td>6·8</td><td>3·1</td></tr><tr><td>″ leaf</td><td>4,704</td><td>706</td><td>75</td><td>28</td><td>3·2</td><td>16·4</td><td>9·2</td><td>22·7</td><td>2·4</td><td>4·8</td><td>8·3</td><td>3·6</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>36,064</td><td>4055</td><td>238</td><td>98</td><td>17·8*</td><td>79·7</td><td>32·0</td><td>42·4</td><td>9·2</td><td>21·7</td><td>15·1</td><td>6·7</td></tr><tr><td>Mangels, root, 22 tons</td><td>49,280</td><td>5914</td><td>426</td><td>98</td><td>4·9</td><td>222·8</td><td>69·4</td><td>15·9</td><td>18·3</td><td>36·4</td><td>42·5</td><td>8·7</td></tr><tr><td>″ leaf</td><td>18,233</td><td>1654</td><td>254</td><td>51</td><td>9·1</td><td>77·9</td><td>49·3</td><td>27·0</td><td>24·2</td><td>16·5</td><td>40·6</td><td>9·2</td></tr><tr style="border:1px solid"><td style="border-top:1px solid transparent">Total crop</td><td>67,513</td><td>7568</td><td>680</td><td>149</td><td>14·0</td><td>300·7</td><td style="padding-left:0">118·7</td><td>42·9</td><td>42·5</td><td>52·9</td><td>83·1</td><td>17·9</td></tr><tr style="border:1px solid"><td>Potatoes, tubers, 6 tons</td><td>13,440</td><td>3360</td><td>127</td><td>46</td><td>2·7</td><td>76·5</td><td>3·8</td><td>3·4</td><td>6·3</td><td>21·5</td><td>4·4</td><td>2·6</td></tr></table>«/HTMLTABLE»
 «CTR»«SPAN[style:font-size:92%]»*Calculated from a single analysis only.«/SPAN»«/CTR»
 
 The still more highly nitrogenous leguminous crops, although
@@ -466,17 +621,112 @@ at five-yearly intervals in Table XII. Under horses are embraced
 only unbroken horses and horses used solely for agriculture
 (including mares kept for breeding). The highest and
 lowest annual totals for the United Kingdom in the period 1875–1905
-were the following:PAGE:444«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td></td><td>Highest.</td><td>Lowest.</td><td> Difference. </td></tr><tr><td>Horses </td><td style="text-align:right;padding-right:0.5em">2,116,800 in 1905</td><td style="text-align:right;padding-right:0.5em">1,819,687 in 1875</td><td style="text-align:right;padding-right:0.5em">295,113</td></tr><tr><td>Cattle</td><td style="text-align:right;padding-right:0.5em">11,674,019 ″ 1905</td><td style="text-align:right;padding-right:0.5em">9,731,537 ″ 1877</td><td style="text-align:right;padding-right:0.5em">1,942,482</td></tr><tr><td>Sheep</td><td style="text-align:right;padding-right:0.5em"> 33,642,808 ″ 1892</td><td style="text-align:right;padding-right:0.5em"> 27,448,220 ″ 1882</td><td style="text-align:right;padding-right:0.5em">6,194,588</td></tr><tr><td>Pigs</td><td style="text-align:right;padding-right:0.5em">4,362,040 ″ 1890</td><td style="text-align:right;padding-right:0.5em">2,863,488 ″ 1880</td><td style="text-align:right;padding-right:0.5em">1,498,552</td></tr></table>«/HTMLTABLE»
+were the following:PAGE:444«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>
+</td><td>Highest.
+</td><td>Lowest.
+</td><td> Difference. 
+</td></tr><tr><td>Horses 
+</td><td style="text-align:right;padding-right:0.5em">2,116,800 in 1905
+</td><td style="text-align:right;padding-right:0.5em">1,819,687 in 1875
+</td><td style="text-align:right;padding-right:0.5em">295,113
+</td></tr><tr><td>Cattle
+</td><td style="text-align:right;padding-right:0.5em">11,674,019 ″ 1905
+</td><td style="text-align:right;padding-right:0.5em">9,731,537 ″ 1877
+</td><td style="text-align:right;padding-right:0.5em">1,942,482
+</td></tr><tr><td>Sheep
+</td><td style="text-align:right;padding-right:0.5em"> 33,642,808 ″ 1892
+</td><td style="text-align:right;padding-right:0.5em"> 27,448,220 ″ 1882
+</td><td style="text-align:right;padding-right:0.5em">6,194,588
+</td></tr><tr><td>Pigs
+</td><td style="text-align:right;padding-right:0.5em">4,362,040 ″ 1890
+</td><td style="text-align:right;padding-right:0.5em">2,863,488 ″ 1880
+</td><td style="text-align:right;padding-right:0.5em">1,498,552
+</td></tr></table>«/HTMLTABLE»
 
 After 1892 cattle, which in that year numbered 11,519,417, and sheep declined continuously for three years to the totals of 1895, the diminution being mainly the result of the memorable drought of 1893. Sheep, which numbered 32,571,018 in 1878, declined continuously to 27,448,220 in 1882—a loss of over five million head in five years. This was chiefly attributable to the ravages of the liver fluke which began in the disastrously wet season of 1879. Pigs, being prolific breeders, fluctuate more widely in numbers than cattle or sheep, for the difference of 1,498,552 in their case represents one-third of the highest total, whereas the difference is less than one-seventh for horses, less than one-sixth for cattle, and less than one-fifth for sheep.
 
 «CTR»«DIV[style:font-size:83%]»«SC»Table«/SC» XII.—«I»Numbers of Horses«/I», «I»Cattle«/I», «I»Sheep and Pigs in the«BR»United Kingdom.«/I»«/DIV»«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>Year. </td><td>Horses.</td><td>Cattle.</td><td>Sheep.</td><td>Pigs.</td></tr><tr><td>1875</td><td>1,819,687</td><td>10,162,787</td><td>33,491,948</td><td>3,495,167</td></tr><tr><td>1880</td><td>1,929,680</td><td> 9,871,153</td><td>30,239,620</td><td>2,863,488</td></tr><tr><td>1885</td><td>1,909,200</td><td>10,868,760</td><td>30,086,200</td><td>3,686,628</td></tr><tr><td>1890</td><td>1,964,911</td><td>10,789,858</td><td>31,667,195</td><td>4,362,040</td></tr><tr><td>1895</td><td>2,112,207</td><td>10,753,314</td><td>29,774,853</td><td>4,238,870</td></tr><tr><td>1900</td><td>2,000,402</td><td>11,454,902</td><td>31,054,547</td><td>3,663,669</td></tr><tr><td>1905</td><td>2,116,800</td><td>11,674,019</td><td>29,076,777</td><td>3,601,659</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>Year. 
+</td><td> Horses. 
+</td><td>  Cattle.  
+</td><td>  Sheep.  
+</td><td>  Pigs.  
+</td></tr><tr><td>1875
+</td><td>1,819,687
+</td><td>10,162,787
+</td><td>33,491,948
+</td><td>3,495,167
+</td></tr><tr><td>1880
+</td><td>1,929,680
+</td><td> 9,871,153
+</td><td>30,239,620
+</td><td>2,863,488
+</td></tr><tr><td>1885
+</td><td>1,909,200
+</td><td>10,868,760
+</td><td>30,086,200
+</td><td>3,686,628
+</td></tr><tr><td>1890
+</td><td>1,964,911
+</td><td>10,789,858
+</td><td>31,667,195
+</td><td>4,362,040
+</td></tr><tr><td>1895
+</td><td>2,112,207
+</td><td>10,753,314
+</td><td>29,774,853
+</td><td>4,238,870
+</td></tr><tr><td>1900
+</td><td>2,000,402
+</td><td>11,454,902
+</td><td>31,054,547
+</td><td>3,663,669
+</td></tr><tr><td>1905
+</td><td>2,116,800
+</td><td>11,674,019
+</td><td>29,076,777
+</td><td>3,601,659
+</td></tr></table>«/HTMLTABLE»
 
 The relative proportions as distinguished from the actual numbers—in which stock are distributed over the several sections of the United Kingdom do not vary greatly from year to year. Table XIII., in which the totals for the United Kingdom include those for the Channel Islands and Isle of Man, illustrates the preponderance of the sheep-breeding industry in the drier climate of Great Britain, and of the cattle-breeding industry in the more humid atmosphere of Ireland. In Great Britain in 1905, for every head of cattle there were about four head of sheep, whereas in Ireland the cattle outnumbered the sheep. 
 
 «CTR»«SC»Table«/SC» XIII.—«I»Numbers of Horses, Cattle, Sheep and Pigs in the«BR»United Kingdom in«/I» 1905.«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>1905.</td><td>Horses.</td><td>Cattle.</td><td>Sheep.</td><td>Pigs.</td></tr><tr><td>England</td><td style="text-align:right;padding-right:0.5em">1,204,124</td><td style="text-align:right;padding-right:0.5em">5,020,936</td><td style="text-align:right;padding-right:0.5em">14,698,018</td><td style="text-align:right;padding-right:0.5em">2,083,226</td></tr><tr><td>Wales</td><td style="text-align:right;padding-right:0.5em">161,923</td><td style="text-align:right;padding-right:0.5em">738,789</td><td style="text-align:right;padding-right:0.5em">3,534,967</td><td style="text-align:right;padding-right:0.5em">211,479</td></tr><tr><td>Scotland</td><td style="text-align:right;padding-right:0.5em">206,386</td><td style="text-align:right;padding-right:0.5em">1,227,295</td><td style="text-align:right;padding-right:0.5em">7,024,211</td><td style="text-align:right;padding-right:0.5em">130,214</td></tr><tr style="border:1px solid"><td>Great Britain</td><td style="text-align:right;padding-right:0.5em">1,572,433</td><td style="text-align:right;padding-right:0.5em">6,987,020</td><td style="text-align:right;padding-right:0.5em">25,257,196</td><td style="text-align:right;padding-right:0.5em">2,424,919</td></tr><tr style="border:1px solid"><td>Ireland</td><td style="text-align:right;padding-right:0.5em">534,875</td><td style="text-align:right;padding-right:0.5em">4,645,215</td><td style="text-align:right;padding-right:0.5em">3,749,352</td><td style="text-align:right;padding-right:0.5em">1,164,316</td></tr><tr><td>United <br>Kingdom«FN:Including Channel Islands and Isle of Man.«/FN» «BRACE2[2|r]»</td><td style="text-align:right;padding-right:0.5em">2,116,800</td><td style="text-align:right;padding-right:0.5em">11,674,019</td><td style="text-align:right;padding-right:0.5em">29,076,777</td><td style="text-align:right;padding-right:0.5em">3,601,659</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>1905.
+</td><td>Horses.
+</td><td>Cattle.
+</td><td>Sheep.
+</td><td>Pigs.
+</td></tr><tr><td>England
+</td><td style="text-align:right;padding-right:0.5em">1,204,124
+</td><td style="text-align:right;padding-right:0.5em">5,020,936
+</td><td style="text-align:right;padding-right:0.5em">14,698,018
+</td><td style="text-align:right;padding-right:0.5em">2,083,226
+</td></tr><tr><td>Wales
+</td><td style="text-align:right;padding-right:0.5em">161,923
+</td><td style="text-align:right;padding-right:0.5em">738,789
+</td><td style="text-align:right;padding-right:0.5em">3,534,967
+</td><td style="text-align:right;padding-right:0.5em">211,479
+</td></tr><tr><td>Scotland
+</td><td style="text-align:right;padding-right:0.5em">206,386
+</td><td style="text-align:right;padding-right:0.5em">1,227,295
+</td><td style="text-align:right;padding-right:0.5em">7,024,211
+</td><td style="text-align:right;padding-right:0.5em">130,214
+</td></tr><tr style="border:1px solid"><td>Great Britain
+</td><td style="text-align:right;padding-right:0.5em">1,572,433
+</td><td style="text-align:right;padding-right:0.5em">6,987,020
+</td><td style="text-align:right;padding-right:0.5em">25,257,196
+</td><td style="text-align:right;padding-right:0.5em">2,424,919
+</td></tr><tr style="border:1px solid"><td>Ireland
+</td><td style="text-align:right;padding-right:0.5em">534,875
+</td><td style="text-align:right;padding-right:0.5em">4,645,215
+</td><td style="text-align:right;padding-right:0.5em">3,749,352
+</td><td style="text-align:right;padding-right:0.5em">1,164,316
+</td></tr><tr><td>United <br>Kingdom«FN:Including Channel Islands and Isle of Man.«/FN» «BRACE2[2|r]»
+</td><td style="text-align:right;padding-right:0.5em">2,116,800
+</td><td style="text-align:right;padding-right:0.5em">11,674,019
+</td><td style="text-align:right;padding-right:0.5em">29,076,777
+</td><td style="text-align:right;padding-right:0.5em">3,601,659
+</td></tr></table>«/HTMLTABLE»
 
 Again, whilst Great Britain possessed only half as many cattle more than
 Ireland, she possessed six times as many sheep. The cattle population of England alone slightly exceeded that of Ireland, but cattle are more at home on the broad plains of England than amongst the hills and mountains of Wales and Scotland, which are suitable for sheep. Hence, whilst in England sheep were not three times as numerous as cattle, in Wales they were nearly five times, and in Scotland nearly six times as many. Great Britain had twice as many pigs as Ireland, but the swine industry is mainly. English and Irish, and England possessed more than six times as many pigs as Wales and Scotland together, the number in the last-named country being particularly small. One English county alone, Suffolk, maintained more pigs than the whole of Scotland.
@@ -487,7 +737,71 @@ The stock-breeders and graziers of the United Kingdom have, equally with the cor
 Up to 1896 store cattle were admitted into the United Kingdom for the purpose of being fattened, but under the Diseases of Animals Act of that year animals imported since then have to be slaughtered at the place of landing. The dimensions of this trade are shown in Table XIV.
 
 «CTR»«DIV[style:font-size:83%]»«SC»Table«/SC» XIV.—«I»Numbers of Cattle, Sheep and Pigs imported into the«BR»United Kingdom«/I», 1891–1905.«/DIV»«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td> Year. </td><td> Cattle. </td><td> Sheep. </td><td> Pigs. </td></tr><tr><td>1891</td><td>507,407</td><td>344,504</td><td> 542</td></tr><tr><td>1892</td><td>502,237</td><td> 79,048</td><td>3826</td></tr><tr><td>1893</td><td>340,045</td><td> 62,682</td><td> 138</td></tr><tr><td>1894</td><td>475,440</td><td>484,597</td><td>8</td></tr><tr><td>1895</td><td>415,565</td><td>1,065,470</td><td> 321</td></tr><tr><td>1896</td><td>562,553</td><td>769,592</td><td>4</td></tr><tr><td>1897</td><td>618,321</td><td>611,504</td><td>..</td></tr><tr><td>1898</td><td>569,066</td><td>663,747</td><td> 450</td></tr><tr><td>1899</td><td>503,504</td><td>607,755</td><td>..</td></tr><tr><td>1900</td><td>495,645</td><td>382,833</td><td>..</td></tr><tr><td>1901</td><td>495,635</td><td>383,594</td><td>..</td></tr><tr><td>1902</td><td>419,488</td><td>293,203</td><td>..</td></tr><tr><td>1903</td><td>522,546</td><td>354,241</td><td>..</td></tr><tr><td>1904</td><td>549,532</td><td>382,240</td><td>..</td></tr><tr><td>1905</td><td>565,139</td><td>183,084</td><td> 150</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td> Year. 
+</td><td> Cattle. 
+</td><td> Sheep. 
+</td><td> Pigs. 
+</td></tr><tr><td>1891
+</td><td>507,407
+</td><td>344,504
+</td><td> 542
+</td></tr><tr><td>1892
+</td><td>502,237
+</td><td> 79,048
+</td><td>3826
+</td></tr><tr><td>1893
+</td><td>340,045
+</td><td> 62,682
+</td><td> 138
+</td></tr><tr><td>1894
+</td><td>475,440
+</td><td>484,597
+</td><td>8
+</td></tr><tr><td>1895
+</td><td>415,565
+</td><td>1,065,470 
+</td><td> 321
+</td></tr><tr><td>1896
+</td><td>562,553
+</td><td>769,592
+</td><td>4
+</td></tr><tr><td>1897
+</td><td>618,321
+</td><td>611,504
+</td><td> ..
+</td></tr><tr><td>1898
+</td><td>569,066
+</td><td>663,747
+</td><td> 450
+</td></tr><tr><td>1899
+</td><td>503,504
+</td><td>607,755
+</td><td> ..
+</td></tr><tr><td>1900
+</td><td>495,645
+</td><td>382,833
+</td><td> ..
+</td></tr><tr><td>1901
+</td><td>495,635
+</td><td>383,594
+</td><td> .. 
+</td></tr><tr><td>1902
+</td><td>419,488
+</td><td>293,203
+</td><td> ..
+</td></tr><tr><td>1903
+</td><td>522,546
+</td><td>354,241
+</td><td> ..
+</td></tr><tr><td>1904
+</td><td>549,532
+</td><td>382,240
+</td><td> ..
+</td></tr><tr><td>1905
+</td><td>565,139
+</td><td>183,084
+</td><td> 150
+</td></tr></table>«/HTMLTABLE»
 
 The animals come mainly from the United States of America, Canada and Argentina, and the traffic in cattle is more uniform than that in sheep, whilst that in pigs seems practically to have reached extinction. The quantities of dead meat imported increased with great rapidity from 1891 to 1905, a circumstance largely due to the rise of the trade in chilled and frozen meat. Fresh beef in this form is imported chiefly from the United States and Australasia, fresh mutton from Australasia and Argentina.
 
@@ -501,7 +815,109 @@ The trend of the import trade in meat, live and dead (exclusive of rabbits), may
 The rate at which the trade in imported frozen mutton increased as compared with the industry in home-grown mutton is illustrated in the figures published annually by Messrs W.PAGE:445Weddel and Company, from which those for 1885 and 1890 and for each year from 1895 to 1906 are given in Table XVIII. The home-grown is the «I»estimated«/I» dead weight of sheep and lambs slaughtered, which is taken at 40% of the total number of sheep and lambs returned each year in the United Kingdom.
 
 «CTR»«DIV[style:font-size:83%]»«SC»Table«/SC» XVI.—«I»Average Values of Fresh Meat«/I», «I»Bacon and Hams«BR»imported into the United Kingdom«/I», 1891–1905—«I»per Cwt«/I».«/DIV»«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td>Year.</td><td>Fresh «BR»Beef.</td><td style="padding-left:0">Fresh«BR» Mutton.</td><td>Fresh «BR»Pork.</td><td>Bacon.</td><td>Hams.</td></tr><tr><td></td><td>s. d.</td><td>s. d.</td><td>s. d.</td><td>s. d.</td><td>s. d.</td></tr><tr><td>1891</td><td>42 1</td><td>39 6</td><td>47 6</td><td>37 11</td><td>46 4</td></tr><tr><td>1892</td><td>42 5</td><td>40 6</td><td>46 11</td><td>40 10</td><td>47 4</td></tr><tr><td>1893</td><td>42 4</td><td>39 3</td><td>50 0</td><td>53 0</td><td>58 5</td></tr><tr><td>1894</td><td>40 0</td><td>37 10</td><td>48 5</td><td>43 10</td><td>49 1</td></tr><tr><td>1895</td><td>39 0</td><td>35 2</td><td>46 1</td><td>39 0</td><td>44 11</td></tr><tr><td>1896</td><td>37 10</td><td>32 7</td><td>45 11</td><td>34 6</td><td>43 0</td></tr><tr><td>1897</td><td>38 5</td><td>30 3</td><td>44 0</td><td>35 5</td><td>42 8</td></tr><tr><td>1898</td><td>38 2</td><td>29 7</td><td>41 10</td><td>36 2</td><td>39 6</td></tr><tr><td>1899</td><td>38 8</td><td>31 7</td><td>41 11</td><td>35 10</td><td>41 5</td></tr><tr><td>1900</td><td>39 7</td><td>34 5</td><td>43 0</td><td>41 9</td><td>46 10</td></tr><tr><td>1901</td><td>39 6</td><td>36 7</td><td>43 4</td><td>47 1</td><td>48 8</td></tr><tr><td>1902</td><td>42 8</td><td>37 9</td><td>44 2</td><td>52 9</td><td>52 1</td></tr><tr><td>1903</td><td>40 3</td><td>39 0</td><td>44 1</td><td>52 10</td><td>55 1</td></tr><tr><td>1904</td><td>37 1</td><td>39 3</td><td>45 2</td><td>47 1</td><td>49 11</td></tr><tr><td>1905</td><td>35 6</td><td>38 6</td><td>46 0</td><td>46 6</td><td>47 4</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder"><tr style="text-align:center;border:1px solid"><td> Year. 
+</td><td> Fresh «BR»Beef.
+</td><td style="padding-left:0">Fresh«BR» Mutton. 
+</td><td> Fresh «BR»Pork.
+</td><td> Bacon. 
+</td><td> Hams. 
+</td></tr><tr><td>
+</td><td> s. d.
+</td><td> s. d.
+</td><td> s. d.
+</td><td> s. d.
+</td><td> s. d.
+</td></tr><tr><td>1891
+</td><td>42  1
+</td><td>39  6
+</td><td>47  6
+</td><td>37 11
+</td><td>46  4
+</td></tr><tr><td>1892
+</td><td>42  5
+</td><td>40  6
+</td><td>46 11
+</td><td>40 10
+</td><td>47  4
+</td></tr><tr><td>1893
+</td><td>42  4
+</td><td>39  3
+</td><td>50  0
+</td><td>53  0
+</td><td>58  5
+</td></tr><tr><td>1894
+</td><td>40  0
+</td><td>37 10
+</td><td>48  5
+</td><td>43 10
+</td><td>49  1
+</td></tr><tr><td>1895
+</td><td>39  0
+</td><td>35  2
+</td><td>46  1
+</td><td>39  0
+</td><td>44 11
+</td></tr><tr><td>1896
+</td><td>37 10
+</td><td>32  7
+</td><td>45 11
+</td><td>34  6
+</td><td>43  0
+</td></tr><tr><td>1897
+</td><td>38  5
+</td><td>30  3
+</td><td>44  0
+</td><td>35  5
+</td><td>42  8
+</td></tr><tr><td>1898
+</td><td>38  2
+</td><td>29  7
+</td><td>41 10
+</td><td>36  2
+</td><td>39  6
+</td></tr><tr><td>1899
+</td><td>38  8
+</td><td>31  7
+</td><td>41 11
+</td><td>35 10
+</td><td>41  5
+</td></tr><tr><td>1900
+</td><td>39  7
+</td><td>34  5
+</td><td>43  0
+</td><td>41  9
+</td><td>46 10
+</td></tr><tr><td>1901
+</td><td>39  6
+</td><td>36  7
+</td><td>43  4
+</td><td>47  1
+</td><td>48  8
+</td></tr><tr><td>1902
+</td><td>42  8
+</td><td>37  9
+</td><td>44  2
+</td><td>52  9
+</td><td>52  1
+</td></tr><tr><td>1903
+</td><td>40  3
+</td><td>39  0
+</td><td>44  1
+</td><td>52 10
+</td><td>55  1
+</td></tr><tr><td>1904
+</td><td>37  1
+</td><td>39  3
+</td><td>45  2
+</td><td>47  1
+</td><td>49 11
+</td></tr><tr><td>1905
+</td><td>35  6
+</td><td>38  6
+</td><td>46  0
+</td><td>46  6
+</td><td>47  4
+</td></tr></table>«/HTMLTABLE»
 
 In the imported column is given the weight of fresh (frozen) mutton and lamb imported, plus the «I»estimated«/I» dead weight of the sheep imported on the hoof for slaughter. The quantity imported in 1899 was double that in 1890, and quadruple that in 1885. Moreover, in 1885 the imported product was only about one-seventh
 as much as the home-grown, whereas in 1890 it was more than one-fourth, and in 1906 close on two-thirds. 
@@ -511,7 +927,7 @@ as much as the home-grown, whereas in 1890 it was more than one-fourth, and in 1
 This large import trade in fresh meat, which sprang up entirely within the last quarter of the 19th century, has placed an abundance of cheap and wholesome food well within the reach of the great industrial populations of the United Kingdom.
 
 «CTR»«DIV[style:font-size:83%]»«SC»Table«/SC» XVIII.—«I»Home Product and Imports of Sheep and Mutton«/I»«BR» «I»into the United Kingdom—Thousands of Tons.«/I»«/DIV»«/CTR»
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="font-size:92%;line-height:120%;text-align:center"><tr style="border:1px solid"><td>Year.</td><td>Home-«BR» grown. </td><td style="border-right:2px solid"> Imported. </td><td>Year.</td><td>Home-«BR» grown. </td><td> Imported. </td></tr><tr><td>1885</td><td>322</td><td style="border-right:2px solid">47</td><td>1900</td><td>332</td><td>179</td></tr><tr><td>1890</td><td>339</td><td style="border-right:2px solid">92</td><td>1901</td><td>330</td><td>191</td></tr><tr><td>1895</td><td>319</td><td style="border-right:2px solid">157</td><td>1902</td><td>322</td><td>191</td></tr><tr><td>1896</td><td>329</td><td style="border-right:2px solid">164</td><td>1903</td><td>318</td><td>210«FN:In 1903 two of the principal sources of supply of mutton shipped in excess of their exportable surplus, for which they suffered severely in 1904—hence the somewhat irregular movements after 1903.«/FN»</td></tr><tr><td>1897</td><td>327</td><td style="border-right:2px solid">175</td><td>1904</td><td>311</td><td>185</td></tr><tr><td>1898</td><td>333</td><td style="border-right:2px solid">182</td><td>1905</td><td>312</td><td>195</td></tr><tr><td>1899</td><td>339</td><td style="border-right:2px solid">187</td><td>1906</td><td>313</td><td>207</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="font-size:92%;line-height:120%;text-align:center"><tr style="border:1px solid"><td>Year.</td><td>Home grown. </td><td style="border-right:2px solid"> Imported. </td><td>Year.</td><td>Home grown. </td><td> Imported. </td></tr><tr><td>1885</td><td>322</td><td style="border-right:2px solid">47</td><td>1900</td><td>332</td><td>179</td></tr><tr><td>1890</td><td>339</td><td style="border-right:2px solid">92</td><td>1901</td><td>330</td><td>191</td></tr><tr><td>1895</td><td>319</td><td style="border-right:2px solid">157</td><td>1902</td><td>322</td><td>191</td></tr><tr><td>1896</td><td>329</td><td style="border-right:2px solid">164</td><td>1903</td><td>318</td><td>210«FN:In 1903 two of the principal sources of supply of mutton shipped in excess of their exportable surplus, for which they suffered severely in 1904—hence the somewhat irregular movements after 1903.«/FN»</td></tr><tr><td>1897</td><td>327</td><td style="border-right:2px solid">175</td><td>1904</td><td>311</td><td>185</td></tr><tr><td>1898</td><td>333</td><td style="border-right:2px solid">182</td><td>1905</td><td>312</td><td>195</td></tr><tr><td>1899</td><td>339</td><td style="border-right:2px solid">187</td><td>1906</td><td>313</td><td>207</td></tr></table>«/HTMLTABLE»
 At the same time it cannot be gainsaid that it has opened the way to fraud. Butchers have palmed off upon their customers imported fresh meat as homegrown, and secured a dishonest profit by charging for it the prices of the latter, which are considerably in excess of those of the imported product.
 «CTR»«I»Sale of Cattle by Live Weight«/I».«/CTR»
 
@@ -522,7 +938,7 @@ In the feeding experiments which have been carried on at Rothamsted it has been 
 
 The quantity of digestible nutritive matter in 1000 lb of ordinary feeding-stuffs when supplied to sheep or oxen is shown in Table XIX. This table is taken from Warington’s «I»Chemistry of the Farm«/I», 19th edition (Vinton and Co.), to which reference may be made for a detailed discussion of the feeding of animals. In the fattening of animals for the butcher the principle ofPAGE:446early maturity has received full recognition. If the sole purpose for which an animal is reared is to prepare it for the block—and this is the case with steers amongst cattle and with wethers amongst sheep—the sooner it is ready for slaughter the less should be the outlay involved. During the whole time the animal is living the feeder has to pay what has been termed the “life tax”—that is, so much of the food has to go to the maintenance of the animal as a living organism, independently of that which may be undergoing conversion into what will subsequently be available in the form of beef or mutton. If a bullock can be rendered fit for the butcher at the age of two or three years, will the animal repay another year’s feeding? It has been proved at the Christmas fat stock shows that the older a bullock gets the less will he gain in weight per day as a result of the feeding. With regard to this point the work of the Smithfield Club deserves recognition. This body was instituted in 1798 as the Smithfield Cattle and Sheep Society, the title being
 changed to that of the Smithfield Club in 1802.
-«HTMLTABLE:<table class="figtable" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;font-size:92%;line-height:110%;text-align:right"><caption>«SC»Table«/SC» XIX.—«I»Digestible Matter in«/I» 1000 «I»lb. of various Foods.«/I»</caption><tr style="text-align:center"><td rowspan="2" style="border:1px solid"></td><td rowspan="2" style="border:1px solid">Total«BR» Organic «BR»Matter.</td><td colspan="2" style="border:1px solid">Nitrogenous«BR»Substances.</td><td rowspan="2" style="border:1px solid"> Fat. </td><td rowspan="2" style="border:1px solid">Soluble«BR»Carbo-«BR» hydrates.</td><td rowspan="2" style="border:1px solid"> Fibre. </td></tr><tr><td style="border:1px solid;text-align:center">Albu-«BR» minoids.</td><td style="border:1px solid;text-align:center"> Amides,«BR»etc.</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Cotton cake (decorticated)</td><td style="border-right:1px solid;padding-right:1em">691</td><td style="border-right:1px solid;padding-right:1em">374</td><td style="border-right:1px solid;padding-right:1em">18</td><td style="border-right:1px solid;padding-right:1em">128</td><td style="border-right:1px solid;padding-right:1em">158</td><td style="padding-right:1em">13</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:2.5em">″ (undecorticated)</td><td style="border-right:1px solid;padding-right:1em">422</td><td style="border-right:1px solid;padding-right:1em">150</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">50</td><td style="border-right:1px solid;padding-right:1em">177</td><td style="padding-right:1em">32</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Linseed cake</td><td style="border-right:1px solid;padding-right:1em">655</td><td style="border-right:1px solid;padding-right:1em">230</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">103</td><td style="border-right:1px solid;padding-right:1em">266</td><td style="padding-right:1em">45</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Beans</td><td style="border-right:1px solid;padding-right:1em">733</td><td style="border-right:1px solid;padding-right:1em">196</td><td style="border-right:1px solid;padding-right:1em">28</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">446</td><td style="padding-right:1em">51</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat «FN:In the absence of experiments it is assumed that wheat is digested like other foods of the same class.«/FN»</td><td style="border-right:1px solid;padding-right:1em">786</td><td style="border-right:1px solid;padding-right:1em">92</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">15</td><td style="border-right:1px solid;padding-right:1em">656</td><td>10</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Oats</td><td style="border-right:1px solid;padding-right:1em">600</td><td style="border-right:1px solid;padding-right:1em">81</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">45</td><td style="border-right:1px solid;padding-right:1em">441</td><td>26</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Barley</td><td style="border-right:1px solid;padding-right:1em">715</td><td style="border-right:1px solid;padding-right:1em">70</td><td style="border-right:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">19</td><td style="border-right:1px solid;padding-right:1em">607</td><td>15</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Maize</td><td style="border-right:1px solid;padding-right:1em">786</td><td style="border-right:1px solid;padding-right:1em">73</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">44</td><td style="border-right:1px solid;padding-right:1em">651</td><td>12</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Rice meal</td><td style="border-right:1px solid;padding-right:1em">612</td><td style="border-right:1px solid;padding-right:1em">67</td><td style="border-right:1px solid;padding-right:1em">10</td><td style="border-right:1px solid;padding-right:1em">102</td><td style="border-right:1px solid;padding-right:1em">411</td><td>22</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat bran</td><td style="border-right:1px solid;padding-right:1em">585</td><td style="border-right:1px solid;padding-right:1em">90</td><td style="border-right:1px solid;padding-right:1em">20</td><td style="border-right:1px solid;padding-right:1em">27</td><td style="border-right:1px solid;padding-right:1em">426</td><td>22</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Malt sprouts</td><td style="border-right:1px solid;padding-right:1em">681</td><td style="border-right:1px solid;padding-right:1em">114</td><td style="border-right:1px solid;padding-right:1em">71</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">379</td><td>106</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Brewers’ grains</td><td style="border-right:1px solid;padding-right:1em">137</td><td style="border-right:1px solid;padding-right:1em">34</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">14</td><td style="border-right:1px solid;padding-right:1em">67</td><td>20</td></tr><tr><td style="border-right:1px solid;text-align:left">″ (dried)</td><td style="border-right:1px solid;padding-right:1em">529</td><td style="border-right:1px solid;padding-right:1em">136</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:1em">57</td><td style="border-right:1px solid;padding-right:1em">266</td><td>62</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Pasture grass</td><td style="border-right:1px solid;padding-right:1em">156</td><td style="border-right:1px solid;padding-right:1em">19</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">84</td><td>36</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Clover (bloom beginning)</td><td style="border-right:1px solid;padding-right:1em">123</td><td style="border-right:1px solid;padding-right:1em">17</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">63</td><td>30</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Clover hay (medium)</td><td style="border-right:1px solid;padding-right:1em">440</td><td style="border-right:1px solid;padding-right:1em">47</td><td style="border-right:1px solid;padding-right:1em">25</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">242</td><td>113</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Meadow hay (best)</td><td style="border-right:1px solid;padding-right:1em">511</td><td style="border-right:1px solid;padding-right:1em">60</td><td style="border-right:1px solid;padding-right:1em">18</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">269</td><td>151</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:3em">″ (medium)</td><td style="border-right:1px solid;padding-right:1em">485</td><td style="border-right:1px solid;padding-right:1em">40</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">269</td><td>152</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:3em">″ (poor)</td><td style="border-right:1px solid;padding-right:1em">460</td><td style="border-right:1px solid;padding-right:1em">29</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">10</td><td style="border-right:1px solid;padding-right:1em">242</td><td>174</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Maize silage</td><td style="border-right:1px solid;padding-right:1em">124</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">75</td><td>34</td></tr><tr><td></td><td style="border-right:1px solid;border-left:1px solid"></td><td colspan="2" style="text-align:center">«BRACE2[6|d]»</td><td style="border-right:1px solid;border-left:1px solid"></td><td style="border-right:1px solid"></td><td></td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Bean straw</td><td style="border-right:1px solid;padding-right:1em">412</td><td colspan="2">«CTR»40«/CTR»</td><td style="border-right:1px solid;border-left:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">211</td><td>155</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Oat straw</td><td style="border-right:1px solid;padding-right:1em">381</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">163</td><td>199</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Barley straw</td><td style="border-right:1px solid;padding-right:1em">426</td><td style="border-right:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">3</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">211</td><td>202</td></tr><tr><td></td><td style="border-right:1px solid;border-left:1px solid"></td><td colspan="2" style="text-align:center">«BRACE2[6|d]»</td><td style="border-right:1px solid;border-left:1px solid"></td><td style="border-right:1px solid"></td><td></td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat straw</td><td style="border-right:1px solid;padding-right:1em">351</td><td colspan="2">«CTR»4«/CTR»</td><td style="border-right:1px solid;border-left:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">150</td><td>193</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Potatoes</td><td style="border-right:1px solid;padding-right:1em">213</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">9</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">195</td><td>3</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Mangels (large)</td><td style="border-right:1px solid;padding-right:1em">89</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:0.5em">½</td><td style="border-right:1px solid;padding-right:1em">74</td><td>6</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:2em">″ (small)</td><td style="border-right:1px solid;padding-right:1em">109</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:0.5em">½</td><td style="border-right:1px solid;padding-right:1em">96</td><td>5</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Swedes</td><td style="border-right:1px solid;padding-right:1em">87</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">71</td><td>6</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Turnips</td><td style="border-right:1px solid;padding-right:1em">68</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">56</td><td>5</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;font-size:92%;line-height:110%;text-align:right"><caption>«SC»Table«/SC» XIX.—«I»Digestible Matter in«/I» 1000 «I»lb. of various Foods.«/I»</caption><tr style="text-align:center"><td rowspan="2" style="border:1px solid"></td><td rowspan="2" style="border:1px solid">Total«BR» Organic «BR»Matter.</td><td colspan="2" style="border:1px solid">Nitrogenous«BR»Substances.</td><td rowspan="2" style="border:1px solid"> Fat. </td><td rowspan="2" style="border:1px solid">Soluble«BR»Carbo hydrates.</td><td rowspan="2" style="border:1px solid"> Fibre. </td></tr><tr><td style="border:1px solid;text-align:center">Albu minoids.</td><td style="border:1px solid;text-align:center"> Amides,«BR»etc.</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Cotton cake (decorticated)</td><td style="border-right:1px solid;padding-right:1em">691</td><td style="border-right:1px solid;padding-right:1em">374</td><td style="border-right:1px solid;padding-right:1em">18</td><td style="border-right:1px solid;padding-right:1em">128</td><td style="border-right:1px solid;padding-right:1em">158</td><td style="padding-right:1em">13</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:2.5em">″ (undecorticated)</td><td style="border-right:1px solid;padding-right:1em">422</td><td style="border-right:1px solid;padding-right:1em">150</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">50</td><td style="border-right:1px solid;padding-right:1em">177</td><td style="padding-right:1em">32</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Linseed cake</td><td style="border-right:1px solid;padding-right:1em">655</td><td style="border-right:1px solid;padding-right:1em">230</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">103</td><td style="border-right:1px solid;padding-right:1em">266</td><td style="padding-right:1em">45</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Beans</td><td style="border-right:1px solid;padding-right:1em">733</td><td style="border-right:1px solid;padding-right:1em">196</td><td style="border-right:1px solid;padding-right:1em">28</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">446</td><td style="padding-right:1em">51</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat «FN:In the absence of experiments it is assumed that wheat is digested like other foods of the same class.«/FN»</td><td style="border-right:1px solid;padding-right:1em">786</td><td style="border-right:1px solid;padding-right:1em">92</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">15</td><td style="border-right:1px solid;padding-right:1em">656</td><td>10</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Oats</td><td style="border-right:1px solid;padding-right:1em">600</td><td style="border-right:1px solid;padding-right:1em">81</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">45</td><td style="border-right:1px solid;padding-right:1em">441</td><td>26</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Barley</td><td style="border-right:1px solid;padding-right:1em">715</td><td style="border-right:1px solid;padding-right:1em">70</td><td style="border-right:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">19</td><td style="border-right:1px solid;padding-right:1em">607</td><td>15</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Maize</td><td style="border-right:1px solid;padding-right:1em">786</td><td style="border-right:1px solid;padding-right:1em">73</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">44</td><td style="border-right:1px solid;padding-right:1em">651</td><td>12</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Rice meal</td><td style="border-right:1px solid;padding-right:1em">612</td><td style="border-right:1px solid;padding-right:1em">67</td><td style="border-right:1px solid;padding-right:1em">10</td><td style="border-right:1px solid;padding-right:1em">102</td><td style="border-right:1px solid;padding-right:1em">411</td><td>22</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat bran</td><td style="border-right:1px solid;padding-right:1em">585</td><td style="border-right:1px solid;padding-right:1em">90</td><td style="border-right:1px solid;padding-right:1em">20</td><td style="border-right:1px solid;padding-right:1em">27</td><td style="border-right:1px solid;padding-right:1em">426</td><td>22</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Malt sprouts</td><td style="border-right:1px solid;padding-right:1em">681</td><td style="border-right:1px solid;padding-right:1em">114</td><td style="border-right:1px solid;padding-right:1em">71</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">379</td><td>106</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Brewers’ grains</td><td style="border-right:1px solid;padding-right:1em">137</td><td style="border-right:1px solid;padding-right:1em">34</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">14</td><td style="border-right:1px solid;padding-right:1em">67</td><td>20</td></tr><tr><td style="border-right:1px solid;text-align:left">″ (dried)</td><td style="border-right:1px solid;padding-right:1em">529</td><td style="border-right:1px solid;padding-right:1em">136</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:1em">57</td><td style="border-right:1px solid;padding-right:1em">266</td><td>62</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Pasture grass</td><td style="border-right:1px solid;padding-right:1em">156</td><td style="border-right:1px solid;padding-right:1em">19</td><td style="border-right:1px solid;padding-right:1em">11</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">84</td><td>36</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Clover (bloom beginning)</td><td style="border-right:1px solid;padding-right:1em">123</td><td style="border-right:1px solid;padding-right:1em">17</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">63</td><td>30</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Clover hay (medium)</td><td style="border-right:1px solid;padding-right:1em">440</td><td style="border-right:1px solid;padding-right:1em">47</td><td style="border-right:1px solid;padding-right:1em">25</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">242</td><td>113</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Meadow hay (best)</td><td style="border-right:1px solid;padding-right:1em">511</td><td style="border-right:1px solid;padding-right:1em">60</td><td style="border-right:1px solid;padding-right:1em">18</td><td style="border-right:1px solid;padding-right:1em">13</td><td style="border-right:1px solid;padding-right:1em">269</td><td>151</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:3em">″ (medium)</td><td style="border-right:1px solid;padding-right:1em">485</td><td style="border-right:1px solid;padding-right:1em">40</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">12</td><td style="border-right:1px solid;padding-right:1em">269</td><td>152</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:3em">″ (poor)</td><td style="border-right:1px solid;padding-right:1em">460</td><td style="border-right:1px solid;padding-right:1em">29</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">10</td><td style="border-right:1px solid;padding-right:1em">242</td><td>174</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Maize silage</td><td style="border-right:1px solid;padding-right:1em">124</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">75</td><td>34</td></tr><tr><td></td><td style="border-right:1px solid;border-left:1px solid"></td><td colspan="2" style="text-align:center">«BRACE2[6|d]»</td><td style="border-right:1px solid;border-left:1px solid"></td><td style="border-right:1px solid"></td><td></td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Bean straw</td><td style="border-right:1px solid;padding-right:1em">412</td><td colspan="2">«CTR»40«/CTR»</td><td style="border-right:1px solid;border-left:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">211</td><td>155</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Oat straw</td><td style="border-right:1px solid;padding-right:1em">381</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">163</td><td>199</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Barley straw</td><td style="border-right:1px solid;padding-right:1em">426</td><td style="border-right:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">3</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:1em">211</td><td>202</td></tr><tr><td></td><td style="border-right:1px solid;border-left:1px solid"></td><td colspan="2" style="text-align:center">«BRACE2[6|d]»</td><td style="border-right:1px solid;border-left:1px solid"></td><td style="border-right:1px solid"></td><td></td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Wheat straw</td><td style="border-right:1px solid;padding-right:1em">351</td><td colspan="2">«CTR»4«/CTR»</td><td style="border-right:1px solid;border-left:1px solid;padding-right:1em">4</td><td style="border-right:1px solid;padding-right:1em">150</td><td>193</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Potatoes</td><td style="border-right:1px solid;padding-right:1em">213</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">9</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">195</td><td>3</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Mangels (large)</td><td style="border-right:1px solid;padding-right:1em">89</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">8</td><td style="border-right:1px solid;padding-right:0.5em">½</td><td style="border-right:1px solid;padding-right:1em">74</td><td>6</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:2em">″ (small)</td><td style="border-right:1px solid;padding-right:1em">109</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">6</td><td style="border-right:1px solid;padding-right:0.5em">½</td><td style="border-right:1px solid;padding-right:1em">96</td><td>5</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Swedes</td><td style="border-right:1px solid;padding-right:1em">87</td><td style="border-right:1px solid;padding-right:1em">2</td><td style="border-right:1px solid;padding-right:1em">7</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">71</td><td>6</td></tr><tr><td style="border-right:1px solid;text-align:left;padding-left:1em">Turnips</td><td style="border-right:1px solid;padding-right:1em">68</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">5</td><td style="border-right:1px solid;padding-right:1em">1</td><td style="border-right:1px solid;padding-right:1em">56</td><td>5</td></tr></table>«/HTMLTABLE»
 The original object—the supply of the cattle markets of Smithfield and other places with the cheapest and best meat—is still kept strictly in view. The judges, in making their awards at the show held annually in December, at Islington, North London (since 1862), are instructed to decide according to quality of flesh, lightness of offal, age and early maturity, with no restrictions as to feeding, and thus to promote the primary aim of the club in encouraging the selection and breeding of the best and most useful animals for the production of meat, and testing their capabilities in respect of early maturity. At the first show, held at Smithfield in 1799, two classes were provided for cattle and two for sheep, the prizes offered amounting to £52: 10s. In 1839 the classes comprised seven for cattle, six for sheep, and one for pigs, with prizes to the amount of £300. By 1862 the classes had risen to 29 for cattle, 17 for sheep and 4 for pigs, and the prize money to £2072. At the centenary show in 1898 provision was made for 40 classes for cattle, 29 for sheep, 18 for pigs, and 7 for animals to be slaughtered, whilst to mark the importance of the occasion the prizes offered amounted to close upon £5000 in value. In 1907 there were 38 classes for cattle, 29 for sheep, 20 for pigs, and 12 for carcase competitors, and the value of the prizes was £4113. The sections provided for cattle are properly restricted to what may be termed the beef breeds; in the catalogue order they are Devon, South Devon, Hereford, Shorthorn, Sussex, Red Polled, Aberdeen-Angus, Galloway, Welsh, Highland, Cross-bred, Kerry and Dexter, and Small Cross-bred.
 
 It will be noticed that such characteristically milking breeds as the Ayrshire, Jersey and Guernsey have no place here. Provision is made, however, for all the well-known breeds of sheep and swine. In the cattle classes, aged beasts of huge size and of considerably over a ton in weight used to be common, but in recent years the tendency has been to reduce the upper limit of age, and thus to bring out animals ripe for the butcher in a shorter time than was formerly the case. An important step in this direction was taken in 1896, when the senior class for steers, viz. animals three to four years old, was abolished, the «I»maximum«/I» age at which steers were allowed to compete for prizes being reduced to three years. The cow classes were abolished in 1897, and in the schedule of the 1905 exhibition the classes for each breed of cattle were (1) for steers not exceeding two years old, (2) for steers above two years and not exceeding three years old, and (3) for heifers not exceeding three years old. The single exception is provided by the slowly-maturing Highland breed of cattle, for which classes were allotted to (1) steers not exceeding three years old, (2) steers or oxen above three years old (with no «I»maximum«/I» limit), and (3) heifers not exceeding four years old. As illustrating heavy weights, there were in the 1893 show, out of 310 entries of cattle, four beasts which weighed over a ton. They were all steers of three to four years old, one being a Hereford weighing 20 cwt. 2 qr. 4 lb, and the others Shorthorns weighing respectively 20 cwt. 2 qr., 20 cwt. 3 qr. 21 lb, and 22 cwt. 2 qr. 18 lb. In the 1895 show, out of 356 entries of cattle, there were seven beasts of more than a ton in weight. They were all three to four years old, and comprised four Shorthorns (top weight 21 cwt. 1 qr. 18 lb), one Sussex (22 cwt. 3 qr. 7 lb), and two cross-breds (top weight 20 cwt. 3 qr. 24 lb). In the 1899 show, with 311 entries of cattle, and the age limited to three years, no beast reached the weight of a ton, the heaviest animal being a crossbred (Aberdeen-Angus and Shorthorn) which, at three years old, turned the scale at 19 cwt. 1 qr. 5 lb. Out of 301 entries in 1905 the top weight was 19 cwt. 1 qr. 25 lb in the case of a Shorthorn steer. Useful figures for purposes of comparison are obtained by dividing the weight of a fat beast by the number of days in its age, the weight at birth being thrown in. The average daily gain in live weight is thus arrived at, and as the animal increases in age this average gradually diminishes, until the daily gain reaches a stage at which it does not afford any profitable return upon the food consumed. At the centenary show of the Smithfield Club in 1898 the highest average daily gains in weight amongst prize-winning cattle were provided by a Shorthorn-Aberdeen cross-bred steer (age, one year seven months; daily gain 2·47 lb); a Shorthorn steer (age, one year seven months; daily gain, 2·44 lb); and an Aberdeen-Shorthorn cross-bred steer (age, one year ten months; daily gain, 2·33 lb). These beasts, it will be observed, were all under two years old. Amongst prize steers of two and a half to three years old, on the same occasion, the three highest daily average gains in live weight were 2·07 lb for an Aberdeen-Angus, 1·99 lb for a Shorthorn-Aberdeen cross-bred and 1·97 lb for a Sussex. In the sheep section of the Smithfield show the classes for ewes were finally abolished in 1898, and the classes restricted to wethers andPAGE:447wether lambs, whose function is exclusively the production of meat. At the 1905 show, sheep of each breed, and also cross-breds, competed as (1) wether lambs under twelve months old, and (2) wether sheep above twelve and under twenty-four months old. The only exception was in the case of the slowly-maturing Cheviot and mountain breeds, for which the second class was for wether sheep of any age above twelve months. Of prize sheep at the centenary show the largest average daily gain was 0·77 lb per head given by Oxford-Hampshire cross-bred wether lambs, aged nine months two weeks. In the case of wether sheep, twelve to twenty-four months old, the highest daily increase was 0·56 lb per head as yielded by Lincolns, aged twenty-one months. Within the last quarter of the 19th century the stock-feeding practices of the country were much modified in accordance with these ideas of early maturity. The three-year-old wethers and older oxen that used to be common in the fat stock markets are now rarely seen, excepting perhaps in the case of mountain breeds of sheep and Highland cattle. It was in 1875 that the Smithfield Club first provided the competitive classes for lambs, and in 1883 the champion plate offered for the best pen of sheep of any age in the show was for the first time won by lambs, a pen of Hampshire Downs. The young classes for bullocks were established in 1880. The time-honoured notion that an animal must have completed its growth before it could be profitably fattened is no longer held, and the improved breeds which now exist rival one another as regards the early period at which they may be made ready for the butcher by appropriate feeding and management.
@@ -605,7 +1021,75 @@ The number of “agricultural labourers and shepherds,” which affords a more p
 The decrease in the demand for labour is attributable chiefly to the reduction of the cultivated area and the laying down to pasture of land once under the plough, and to the increasing use of agricultural machinery. It may, however, be noticed that the period 1850–1903 was marked by a steady increase of the cash wages of the farm labourer, as indicated in the following table from the Report on the Earnings of Agricultural Labourers issued by the Board of Trade in 1905.
 
 «CTR»«I»Average Weekly Cash Wages of ordinary Agricultural Labourers«BR»employed on certain Farms in England and Wales«/I».«/CTR»
-«HTMLTABLE:<table class="figtable"><tr><td style="border:1px solid">  Year.  </td><td colspan="2" style="border:1px solid"> England and Wales, «BR»69 farms.</td><td colspan="2" style="border:1px solid"> Eastern counties, «BR»12 farms.</td></tr><tr><td></td><td style="border-left:1px solid;text-align:right">s.</td><td style="text-align:left;padding-left:1em">d.</td><td style="border-left:1px solid;text-align:right">s.</td><td style="text-align:left;padding-left:1em">d.</td></tr><tr><td>1850</td><td style="border-left:1px solid;text-align:right">9</td><td style="text-align:left;padding-left:0.5em"> 3½</td><td style="border-left:1px solid;text-align:right"> 8</td><td style="text-align:left;padding-left:0.5em"> 8</td></tr><tr><td>1855</td><td style="border-left:1px solid;text-align:right"> 10</td><td style="text-align:left;padding-left:0.5em">11½</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 5</td></tr><tr><td>1860</td><td style="border-left:1px solid;text-align:right">10</td><td style="text-align:left;padding-left:0.5em">11</td><td style="border-left:1px solid;text-align:right">10</td><td style="text-align:left;padding-left:0.5em"> 8</td></tr><tr><td>1865</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 3</td><td style="border-left:1px solid;text-align:right">10</td><td style="text-align:left;padding-left:0.5em"> 5</td></tr><tr><td>1870</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em">10½</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 1½</td></tr><tr><td>1875</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 7</td><td style="border-left:1px solid;text-align:right">12</td><td style="text-align:left;padding-left:0.5em">11½</td></tr><tr><td>1880</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 2½</td><td style="border-left:1px solid;text-align:right">12</td><td style="text-align:left;padding-left:0.5em"> 1</td></tr><tr><td>1885</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 1</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 5</td></tr><tr><td>1890</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 0½</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 0½</td></tr><tr><td>1895</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 2½</td><td style="border-left:1px solid;text-align:right">11</td><td style="text-align:left;padding-left:0.5em"> 0</td></tr><tr><td>1900</td><td style="border-left:1px solid;text-align:right">14</td><td style="text-align:left;padding-left:0.5em"> 5½</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 1½</td></tr><tr><td>1903</td><td style="border-left:1px solid;text-align:right">14</td><td style="text-align:left;padding-left:0.5em"> 7</td><td style="border-left:1px solid;text-align:right">13</td><td style="text-align:left;padding-left:0.5em"> 2½</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td style="border:1px solid">  Year.  
+</td><td colspan="2" style="border:1px solid"> England and Wales, «BR»69 farms.
+</td><td colspan="2" style="border:1px solid"> Eastern counties, «BR»12 farms.
+</td></tr><tr><td>
+</td><td style="border-left:1px solid;text-align:right">s.
+</td><td style="text-align:left;padding-left:1em">d.
+</td><td style="border-left:1px solid;text-align:right">s.
+</td><td style="text-align:left;padding-left:1em">d.
+</td></tr><tr><td>1850
+</td><td style="border-left:1px solid;text-align:right">9
+</td><td style="text-align:left;padding-left:0.5em"> 3½
+</td><td style="border-left:1px solid;text-align:right"> 8
+</td><td style="text-align:left;padding-left:0.5em"> 8
+</td></tr><tr><td>1855
+</td><td style="border-left:1px solid;text-align:right"> 10
+</td><td style="text-align:left;padding-left:0.5em">11½
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em"> 5
+</td></tr><tr><td>1860
+</td><td style="border-left:1px solid;text-align:right">10
+</td><td style="text-align:left;padding-left:0.5em">11
+</td><td style="border-left:1px solid;text-align:right">10
+</td><td style="text-align:left;padding-left:0.5em"> 8
+</td></tr><tr><td>1865
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em"> 3
+</td><td style="border-left:1px solid;text-align:right">10
+</td><td style="text-align:left;padding-left:0.5em"> 5
+</td></tr><tr><td>1870
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em">10½
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em"> 1½
+</td></tr><tr><td>1875
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 7
+</td><td style="border-left:1px solid;text-align:right">12
+</td><td style="text-align:left;padding-left:0.5em">11½
+</td></tr><tr><td>1880
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 2½
+</td><td style="border-left:1px solid;text-align:right">12
+</td><td style="text-align:left;padding-left:0.5em"> 1
+</td></tr><tr><td>1885
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 1
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em"> 5
+</td></tr><tr><td>1890
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 0½
+</td><td style="border-left:1px solid;text-align:right">11 
+</td><td style="text-align:left;padding-left:0.5em"> 0½
+</td></tr><tr><td>1895
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 2½
+</td><td style="border-left:1px solid;text-align:right">11
+</td><td style="text-align:left;padding-left:0.5em"> 0
+</td></tr><tr><td>1900
+</td><td style="border-left:1px solid;text-align:right">14
+</td><td style="text-align:left;padding-left:0.5em"> 5½
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 1½
+</td></tr><tr><td>1903
+</td><td style="border-left:1px solid;text-align:right">14
+</td><td style="text-align:left;padding-left:0.5em"> 7
+</td><td style="border-left:1px solid;text-align:right">13
+</td><td style="text-align:left;padding-left:0.5em"> 2½
+</td></tr></table>«/HTMLTABLE»
 
 (See also «LN:Allotments and Small Holdings|Allotments and Small Holdings«/LN».) 
 «CTR»«I»Agricultural Education.«/I»«/CTR»
@@ -740,7 +1224,7 @@ of acres in these crops was required, therefore, to supply the home
 demand for 1888–1892:—0·43 of an acre in wheat, 1·15 acre in corn,
 and 0·43 acre in oats per head of the population. Taking the yearPAGE:4571890 as an illustration, this gave a surplus area in wheat of 11,264,478 acres, of 2,648,404 acres in Indian corn, and of 238,162 acres in oats.
 
-«HTMLTABLE:<table class="figtable" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;text-align:right"><caption>«SC»Table«/SC» XXXV.—«I»Acreage«/I», «I»Production«/I», «I»Value«/I», «I»Prices and Exports of Indian Corn in the United States in«/I» 1890–1905.</caption><tr style="border:1px solid;text-align:center"><td> Year. </td><td style="border:1px solid">Acreage.</td><td>Average«BR» Yield per«BR»Acre. </td><td style="border:1px solid">Production.</td><td>Average«BR»Farm Price«BR»per Bushel,«BR»1st Dec.</td><td style="border:1px solid">Farm Value,«BR»1st Dec.</td><td>Domestic Exports,«BR»including Corn-«BR»Meal, Fiscal Years«BR»beginning 1st July.</td></tr><tr style="text-align:center"><td style="border-right:1px solid"></td><td style="border-right:1px solid">Acres.</td><td style="border-right:1px solid">Bushels.</td><td style="border-right:1px solid">Bushels.</td><td style="border-right:1px solid">Cents.</td><td style="border-right:1px solid">Dollars.</td><td>Bushels.</td></tr><tr><td style="border-right:1px solid;text-align:center">1890</td><td style="border-right:1px solid;padding-right:0.5em">71,970,763</td><td style="border-right:1px solid;padding-right:1em">20·7</td><td style="border-right:1px solid;padding-right:0.5em">1,489,970,000</td><td style="border-right:1px solid;text-align:center">50·6</td><td style="border-right:1px solid;padding-right:0.5em">754,433,451</td><td style="padding-right:1em">32,041,529</td></tr><tr><td style="border-right:1px solid;text-align:center">1891</td><td style="border-right:1px solid;padding-right:0.5em">76,204,515</td><td style="border-right:1px solid;padding-right:1em">27·0</td><td style="border-right:1px solid;padding-right:0.5em">2,060,154,000</td><td style="border-right:1px solid;text-align:center">40·6</td><td style="border-right:1px solid;padding-right:0.5em">836,439,228</td><td style="padding-right:1em">76,602,285</td></tr><tr><td style="border-right:1px solid;text-align:center">1892</td><td style="border-right:1px solid;padding-right:0.5em">70,626,658</td><td style="border-right:1px solid;padding-right:1em">23·1</td><td style="border-right:1px solid;padding-right:0.5em">1,628,464,000</td><td style="border-right:1px solid;text-align:center">39·4</td><td style="border-right:1px solid;padding-right:0.5em">642,146,630</td><td style="padding-right:1em">47,121,894</td></tr><tr><td style="border-right:1px solid;text-align:center">1893</td><td style="border-right:1px solid;padding-right:0.5em">72,036,465</td><td style="border-right:1px solid;padding-right:1em">22·5</td><td style="border-right:1px solid;padding-right:0.5em">1,619,496,131</td><td style="border-right:1px solid;text-align:center">36·5</td><td style="border-right:1px solid;padding-right:0.5em">591,625,627</td><td style="padding-right:1em">66,489,529</td></tr><tr><td style="border-right:1px solid;text-align:center">1894</td><td style="border-right:1px solid;padding-right:0.5em">62,582,269</td><td style="border-right:1px solid;padding-right:1em">19·4</td><td style="border-right:1px solid;padding-right:0.5em">1,212,770,052</td><td style="border-right:1px solid;text-align:center">45·7</td><td style="border-right:1px solid;padding-right:0.5em">554,719,162</td><td style="padding-right:1em">28,585,405</td></tr><tr><td style="border-right:1px solid;text-align:center">1895</td><td style="border-right:1px solid;padding-right:0.5em">82,075,830</td><td style="border-right:1px solid;padding-right:1em">26·2</td><td style="border-right:1px solid;padding-right:0.5em">2,151,138,580</td><td style="border-right:1px solid;text-align:center">25·3</td><td style="border-right:1px solid;padding-right:0.5em">544,985,534</td><td style="padding-right:1em">101,100,375</td></tr><tr><td style="border-right:1px solid;text-align:center">1896</td><td style="border-right:1px solid;padding-right:0.5em">81,027,156</td><td style="border-right:1px solid;padding-right:1em">28·2</td><td style="border-right:1px solid;padding-right:0.5em">2,283,875,165</td><td style="border-right:1px solid;text-align:center">21·5</td><td style="border-right:1px solid;padding-right:0.5em">491,006,967</td><td style="padding-right:1em">178,817,417</td></tr><tr><td style="border-right:1px solid;text-align:center">1897</td><td style="border-right:1px solid;padding-right:0.5em">80,095,051</td><td style="border-right:1px solid;padding-right:1em">23·8</td><td style="border-right:1px solid;padding-right:0.5em">1,902,967,933</td><td style="border-right:1px solid;text-align:center">26·3</td><td style="border-right:1px solid;padding-right:0.5em">501,072,952</td><td style="padding-right:1em">212,055,543</td></tr><tr><td style="border-right:1px solid;text-align:center">1898</td><td style="border-right:1px solid;padding-right:0.5em">77,721,781</td><td style="border-right:1px solid;padding-right:1em">24·8</td><td style="border-right:1px solid;padding-right:0.5em">1,924,184,660</td><td style="border-right:1px solid;text-align:center">28·7</td><td style="border-right:1px solid;padding-right:0.5em">552,023,428</td><td style="padding-right:1em">117,255,046</td></tr><tr><td style="border-right:1px solid;text-align:center">1899</td><td style="border-right:1px solid;padding-right:0.5em">82,108,587</td><td style="border-right:1px solid;padding-right:1em">25·3</td><td style="border-right:1px solid;padding-right:0.5em">2,078,143,933</td><td style="border-right:1px solid;text-align:center">30·3</td><td style="border-right:1px solid;padding-right:0.5em">629,210,110</td><td style="padding-right:1em">213,123,412</td></tr><tr><td style="border-right:1px solid;text-align:center">1900</td><td style="border-right:1px solid;padding-right:0.5em">83,320,872</td><td style="border-right:1px solid;padding-right:1em">25·3</td><td style="border-right:1px solid;padding-right:0.5em">2,105,102,516</td><td style="border-right:1px solid;text-align:center">35·7</td><td style="border-right:1px solid;padding-right:0.5em">751,220,324</td><td style="padding-right:1em">181,405,473</td></tr><tr><td style="border-right:1px solid;text-align:center">1901</td><td style="border-right:1px solid;padding-right:0.5em">91,349,928</td><td style="border-right:1px solid;padding-right:1em">16·7</td><td style="border-right:1px solid;padding-right:0.5em">1,522,519,891</td><td style="border-right:1px solid;text-align:center">60·5</td><td style="border-right:1px solid;padding-right:0.5em">921,555,768</td><td style="padding-right:1em">28,028,688</td></tr><tr><td style="border-right:1px solid;text-align:center">1902</td><td style="border-right:1px solid;padding-right:0.5em">94,043,613</td><td style="border-right:1px solid;padding-right:1em">26·8</td><td style="border-right:1px solid;padding-right:0.5em">2,523,648,312</td><td style="border-right:1px solid;text-align:center">40·3</td><td style="border-right:1px solid;padding-right:0.5em">1,017,017,349</td><td style="padding-right:1em">76,639,261</td></tr><tr><td style="border-right:1px solid;text-align:center">1903</td><td style="border-right:1px solid;padding-right:0.5em">88,091,993</td><td style="border-right:1px solid;padding-right:1em">25·5</td><td style="border-right:1px solid;padding-right:0.5em">2,244,176,925</td><td style="border-right:1px solid;text-align:center">42·5</td><td style="border-right:1px solid;padding-right:0.5em">952,868,801</td><td style="padding-right:1em">58,222,061</td></tr><tr><td style="border-right:1px solid;text-align:center">1904</td><td style="border-right:1px solid;padding-right:0.5em">92,231,581</td><td style="border-right:1px solid;padding-right:1em">26·8</td><td style="border-right:1px solid;padding-right:0.5em">2,467,480,934</td><td style="border-right:1px solid;text-align:center">44·1</td><td style="border-right:1px solid;padding-right:0.5em">1,087,461,440</td><td style="padding-right:1em">90,293,483</td></tr><tr><td style="border-right:1px solid;text-align:center">1905</td><td style="border-right:1px solid;padding-right:0.5em"> 94,011,369</td><td style="border-right:1px solid;padding-right:1em">28·8</td><td style="border-right:1px solid;padding-right:0.5em"> 2,707,993,540</td><td style="border-right:1px solid;text-align:center">41·2</td><td style="border-right:1px solid;padding-right:0.5em"> 1,116,696,738</td><td style="text-align:center">..</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto;text-align:right"><caption>«SC»Table«/SC» XXXV.—«I»Acreage«/I», «I»Production«/I», «I»Value«/I», «I»Prices and Exports of Indian Corn in the United States in«/I» 1890–1905.</caption><tr style="border:1px solid;text-align:center"><td> Year. </td><td style="border:1px solid">Acreage.</td><td>Average«BR» Yield per«BR»Acre. </td><td style="border:1px solid">Production.</td><td>Average«BR»Farm Price«BR»per Bushel,«BR»1st Dec.</td><td style="border:1px solid">Farm Value,«BR»1st Dec.</td><td>Domestic Exports,«BR»including CornMeal, Fiscal Years«BR»beginning 1st July.</td></tr><tr style="text-align:center"><td style="border-right:1px solid"></td><td style="border-right:1px solid">Acres.</td><td style="border-right:1px solid">Bushels.</td><td style="border-right:1px solid">Bushels.</td><td style="border-right:1px solid">Cents.</td><td style="border-right:1px solid">Dollars.</td><td>Bushels.</td></tr><tr><td style="border-right:1px solid;text-align:center">1890</td><td style="border-right:1px solid;padding-right:0.5em">71,970,763</td><td style="border-right:1px solid;padding-right:1em">20·7</td><td style="border-right:1px solid;padding-right:0.5em">1,489,970,000</td><td style="border-right:1px solid;text-align:center">50·6</td><td style="border-right:1px solid;padding-right:0.5em">754,433,451</td><td style="padding-right:1em">32,041,529</td></tr><tr><td style="border-right:1px solid;text-align:center">1891</td><td style="border-right:1px solid;padding-right:0.5em">76,204,515</td><td style="border-right:1px solid;padding-right:1em">27·0</td><td style="border-right:1px solid;padding-right:0.5em">2,060,154,000</td><td style="border-right:1px solid;text-align:center">40·6</td><td style="border-right:1px solid;padding-right:0.5em">836,439,228</td><td style="padding-right:1em">76,602,285</td></tr><tr><td style="border-right:1px solid;text-align:center">1892</td><td style="border-right:1px solid;padding-right:0.5em">70,626,658</td><td style="border-right:1px solid;padding-right:1em">23·1</td><td style="border-right:1px solid;padding-right:0.5em">1,628,464,000</td><td style="border-right:1px solid;text-align:center">39·4</td><td style="border-right:1px solid;padding-right:0.5em">642,146,630</td><td style="padding-right:1em">47,121,894</td></tr><tr><td style="border-right:1px solid;text-align:center">1893</td><td style="border-right:1px solid;padding-right:0.5em">72,036,465</td><td style="border-right:1px solid;padding-right:1em">22·5</td><td style="border-right:1px solid;padding-right:0.5em">1,619,496,131</td><td style="border-right:1px solid;text-align:center">36·5</td><td style="border-right:1px solid;padding-right:0.5em">591,625,627</td><td style="padding-right:1em">66,489,529</td></tr><tr><td style="border-right:1px solid;text-align:center">1894</td><td style="border-right:1px solid;padding-right:0.5em">62,582,269</td><td style="border-right:1px solid;padding-right:1em">19·4</td><td style="border-right:1px solid;padding-right:0.5em">1,212,770,052</td><td style="border-right:1px solid;text-align:center">45·7</td><td style="border-right:1px solid;padding-right:0.5em">554,719,162</td><td style="padding-right:1em">28,585,405</td></tr><tr><td style="border-right:1px solid;text-align:center">1895</td><td style="border-right:1px solid;padding-right:0.5em">82,075,830</td><td style="border-right:1px solid;padding-right:1em">26·2</td><td style="border-right:1px solid;padding-right:0.5em">2,151,138,580</td><td style="border-right:1px solid;text-align:center">25·3</td><td style="border-right:1px solid;padding-right:0.5em">544,985,534</td><td style="padding-right:1em">101,100,375</td></tr><tr><td style="border-right:1px solid;text-align:center">1896</td><td style="border-right:1px solid;padding-right:0.5em">81,027,156</td><td style="border-right:1px solid;padding-right:1em">28·2</td><td style="border-right:1px solid;padding-right:0.5em">2,283,875,165</td><td style="border-right:1px solid;text-align:center">21·5</td><td style="border-right:1px solid;padding-right:0.5em">491,006,967</td><td style="padding-right:1em">178,817,417</td></tr><tr><td style="border-right:1px solid;text-align:center">1897</td><td style="border-right:1px solid;padding-right:0.5em">80,095,051</td><td style="border-right:1px solid;padding-right:1em">23·8</td><td style="border-right:1px solid;padding-right:0.5em">1,902,967,933</td><td style="border-right:1px solid;text-align:center">26·3</td><td style="border-right:1px solid;padding-right:0.5em">501,072,952</td><td style="padding-right:1em">212,055,543</td></tr><tr><td style="border-right:1px solid;text-align:center">1898</td><td style="border-right:1px solid;padding-right:0.5em">77,721,781</td><td style="border-right:1px solid;padding-right:1em">24·8</td><td style="border-right:1px solid;padding-right:0.5em">1,924,184,660</td><td style="border-right:1px solid;text-align:center">28·7</td><td style="border-right:1px solid;padding-right:0.5em">552,023,428</td><td style="padding-right:1em">117,255,046</td></tr><tr><td style="border-right:1px solid;text-align:center">1899</td><td style="border-right:1px solid;padding-right:0.5em">82,108,587</td><td style="border-right:1px solid;padding-right:1em">25·3</td><td style="border-right:1px solid;padding-right:0.5em">2,078,143,933</td><td style="border-right:1px solid;text-align:center">30·3</td><td style="border-right:1px solid;padding-right:0.5em">629,210,110</td><td style="padding-right:1em">213,123,412</td></tr><tr><td style="border-right:1px solid;text-align:center">1900</td><td style="border-right:1px solid;padding-right:0.5em">83,320,872</td><td style="border-right:1px solid;padding-right:1em">25·3</td><td style="border-right:1px solid;padding-right:0.5em">2,105,102,516</td><td style="border-right:1px solid;text-align:center">35·7</td><td style="border-right:1px solid;padding-right:0.5em">751,220,324</td><td style="padding-right:1em">181,405,473</td></tr><tr><td style="border-right:1px solid;text-align:center">1901</td><td style="border-right:1px solid;padding-right:0.5em">91,349,928</td><td style="border-right:1px solid;padding-right:1em">16·7</td><td style="border-right:1px solid;padding-right:0.5em">1,522,519,891</td><td style="border-right:1px solid;text-align:center">60·5</td><td style="border-right:1px solid;padding-right:0.5em">921,555,768</td><td style="padding-right:1em">28,028,688</td></tr><tr><td style="border-right:1px solid;text-align:center">1902</td><td style="border-right:1px solid;padding-right:0.5em">94,043,613</td><td style="border-right:1px solid;padding-right:1em">26·8</td><td style="border-right:1px solid;padding-right:0.5em">2,523,648,312</td><td style="border-right:1px solid;text-align:center">40·3</td><td style="border-right:1px solid;padding-right:0.5em">1,017,017,349</td><td style="padding-right:1em">76,639,261</td></tr><tr><td style="border-right:1px solid;text-align:center">1903</td><td style="border-right:1px solid;padding-right:0.5em">88,091,993</td><td style="border-right:1px solid;padding-right:1em">25·5</td><td style="border-right:1px solid;padding-right:0.5em">2,244,176,925</td><td style="border-right:1px solid;text-align:center">42·5</td><td style="border-right:1px solid;padding-right:0.5em">952,868,801</td><td style="padding-right:1em">58,222,061</td></tr><tr><td style="border-right:1px solid;text-align:center">1904</td><td style="border-right:1px solid;padding-right:0.5em">92,231,581</td><td style="border-right:1px solid;padding-right:1em">26·8</td><td style="border-right:1px solid;padding-right:0.5em">2,467,480,934</td><td style="border-right:1px solid;text-align:center">44·1</td><td style="border-right:1px solid;padding-right:0.5em">1,087,461,440</td><td style="padding-right:1em">90,293,483</td></tr><tr><td style="border-right:1px solid;text-align:center">1905</td><td style="border-right:1px solid;padding-right:0.5em"> 94,011,369</td><td style="border-right:1px solid;padding-right:1em">28·8</td><td style="border-right:1px solid;padding-right:0.5em"> 2,707,993,540</td><td style="border-right:1px solid;text-align:center">41·2</td><td style="border-right:1px solid;padding-right:0.5em"> 1,116,696,738</td><td style="text-align:center">..</td></tr></table>«/HTMLTABLE»
 
 Tables XXXVII. and XXXVIII. give the number, total value and average price of farm animals in 1880, 1890, 1900 and 1906.
 

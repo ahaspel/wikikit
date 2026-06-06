@@ -1294,9 +1294,13 @@ def _process_table_unified(
         from britannica.pipeline.stages.elements import process_elements
         cell_recurse = (lambda c: process_elements(
             c, text_transform, context, _allow_figure=False))
+    # No `_html_cell_clean` preclean: an HTML cell recurses RAW through
+    # `process_elements` exactly like a wiki cell — its `<sub>`/`<br>`/styler/
+    # nested-table content is handled as the element it is, not flattened in
+    # place.  The flattener was the source of the cell-context style leaks.
     caption_raw, rows, _has_header, _has_span = produce_table_rows(
         inner, text_transform, flavor=flavor,
-        cell_preclean=_html_cell_clean if flavor == "html" else None,
+        cell_preclean=None,
         cell_recurse=cell_recurse)
     if not rows:
         return ""
