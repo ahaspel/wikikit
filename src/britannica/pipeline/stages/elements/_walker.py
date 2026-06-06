@@ -166,6 +166,15 @@ _SPACER_OPENER_RE = re.compile(
 # (tooltip string / language code / title); the producer unwraps + recurses it.
 _CONTENT_EXTRACT_OPENER_RE = re.compile(
     r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b", re.IGNORECASE)
+# `<span title="T">X</span>` — a transliteration TOOLTIP when X is Greek/Hebrew (T is the
+# romanization, carried as «SPAN[title:T]» — the HTML twin of the {{tooltip}} template);
+# any other title= is editorial provenance, dropped (content kept).  Re-promotes the
+# gutted body-text `_handle_title_spans`; `_process_styled` applies the carry/drop split.
+_SPAN_TITLE_OPEN_RE = re.compile(
+    r'<span\b[^>]*?\btitle\s*=\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
+    re.IGNORECASE)
+_TRANSLIT_CONTENT_RE = re.compile(
+    r"\{\{\s*(?:Greek|Hebrew|polytonic)|[Ͱ-Ͽἀ-῿֐-׿]", re.IGNORECASE)
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
@@ -457,7 +466,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
-    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)"  # STYLED <span> (style attr in opener)
+    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
@@ -741,6 +750,7 @@ def _walk_balanced_shapes(
         # wrappers are still claimed above by the figure recognizers.
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
+                or _SPAN_TITLE_OPEN_RE.match(text, opener_pos)
                 or _TEMPLATE_STYLE_RE.match(text, opener_pos)
                 or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)
                 or _SHOULDER_HEADING_RE.match(text, opener_pos)):

@@ -435,6 +435,23 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     from britannica.pipeline.stages.elements._tables import (
         _cell_styles, style_block, _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS,
         _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE)
+    from britannica.pipeline.stages.elements._walker import (
+        _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
+    # `<span title="T">X</span>` — transliteration TOOLTIP when X is Greek/Hebrew (carry T
+    # as «SPAN[title:T]», the HTML twin of {{tooltip}}) vs editorial provenance (drop the
+    # wrapper, keep X).  Checked FIRST so a styled-AND-titled amendment span is dropped,
+    # not carried.  Re-promotes the gutted body-text `_handle_title_spans`.
+    sp = _SPAN_TITLE_OPEN_RE.match(raw)
+    if sp:
+        title = (sp.group("q") or sp.group("uq") or "").strip().replace(
+            "]", "").replace("»", "")
+        inner_raw = _styled_br_to_marker(
+            re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
+        content = process_elements(
+            inner_raw, text_transform, context, _allow_figure=False).strip()
+        if title and _TRANSLIT_CONTENT_RE.search(content):
+            return f"«SPAN[title:{title}]»{content}«/SPAN»"
+        return content  # editorial title → drop the wrapper, keep the content
     # Shoulder heading — `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the
     # `…HeadingSmall` / `{{EB9 Margin Note}}` synonyms.  A marginal SECTION label:
     # emit «SH»…«/SH» (what `detect_sections` keys on for the TOC), recursing the
