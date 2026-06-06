@@ -679,18 +679,10 @@ def _walk_balanced_shapes(
         # First successful match wins.
         matched: tuple[int, str, str] | None = None
 
-        # Figure wrapper: a `{{center|…image…}}` enclosing an image IS the
-        # figure unit — recognized before its inner image so the caption that
-        # lives inside the wrapper stays intact.  Also the HTML float-wrapper
-        # variant `<span/div style="float:…">…image…</…>` (WATERBUCK family).
-        if figures:
-            w = figure_wrapper_end(text, opener_pos)
-            if w is None:
-                w = html_float_figure_end(text, opener_pos)
-            if w is None:
-                w = html_ts_figure_end(text, opener_pos)
-            if w is not None:
-                matched = (w, SHAPE_FIGURE, text[opener_pos:w])
+        # (SHAPE_FIGURE recognition removed — imposed taxonomy.  A `{{center|…}}`/
+        # `{{csc|…}}`/`<div style="float:…">` enclosing an image is just a STYLER,
+        # recognized as SHAPE_STYLED below and recursed by `_process_styled` (image
+        # → leaf, caption → recursed content); a bare `[[File:…]]` is an IMAGE.)
 
         # Paired-wrapper span `{{NAME/s}}…{{NAME/e}}` → one CENTER node.
         # Before the regex recognizers (so `{{c/s}}` isn't mis-read as a bare
@@ -768,14 +760,9 @@ def _walk_balanced_shapes(
                     matched = (m.end(), shape, m.group(0))
                     break
 
-            # Figure tail: a bare image followed by a structural caption run
-            # becomes one FIGURE (image + caption), stopping at body prose.
-            if (figures and matched is not None
-                    and matched[1] in (SHAPE_DOUBLE_BRACKET, SHAPE_DOUBLE_BRACE)
-                    and _FIG_IMAGE_RAW.match(matched[2])):
-                fig_end = figure_tail_end(text, matched[0])
-                if fig_end > matched[0]:
-                    matched = (fig_end, SHAPE_FIGURE, text[opener_pos:fig_end])
+            # (Figure-tail upgrade removed — a bare `[[File:…]]` stays an IMAGE
+            # leaf; a following `{{center|…}}` caption is its own SHAPE_STYLED
+            # sibling, recursed in place, not folded into a FIGURE span.)
 
             # Inline-image lookahead: a bare `[[File:…]]` (no EXTCAP, no
             # figure-tail upgrade) sitting in same-line prose is structurally
