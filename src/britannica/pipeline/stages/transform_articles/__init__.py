@@ -376,42 +376,23 @@ def transform_articles(volume: int) -> int:
                 .all()
             )
 
-            is_plate = article.article_type == "plate"
-
-            if is_plate:
-                # Plates go through the SAME faithful recursive producer as
-                # in-article figures (the plate playbook).  The old `parse_plate`
-                # flattened the image grid to a vertical stack of caption-folded
-                # `{{IMG:|cap}}` and destroyed every `«SC»`/`«I»`/`«BR»`; the
-                # faithful producer preserves the header, the `{|`-grid (→
-                # figtable), and the marked-up captions.
-                raw = segments[0][0].segment_text if segments else ""
-                from britannica.pipeline.stages.elements._figure_faithful import (
-                    produce_faithful_figure,
-                )
-                article.body = produce_faithful_figure(raw) if raw else ""
-            else:
-                # Re-assemble the article body from its per-page segments.
-                # FAITHFULLY: each segment is a slice of the clean stream cut at a
-                # `\x01PAGE\x01` marker, so concatenating `marker+segment` with NO
-                # separator reproduces exactly that stream slice.  The old
-                # `"\n".join` inserted a newline the stream never had — at a page
-                # seam that became the second half of a `\n\n`, a spurious
-                # paragraph split.  Concatenate as-is; the slice IS the body.
-                # The body IS the article's slice of the clean (preprocessed)
-                # stream — word-joins and seam healing already happened there.
-                # Reproduce the slice faithfully: each segment is the text
-                # between page markers, so concatenating `marker+segment` with NO
-                # separator rebuilds exactly that stream slice.  No transform
-                # between preprocess and the walker.
-                joined_raw = "".join(
-                    f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
-                    for seg, page_number in segments)
-
-                article.body = _transform_text_v2(
-                    joined_raw, volume,
-                    segments[0][1] if segments else 0,
-                ) if joined_raw else ""
+            # Plates and articles alike flow through the ONE walker now — the
+            # faithless `produce_faithful_figure` shadow-pipeline is deleted.  The
+            # walker recurses a plate's stylers and `{|`-grid honestly (the shadow
+            # producer leaked them raw, its `TT` being identity).
+            #
+            # Re-assemble the body from per-page segments FAITHFULLY: each segment
+            # is a slice of the clean stream cut at a `\x01PAGE\x01` marker, so
+            # concatenating `marker+segment` with NO separator reproduces exactly
+            # that stream slice (a `"\n".join` would inject a seam the stream never
+            # had — word-joins and seam healing already happened in preprocess).
+            joined_raw = "".join(
+                f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
+                for seg, page_number in segments)
+            article.body = _transform_text_v2(
+                joined_raw, volume,
+                segments[0][1] if segments else 0,
+            ) if joined_raw else ""
                 # (No redundant-title-qualifier strip: the title-formation keeps
                 # the title bare ("YORK") with the qualifier in the body paren,
                 # the old pattern (title "X, Q" + body "(Q)") no longer occurs.

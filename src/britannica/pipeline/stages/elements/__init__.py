@@ -301,7 +301,7 @@ def _image_leaf_disentangle(raw, text_transform, context):
         # ([[feedback_no_caption_concept]]); only a FOLLOWING `{{center|…}}` block
         # is a real caption and recurses as a sibling (SUNDEW Figs 2/4, which the
         # old `_produce_figure` dropped).  `_img_marker` is the bare-image leaf.
-        from britannica.pipeline.stages.elements._figure_faithful import _img_marker
+        from britannica.pipeline.stages.elements._image import _img_marker
         marker = _img_marker(tmpl)
     elif re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
         fn = djvu_crop_filename(tmpl)

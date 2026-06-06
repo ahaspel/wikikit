@@ -15,6 +15,25 @@ from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 from britannica.captions import clean_caption
 
 
+def _img_marker(raw: str) -> str:
+    """Bare ``[[File:…]]`` / ``[[Image:…]]`` block image → ``{{IMG:…}}`` leaf (filename +
+    px-width / center-left-right align).  The bracket's trailing text is ``alt``, not a
+    caption, and is dropped ([[feedback_no_caption_concept]]).  Relocated verbatim from
+    the deleted ``_figure_faithful`` shadow producer."""
+    inner = re.sub(r"\]\]\s*$", "", re.sub(r"^\s*\[\[(?:File|Image):", "", raw, flags=re.I))
+    parts = [p.strip() for p in inner.split("|")]
+    fn = parts[0]
+    width = align = None
+    for p in parts[1:]:
+        mw = re.match(r"(\d+)\s*px$", p)
+        if mw:
+            width = int(mw.group(1))
+        elif p.lower() in ("center", "right", "left"):
+            align = p.lower()
+    meta = (f"|align={align}" if align else "") + (f"|width={width}" if width else "")
+    return f"{{{{IMG:{fn}{meta}}}}}"
+
+
 def build_img_marker(
     filename: str,
     caption: str | None = None,
