@@ -18,10 +18,6 @@ from typing import Callable
 
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._text import (
-    _convert_inline_sub_sup,
-    _strip_br,
-)
 from britannica.pipeline.stages.elements._ref import (
     _process_ref,
     _process_ref_self,

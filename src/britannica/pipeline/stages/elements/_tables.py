@@ -21,7 +21,6 @@ from britannica.pipeline.stages.elements._leaf import (
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry, IMAGE_LABELS, _PH)
 from britannica.pipeline.stages.elements._text import (
-    _convert_inline_sub_sup,
     _strip_br,
 )
 
@@ -243,25 +242,6 @@ def _table_grid(inner: str) -> list[list[str]]:
         if cells:  # drop empty segments (e.g. a leading `|-` row separator)
             grid.append(cells)
     return grid
-
-
-def _strip_wiki_cell_attr_in_html(text: str) -> str:
-    """Strip wiki cell-attribute syntax (``|attr=val|``) that leaked
-    into HTML ``<td>`` cell content.
-
-    Some source authors mix syntaxes inside an HTML ``<table>`` —
-    CALENDAR (vol 4 pp. 1028-30) and HYDRAULICS (vol 14 p. 120) both
-    write ``<td>content|rowspan=3|content</td>``, expecting the wiki
-    ``|rowspan=3|`` to be interpreted as a cell attribute.  Wiki
-    syntax doesn't apply inside HTML, so the ``|rowspan=3|`` would
-    leak as raw text through ``<td>`` content.  This strip removes
-    the wiki-attr token (visual cell-spanning is lost, but the
-    surrounding math/text content survives clean)."""
-    return re.sub(
-        r"\|\s*(?:colspan|rowspan|style|align|valign|width|class|bgcolor|"
-        r"cellpadding|cellspacing|border|height)\s*=[^|\n]*\|",
-        " ", text, flags=re.IGNORECASE,
-    )
 
 
 def emit_html_cell(
@@ -1244,36 +1224,6 @@ def _is_verse_table(inner: str) -> bool:
         else:
             return False
     return saw_verse_row and saw_punct_col1
-
-
-def _html_cell_clean(content: str) -> str:
-    """HTML cell-content normalisation: join soft-hyphen ``<br>`` breaks,
-    convert inline ``<sub>``/``<sup>`` to Unicode, strip remaining HTML
-    tags, collapse whitespace.
-
-    Producer-specific pre-``text_transform`` step; the canonical
-    ``produce_cell`` then runs body-text on the cleaned content while
-    ``_cell_styles`` consumes the cell's attribute slot independently.
-    """
-    c = _strip_wiki_cell_attr_in_html(content)
-    # Lossless `<br>` fidelity: a `<br>` in a table cell is the source/print's
-    # DELIBERATE line break (data-row delimiters in stacked-list columns, wrapped
-    # multi-line headers, legend line breaks) — keep it as a break instead of
-    # flattening to a space, so hand-aligned columns line up and headers wrap as
-    # printed.  We do NOT classify what each `<br>` "means"; rendering the break
-    # is faithful in every structural case (the only cost is the rare incidental
-    # narrow-column wrap, which shows a harmless extra line — no misalignment, no
-    # content loss).  The `-<br>` soft-hyphen join is still applied (a real print
-    # artifact, not a break).
-    c = _strip_br(c, "<br>")
-    c = _convert_inline_sub_sup(c)
-    # Strip remaining HTML tags but PRESERVE `<br>` (else the line break we just
-    # kept would be stripped here).
-    c = re.sub(r"<(?!br\s*/?>)[^>]+>", " ", c, flags=re.IGNORECASE)
-    # Collapse whitespace (incl. source newlines) to single spaces; `<br>` is
-    # not whitespace, so the preserved breaks survive.
-    c = re.sub(r"\s+", " ", c).strip()
-    return c
 
 
 def _process_table_unified(
