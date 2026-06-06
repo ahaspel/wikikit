@@ -18,24 +18,7 @@ from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
-from britannica.pipeline.stages.transform_articles.body_text import (
-    _FMT,
-    _FRAKTUR_MAP,
-    _LNK,
-    _SH,
-    _apply_markup,
-    _convert_hieroglyphs,
-    _convert_links,
-    _convert_shoulder_headings,
-    _convert_sub_sup,
-    _decode_entities,
-    _finalize_markers,
-    _strip_templates,
-    _to_fraktur,
-    _transform_body_text,
-    _unwrap_content_templates,
-    _unwrap_layout_templates,
-)
+from britannica.pipeline.stages.elements._prose import _apply_markup
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,

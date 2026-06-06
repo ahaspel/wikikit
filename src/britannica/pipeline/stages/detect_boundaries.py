@@ -65,28 +65,25 @@ def _extract_template_content(text: str, template_name: str) -> str | None:
     return None
 
 
-def _strip_templates(text: str) -> str:
-    """Unwrap nested wiki template wrappers, keeping the innermost content.
+def _title_plaintext(text: str) -> str:
+    """Project a TITLE field to plain text — the title path's own minimal need, NOT a
+    general template sweeper.
 
-    Handles patterns like {{mono|{{fs|108%|TITLE}}}} -> TITLE.
-    Multi-param templates keep the last parameter.
-    Also strips inline HTML formatting tags (<big>, <small>, <sub>, <sup>)
-    used for drop-caps / size emphasis in headings — we don't want
-    '<big>S</big>UCCINIC <big>A</big>CID' leaking into the title.
-    """
+    UNWRAPS styling-template wrappers keeping their content ({{mono|{{fs|108%|TITLE}}}}
+    → TITLE, last param), and drops the drop-cap / size HTML tags (<big>S</big>UCCINIC →
+    SUCCINIC) and «B»/«I» markers that mustn't leak into a rendered title.
+
+    It does NOT silently delete unhandled templates: the old `_strip_templates` sweeper's
+    content-destroying `{{…}}`→'' pass is gone, so a raw title-furniture template stays
+    visible rather than vanishing.  (Honest title recursion via the TITLE element is a
+    later step; this is the scoped field projection the boundary pass needs now.)"""
     for _ in range(5):
         text = re.sub(r"\{\{[^{}|]*\|([^{}|]*)\}\}", r"\1", text)
         text = re.sub(r"\{\{[^{}]*\|([^{}|]*)\}\}", r"\1", text)
-    text = re.sub(r"\{\{[^{}]*\}\}", "", text)
     text = re.sub(
         r"</?(?:big|small|sub|sup|span|font)\b[^>]*>",
         "", text, flags=re.IGNORECASE,
     )
-    # Strip wiki bold/italic markers (vol 1 AMPHITHEATRE wraps the
-    # title field in `«B»…«/B»` and the plate label in
-    # `<small>«B»{{sc|Plate}} I.«/B»</small>`; we want neither leaking
-    # into rendered titles).  Bold/italic arrive as «B»/«I» markers
-    # because clean_pages converts wikitext quote runs upstream.
     text = re.sub(r"«/?[BI]»", "", text)
     return text.strip()
 
@@ -804,7 +801,7 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
                         r"<ref[^>]*>.*?</ref>", "", fallback, flags=re.DOTALL)
                     fallback = re.sub(
                         r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", fallback)
-                    fallback = _strip_templates(fallback).rstrip(",.")
+                    fallback = _title_plaintext(fallback).rstrip(",.")
                     heading_title = fallback
                     _used_bold_fallback = True
             # Prefer section ID when the heading match is a partial capture
@@ -1019,7 +1016,7 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
             r"<ref[^>]*>.*?</ref>", "", stripped_bold, flags=re.DOTALL)
         stripped_bold = re.sub(
             r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", stripped_bold)
-        clean = _strip_templates(stripped_bold)
+        clean = _title_plaintext(stripped_bold)
         title = clean.rstrip(",.")
         if title:
             body_text = body_after.lstrip(" ,.")
@@ -1369,7 +1366,7 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
         if inner is None:
             inner = _extract_template_content(hdr, "larger")
         if inner is not None:
-            plate_title = _strip_templates(inner).rstrip(",.")
+            plate_title = _title_plaintext(inner).rstrip(",.")
         else:
             # {{rh|…|TITLE|…}} / {{EB1911 Page Heading|…|TITLE|…}} —
             # split on top-level pipes (brace-depth aware) for fields.
@@ -1397,7 +1394,7 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
                 if current:
                     fields.append(current)
                 for f in fields[1:]:
-                    clean = _strip_templates(f).rstrip("}]")
+                    clean = _title_plaintext(f).rstrip("}]")
                     if (clean and len(clean) > 2 and not clean.isdigit()
                             and not re.match(r"^Plate\b", clean)
                             and re.search(r"[A-Za-z]{3,}", clean)):

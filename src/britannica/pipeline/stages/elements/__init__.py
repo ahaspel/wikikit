@@ -183,7 +183,7 @@ def _produce_body(raw, inner, text_transform, context, inner_registry):
     form at module load.  A future refactor moves body-text logic into
     ``elements/_body.py`` and collapses the cycle.
     """
-    from britannica.pipeline.stages.transform_articles.body_text import (
+    from britannica.pipeline.stages.elements._prose import (
         _transform_body_text,
     )
     return _transform_body_text(raw)
@@ -223,7 +223,7 @@ def _plain_image_disentangle(raw, text_transform, context):
     cell becomes an IMAGE leaf and the caption cell rides the cell-collapse — held
     WITH the image by the table, not floated away as a loose sibling.  (The first
     figtable routed through `_process_table_unified`.)"""
-    from britannica.pipeline.stages.transform_articles.body_text import (
+    from britannica.pipeline.stages.elements._link import (
         _split_top_pipes)
     inner = re.sub(r"\}\}\s*$", "", re.sub(
         r"^\s*\{\{\s*plain image with caption\s*\|", "", raw, flags=re.IGNORECASE))
@@ -460,7 +460,7 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     # `_convert_shoulder_headings`.
     sh = _SHOULDER_HEADING_RE.match(raw)
     if sh:
-        from britannica.pipeline.stages.transform_articles.body_text import (
+        from britannica.pipeline.stages.elements._link import (
             _split_top_pipes)
         rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
         label = _styled_br_to_marker(_split_top_pipes(rest)[-1])
@@ -528,7 +528,7 @@ def _process_fraction(inner, text_transform):
     ``_render_fraction`` assembles num-over-den.  Replaces body-text's
     ``_expand_fractions`` flatten, which leaked the `{{sfrac|` the moment a slot
     held an extracted element or the template spanned a body-run `\\n\\n`."""
-    from britannica.pipeline.stages.transform_articles.body_text import (
+    from britannica.pipeline.stages.elements._fraction import (
         _render_fraction)
     bar = inner.find("|")                       # strip the `name` token
     if bar < 0:

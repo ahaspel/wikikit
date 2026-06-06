@@ -24,9 +24,6 @@ from britannica.pipeline.stages.elements._text import (
     _convert_inline_sub_sup,
     _strip_br,
 )
-from britannica.pipeline.stages.transform_articles.body_text import (
-    strip_known_wrapper_tags,
-)
 
 
 # Wiki cell-attribute keywords — used in two places (here, _layout) to
@@ -336,15 +333,12 @@ def _complex_cell_body(attr_part: str, content: str,
     # outputs literal HTML, so the `<br>` renders as a break.
     c = _strip_br(c, "<br>")
     c = c.strip()
-    # Run text_transform FIRST so it converts templates it knows about
-    # (`{{sfrac|…}}`, `{{hi|…}}`, `{{sc|…}}`) before the catch-all strip
-    # below eats every unlabelled template.
+    # Transform the OUTER (cell → styles); RECURSE the inner and leave it.
+    # No catch-all `{{…}}` strip, no wrapper sweep — an unhandled template or
+    # <span> in the recursed inner leaks to the audit, never silently deleted;
+    # recognizing them is the walker's job, not a post-recursion sweep here.
     if c:
         c = text_transform(c)
-    c = re.sub(r"\{\{[^{}]*\}\}", "", c)
-    # Cell-content wrapper-strip: enumerated HTML tags whose inner content
-    # the cell renders directly (AFRICA's transcriber-annotation spans).
-    c = strip_known_wrapper_tags(c)
     return styles, c
 
 
@@ -682,13 +676,9 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
             content = content.strip()
             if content:
                 content = text_transform(content)
-            # Anything text_transform didn't expand is unrecognised
-            # template noise (e.g. stray {{larger|...}} that the
-            # template was supposed to neutralise).
-            content = re.sub(r"\{\{[^{}]*\}\}", "", content)
-            # Cell-content wrapper-strip: shared toolkit utility,
-            # enumerated tag set, same as the BODY producer's call.
-            content = strip_known_wrapper_tags(content)
+            # Recurse the inner and leave it — no catch-all `{{…}}` strip, no
+            # wrapper sweep (transform the outer, recurse the inner; leftovers
+            # leak to the audit).
             content = (content.replace("&vert;", "|")
                               .replace("&nbsp;", " "))
             for sentinel, glyph in _CHEM_RESOLVE.items():
