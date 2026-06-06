@@ -32,6 +32,7 @@ from britannica.pipeline.stages.elements._image import (
     _process_image_from_raw,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
+from britannica.pipeline.stages.elements._link import process_eb1911_article_link
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
 from britannica.pipeline.stages.elements._math import (
@@ -631,6 +632,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (CONTRIBUTOR_FOOTER deleted: the footer is a FIELD, not rendered output, so it's
     # cut upstream by `strip_attributions` before the walker — we don't route a
     # never-rendered field through the renderer just to emit "".)
+    # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
+    # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
+    # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
+    "EB1911_ARTICLE_LINK": lambda raw, inner, tt, ctx, reg:
+        process_eb1911_article_link(raw, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
     "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),

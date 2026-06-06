@@ -134,6 +134,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # macro (`_process_plain_image` builds the {{IMG:…}} from the named params).
     if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
         return "PLAIN_IMAGE"
+    # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
+    # (like the image cases) since the first-token name is the ambiguous "eb1911".
+    if re.match(r"\{\{\s*EB1911\s+article\s+link\b", raw, re.IGNORECASE):
+        return "EB1911_ARTICLE_LINK"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(

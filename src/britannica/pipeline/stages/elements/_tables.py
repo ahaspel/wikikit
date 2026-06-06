@@ -806,14 +806,6 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "block center": {"ctr": True},
     "center block": {"ctr": True},
     "csc":          {"ctr": True, "sc": True},
-    # Small-caps family → INLINE «SC».  Safe at the walker now: the contributor
-    # signatures that carried `{{sc|initials}}` inside `[[Author:…]]` are cut as FIELDS
-    # before the walker runs (`strip_attributions`), so there is no signature left for
-    # it to recurse into and break.  Byte-identical to body-text's `_inline_small_caps`.
-    "sc":           {"sc": True},
-    "asc":          {"sc": True},
-    "smallcaps":    {"sc": True},
-    "small caps":   {"sc": True},
     "left":         {"css": "text-align:left"},
     "right":        {"css": "text-align:right"},
     "float right":  {"css": "float:right"},
@@ -825,6 +817,27 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "fine block":        {"css": "font-size:83%"},
     "eb1911 fine print": {"css": "font-size:83%"},
     "smaller block":     {"css": "font-size:83%"},
+    # ── Inline stylers — folded in now that the style producer is SOLE owner.
+    # `_apply_markup` is gone, so there's no flat handler left to collide with (that
+    # collision is what blocked `sc` before).  ANY styler routes here, period.
+    # Small-caps family → «SC» (the viewer's one special-cased style marker).
+    "sc":           {"sc": True},
+    "asc":          {"sc": True},
+    "smallcaps":    {"sc": True},
+    "small caps":   {"sc": True},
+    "small-caps":   {"sc": True},
+    # Script wrappers → content bare (the script IS the glyphs; no style of ours to
+    # carry).  Recognized so they route here and never leak — the producer's
+    # "unmatched" case: a styler we own but render as plain content.
+    "greek":        {},
+    "polytonic":    {},
+    "hebrew":       {},
+    "uc":           {},
+    # Inline no-wrap / font / decoration stylers → CSS the viewer decodes.
+    "nowrap":       {"css": "white-space:nowrap", "tag": "SPAN"},
+    "sans-serif":   {"css": "font-family:sans-serif", "tag": "SPAN"},
+    "serif":        {"css": "font-family:serif", "tag": "SPAN"},
+    "overline":     {"css": "text-decoration:overline", "tag": "SPAN"},
 }
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(

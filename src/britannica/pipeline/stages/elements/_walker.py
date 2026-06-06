@@ -144,6 +144,12 @@ _HIEROGLYPH_TMPL_RE = re.compile(
 # and the `{{EB1911 XYZ}}` bare-initials shortcuts — are attribution FIELDS, not body
 # content.  They are cut upstream by `extract_contributors.strip_attributions` before
 # the walker runs, so the walker no longer recognizes them at all.)
+# `{{EB1911 article link|Display|Target}}` — a cross-reference LINK.  OPENER-only regex;
+# the span is closed by the one balanced matcher (`_construct_end`, exactly like the
+# fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
+# no hand-rolled brace-balancer.  The producer recurses the display.
+_EB1911_ARTICLE_LINK_OPENER_RE = re.compile(
+    r"\{\{\s*EB1911\s+article\s+link\s*\|", re.IGNORECASE)
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
