@@ -81,7 +81,7 @@ _BRACKET_PREFIX_RE = re.compile(r"^\[\[\s*([A-Za-z]+)\s*:", re.IGNORECASE)
 _FRAC_LABEL_RE = re.compile(
     r"\{\{\s*(?:sfrac\s+nobar|EB1911\s+sfrac|EB1911\s+tfrac"
     r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
-    r"|sfracN|sfrac|mfrac|frac|over)\s*\|", re.IGNORECASE)
+    r"|sfracN|sfrac|mfrac|frac|over|binom)\s*\|", re.IGNORECASE)
 
 
 _HTML_TAG_LABEL: dict[str, str] = {
@@ -147,6 +147,9 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
                 r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", raw, re.IGNORECASE):
         return "SPACER"
+    # Content extractors — display arg is the content; producer unwraps + recurses it.
+    if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b", raw, re.IGNORECASE):
+        return "CONTENT_EXTRACT"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(

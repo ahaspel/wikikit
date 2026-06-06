@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
     process_eb1911_article_link, process_target_first_link)
 from britannica.pipeline.stages.elements._spacer import process_spacer
+from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
 from britannica.pipeline.stages.elements._math import (
@@ -515,7 +516,11 @@ def _process_fraction(inner, text_transform):
     bar = inner.find("|")                       # strip the `name` token
     if bar < 0:
         return text_transform(inner)
-    return _render_fraction(text_transform(inner[bar:]))
+    rendered = _render_fraction(text_transform(inner[bar:]))
+    if inner[:bar].strip().lower() == "binom":
+        # Binomial coefficient — a GROUPED pair (parens), not a bare bar-fraction.
+        return f"({rendered})"
+    return rendered
 
 
 # ── Producer dispatch ─────────────────────────────────────────────────
@@ -645,6 +650,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         process_target_first_link(inner, tt),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, tt, ctx, reg: process_spacer(raw),
+    # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
+    # lang/sic/dropinitial/fqm unwrap to the display arg.
+    "CONTENT_EXTRACT": lambda raw, inner, tt, ctx, reg:
+        process_content_extract(inner, tt),
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
     "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),

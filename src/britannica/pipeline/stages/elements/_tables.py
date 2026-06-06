@@ -846,6 +846,15 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "x-smaller":    {"css": "font-size:69%", "tag": "SPAN"},
     "xx-smaller":   {"css": "font-size:58%", "tag": "SPAN"},
     "nw":           {"css": "white-space:nowrap", "tag": "SPAN"},
+    # Rare styler tail — same rows, same mechanism.
+    "sm":               {"css": "font-size:83%", "tag": "SPAN"},
+    "underline":        {"css": "text-decoration:underline", "tag": "SPAN"},
+    "double underline": {"css": "text-decoration:underline", "tag": "SPAN"},
+    "float left":       {"css": "float:left"},
+    "normal":           {},  # font-variant:normal override → just the content
+    "brace2":           {},  # grouping brace → content (decoration not rendered)
+    "11co":             {},  # column wrapper → content
+    "u":                {"css": "text-decoration:underline", "tag": "SPAN"},
 }
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(
