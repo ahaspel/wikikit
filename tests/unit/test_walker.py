@@ -97,7 +97,8 @@ class TestWalkOutput:
         "{{dual line|A|B}}",
         "{{Plain image with caption|image=File:X.png|caption=Fig. 1}}",
         "{{ppoem|Verse line one\nVerse line two}}",
-        "{{EB1911 footer initials|Full Name|F. N.}}",
+        # ({{EB1911 footer initials}} is no longer a DOUBLE_BRACE element — it's a
+        #  contributor FIELD, cut by strip_attributions before the walker.)
     ])
     def test_double_brace_template_is_recognized(self, instance):
         _t, extracts = walk(instance)

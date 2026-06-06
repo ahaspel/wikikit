@@ -240,6 +240,14 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # old named-removal re.sub is DELETED — its greedy trailing `\}+` ate the
     # enclosing {{Fine block}}'s closing braces, unbalancing it (the holdover
     # `{{Fine block|`/`{{Fs|108%|` leak).
+    #
+    # Author attribution is a FIELD, like the title: cut the footer + {{right}}/
+    # {{float right}} signature BEFORE the walker.  They're bound to the DB from the raw
+    # by extract_contributors and re-rendered as the export byline, so the in-body copy
+    # is redundant.  The cut is SCOPED to the signature shapes, so prose [[Author:…]]
+    # citations are untouched.  Subsumes the old CONTRIBUTOR_FOOTER walker element.
+    from britannica.pipeline.stages.extract_contributors import strip_attributions
+    raw_wikitext = strip_attributions(raw_wikitext)
     text = process_elements(raw_wikitext, _apply_markup, context)
 
     # (chart2 genealogical-tree images are substituted at source in

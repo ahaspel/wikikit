@@ -46,7 +46,6 @@ In the swamp regions of north-east Africa the papyrus and associated plants, inc
 The rivers in the tropical zone abound with hippopotami and crocodiles, the former entirely confined to Africa. The vast herds of game, formerly so characteristic of many parts of Africa, have much diminished with the increase of intercourse with the interior. Game reserves have, however, been established in South Africa, British Central Africa, British East Africa, Somaliland, &c., while measures for the protection of wild animals were laid down in an international convention signed in May 1900.
 
 The ornithology of northern Africa presents a close resemblance to that of southern Europe, scarcely a species being found which does not also occur in the other countries bordering the Mediterranean. Among the birds most characteristic of Africa are the ostrich and the secretary-bird. The ostrich is widely dispersed, but is found chiefly in the desert and steppe regions. The secretary-bird is common in the south. The weaver birds and their allies, including the long-tailed whydahs, are abundant, as are, among game-birds, the francolin and guinea-fowl. Many of the smaller birds, such as the sun-birds, bee-eaters, the parrots and halcyons, as well as the larger plantain-eaters, are noted for the brilliance of their plumage. Of reptiles the lizard and chameleon are common, and there are a number of venomous serpents, though these are not so numerous as in other tropical countries. The scorpion is abundant. Of insects Africa has many thousand different kinds; of these the locust is the proverbial scourge of the continent, and the ravages of the termites or white ants are almost incredible. The spread of malaria by means of mosquitoes has already been mentioned. The tsetse fly, whose bite is fatal to all domestic animals, is common in many districts of South and East Africa. Fortunately it is found nowhere outside Africa.
-«DIV[style:float:right]»(E. He.; F. R. C.)«/DIV»
 
 «CTR»«SC»II. Geology«/SC»«/CTR»
 
@@ -650,7 +649,6 @@ Africa, were explored by Karl Mauch. In the following year
 F. C. Selous began his journeys over South Central Africa, 
 which continued for more than twenty years and extended 
 over every part of Mashonaland and Matabeleland. 
-
 
 «CTR»«SC»V. Partition among European Powers«/SC»«/CTR»
 
@@ -2497,7 +2495,6 @@ European control; but this work is advancing by rapid strides.
 has been to divide Africa among the powers as follows:—
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;line-height:110%;font-size:92%"><tr><td></td><td></td><td style="text-align:center">Sq. m.</td></tr><tr><td>British Africa</td><td>...........</td><td style="text-align:right">2,101,411</td></tr><tr><td>Egyptian Africa</td><td>...........</td><td style="text-align:right">1,600,000</td></tr><tr><td>French Africa</td><td>...........</td><td style="text-align:right">3,866,950</td></tr><tr><td>German Africa</td><td>...........</td><td style="text-align:right">910,150</td></tr><tr><td>Italian Africa</td><td>...........</td><td style="text-align:right">200,000</td></tr><tr><td colspan="2">Portuguese Africa.........</td><td style="text-align:right">787,500</td></tr><tr><td>Spanish Africa</td><td>...........</td><td style="text-align:right">79,800</td></tr><tr><td>Belgian Africa</td><td>...........</td><td style="text-align:right">900,000</td></tr><tr><td>Turkish Africa</td><td>...........</td><td style="text-align:right">400,000</td></tr><tr><td colspan="2">Independent Africa........</td><td style="text-align:right">613,000</td></tr><tr><td></td><td></td><td>«BAR[5]»</td></tr><tr><td></td><td></td><td style="text-align:right">11,458,811</td></tr><tr><td></td><td></td><td>«BAR[5]»«BAR[5]»</td></tr></table>«/HTMLTABLE»
 
-
 «CTR»«SC»VI. Exploration and Survey since 1875«/SC»«/CTR»
 In giving the history of the partition of the continent, the later
 work of exploration, except where, as in the case of de Brazza’s
@@ -3237,7 +3234,6 @@ France and other countries to the African seaports,
 the journey from any place in western Europe to any
 port on the African coast occupying, by the shortest
 route, not more than three weeks.
-
 
 «SC»Bibliography.«/SC»—Authoritative works dealing with Africa as a whole in any of its aspects are comparatively rare. Besides such volumes the following list includes therefore books containing valuable information concerning large or typical sections of the continent:—
 

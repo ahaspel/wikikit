@@ -18,24 +18,43 @@ _RAW_DIRS = [
 # The "double" variant uses four positional args instead of named
 # parameters; _parse_contributors handles both shapes.
 _FOOTER_PATTERN = re.compile(
-    r"\{\{EB1911 footer(?: double)? initials\|([^}]+)\}\}",
+    r"\{\{\s*EB1911\s+footer(?:\s+double)?\s+initials\s*\|([^}]+)\}\}",
     re.IGNORECASE,
 )
 
-# Sister pattern: {{right|([[Author:Full Name|Initials]]; [[Author:…|…]])}}
-# — author signature shape used by ~152 articles where the wiki-link
-# `[[Author:NAME|INITIALS]]` carries the contributor identity directly.
-# Multiple authors are `;`-separated inside the same template.
-# Canonical case: THUCYDIDES (vol 26).  Audit at
-# tools/_scratch/signature_shapes_audit.md.
+# Sister pattern: {{right|…}} / {{float right|…}} carrying [[Author:NAME|INITIALS]]
+# — the inline author-signature shape (~159 {{right}} + 6 {{float right}}); the
+# wiki-link carries the contributor identity directly, `;`-separated for multiples.
+# Canonical case: THUCYDIDES (vol 26).  Audit: tools/_scratch/signature_shapes_audit.md.
+# NOTE: the `(?:[^{}]|\{\{[^{}]*\}\})*?` is a brace-balancer — a nested-regex smell we'll
+# fix later.  It's load-bearing for now: it scopes the match to the SIGNATURE, which is
+# what keeps prose `[[Author:…]]` CITATIONS out of both the bind and the cut.
 _RIGHT_AUTHOR_PATTERN = re.compile(
-    r"\{\{\s*right\s*\|\s*"
+    r"\{\{\s*(?:float\s+)?right\s*\|\s*"
     r"((?:[^{}]|\{\{[^{}]*\}\})*?"
     r"\[\[Author:[^\]]+\]\]"
     r"(?:[^{}]|\{\{[^{}]*\}\})*?)"
     r"\}\}",
     re.IGNORECASE | re.DOTALL,
 )
+
+
+def strip_attributions(text: str) -> str:
+    """Delete the in-body author attributions — the `{{EB1911 footer initials}}` footer
+    and the `{{right}}`/`{{float right}}` signature — BEFORE the walker sees them.  They
+    are redundant: bound to the DB by `extract_contributors` (which reads the raw, so
+    this in-memory cut doesn't touch it) and re-rendered as the export byline.
+
+    We reuse the very patterns the bind reads, so the cut removes EXACTLY the recorded
+    shapes — a bare `[[Author:…]]` citation in prose is not one of these shapes, so it
+    stays.  A footer's `{{Fs|…}}` wrapper is left empty; the walker's styler collapses it
+    to ``""``.  (Same matching we already use; refining it is a later concern.)"""
+    text = _FOOTER_PATTERN.sub("", text)
+    # bare-initials sign-off shortcut (`{{EB1911 TAs}}` etc.) — the second shape the
+    # deleted CONTRIBUTOR_FOOTER element used to swallow.
+    text = re.sub(r"\{\{\s*EB1911\s+[A-Z][A-Za-z*\-]{0,4}\s*\}\}", "", text,
+                  flags=re.IGNORECASE)
+    return _RIGHT_AUTHOR_PATTERN.sub("", text)
 
 # Inside the `{{right|...}}` body, each contributor is one wiki-link
 # `[[Author:Full Name|Initials]]`.  The full-name comes from the

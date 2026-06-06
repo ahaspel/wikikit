@@ -806,6 +806,14 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "block center": {"ctr": True},
     "center block": {"ctr": True},
     "csc":          {"ctr": True, "sc": True},
+    # Small-caps family → INLINE «SC».  Safe at the walker now: the contributor
+    # signatures that carried `{{sc|initials}}` inside `[[Author:…]]` are cut as FIELDS
+    # before the walker runs (`strip_attributions`), so there is no signature left for
+    # it to recurse into and break.  Byte-identical to body-text's `_inline_small_caps`.
+    "sc":           {"sc": True},
+    "asc":          {"sc": True},
+    "smallcaps":    {"sc": True},
+    "small caps":   {"sc": True},
     "left":         {"css": "text-align:left"},
     "right":        {"css": "text-align:right"},
     "float right":  {"css": "float:right"},

@@ -628,12 +628,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_math_equation(inner, tt),
     "MATH_NE": lambda raw, inner, tt, ctx, reg:
         _process_math_equation(inner, tt),
-    # CONTRIBUTOR_FOOTER — `{{EB1911 footer initials|...}}` and its
-    # variants.  Captured by `extract_contributors` reading raw page
-    # text in its own pipeline stage; the body output renders nothing.
-    # Replaces the silent `_strip_templates` deletion path with an
-    # explicit producer contract.
-    "CONTRIBUTOR_FOOTER": lambda raw, inner, tt, ctx, reg: "",
+    # (CONTRIBUTOR_FOOTER deleted: the footer is a FIELD, not rendered output, so it's
+    # cut upstream by `strip_attributions` before the walker — we don't route a
+    # never-rendered field through the renderer just to emit "".)
     "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
     "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
     "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),
