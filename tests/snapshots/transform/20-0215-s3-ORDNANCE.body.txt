@@ -432,7 +432,7 @@ order to obtain rapidity each gun was furnished with several
 chambers.
 {{IMG:EB1911 - Ordnance - Fig. 7.png|align=center|width=390}}
 
-«CTR»«SC»Fig«/SC». 7.—Early Breech-loader.«/CTR»
+«CTR»«DIV[style:font-size:83%]»«SC»Fig«/SC». 7.—Early Breech-loader.«/DIV»«/CTR»
 
 Guns of this nature, called Petrieroes a Braza, were used in
 particular positions even at the end of the 17th century. Moretii
@@ -461,7 +461,7 @@ which, after the loading had been completed, was closed by a
 screw. The breech arrangement (fig. 8) of the rifled gun invented 
 {{IMG:EB1911 - Ordnance - Fig. 8.png|align=center|width=400}}
 
-«CTR»«SC»Fig«/SC». 8.—Cavalli Gun, 1845.«/CTR»
+«CTR»«DIV[style:font-size:83%]»«SC»Fig«/SC». 8.—Cavalli Gun, 1845.«/DIV»«/CTR»
 
 by Major Cavalli, a Sardinian officer, in 1845, was far
 superior to anything tried previously. After the projectile and
@@ -555,7 +555,7 @@ old type solid gun it was proportional to the extension only.
 
 {{IMG:EB1911 - Ordnance - Fig. 11.png|align=center|width=400}}
 
-«CTR»«SC»Fig«/SC». 11.—Armstrong B.L. Construction.«/CTR»
+«CTR»«DIV[style:font-size:83%]»«SC»Fig«/SC». 11.—Armstrong B.L. Construction.«/DIV»«/CTR»
 
 The first to employ successfully this important principle for all parts
 of a gun was «LN:Armstrong, William George Armstrong, Baron|Lord Armstrong«/LN» («I»q.v.«/I»), who in 1855–1856 produced
@@ -635,7 +635,7 @@ the hardening treatment of the steel is also the same—the coiled
 iron hoops when welded, of course, received no such treatment.
 {{IMG:EB1911 - Ordnance - Fig. 13.png|align=center|width=400}}
 
-«CTR»«SC»Fig«/SC». 13.—M.L. Gun Construction (Fraser).«/CTR»
+«CTR»«DIV[style:font-size:83%]»«SC»Fig«/SC». 13.—M.L. Gun Construction (Fraser).«/DIV»«/CTR»
 
 Fig. 14 shows the various stages of building up a B.L. gun and
 illustrates at the same time the principle of the interlocking

@@ -301,7 +301,15 @@ def _image_leaf_disentangle(raw, text_transform, context):
     end = _construct_end(s, 0)
     tmpl = s[:end] if end is not None else s
     rest = s[end:].strip() if end is not None else ""
-    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
+    if s.startswith("[["):
+        # Bare `[[File:…]]` block image (the `IMAGE` label).  The image is a pure
+        # LEAF — the bracket's trailing text is ALT, not a caption, and is dropped
+        # ([[feedback_no_caption_concept]]); only a FOLLOWING `{{center|…}}` block
+        # is a real caption and recurses as a sibling (SUNDEW Figs 2/4, which the
+        # old `_produce_figure` dropped).  `_img_marker` is the bare-image leaf.
+        from britannica.pipeline.stages.elements._figure_faithful import _img_marker
+        marker = _img_marker(tmpl)
+    elif re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
         fn = djvu_crop_filename(tmpl)
         if fn is None:
             img = _parse_crop_param(tmpl, "Image")
@@ -629,7 +637,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # into the marker) and refused to recurse (dropping sibling blocks like a
     # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
     # faithful recursive producer: image → leaf, caption → its own «CTR» block.
-    "IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    "IMAGE": lambda raw, inner, tt, ctx, reg:
+        _image_leaf_disentangle(raw, tt, ctx),
     # INLINE_IMAGE is the one image label faithful can't own: an inline glyph
     # needs `align=inline` (so the viewer renders it at source size in the
     # prose flow), and faithful's leaf is label-blind — it works from raw and
