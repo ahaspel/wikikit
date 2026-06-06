@@ -12,7 +12,6 @@ from britannica.image_assets import CHART2_IMAGES
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
-from britannica.captions import clean_caption
 
 
 def _img_marker(raw: str) -> str:
@@ -55,13 +54,10 @@ def build_img_marker(
     bare filename) call ``build_img_marker(fn, cap)`` exactly as before and
     get the identical metadata-free marker.
 
-    Applies ``clean_caption`` so every producer emits a clean caption as
-    part of producing — not a downstream renormalization pass.  Idempotent,
-    so callers that already cleaned their caption can route through it
-    harmlessly.  Every IMG-emitting producer should build markers via this
-    helper rather than an ad-hoc f-string."""
-    if caption:
-        caption = clean_caption(caption)
+    Does NOT clean the caption — the caption is the caller's already-recursed content
+    (the producer template: transform the outer, recurse the inner).  Re-cleaning it here
+    would maul the «SC»/«I»/… markers the recursion produced.  This helper only FORMATS;
+    every IMG-emitting producer builds markers through it rather than an ad-hoc f-string."""
     fields: list[str] = []
     if align:
         fields.append(f"align={align}")
