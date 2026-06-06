@@ -3947,7 +3947,7 @@ one of impulse. No drop of pressure occurs while the steam is
 passing the moving blades, and its velocity relative to the blade 
 surface undergoes no change except such as is brought about by 
 friction.
-«HTMLTABLE:<table class="figtable" style="float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«DIV[style:font-size:83%]»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/DIV»«/CTR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="width:240px;float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«DIV[style:font-size:83%]»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/DIV»«/CTR»</td></tr></table>«/HTMLTABLE»
 In the Parsons turbine, on the other hand, there is a 
 «I»reaction«/I» effect. The steam
 acquires relative velocity 

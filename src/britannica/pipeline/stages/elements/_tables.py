@@ -919,10 +919,11 @@ def _table_opener_styles(text: str) -> list[str]:
     m = re.match(r"^\{\|([^\n]*)", text)
     if not m:
         return []
-    return _cell_styles(m.group(1).strip(), "")
+    return _cell_styles(m.group(1).strip(), "", table_level=True)
 
 
-def _cell_styles(attr_part: str, content: str) -> list[str]:
+def _cell_styles(attr_part: str, content: str,
+                 table_level: bool = False) -> list[str]:
     """Extract the FULL styling for one cell from its attribute portion.
 
     Scans:
@@ -948,13 +949,25 @@ def _cell_styles(attr_part: str, content: str) -> list[str]:
     del content  # intentionally unused — see docstring.
     rules: list[str] = []
     blob = attr_part or ""
-    # HTML align="right" → text-align:right
+    # HTML align="right" → text-align:right for a CELL; for a TABLE OPENER
+    # (`table_level`), MediaWiki treats the opener's align as the whole table's
+    # FLOAT (left/right) or centring (center) — render_markers was right to emit
+    # `float:left` where the generic cell path emitted `text-align:left`.
     m = _CELL_ALIGN_ATTR_RE.search(blob)
     if m:
         a = m.group(1).lower()
         a = "center" if a.startswith("cent") else a
         if a in ("right", "center", "left"):
-            rules.append(f"text-align:{a}")
+            if table_level:
+                rules.append("margin-right:auto;margin-left:auto" if a == "center"
+                             else f"float:{a}")
+            else:
+                rules.append(f"text-align:{a}")
+    # A TABLE opener's width="N" is the table's own width (the cell path drops it).
+    if table_level:
+        wm = re.search(r"(?<![-\w])width\s*=\s*\"?\s*(\d+)", blob, re.IGNORECASE)
+        if wm:
+            rules.append(f"width:{wm.group(1)}px")
     # HTML valign="top" → vertical-align:top
     vm = re.search(r"valign\s*=\s*\"?(top|middle|bottom)", blob, re.IGNORECASE)
     if vm:

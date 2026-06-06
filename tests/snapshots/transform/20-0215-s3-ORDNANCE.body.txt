@@ -2517,7 +2517,7 @@ The stress for any intermediate radius 𝑟 can be obtained from
 Subtracting the «I»Powder Stress«/I» from the «I»Firing Stress«/I» the «I»Initial«/I»
 «I»Stress«/I» is obtained, and the various results can be tabulated as
 follows:—
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr><td rowspan="2" colspan="2">At Radius.</td><td colspan="3">Tensions.</td><td colspan="3">Pressures.</td></tr><tr style="border:1px solid black"><td>Firing«BR»Stress.</td><td>Powder«BR»Stress.</td><td>Initial«BR»Stress.</td><td>Firing«BR»Stress.</td><td>Powder«BR»Stress.</td><td>Initial«BR»Stress.</td></tr><tr><td rowspan="2">Barrel «BRACE2[2|l]»</td><td style="border-left:1px solid transparent">𝑟₀=2·5</td><td>15·0 </td><td>26·25</td><td>−11·25 </td><td>21·0 </td><td>21·0 </td><td>0</td></tr><tr><td style="border-left:1px solid transparent">𝑟₀=4·1</td><td> 3·72</td><td>11·57</td><td>−7·85</td><td> 9·72</td><td> 6·32</td><td>3·4</td></tr><tr><td rowspan="2">Jacket «BRACE2[2|l]»</td><td style="border-left:1px solid transparent">𝑟₀=4·1</td><td>18·0 </td><td>11·57</td><td> 6·43</td><td> 9·72</td><td> 6·32</td><td>3·4</td></tr><tr><td style="border-left:1px solid transparent">𝑟₀=7·5</td><td> 8·28</td><td> 5·25</td><td> 3·03</td><td>0</td><td>0</td><td>0</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="margin-right:auto;margin-left:auto"><tr><td rowspan="2" colspan="2">At Radius.</td><td colspan="3">Tensions.</td><td colspan="3">Pressures.</td></tr><tr style="border:1px solid black"><td>Firing«BR»Stress.</td><td>Powder«BR»Stress.</td><td>Initial«BR»Stress.</td><td>Firing«BR»Stress.</td><td>Powder«BR»Stress.</td><td>Initial«BR»Stress.</td></tr><tr><td rowspan="2">Barrel «BRACE2[2|l]»</td><td style="border-left:1px solid transparent">𝑟₀=2·5</td><td>15·0 </td><td>26·25</td><td>−11·25 </td><td>21·0 </td><td>21·0 </td><td>0</td></tr><tr><td style="border-left:1px solid transparent">𝑟₀=4·1</td><td> 3·72</td><td>11·57</td><td>−7·85</td><td> 9·72</td><td> 6·32</td><td>3·4</td></tr><tr><td rowspan="2">Jacket «BRACE2[2|l]»</td><td style="border-left:1px solid transparent">𝑟₀=4·1</td><td>18·0 </td><td>11·57</td><td> 6·43</td><td> 9·72</td><td> 6·32</td><td>3·4</td></tr><tr><td style="border-left:1px solid transparent">𝑟₀=7·5</td><td> 8·28</td><td> 5·25</td><td> 3·03</td><td>0</td><td>0</td><td>0</td></tr></table>«/HTMLTABLE»
 
 It is generally stipulated that the initial compression of the
 material at the interior surface of the barrel shall not exceed
@@ -2539,7 +2539,7 @@ of the external diameter of the tube over the internal diameter of
 the hoop, when separate and both are in the cold state. ThenPAGE:244ii. 𝑛S𝑛₊₁ denotes the shrinkage between the 𝑛𝑡ℎ and (𝑛 + 1)𝑡ℎ
 hoops.
 
-«HTMLTABLE:<table class="figtable"><tr><td style="text-align:right">𝑛S𝑛₊₁</td><td>=2𝑟𝑛/M{ (𝑡𝑛 − 𝑡′𝑛)}</td><td style="text-align:right">(8)</td></tr><tr><td>=2𝑟𝑛/M «XL»[«/XL» (𝑡𝑛 − 𝑡𝑛−₁) + 𝑟𝑛² − 𝑟𝑛²−₁/𝑟𝑛² + 𝑟𝑛²−₁ {(𝑡𝑛−1) + (𝑝𝑛)} «XL»]«/XL»</td><td style="text-align:right">(9).</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="width:100px"><tr><td style="text-align:right">𝑛S𝑛₊₁</td><td>=2𝑟𝑛/M{ (𝑡𝑛 − 𝑡′𝑛)}</td><td style="text-align:right">(8)</td></tr><tr><td>=2𝑟𝑛/M «XL»[«/XL» (𝑡𝑛 − 𝑡𝑛−₁) + 𝑟𝑛² − 𝑟𝑛²−₁/𝑟𝑛² + 𝑟𝑛²−₁ {(𝑡𝑛−1) + (𝑝𝑛)} «XL»]«/XL»</td><td style="text-align:right">(9).</td></tr></table>«/HTMLTABLE»
 Here M can be taken as 12,500 tons per square inch for
 gun steel. In the example already calculated the shrinkage
 between the jacket and barrel is 0·009 in.
