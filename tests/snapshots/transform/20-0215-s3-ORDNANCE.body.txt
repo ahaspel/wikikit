@@ -236,7 +236,7 @@ about 100 yds. distance, the breech end of the gun or the rear
 end of the bed abutting against a solid baulk of wood fixed to
 the ground. “Mons Meg” was originally provided with a wood
 cradle.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 3.png|width=400}}</td></tr><tr><td>«FS[92%]»Redrawn from Mallet’s «I»Construction of Artillery«/I».«/FS»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 3. — Primitive Gun-mounting.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 3.png|width=400}}</td></tr><tr><td>«SPAN[style:font-size:92%]»Redrawn from Mallet’s «I»Construction of Artillery«/I».«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 3. — Primitive Gun-mounting.</td></tr></table>«/HTMLTABLE»
 It is by no means certain when wheeled carriages werePAGE:217introduced. They must have gradually appeared as a means of
 surmounting the difficulties engendered by the recoil of the piece
 and of transport of the early guns and their cradles. Andrea
@@ -260,7 +260,7 @@ axle or trunnions for the purpose. For giving elevation a wood
 arc was fixed to the trail towards the rear end, and the breech
 end could be moved up and down along this arc and fixed at
 certain positions by a pin passing through both cradle and arc.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:100%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 4.png|width=400}}</td></tr><tr><td>«SPAN[style:position:relative; bottom:2em; font-size:85%]»From Clephan, «I»Early Ordnance«/I».«/SPAN»</td></tr><tr><td>«SPAN[style:position:relative; bottom:1.2em]»«SC»Fig«/SC». 4.—Early Field Gun.«/SPAN»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:100%"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 4.png|width=400}}</td></tr><tr><td>«SPAN[style:position:relative;bottom:2em;font-size:85%]»From Clephan, «I»Early Ordnance«/I».«/SPAN»</td></tr><tr style="text-align:center"><td>«SPAN[style:position:relative;bottom:1.2em]»«SC»Fig«/SC». 4.—Early Field Gun.«/SPAN»</td></tr></table>«/HTMLTABLE»
 About the middle of the 15th century the trunnions were
 formed with the gun—the wood cradle therefore became unnecessary
 and was discarded. The carriage was then formed of
@@ -2085,7 +2085,7 @@ ship survived after
 being struck by ten
 12-in. projectiles.
 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 52-53.png|width=390}}</td></tr><tr><td>«SC»Fig«/SC». 52.—De Range Obturator.«BR»«BR»</td><td style="padding-left:1em">«SC»Fig«/SC». 53.—Steep Cone de«BR»Bange Obturator.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%;text-align:center"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 52-53.png|width=390}}</td></tr><tr><td>«SC»Fig«/SC». 52.—De Range Obturator.«BR»«BR»</td><td style="padding-left:1em">«SC»Fig«/SC». 53.—Steep Cone de«BR»Bange Obturator.</td></tr></table>«/HTMLTABLE»
 Some authorities
 have lately sought
 to increase the
@@ -2114,9 +2114,7 @@ of the gun house is reduced to the smallest dimension and, in
 consequence, there is a great saving of weight of armour. The
 extra weight of the gun is therefore
 more than compensated for.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%"><tr><td>{{IMG:EB1911 - Ordnance Fig 54.png|width=583}}
-
-«BR» «SPAN[style:position: relative; bottom:2em]»«SC»Fig«/SC». 54.—Metallic Cartridge Case.«/SPAN»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;font-size:92%;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 54.png|width=583}}«BR» «SPAN[style:position: relative;bottom:2em]»«SC»Fig«/SC». 54.—Metallic Cartridge Case.«/SPAN»</td></tr></table>«/HTMLTABLE»
 
 «HTMLTABLE:<table class="data-table _tablecolhdborder" style="font-size:92%;line-height:120%;text-align:center"><caption>«SC»Table«/SC» II.—«I»Names and Weights of English Cannon«/I», «I»1574«/I»</caption><tr style="border:1px solid"><td>Names.</td><td>Weight.</td><td>Diameter«BR»of Bore.</td><td>Diameter«BR»of Shot.</td><td>Weight of«BR»Shot.</td><td>Weight of«BR»Charge.«BR»Serpentine.</td><td>Scores of«BR»Paces at«BR»point-blank.</td></tr><tr><td>lb</td><td>in.</td><td>in.</td><td>lb</td><td>lb</td><td></td></tr><tr><td style="text-align:left">Robinet</td><td> 200</td><td>1¼</td><td>1</td><td>1</td><td> ½</td><td>..</td></tr><tr><td style="text-align:left">Falconet</td><td> 500</td><td>2 </td><td>1¾</td><td>2</td><td> 1¼</td><td>14</td></tr><tr><td style="text-align:left">Falcon</td><td> 800</td><td>2¾</td><td>2½</td><td> 2½</td><td> 2½</td><td>16</td></tr><tr><td style="text-align:left">Minion</td><td>1100</td><td>3¼</td><td>3</td><td> 4½</td><td> 4½</td><td>17</td></tr><tr><td style="text-align:left">Sacre</td><td>1500</td><td>3½</td><td>3½</td><td>5</td><td>5</td><td>18</td></tr><tr><td style="text-align:left">Demi-Culverin  </td><td>2500</td><td>4¼</td><td>4</td><td>9</td><td>9</td><td>20</td></tr><tr><td style="text-align:left">Culverin</td><td>4000</td><td>5¼</td><td>5</td><td>18</td><td>18</td><td>25</td></tr><tr><td style="text-align:left">Demi-Cannon</td><td>6000</td><td>6½</td><td>6¼</td><td>30</td><td>28</td><td>28</td></tr><tr><td style="text-align:left">Cannon</td><td>7000</td><td>7¾</td><td>7½</td><td>60</td><td>40</td><td>20</td></tr><tr><td style="text-align:left">Eliza-Cannon</td><td>8000</td><td>8 </td><td>7¾</td><td>63</td><td>42</td><td>20</td></tr><tr><td style="text-align:left">Basiliske</td><td>9000</td><td>8¾</td><td>8½</td><td>60</td><td>60</td><td>21</td></tr></table>«/HTMLTABLE»
 
@@ -3033,7 +3031,7 @@ second by the goniometric sight or the panorama sight. ThePAGE:247«HTMLTABLE:
 gear found in many modern field guns, which divides between
 two gunners the work of aiming (called «I»laying«/I») the gun, and of
 giving it the elevation required to hit the target.
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 59.png|width=400}}</td></tr><tr><td>«FS[83%]»From Bethell’s «I»Modern Guns and Gunnery«/I».«/FS»</td></tr><tr><td style="text-align:center;font-size:92%">«SC»Fig«/SC». 59.—Diagram illustrating the independent line of sight.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 59.png|width=400}}</td></tr><tr><td>«SPAN[style:font-size:83%]»From Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center;font-size:92%">«SC»Fig«/SC». 59.—Diagram illustrating the independent line of sight.</td></tr></table>«/HTMLTABLE»
 In fig. 59 the gun is shown mounted on an intermediate
 carriage elevated and depressed by the screw A. The telescopic
 or ordinary sight is fixed to this carriage. The gun, in its cradle,
@@ -3392,7 +3390,7 @@ but has a panorama sight. It traverses on the axletree.
 of the heavier or more powerful type of Krupp field gun. The gun
 may be seen supported on the cradle, which contains the hydraulic
 buffer and running-up springs. The wedge breech-block is open.
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance Fig 63.png|width=800}}</td></tr><tr><td>«FS[85%]»Redrawn from Bethell’s «I»Modern Guns and Gunnery«/I».«/FS»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 63.—The German Q.F. Gun. C. 96. n./A. (1906).</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance Fig 63.png|width=800}}</td></tr><tr><td>«SPAN[style:font-size:85%]»Redrawn from Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 63.—The German Q.F. Gun. C. 96. n./A. (1906).</td></tr></table>«/HTMLTABLE»
 The arc sight with panorama telescope is seen behind the shield,
 which is curved backwards for better protection. The seats for the
 gunners who lay and attend to the breech are on either side of the
@@ -3647,9 +3645,7 @@ up is given as 712/7 cwt.: it is known as a siege gun.
 
 In its general aspect the carriage resembles a field carriage, but of
 stronger type, with a special arrangement of cradle.
-«HTMLTABLE:<table class="figtable"><tr><td colspan="6">{{IMG:EB1911 - Ordnance Fig 71.png|width=400}}</td></tr><tr><td colspan="6">«FS[85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/FS»«BR»
-
-«CTR»«SC»Fig«/SC». 71.—Diagram of 4·7-in. Siege Gun, U.S.A.«/CTR»</td></tr><tr><td>«I»b«/I»,</td><td>Traversing bracket,</td><td>«I»r«/I»,</td><td>Rails.</td><td>«I»x«/I»,</td><td>Axle.</td></tr><tr><td>«I»p«/I».</td><td>Pintle bearing.</td><td>«I»s«/I».</td><td>Spring cylinders,</td><td>«I»y«/I»,</td><td>Pintle yoke.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td colspan="6">{{IMG:EB1911 - Ordnance Fig 71.png|width=400}}</td></tr><tr><td colspan="6">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»«BR» «CTR»«SC»Fig«/SC». 71.—Diagram of 4·7-in. Siege Gun, U.S.A.«/CTR»</td></tr><tr><td>«I»b«/I»,</td><td>Traversing bracket,</td><td>«I»r«/I»,</td><td>Rails.</td><td>«I»x«/I»,</td><td>Axle.</td></tr><tr><td>«I»p«/I».</td><td>Pintle bearing.</td><td>«I»s«/I».</td><td>Spring cylinders,</td><td>«I»y«/I»,</td><td>Pintle yoke.</td></tr></table>«/HTMLTABLE»
 In fig. 71 two sections are given; the cradle, it will be seen,
 consists of three cylinders (seen in section in the upper figure) which
 are bound together by broad steel bands; the two outer cylinders
@@ -3922,7 +3918,7 @@ the platform. Its upper portion consists of two inclined rails along
 which the bed or carriage of the howitzer slides. To check recoil a
 hydraulic buffer is attached to the front of the slide and also to the
 bed.
-«HTMLTABLE:<table class="figtable"><tr><td colspan="4">{{IMG:EB1911 - Ordnance Fig 75.png|width=580}}</td></tr><tr><td colspan="4">«FS[85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/FS»</td></tr><tr><td colspan="4" style="text-align:center">«SC»Fig«/SC». 75.—Diagram of 6-in. Siege Howitzer, U.S.A.</td></tr><tr><td>«I»b«/I»,</td><td>Hand-wheel actuating wheel</td><td>«I»k«/I»,</td><td>Hook, 1, 2, 3, 4 and mechanism</td></tr><tr><td></td><td>brakes.</td><td></td><td>for loading position.</td></tr><tr><td>«I»e«/I».</td><td>Elevating hand-wheel.</td><td>«I»n«/I»,</td><td>Elevating screw.</td></tr><tr><td>«I»h«/I»,</td><td>Handle.</td><td>«I»t«/I».</td><td>Traversing wheel.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable"><tr><td colspan="4">{{IMG:EB1911 - Ordnance Fig 75.png|width=580}}</td></tr><tr><td colspan="4">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»</td></tr><tr><td colspan="4" style="text-align:center">«SC»Fig«/SC». 75.—Diagram of 6-in. Siege Howitzer, U.S.A.</td></tr><tr><td>«I»b«/I»,</td><td>Hand-wheel actuating wheel</td><td>«I»k«/I»,</td><td>Hook, 1, 2, 3, 4 and mechanism</td></tr><tr><td></td><td>  brakes.</td><td></td><td>  for loading position.</td></tr><tr><td>«I»e«/I».</td><td>Elevating hand-wheel.</td><td>«I»n«/I»,</td><td>Elevating screw.</td></tr><tr><td>«I»h«/I»,</td><td>Handle.</td><td>«I»t«/I».</td><td>Traversing wheel.</td></tr></table>«/HTMLTABLE»
 The fighting units of siege artillery in the British service are
 companies and brigades; each company would be armed with
 from 4 to 6 light siege pieces or from 2 to 4 heavy pieces. A company
@@ -4203,7 +4199,7 @@ the recess shown in section at O. By means of a shell barrow any
 projectile can be placed on the lift W and raised to a trolley which
 can be run round over the lift W, which raises the projectile, as
 shown at S, to a point suitable for loading.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td>«SPAN[style:position:relative; bottom:2em]»«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.«/SPAN»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td>«SPAN[style:position:relative;bottom:2em]»«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.«/SPAN»</td></tr></table>«/HTMLTABLE»
 
 «CTR»{{IMG:EB1911 - Ordnance Fig 85.png|width=540}}
 
@@ -4263,7 +4259,7 @@ by the action of a clock spring.«FN[230f1]:The elevation indicators are now rea
 a spiral groove, which guides a stud on the reader along the scale of
 graduations.«/FN» The mounting carries an
 automatic sight (see «LN:Sights|Sights«/LN», «I»Gun Sights«/I»).
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 86-7.png|width=720}}</td></tr><tr><td>«SPAN[style:position: relative; bottom:6em]»      «SC»Fig«/SC». 87.«/SPAN»</td><td>«SC»Fig«/SC». 86.</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig«/SC». 86.—British Mark II. Barbette Mounting for 6″ B.L. Gun.«BR» «SC»Fig«/SC». 87—Longitudinal Section of Part of Cradle of Gun shown in fig. 13, through Axis of Buffer.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td colspan="2">{{IMG:EB1911 - Ordnance Fig 86-7.png|width=720}}</td></tr><tr><td>«SPAN[style:position: relative;bottom:6em]»«SC»Fig«/SC». 87.«/SPAN»</td><td>«SC»Fig«/SC». 86.</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig«/SC». 86.—British Mark II. Barbette Mounting for 6″ B.L. Gun.«BR» «SC»Fig«/SC». 87—Longitudinal Section of Part of Cradle of Gun shown in fig. 13, through Axis of Buffer.</td></tr></table>«/HTMLTABLE»
 
 «I»The British 12-pr. Q.F. Gun«/I». — A typical mounting for guns of
 class («I»c«/I») is the British pedestal mounting for the 12-pr. Q.F. gun.

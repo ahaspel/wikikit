@@ -550,21 +550,21 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # nested wikitables, POEM cells).
     # Phase-1 cutover: faithful recursive producer (was _process_captioned_figure).
     "CAPTIONED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # CAPTIONED_FIGURE_INLINE — image and caption share one cell,
     # `<br>`-separated, often wrapped in `{{center|…}}` or a
     # `<span style="…">…</span>` styling element.  Producer strips
     # the image placeholder + wrapper templates from the cell, the
     # remaining text is the caption.
     "CAPTIONED_FIGURE_INLINE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # LEGENDED_FIGURE — single-image figure carrying legend material
     # (multicol `|LABEL.||text|…`, prose `LABEL. text` cells, POEM
     # placeholder, or nested wikitable).  Producer finds + extracts
     # the legend first, then runs the same one-pass extract on the
     # caption/attribution remainder, then assembles.
     "LEGENDED_FIGURE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # LEGENDED_FIGURE_BESIDE — single-image figure whose legend sits
     # in a sibling cell on the image's row, separated by `||`
     # (ABBEY Fig 1 Santa Laura).  Producer parses the sibling cell's
@@ -572,7 +572,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # raw row text (so paragraph-`\n\n` breaks survive), then finds
     # the caption in a subsequent colspan row.
     "LEGENDED_FIGURE_BESIDE": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # LEGENDED_FIGURE_CHILD — single-image figure whose legend lives
     # in a POEM placeholder or a nested wikitable child.  Producer
     # finds the child, calls the appropriate raw-parser
@@ -580,14 +580,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # nested TABLE), excises the placeholder, and runs one-pass
     # extraction on the remainder.
     "LEGENDED_FIGURE_CHILD": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # (SIMPLE_PLATE + CAPTIONED_FIGURE_GRID labels removed — multi-image
     # figures now classify as UNPAIRED_FIGURE_GROUP, above.)
     # FIGURE_GROUP — outer wikitable wrapping ≥2 nested figure
     # wikitables (HYDROMEDUSAE-style composite).  No direct images
     # at this level.  Initially shared with LAYOUT_WRAPPER.
     "FIGURE_GROUP": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _process_table_unified(raw, inner, tt, reg, ctx),
     # FIGURE — a bare image + its structural caption run, carved as one span
     # by the walker.  Cut over to the faithful producer (was `_produce_figure`,
     # which folded the caption into `{{IMG:|caption}}` — flattening `{{sc|Fig.}}`

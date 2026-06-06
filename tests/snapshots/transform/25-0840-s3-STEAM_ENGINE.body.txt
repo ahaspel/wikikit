@@ -1249,7 +1249,7 @@ Then We can perform as follows the ideal reversible cycle of operations
 first described by Carnot, which gives the highest possible efficiency
 attainable in any heat engine. To fix the ideas, suppose that there
 is 1 lb of water in the cylinder to begin with, at the temperature τ₁:—
-«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td></td><td>«SPAN[style:position: relative; bottom: 2.5em]»«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.«/SPAN»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td></td><td>«SPAN[style:position: relative;bottom: 2.5em]»«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.«/SPAN»</td></tr></table>«/HTMLTABLE»
 1. Apply A, and allow the piston to rise. The water will take
 in heat and be converted into steam, expanding isothermally at
 constant pressure 𝑝₁. This part
@@ -2190,7 +2190,7 @@ working, and as regards the relative position of the crank and
 eccentric it would have to be set so that its middle position 
 coincided with the extreme position of the piston; in other words, 
 the eccentric radius would make a right angle with the crank.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;line-height:110%"><tr><td colspan="3">{{IMG:EB1911 Steam Engine Fig. 20-21.png|width=320}}</td></tr><tr><td>«SC»Fig«/SC». 20.—Slide-Valve«BR»without Lap.</td><td></td><td style="padding-left:2em">«SC»Fig«/SC». 21.—Slide-Valve«BR»with Lap.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;line-height:110%"><tr><td colspan="3">{{IMG:EB1911 Steam Engine Fig. 20-21.png|width=320}}</td></tr><tr><td>«SC»Fig«/SC». 20.—Slide-Valve«BR»without Lap.</td><td></td><td style="padding-left:2em">«SC»Fig«/SC». 21.—Slide-Valve«BR»with Lap.</td></tr></table>«/HTMLTABLE»
 Expansive working, however, becomes possible when we give the 
 valve what is called “lap,” by making it project over the edges of 
 the steam ports, as in fig. 21, where is the “outside lap” and 𝑖 is 
@@ -2594,7 +2594,7 @@ or recede from each other. In large valves the adjustment is more
 conveniently made by varying the travel of the valve, which is done 
 by connecting it to its eccentric through a link which serves as a 
 lever of variable length. 
-«HTMLTABLE:<table class="figtable" style="float:right;width:95px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 39.png|width=70}}</td></tr><tr><td>«SC»Fig«/SC». 39.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right;width:95px;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 39.png|width=70}}</td></tr><tr><td>«SC»Fig«/SC». 39.</td></tr></table>«/HTMLTABLE»
 72. «I»Relief Rings«/I».—To relieve the pressure of the valve on the seat, 
 large slide-valves are generally fitted with a steam-tight ring, which 
 excludes steam from the greater part of the back of 
@@ -2635,7 +2635,7 @@ them. Fig. 40 shows a form of piston
 valve for the supply of high-pressure 
 steam to a large marine engine. P, P are 
 the cylinder ports. 
-«HTMLTABLE:<table class="figtable" style="float:left;width:165px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 40.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 40.—Piston«BR»Slide-Valve.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:left;width:165px;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 40.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 40.—Piston«BR»Slide-Valve.</td></tr></table>«/HTMLTABLE»
 74. «I»Balance Piston«/I».—Fig. 39 illustrates 
 an arrangement common in all heavy 
 slide-valves whose travel is vertical—the 

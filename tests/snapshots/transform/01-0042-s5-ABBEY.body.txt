@@ -21,24 +21,13 @@ This curious and interesting plan has been made the subject of a memoir both by 
 
 «DIV[style:font-size:83%]»The general distribution of the buildings may be thus described:—The church, with its cloister to the south, occupies the centre of a quadrangular area, about 430 feet square. The buildings, as in all great monasteries, are distributed into groups. The church forms the nucleus, as the centre of the religious life of the community. In closest connexion with the church is the group of buildings appropriated to the monastic life and its daily requirements—the refectory for eating, the dormitory for sleeping, the common room for social intercourse, the chapter-house for religious and disciplinary conference. These essential elements of monastic life are ranged about a cloister court, surrounded by a covered arcade, affording communication sheltered from the elements between the various buildings. The infirmary for sick monks, with the physician’s house and physic garden, lies to the east. In the same group with the infirmary is the school for the novices. The outer school, with its headmaster’s house against the opposite wall of the church, stands outside the convent enclosure, in close proximity to the abbot’s house, that he might have a constant eye over them. The buildings devoted to hospitality are divided into three groups,—one for the reception of distinguished guests, another for monks visiting the monastery, a third for poor travellers and pilgrims. The first and third are placed to the right and left of the common entrance of the monastery,—the hospitium for distinguished guests being placed on the north side of the church, not far from the abbot’s house; that for the poor on the south side next to the farm buildings. The monks are lodged in a guest-house built against the north wall of the church. The group of buildings connected with the material wants of the establishment is placed to the south and west of the church, and is distinctly separated from the monastic buildings. The kitchen, buttery and offices are reached by a passage from the west end of the refectory, and are connected with the bakehouse and brewhouse, which are placed still farther away. The whole of the southern and western sides is devoted to workshops, stables and farm-buildings. The buildings, with some exceptions, seem to have been of one story only, and all but the church were probably erected of wood. The whole includes thirty-three separate blocks. The church (D) is cruciform, with a nave of nine bays, and a semicircular apse at either extremity. That to the west is surrounded by a semicircular colonnade, leaving an open “paradise” (E) between it and the wall of the church. The whole area is divided by screens into various chapels. The high altar (A) stands immediately to the east of the transept, or ritual choir; the altar of St Paul (B) in the eastern, and that of St Peter (C) in the western apse. A cylindrical campanile stands detached from the church on either side of the western apse (FF).«/DIV»
 
-«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:100%;margin-right:auto;margin-left:auto;width:450px"><tr><td>{{IMG:Abbey_3.png|width=450}}</td></tr><tr><td>«CTR»«SC»Fig. 3.«/SC»—Ground-plan of St Gall.«/CTR»
-
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td style="width:49%;vertical-align:top">«CTR»«SC»Church.«/SC»«/CTR»
-
-{{VERSE:A. High altar.
+«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:100%;margin-right:auto;margin-left:auto;width:450px"><tr><td>{{IMG:Abbey_3.png|width=450}}</td></tr><tr><td>«CTR»«SC»Fig. 3.«/SC»—Ground-plan of St Gall.«/CTR» «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td style="width:49%;vertical-align:top">«CTR»«SC»Church.«/SC»«/CTR» {{VERSE:A. High altar.
 B. Altar of St Paul.
 C. Altar of St Peter.
 D. Nave.
 E. Paradise.
-FF. Towers.}VERSE}
-
-«DHR[75%]»
-
-«CTR»«SC»Monastic Buildings.«/SC»«/CTR»
-
-{{VERSE:G. Cloister.
-H. Calefactory, with dormitory
-over.
+FF. Towers.}VERSE} «DHR[75%]» «CTR»«SC»Monastic Buildings.«/SC»«/CTR» {{VERSE:G. Cloister.
+H. Calefactory, with dormitory<br> over.
 I. Necessary.
 J. Abbot’s House.
 K. Refectory.
@@ -48,25 +37,15 @@ N. Cellar.
 O. Parlour.
 P₁. Scriptorium with library over.
 P₂. Sacristy and vestry.
-Q. House of novices—1. chapel;
-2. refectory; 3. calefactory;
-4. dormitory; 5. master’s
-room; 6. chambers.
-R. Infirmary—1–6 as above in
-the house of novices.
+Q. House of novices—1. chapel;<br> 2. refectory; 3. calefactory;<br> 4. dormitory; 5. master’s<br> room; 6. chambers.
+R. Infirmary—1–6 as above in<br> the house of novices.
 S. Doctor’s house.
-T. Physic garden.}VERSE}</td><td></td><td>{{VERSE:U. House for blood-letting.
+T. Physic garden.}VERSE}</td><td> </td><td>{{VERSE:U. House for blood-letting.
 V. School.
 W. Schoolmaster’s lodgings.
-X₁X₁. Guest-house for those of
-superior rank.
+X₁X₁. Guest-house for those of<br> superior rank.
 X₂X₂. Guest-house for the poor.
-Y. Guest-chamber for strange
-monks.}VERSE}
-
-«CTR»«SC»Menial Department.«/SC»«/CTR»
-
-{{VERSE:«I»Z«/I». Factory.
+Y. Guest-chamber for strange<br> monks.}VERSE} «CTR»«SC»Menial Department.«/SC»«/CTR» {{VERSE:«I»Z«/I». Factory.
 «I»a«/I». Threshing Floor.
 «I»b«/I». Workshops.
 «I»c«/I»,«I»c«/I». Mills.
@@ -75,8 +54,7 @@ monks.}VERSE}
 «I»f«/I». Cow-sheds.
 «I»g«/I». Goat-sheds.
 «I»h«/I». Pig-sties. «I»i«/I». Sheep-folds.
-«I»k«/I»,«I»k«/I»,«I»k«/I». Servants’ and workmen’s
-sleeping chambers.
+«I»k«/I»,«I»k«/I»,«I»k«/I». Servants’ and workmen’s<br> sleeping chambers.
 «I»l«/I». Gardener’s House.
 «I»m«/I»,«I»m«/I». Hen and duck house.
 «I»n«/I». Poultry-keeper’s house.
@@ -110,9 +88,7 @@ Westminster Abbey is another example of a great Benedictine abbey, identical in 
 St Mary’s Abbey, York, of which the ground-plan is annexed, exhibits the usual Benedictine arrangements. The precincts are surrounded by a strong fortified wall on three sides, the river Ouse being sufficient protection on the fourth side. The entrance was by a strong gateway (U) to the north. Close to the entrance was a chapel, where is now «SH»York.«/SH»thePAGE:46church of St Olaf (W), in which the new-comers paid their devotions immediately on their arrival. Near the gate to the south was the guest-hall or hospitium (T). The buildings are completely ruined, but enough remains to enable us to identify the grand cruciform church (A), the cloister-court with the chapter-house (B), the refectory (I), the kitchen-court with its offices (K, O, O) and the other principal apartments. The infirmary has perished completely.
 
 Some Benedictine houses display exceptional arrangements, dependent upon local circumstances, «I»e.g.«/I» the dormitory of Worcester runs from east to west, from the west walk of the cloister, and that of Durham is built over the west, instead of as usual, over the east walk; but, as a general rule, the arrangements deduced from the examples described may be regarded as invariable.
-«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:110%;margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 - Volume 01 pg. 46 img 1.png|width=400}}</td></tr><tr><td>«CTR»«SC»Fig. 4.«/SC»«BR»St Mary’s Abbey, York (Benedictine).—Churton’s «I»«LN:The monastic ruins of Yorkshire|Monastic Ruins«/LN»«/I».«/CTR»
-
-«HTMLTABLE:<table class="figtable" style="width:400px;margin-right:auto;margin-left:auto"><tr><td>{{VERSE:A. Church.
+«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:110%;margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 - Volume 01 pg. 46 img 1.png|width=400}}</td></tr><tr><td>«CTR»«SC»Fig. 4.«/SC»«BR»St Mary’s Abbey, York (Benedictine).—Churton’s «I»«LN:The monastic ruins of Yorkshire|Monastic Ruins«/LN»«/I».«/CTR» «HTMLTABLE:<table class="figtable" style="width:400px;margin-right:auto;margin-left:auto"><tr><td>{{VERSE:A. Church.
 B. Chapter-house.
 C. Vestibule to ditto.
 E. Library or scriptorium.
@@ -125,7 +101,7 @@ L. Cellarer’s office.
 M. Cellars.
 N. Passage to cloister.}VERSE}</td><td>{{VERSE:O. Offices.
 P. Cellars.
-Q. Uncertain.
+Q. Uncertain. 
 R. Passage to abbot’s house.
 S. Passage to common house.
 T. Hospitium.
@@ -133,8 +109,7 @@ U. Great gate.
 V. Porter’s lodge.
 W. Church of St Olaf.
 X. Tower.
-Y. Entrance from Bootham.
-}VERSE}</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»
+Y. Entrance from Bootham.<br> }VERSE}</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»
 
 The history of monasticism is one of alternate periods of decay and revival. With growth in popular esteem came increase in material wealth, leading to luxury and worldliness. The first religious ardour cooled, the strictness of the rule was relaxed, until by the 10th century the decay of discipline was so complete in France that the monks are said to have been frequently unacquainted with the rule of St Benedict, and even ignorant that they were bound by any rule at all. The reformation of abuses generally took the form of the establishment of new monastic orders, with new and more stringent rules, requiring a modification of the architectural arrangements. One of the earliest of these reformed orders was the «I»Cluniac«/I». This order took its name from the little village of Cluny, 12 miles N.W. of Macon, near which, about «SC»A.D.«/SC» 909, a reformed Benedictine «SH»Cluny.«/SH»abbey was founded by William, duke of Aquitaine and count of Auvergne, under Berno, abbot of Beaume. He was succeeded by Odo, who is often regarded as the founder of the order. The fame of Cluny spread far and wide. Its rigid rule was adopted by a vast number of the old Benedictine abbeys, who placed themselves in affiliation to the mother society, while new foundations sprang up in large numbers, all owing allegiance to the “archabbot”, established at Cluny. By the end of the 12th century the number of monasteries affiliated to Cluny in the various countries of western Europe amounted to 2000. The monastic establishment of Cluny was one of the most extensive and magnificent in France. We may form some idea of its enormous dimensions from the fact recorded, that when, «SC»A.D.«/SC» 1245, Pope Innocent IV., accompanied by twelve cardinals, a patriarch, three archbishops, the two generals of the Carthusians and Cistercians, the king (St Louis), and three of his sons, the queen mother, Baldwin, count of Flanders and emperor of Constantinople, the duke of Burgundy, and six lords, visited the abbey, the whole party, with their attendants, were lodged within the monastery without disarranging the monks, 400 in number. Nearly the whole of the abbey buildings, including the magnificent church, were swept away at the close of the 18th century. When the annexed ground-plan was taken, shortly before its destruction, nearly all the monastery, with the exception of the church, had been rebuilt.
 «HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:100%;margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="6">{{IMG:EB1911 - Volume 01 pg. 46 img 2.png|align=center|width=380}}</td></tr><tr><td colspan="6">«CTR»«SC»Fig. 5.«/SC»—Abbey of Cluny, from Viollet-le-Duc.«/CTR»</td></tr><tr><td>A.</td><td>Gateway.</td><td>F.</td><td>Tomb of St Hugh.</td><td>M.</td><td>Bakehouse.</td></tr><tr><td>B.</td><td>Narthex.</td><td>G.</td><td>Nave.</td><td>N.</td><td>Abbey buildings.</td></tr><tr><td>C.</td><td>Choir.</td><td>H.</td><td>Cloister.</td><td>O.</td><td>Garden.</td></tr><tr><td>D.</td><td>High-altar.</td><td>K.</td><td>Abbot’s house.</td><td>P.</td><td>Refectory.</td></tr><tr><td>E.</td><td>Retro-altar.</td><td>L.</td><td>Guest-house.</td></tr></table>«/HTMLTABLE»
@@ -146,24 +121,20 @@ The next great monastic revival, the Cistercian, arising in the last years of th
 All Cistercian monasteries, unless the circumstances of the locality forbade it, were arranged according to one plan. The general arrangement and distribution of the various buildings, which went to make up one of these vast establishments, may be gathered from that of St Bernard’s own abbey of Clairvaux, which is here given. It will be observed «SH»Clairvaux.«/SH»that the abbey precincts are surrounded by a strong wall, furnished at intervals with watch-towers and other defensive works. The wall is nearly encircled by a stream of water, artificially diverted from the small rivulets which flow through the precincts, furnishing the establishment with an abundant supply in every part, for the irrigation of the gardens and orchards, the sanitary requirements of the brotherhood and for the use of the offices and workshops.
 
 «HTMLTABLE:<table class="figtable" style="width:490px;font-size:92%;line-height:110%;margin-right:auto;margin-left:auto"><tr><td colspan="5">{{IMG:EB1911 - Volume 01 pg. 47 img 1.png|align=center|width=350}}</td></tr><tr><td colspan="5">«CTR»«SC»Fig. 6.«/SC»—Clairvaux, No. 1 (Cistercian), General Plan.«/CTR»</td></tr><tr><td style="width:33%;vertical-align:top">{{VERSE:A. Cloisters.
-B. Ovens, and corn
-and oil-mills.
-C. St Bernard’s cell.
+B. Ovens, and corn<br> and oil-mills.
+C. St Bernard’s cell. 
 D. Chief entrance.
 E. Tanks for fish.
 F. Guest-house.
-G. Abbot’s house.}VERSE}</td><td></td><td>{{VERSE:H. Stables.
-I. Wine-press and
-hay-chamber.
+G. Abbot’s house.}VERSE}</td><td> </td><td>{{VERSE:H. Stables.
+I. Wine-press and<br> hay-chamber.
 K. Parlour.
-L. Workshops and
-workmen’s lodgings.
+L. Workshops and<br> workmen’s lodgings.
 M. Slaughter-house.
 N. Barns and stables.
-}VERSE}</td><td></td><td style="width:33%;vertical-align:top">{{VERSE:O. Public presse.
+ }VERSE}</td><td> </td><td style="width:33%;vertical-align:top">{{VERSE:O. Public presse.
 P. Gateway.
-R. Remains of old
-monastery.
+R. Remains of old<br> monastery.
 S. Oratory.
 V. Tile-works.
 X. Tile-kiln.
@@ -182,25 +153,19 @@ F. Kitchen and court.
 G. Refectory.
 H. Cemetery.
 I. Little cloister.
-K. Infirmary.}VERSE}</td><td></td><td>{{VERSE:L. Lodgings of
-novices.
+K. Infirmary.}VERSE}</td><td> </td><td>{{VERSE:L. Lodgings of<br> novices.
 M. Old guest-house.
-N. Old abbot’s
-lodgings.
-O. Cloister of super-
-numerary monks.
+N. Old abbot’s<br>  lodgings.
+O. Cloister of super-<br> numerary monks.
 P. Abbot’s hall.
 Q. Cell of St Bernard.
-R. Stables.}VERSE}</td><td></td><td>{{VERSE:S. Cellars and store-
-houses.
+R. Stables.}VERSE}</td><td> </td><td>{{VERSE:S. Cellars and store-<br> houses.
 T. Water-course.
-U. Saw-mill and oil-
-mill.
+U. Saw-mill and oil-<br>  mill.
 V. Currier’s workshop.
 X. Sacristy.
 Y. Little library.
-Z. Undercroft of
-dormitory.}VERSE}</td></tr></table>«/HTMLTABLE»
+Z. Undercroft of<br> dormitory.}VERSE}</td></tr></table>«/HTMLTABLE»
 In Cistercian houses this was quadrangular, and was divided by pillars and arches into two or three aisles. Between it and the transept we find the sacristy (X), and a small book-room (Y), «I»armariolum«/I», where the brothers deposited the volumes borrowed from the library. On the other side of the chapter-house, to the south, is a passage (D) communicating with the courts and buildings beyond. This was sometimes known as the «I»parlour«/I», «I»colloquii locus«/I», the monks having the privilege of conversation here. Here also, when discipline became relaxed, traders, who had the liberty of admission, were allowed to display their goods. Beyond this we often find the «I»calefactorium«/I» or «I»day-room«/I»—an apartment warmed by flues beneath the pavement, where the brethren, half frozen during the night offices, betook themselves after the conclusion of lauds, to gain a little warmth, grease their sandals and get themselves ready for the work of the day. In the plan before us this apartment (E) opens from the south cloister walk, adjoining the refectory. The place usually assigned to it is occupied by the vaulted substructure of the «I»dormitory«/I» (Z). The «I»dormitory«/I», as a rule, was placed on the east side of the cloister, running over the «I»calefactory«/I» and «I»chapter-house«/I», and joined the south transept, where a flight of steps admitted the brethren into the church for nocturnal services. Opening out of the dormitory was always the «I»necessarium«/I», planned with the greatest regard to health and cleanliness, a water-course invariably running from end to end. The refectory opens out of the south cloister at G. The position of the refectory is usually a marked point of difference between Benedictine and Cistercian abbeys. In the former, as at Canterbury, the refectory ran east and west parallel to the nave of the church, on the side of the cloister farthest removed from it. In the Cistercian monasteries, to keep the noise and smell of dinner still farther away from the sacred building, the refectory was built north and south, at right angles to the axis of the church. It was often divided, sometimes into two, sometimes, as here, into three aisles. Outside the refectory door, in the cloister, was the «I»lavatory«/I», where the monks washed their hands at dinner-time. The buildings belonging to the material life of the monks lay near the refectory, as far as possible from the church, to the S.W. With a distinct entrance from the outer court was the kitchen court (F), with its buttery, scullery and larder, and the important adjunct of a stream of running water. Farther to the west, projecting beyond the line of the west front of the church, were vast vaulted apartments (SS), serving as cellars and storehouses, above which was the dormitory of the «I»conversi«/I». Detached from these, and separated entirely from the monastic buildings, were various workshops, which convenience required to be banished to the outer precincts, a saw-mill and oil-mill (UU) turned by water, and a currier’s shop (V), where the sandals and leathern girdles of the monks were made and repaired.
 
 Returning to the cloister, a vaulted passage admitted to the small cloister (I), opening from the north side of which were eight small cells, assigned to the scribes employed in copying works for the library, which was placed in the upper story, accessible by a turret staircase. To the south of the small cloister a long hall will be noticed. This was a «I»lecture-hall«/I», or rather a hall for the religious disputations customary among the Cistercians. From this cloister opened the «I»infirmary«/I» (K), with its hall, chapel, cells, blood-letting house and other dependencies. At the eastern verge of the vast group of buildings we find the «I»novices’ lodgings«/I» (L), with a third cloister near the novices’ quarters and the original guest-house (M). Detached from the great mass of the monastic edifices was the original abbot’s house (N), with its dining-hall (P). Closely adjoining to this, so that the eye of the father of the whole establishment should be constantly over those who stood the most in need of his watchful care,—those who were training for the monastic life, and those who had worn themselves out in its duties,—was a fourth cloister (O), with annexed buildings, devoted to the aged and infirm members of the establishment. The cemetery, the last resting-place of the brethren, lay to the north side of the nave of the church (H).
@@ -216,18 +181,14 @@ C. Almonry.
 D. Chapel.
 E. Inner gate-house.
 F. Stable.
-G. Dormitory of lay
-brethren.}VERSE}</td><td></td><td>{{VERSE:H. Abbot’s house.
+G. Dormitory of lay<br> brethren.}VERSE}</td><td> </td><td>{{VERSE:H. Abbot’s house.
 I. Kitchen.
 K. Refectory.
-L. Staircase to
-dormitory.
+L. Staircase to<br> dormitory.
 M. Dormitory.
 N. Church.
-P. Library.}VERSE}</td><td></td><td>{{VERSE:R. Infirmary.
-S. Door to the
-church for the
-lay brothers.
+P. Library.}VERSE}</td><td> </td><td>{{VERSE:R. Infirmary.
+S. Door to the<br> church for the<br> lay brothers.
 T. Base court.
 V. Great cloister.
 W. Small cloister.
@@ -241,17 +202,14 @@ The English Cistercian houses, of which there are such extensive and beautiful r
 5. Chapter-house.
 6. Parlour.
 7. Punishment cell (?).
-8. Cellars, with dormitories for
-«I»conversi«/I» over.
-9. Guest-house.}VERSE}</td><td></td><td>{{VERSE:10. Common room.
+8. Cellars, with dormitories for<br> «I»conversi«/I» over.
+9. Guest-house.}VERSE}</td><td> </td><td>{{VERSE:10. Common room.
 11. Old refectory.
 12. New refectory.
 13. Kitchen court.
 14. Calefactory or day-room.
 15. Kitchen and offices.
-16-19. Uncertain; perhaps offices
-connected with the
-infirmary.
+16-19. Uncertain; perhaps offices<br>  connected with the<br>  infirmary.
 20. Infirmary or abbot’s house.}VERSE}</td></tr></table>«/HTMLTABLE»
 
 Extending from the south-east angle of the main group of buildings are the walls and foundations of a secondary group of considerable extent. These have been identified either with the hospitium or with the abbot’s house, but they occupy the position in which the infirmary is more usually found. The hall was a very spacious apartment, measuring 83 ft. in length by 48 ft. 9 in. in breadth, and was divided by two rows of columns. The fish-ponds lay between the monastery and the river to the south. The abbey mill was situated about 80 yards to the north-west. The mill-pool may be distinctly traced, together with the gowt or mill stream.
@@ -262,35 +220,33 @@ C. Chapels.
 D. Tower.
 E. Sacristy.
 F. Choir.
-G. Chapel of nine
-altars.
+G. Chapel of nine<br> altars.
 H. Cloister.
 I. Chapter-house.
 K. Base court.
 L. Calefactory.
-M. Water-course.}VERSE}</td><td></td><td>{{VERSE:N. Cellar.
+M. Water-course.}VERSE}</td><td> </td><td>{{VERSE:N. Cellar.
 O. Brewhouse.
 P. Prisons.
 Q. Kitchen.
 R. Offices.
 S. Refectory.
 T. Buttery.
-U. Cellars and store-
-houses.
+U. Cellars and store-<br> houses.
 V. Necessary.
 W. Infirmary (?).
 X. Guest-houses.
 Y. Mill bridge.}VERSE}</td><td>{{VERSE:Z. Gate-house
-«SPAN[style:line-height:200%; text-align:center]» «SC»Abbot’s House.«/SC»«/SPAN»
-1. Passage.
-2. Great hall.
-3. Refectory.
-4. Buttery.
-5. Storehouse.
-6. Chapel.
-7. Kitchen.
-8. Ashpit.
-9. Yard.
+«SPAN[style:text-align:center;line-height:200%]»«SC»Abbot’s House.«/SC»«/SPAN»
+ 1. Passage.
+ 2. Great hall.
+ 3. Refectory.
+ 4. Buttery.
+ 5. Storehouse.
+ 6. Chapel.
+ 7. Kitchen.
+ 8. Ashpit.
+ 9. Yard.
 10. Kitchen tank.}VERSE}</td></tr></table>«/HTMLTABLE»
 
 Parallel with the western walk is an immense vaulted substructure (U), incorrectly styled the cloisters, serving as cellars and store-rooms, and supporting the dormitory of the «I»conversi«/I» above. This building extended across the river. At its S.W. corner were the necessaries (V), also built, as usual, above the swiftly flowing stream. The monks’ dormitory was in its usual position above the chapter-house, to the south of the transept. As peculiarities of arrangement may be noticed the position of the kitchen (Q), between the refectory and calefactory, and of the infirmary (W) (unless there is some error in its designation) above the river to the west, adjoining the guest-houses (XX). We may also call attention to the greatly lengthened choir, commenced by Abbot John of York, 1203–1211, and carried on by his successor, terminating, like Durham Cathedral, in an eastern transept, the work of Abbot John of Kent, 1220–1247, and to the tower (D), added not long before the dissolution by Abbot Huby, 1494–1526, in a very unusual position at the northern end of the north transept. The abbot’s house, the largest and most remarkable example of this class of buildings in the kingdom, stands south to the east of the church and cloister, from which it is divided by the kitchen court (K), surrounded by the ordinary domestic offices. A considerable portion of this house was erected on arches over the Skell. The size and character of this house, probably, at the time of its erection, the most spacious house of a subject in the kingdom, not a castle, bespeaks the wide departure of the Cistercian order from the stern simplicity of the original foundation. The hall (2) was one of the most spacious and magnificent apartments in medieval times, measuring 170 ft. by 70 ft. Like the hall in the castle at Winchester, and Westminster Hall, as originally built, it was divided by 18 pillars and arches, with 3 aisles. Among other apartments, for the designation of which we must refer to the ground-plan, was a domestic oratory or chapel, 46½ ft. by 23 ft. and a kitchen (7), 50 ft. by 38 ft. The whole arrangements and character of the building bespeak the rich and powerful feudal lord, not the humble father of a body of hard-working brethren, bound by vows to a life of poverty and self-denying toil. In the words of Dean Milman, “the superior, once a man bowed to the earth with humility, care-worn, pale, emaciated, with a coarse habit bound with a cord, with naked feet, had become an abbot on his curvetting palfrey, in rich attire, with his silver cross before him, travelling to take his place amid the lordliest of the realm.”—(«I»Lat. Christ.«/I» vol. iii. p. 330.)
@@ -305,19 +261,19 @@ C. Little cloister.
 D. Chapter-house.
 E. Calefactory.
 F. Refectory.
-G. Parlour.}VERSE}</td><td></td><td>{{VERSE:H. Kitchen.
+G. Parlour.}VERSE}</td><td> </td><td>{{VERSE:H. Kitchen.
 I. Kitchen court.
 K. Cellars.
 L. Abbot’s hall.
 P. Abbot’s gateway.
 R. Infirmary.
-}VERSE}</td><td></td><td>{{VERSE:S. Friars’ lodging.
+ }VERSE}</td><td> </td><td>{{VERSE:S. Friars’ lodging.
 T. King’s hall.
 V. Guest-house.
 W. Abbey gateway.
 X. Barns, stables, &c.
 Y. Lavatory.
-}VERSE}</td></tr></table>«/HTMLTABLE»
+ }VERSE}</td></tr></table>«/HTMLTABLE»
 
 The «I»Carthusian«/I» order, on its establishment by St Bruno, about «SC»A.D.«/SC» 1084, developed a greatly modified form and arrangement of a monastic institution. The principle of this order, which combined the coenobitic with the solitary life, demanded the erection of buildings on a novel plan. This plan, which was first adopted by St Bruno and his «SH»Carthusians.«/SH»twelve companions at the original institution at Chartreux, near Grenoble, was maintained in all the Carthusian establishments throughout Europe, even after the ascetic severity of the order had been to some extent relaxed, and the primitive simplicity of their buildings had been exchanged for the magnificence of decoration which characterizes such foundations as the «I»Certosas«/I» of Pavia and Florence. According to the rule of St Bruno, all the members of a Carthusian brotherhood lived in the most absolute solitude and silence. Each occupied a small detached cottage, standing by itself in a small garden surrounded by high walls and connected by a common corridor or cloister. In these cottages or cells a Carthusian monk passed his time in the strictest asceticism, only leaving his solitary dwelling to attend the services of the Church, except on certain days when the brotherhood assembled in the refectory. The peculiarity of the arrangements of a Carthusian monastery, or «I»charter-house«/I», as it was called in England, from a corruption of the French «I»chartreux«/I», is exhibited in the plan of that of Clermont, from Viollet-le-Duc.
 «HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:120%;width:490px;margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Volume 01 pg. 51 img 2.png|width=310}}</td><td></td><td>{{VERSE:A. Church.
@@ -349,15 +305,24 @@ Z. Prison.
 The whole establishment is surrounded by a wall, furnished at intervals with watch towers (R). The enclosure is divided into two courts, of which the eastern court, surrounded by a cloister, from which the cottages of the monks (I) open, is much the larger. The two courts are divided by the main buildings of the monastery, including the church, the sanctuary (A), divided from B, the monks’ «SH»Clermont.«/SH»choir, by a screen with two altars, the smaller cloister to the south (S) surrounded by the chapter-house (E), the refectory (X)—these buildings occupying their normal position—and the chapel of Pontgibaud (K). The kitchen with its offices (V) lies behind the refectory, accessible from the outer court without entering the cloister. To the north of the church, beyond the sacristy (L), and the side chapels (M), we find the cell of the sub-prior («I»a«/I»), with its garden. The lodgings of the prior (G) occupy the centre of the outer court, immediately in front of the west door of the church, and face the gateway of the convent (O). A small raised court with a fountain (C) is before it. This outer court also contains the guest-chambers (P), the stables and lodgings of the lay brothers (N), the barns and granaries (Q), the dovecot (H) and the bakehouse (T). At Z is the prison. (In this outer court, in all the earlier foundations, as at Witham, there was a smaller church in addition to the larger church of the monks.) The outer and inner courts are connected by a long passage (F), wide enough to admit a cart laden with wood to supply the cells of the brethren with fuel. The number of cells surrounding the great cloister is 18. They are all arranged on a uniform plan. Each little dwelling contains three rooms: a sitting-room (C), warmed by a stove in winter; a sleeping-room (D), furnished with a bed, a table, a bench, and a bookcase; and a closet (E). Between the cell and the cloister gallery (A) is a passage or corridor (B), cutting off the inmate of the cell from all sound or movement which might interrupt his meditations. The superior had free access to this corridor, and through open niches was able to inspect the garden without being seen. At I is the hatch or turn-table, in which the daily allowance of food was deposited by a brother appointed for that purpose, affording no view either inwards or outwards. H is the garden, cultivated by the occupant of the cell. At K is the wood-house. F is a covered walk, with the necessary at the end.
 
 The above arrangements are found with scarcely any variation in all the charter-houses of western Europe. The Yorkshire Charter-house of Mount Grace, founded by Thomas Holland, the young duke of Surrey, nephew of Richard II. and marshal of England, during the revival of the popularity of the order, about «SC»A.D.«/SC» 1397, is the most perfect and best preserved English example. It is characterized by all the simplicity of the order. The church is a modest building, long, narrow and aisleless. Within the wall of enclosure are two courts. The smaller of the two, the south, presents the usual arrangement of church, refectory, &c., opening out of a cloister. The buildings are plain and solid. The northern court contains the cells, 14 in number. It is surrounded by a double stone wall, the two walls being about 30 ft. or 40 ft. apart. Between these, each in its ownPAGE:52garden, stand the cells; low-built two-storied cottages, of two or three rooms on the ground-floor, lighted by a larger and a smaller window to the side, and provided with a doorway to the court, and one at the back, opposite to one in the outer wall, through which the monk may have conveyed the sweepings of his cell and the refuse of his garden to the “eremus” beyond. By the side of the door to the court is a little hatch through which the daily pittance of food was supplied, so contrived by turning at an angle in the wall that no one could either look in or look out. A very perfect example of this hatch—an arrangement belonging to all Carthusian houses—exists at Miraflores, near Burgos, which remains nearly as it was completed in 1480.
-«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:100%;margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Volume 01 pg. 52 img 1.png|width=228}}</td><td>{{VERSE:A. Cloister gallery.
+«HTMLTABLE:<table class="figtable" style="font-size:92%;line-height:100%;margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 - Volume 01 pg. 52 img 1.png|align=inline|width=228}} </td><td>{{VERSE:A. Cloister gallery.
+
 B. Corridor.
+
 C. Living-room.
+
 D. Sleeping-room.
+
 E. Closets.
+
 F. Covered walk.
+
 G. Necessary.
+
 H. Garden.
+
 I. Hatch.
+
 K. Wood-house.}VERSE}</td></tr><tr><td colspan="2" style="text-align:center;font-size:92%">«SC»Fig. 13.«/SC»—Carthusian cell, Clermont.</td></tr></table>«/HTMLTABLE»
 There were only nine Carthusian houses in England. The earliest was that at Witham in Somersetshire, founded by Henry II., by whom the order was first brought into England. The wealthiest and most magnificent was that of Sheen or Richmond in Surrey, founded by Henry V. about «SC»A.D.«/SC» 1414. The dimensions of the buildings at Sheen are stated to have been remarkably large. The great court measured 300 ft. by 250 ft.; the cloisters were a square of 500 ft.; the hall was 110 ft. in length by 60 ft. in breadth. The most celebrated historically is the Charter-house of London, founded by Sir Walter Manny «SC»A.D.«/SC» 1371, the name of which is preserved by the famous public school established on the site by Thomas Sutton «SC»A.D.«/SC» 1611, now removed to Godalming.
 An article on monastic arrangements would be incomplete without some account of the convents of the Mendicant or Preaching Friars, including the Black Friars or Dominicans, the Grey or Franciscans, the White or Carmelites, the Eremite or Austin Friars. These orders arose at the beginning of the 13th century, when the Benedictines, together «SH»Mendicant Friars.«/SH»with their various reformed branches, had terminated their active mission, and Christian Europe was ready for a new religious revival. Planting themselves, as a rule, in large towns, and by preference in the poorest and most densely populated districts, the Preaching Friars were obliged to adapt their buildings to the requirements of the site. Regularity of arrangement, therefore, was not possible, even if they had studied it. Their churches, built for the reception of large congregations of hearers rather than worshippers, form a class by themselves, totally unlike those of the elder orders in ground-plan and character. They were usually long parallelograms unbroken by transepts. The nave very usually consisted of two equal bodies, one containing the stalls of the brotherhood, the other left entirely free for the congregation. The constructional choir is often wanting, the whole church forming one uninterrupted structure, with a continuous range of windows. The east end was usually square, but the Friars Church at Winchelsea had a polygonal apse. We not unfrequently find a single transept, sometimes of great size, rivalling or exceeding the nave. This arrangement is frequent in Ireland, where the numerous small friaries afford admirable exemplifications of these peculiarities of ground-plan. The friars’ churches were at first destitute of towers; but in the 14th and 15th centuries, tall, slender towers were commonly inserted between the nave and the choir. The Grey Friars at Lynn, where the tower is hexagonal, is a good example. The arrangement of the monastic buildings is equally peculiar and characteristic. We miss entirely the regularity of the buildings of the earlier orders. At the Jacobins at Paris, a cloister lay to the north of the long narrow church of two parallel aisles, while the refectory—a room of immense length, quite detached from the cloister—stretched across the area before the west front of the church. At Toulouse the nave also has two parallel aisles, but the choir is apsidal, with radiating chapel. The refectory stretches northwards at right angles to the cloister, which lies to the north of the church, having the chapter-house and sacristy on the east.
