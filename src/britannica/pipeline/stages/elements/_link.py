@@ -60,3 +60,18 @@ def process_eb1911_article_link(inner: str, tt) -> str:
             return disp
         return f"«LN:{display}|{disp}«/LN»"
     return f"«LN:{target}|{disp}«/LN»"
+
+
+def process_target_first_link(inner: str, tt) -> str:
+    """`{{EB1911/DNB lkpl|Target|Display}}` / `{{1911link|Target|Display}}` /
+    `{{EB1911 link|…}}` — the TARGET-first cross-reference convention (vs the article
+    link's display-first).  Slot 0 is the template name; target is the first positional,
+    display the second (falls back to the target).  Display RECURSED through `tt`, same
+    «LN» marker — no flat pre-unwrap, no re-parse of the raw."""
+    parts = [p.strip() for p in _split_top_pipes(inner)]
+    positional = [p for p in parts[1:] if "=" not in p and p]
+    if not positional:
+        return ""
+    target = positional[0]
+    display = positional[1] if len(positional) > 1 else target
+    return f"«LN:{target}|{tt(display)}«/LN»"

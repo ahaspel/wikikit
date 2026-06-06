@@ -150,6 +150,17 @@ _HIEROGLYPH_TMPL_RE = re.compile(
 # no hand-rolled brace-balancer.  The producer recurses the display.
 _EB1911_ARTICLE_LINK_OPENER_RE = re.compile(
     r"\{\{\s*EB1911\s+article\s+link\s*\|", re.IGNORECASE)
+# Target-first link siblings — `{{EB1911/DNB lkpl|…}}`, `{{1911link|…}}`,
+# `{{11link|…}}`, `{{EB1911 link|…}}` (NOT `EB1911 article link`, which is display-first
+# above).  Opener-only; the one matcher bounds the span at any nesting depth.
+_TARGET_FIRST_LINK_OPENER_RE = re.compile(
+    r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\s*\|",
+    re.IGNORECASE)
+# Spacer / layout-primitive LEAVES — `{{em}}`/`{{gap}}` (space), `{{ditto}}` (″),
+# `{{dhr}}`/`{{rule}}` (rule markers), `{{clear}}`/`{{anchor}}` (no glyph).  Atomic;
+# the producer emits a char/marker, nothing recurses.
+_SPACER_OPENER_RE = re.compile(
+    r"\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b", re.IGNORECASE)
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
@@ -445,7 +456,8 @@ _OPENER_HINT_RE = re.compile(
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|1911link|11link)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b"  # SPACER leaves
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
     r"|\{\{\s*lb-"  # lb- pound-weight glyph (ends in '-', no \b)
     r"|\{\{\s*(?:sub|sup)\s*\|"  # sub/sup typography
@@ -735,6 +747,25 @@ def _walk_balanced_shapes(
         # (single LaTeX braces) is skipped whole.  → DOUBLE_BRACE, classified
         # FRACTION, slots recurse in the producer.
         if matched is None and _FRACTION_OPENER_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        # `{{EB1911 article link|…}}` — cross-reference link; opener matched, span
+        # closed by the ONE balanced matcher so a nested `{{sc|…}}` display is bounded
+        # at any depth (no hand-rolled brace-balancer).  → DOUBLE_BRACE, classified
+        # EB1911_ARTICLE_LINK; the display recurses in the producer.
+        if matched is None and _EB1911_ARTICLE_LINK_OPENER_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        if matched is None and _TARGET_FIRST_LINK_OPENER_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        if matched is None and _SPACER_OPENER_RE.match(text, opener_pos):
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])

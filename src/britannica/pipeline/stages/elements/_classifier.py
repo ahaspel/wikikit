@@ -138,6 +138,13 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
     if re.match(r"\{\{\s*EB1911\s+article\s+link\b", raw, re.IGNORECASE):
         return "EB1911_ARTICLE_LINK"
+    # Target-first link siblings — lkpl / 1911link / EB1911 link (NOT "article link").
+    if re.match(r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\b",
+                raw, re.IGNORECASE):
+        return "TARGET_FIRST_LINK"
+    # Spacer / layout-primitive leaves — em/gap/clear/anchor/ditto/dhr/rule.
+    if re.match(r"\{\{\s*(?:em|gap|clear|anchor|ditto|dhr|rule)\b", raw, re.IGNORECASE):
+        return "SPACER"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(
