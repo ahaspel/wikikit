@@ -794,8 +794,12 @@ def style_block(content: str, *, css: str = "", tag: str = "DIV",
 # corpus, NOT decompose's partial 5-entry list) recognized by the walker as
 # SHAPE_STYLED and produced by `_process_styled` — so `{{center|X}}` is handled
 # identically whether X is text, an image, or a table (style ⊥ content).  INLINE
-# typography (`{{sc}}`/`{{sub}}`/`{{smaller}}`/`{{sans-serif}}`/…) stays in
-# body-text: it flows within prose, not a block to extract.
+# typography (`{{sc}}`/`{{smaller}}`/…) stays in body-text FOR NOW: it cannot move
+# here until render_markers' figure captions recurse through the walker — today
+# those captions go through body-text's `_apply_markup`, so a handler removed from
+# body-text vanishes from every figure caption.  A `"tag": "SPAN"` spec on
+# `_process_styled` is ready for when they do move.  (`sc` also overlaps the figure
+# recognizer — `{{sc|[[Image]]}}` is a figure — so it needs the collapse first.)
 _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "center":       {"ctr": True},
     "c":            {"ctr": True},

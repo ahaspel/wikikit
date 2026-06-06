@@ -193,6 +193,24 @@ _FRACTION_OPENER_RE = re.compile(
     r"\{\{\s*(?:sfrac\s+nobar|EB1911\s+sfrac|EB1911\s+tfrac"
     r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
     r"|sfracN|sfrac|mfrac|frac|over)\s*\|", re.IGNORECASE)
+# `{{lb-|N}}` → `N lb` / bare `{{lb-}}` → `lb`: the pound-weight glyph (℔
+# unwrapped to literal "lb" for search/copy-paste).  A LEAF, recognized at the
+# walker so it carries in EVERY context — not just the body-text pass it used to
+# live in, which leaked it inside math/italic/centred blocks (the lb-/sup
+# context-leak: a body-text handler is context-dependent).
+_LB_RE = re.compile(r"\{\{\s*lb-\s*(?:\|[^{}]*)?\}\}", re.IGNORECASE)
+# `{{sub|x}}` / `{{sup|x}}` — subscript/superscript TYPOGRAPHY (chem subscripts,
+# math exponents, ordinals, footnote markers).  Content can nest (`{{sup|{{sfrac
+# |1|n}}}}`), so the recognizer bounds 2 levels deep like DUAL_LINE; the producer
+# recurses the slot and translates flat runs to Unicode around element markers.
+# Promoted out of body-text's `_convert_sub_sup` (which only fired in `_apply_markup`,
+# leaking sup inside math/italic/centred blocks — the lb-/sup context-leak).
+_SUBSUP_RE = re.compile(
+    r"\{\{\s*(?:sub|sup)\s*\|"
+    r"(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*"
+    r"\}\}",
+    re.IGNORECASE | re.DOTALL,
+)
 # `{{ppoem|…}}` — Wikisource preformatted-poem template (verse analog of
 # `<poem>`).  Multiline verse with shallow inline templates (`{{fqm|"}}` quote
 # marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); same 3-level nesting
@@ -414,6 +432,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _CONTRIBUTOR_FOOTER_RE),
     (SHAPE_DOUBLE_BRACE,      _PPOEM_RE),
     (SHAPE_DOUBLE_BRACE,      _DUAL_LINE_RE),
+    (SHAPE_DOUBLE_BRACE,      _LB_RE),
+    (SHAPE_DOUBLE_BRACE,      _SUBSUP_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
 ]
 
@@ -441,6 +461,8 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
+    r"|\{\{\s*lb-"  # lb- pound-weight glyph (ends in '-', no \b)
+    r"|\{\{\s*(?:sub|sup)\s*\|"  # sub/sup typography
     r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|"  # labeled-equation templates
     r"|" + _TEMPLATE_STYLE_RE.pattern  # template-form style wrappers (registry-driven, auto-syncs)
     + r"|" + _TEMPLATE_PARAM_STYLE_RE.pattern  # param font-size stylers ({{Fs|N%|X}})

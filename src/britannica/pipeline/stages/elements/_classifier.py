@@ -145,6 +145,14 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # CONTRIBUTOR_FOOTER case below).
     if _FRAC_LABEL_RE.match(raw):
         return "FRACTION"
+    # `{{lb-|N}}` / `{{lb-}}` — pound-weight glyph leaf (promoted out of the
+    # body-text `_convert_lb_dash` re.sub, which only fired inside `_apply_markup`).
+    if name == "lb-":
+        return "LB"
+    # `{{sub|x}}` / `{{sup|x}}` — sub/superscript typography (out of body-text's
+    # `_convert_sub_sup`); the producer recurses the slot + Unicode-translates.
+    if name in {"sub", "sup"}:
+        return "SUBSUP"
     # The IMAGE_FLOAT walker regex matches `{{(?:img float|figure|FI)\|…}}`.
     # `img float` tokenizes here as "img" (whitespace stop in the
     # template-name pattern).  Figure-equivalent templates with a

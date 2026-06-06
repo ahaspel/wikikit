@@ -254,6 +254,114 @@ def _plain_image_disentangle(raw, text_transform, context):
                             text_transform, context, _allow_figure=False)
 
 
+def _img_float_disentangle(raw, text_transform, context):
+    """`{{img float|file=…|cap=…}}` / `{{figure|…}}` / `{{FI|…}}` — the floated-
+    figure template.  A pure image LEAF when captionless; with a caption it's the
+    same floated `{|`-figtable the source's own `{|`-figures use (image cell on
+    top, caption cell beneath), now routed through `_process_table_unified` so the
+    caption cell recurses through the WALKER.  Replaces render_markers'
+    `_rows_to_htmltable`, whose caption cell went through body-text (`_apply_markup`)
+    — the path that blocked the inline sweep.  Same float/width as before."""
+    from britannica.parsers import img_float as _imgf
+    from britannica.pipeline.stages.elements._image import build_img_marker
+    s = raw.strip()
+    inner = s[2:-2] if s.startswith("{{") and s.endswith("}}") else s
+    parsed = _imgf.parse(inner)
+    if parsed is None:
+        return ""
+    if not parsed.caption:
+        return build_img_marker(parsed.filename, None,
+                                align=parsed.align, width=parsed.width)
+    align = parsed.align or "left"
+    box = ("margin-right:auto;margin-left:auto" if align == "center"
+           else f"float:{align}")
+    style = ";".join(x for x in (box, f"width:{parsed.width}px"
+                                 if parsed.width else "") if x)
+    img_src = (f"[[File:{parsed.filename}|{parsed.width}px]]"
+               if parsed.width else f"[[File:{parsed.filename}]]")
+    return process_elements(
+        f'{{|style="{style}"\n|{img_src}\n|-\n|{parsed.caption}\n|}}',
+        text_transform, context, _allow_figure=False)
+
+
+def _image_leaf_disentangle(raw, text_transform, context):
+    """Leaf-image TEMPLATE spellings, off render_markers: `{{Css image crop|…}}`
+    (a DjVu crop) and `{{raw image|…}}` (a DjVu page-ref / filename).  EITHER can be
+    FOLLOWED by a caption block (`{{center|…}}` / `{{c|…}}`) the source bounds into
+    the figure element.  Bound the leading image template with `_construct_end`,
+    emit the «IMG» leaf, then recurse EVERYTHING after it through the walker as its
+    own sibling block — the `«CTR»«SC»` render_markers' decompose produced, now
+    context-free.  Recursing the whole tail (not matching one caption shape) is what
+    stops a trailing `{{center|…}}` from being dropped — ORDNANCE figs. 78/81/82."""
+    from britannica.pipeline.stages.elements._image import (
+        build_img_marker, djvu_crop_filename, _parse_crop_param,
+        _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE)
+    from britannica.pipeline.stages.elements._walker import _construct_end
+    s = raw.strip()
+    end = _construct_end(s, 0)
+    tmpl = s[:end] if end is not None else s
+    rest = s[end:].strip() if end is not None else ""
+    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
+        fn = djvu_crop_filename(tmpl)
+        if fn is None:
+            img = _parse_crop_param(tmpl, "Image")
+            fn = img.replace(" ", "_") if img else ""
+        marker = build_img_marker(fn) if fn else ""
+    else:
+        m = _RAW_IMAGE_ARG_RE.match(tmpl)
+        if not m:
+            return ""
+        arg = m.group(1).strip()
+        dref = _RAW_DJVU_REF_RE.match(arg)
+        filename = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
+                    if dref else arg)
+        marker = build_img_marker(filename)
+    if not rest:
+        return marker
+    block = process_elements(
+        rest, text_transform, context, _allow_figure=False).strip()
+    return f"{marker}\n\n{block}" if block else marker
+
+
+def _process_lb(raw):
+    """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph leaf).
+    Relocated verbatim from body-text's `_convert_lb_dash` so it carries in EVERY
+    context, not just content that passes through `_apply_markup`."""
+    m = re.match(r"\{\{\s*lb-\s*\|\s*([^{}|]+?)\s*\}\}", raw, re.IGNORECASE)
+    return f"{m.group(1).strip()} lb" if m else "lb"
+
+
+_SUB_MAP = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
+_SUP_MAP = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾")
+_MARKER_TOKEN_RE = re.compile(r"«[^«»]*»")
+
+
+def _process_subsup(raw, text_transform, context):
+    """`{{sub|x}}` / `{{sup|x}}` → Unicode subscript / superscript.  Relocated
+    from body-text's `_convert_sub_sup` so it carries in every context (it leaked
+    inside math/italic/centred blocks).  The slot RECURSES — it can hold a walker
+    element (STEAM_ENGINE's `{{sup|{{sfrac|1|n}}}}`) — and flat runs translate to
+    Unicode while element markers (`«…»`) pass through verbatim (their digits would
+    otherwise be mangled).  Bold/italic inside is dropped, as the old pass did (it
+    doesn't render in super/subscript)."""
+    m = re.match(r"\{\{\s*(sub|sup)\s*\|(.*)\}\}\s*$", raw,
+                 re.IGNORECASE | re.DOTALL)
+    if not m:
+        return raw
+    table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP
+    inner = process_elements(m.group(2), text_transform, context,
+                             _allow_figure=False)
+    inner = (inner.replace("«B»", "").replace("«/B»", "")
+                  .replace("«I»", "").replace("«/I»", ""))
+    out, last = [], 0
+    for mk in _MARKER_TOKEN_RE.finditer(inner):
+        out.append(inner[last:mk.start()].translate(table))
+        out.append(mk.group(0))
+        last = mk.end()
+    out.append(inner[last:].translate(table))
+    return "".join(out)
+
+
 # `<div …>` / `<p …>` / `<span …>` opener — captures (tag, attrs).  The matching
 # close is found by the walker's one balanced matcher, so the producer peels the
 # wrapper without a second balanced scanner.
@@ -368,6 +476,7 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         content = process_elements(
             inner_raw, text_transform, context, _allow_figure=False).strip()
         return style_block(content, css=spec.get("css", ""),
+                           tag=spec.get("tag", "DIV"),
                            ctr=spec.get("ctr", False), sc=spec.get("sc", False))
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
@@ -507,7 +616,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # DJVU_CROP — a `{{Css image crop}}` is just another image; the faithful
     # figure producer recognizes it as an image leaf (stateless filename) and,
     # for the `{|`-wrapped form, recurses the caption/attribution cells.
-    "DJVU_CROP": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
+        _image_leaf_disentangle(raw, tt, ctx),
     "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
     "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
@@ -527,11 +637,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # producer (a retained leaf utility) for it.
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
         _process_image_from_raw(raw, tt, inline=True),
-    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg: _faithful_figure(raw),
+    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg:
+        _image_leaf_disentangle(raw, tt, ctx),
     "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg:
         _plain_image_disentangle(raw, tt, ctx),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
-        _faithful_figure(raw),
+        _img_float_disentangle(raw, tt, ctx),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack) with PLAIN content (table headers, hyphenations, figure-
     # caption splits).  Chem-shaped / math-shaped variants reclassify
@@ -554,6 +665,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # its slots recurse (the dual-line model for a two-slot wrapper).
     "FRACTION": lambda raw, inner, tt, ctx, reg:
         _process_fraction(inner, tt),
+    # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
+    "LB": lambda raw, inner, tt, ctx, reg: _process_lb(raw),
+    # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
+    "SUBSUP": lambda raw, inner, tt, ctx, reg: _process_subsup(raw, tt, ctx),
     # MATH family — walker lifts labeled-display-equation templates
     # because they're declared as math by their template name and
     # have their own paragraph context.  One producer covers all
