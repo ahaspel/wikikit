@@ -65,34 +65,6 @@ from britannica.pipeline.stages.elements._outline import (
 from britannica.pipeline.stages.elements._section import (
     _process_section,
 )
-from britannica.pipeline.stages.elements._layout import (
-    _append_attribution,
-    _ascii_fold_label,
-    _cell_is_legend_full_entry,
-    _cell_is_legend_label,
-    _clean_legend_text,
-    _collect_attribution_rows,
-    _emit_legend_chunk,
-    _entries_look_like_legend,
-    _extract_caption_from_colspan_row,
-    _extract_poem_legend,
-    _find_caption_row_idx,
-    _format_legend_entries,
-    _HI_LEGEND_RE,
-    _image_ph_filename,
-    _is_layout_wrapper,
-    _legend_cell_prep,
-    _looks_like_caption,
-    _normalize_icl_markup,
-    _parse_inline_legend_cell,
-    _parse_multicol_legend_row,
-    _parse_prose_legend_rows,
-    _process_prose_figure,
-    _row_has_legend_multicol_cells,
-    _simple_table_text,
-    _strip_cell_attributes,
-    _try_image_layout_subclass,
-)
 from britannica.pipeline.stages.elements._tables import (
     _CHEM_BRACKET_IMG_RE,
     _has_chem_equation_content,
@@ -755,14 +727,6 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
             or _has_chem_reaction_content(raw_inner))
 
 
-_FIGURE_LABELS: frozenset[str] = frozenset({
-    "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
-    "UNPAIRED_FIGURE_GROUP",
-    "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE",
-    "LEGENDED_FIGURE_CHILD",
-})
-
-
 _DATA_TABLE_HEADER_RE = re.compile(
     r'border\s*=\s*"?[1-9]'
     r'|rules\s*='
@@ -821,367 +785,6 @@ def _top_level_image_present(raw: str) -> bool:
     reading the registry (the locality invariant for the predicate)."""
     return bool(_IMAGE_NS_LINK_RE.search(
         _mask_nested_tables_all(_raw_inner(raw))))
-
-
-def _is_icl_family(raw: str, inner: str,
-                    registry: ElementRegistry | None) -> bool:
-    """Reliable structural/semantic test: is this wikitable an
-    image/caption/legend (ICL) figure?
-
-    Two conditions must hold simultaneously:
-
-      1. No data-table signal — the wikitable doesn't look like a
-         tabular layout.  Anti-signals: ``border=N``, ``rules=``,
-         ``class="…wikitable…"`` on the ``{|`` opener; ``|+`` table-
-         caption sigil; ``!`` column-header row sigil.
-
-      2. A figure carrier is present — either an IMAGE child or, for
-         the ``FIGURE_GROUP`` wrapper case, ≥2 nested figure-labelled
-         children whose images live one level down.
-
-    Sub-shape dispatch in ``_classify_icl_shape`` decides whether the
-    image carries caption / legend / attribution material or is bare.
-    If the structure doesn't match any focused sub-shape (image with
-    only ``<ref>``-footnote siblings, etc.), the dispatcher returns
-    ``None`` and the table falls through to ``LAYOUT_WRAPPER`` — the
-    catch-all for residual figure layouts.
-    """
-    if registry is None:
-        return False
-    # 1. Anti-signals.
-    header = raw.split("\n", 1)[0]
-    if _DATA_TABLE_HEADER_RE.search(header):
-        return False
-    # caption sigil: `|+` (wiki) or `<caption>` (HTML)
-    if (re.search(r"^\|\+", inner, re.MULTILINE)
-            or re.search(r"<caption\b", inner, re.IGNORECASE)):
-        return False
-    # column-header sigil: `!` (wiki) or `<th>` (HTML)
-    if (re.search(r"^\s*!", inner, re.MULTILINE)
-            or re.search(r"<th\b", inner, re.IGNORECASE)):
-        return False
-    # Tall-brace taxonomy grouping (`<math>\left\{…\right.>`): a print-
-    # typographic device that brackets grouped rows of an outline/
-    # taxonomy table (ARENIG GROUP — Ordovician sub-divisions).  The
-    # table may carry an incidental small diagram, but it is an
-    # outline, not a figure — leave it for the data/outline path.
-    if re.search(r"\\left\s*\\?\{", raw):
-        return False
-    # 2. Figure carrier present.
-    # has_image — a `[[File:…]]` at THIS element's own level (a direct
-    # IMAGE/INLINE_IMAGE child) — now read from raw, not the registry.
-    has_image = _top_level_image_present(raw)
-    # figure_child_count — the multi-figure GROUP signal — is left on the
-    # registry ON PURPOSE.  This branch is flip-coupled: a container of
-    # figures isn't itself a figure, so once the children can recurse out
-    # (Step C) the outer needn't claim them.  At the flip the walker stops
-    # descending, the registry empties, this count → 0, the branch falls
-    # through, and the group outers reclassify automatically (the dead
-    # branch is then swept).  Keeping it registry-backed preserves today's
-    # labels exactly until that deliberate, diffed flip.
-    figure_child_count = sum(
-        1 for lbl in registry.labels.values() if lbl in _FIGURE_LABELS)
-    return has_image or figure_child_count >= 2
-
-
-# Legend-material detectors — used by `_classify_icl_shape`.
-#
-# A figure carries legend material when one of:
-#   (a) multicol shape — rows shaped like `|LABEL.||text||LABEL.||text…`
-#       where the labels are short alphanumerics; ABBEY Fig 5 is the
-#       canonical case (5 rows × 3 (label,text) pairs).
-#   (b) prose shape — a cell holding ≥3 line-start `LABEL. text` entries,
-#       optionally on one collapsed line; HYDROMEDUSAE Fig 1 cell:
-#       `a. Hydranth; b. Hydrocaulus; c. Hydrorhiza; …`.
-#   (c) a POEM child placeholder (legend rendered as a poem block).
-#   (d) a nested wikitable child (legend in its own sub-table).
-#
-# Predicate-time detection is coarse — the producer's `find_legend`
-# does the precise parse.  False-positives downgrade gracefully (the
-# producer just emits no legend block).
-
-# Prose-cell legend entry: a SHORT, LETTER-STARTING label (`a`, `bo`,
-# `«I»mg«/I»`) followed by `.,` then text.  Three deliberate
-# restrictions, each tuned against a class of false positive:
-#   * Letter start (not digit) — numbered move-lists like a chess
-#     solution (`1. P – Kt6; 2. P – B6`) otherwise look like a
-#     numbered legend and get mis-detected (CHESS vol 6 p106).
-#     Digit-labelled legends only occur in the MULTICOL shape
-#     (MOSQUE `| 1. Kibla. ||…`), handled cell-aware.
-#   * 1-4 chars only — anatomical legend abbreviations are short
-#     (`a`, `oc`, `mg`, `s.gl`); a 5-6 char limit lets ordinary
-#     prose words ending in a comma (`corner,`, `border,`, `field.`
-#     in a heraldry description — SOUTH AFRICA vol 25 p479) match
-#     as pseudo-labels.  Longer real labels (`prae-gen`) only occur
-#     in the MULTICOL shape, handled cell-aware.
-#   * No internal spaces/commas — a permissive label would greedily
-#     swallow the entry's descriptive text and never reach the `[.,]`
-#     terminator (METAMORPHOSIS `A, Side view…`).
-_LEGEND_PROSE_ENTRY_RE = re.compile(
-    r"(?:^|\n|\|\s*|;\s*)"
-    r"(?:«I»[A-Za-z][A-Za-z0-9.]{0,3}«/I»|[A-Za-z][A-Za-z0-9.]{0,3})"
-    r"[′″‴]?"
-    r"\s*[.,]\s+[A-Z‘“a-z]"
-)
-
-_LEGEND_NON_LABELS = frozenset({"Fig", "Plate", "fig", "plate"})
-
-
-# A cell that OPENS with a Fig./Plate. marker is a caption, not a legend —
-# never mine legend entries from it (default-to-caption; no guessing legends out
-# of flowing caption prose where the structural signal is absent).
-_CAPTION_OPENER_RE = re.compile(
-    r"^\s*(?:\{\{\s*c?sc\s*\|\s*)?(?:Fig|Plate)s?\b", re.IGNORECASE)
-
-
-def _has_legend_material(inner: str,
-                          registry: "ElementRegistry | None",
-                          image_phs: list[str]) -> bool:
-    """Predicate-time coarse detection of cell-based legend material.
-
-    Two row shapes count:
-
-      * **Multicol** — a row whose cells (post-``split_wiki_row``)
-        carry ≥2 legend-shaped entries (label-only OR full
-        `LABEL[.,]\\s+TEXT`).  Cell-aware so the detector sees past
-        cell-attribute prefixes (``|align="right"|…``) and template
-        wrappers (``{{nowrap|…}}``).  Two such rows in the inner
-        confirm legend material.
-
-      * **Prose** — a single cell carrying ≥3 inline ``LABEL.,text``
-        entries separated by ``;`` or newlines (HYDROMEDUSAE Fig 1
-        shape).
-
-    Shared with the producer's row-partitioner via
-    ``_row_has_legend_multicol_cells`` so the predicate and
-    producer agree on what counts as legend.
-    """
-    # `{{Hi}}` hanging-indent is NO LONGER a legend signal.  It's ambiguous —
-    # a real legend in ARACHNIDA Fig 26/72/78, but numbered SUB-FIGURE
-    # descriptions inside a "Figs. N-M" composite caption (BRACHIOPODA Fig
-    # 12-18), structurally identical, with no clean discriminator (number-vs-
-    # letter / length keys are the "fancy heuristic" that's doomed).  Per
-    # default-to-caption (user 2026-05-24) we don't trust it: `{{Hi}}` content
-    # stays caption text.  Revertible if a real structural discriminator turns
-    # up — add it at the producer and the whole bucket works.  See
-    # [[turn-bugs-into-producer-bugs]] / [[project_loose_legend_no_bare]].
-    multicol_row_count = 0
-    for cells in _table_grid(inner):
-        if not any(c.strip() for c in cells):
-            continue
-        if image_phs and any(ph in c for c in cells for ph in image_phs):
-            continue
-        if _row_has_legend_multicol_cells(cells):
-            multicol_row_count += 1
-            if multicol_row_count >= 2:
-                return True
-    # Prose-cell legend: a single DEDICATED legend cell with ≥3 inline
-    # `LABEL.,text` entries (HYDROMEDUSAE Fig 1).  A cell opening with a
-    # Fig./Plate. marker is a caption — its inline gloss-runs (BRACHIOPODA
-    # Fig 12-18: "…ventral valve. f, foramen; d, deltidium;…") stay in the
-    # caption, never mined as a legend.
-    for cells in _table_grid(inner):
-        for content in cells:
-            cs = content.strip()
-            # Caption cells (Fig./Plate. opener) and `{{Hi}}` cells (now
-            # caption content, not legends) are not mined for legend entries.
-            if _CAPTION_OPENER_RE.match(cs) or re.match(r"\{\{\s*hi\b", cs,
-                                                        re.IGNORECASE):
-                continue
-            prose_hits = 0
-            for m in _LEGEND_PROSE_ENTRY_RE.finditer(content):
-                label_m = re.search(r"([A-Za-z]+|\d+)", m.group(0))
-                if label_m and label_m.group(1) in _LEGEND_NON_LABELS:
-                    continue
-                prose_hits += 1
-            if prose_hits >= 3:
-                return True
-    return False
-
-
-def _figure_has_child_legend(
-    registry: ElementRegistry, image_phs: list[str],
-) -> bool:
-    """True iff the figure carries a POEM or nested-wikitable child —
-    the signal that the legend lives in a child element, not in
-    regular cells."""
-    for ph, lbl in registry.labels.items():
-        if ph in image_phs:
-            continue
-        if lbl == "POEM" or lbl in TABLE_LABELS:
-            return True
-    return False
-
-
-_INLINE_CAPTION_MARKER_RE = re.compile(
-    r"\{\{\s*(?:sc|csc|SC)\s*\|\s*(?:Fig|Plate)s?\.?"
-    r"|\b(?:Fig|Plate)s?\.?\s*\d",
-    re.IGNORECASE,
-)
-
-
-def _has_inline_caption_signal(inner: str, image_ph: str) -> bool:
-    """Inline-caption signal: the image's row carries a Fig./Plate.
-    marker (the image and its caption share the same row, often the
-    same cell separated by ``<br>``).  Canonical cases: ORDNANCE
-    Fig 54, STEAM_ENGINE Fig 10.
-
-    Differs from a plain CAPTIONED_FIGURE in that the caption sits
-    in the image's own row rather than a subsequent row.
-    """
-    grid = _table_grid(inner)
-    image_row = next((cells for cells in grid
-                      if any(image_ph in c for c in cells)), None)
-    if image_row is None:
-        return False
-    return bool(_INLINE_CAPTION_MARKER_RE.search(" ".join(image_row)))
-
-
-def _image_alone_in_row(inner: str, image_ph: str) -> bool:
-    """The image is the only non-empty cell in its row — the canonical
-    captioned-figure shape (image on top, caption/legend in subsequent
-    rows).  Empty leading ``||`` cells (typographic spacing) don't
-    disqualify; non-empty sibling cells (legend material, footnote
-    refs, decorative content) do.
-    """
-    grid = _table_grid(inner)
-    image_row = next((cells for cells in grid
-                      if any(image_ph in c for c in cells)), None)
-    if image_row is None:
-        return False
-    siblings = [c for c in image_row if c.strip() and image_ph not in c]
-    return len(siblings) == 0
-
-
-def _has_beside_legend_signal(inner: str, image_ph: str) -> bool:
-    """Beside-legend signal: the image's row contains the image
-    placeholder on a line with `||` separating it from a sibling
-    cell whose paragraph-`\\n\\n`-separated content matches
-    ``LABEL. text`` entries (ABBEY Fig 1 shape).
-
-    Looks at the raw row text — `split_wiki_row` would have
-    collapsed the paragraph breaks that distinguish legend entries
-    from a single multi-sentence caption.
-    """
-    rows = re.split(r"\|-[^\n]*", inner)
-    image_row = next((r for r in rows if image_ph in r), None)
-    if image_row is None:
-        return False
-    row_lines = [l for l in image_row.split("\n") if l.strip()]
-    image_line = next((l for l in row_lines if image_ph in l), None)
-    if image_line is None or "||" not in image_line:
-        return False
-    li = row_lines.index(image_line)
-    cell_lines = [image_line]
-    for nxt in row_lines[li + 1:]:
-        if nxt.lstrip().startswith("|"):
-            break
-        cell_lines.append(nxt)
-    cell_text = "\n".join(cell_lines).lstrip("|")
-    # `_parse_inline_legend_cell` returns entries iff the cell matches
-    # the image-placeholder + `||` + paragraph-`LABEL. text` shape.
-    # Use a no-op text_transform here — predicate runs before markers
-    # are emitted; the producer re-parses with the real transform.
-    _, entries = _parse_inline_legend_cell(cell_text, lambda s: s)
-    return len(entries) >= 3 and _entries_look_like_legend(entries)
-
-
-def _classify_icl_shape(raw: str, inner: str,
-                         registry: ElementRegistry | None) -> str | None:
-    """Single ICL (image/caption/legend) dispatcher.
-
-    Step 1: ``_is_icl_family`` runs the family-membership decision.
-    Tables that fail the gate are NOT funneled to any ICL producer —
-    they fall through to LAYOUT_WRAPPER (verse/text wrappers) or to
-    the non-ICL classifiers (DATA_TABLE, COMPLEX_HTML, math layouts).
-
-    Step 2: once family-confirmed, dispatch by structural features
-    that distinguish ICL sub-shapes from each other:
-
-      * 0 images + ≥2 nested figure children → ``FIGURE_GROUP``.
-      * ≥2 images                            → ``UNPAIRED_FIGURE_GROUP``
-        (the producer bundles what pairs, passes through the rest; the
-        old SIMPLE_PLATE / CAPTIONED_FIGURE_GRID split is gone).
-      * 1 image + POEM/TABLE child           → ``LEGENDED_FIGURE_CHILD``.
-      * 1 image + cell-based legend material → ``LEGENDED_FIGURE``.
-      * 1 image + Fig./Plate. marker in image row
-                                             → ``CAPTIONED_FIGURE_INLINE``.
-      * 1 image, no special signal           → ``CAPTIONED_FIGURE``.
-
-    Because family membership is decided FIRST, sub-shape predicates
-    are free of data-table-defense gating (no ``||``-in-row-0
-    rejection, no image-must-be-in-row-0).  Sibling-cell shapes —
-    image + legend cell in row 0 (ABBEY Fig 1), image + POEM
-    placeholder in row 0 (ABBEY Fig 12, BAG-PIPE) — route correctly
-    because the family gate has already ruled out data tables.
-
-    Returns the sub-label, or ``None`` if the table is not in the
-    ICL family (caller falls through to non-ICL classifiers).
-    """
-    if not _is_icl_family(raw, inner, registry):
-        return None
-
-    assert registry is not None  # _is_icl_family rejects on None
-    # Family-scoped normalization: strip pure-decoration layout
-    # templates so the sub-shape detectors see clean content.  Runs
-    # AFTER family confirmation, so it never touches a non-ICL table
-    # that happens to contain `{{center}}` etc.
-    inner = _normalize_icl_markup(inner)
-    image_phs = [ph for ph, lbl in registry.labels.items()
-                 if lbl in IMAGE_LABELS]
-
-    # No-image case: FIGURE_GROUP wraps ≥2 nested figure children.
-    if not image_phs:
-        figure_children = [ph for ph, lbl in registry.labels.items()
-                            if lbl in _FIGURE_LABELS]
-        if len(figure_children) >= 2:
-            return "FIGURE_GROUP"
-        # Family signal was figure-child-only, but only 1 child —
-        # not a group.  Fall through to LAYOUT_WRAPPER.
-        return None
-
-    # Multi-image case: UNPAIRED_FIGURE_GROUP — ≥2 images that we don't
-    # bundle per-image (the un-pairable multi-image figure; its intent is
-    # "multiple images that can't be mapped 1:1 to captions/legends").
-    # The old SIMPLE_PLATE / CAPTIONED_FIGURE_GRID plate-shaped labels are
-    # gone: plates route to parse_plate, and per-image bundling of the
-    # *pairable* multi-image case is deferred to the plate work (top-legend
-    # + ICLs + group-legend + bottom-legend).  We return the label
-    # DIRECTLY (not fall through) because the family gate has ALREADY
-    # confirmed this is a figure — letting it reach the data-table
-    # predicates would leak `{{small-caps|Fig.}}` + long-legend figures
-    # like ARTHROPODA into COMPLEX_HTML.  Shares LAYOUT_WRAPPER's
-    # passthrough producer.
-    if len(image_phs) >= 2:
-        return "UNPAIRED_FIGURE_GROUP"
-
-    # Single-image case: dispatch by what neighbours the image.
-    image_ph = image_phs[0]
-    if _figure_has_child_legend(registry, image_phs):
-        return "LEGENDED_FIGURE_CHILD"
-    if _has_beside_legend_signal(inner, image_ph):
-        return "LEGENDED_FIGURE_BESIDE"
-    if _has_legend_material(inner, registry, image_phs):
-        return "LEGENDED_FIGURE"
-    if _has_inline_caption_signal(inner, image_ph):
-        return "CAPTIONED_FIGURE_INLINE"
-    # Plain CAPTIONED_FIGURE requires the image to be alone in its
-    # row — caption / attribution material lives in subsequent rows.
-    # Tables where the image shares its row with non-empty non-
-    # legend siblings (e.g., ``<ref>`` footnote markers around an
-    # inline musical-notation image — BAG-PIPE Fig 1) aren't really
-    # captioned figures; they fall through to LAYOUT_WRAPPER which
-    # passes the placeholders through without bundling them as a
-    # caption.
-    if _image_alone_in_row(inner, image_ph):
-        return "CAPTIONED_FIGURE"
-    return None
-
-
-def _is_layout_wrapper_pred(raw: str, inner: str,
-                             registry: ElementRegistry | None) -> bool:
-    """Image+caption wrapper or nested-table wrapper shape."""
-    return _is_layout_wrapper(raw, inner, registry)
 
 
 def _is_brace_table(raw: str, inner: str,
@@ -1312,24 +915,17 @@ def _always_true(raw: str, inner: str,
     return True
 
 
-# Two priority lists with the ICL family dispatch in between.  This
-# layout makes "is this an ICL?" a single explicit step rather than
-# a question dispersed across multiple independent predicates:
+# Two priority lists, tried in order.  (The old ICL family dispatch
+# that sat between them — `_is_icl_family` gate + `_classify_icl_shape`
+# sub-labels — is deleted along with the whole shadow recognizer.  A
+# figure `{|`-table is no longer a recognized family: it falls through
+# to TABLE and the one producer recurses its cells to image + prose,
+# exactly like any other table.)
 #
-#   1. PRE_ICL — more-specific structural shapes that should take
-#      precedence even over ICL family membership (DJVU crops have
-#      ICL-shaped wikitext but their producer parses the raw bytes;
-#      compound and chemistry layouts have data-table signals that
-#      _is_icl_family would also reject, but they need their own
-#      producers, not LAYOUT_WRAPPER).
-#   2. ICL family dispatch — `_classify_icl_shape` runs the
-#      `_is_icl_family` gate and, on success, returns one of the
-#      ICL sub-labels.  On failure (not family) it returns None and
-#      the table falls through to the post-ICL list.
-#   3. POST_ICL — LAYOUT_WRAPPER (catch-all for residual layout
-#      shapes including verse/text wrappers and ICL shapes the
-#      dispatcher returned None for), then the data/math
-#      classifications.
+#   1. PRE_ICL — more-specific shapes that take precedence because their
+#      producer parses raw bytes or needs its own label (DJVU crops,
+#      compound tables, chemistry layouts).
+#   2. POST_ICL — every remaining table shape, all labelled TABLE.
 _PRE_ICL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
     (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
@@ -1349,10 +945,10 @@ _POST_ICL_PREDS: list[tuple[Callable[
     # table of math cells is just a TABLE whose cells recurse to `<math>`
     # — rendered with its original table structure (the fraction bars the
     # old flattening `_process_equation_layout` silently dropped) intact.
-    # Only LAYOUT_WRAPPER keeps its own label (un-pairable multi-image
-    # figure); everything else is TABLE.
+    # Every shape emits TABLE — the one producer decomposes them identically
+    # (LAYOUT_WRAPPER collapsed too; the legend/figure shadow recognizer that
+    # distinguished these shapes is deleted).
     (_is_poem_wrapper_pred,          "TABLE"),
-    (_is_layout_wrapper_pred,        "LAYOUT_WRAPPER"),
     (_is_brace_table,                "TABLE"),
     (_has_data_signal_and_ts,        "TABLE"),
     (_has_rowspan_or_colspan,        "TABLE"),
@@ -1366,20 +962,18 @@ def _classify_table(raw: str, inner: str,
                      inner_registry: ElementRegistry | None) -> str:
     """Classify a wiki table to its producer-dispatch label.
 
-    Three-stage dispatch:
+    Two-stage dispatch:
 
       1. Pre-ICL predicates (DJVU crops, compound tables, chemistry
-         layouts) get priority over generic figure classification.
-      2. `_classify_icl_shape` decides ICL family membership in one
-         place and returns a sub-label when it applies; otherwise
-         returns None so the table falls through.
-      3. Post-ICL predicates handle LAYOUT_WRAPPER (catch-all),
-         data-table variants, and math layouts.
+         layouts) get priority — their producers parse raw bytes or
+         need their own label.
+      2. Post-ICL predicates: every remaining table shape is labelled
+         TABLE, which the one producer decomposes identically.  Figure
+         `{|`-tables are de-recognized — a figure is just a table whose
+         cells recurse to image + prose, no separate family gate.
 
     Adding a new wikitable kind: add a predicate + entry to the
-    appropriate list, or add a new sub-shape to `_classify_icl_shape`
-    if it's an ICL variant.  Non-ICL tables can never receive an
-    ICL label because the family gate is the only path to one.
+    appropriate list.
     """
     for predicate, label in _PRE_ICL_PREDS:
         if predicate(raw, inner, inner_registry):
