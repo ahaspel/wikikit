@@ -161,6 +161,37 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
 
 
 
+def produce_article(session, article) -> tuple[str, str | None]:
+    """Walk one article's segments into ``(body, title_display)`` — the body
+    production shared by ``transform_articles`` (which persists it) and the
+    in-memory assemble (which holds it).  No DB write here."""
+    segments = (
+        session.query(ArticleSegment)
+        .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
+        .filter(ArticleSegment.article_id == article.id)
+        .order_by(ArticleSegment.sequence_in_article)
+        .add_columns(SourcePage.page_number)
+        .all()
+    )
+    joined_raw = "".join(
+        f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
+        for seg, page_number in segments)
+    body = _transform_text_v2(
+        joined_raw, article.volume,
+        segments[0][1] if segments else 0,
+    ) if joined_raw else ""
+    title_display = None
+    if article.title_raw:
+        _disp = _transform_text_v2(
+            article.title_raw, article.volume,
+            segments[0][1] if segments else article.page_start,
+        ).strip()
+        title_display = _disp if (
+            _disp and (re.search(r"«(?:I|SC|FN)", _disp)
+                       or _disp.count("«B»") > 1)) else None
+    return body, title_display
+
+
 def transform_articles(volume: int) -> int:
     """Transform raw wikitext to internal marker format for all articles in a volume.
 
@@ -181,53 +212,8 @@ def transform_articles(volume: int) -> int:
 
         for aid in article_ids:
             article = session.get(Article, aid)
-            segments = (
-                session.query(ArticleSegment)
-                .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
-                .filter(ArticleSegment.article_id == aid)
-                .order_by(ArticleSegment.sequence_in_article)
-                .add_columns(SourcePage.page_number)
-                .all()
-            )
-
-            # Plates and articles alike flow through the ONE walker now — the
-            # faithless `produce_faithful_figure` shadow-pipeline is deleted.  The
-            # walker recurses a plate's stylers and `{|`-grid honestly (the shadow
-            # producer leaked them raw, its `TT` being identity).
-            #
-            # Re-assemble the body from per-page segments FAITHFULLY: each segment
-            # is a slice of the clean stream cut at a `\x01PAGE\x01` marker, so
-            # concatenating `marker+segment` with NO separator reproduces exactly
-            # that stream slice (a `"\n".join` would inject a seam the stream never
-            # had — word-joins and seam healing already happened in preprocess).
-            joined_raw = "".join(
-                f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
-                for seg, page_number in segments)
-            article.body = _transform_text_v2(
-                joined_raw, volume,
-                segments[0][1] if segments else 0,
-            ) if joined_raw else ""
-                # (No redundant-title-qualifier strip: the title-formation keeps
-                # the title bare ("YORK") with the qualifier in the body paren,
-                # the old pattern (title "X, Q" + body "(Q)") no longer occurs.
-                # Verified dead (0 of 743 comma-titles) and deleted.)
-            # Title producer: run the carved title span (markers/footnote
-            # intact) through the SAME transform as the body — «B»/«I»/«SC»
-            # are kept and a title <ref> becomes «FN» (the footnote
-            # producer), exactly like body text.  Store the display title
-            # only when it carries something the plain title lost
-            # (formatting or a footnote); plain bold titles leave it None
-            # and the viewer falls back to `title`.  Keeps the blast
-            # radius to the ~2% of titles that actually differ.
-            if article.title_raw:
-                _disp = _transform_text_v2(
-                    article.title_raw, volume,
-                    segments[0][1] if segments else article.page_start,
-                ).strip()
-                article.title_display = _disp if (
-                    _disp and (re.search(r"«(?:I|SC|FN)", _disp)
-                               or _disp.count("«B»") > 1)) else None
-
+            article.body, article.title_display = produce_article(
+                session, article)
             session.commit()
             session.expire_all()
 
