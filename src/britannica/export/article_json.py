@@ -382,6 +382,7 @@ def export_articles_to_json(
     out_dir: str | Path,
     body_override: dict[int, str] | None = None,
     only_article_id: int | None = None,
+    link_index=None,
 ) -> int:
     """Export one volume's articles to JSON.
 
@@ -570,10 +571,13 @@ def export_articles_to_json(
             body = _wrap_resolved_xrefs_in_body(
                 body, xrefs, stable_id(article), session
             )
+            from britannica.pipeline.stages.resolve_xrefs import resolve_one
             link_targets: dict[str, str] = {}  # normalized_target → filename
             for xref in xrefs:
-                if xref.target_article_id is not None and xref.normalized_target:
-                    target = session.get(Article, xref.target_article_id)
+                aid = (resolve_one(xref, link_index)[0]
+                       if link_index is not None else xref.target_article_id)
+                if aid is not None and xref.normalized_target:
+                    target = session.get(Article, aid)
                     if target:
                         link_targets[xref.normalized_target.lower()] = _safe_filename(
                             target, target.title
