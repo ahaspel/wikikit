@@ -18,7 +18,6 @@ from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
-from britannica.pipeline.stages.elements._prose import _apply_markup
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,
@@ -123,7 +122,7 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # citations are untouched.  Subsumes the old CONTRIBUTOR_FOOTER walker element.
     from britannica.pipeline.stages.extract_contributors import strip_attributions
     raw_wikitext = strip_attributions(raw_wikitext)
-    text = process_elements(raw_wikitext, _apply_markup, context)
+    text = process_elements(raw_wikitext, context)
 
     # (chart2 genealogical-tree images are substituted at source in
     # `make_stream`/preprocess now — the old post-walker injection loop is gone.)

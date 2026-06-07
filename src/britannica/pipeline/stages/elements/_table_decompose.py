@@ -8,15 +8,16 @@ The architectural principle (per
     list.
   * **Row** extracts CELLS.  Peels `|-…` / `<tr …>` plus its attribute
     slot.  Returns the canonical cell list.
-  * **Cell** produces its own CONTENT via `text_transform` (i.e.
-    body-text, the same `_apply_markup` that processes article prose).
-    Its attribute slot feeds `_cell_styles` and is consumed entirely.
+  * **Cell** produces its own CONTENT by recursing through the ONE
+    dispatch (`process_elements`, via the `cell_recurse` hook) — the same
+    engine that processes article prose.  Its attribute slot feeds
+    `_cell_styles` and is consumed entirely.
 
-Cell content reaches body-text in a context indistinguishable from a
-paragraph in prose — same handlers, same totality argument.  There is no
-"table context" or "cell context" mode; the inner template handlers
-(`_convert_sc`, `_convert_sub_sup`, `_convert_foreign_script`, …) apply
-uniformly.
+Cell content reaches the dispatch in a context indistinguishable from a
+paragraph in prose — same producers, same totality argument.  There is no
+"table context" or "cell context" mode; a `{{sc|…}}` / fraction / styled
+wrapper / nested table in a cell is handled by its OWN producer, exactly
+as in prose.
 
 This module provides shape-agnostic infrastructure.  Producers (single
 data-table producer, HTML-table producer, special-shape producers in
@@ -50,9 +51,9 @@ NestedTableProducer = Callable[[str], str]
 #     for header cells (wiki `!`/`!!`, HTML `<th>`).
 #   * `attr_part` — raw attribute prefix (wiki `colspan=2 {{Ts|ac}}` or
 #     HTML `colspan="2" style="text-align:center"`).  Consumed entirely
-#     by `_cell_styles`; nothing here reaches `text_transform`.
-#   * `content` — raw cell body, un-transformed.  Fed to `text_transform`
-#     by `produce_cell` below.
+#     by `_cell_styles`; nothing here reaches the content recursion.
+#   * `content` — raw cell body.  Recursed through `process_elements`
+#     (the `cell_recurse` hook) by `produce_cell` below.
 #
 # A `Row` is `(row_attr_part, list[Cell])`:
 #   * `row_attr_part` — wiki `|-<attrs>` tail or HTML `<tr <attrs>>`
@@ -214,8 +215,8 @@ def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
 
     `inner` is the source between the outer `{|<attrs>` and `|}`
     delimiters (the walker has already bounded these).  Caption is the
-    `|+<text>` line if present (returned un-transformed; the caller runs
-    it through `text_transform`).  Rows are produced by splitting on
+    `|+<text>` line if present (returned raw; the caller emits it, its
+    nested elements riding through as placeholders).  Rows are produced by splitting on
     `|-<attrs>` separators; each row's cells come from
     :func:`split_wiki_row`.
 
@@ -355,32 +356,34 @@ def _html_cells(body: str) -> list[Cell]:
 # ── Cell producer ──────────────────────────────────────────────────────
 
 def produce_cell(
-    attr_part: str, content: str, text_transform: TextTransform,
+    attr_part: str, content: str,
     recurse: NestedTableProducer | None = None,
     cell_recurse: "Callable[[str], str] | None" = None,
 ) -> tuple[list[str], str]:
-    """Produce one cell: extract its styles, run its content through
-    body-text.  Returns `(styles, body)`.
+    """Produce one cell: extract its styles, recurse its content through
+    the dispatch.  Returns `(styles, body)`.
 
     The cell's `attr_part` is consumed entirely by `_cell_styles` —
     `{{Ts|…}}` codes, inline `style="…"`, `align="…"`/`valign="…"` all
-    become CSS declarations.  Nothing from `attr_part` reaches
-    `text_transform`.
+    become CSS declarations.  Nothing from `attr_part` reaches the
+    content.
 
     `content` is the cell body, possibly containing inline templates
     (`{{sc|…}}`, `{{sup|…}}`, foreign-script wrappers, …) and inline
-    HTML (`<span>`, `<i>`, etc.).  These are body-text's concern;
-    `text_transform` handles them uniformly with article prose.
+    HTML (`<span>`, `<i>`, etc.).  With `cell_recurse` set (production) it
+    recurses through `process_elements` — each is handled by its OWN
+    producer, exactly as article prose.  Without it, content passes
+    through unchanged (pre-extracted child placeholders ride to the outer
+    assembler).
 
-    ``recurse`` enables producer-owned recursion: when supplied AND the
-    content carries a raw nested ``{|…|}`` table, each nested table is
-    masked out, the surrounding content is run through body-text, then
-    each nested table's marker — produced by ``recurse(raw)`` — is
-    substituted back in.  Masking keeps the marker clear of body-text's
-    template/markup handling.  ``recurse=None`` (the default, and every
-    production caller today) leaves content untouched; combined with the
-    fact that production cell content never carries raw ``{|`` (it's a
-    placeholder — see module note), this path is dormant until the flip.
+    ``recurse`` enables an alternate producer-owned nested-table path:
+    when supplied AND the content carries a raw nested ``{|…|}`` table,
+    each nested table is masked out, the surrounding content passes
+    through, then each nested table's marker — produced by ``recurse(raw)``
+    — is substituted back in.  ``recurse=None`` (the default, every
+    production caller) leaves content untouched; combined with the fact
+    that production cell content never carries raw ``{|`` (it's a
+    placeholder — see module note), this path is dormant.
     """
     from britannica.pipeline.stages.elements._tables import _cell_styles
     styles = _cell_styles(attr_part, content)
@@ -398,7 +401,7 @@ def produce_cell(
     raw_spans: list[str] = []
     if recurse is not None and "{|" in content:
         content, raw_spans = _mask_nested_tables(content)
-    body = text_transform(content).strip(" \t")
+    body = content.strip(" \t")
     for i, raw in enumerate(raw_spans):
         body = body.replace(_nested_token(i), recurse(raw))
     return styles, body
@@ -415,7 +418,7 @@ def produce_cell(
 # A `ParsedCell` is `(tag, rowspan, colspan, body, styles)`:
 #   * `tag` — `'td'`/`'th'` (header-ness already resolved from `sep`).
 #   * `rowspan`/`colspan` — integer span counts (1 when absent).
-#   * `body` — the produced cell content (`text_transform` already run).
+#   * `body` — the produced cell content (recursed through the dispatch).
 #   * `styles` — CSS declarations from `_cell_styles` (full per-cell list).
 # A `ParsedRow` is `list[ParsedCell]`.
 #
@@ -431,23 +434,20 @@ _COLSPAN_RE = re.compile(r'colspan\s*=\s*"?(\d+)"?', re.IGNORECASE)
 _HTML_FLAVOR_RE = re.compile(r"<table\b|<tr\b|<t[dh]\b", re.IGNORECASE)
 
 
-# A producer-supplied cell-body strategy: `(attr_part, content,
-# text_transform) -> (styles, body)`.  Lets a producer keep a genuinely
-# irreducible per-cell branch (e.g. `_process_complex_table`'s image cell,
-# which becomes `{{IMG:…}}` and must skip both `text_transform` AND the
+# A producer-supplied cell-body strategy: `(attr_part, content) ->
+# (styles, body)`.  Lets a producer keep a genuinely irreducible per-cell
+# branch (e.g. `_process_complex_table`'s image cell, which becomes
+# `{{IMG:…}}` and must skip both the content recursion AND the
 # leftover-`{{}}` strip) while still sharing this one decomposition loop.
 # Default `None` uses the canonical `produce_cell` (= `_cell_styles` +
-# body-text), the uniform leaf.  A `cell_body` strategy is TRANSITIONAL:
-# the end-state moves its template handling into body-text so the branch
-# dissolves and the producer reverts to the default.
-CellBody = Callable[[str, str, TextTransform], "tuple[list[str], str]"]
+# content recursion), the uniform leaf.
+CellBody = Callable[[str, str], "tuple[list[str], str]"]
 
 ProducedRow = tuple[str, ParsedRow]  # (row_attr_part, cells)
 
 
 def produce_table_rows(
     inner: str,
-    text_transform: TextTransform,
     *,
     flavor: str | None = None,
     cell_preclean: TextTransform | None = None,
@@ -468,7 +468,7 @@ def produce_table_rows(
     (`<table>…</table>`).  `None` auto-detects from HTML table tags.
 
     `cell_preclean`, when given, runs on each cell's raw content BEFORE
-    `text_transform` (the HTML spine uses `_html_cell_clean` — the
+    the content recursion (the HTML spine uses `_html_cell_clean` — the
     lossless-`<br>` + tag-strip step).  Ignored when `cell_body` is
     supplied (that strategy owns its own cleaning).
 
@@ -500,12 +500,12 @@ def produce_table_rows(
             if rowspan > 1 or colspan > 1:
                 has_span = True
             if cell_body is not None:
-                styles, body = cell_body(cell_attrs, cell_content, text_transform)
+                styles, body = cell_body(cell_attrs, cell_content)
             else:
                 cleaned = (cell_preclean(cell_content) if cell_preclean
                            else cell_content)
                 styles, body = produce_cell(
-                    cell_attrs, cleaned, text_transform, recurse=recurse,
+                    cell_attrs, cleaned, recurse=recurse,
                     cell_recurse=cell_recurse)
             parsed.append((tag, rowspan, colspan, body, styles))
         if parsed:

@@ -97,7 +97,7 @@ _DISPLAY_KEYWORDS = frozenset({
     "thumb", "thumbnail", "frameless", "frame", "border", "none", "upright"})
 
 
-def _process_image(inner: str, text_transform, default_align: str | None = None) -> str:
+def _process_image(inner: str, default_align: str | None = None) -> str:
     """Convert image content (already stripped of [[File:...]]) to {{IMG:filename|clean caption}}.
 
     ``default_align`` is the alignment to use when the image's own params don't
@@ -146,8 +146,6 @@ def _process_image(inner: str, text_transform, default_align: str | None = None)
     if not caption and ext_caption:
         caption = ext_caption
 
-    if caption:
-        caption = text_transform(caption)
     return build_img_marker(
         filename, caption or None, align=align or default_align,
         width=width, height=height)
@@ -256,7 +254,7 @@ def image_extcap_from_raw(raw: str) -> str:
     return sp[1] if sp else ""
 
 
-def _process_image_from_raw(raw: str, text_transform,
+def _process_image_from_raw(raw: str,
                             inline: bool = False) -> str:
     """Parse a raw `[[File:…]]` + optional trailing capture and produce the
     `{{IMG:…}}` marker.
@@ -276,5 +274,5 @@ def _process_image_from_raw(raw: str, text_transform,
     if ext_caption:
         inner = inner + "|EXTCAP:" + ext_caption
     return _process_image(
-        inner, text_transform,
+        inner,
         default_align="inline" if inline else None)

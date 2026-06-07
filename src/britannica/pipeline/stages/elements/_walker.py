@@ -209,7 +209,7 @@ _LB_RE = re.compile(r"\{\{\s*lb-\s*(?:\|[^{}]*)?\}\}", re.IGNORECASE)
 # |1|n}}}}`); opener-only, the one balanced matcher bounds it at any depth.  The
 # producer recurses the slot and translates flat runs to Unicode around element
 # markers.  Promoted out of body-text's `_convert_sub_sup` (which only fired in
-# `_apply_markup`, leaking sup inside math/italic/centred blocks — the lb-/sup
+# the flat body-text pass, leaking sup inside math/italic/centred blocks — the lb-/sup
 # context-leak).
 _SUBSUP_OPENER_RE = re.compile(
     r"\{\{\s*(?:sub|sup)\s*\|", re.IGNORECASE)

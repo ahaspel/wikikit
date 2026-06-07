@@ -162,7 +162,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if _FRAC_LABEL_RE.match(raw):
         return "FRACTION"
     # `{{lb-|N}}` / `{{lb-}}` — pound-weight glyph leaf (promoted out of the
-    # body-text `_convert_lb_dash` re.sub, which only fired inside `_apply_markup`).
+    # body-text `_convert_lb_dash` re.sub, which only fired in the flat body-text pass).
     if name == "lb-":
         return "LB"
     # `{{sub|x}}` / `{{sup|x}}` — sub/superscript typography (out of body-text's
@@ -460,7 +460,7 @@ def classify_article(
 
 
 def produce_tree(
-    tree: dict[str, ClassifiedElement], text_transform, context
+    tree: dict[str, ClassifiedElement], context
 ) -> None:
     """Producer pass: bottom-up over the classified tree.
 
@@ -482,7 +482,7 @@ def produce_tree(
         # `_to_legacy_registry` is called below (which copies
         # children's markers into the registry view).
         if ce.inner_registry:
-            produce_tree(ce.inner_registry, text_transform, context)
+            produce_tree(ce.inner_registry, context)
 
         legacy_inner_reg = (
             _to_legacy_registry(ce.inner_registry)
@@ -490,7 +490,7 @@ def produce_tree(
         )
         handler = _PRODUCER_DISPATCH.get(ce.label, _passthrough_inner)
         marker = handler(
-            ce.raw, ce.inner_text, text_transform, context, legacy_inner_reg)
+            ce.raw, ce.inner_text, context, legacy_inner_reg)
 
         # Substitute child markers into the producer's output.
         # Multi-pass because a substituted child marker can itself

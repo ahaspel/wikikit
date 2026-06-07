@@ -1,5 +1,5 @@
 """Atomic LEAF producers — spacers, rules, and Wikisource char-escapes.  No content
-recurses; each template maps to a glyph/char or a viewer marker.  Out of `_apply_markup`'s
+recurses; each template maps to a glyph/char or a viewer marker.  Out of body-text's
 flat re.subs: `{{em}}`/`{{gap}}`→space, `{{ditto}}`→″, `{{dhr}}`→«DHR»,
 `{{rule}}`/`{{bar}}`→rule marker, `{{clear}}`/`{{anchor}}`→nothing, and the char-escapes
 (`{{=}}`,`{{(}}`,`{{...}}`,`{{shy}}`, …) Wikisource uses to embed literal characters that

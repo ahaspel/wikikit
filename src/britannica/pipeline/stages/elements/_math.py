@@ -55,7 +55,7 @@ _INTERNAL_WHITESPACE_RE = re.compile(r"[ \t]+")
 _SPACE_BEFORE_PUNCT_RE = re.compile(r" +([,.;:!?])")
 
 
-def _process_math_equation(inner: str, text_transform) -> str:
+def _process_math_equation(inner: str) -> str:
     """Render any labeled-display-equation template.
 
     One producer covers three templates that share the
@@ -76,7 +76,7 @@ def _process_math_equation(inner: str, text_transform) -> str:
     equation as its own paragraph, matching the legacy contract.
 
     Internal whitespace in the rendered content is collapsed to single
-    spaces — mirrors `_transform_body_text`'s `[ \\t]+` collapse that
+    spaces — mirrors body-text's old `[ \\t]+` collapse that
     body-text used to apply to ne content when it was rendered in
     body.  Keeps byte-identity with the legacy iterative `_ne_labeled`
     path (ORDNANCE eqn (14) has `{{sfrac|...|E|r}}  + {{sfrac|...|F|r}}`
@@ -119,10 +119,10 @@ def _process_math_equation(inner: str, text_transform) -> str:
                 label = _clean_eqn_label(args[1])
     if not content:
         return ""
-    rendered = text_transform(content)
+    rendered = content
     rendered = rendered.replace("\xa0", " ")
     rendered = _INTERNAL_WHITESPACE_RE.sub(" ", rendered)
-    # Strip space-before-punctuation — same as `_transform_body_text`'s
+    # Strip space-before-punctuation — same as body-text's old
     # body-only finishing.  Collapses MOLECULE's literal `+ . . . ` to
     # `+...` (the source spells out the ellipsis with spaces between
     # each period; body-text used to drop those spaces by the same
@@ -168,7 +168,7 @@ def is_math_dual_line(inner_text: str) -> bool:
     return False
 
 
-def _process_math_dual_line(inner: str, text_transform) -> str:
+def _process_math_dual_line(inner: str) -> str:
     """Render a MATH_DUAL element.
 
     Initially byte-identical with `_process_dual_line` (the shared
@@ -177,4 +177,4 @@ def _process_math_dual_line(inner: str, text_transform) -> str:
     home — the math family owns its math-shaped dual_lines even when
     the rendering hasn't specialized yet.
     """
-    return _process_dual_line(inner, text_transform)
+    return _process_dual_line(inner)

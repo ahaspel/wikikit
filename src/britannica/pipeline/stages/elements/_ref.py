@@ -50,7 +50,7 @@ def _process_ref_self(raw: str, ref_bodies):
     return ""
 
 
-def _process_ref(raw, inner, text_transform, ref_bodies=None):
+def _process_ref(raw, inner, ref_bodies=None):
     """Convert ``<ref ...>body</ref>`` to a FN anchor with clean text.
 
     ``<ref follow=NAME>body</ref>`` continuations emit nothing at the
@@ -71,13 +71,13 @@ def _process_ref(raw, inner, text_transform, ref_bodies=None):
     # produce_tree substitutes afterwards.  No _clean_text flatten: that
     # stripped formatting and mangled rendered markers (the footnote
     # producer must own its body, not delegate to a generic flattener).
-    content = text_transform(inner).strip()
+    content = inner.strip()
     if name:
         return f"«FN[{name}]:{content}«/FN»"
     return f"«FN:{content}«/FN»"
 
 
-def resolve_ref_bodies(tree, text_transform, context=None) -> dict[str, str]:
+def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
     """Article-scoped resolution of named / continuation footnotes.
 
     ref and note are SPLIT by necessity: a ``<ref name=X/>`` reuse, the
@@ -90,7 +90,7 @@ def resolve_ref_bodies(tree, text_transform, context=None) -> dict[str, str]:
     named or ``follow`` footnote becomes a real nested element, not
     flattened prose.  The plain ``<ref>`` path already recurses (its inner
     is classified and ``produce_tree`` substitutes the child markers); this
-    brings name/follow into line, instead of running ``text_transform`` over
+    brings name/follow into line, instead of flattening
     the concatenated RAW bodies (which dropped a ``<table>`` to ``<td …>``
     debris — the MACHINE-GUN table-in-ref leak).  [[project_walker_one_matcher]]
 
@@ -116,9 +116,9 @@ def resolve_ref_bodies(tree, text_transform, context=None) -> dict[str, str]:
     for nm, bodies in parts.items():
         if context is not None:
             from britannica.pipeline.stages.elements import process_elements
-            produced = [process_elements(b, text_transform, context)
+            produced = [process_elements(b, context)
                         for b in bodies]
         else:
-            produced = [text_transform(b) for b in bodies]
+            produced = [b for b in bodies]
         resolved[nm] = " ".join(p.strip() for p in produced).strip()
     return resolved

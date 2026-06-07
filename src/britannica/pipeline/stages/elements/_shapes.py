@@ -171,7 +171,7 @@ def strip_outer(shape: str, raw: str) -> str:
         # Strip the wrapping `<span style="…{{mirrorH}}…">…</span>`; the
         # mirror semantic is now carried by the shape's label.  Inner is
         # the glyph(s) to mirror, possibly with content-template markup
-        # (`{{larger|𐌔}}`) which the producer's text_transform resolves.
+        # (`{{larger|𐌔}}`) carried through as a walker-extracted child.
         s = re.sub(r"^<span\s+style\s*=\s*\"[^\"]*\"\s*>", "", raw,
                    flags=re.IGNORECASE)
         s = re.sub(r"</span>\s*$", "", s, flags=re.IGNORECASE)

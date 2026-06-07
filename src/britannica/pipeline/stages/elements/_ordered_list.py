@@ -72,7 +72,7 @@ def _balanced_end(text: str, start: int) -> int:
     return n
 
 
-def _walk(block: str, depth: int, text_transform, out: list[tuple[int, str]]) -> None:
+def _walk(block: str, depth: int, out: list[tuple[int, str]]) -> None:
     """Recursively emit ``(depth, "label. text")`` rows for one
     `{{ordered list|…}}` block and its nested sub-lists."""
     m = _OL_OPEN.match(block.strip())
@@ -100,14 +100,14 @@ def _walk(block: str, depth: int, text_transform, out: list[tuple[int, str]]) ->
         text = text.strip()
         if text:
             n += 1
-            out.append((depth, f"{_label(kind, upper, n)}. {text_transform(text)}"))
+            out.append((depth, f"{_label(kind, upper, n)}. {text}"))
         if nested:
-            _walk(nested, depth + 1, text_transform, out)
+            _walk(nested, depth + 1, out)
 
 
-def _process_ordered_list(raw: str, text_transform) -> str:
+def _process_ordered_list(raw: str) -> str:
     rows: list[tuple[int, str]] = []
-    _walk(raw, 0, text_transform, rows)
+    _walk(raw, 0, rows)
     if not rows:
         return ""
     body = "\n".join(f"{d}|{c}" for d, c in rows)

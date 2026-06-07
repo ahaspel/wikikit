@@ -122,39 +122,33 @@ def _is_compound_table(raw: str,
 # ── Processing ────────────────────────────────────────────────────────
 
 # Producer handler signature.  All producers share this shape:
-#   (raw, inner, text_transform, context, inner_registry) -> marker
+#   (raw, inner, context, inner_registry) -> marker
 # `raw` is the source bytes of the element (with delimiters); `inner`
 # is the delimiter-stripped content with child placeholders.  Most
 # producers use `inner` + the child registry; the leaf cases
 # (CHART2, DJVU_CROP, COMPOUND_TABLE) use `raw` and ignore the rest.
 _ElementHandler = Callable[
-    [str, str, Callable, ElementContext, "ElementRegistry | None"], str]
+    [str, str, ElementContext, "ElementRegistry | None"], str]
 
 
-def _passthrough_inner(raw, inner, text_transform, context,
+def _passthrough_inner(raw, inner, context,
                        inner_registry):
     return inner
 
 
-def _produce_body(raw, inner, text_transform, context, inner_registry):
-    """BODY producer: apply markup conversion + body-prose finishing
+def _produce_body(raw, inner, context, inner_registry):
+    """BODY producer: emits the residual prose run as-is — no markup pass
     (whitespace collapse, ``\\xa0`` → space, paragraph-break normalization,
     line-leading ``:``/``;`` sigil strip, body-only ``<br>`` → space rule).
 
-    The walker emits SHAPE_BODY for residual prose runs between extracted
-    elements; this producer is the sole owner of body-text rendering.
-    Article assembly is then pure ordered concatenation of element markers
-    — no special body-substrate, no marker-substitution glue layer.
-
-    Lazy-imports ``_transform_body_text`` from ``transform_articles`` to
-    avoid the elements → transform_articles → elements cycle that would
-    form at module load.  A future refactor moves body-text logic into
-    ``elements/_body.py`` and collapses the cycle.
+    The walker emits SHAPE_BODY for it.  The run is NOT a pure leaf — it
+    carries inline element markers («SC», «LN», …) and child placeholders
+    the walker produced, which ``produce_tree`` substitutes; an across-the-
+    board pass here would reach into content the body doesn't own.  So the
+    body transforms nothing and article assembly is pure ordered
+    concatenation of element markers.
     """
-    from britannica.pipeline.stages.elements._prose import (
-        _transform_body_text,
-    )
-    return _transform_body_text(raw)
+    return raw
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
@@ -176,14 +170,14 @@ def _center_wrap(text: str) -> str:
     return "\n\n".join(out)
 
 
-def _process_center(raw, inner, text_transform, context, inner_registry):
+def _process_center(raw, inner, context, inner_registry):
     """CENTER paired-wrapper (`{{c/s}}…{{c/e}}` etc.) → «CTR» around the
     transformed inner.  Child placeholders (a figure/table inside the span)
     are preserved for the framework's marker substitution."""
-    return _center_wrap(text_transform(inner))
+    return _center_wrap(inner)
 
 
-def _plain_image_disentangle(raw, text_transform, context):
+def _plain_image_disentangle(raw, context):
     """`{{plain image with caption|image=X|align=|width=|caption=Y}}` IS a
     figtable in template spelling — ONE column, TWO cells: the image on top, the
     caption beneath, the whole box floated.  Reconstruct the canonical
@@ -213,16 +207,16 @@ def _plain_image_disentangle(raw, text_transform, context):
     cap = params.get("caption", "")
     body = f"|{img_src}\n|-\n|{cap}" if cap else f"|{img_src}"
     return process_elements(f"{opener}\n{body}\n|}}",
-                            text_transform, context, _allow_figure=False)
+                            context, _allow_figure=False)
 
 
-def _img_float_disentangle(raw, text_transform, context):
+def _img_float_disentangle(raw, context):
     """`{{img float|file=…|cap=…}}` / `{{figure|…}}` / `{{FI|…}}` — the floated-
     figure template.  A pure image LEAF when captionless; with a caption it's the
     same floated `{|`-figtable the source's own `{|`-figures use (image cell on
     top, caption cell beneath), now routed through `_process_table_unified` so the
     caption cell recurses through the WALKER.  Replaces render_markers'
-    `_rows_to_htmltable`, whose caption cell went through body-text (`_apply_markup`)
+    `_rows_to_htmltable`, whose caption cell went through body-text
     — the path that blocked the inline sweep.  Same float/width as before."""
     from britannica.parsers import img_float as _imgf
     from britannica.pipeline.stages.elements._image import build_img_marker
@@ -243,7 +237,7 @@ def _img_float_disentangle(raw, text_transform, context):
                if parsed.width else f"[[File:{parsed.filename}]]")
     return process_elements(
         f'{{|style="{style}"\n|{img_src}\n|-\n|{parsed.caption}\n|}}',
-        text_transform, context, _allow_figure=False)
+        context, _allow_figure=False)
 
 
 def _image_leaf(raw):
@@ -279,7 +273,7 @@ def _image_leaf(raw):
 def _process_lb(raw):
     """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph leaf).
     Relocated verbatim from body-text's `_convert_lb_dash` so it carries in EVERY
-    context, not just content that passes through `_apply_markup`."""
+    context, not just content that body-text used to process."""
     m = re.match(r"\{\{\s*lb-\s*\|\s*([^{}|]+?)\s*\}\}", raw, re.IGNORECASE)
     return f"{m.group(1).strip()} lb" if m else "lb"
 
@@ -293,7 +287,7 @@ _SUP_MAP = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻�
 _MARKER_TOKEN_RE = re.compile(r"«[^«»]*»|\x03[^\x03]*\x03")
 
 
-def _process_subsup(raw, text_transform, context):
+def _process_subsup(raw, context):
     """`{{sub|x}}` / `{{sup|x}}` → Unicode subscript / superscript.  Relocated
     from body-text's `_convert_sub_sup` so it carries in every context (it leaked
     inside math/italic/centred blocks).  The slot RECURSES — it can hold a walker
@@ -306,7 +300,7 @@ def _process_subsup(raw, text_transform, context):
     if not m:
         return raw
     table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP
-    inner = process_elements(m.group(2), text_transform, context,
+    inner = process_elements(m.group(2), context,
                              _allow_figure=False)
     inner = (inner.replace("«B»", "").replace("«/B»", "")
                   .replace("«I»", "").replace("«/I»", ""))
@@ -364,7 +358,7 @@ def _styled_br_to_marker(text: str) -> str:
     return "".join(out)
 
 
-def _process_styled(raw, inner, text_transform, context, inner_registry):
+def _process_styled(raw, inner, context, inner_registry):
     """The ONE styled-wrapper producer: a `<div>`/`<p>`/`<span>` carrying style
     (`{{Ts}}` / `style=` / `align=`).
 
@@ -399,7 +393,7 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         inner_raw = _styled_br_to_marker(
             re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
         content = process_elements(
-            inner_raw, text_transform, context, _allow_figure=False).strip()
+            inner_raw, context, _allow_figure=False).strip()
         if title and _TRANSLIT_CONTENT_RE.search(content):
             return f"«SPAN[title:{title}]»{content}«/SPAN»"
         return content  # editorial title → drop the wrapper, keep the content
@@ -416,7 +410,7 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
         label = _styled_br_to_marker(_split_top_pipes(rest)[-1])
         content = process_elements(
-            label, text_transform, context, _allow_figure=False).strip()
+            label, context, _allow_figure=False).strip()
         return f"«SH»{content}«/SH»"
     # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same
     # styler family, but the size is arg-1.  Split value | content on the first
@@ -430,7 +424,7 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         value = (rest[:bar] if bar >= 0 else "").strip()
         inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
         content = process_elements(
-            inner_raw, text_transform, context, _allow_figure=False).strip()
+            inner_raw, context, _allow_figure=False).strip()
         size = value + "%" if value.isdigit() else value
         # FS is just a styler — one uniform inline `«SPAN[style:font-size:…]»`,
         # same as every other styler, NOT a special per-context marker.  Structure
@@ -448,13 +442,13 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
         inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
         inner_raw = _styled_br_to_marker(inner_raw)
         content = process_elements(
-            inner_raw, text_transform, context, _allow_figure=False).strip()
+            inner_raw, context, _allow_figure=False).strip()
         return style_block(content, css=spec.get("css", ""),
                            tag=spec.get("tag", "DIV"),
                            ctr=spec.get("ctr", False), sc=spec.get("sc", False))
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
-        return text_transform(raw)
+        return raw
     tag = m.group(1).lower()
     attrs = m.group(2)
     # Peel the matching close tag off the tail (the walker already balanced the
@@ -465,17 +459,17 @@ def _process_styled(raw, inner, text_transform, context, inner_registry):
     # styled block's line breaks are meaningful (see `_styled_br_to_marker`).
     inner_raw = _styled_br_to_marker(inner_raw)
     content = process_elements(
-        inner_raw, text_transform, context, _allow_figure=False).strip()
+        inner_raw, context, _allow_figure=False).strip()
     css = ";".join(_cell_styles(attrs, ""))
     marker_tag = "SPAN" if tag == "span" else "DIV"
     return style_block(content, css=css, tag=marker_tag)
 
 
-def _process_fraction(inner, text_transform):
+def _process_fraction(inner):
     """FRACTION producer: a `{{sfrac|n|d}}`-family styler (sfrac / mfrac / frac /
     over / EB1911 tfrac / …) lifted as a bounded element so its slots RECURSE.
     The `<math>` numerator/denominator are MATH children (the framework
-    substitutes their markers); text slots run through ``text_transform``; then
+    substitutes their markers); text slots pass through unchanged; then
     ``_render_fraction`` assembles num-over-den.  Replaces body-text's
     ``_expand_fractions`` flatten, which leaked the `{{sfrac|` the moment a slot
     held an extracted element or the template spanned a body-run `\\n\\n`."""
@@ -483,8 +477,8 @@ def _process_fraction(inner, text_transform):
         _render_fraction)
     bar = inner.find("|")                       # strip the `name` token
     if bar < 0:
-        return text_transform(inner)
-    rendered = _render_fraction(text_transform(inner[bar:]))
+        return inner
+    rendered = _render_fraction(inner[bar:])
     if inner[:bar].strip().lower() == "binom":
         # Binomial coefficient — a GROUPED pair (parens), not a bare bar-fraction.
         return f"({rendered})"
@@ -516,8 +510,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (and the odd glyph-image) inline in a sentence; the transcriber's table
     # is layout scaffolding, not data.  Producer joins the cells back into
     # inline prose, glyphs inline, no table marker (kills the pipe leak).
-    "INLINE_GLYPHS": lambda raw, inner, tt, ctx, reg:
-        _process_inline_glyph_wrapper(inner, tt, reg),
+    "INLINE_GLYPHS": lambda raw, inner, ctx, reg:
+        _process_inline_glyph_wrapper(inner, reg),
     # TABLE — every wikitable (`{|`) and HTML `<table>`, whatever its
     # source sub-shape (data grid, single-column text box, verse-quotation,
     # compound/nested, rowspan-complex), decomposes through the ONE
@@ -525,68 +519,68 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # table-vs-(math/chem/figure/glyph); among themselves they make no
     # distinction the producer cares about, so there is one label and one
     # dispatch entry.
-    "TABLE": lambda raw, inner, tt, ctx, reg:
-        _process_table_unified(raw, inner, tt, reg, ctx),
-    "CHEMISTRY_LAYOUT": lambda raw, inner, tt, ctx, reg:
-        _process_chemistry_layout(raw, inner, tt, reg),
+    "TABLE": lambda raw, inner, ctx, reg:
+        _process_table_unified(raw, inner, reg, ctx),
+    "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
+        _process_chemistry_layout(raw, inner, reg),
     # Single-label kinds — element_type == label.
     # DJVU_CROP — a `{{Css image crop}}` is just another image; the faithful
     # figure producer recognizes it as an image leaf (stateless filename) and,
     # for the `{|`-wrapped form, recurses the caption/attribution cells.
-    "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
+    "DJVU_CROP": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
-    "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
-    "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
-    "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
-    "REF_SELF": lambda raw, inner, tt, ctx, reg:
+    "CHART2": lambda raw, inner, ctx, reg: _process_chart2(raw, ctx),
+    "MATH": lambda raw, inner, ctx, reg: _process_math(inner),
+    "SCORE": lambda raw, inner, ctx, reg: _process_score(inner),
+    "REF_SELF": lambda raw, inner, ctx, reg:
         _process_ref_self(raw, ctx.ref_bodies),
-    "REF": lambda raw, inner, tt, ctx, reg:
-        _process_ref(raw, inner, tt, ctx.ref_bodies),
+    "REF": lambda raw, inner, ctx, reg:
+        _process_ref(raw, inner, ctx.ref_bodies),
     # IMAGE is just a figure whose raw the old `_process_image` folded (caption
     # into the marker) and refused to recurse (dropping sibling blocks like a
     # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
     # faithful recursive producer: image → leaf, caption → its own «CTR» block.
-    "IMAGE": lambda raw, inner, tt, ctx, reg:
+    "IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
     # INLINE_IMAGE is the one image label faithful can't own: an inline glyph
     # needs `align=inline` (so the viewer renders it at source size in the
     # prose flow), and faithful's leaf is label-blind — it works from raw and
     # can't know the walker classified this one inline.  Keep the inline-aware
     # producer (a retained leaf utility) for it.
-    "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
-        _process_image_from_raw(raw, tt, inline=True),
-    "RAW_IMAGE": lambda raw, inner, tt, ctx, reg:
+    "INLINE_IMAGE": lambda raw, inner, ctx, reg:
+        _process_image_from_raw(raw, inline=True),
+    "RAW_IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
-    "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg:
-        _plain_image_disentangle(raw, tt, ctx),
-    "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:
-        _img_float_disentangle(raw, tt, ctx),
+    "PLAIN_IMAGE": lambda raw, inner, ctx, reg:
+        _plain_image_disentangle(raw, ctx),
+    "IMAGE_FLOAT": lambda raw, inner, ctx, reg:
+        _img_float_disentangle(raw, ctx),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack) with PLAIN content (table headers, hyphenations, figure-
     # caption splits).  Chem-shaped / math-shaped variants reclassify
     # as CHEM_DUAL / MATH_DUAL and route to their family producers.
-    "DUAL_LINE": lambda raw, inner, tt, ctx, reg:
-        _process_dual_line(inner, tt),
+    "DUAL_LINE": lambda raw, inner, ctx, reg:
+        _process_dual_line(inner),
     # CHEM_DUAL — a dual_line whose content is element-formula shaped.
     # Routed to chem's inline producer; renders byte-identical with the
     # layout DUAL_LINE today, but the home is right for future chem-
     # specific work (formula validation, structural-formula layout).
-    "CHEM_DUAL": lambda raw, inner, tt, ctx, reg:
-        _process_chem_dual_line(inner, tt),
+    "CHEM_DUAL": lambda raw, inner, ctx, reg:
+        _process_chem_dual_line(inner),
     # MATH_DUAL — a dual_line whose content has math signature (italic
     # variables, sub/sup on non-element content).  Routed to math's
     # inline producer; same byte-output as DUAL_LINE today, but lives
     # in math's home for future math-specific rendering.
-    "MATH_DUAL": lambda raw, inner, tt, ctx, reg:
-        _process_math_dual_line(inner, tt),
+    "MATH_DUAL": lambda raw, inner, ctx, reg:
+        _process_math_dual_line(inner),
     # FRACTION — the `{{sfrac|n|d}}` family, a STYLER lifted as an element so
     # its slots recurse (the dual-line model for a two-slot wrapper).
-    "FRACTION": lambda raw, inner, tt, ctx, reg:
-        _process_fraction(inner, tt),
+    "FRACTION": lambda raw, inner, ctx, reg:
+        _process_fraction(inner),
     # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
-    "LB": lambda raw, inner, tt, ctx, reg: _process_lb(raw),
+    "LB": lambda raw, inner, ctx, reg: _process_lb(raw),
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
-    "SUBSUP": lambda raw, inner, tt, ctx, reg: _process_subsup(raw, tt, ctx),
+    "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates
     # because they're declared as math by their template name and
     # have their own paragraph context.  One producer covers all
@@ -598,45 +592,45 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # stay in body-text — they're typography whose output flows back
     # into prose, and body-text's `_convert_sfrac` / `_convert_sub_sup`
     # own them.
-    "MATH_EQUATION": lambda raw, inner, tt, ctx, reg:
-        _process_math_equation(inner, tt),
-    "MATH_FORMULA_LABELED": lambda raw, inner, tt, ctx, reg:
-        _process_math_equation(inner, tt),
-    "MATH_NE": lambda raw, inner, tt, ctx, reg:
-        _process_math_equation(inner, tt),
+    "MATH_EQUATION": lambda raw, inner, ctx, reg:
+        _process_math_equation(inner),
+    "MATH_FORMULA_LABELED": lambda raw, inner, ctx, reg:
+        _process_math_equation(inner),
+    "MATH_NE": lambda raw, inner, ctx, reg:
+        _process_math_equation(inner),
     # (CONTRIBUTOR_FOOTER deleted: the footer is a FIELD, not rendered output, so it's
     # cut upstream by `strip_attributions` before the walker — we don't route a
     # never-rendered field through the renderer just to emit "".)
     # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
     # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
     # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
-    "EB1911_ARTICLE_LINK": lambda raw, inner, tt, ctx, reg:
-        process_eb1911_article_link(inner, tt),
+    "EB1911_ARTICLE_LINK": lambda raw, inner, ctx, reg:
+        process_eb1911_article_link(inner),
     # Target-first link siblings — lkpl / 1911link / EB1911 link.  Same recurse-the-
     # display producer, target-first convention.
-    "TARGET_FIRST_LINK": lambda raw, inner, tt, ctx, reg:
-        process_target_first_link(inner, tt),
+    "TARGET_FIRST_LINK": lambda raw, inner, ctx, reg:
+        process_target_first_link(inner),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
-    "SPACER": lambda raw, inner, tt, ctx, reg: process_spacer(raw),
+    "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
     # lang/sic/dropinitial/fqm unwrap to the display arg.
-    "CONTENT_EXTRACT": lambda raw, inner, tt, ctx, reg:
-        process_content_extract(inner, tt),
-    "POEM": lambda raw, inner, tt, ctx, reg: _process_poem(inner, tt),
-    "PPOEM": lambda raw, inner, tt, ctx, reg: _process_ppoem(inner, tt),
-    "ORDERED_LIST": lambda raw, inner, tt, ctx, reg: _process_ordered_list(raw, tt),
-    "HIEROGLYPH": lambda raw, inner, tt, ctx, reg:
+    "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
+        process_content_extract(inner),
+    "POEM": lambda raw, inner, ctx, reg: _process_poem(inner),
+    "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner),
+    "ORDERED_LIST": lambda raw, inner, ctx, reg: _process_ordered_list(raw),
+    "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
-    "OUTLINE": lambda raw, inner, tt, ctx, reg: _process_outline(inner, tt),
+    "OUTLINE": lambda raw, inner, ctx, reg: _process_outline(inner),
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
-    "SECTION": lambda raw, inner, tt, ctx, reg: _process_section(raw),
+    "SECTION": lambda raw, inner, ctx, reg: _process_section(raw),
     # PAGEQUALITY — `<pagequality level=N user=X />` Wikisource metadata.
     # Previously inside a `<noinclude>` block claimed by NOINCLUDE.  With
     # noinclude wiped in `_transform_text_v2`, this self-closing tag sits
     # naked in body raw; producer renders nothing.
-    "PAGEQUALITY": lambda raw, inner, tt, ctx, reg: "",
+    "PAGEQUALITY": lambda raw, inner, ctx, reg: "",
     # BODY — article-level prose run between extracted elements; the body
     # producer applies markup conversion + body-only finishing.  With BODY
     # owning its bytes as a normal element, article assembly collapses to
@@ -651,8 +645,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # Without this, the catch-all silently dropped the `{{mirrorH}}` CSS
     # and the wrapper-strip removed the `<span>`, leaving glyphs displayed
     # un-mirrored with no signal that they were ever meant to be.
-    "MIRROR_GLYPH": lambda raw, inner, tt, ctx, reg:
-        f"«MIRROR:{tt(inner).strip()}«/MIRROR»",
+    "MIRROR_GLYPH": lambda raw, inner, ctx, reg:
+        f"«MIRROR:{inner.strip()}«/MIRROR»",
 }
 
 
@@ -1041,7 +1035,7 @@ def _classify_table(raw: str, inner: str,
 
 # ── Public API ────────────────────────────────────────────────────────
 
-def process_elements(text: str, markup_transform,
+def process_elements(text: str,
                      context: ElementContext,
                      _allow_figure: bool = True) -> str:
     """Extract, process, and reassemble all embedded elements.
@@ -1054,18 +1048,12 @@ def process_elements(text: str, markup_transform,
 
     With BODY as its own element shape, the walker emits SHAPE_BODY for
     every residual prose run between extracted elements; the BODY
-    producer (registered like any other) applies markup + body finishing.
+    producer (registered like any other) emits its bytes as-is.
     Article assembly is then pure ordered concatenation of element
     markers — no body-substrate, no marker-substitution glue layer.
 
     Args:
         text: raw wikitext (may contain tables, images, footnotes, etc.)
-        markup_transform: shared markup-conversion utility (small-caps /
-            italic / sub-sup / hieroglyph / template-unwrap / spacing-
-            template expansion / entity decode / marker finalisation).
-            Threaded to every element producer via ``produce_tree`` and to
-            ``resolve_ref_bodies``.  Producers call this on the fragments
-            they own (cell contents, captions, attributions, legends, …).
         context: per-article ElementContext (volume / page used for
             score and chart-image lookups).
 
@@ -1094,12 +1082,12 @@ def process_elements(text: str, markup_transform,
     # merged body.  Threaded into `context` so the REF producer can
     # read it.  Copy the caller's context so we don't mutate it.
     context = _dc_replace(context)
-    context.ref_bodies = resolve_ref_bodies(tree, markup_transform, context)
+    context.ref_bodies = resolve_ref_bodies(tree, context)
 
     # Produce: bottom-up over the tree.  Each element's producer
     # runs after its children's markers exist; child markers are
     # substituted into the producer's output by the framework.
-    produce_tree(tree, markup_transform, context)
+    produce_tree(tree, context)
 
     # Reassemble: substitute markers into the placeholder-only text —
     # since BODY runs are now placeholders too, this reduces to ordered

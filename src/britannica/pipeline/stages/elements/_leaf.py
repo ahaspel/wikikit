@@ -54,7 +54,7 @@ def _process_math(inner: str) -> str:
     return f"«MATH:{inner}«/MATH»"
 
 
-def _process_poem(inner: str, text_transform) -> str:
+def _process_poem(inner: str) -> str:
     """Convert poem content to {{VERSE:...}VERSE}.
 
     Wrap with paragraph breaks: <poem> blocks are virtually always
@@ -66,7 +66,7 @@ def _process_poem(inner: str, text_transform) -> str:
     as a continuation of the prose line (MOLECULE p684's Lucretius
     quote was the canonical case).
     """
-    content = text_transform(inner)
+    content = inner
     return "{{VERSE:" + content + "}VERSE}"
 
 
@@ -81,7 +81,7 @@ _PPOEM_CTRL_RE = re.compile(r"^\s*(?:start|end|class|style)\s*=", re.IGNORECASE)
 _PPOEM_NUMBERED_RE = re.compile(r"^\s*1\s*=")
 
 
-def _process_ppoem(inner: str, text_transform) -> str:
+def _process_ppoem(inner: str) -> str:
     segs = _split_top_level_pipe(inner)[1:]   # drop the "ppoem" template name
     verse: list[str] = []
     for seg in segs:
@@ -96,7 +96,7 @@ def _process_ppoem(inner: str, text_transform) -> str:
     content = "|".join(verse).strip("\n")
     if not content.strip():
         return ""
-    return _process_poem(content, text_transform)
+    return _process_poem(content)
 
 
 def _is_structural_formula(text: str) -> bool:

@@ -184,7 +184,7 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
 # answer the row/cell question once, syntax-detected, so a single
 # predicate serves both encodings (remove-nontables-from-table-path).
 # RECOGNITION-only: row/cell boundaries are parsed and cell CONTENT is
-# returned raw/untransformed — no text_transform, nothing flows
+# returned raw/untransformed — no flat transform, nothing flows
 # differently to any producer.
 _HTML_TABLE_TAG_RE = re.compile(r"<t[rdh]\b", re.IGNORECASE)
 
@@ -279,17 +279,16 @@ def emit_html_cell(
     return f"<{tag}{attrs}>{content}</{tag}>"
 
 
-def _complex_cell_body(attr_part: str, content: str,
-                       text_transform) -> tuple[list[str], str]:
+def _complex_cell_body(attr_part: str, content: str) -> tuple[list[str], str]:
     """Cell-body strategy for `_process_complex_table` (the `cell_body`
     hook of `produce_table_rows`).
 
     Reproduces the producer's image-vs-text BRANCH: a cell that is
     wholly an `[[Image:…]]`/`[[File:…]]` becomes a `{{IMG:filename}}`
-    marker, skipping `text_transform` AND the leftover-`{{}}` strip that
-    would otherwise delete the marker.  Non-image cells run the bespoke
-    clean: drop stray image links, `{{ditto}}`→″, `{{…}}`→…, lossless
-    `<br>`, body-text, strip leftover templates, strip wrapper tags.
+    marker, skipping the content recursion AND the leftover-`{{}}` strip
+    that would otherwise delete the marker.  Non-image cells run the
+    bespoke clean: drop stray image links, `{{ditto}}`→″, `{{…}}`→…,
+    lossless `<br>`, strip leftover templates, strip wrapper tags.
 
     TRANSITIONAL (see `CellBody` in `_table_decompose`): the end-state
     moves the `{{ditto}}`/`{{…}}`/image template handling into body-text
@@ -317,8 +316,6 @@ def _complex_cell_body(attr_part: str, content: str,
     # No catch-all `{{…}}` strip, no wrapper sweep — an unhandled template or
     # <span> in the recursed inner leaks to the audit, never silently deleted;
     # recognizing them is the walker's job, not a post-recursion sweep here.
-    if c:
-        c = text_transform(c)
     return styles, c
 
 
@@ -555,7 +552,7 @@ _CHEM_RESOLVE = {
 }
 
 
-def _process_chemistry_layout(raw: str, inner: str, text_transform,
+def _process_chemistry_layout(raw: str, inner: str,
                               inner_registry=None) -> str:
     """Render a 2-D chemical-reaction / structural-formula layout.
 
@@ -579,8 +576,8 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
         (``CRR\u00b9<br>&vert;<br>CH\u00b7COOH``) into one line, killing the
         vertical bond rendering.
 
-    Atom-bracket and ``<br>`` substitution is two-phase to survive
-    ``text_transform``'s HTML-tag strip: each placeholder/markup is
+    Atom-bracket and ``<br>`` substitution is two-phase (it once had to
+    survive body-text's HTML-tag strip): each placeholder/markup is
     first replaced with a Private-Use-Area sentinel that passes
     through text-transform unmolested; we resolve the sentinels to
     final glyphs / ``<br>`` / spans after each cell is processed.
@@ -618,8 +615,8 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
             angle_sentinel[ph] = _CHEM_SENTINEL[(side, suffix)]
     for ph, sentinel in angle_sentinel.items():
         inner = inner.replace(ph, sentinel)
-    # Preserve in-cell <br> as a sentinel so text_transform's HTML-tag
-    # strip doesn't eat the line breaks that stack atom-bond-atom.
+    # Preserve in-cell <br> as a sentinel (body-text's HTML-tag strip
+    # once ate the line breaks that stack atom-bond-atom).
     inner = re.sub(r"<br\s*/?>", _CHEM_BR_SENTINEL, inner, flags=re.IGNORECASE)
 
     # Split rows.  No caption / preamble detection \u2014 chem layouts are
@@ -654,8 +651,6 @@ def _process_chemistry_layout(raw: str, inner: str, text_transform,
             content = re.sub(
                 r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
             content = content.strip()
-            if content:
-                content = text_transform(content)
             # Recurse the inner and leave it — no catch-all `{{…}}` strip, no
             # wrapper sweep (transform the outer, recurse the inner; leftovers
             # leak to the audit).
@@ -764,12 +759,10 @@ def style_block(content: str, *, css: str = "", tag: str = "DIV",
 # corpus, NOT decompose's partial 5-entry list) recognized by the walker as
 # SHAPE_STYLED and produced by `_process_styled` — so `{{center|X}}` is handled
 # identically whether X is text, an image, or a table (style ⊥ content).  INLINE
-# typography (`{{sc}}`/`{{smaller}}`/…) stays in body-text FOR NOW: it cannot move
-# here until render_markers' figure captions recurse through the walker — today
-# those captions go through body-text's `_apply_markup`, so a handler removed from
-# body-text vanishes from every figure caption.  A `"tag": "SPAN"` spec on
-# `_process_styled` is ready for when they do move.  (`sc` also overlaps the figure
-# recognizer — `{{sc|[[Image]]}}` is a figure — so it needs the collapse first.)
+# typography (`{{sc}}`/`{{smaller}}`/…) is folded in below too: with body-text gone,
+# `_process_styled` is the SOLE styler owner, so there's no flat handler left for it
+# to collide with.  (`{{sc|[[Image]]}}` overlaps the figure recognizer — that case is
+# resolved by the figure collapse, which runs first.)
 _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "center":       {"ctr": True},
     "c":            {"ctr": True},
@@ -788,7 +781,7 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "eb1911 fine print": {"css": "font-size:83%"},
     "smaller block":     {"css": "font-size:83%"},
     # ── Inline stylers — folded in now that the style producer is SOLE owner.
-    # `_apply_markup` is gone, so there's no flat handler left to collide with (that
+    # The flat body-text handler is gone, so there's no collision left (that
     # collision is what blocked `sc` before).  ANY styler routes here, period.
     # Small-caps family → «SC» (the viewer's one special-cased style marker).
     "sc":           {"sc": True},
@@ -1004,11 +997,11 @@ def _cell_styles(attr_part: str, content: str,
     return deduped
 
 
-def _extract_table_cells(row_text, text_transform,
+def _extract_table_cells(row_text,
                          with_attrs=False, with_styles=False):
     """Extract data cells from a row via the shared `split_wiki_row`
     helper, then drop any remaining `{{Ts|…}}` cell-styling templates
-    and run each cell's content through `text_transform`.
+    and return each cell's content.
 
     ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
     alignment the producer must CARRY (resolved before the `{{Ts}}` style
@@ -1059,14 +1052,13 @@ def _extract_table_cells(row_text, text_transform,
         styles = _cell_styles(attr_part, content) if with_styles else None
         align = _cell_align(attr_part, content) if with_attrs else None
         cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
-        # text_transform expands layout templates like ``{{gap}}`` /
-        # ``{{em|N}}`` to whitespace, which can leave stray leading or
-        # trailing whitespace at the cell boundary — render-irrelevant for
-        # most consumers but markup-noisy.  Strip after the transform so
-        # the cell's emitted bytes are canonical.  Ascii-space-and-tab only
+        # A layout template like ``{{gap}}`` / ``{{em|N}}`` that resolves
+        # to whitespace can leave stray leading or trailing whitespace at
+        # the cell boundary — render-irrelevant for most consumers but
+        # markup-noisy.  Strip it so the cell's emitted bytes are canonical.  Ascii-space-and-tab only
         # so visible-on-render non-breaking entities (``&nbsp;`` → ``\xa0``)
         # the source carried deliberately survive.
-        val = text_transform(cleaned).strip(" \t") if cleaned else " "
+        val = cleaned.strip(" \t") if cleaned else " "
         if with_styles:
             cells.append((val, styles or []))
         elif with_attrs:
@@ -1116,7 +1108,7 @@ def _is_single_column_table(inner: str) -> bool:
 
 
 def _process_inline_glyph_wrapper(
-        inner: str, text_transform,
+        inner: str,
         inner_registry: ElementRegistry | None = None) -> str:
     """Render an inline-glyph wrapper as the inline prose it actually is.
 
@@ -1136,13 +1128,13 @@ def _process_inline_glyph_wrapper(
     as a figure and breaks the flow).  No table marker → no pipe leak.
     """
     parts = [content for _sep, _attr, content in split_wiki_row(inner)]
-    prose = text_transform("".join(parts)).strip()
+    prose = "".join(parts).strip()
     if inner_registry is not None:
         for ph, label in list(inner_registry.labels.items()):
             if label in IMAGE_LABELS and ph in prose:
                 eraw = inner_registry.elements[ph][1]
                 prose = prose.replace(
-                    ph, _process_image_from_raw(eraw, text_transform,
+                    ph, _process_image_from_raw(eraw,
                                                 inline=True))
     return prose
 
@@ -1229,7 +1221,6 @@ def _is_verse_table(inner: str) -> bool:
 def _process_table_unified(
     raw: str,
     inner: str,
-    text_transform,
     inner_registry: "ElementRegistry | None" = None,
     context=None,
 ) -> str:
@@ -1271,13 +1262,13 @@ def _process_table_unified(
     if context is not None:
         from britannica.pipeline.stages.elements import process_elements
         cell_recurse = (lambda c: process_elements(
-            c, text_transform, context, _allow_figure=False))
+            c, context, _allow_figure=False))
     # No `_html_cell_clean` preclean: an HTML cell recurses RAW through
     # `process_elements` exactly like a wiki cell — its `<sub>`/`<br>`/styler/
     # nested-table content is handled as the element it is, not flattened in
     # place.  The flattener was the source of the cell-context style leaks.
     caption_raw, rows, _has_header, _has_span = produce_table_rows(
-        inner, text_transform, flavor=flavor,
+        inner, flavor=flavor,
         cell_preclean=None,
         cell_recurse=cell_recurse)
     if not rows:
@@ -1305,7 +1296,7 @@ def _process_table_unified(
     attrs = f' class="{cls}"' + (f' style="{";".join(styles)}"' if styles else "")
     caption_html = ""
     if caption_raw:
-        ct = strip_cell_attrs(text_transform(caption_raw))
+        ct = strip_cell_attrs(caption_raw)
         if ct:
             caption_html = f"<caption>{ct}</caption>"
     return body.replace(

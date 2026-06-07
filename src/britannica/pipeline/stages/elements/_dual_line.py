@@ -60,7 +60,7 @@ def _split_top_level_pipe(s: str) -> list[str]:
     return parts
 
 
-def _process_dual_line(inner: str, text_transform) -> str:
+def _process_dual_line(inner: str) -> str:
     """Render a DUAL_LINE element as ``A<br>B``.
 
     ``inner`` is the content between ``{{`` and ``}}`` (e.g.
@@ -69,8 +69,8 @@ def _process_dual_line(inner: str, text_transform) -> str:
     strings — those will be substituted back to their final markers by
     ``produce_tree`` after this producer returns.  We strip the leading
     template name + pipe, split the remainder on top-level pipes, drop
-    a leading style decoration if any, run ``text_transform`` on each
-    arg, and join with ``<br>``.
+    a leading style decoration if any, and join the args with ``<br>``
+    (their inner placeholders ride through to ``produce_tree``'s substitution).
 
     Degenerate single-arg form falls back to a plain-space join.
     """
@@ -79,14 +79,12 @@ def _process_dual_line(inner: str, text_transform) -> str:
     parts = _split_top_level_pipe(body)
     if parts and parts[0].lstrip().lower().startswith("style="):
         parts = parts[1:]
-    # Strip the RAW args (before text_transform) — matches the legacy
-    # `_convert_dual_line` ordering.  Stripping after transform would
-    # remove decoded entities that fall in Python's whitespace class
-    # (e.g. `&numsp;` → U+2007 figure space, which `.strip()` eats):
-    # ORDNANCE has `{{dual line|1·75|1·6&numsp;}}` where the trailing
-    # figure space is part of the column's display content.
+    # Strip the RAW args, whose entities are still ENCODED — `.strip()`
+    # can't eat a `&numsp;` the way it would the decoded U+2007 figure
+    # space.  ORDNANCE has `{{dual line|1·75|1·6&numsp;}}` where the
+    # trailing figure space is part of the column's display content.
     if len(parts) < 2:
-        return " ".join(text_transform(p.strip()) for p in parts).strip()
-    a = text_transform(parts[0].strip())
-    b = text_transform("|".join(parts[1:]).strip())
+        return " ".join(p.strip() for p in parts).strip()
+    a = parts[0].strip()
+    b = "|".join(parts[1:]).strip()
     return f"{a}<br>{b}"

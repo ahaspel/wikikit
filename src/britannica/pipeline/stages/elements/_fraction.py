@@ -1,6 +1,7 @@
 """Fraction production — the `{{sfrac|n|d}}` family's output, for the FRACTION element.
 
-Out of body_text (deleted).  `_process_fraction` recurses its slots via `tt`, then calls
+Out of body_text (deleted).  `_process_fraction` parses its slots (nested elements ride
+through as walker-extracted placeholders), then calls
 `_render_fraction` to PRODUCE the fraction from them — vulgar-Unicode where available (½,
 ¾, …), else `n/d`.  This is the producer assembling its OWN output from its recursed
 parts, not an across-the-board transform of inner content.  `_split_top_pipes` is the
