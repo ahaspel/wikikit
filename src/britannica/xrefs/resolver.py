@@ -132,7 +132,7 @@ def _matches_disambiguator(disambiguator: str, body_opening: str) -> bool:
 
 
 def disambiguate_among(
-    xref: CrossReference, candidates: list[Article]
+    xref: CrossReference, candidates: list[Article], body_of=None
 ) -> int | None:
     """Apply self-reference + display-disambiguator + fallback rules
     to pick one candidate's id.  Returns None only when the candidate
@@ -157,7 +157,8 @@ def disambiguate_among(
         matched = [
             c for c in remaining
             if _matches_disambiguator(
-                disambiguator, _body_opening(c.body or "")
+                disambiguator,
+                _body_opening(body_of(c) if body_of else (c.body or ""))
             )
         ]
         if len(matched) == 1:
