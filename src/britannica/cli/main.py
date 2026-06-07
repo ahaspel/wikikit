@@ -17,7 +17,7 @@ from britannica.pipeline.stages.extract_contributor_bios import extract_contribu
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 from britannica.pipeline.stages.extract_images import extract_images_for_volume
 from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
-from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_for_volume, resolve_xrefs_all
+from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_all
 from britannica.review.reports import (
     get_unresolved_xrefs_report,
     get_backlinks_report,
@@ -172,12 +172,6 @@ def list_xrefs(volume: int = typer.Option(None)) -> None:
     finally:
         session.close()
         
-@app.command("resolve-xrefs")
-def resolve_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
-    count = resolve_xrefs_for_volume(volume)
-    print(f"Resolved {count} cross-references for volume {volume}.")
-
-
 @app.command("resolve-xrefs-all")
 def resolve_xrefs_all_cmd() -> None:
     count = resolve_xrefs_all()
