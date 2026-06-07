@@ -55,13 +55,11 @@ from britannica.pipeline.stages.elements._registry import (
 )
 from britannica.pipeline.stages.elements._outline import (
     _OUTLINE_RANGE_HEADER_RE,
-    _PAGE_MARKER_PREFIX_RE,
     _extract_outlines,
     _outline_indent_depth,
     _outline_is_bare_emphasis,
     _outline_is_list_shaped,
     _process_outline,
-    _strip_page_marker_prefix,
 )
 from britannica.pipeline.stages.elements._section import (
     _process_section,
@@ -627,6 +625,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
     "OUTLINE": lambda raw, inner, ctx, reg: _process_outline(inner),
+    "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).

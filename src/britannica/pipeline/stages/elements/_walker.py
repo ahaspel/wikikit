@@ -41,6 +41,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_MIRROR_GLYPH,
     SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
+    SHAPE_PAGE,
     SHAPE_SECTION,
     SHAPE_STYLED,
 )
@@ -387,6 +388,13 @@ def _is_inline_image_position(text: str, pos: int) -> bool:
     return True
 
 
+# PAGE — the injected page-break marker (\x01PAGE:N\x01), recognized as a leaf
+# so it rides the tree as a child element instead of a raw sentinel the outline
+# scanner has to reach around; the producer re-emits the raw marker, and the
+# export reads it off the tree.
+_PAGE_RE = re.compile(r"\x01PAGE:\d+\x01")
+
+
 # Recognizer dispatch table in opener-specificity order.  At each
 # opener-hint position the linear scanner walks this list and uses
 # the first recognizer whose pattern matches.
@@ -406,6 +414,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _LB_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
+    (SHAPE_PAGE,              _PAGE_RE),
 ]
 
 
@@ -416,7 +425,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
 # hinted position.  Order doesn't affect correctness (any match
 # triggers dispatch); the order below is just readable grouping.
 _OPENER_HINT_RE = re.compile(
-    r"\{\{chart2/start"             # CHART2
+    r"\x01PAGE:"                    # PAGE break bookkeeping marker
+    r"|\{\{chart2/start"             # CHART2
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata

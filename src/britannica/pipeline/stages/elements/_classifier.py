@@ -57,6 +57,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_MIRROR_GLYPH,
     SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
+    SHAPE_PAGE,
     SHAPE_SECTION,
     SHAPE_STYLED,
     strip_outer,
@@ -363,6 +364,8 @@ def _derive_label(
         return "OUTLINE"
     if shape == SHAPE_FIGURE:
         return "FIGURE"
+    if shape == SHAPE_PAGE:
+        return "PAGE"
     if shape == SHAPE_SECTION:
         return "SECTION"
     if shape == SHAPE_BODY:

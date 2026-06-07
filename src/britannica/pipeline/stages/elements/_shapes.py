@@ -37,6 +37,7 @@ SHAPE_BODY              = "BODY"               # article-level prose run between
 SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
 SHAPE_CENTER            = "CENTER"             # {{NAME/s}}…{{NAME/e}} paired-wrapper span
 SHAPE_STYLED            = "STYLED"             # <div>/<p>/<span> carrying {{Ts}}/style=/align=
+SHAPE_PAGE              = "PAGE"               # page-break bookkeeping marker (\x01PAGE:N\x01)
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -55,6 +56,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_MIRROR_GLYPH,
     SHAPE_CENTER,
     SHAPE_STYLED,
+    SHAPE_PAGE,
 })
 
 
@@ -99,6 +101,10 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # already have been pulled out as its own element before the BODY
     # wrapper ran).
     SHAPE_BODY,
+    # PAGE — the `\x01PAGE:N\x01` page-break marker; a leaf, the producer
+    # re-emits the raw.  Folding it in retires the page-marker strip the
+    # outline recognizer used to need.
+    SHAPE_PAGE,
 })
 
 
@@ -133,6 +139,10 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_SECTION:
         # No inner content — the whole tag is the marker; the producer
         # reads `raw`.
+        return ""
+    if shape == SHAPE_PAGE:
+        # Leaf — the whole `\x01PAGE:N\x01` token is the marker; the
+        # producer re-emits `raw`.
         return ""
     if shape == SHAPE_DOUBLE_BRACKET or shape == SHAPE_INLINE_IMAGE:
         s = re.sub(r"^\[\[", "", raw)
