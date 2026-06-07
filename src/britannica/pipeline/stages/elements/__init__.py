@@ -246,51 +246,34 @@ def _img_float_disentangle(raw, text_transform, context):
         text_transform, context, _allow_figure=False)
 
 
-def _image_leaf_disentangle(raw, text_transform, context):
-    """Leaf-image TEMPLATE spellings, off render_markers: `{{Css image crop|…}}`
-    (a DjVu crop) and `{{raw image|…}}` (a DjVu page-ref / filename).  EITHER can be
-    FOLLOWED by a caption block (`{{center|…}}` / `{{c|…}}`) the source bounds into
-    the figure element.  Bound the leading image template with `_construct_end`,
-    emit the «IMG» leaf, then recurse EVERYTHING after it through the walker as its
-    own sibling block — the `«CTR»«SC»` render_markers' decompose produced, now
-    context-free.  Recursing the whole tail (not matching one caption shape) is what
-    stops a trailing `{{center|…}}` from being dropped — ORDNANCE figs. 78/81/82."""
+def _image_leaf(raw):
+    """Leaf-image TEMPLATE spellings → the `{{IMG:…}}` marker: `{{Css image crop|…}}`
+    (a DjVu crop), `{{raw image|…}}` (a DjVu page-ref / filename), and the bare
+    `[[File:…]]` / `[[Image:…]]` bracket.  The walker already bounds the template;
+    this just maps the three spellings to a filename and emits the leaf.  Any
+    caption that follows is its OWN sibling block, recursed in place by the
+    dispatch — not folded in here (there is no figure unit to fold into).  The
+    bracket's in-`[[…]]` trailing text is ALT and is dropped ([[feedback_no_caption_concept]])."""
     from britannica.pipeline.stages.elements._image import (
         build_img_marker, djvu_crop_filename, _parse_crop_param,
-        _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE)
-    from britannica.pipeline.stages.elements._walker import _construct_end
-    s = raw.strip()
-    end = _construct_end(s, 0)
-    tmpl = s[:end] if end is not None else s
-    rest = s[end:].strip() if end is not None else ""
-    if s.startswith("[["):
-        # Bare `[[File:…]]` block image (the `IMAGE` label).  The image is a pure
-        # LEAF — the bracket's trailing text is ALT, not a caption, and is dropped
-        # ([[feedback_no_caption_concept]]); only a FOLLOWING `{{center|…}}` block
-        # is a real caption and recurses as a sibling (SUNDEW Figs 2/4, which the
-        # old `_produce_figure` dropped).  `_img_marker` is the bare-image leaf.
-        from britannica.pipeline.stages.elements._image import _img_marker
-        marker = _img_marker(tmpl)
-    elif re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
+        _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE, _img_marker)
+    tmpl = raw.strip()
+    if tmpl.startswith("[["):
+        return _img_marker(tmpl)
+    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
         fn = djvu_crop_filename(tmpl)
         if fn is None:
             img = _parse_crop_param(tmpl, "Image")
             fn = img.replace(" ", "_") if img else ""
-        marker = build_img_marker(fn) if fn else ""
-    else:
-        m = _RAW_IMAGE_ARG_RE.match(tmpl)
-        if not m:
-            return ""
-        arg = m.group(1).strip()
-        dref = _RAW_DJVU_REF_RE.match(arg)
-        filename = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
-                    if dref else arg)
-        marker = build_img_marker(filename)
-    if not rest:
-        return marker
-    block = process_elements(
-        rest, text_transform, context, _allow_figure=False).strip()
-    return f"{marker}\n\n{block}" if block else marker
+        return build_img_marker(fn) if fn else ""
+    m = _RAW_IMAGE_ARG_RE.match(tmpl)
+    if not m:
+        return ""
+    arg = m.group(1).strip()
+    dref = _RAW_DJVU_REF_RE.match(arg)
+    filename = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
+                if dref else arg)
+    return build_img_marker(filename)
 
 
 def _process_lb(raw):
@@ -551,7 +534,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # figure producer recognizes it as an image leaf (stateless filename) and,
     # for the `{|`-wrapped form, recurses the caption/attribution cells.
     "DJVU_CROP": lambda raw, inner, tt, ctx, reg:
-        _image_leaf_disentangle(raw, tt, ctx),
+        _image_leaf(raw),
     "CHART2": lambda raw, inner, tt, ctx, reg: _process_chart2(raw, ctx),
     "MATH": lambda raw, inner, tt, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, tt, ctx, reg: _process_score(inner),
@@ -564,7 +547,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
     # faithful recursive producer: image → leaf, caption → its own «CTR» block.
     "IMAGE": lambda raw, inner, tt, ctx, reg:
-        _image_leaf_disentangle(raw, tt, ctx),
+        _image_leaf(raw),
     # INLINE_IMAGE is the one image label faithful can't own: an inline glyph
     # needs `align=inline` (so the viewer renders it at source size in the
     # prose flow), and faithful's leaf is label-blind — it works from raw and
@@ -573,7 +556,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "INLINE_IMAGE": lambda raw, inner, tt, ctx, reg:
         _process_image_from_raw(raw, tt, inline=True),
     "RAW_IMAGE": lambda raw, inner, tt, ctx, reg:
-        _image_leaf_disentangle(raw, tt, ctx),
+        _image_leaf(raw),
     "PLAIN_IMAGE": lambda raw, inner, tt, ctx, reg:
         _plain_image_disentangle(raw, tt, ctx),
     "IMAGE_FLOAT": lambda raw, inner, tt, ctx, reg:

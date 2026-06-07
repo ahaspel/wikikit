@@ -202,8 +202,6 @@ def djvu_crop_filename(crop_body: str) -> str | None:
 # full-page render `djvu_volNN_pagePPPP.jpg` (matching download_djvu_crops.py).
 _RAW_IMAGE_ARG_RE = re.compile(r"\{\{\s*raw\s+image\s*\|([^{}|]+)\}\}", re.IGNORECASE)
 _RAW_DJVU_REF_RE = re.compile(r"EB1911\s*-\s*Volume\s*(\d+)\.djvu/(\d+)", re.IGNORECASE)
-_RAW_CAPTION_RE = re.compile(
-    r"\{\{\s*c\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}", re.IGNORECASE)
 
 
 # `{{Plain image with caption|image=File:…|align=…|width=…px|caption=…|caption

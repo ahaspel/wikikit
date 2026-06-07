@@ -128,16 +128,13 @@ _MIRROR_GLYPH_RE = re.compile(
 )
 
 
-# DOUBLE_BRACE template recognizers — named templates with up to four
-# levels of `{{…}}` nesting (CASTLE Fig. 9 cap parameters reach four
-# deep).  Specificity: each has a fixed template-name opener like
-# `{{img float|` or `{{hieroglyph|`, more specific than bare `{{`.
-_IMAGE_FLOAT_RE = re.compile(
-    r"\{\{(?:img float|figure|FI)\s*\|"
-    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
-    r"\}\}",
-    re.DOTALL | re.IGNORECASE,
-)
+# DOUBLE_BRACE template recognizers.  Each has a fixed template-name OPENER
+# (`{{img float|`, more specific than bare `{{`); the span is closed by the one
+# balanced matcher (`_construct_end`), so the body nests to ANY depth and an
+# OPAQUE `<math>` arg (single LaTeX braces) is skipped whole — no hand-rolled
+# brace-balancer, no per-corpus depth cap.
+_IMAGE_FLOAT_OPENER_RE = re.compile(
+    r"\{\{(?:img float|figure|FI)\s*\|", re.IGNORECASE)
 _HIEROGLYPH_TMPL_RE = re.compile(
     r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
 # (Contributor-footer templates — `{{EB1911 footer initials}}`, the double variant,
@@ -178,18 +175,14 @@ _TRANSLIT_CONTENT_RE = re.compile(
 # `{{dual line|A|B}}` — pure layout primitive that stacks two lines
 # (`A<br>B`).  Args A and B can carry any inline content including
 # nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
-# refs `<ref>…</ref>`).  Up to four levels of `{{…}}` nesting, matching
-# `_IMAGE_FLOAT_RE`'s depth — covers every observed case in 611 corpus
-# instances.  Lifting this template at the walker level gives the
-# classifier a bounded unit to inspect; if its content is chem/math-
-# shaped, the classifier will route accordingly (future predicate),
-# instead of body-text smuggling the rendering in via a regex pass.
-_DUAL_LINE_RE = re.compile(
-    r"\{\{\s*dual\s+line\s*\|"
-    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
-    r"\}\}",
-    re.DOTALL | re.IGNORECASE,
-)
+# refs `<ref>…</ref>`) and opaque `<math>` with single LaTeX braces.
+# Opener-only; the one balanced matcher closes the span at ANY depth.
+# Lifting this template at the walker level gives the classifier a
+# bounded unit to inspect; if its content is chem/math-shaped, the
+# classifier will route accordingly (future predicate), instead of
+# body-text smuggling the rendering in via a regex pass.
+_DUAL_LINE_OPENER_RE = re.compile(
+    r"\{\{\s*dual\s+line\s*\|", re.IGNORECASE)
 # The fraction family — `{{sfrac|n|d}}` / `{{mfrac|i|n|d}}` / `{{frac}}` /
 # `{{over}}` / `{{EB1911 tfrac}}` / … — is a STYLER, not body-text typography:
 # it imposes a numerator-over-denominator presentation on content that may
@@ -213,26 +206,19 @@ _FRACTION_OPENER_RE = re.compile(
 _LB_RE = re.compile(r"\{\{\s*lb-\s*(?:\|[^{}]*)?\}\}", re.IGNORECASE)
 # `{{sub|x}}` / `{{sup|x}}` — subscript/superscript TYPOGRAPHY (chem subscripts,
 # math exponents, ordinals, footnote markers).  Content can nest (`{{sup|{{sfrac
-# |1|n}}}}`), so the recognizer bounds 2 levels deep like DUAL_LINE; the producer
-# recurses the slot and translates flat runs to Unicode around element markers.
-# Promoted out of body-text's `_convert_sub_sup` (which only fired in `_apply_markup`,
-# leaking sup inside math/italic/centred blocks — the lb-/sup context-leak).
-_SUBSUP_RE = re.compile(
-    r"\{\{\s*(?:sub|sup)\s*\|"
-    r"(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*"
-    r"\}\}",
-    re.IGNORECASE | re.DOTALL,
-)
+# |1|n}}}}`); opener-only, the one balanced matcher bounds it at any depth.  The
+# producer recurses the slot and translates flat runs to Unicode around element
+# markers.  Promoted out of body-text's `_convert_sub_sup` (which only fired in
+# `_apply_markup`, leaking sup inside math/italic/centred blocks — the lb-/sup
+# context-leak).
+_SUBSUP_OPENER_RE = re.compile(
+    r"\{\{\s*(?:sub|sup)\s*\|", re.IGNORECASE)
 # `{{ppoem|…}}` — Wikisource preformatted-poem template (verse analog of
 # `<poem>`).  Multiline verse with shallow inline templates (`{{fqm|"}}` quote
-# marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); same 3-level nesting
-# depth as DUAL_LINE covers them.  → PPOEM, extracted + emitted as VERSE.
-_PPOEM_RE = re.compile(
-    r"\{\{\s*ppoem\s*\|"
-    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
-    r"\}\}",
-    re.DOTALL | re.IGNORECASE,
-)
+# marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); opener-only, bounded by
+# the one balanced matcher at any depth.  → PPOEM, extracted + emitted as VERSE.
+_PPOEM_OPENER_RE = re.compile(
+    r"\{\{\s*ppoem\s*\|", re.IGNORECASE)
 # Labeled display-equation templates — `{{equation|content}}`,
 # `{{MathForm1|label|content}}`, `{{ne|content}}`.  These are
 # structurally declared as math by their template name — the source's
@@ -316,62 +302,34 @@ def _find_balanced_template_end(text: str, start: int) -> int | None:
         else:
             i += 1
     return None
-# `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params), optionally
-# followed by a `{{center|cap}}` / `{{csc|cap}}` caption.  Recognized as one
-# DOUBLE_BRACE image element (→ DJVU_CROP); the producer crops + captions it.
-# In-table crops route via the table classifier instead — this catches the
-# standalone ones the old `_css_crop_replace` pre-pass used to convert.
-_DJVU_CROP_RE = re.compile(
-    r"\{\{\s*Css image crop\b(?:[^{}]|\{\{[^{}]*\}\})*\}\}"
-    r"(?:\s*\{\{\s*(?:center|csc)\s*\|(?:[^{}]|\{\{[^{}]*\}\})*\}\})?",
-    re.IGNORECASE | re.DOTALL)
+# `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params).  Opener-
+# only; the one balanced matcher bounds the template at any depth.  A following
+# caption (`{{center|…}}` / `{{csc|…}}`) is NOT absorbed — it's the styled
+# sibling it already is.  In-table crops route via the table classifier instead.
+_DJVU_CROP_OPENER_RE = re.compile(
+    r"\{\{\s*Css image crop\b", re.IGNORECASE)
 # `{{raw image|X}}` — EB1911's bare full-image syntax (a DjVu page-ref → full-
-# page render, or a plain filename), with an OPTIONAL trailing `{{c|cap}}`.
-# Recognized as one DOUBLE_BRACE image element (→ RAW_IMAGE).
-_RAW_IMAGE_RE = re.compile(
-    r"\{\{\s*raw\s+image\s*\|[^{}|]+\}\}"
-    r"(?:\s*\{\{\s*c\s*\|(?:[^{}]|\{\{[^{}]*\}\})*\}\})?",
-    re.IGNORECASE | re.DOTALL)
+# page render, or a plain filename).  Opener-only; the one balanced matcher
+# bounds the template.  A following `{{c|…}}` caption is NOT absorbed — it's a
+# styled sibling.  Recognized as one DOUBLE_BRACE image element (→ RAW_IMAGE).
+_RAW_IMAGE_OPENER_RE = re.compile(
+    r"\{\{\s*raw\s+image\s*\|", re.IGNORECASE)
 
 # `{{Plain image with caption|image=File:…|align=…|width=…|caption=…|caption
 # position=…}}` — Wikisource named-parameter figure macro (MAP's cartography
-# plates).  Caption nests up to three brace levels deep
-# (`{{center|{{nowrap|{{smallcaps|…}}}}}}`) — same depth as `_IMAGE_FLOAT_RE`.
-# Recognized as one DOUBLE_BRACE image element (→ PLAIN_IMAGE).
-_PLAIN_IMAGE_RE = re.compile(
-    r"\{\{\s*plain image with caption\s*\|"
-    r"(?:[^{}]|\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\})*"
-    r"\}\}",
-    re.IGNORECASE | re.DOTALL)
+# plates).  Caption nests arbitrarily (`{{center|{{nowrap|{{smallcaps|…}}}}}}`);
+# opener-only, bounded by the one balanced matcher at any depth.  Recognized as
+# one DOUBLE_BRACE image element (→ PLAIN_IMAGE).
+_PLAIN_IMAGE_OPENER_RE = re.compile(
+    r"\{\{\s*plain image with caption\s*\|", re.IGNORECASE)
 
-# DOUBLE_BRACKET image — `[[File:…]]` or `[[Image:…]]` with optional
-# trailing caption block (EXTCAP form).  The regex absorbs nothing more —
-# inline-vs-block is decided structurally by lookahead at dispatch time
-# (see _is_inline_image_position below); the walker advances past `]]`
-# (or past the EXTCAP) and the surrounding bytes stay in the
-# placeholderized text intact.
+# DOUBLE_BRACKET image — `[[File:…]]` / `[[Image:…]]`, a pure LEAF.  No caption
+# absorption: a following caption block is its own sibling, recursed in place
+# (image = leaf, caption = sibling — there is no figure unit to fold into).
+# Inline-vs-block is decided structurally by `_is_inline_image_position` at
+# dispatch; the walker advances past `]]` and surrounding bytes stay intact.
 _IMAGE_RE = re.compile(
-    r"\[\[(?:File|Image):[^\]]+\]\]"
-    r"(?:\s*\n\n?("
-    r"(?:<[a-z]+[^>\n]*>\s*)?"
-    r"(?:"
-    r"(?:\{\{sm\||\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
-    r"|Fig[. ]\d|Plate\s|\d+\.\s*[—–])"
-    r"[^\n]*"
-    r"(?:\n(?:<[a-z]+[^>\n]*>\s*)?"
-    r"(?:\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
-    r"|Fig[. ]\d|\d+\.\s*[—–])"
-    r"[^\n]*)?"
-    r"|"
-    r"(?:From|After|Photo|Copyright|Modified)\s[^\n]*"
-    r"\n(?:<[a-z]+[^>\n]*>\s*)?"
-    r"(?:\{\{center\||\{\{(?:sc|small-caps|Fine)\|Fig[.}]"
-    r"|Fig[. ]\d|\d+\.\s*[—–])"
-    r"[^\n]*"
-    r")"
-    r"))?",
-    re.IGNORECASE,
-)
+    r"\[\[(?:File|Image):[^\]]+\]\]", re.IGNORECASE)
 
 
 # Inline-image structural recognition.  At the moment the walker has just
@@ -436,15 +394,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     # embedded a false no-nesting assumption (table-in-table orphaned the
     # outer tail into body-text).
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
-    (SHAPE_DOUBLE_BRACE,      _DJVU_CROP_RE),
-    (SHAPE_DOUBLE_BRACE,      _RAW_IMAGE_RE),
-    (SHAPE_DOUBLE_BRACE,      _PLAIN_IMAGE_RE),
-    (SHAPE_DOUBLE_BRACE,      _IMAGE_FLOAT_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
-    (SHAPE_DOUBLE_BRACE,      _PPOEM_RE),
-    (SHAPE_DOUBLE_BRACE,      _DUAL_LINE_RE),
     (SHAPE_DOUBLE_BRACE,      _LB_RE),
-    (SHAPE_DOUBLE_BRACE,      _SUBSUP_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
 ]
 
@@ -790,6 +741,22 @@ def _walk_balanced_shapes(
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        # Named DOUBLE_BRACE templates whose args nest arbitrarily and may carry
+        # an opaque `<math>` (single LaTeX braces) — opener-matched, span closed
+        # by the one balanced matcher, exactly like the fraction family above.
+        # Migrated off hand-rolled 2-4 level brace regexes that capped depth and
+        # broke on a lone `{` inside `<math>`.
+        if matched is None:
+            for _opener in (_IMAGE_FLOAT_OPENER_RE, _PLAIN_IMAGE_OPENER_RE,
+                            _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
+                            _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
+                            _DJVU_CROP_OPENER_RE):
+                if _opener.match(text, opener_pos):
+                    end = _construct_end(text, opener_pos)
+                    if end is not None:
+                        matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+                    break
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
