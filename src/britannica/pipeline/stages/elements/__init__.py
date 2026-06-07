@@ -29,7 +29,8 @@ from britannica.pipeline.stages.elements._image import (
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
-    process_eb1911_article_link, process_target_first_link)
+    process_eb1911_article_link, process_target_first_link,
+    process_eb1911_selfref_link)
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
@@ -317,7 +318,7 @@ def _process_subsup(raw, context):
 # close is found by the walker's one balanced matcher, so the producer peels the
 # wrapper without a second balanced scanner.
 _STYLED_OPEN_RE = re.compile(
-    r"^\s*<(div|p|span)\b([^>]*)>", re.IGNORECASE)
+    r"^\s*<(div|p|span|ins)\b([^>]*)>", re.IGNORECASE)
 _BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
 
@@ -461,7 +462,7 @@ def _process_styled(raw, inner, context, inner_registry):
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()
     css = ";".join(_cell_styles(attrs, ""))
-    marker_tag = "SPAN" if tag == "span" else "DIV"
+    marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
     return style_block(content, css=css, tag=marker_tag)
 
 
@@ -610,6 +611,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # display producer, target-first convention.
     "TARGET_FIRST_LINK": lambda raw, inner, ctx, reg:
         process_target_first_link(inner),
+    # EB1911_SELFREF — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`, the internal
+    # cross-link in raw bracket form; same «LN» family as the template links above.
+    "EB1911_SELFREF": lambda raw, inner, ctx, reg:
+        process_eb1911_selfref_link(inner),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;

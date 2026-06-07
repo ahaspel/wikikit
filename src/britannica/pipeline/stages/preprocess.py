@@ -196,6 +196,15 @@ def heal_page_seams(text: str) -> str:
     return text
 
 
+# Wikisource proofreading DELETE: `<del>` marks text the transcriber removed to repair
+# an OCR/print error (`Feb<ins>r</ins>u<del>r</del>ary` → February).  Verified corpus-
+# wide as ALWAYS editorial — every <del> is a correction, none carries genuine content
+# or styling — so it is cut here, unconditionally, with no content decision (a correction
+# is the sanctioned step-1 source-clean).  Its `<ins>` partner is the kept correction
+# (a styler, lifted by the walker).
+_EDITORIAL_DEL = re.compile(r"<del\b[^>]*>.*?</del>", re.IGNORECASE | re.DOTALL)
+
+
 def preprocess(stream: str) -> str:
     """Source-clean + heal page transitions on the continuous stream; return
     the frozen clean stream."""
@@ -206,6 +215,7 @@ def preprocess(stream: str) -> str:
     stream = _NOP.sub("", stream)                          # {{nop}} chrome + its line
     stream = _REF_FOLLOW_LINE.sub(r"\1", stream)           # <ref follow> chrome line
     stream = strip_html_comments(stream)
+    stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
     stream = strip_word_spacing_templates(stream)
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)

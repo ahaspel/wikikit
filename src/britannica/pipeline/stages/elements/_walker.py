@@ -331,6 +331,14 @@ _PLAIN_IMAGE_OPENER_RE = re.compile(
 _IMAGE_RE = re.compile(
     r"\[\[(?:File|Image):[^\]]+\]\]", re.IGNORECASE)
 
+# DOUBLE_BRACKET self-reference — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`,
+# an internal EB1911 cross-link in raw bracket form (vs the `{{EB1911 article link}}`
+# template form).  Recognized here, classified EB1911_SELFREF, produced as «LN».  The
+# `1911 Encyclop` prefix is the signal — EB9 "Ninth Edition" refs do NOT match (those
+# are external Wikisource links, handled by the external-link producer).
+_EB1911_SELFREF_RE = re.compile(
+    r"\[\[\s*1911\s+[Ee]ncyclop[^\]]*\]\]", re.IGNORECASE)
+
 
 # Inline-image structural recognition.  At the moment the walker has just
 # matched an `[[File:…]]` (no EXTCAP), it checks the text immediately AFTER
@@ -397,6 +405,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
     (SHAPE_DOUBLE_BRACE,      _LB_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
+    (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
 ]
 
 
@@ -417,8 +426,10 @@ _OPENER_HINT_RE = re.compile(
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
+    r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
+    r"|\[\[\s*1911\s+[Ee]ncyclop"   # DOUBLE_BRACKET EB1911 self-reference cross-link
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
@@ -468,7 +479,7 @@ _ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score"})
 # below).  Corpus-verified balanced: `<p>` 407 open / 403 close (5 unbalanced
 # articles, all OCR-garbage `<p.u(kp)` non-tags or close-less stubs that
 # fail-close → fall through); `<span>` 15706 / 15704 (1 unbalanced article).
-_BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span"}
+_BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span", "ins"}
 # A `<div>`/`<p>`/`<span>` that carries styling ({{Ts}} shorthand, inline
 # style=, or align=) — the gate that distinguishes a meaningful styled wrapper
 # (lift → STYLED, which carries the style and recurses its content) from a bare
@@ -490,6 +501,12 @@ _BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span"}
 _STYLED_WRAPPER_RE = re.compile(
     r"<(?:div|p|span)\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*=)"
     r"[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)", re.IGNORECASE)
+# `<ins>` — Wikisource insertion.  UNLIKE the gated div/p/span above, EVERY <ins>
+# lifts to STYLED (ungated): its tag is editorial (the UA-default underline is dropped),
+# but its content is kept and any explicit style carried — a plain `<ins>s</ins>` → `s`,
+# `<ins style="…overline">y</ins>` → «SPAN[style:…]».  A bare <div> is left transparent;
+# a bare <ins> must be actively unwrapped, so there is no style gate.
+_INS_OPEN_RE = re.compile(r"<ins\b", re.IGNORECASE)
 
 
 def _construct_end(text: str, start: int) -> int | None:
@@ -701,6 +718,7 @@ def _walk_balanced_shapes(
         # wrappers are still claimed above by the figure recognizers.
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
+                or _INS_OPEN_RE.match(text, opener_pos)
                 or _SPAN_TITLE_OPEN_RE.match(text, opener_pos)
                 or _TEMPLATE_STYLE_RE.match(text, opener_pos)
                 or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)
@@ -776,6 +794,7 @@ def _walk_balanced_shapes(
             if (matched is not None
                     and matched[1] == SHAPE_DOUBLE_BRACKET
                     and matched[2].endswith("]]")
+                    and _IMAGE_RE.match(matched[2])  # images only — not self-ref links
                     and _is_inline_image_position(text, matched[0])):
                 matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
