@@ -377,6 +377,27 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
+def _xrefs_from_body(body, article_id, link_index):
+    """The candidate-source half of the xref decorator: extract every
+    reference from the body and resolve it off the in-memory index,
+    returning transient (un-persisted) CrossReference rows.  No DB read."""
+    from britannica.xrefs.extractor import extract_xrefs
+    from britannica.pipeline.stages.resolve_xrefs import resolve_one
+    xrefs = []
+    for m in extract_xrefs(body):
+        xr = CrossReference(
+            article_id=article_id,
+            surface_text=m["surface_text"],
+            normalized_target=m["normalized_target"],
+            xref_type=m["xref_type"],
+        )
+        xr.target_article_id, xr.target_section = resolve_one(xr, link_index)
+        xr.status = ("resolved" if xr.target_article_id is not None
+                     else "unresolved")
+        xrefs.append(xr)
+    return xrefs
+
+
 def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                         global_title_to_filename):
     """The body-linking half of the xref decorator, lifted out of
@@ -562,23 +583,8 @@ def export_articles_to_json(
                     and article.id != only_article_id):
                 continue
             if link_index is not None:
-                # Decorator path: candidates from the body, resolved off the
-                # in-memory index — no CrossReference read.
-                from britannica.xrefs.extractor import extract_xrefs
-                from britannica.pipeline.stages.resolve_xrefs import resolve_one
-                xrefs = []
-                for m in extract_xrefs(_body_for(article)):
-                    xr = CrossReference(
-                        article_id=article.id,
-                        surface_text=m["surface_text"],
-                        normalized_target=m["normalized_target"],
-                        xref_type=m["xref_type"],
-                    )
-                    xr.target_article_id, xr.target_section = resolve_one(
-                        xr, link_index)
-                    xr.status = ("resolved" if xr.target_article_id is not None
-                                 else "unresolved")
-                    xrefs.append(xr)
+                xrefs = _xrefs_from_body(
+                    _body_for(article), article.id, link_index)
             else:
                 xrefs = (
                     session.query(CrossReference)
