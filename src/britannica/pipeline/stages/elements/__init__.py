@@ -1064,6 +1064,24 @@ def process_elements(text: str,
     Returns:
         text with all embedded elements processed to their final form
     """
+    return process_elements_tree(text, context, _allow_figure)[0]
+
+
+def process_elements_tree(
+    text: str,
+    context: ElementContext,
+    _allow_figure: bool = True,
+) -> tuple[str, dict]:
+    """Walk + classify + produce, returning BOTH the assembled body and the
+    element tree.
+
+    `tree` is the top-level registry of ClassifiedElement records — each with
+    its children populated and `marker` set by the producer pass, keyed by
+    placeholder in walker source order.  Consumers that read elements off the
+    structure (the export reading TITLE / PAGE / «LN» off the tree instead of
+    reparsing the flattened body) use this; callers that only need the body
+    call `process_elements`, which is exactly this minus the tree.
+    """
     from britannica.pipeline.stages.elements._classifier import (
         classify_article,
         produce_tree,
@@ -1071,29 +1089,23 @@ def process_elements(text: str,
     )
     from britannica.pipeline.stages.elements._ref import resolve_ref_bodies
 
-    # Walk + classify (one mutually-recursive pass).  Returns the
-    # placeholderized article body plus a tree of ClassifiedElement
-    # records — each element knows its own label, raw bytes, inner
-    # text, and inner registry of classified children.  With BODY-wrap
-    # on, the placeholderized text contains only placeholders — every
-    # byte of the article is owned by some classified element.
+    # Walk + classify (one mutually-recursive pass): the placeholderized body
+    # plus a tree of ClassifiedElement records — each knows its label, raw
+    # bytes, inner text, and inner registry of classified children.  With
+    # BODY-wrap on, the placeholderized text is placeholders only.
     placeholderized_text, tree = classify_article(
         text, _allow_figure=_allow_figure)
 
-    # Article-wide ref-body resolution.  `<ref name=X/>` self-closing
-    # reuses (and `<ref name=X>body…` definitions whose body arrives
-    # via a later `<ref follow=X>…` continuation) resolve to the
-    # merged body.  Threaded into `context` so the REF producer can
-    # read it.  Copy the caller's context so we don't mutate it.
+    # Article-wide ref-body resolution, threaded into a COPY of context so the
+    # REF producer reads it without mutating the caller's context.
     context = _dc_replace(context)
     context.ref_bodies = resolve_ref_bodies(tree, context)
 
-    # Produce: bottom-up over the tree.  Each element's producer
-    # runs after its children's markers exist; child markers are
-    # substituted into the producer's output by the framework.
+    # Produce: bottom-up over the tree; child markers substituted into each
+    # producer's output by the framework.
     produce_tree(tree, context)
 
-    # Reassemble: substitute markers into the placeholder-only text —
-    # since BODY runs are now placeholders too, this reduces to ordered
+    # Reassemble: substitute markers into the placeholder-only text — ordered
     # concatenation of element markers in walker source order.
-    return substitute_top_level_markers(placeholderized_text, tree)
+    body = substitute_top_level_markers(placeholderized_text, tree)
+    return body, tree
