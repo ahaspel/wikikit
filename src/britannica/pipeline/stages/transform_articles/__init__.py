@@ -69,114 +69,6 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
 # and not just a short word in a data table cell.
 
 
-# Page-cosmetic 2-column body-layout wrapper: ``{|cellpadding="N"
-# rules="cols"`` (in either attribute order) immediately followed by a
-# ``|width="NN%" valign="top"|`` cell with no body content.  This is
-# the Wikisource convention for typesetting a single page's prose in
-# two columns; it has nothing to do with the article's data.  Real
-# multi-page data tables (like INDIANS, NORTH AMERICAN's ``{|{{Ts|ma}}
-# rules=cols border="1"``) have ``border=`` and header cells, so
-# requiring "no border, then column-width-only first cell" cleanly
-# distinguishes the two.
-_LAYOUT_NOINCLUDE_OPENER_RE = re.compile(
-    r"<noinclude>"                                # block opener
-    r"(?P<head>(?:(?!</noinclude>).)*?)"          # everything up to
-    r"\{\|(?P<attrs>(?![^\n]*\bborder\s*=)"       # `{|` with NO border
-    r"[^\n]*\bcellpadding\s*="                    # has cellpadding
-    r"[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"       # AND rules=cols
-    r"|(?![^\n]*\bborder\s*=)"                    # OR (alt order)
-    r"[^\n]*\brules\s*=\s*[\"']?cols"
-    r"[^\n]*\bcellpadding\s*=[^\n]*)\n"
-    r"\s*\|width\s*=\s*[\"']?\d+%[\"']?"          # then width=NN%
-    r"\s+valign\s*=\s*[\"']?top[\"']?\|"          # valign=top cell
-    r"(?P<tail>(?:(?!</noinclude>).)*?)"
-    r"</noinclude>",
-    re.DOTALL | re.IGNORECASE,
-)
-
-# Bare-line variant — by the time `_transform_text_v2` runs against a
-# stored ArticleSegment, ``detect_boundaries._strip_noinclude_preserve_tables``
-# has already stripped ``<noinclude>`` wrappers but kept ``{|…`` opener
-# lines.  So in segment-text the JESUS CHRIST opener appears as just a
-# bare ``{|cellpadding="5" rules="cols"`` line at the start of its page
-# segment, no surrounding noinclude.  Same attribute fingerprint.
-_LAYOUT_BARE_OPENER_RE = re.compile(
-    # Use a look-behind for `^`, `\n`, or a PAGE marker (`\x01PAGE:NNN\x01`)
-    # so the substitution leaves the lead intact — the layout opener can
-    # sit immediately after a page marker in a joined segment stream
-    # (JESUS CHRIST p358), and we must keep the marker.
-    #
-    # CRITICAL: also require the NEXT line not to start with `|` — a
-    # real data table opener (BEAUFORT SCALE `{|rules=cols cellpadding=3`)
-    # is immediately followed by wiki-table row content (`|-` /
-    # `|cell...`).  A page-layout wrapper opener is followed by plain
-    # article prose.  Without this lookahead, the regex stripped real
-    # data tables corpus-wide (BEAUFORT, FUNCTION, PROBABILITY, ROOT,
-    # ROME, TROCHAIC, TURKEY, ZEUXIS — all leaked their pipe rows).
-    r"(?<=\n)\s*\{\|(?:"
-    r"(?![^\n]*\bborder\s*=)[^\n]*\bcellpadding\s*=[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"
-    r"|(?![^\n]*\bborder\s*=)[^\n]*\brules\s*=\s*[\"']?cols[^\n]*\bcellpadding\s*=[^\n]*"
-    r")\n(?!\s*\|)"
-    r"|(?<=\x01)\s*\{\|(?:"
-    r"(?![^\n]*\bborder\s*=)[^\n]*\bcellpadding\s*=[^\n]*\brules\s*=\s*[\"']?cols[^\n]*"
-    r"|(?![^\n]*\bborder\s*=)[^\n]*\brules\s*=\s*[\"']?cols[^\n]*\bcellpadding\s*=[^\n]*"
-    r")\n(?!\s*\|)",
-    re.IGNORECASE,
-)
-
-# Matching closer in either form — wrapped noinclude or bare ``|}``
-# line.  Stripping any solo ``|}`` would risk a real multi-page data-
-# table closer, so closer-stripping is GATED by opener presence (see
-# `_strip_page_layout_noinclude_wrappers`).
-_LAYOUT_NOINCLUDE_CLOSER_RE = re.compile(
-    r"<noinclude>\s*\|\}\s*</noinclude>",
-    re.IGNORECASE,
-)
-_LAYOUT_BARE_CLOSER_RE = re.compile(
-    r"(?:^|\n)\s*\|\}(?!\})\s*(?=\n|$)",
-)
-
-
-def _strip_page_layout_noinclude_wrappers(text: str) -> str:
-    """Strip Wikisource per-page 2-column display wrappers.
-
-    These wrappers are typographic only (``cellpadding="5" rules="cols"``
-    with a single ``width="NN%" valign="top"`` cell carrying the page's
-    prose).  Without this pass, the opener is preserved as plain ``{|…``
-    text and the orphaned closer fakes a wrapper around the article body
-    (``_wrap_orphaned_table_rows`` adds a synthetic ``{|``).  The shape
-    cannot be confused with a real multi-page data table — those carry
-    ``border=`` plus header cells, both of which we exclude.
-
-    Two opener forms exist depending on where in the pipeline this is
-    invoked: ``<noinclude>{|cellpadding=…|width=…</noinclude>`` (raw
-    page wikitext) and a bare ``{|cellpadding=…`` line (segment-text,
-    after ``detect_boundaries`` has stripped noinclude wrappers but
-    preserved the ``{|`` opener).  Both are handled.  Strips opener and
-    matching closer in tandem so the body is left bare, as Wikisource's
-    standalone-page renderer intends when transcluded.
-    """
-    has_wrapped = _LAYOUT_NOINCLUDE_OPENER_RE.search(text) is not None
-    has_bare = _LAYOUT_BARE_OPENER_RE.search(text) is not None
-    if not has_wrapped and not has_bare:
-        return text
-    if has_wrapped:
-        text = _LAYOUT_NOINCLUDE_OPENER_RE.sub("", text)
-        text = _LAYOUT_NOINCLUDE_CLOSER_RE.sub("", text)
-    if has_bare:
-        text = _LAYOUT_BARE_OPENER_RE.sub("", text)
-        text = _LAYOUT_BARE_CLOSER_RE.sub("", text)
-    return text
-
-
-# ── Layer-A audit instrumentation (TEMPORARY) ─────────────────────────
-# Default-empty: production behavior is byte-identical.  An audit harness
-# assigns this module global to a {pass-name} set to measure each
-# preprocessing pass's MARGINAL render effect (does it do anything the
-# producers don't already do?).  Remove after the Layer-A migration.
-_AUDIT_SKIP: frozenset = frozenset()
-
-
 def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     """Transform an article's raw wikitext body into the internal marker
     format.
@@ -252,15 +144,13 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # body now begins with a `\x01PAGE\x01` marker anyway, so a `^[\s,]+` strip
     # could never match.  Verified dead (0 articles) and deleted.)
 
-    # Defensive cleanup for orphan punctuation left when a template
-    # gets stripped without its display text (e.g. a malformed
-    # `{{1911link|X|Y}}` previously dropped, leaving `…, , Y…`):
-    #   ", , , "  → ", "
-    #   ", ;"     → ";"
-    #   ", ."     → "."
-    # Preserve `,,` adjacent (ditto marks in tables).
-    text = re.sub(r",(\s+,)+", ",", text)
-    text = re.sub(r",\s*([;.])", r"\1", text)
+    # (No orphan-punctuation cleanup.  The old `, ,`/`, ;`/`, .` collapse claimed
+    # to fix templates "stripped without display text" — but honest producers
+    # recurse the display, so that never happens now.  What it actually did, across
+    # 335 firing articles, was CORRUPT legitimate content: it mangled table ditto
+    # marks (`,, ,,` → `,,,`) and editorialised source typos (`S. Cal,;` →
+    # `S. Cal;`).  Both unfaithful; source quality is end-stage — render what's
+    # there.  Deleted.)
 
     # (No blank-line collapse: the viewer splits on `\n\n`, so it already treats
     # `\n\n\n+` as a single paragraph break — the surplus newline becomes an empty
@@ -268,81 +158,6 @@ def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
     # deleted; verify at the rebuild sweep.)
 
     return text
-
-
-
-
-def _wrap_orphaned_table_rows(text: str) -> str:
-    """Wrap orphaned wiki table rows (|- and | lines) that lack a {| opener.
-
-    Multi-page wiki tables have {| in <noinclude> on continuation pages.
-    After noinclude stripping, the rows are left bare.  Wrap them in
-    {|...|} so the table converter can process them.
-
-    Also detects runs of |lines without |- separators (two-column tables
-    spanning page boundaries).
-    """
-    # Quick check: any lines starting with |?
-    has_pipe_rows = any(
-        line.strip().startswith("|") and len(line.strip()) > 3
-        for line in text.split("\n")
-    )
-    if not has_pipe_rows:
-        return text
-
-    # Count opens and closes
-    opens = len(re.findall(r"\{\|", text))
-    closes = len(re.findall(r"\|\}", text))
-
-    if "{|" in text:
-        if opens > closes:
-            # Unclosed table — add |} at end so balanced extractor can find it
-            text = text + "\n|}"
-        elif opens < closes:
-            # Orphaned |} — wrap preceding rows in {|
-            first_close = text.find("|}")
-            prefix = text[:first_close]
-            rest = text[first_close + 2:]
-            text = "{|\n" + prefix + "\n|}" + rest
-        # Also handle orphaned rows before the first {|
-        first_table = text.find("{|")
-        prefix = text[:first_table]
-        rest = text[first_table:]
-        if prefix.strip() and ("\n|-" in prefix or prefix.strip().startswith("|-")):
-            wrapped_prefix = _wrap_orphaned_table_rows(prefix)
-            return wrapped_prefix + rest
-        return text
-
-    # Find runs of |lines and wrap them
-    lines = text.split("\n")
-    first_row = None
-    last_row = None
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        is_table_line = (
-            (stripped.startswith("|-") or stripped.startswith("|"))
-            and len(stripped) > 3
-            and not stripped.startswith("|}")
-        )
-        if is_table_line:
-            if first_row is None:
-                first_row = i
-            last_row = i
-
-    if first_row is None:
-        return text
-
-    # Wrap the table rows
-    before = "\n".join(lines[:first_row])
-    table = "\n".join(lines[first_row:last_row + 1])
-    after = "\n".join(lines[last_row + 1:])
-    parts = []
-    if before.strip():
-        parts.append(before)
-    parts.append("{|\n" + table + "\n|}")
-    if after.strip():
-        parts.append(after)
-    return "\n".join(parts)
 
 
 
