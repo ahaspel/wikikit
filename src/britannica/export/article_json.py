@@ -377,6 +377,46 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
+def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
+                        global_title_to_filename):
+    """The body-linking half of the xref decorator, lifted out of
+    export_articles_to_json: wrap resolved qv/see prose in place, then
+    resolve 2-part «EB9»/«LN» markers to 3-part filename links."""
+    body = _wrap_resolved_xrefs_in_body(body, xrefs, self_stable_id, session)
+
+    link_targets: dict[str, str] = {}  # normalized_target → filename
+    for xref in xrefs:
+        if xref.target_article_id is not None and xref.normalized_target:
+            target = session.get(Article, xref.target_article_id)
+            if target:
+                link_targets[xref.normalized_target.lower()] = _safe_filename(
+                    target, target.title
+                )
+
+    def _resolve_eb9(m: re.Match) -> str:
+        target_text, display = m.group(1), m.group(2)
+        fn = global_title_to_filename.get(target_text.strip().upper())
+        if fn:
+            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+        return display
+    body = re.sub(
+        r"«EB9:([^|]*)\|([^«]*)«/EB9»",
+        _resolve_eb9, body,
+    )
+
+    def _resolve_link(m: re.Match) -> str:
+        target_text, display = m.group(1), m.group(2)
+        fn = link_targets.get(target_text.strip().lower())
+        if fn:
+            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+        return m.group(0)  # leave unresolved as-is (2-part)
+    body = re.sub(
+        r"«LN:([^|]*)\|([^«]*)«/LN»",
+        _resolve_link, body,
+    )
+    return body
+
+
 def export_articles_to_json(
     volume: int,
     out_dir: str | Path,
@@ -578,53 +618,11 @@ def export_articles_to_json(
                         "filename": _safe_filename(parent, parent.title),
                     }
 
-            # Resolve inline link markers: embed target filename for resolved xrefs
-            # «LN:target|display«/LN» → «LN:filename|target|display«/LN»
-            body = _body_for(article)
-            # Phase 2 body-wrapping: propagate resolved qv/see/see_also
-            # xrefs into the body prose so those mentions render as
-            # clickable links instead of only appearing in the xref
-            # panel.  Runs before the 2-part → 3-part resolver below,
-            # and emits 3-part markers directly so the resolver is a
-            # no-op for our new wraps.
-            body = _wrap_resolved_xrefs_in_body(
-                body, xrefs, stable_id(article), session
-            )
-            link_targets: dict[str, str] = {}  # normalized_target → filename
-            for xref in xrefs:
-                if xref.target_article_id is not None and xref.normalized_target:
-                    target = session.get(Article, xref.target_article_id)
-                    if target:
-                        link_targets[xref.normalized_target.lower()] = _safe_filename(
-                            target, target.title
-                        )
-
-            # \u00abEB9:target|display\u00ab/EB9\u00bb (soft 9th-edition refs):
-            # link to the 11th-edition article if one exists, else
-            # plain display text \u2014 never a search-link fallback.
-            def _resolve_eb9(m: re.Match) -> str:
-                target_text, display = m.group(1), m.group(2)
-                fn = global_title_to_filename.get(target_text.strip().upper())
-                if fn:
-                    return f"\u00abLN:{fn}|{target_text}|{display}\u00ab/LN\u00bb"
-                return display
-            body = re.sub(
-                r"\u00abEB9:([^|]*)\|([^\u00ab]*)\u00ab/EB9\u00bb",
-                _resolve_eb9,
-                body,
-            )
-
-            def _resolve_link(m: re.Match) -> str:
-                target_text, display = m.group(1), m.group(2)
-                fn = link_targets.get(target_text.strip().lower())
-                if fn:
-                    return f"\u00abLN:{fn}|{target_text}|{display}\u00ab/LN\u00bb"
-                return m.group(0)  # leave unresolved as-is (2-part)
-
-            body = re.sub(
-                r"\u00abLN:([^|]*)\|([^\u00ab]*)\u00ab/LN\u00bb",
-                _resolve_link,
-                body,
+            # Resolve inline link markers (xrefs + EB9): the body-linking
+            # half of the decorator.
+            body = _link_xrefs_in_body(
+                _body_for(article), xrefs, stable_id(article), session,
+                global_title_to_filename,
             )
 
             # Convert PAGE markers from Wikisource to printed page numbers.
