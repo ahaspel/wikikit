@@ -521,12 +521,31 @@ def export_articles_to_json(
             if (only_article_id is not None
                     and article.id != only_article_id):
                 continue
-            xrefs = (
-                session.query(CrossReference)
-                .filter(CrossReference.article_id == article.id)
-                .order_by(CrossReference.id)
-                .all()
-            )
+            if link_index is not None:
+                # Decorator path: candidates from the body, resolved off the
+                # in-memory index — no CrossReference read.
+                from britannica.xrefs.extractor import extract_xrefs
+                from britannica.pipeline.stages.resolve_xrefs import resolve_one
+                xrefs = []
+                for m in extract_xrefs(_body_for(article)):
+                    xr = CrossReference(
+                        article_id=article.id,
+                        surface_text=m["surface_text"],
+                        normalized_target=m["normalized_target"],
+                        xref_type=m["xref_type"],
+                    )
+                    xr.target_article_id, xr.target_section = resolve_one(
+                        xr, link_index)
+                    xr.status = ("resolved" if xr.target_article_id is not None
+                                 else "unresolved")
+                    xrefs.append(xr)
+            else:
+                xrefs = (
+                    session.query(CrossReference)
+                    .filter(CrossReference.article_id == article.id)
+                    .order_by(CrossReference.id)
+                    .all()
+                )
 
             xref_list = []
             for xref in xrefs:
@@ -571,13 +590,10 @@ def export_articles_to_json(
             body = _wrap_resolved_xrefs_in_body(
                 body, xrefs, stable_id(article), session
             )
-            from britannica.pipeline.stages.resolve_xrefs import resolve_one
             link_targets: dict[str, str] = {}  # normalized_target → filename
             for xref in xrefs:
-                aid = (resolve_one(xref, link_index)[0]
-                       if link_index is not None else xref.target_article_id)
-                if aid is not None and xref.normalized_target:
-                    target = session.get(Article, aid)
+                if xref.target_article_id is not None and xref.normalized_target:
+                    target = session.get(Article, xref.target_article_id)
                     if target:
                         link_targets[xref.normalized_target.lower()] = _safe_filename(
                             target, target.title
