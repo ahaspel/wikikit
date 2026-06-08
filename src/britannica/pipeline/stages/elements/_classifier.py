@@ -145,6 +145,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.match(r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
+    # `{{EB1911 footer …}}` — the contributor signature footer.  RECOGNIZED as a bounded
+    # CONTRIBUTOR_FOOTER node; the byline + removal are the decorator's job, not here.
+    if re.match(r"\{\{\s*EB1911\s+footer\b", raw, re.IGNORECASE):
+        return "CONTRIBUTOR_FOOTER"
     # Spacer / rule / char-escape leaves — em/gap/clear/anchor/ditto/dhr/rule/bar/shy
     # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).
     if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"

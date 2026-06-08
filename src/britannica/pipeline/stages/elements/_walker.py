@@ -138,10 +138,13 @@ _IMAGE_FLOAT_OPENER_RE = re.compile(
     r"\{\{(?:img float|figure|FI)\s*\|", re.IGNORECASE)
 _HIEROGLYPH_TMPL_RE = re.compile(
     r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
-# (Contributor-footer templates — `{{EB1911 footer initials}}`, the double variant,
-# and the `{{EB1911 XYZ}}` bare-initials shortcuts — are attribution FIELDS, not body
-# content.  They are cut upstream by `extract_contributors.strip_attributions` before
-# the walker runs, so the walker no longer recognizes them at all.)
+# `{{EB1911 footer initials|…}}` / `{{EB1911 footer double initials|…}}` — the
+# contributor signature footer.  RECOGNIZED as a bounded CONTRIBUTOR_FOOTER node so the
+# contributor decorator has ONE clean handle (its byline + removal logic is the
+# decorator's job, not the walker's).  Opener-only; span closes via `_construct_end`.
+# (The bare `{{EB1911 XYZ}}` sign-off shortcut is NOT recognized here — decorator's too.)
+_CONTRIBUTOR_FOOTER_OPENER_RE = re.compile(
+    r"\{\{\s*EB1911\s+footer\b", re.IGNORECASE)
 # `{{EB1911 article link|Display|Target}}` — a cross-reference LINK.  OPENER-only regex;
 # the span is closed by the one balanced matcher (`_construct_end`, exactly like the
 # fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
@@ -779,7 +782,7 @@ def _walk_balanced_shapes(
             for _opener in (_IMAGE_FLOAT_OPENER_RE, _PLAIN_IMAGE_OPENER_RE,
                             _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
                             _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
-                            _DJVU_CROP_OPENER_RE):
+                            _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE):
                 if _opener.match(text, opener_pos):
                     end = _construct_end(text, opener_pos)
                     if end is not None:

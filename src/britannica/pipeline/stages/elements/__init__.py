@@ -597,9 +597,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_math_equation(inner),
     "MATH_NE": lambda raw, inner, ctx, reg:
         _process_math_equation(inner),
-    # (CONTRIBUTOR_FOOTER deleted: the footer is a FIELD, not rendered output, so it's
-    # cut upstream by `strip_attributions` before the walker — we don't route a
-    # never-rendered field through the renderer just to emit "".)
+    # CONTRIBUTOR_FOOTER — the `{{EB1911 footer …}}` signature, RECOGNIZED as a bounded
+    # node that CARRIES the footer raw (no deletion here).  The contributor decorator is
+    # the sole owner of what comes next — read it for the byline, then remove it.  Inert
+    # in the live pipeline today (the footer is still cut pre-walk by `strip_attributions`);
+    # it comes alive when the decorator drops that strip and consumes these nodes.
+    "CONTRIBUTOR_FOOTER": lambda raw, inner, ctx, reg:
+        f"«CONTRIBUTOR_FOOTER:{raw}«/CONTRIBUTOR_FOOTER»",
     # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
     # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
     # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
