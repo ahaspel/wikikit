@@ -76,7 +76,9 @@ def preprocess_article(session, article) -> str:
     The title bracket is a transform, legitimately placed here: ``preprocess_article``
     runs per article, so ``beginning`` and ``once`` are free (the article IS the unit,
     there is no "first" to hunt), and it is preprocessing — one of the two transform
-    homes.  (PAGE stamping stays here for now; it moves to recognition in its own step.)
+    homes.  The «PAGE» marker is NOT stamped here anymore: ``super_detect`` slaps the
+    leaf onto each segment at the cut, where the leaf is known; this function only
+    concatenates the already-marked segments.
     """
     segments = (
         session.query(ArticleSegment)
@@ -86,9 +88,10 @@ def preprocess_article(session, article) -> str:
         .add_columns(SourcePage.page_number)
         .all()
     )
-    joined = "".join(
-        f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
-        for seg, page_number in segments)
+    # The «PAGE» marker is already materialized into each segment at detection
+    # (super_detect slaps the current leaf on as it cuts the page-fragment).  Just
+    # concatenate — never re-stamp a leaf-fact at the article level.
+    joined = "".join(seg.segment_text or "" for seg, page_number in segments)
     if article.title_raw:
         return f"«TITLE»{article.title_raw}«/TITLE»{joined}"
     return joined

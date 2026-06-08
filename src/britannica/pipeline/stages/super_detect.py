@@ -39,8 +39,6 @@ _SECBEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECA
 # strands the newline as a `\n\n` once the empty SECTION element renders.)
 _SECTAG_DROP = re.compile(
     r"[ \t]*<section\s+(?:begin|end)\b[^>]*?/?>[ \t]*\n?", re.IGNORECASE)
-_DROPINITIAL = re.compile(
-    r"\{\{\s*(?:drop\s*initial|di)\s*[|}]", re.IGNORECASE)
 
 
 def detect_boundaries(volume: int) -> list[DetectedArticle]:
@@ -60,7 +58,6 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
     # content; boundaries slice it, segments fall out of the markers.
     raw_stream = SW.volume_stream(volume)
     stream = raw_stream                      # section_at reads the same stream
-    pagepos = {int(m.group(1)): m.end() for m in _PAGE_RE.finditer(raw_stream)}
 
     arts = SW.super_walk(volume)
     sec_tags = [(m.start(), (m.group(1) or "").strip())
@@ -75,55 +72,21 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
                 break
         return name
 
-    page_markers = sorted(pagepos.items(), key=lambda kv: kv[1])
-
-    def page_of(pos: int) -> int:
-        pg = page_markers[0][0]
-        for pn2, mp in page_markers:
-            if mp <= pos:
-                pg = pn2
-            else:
-                break
-        return pg
-
-    # Per-page content span [start, end) — bounds the heading search to its page.
-    _marks = list(_PAGE_RE.finditer(raw_stream))
-    page_span = {
-        int(m.group(1)): (m.end(),
-                          _marks[k + 1].start() if k + 1 < len(_marks)
-                          else len(raw_stream))
-        for k, m in enumerate(_marks)}
-
-    # Anchor each heading WITHIN its page via a per-page cursor: two same-page
-    # articles sharing a headword take successive occurrences; page-bounded so a
-    # stray bold elsewhere can't drag the anchor off.  `\s*` after the link pipe
-    # tolerates a heading whose «B» sits on the next line ([[Author:…|\n«B»…]]).
-    bounds: list[tuple[int, str]] = []
-    prev_pg, pc, pe = None, 0, 0
-    for a in arts:
-        pg = a.page_start
-        if pg not in page_span:
-            continue
-        if pg != prev_pg:
-            pc, pe = page_span[pg]
-            prev_pg = pg
-        pat = re.compile(
-            r"(?:\[\[[^\]|]*\|\s*)?«B»" + re.escape(a.raw_heading) + r"«/B»")
-        m = pat.search(raw_stream, pc, pe)
-        if m:
-            bpos, pc = m.start(), m.end()
-        else:
-            dm = _DROPINITIAL.search(raw_stream, pc, pe)
-            bpos = dm.start() if dm else pc
-            pc = bpos + 1
-        bounds.append((bpos, section_at(a.start)))
+    # super_walk already stopped at each article's boundary: ``a.start`` IS the
+    # byte offset (in this same ``volume_stream``) and ``a.page_start`` IS the leaf
+    # it sits on (the «PAGE» marker before ``a.start``).  Use them.  We do NOT
+    # re-find the article by searching the stream for its own headword — the
+    # headword isn't unique (collisions — the per-page cursor was that admission),
+    # it can be rewritten before the search, and on a miss the old code FABRICATED
+    # a boundary from the previous article's end.  A boundary known at the walk is
+    # carried, never re-derived.
+    bounds = [(a.start, section_at(a.start), a.page_start) for a in arts]
 
     out: list[DetectedArticle] = list(plates)
-    for i, (bpos, sec) in enumerate(bounds):
+    for i, (bpos, sec, pstart) in enumerate(bounds):
         end = bounds[i + 1][0] if i + 1 < len(bounds) else len(raw_stream)
         content = raw_stream[bpos:end]               # the article's raw content
         content = _SECTAG_DROP.sub("", content)      # drop consumed section chrome
-        pstart = page_of(bpos)
         title, body, title_raw = produce_title(content)
         # Segments fall out by splitting the title-STRIPPED body on
         # «PAGE» markers.  Splitting raw `content` instead would put
@@ -134,14 +97,21 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         # the chop-up's product — never re-pack it into the body.
         segs: list[SegmentInfo] = []
         seq = 0
+        # Slap the current leaf onto each page-fragment AS WE CUT IT — the «PAGE»
+        # marker is materialized HERE, where the leaf is known (``pstart`` for the
+        # opening fragment, the split's own page number after each seam).
+        # ``preprocess_article`` then only concatenates; it never re-stamps the leaf
+        # at the article level.
         parts = _PAGE_RE.split(body)                 # [t0, pn1, t1, pn2, t2, …]
         if parts[0].strip():
-            segs.append(SegmentInfo(pid[pstart], pstart, seq, parts[0]))
+            segs.append(SegmentInfo(pid[pstart], pstart, seq,
+                                    f"\x01PAGE:{pstart}\x01{parts[0]}"))
             seq += 1
         for k in range(1, len(parts), 2):
             cpn = int(parts[k])
             if parts[k + 1].strip() and cpn in pid:
-                segs.append(SegmentInfo(pid[cpn], cpn, seq, parts[k + 1]))
+                segs.append(SegmentInfo(pid[cpn], cpn, seq,
+                                        f"\x01PAGE:{cpn}\x01{parts[k + 1]}"))
                 seq += 1
         if not segs:
             continue
