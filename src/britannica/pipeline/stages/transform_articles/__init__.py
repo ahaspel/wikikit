@@ -190,33 +190,3 @@ def produce_article(session, article) -> tuple[str, str | None]:
             _disp and (re.search(r"«(?:I|SC|FN)", _disp)
                        or _disp.count("«B»") > 1)) else None
     return body, title_display
-
-
-def transform_articles(volume: int) -> int:
-    """Transform raw wikitext to internal marker format for all articles in a volume.
-
-    Transforms each segment (page-sized) individually, then joins them
-    into article.body with \\x01PAGE:N\\x01 markers at page boundaries.
-    The markers are injected after transformation so they survive the
-    control-character stripping in prepare_wikitext.
-
-    Processes one article at a time with per-article commits.
-    """
-    session = SessionLocal()
-    try:
-        article_ids = [
-            aid for (aid,) in session.query(Article.id)
-            .filter(Article.volume == volume)
-            .all()
-        ]
-
-        for aid in article_ids:
-            article = session.get(Article, aid)
-            article.body, article.title_display = produce_article(
-                session, article)
-            session.commit()
-            session.expire_all()
-
-        return len(article_ids)
-    finally:
-        session.close()

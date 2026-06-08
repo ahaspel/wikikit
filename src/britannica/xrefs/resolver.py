@@ -169,23 +169,6 @@ def disambiguate_among(
     return remaining[0].id
 
 
-def resolve_xref_exact(
-    xref: CrossReference, articles: list[Article]
-) -> int | None:
-    """Resolve an xref against an article list by exact title match,
-    applying collision-aware disambiguation when two or more match."""
-    target = xref.normalized_target.strip().upper()
-    matches: list[Article] = []
-    for article in articles:
-        if article.article_type == "plate":
-            continue
-        if article.title.strip().upper() == target:
-            matches.append(article)
-    if not matches:
-        return None
-    return disambiguate_among(xref, matches)
-
-
 def resolve_xref_fuzzy(
     xref: CrossReference, title_map: dict[str, int]
 ) -> int | None:

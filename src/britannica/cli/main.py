@@ -10,14 +10,12 @@ from britannica.db.models import (
 from britannica.pipeline.stages.detect_boundaries import (
     persist_articles, wipe_articles)
 from britannica.pipeline.stages.super_detect import detect_boundaries
-from britannica.pipeline.stages.transform_articles import transform_articles
 from britannica.export.article_json import export_articles_to_json
+from britannica.pipeline.assemble import assemble_and_export
 from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
 from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 from britannica.pipeline.stages.extract_images import extract_images_for_volume
-from britannica.pipeline.stages.extract_xrefs import extract_xrefs_for_volume
-from britannica.pipeline.stages.resolve_xrefs import resolve_xrefs_all
 from britannica.review.reports import (
     get_unresolved_xrefs_report,
     get_backlinks_report,
@@ -120,12 +118,6 @@ def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
     print(f"Detected and created {count} articles for volume {volume}.")
 
 
-@app.command("transform-articles")
-def transform_articles_cmd(volume: int = typer.Argument(...)) -> None:
-    count = transform_articles(volume)
-    print(f"Transformed {count} articles for volume {volume}.")
-
-
 @app.command("list-articles")
 def list_articles(volume: int = typer.Option(None)) -> None:
     session = SessionLocal()
@@ -143,12 +135,6 @@ def list_articles(volume: int = typer.Option(None)) -> None:
     finally:
         session.close()
         
-@app.command("extract-xrefs")
-def extract_xrefs_cmd(volume: int = typer.Argument(...)) -> None:
-    count = extract_xrefs_for_volume(volume)
-    print(f"Extracted {count} cross-references for volume {volume}.")
-
-
 @app.command("list-xrefs")
 def list_xrefs(volume: int = typer.Option(None)) -> None:
     session = SessionLocal()
@@ -172,12 +158,6 @@ def list_xrefs(volume: int = typer.Option(None)) -> None:
     finally:
         session.close()
         
-@app.command("resolve-xrefs-all")
-def resolve_xrefs_all_cmd() -> None:
-    count = resolve_xrefs_all()
-    print(f"Resolved {count} cross-references across all volumes.")
-
-
 @app.command("extract-images")
 def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
     count = extract_images_for_volume(volume)
@@ -253,8 +233,16 @@ def export_articles_cmd(
     volume: int = typer.Argument(...),
     out_dir: str = typer.Option("data/derived/articles"),
 ) -> None:
-    count = export_articles_to_json(volume, out_dir)
+    count = assemble_and_export(out_dir, only_volume=volume)
     print(f"Exported {count} articles for volume {volume} to {out_dir}.")
+
+
+@app.command("corpus-export")
+def corpus_export_cmd(
+    out_dir: str = typer.Option("data/derived/articles"),
+) -> None:
+    count = assemble_and_export(out_dir)
+    print(f"Assembled + exported {count} articles to {out_dir}.")
 
 
 def run() -> None:

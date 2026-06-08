@@ -466,10 +466,8 @@ def export_articles_to_json(
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    _overrides = body_override or {}
-
     def _body_for(article: Article) -> str:
-        return _overrides.get(article.id, article.body) or ""
+        return body_override.get(article.id, "")
 
     session = SessionLocal()
 
@@ -578,21 +576,14 @@ def export_articles_to_json(
                 })
 
         exported = 0
+        xref_counts: dict[int, tuple[int, int]] = {}
 
         for article in articles:
             if (only_article_id is not None
                     and article.id != only_article_id):
                 continue
-            if link_index is not None:
-                xrefs = _xrefs_from_body(
-                    _body_for(article), article.id, link_index)
-            else:
-                xrefs = (
-                    session.query(CrossReference)
-                    .filter(CrossReference.article_id == article.id)
-                    .order_by(CrossReference.id)
-                    .all()
-                )
+            xrefs = _xrefs_from_body(
+                _body_for(article), article.id, link_index)
 
             xref_list = []
             for xref in xrefs:
@@ -612,6 +603,11 @@ def export_articles_to_json(
                             target, target.title
                         )
                 xref_list.append(entry)
+
+            xref_counts[article.id] = (
+                len(xref_list),
+                sum(1 for e in xref_list if e["status"] == "resolved"),
+            )
 
             quality = _source_quality(session, article)
 
@@ -683,11 +679,7 @@ def export_articles_to_json(
                 # Marked-up display title («B»/«I»/«SC» + «FN») when the
                 # title carries formatting/footnotes the plain title lost;
                 # null for plain titles (viewer falls back to `title`).
-                "title_display": (
-                    title_display_override.get(article.id)
-                    if title_display_override is not None
-                    else article.title_display
-                ),
+                "title_display": title_display_override.get(article.id),
                 "article_type": article.article_type,
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),
@@ -760,19 +752,7 @@ def export_articles_to_json(
         # Write index file for the viewer
         index = []
         for article in articles:
-            xref_count = (
-                session.query(CrossReference)
-                .filter(CrossReference.article_id == article.id)
-                .count()
-            )
-            resolved_count = (
-                session.query(CrossReference)
-                .filter(
-                    CrossReference.article_id == article.id,
-                    CrossReference.status == "resolved",
-                )
-                .count()
-            )
+            xref_count, resolved_count = xref_counts[article.id]
             body = _body_for(article)
             # (Chop-up at source — no title strip here.)
             # First ~10 words of body for disambiguation in the index.

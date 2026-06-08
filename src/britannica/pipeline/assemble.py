@@ -25,7 +25,11 @@ def assemble_corpus(session):
     Returns ``(all_articles, corpus, title_display)`` — the article rows
     (for the index), ``{id: body}``, and ``{id: title_display|None}``.
     """
-    all_articles = session.query(Article).order_by(Article.id).all()
+    # NOTE: no order_by — must match resolve_xrefs_all's query order exactly,
+    # because the collider tie-break (title_map first-wins) depends on the
+    # order articles arrive in.  Imposing order_by(id) here silently reorders
+    # every fuzzy-resolved collider (see NARSES (Roman General)).
+    all_articles = session.query(Article).all()
     corpus: dict[int, str] = {}
     title_display: dict[int, str | None] = {}
     for article in all_articles:
