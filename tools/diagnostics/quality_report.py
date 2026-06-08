@@ -24,7 +24,7 @@ REPORT_DIR = Path("data/derived/quality_reports")
 def run_db_checks() -> dict:
     """Database-level quality checks."""
     from britannica.db.models import (
-        Article, ArticleSegment, CrossReference, SourcePage,
+        Article, ArticleSegment, SourcePage,
     )
     from britannica.db.session import SessionLocal
 
@@ -37,6 +37,21 @@ def run_db_checks() -> dict:
             .all()
         )
 
+        # Body + xrefs now live in the exported JSON, not the DB.
+        import glob
+        _recs = [
+            json.loads(open(_f, encoding="utf-8").read())
+            for _f in glob.glob("data/derived/articles/*.json")
+            if not _f.endswith(("index.json", "contributors.json"))
+        ]
+        bodies = {r["id"]: (r.get("body") or "") for r in _recs}
+        _xr_resolved = sum(
+            1 for r in _recs for x in r.get("xref_list", [])
+            if x.get("status") == "resolved")
+        _xr_unresolved = sum(
+            1 for r in _recs for x in r.get("xref_list", [])
+            if x.get("status") == "unresolved")
+
         results = {}
 
         # Article count
@@ -45,7 +60,7 @@ def run_db_checks() -> dict:
         # Length distribution
         length_buckets = Counter()
         for a in articles:
-            wc = len((a.body or "").split())
+            wc = len(bodies.get(a.id, "").split())
             if wc == 0:
                 length_buckets["0_empty"] += 1
             elif wc <= 5:
@@ -83,7 +98,8 @@ def run_db_checks() -> dict:
         # Body starts lowercase (almost always legitimate — encyclopedia
         # definitions continue from the bold title)
         results["lowercase_body_total"] = sum(
-            1 for a in articles if (a.body or "") and (a.body or "")[0].islower()
+            1 for a in articles
+            if bodies.get(a.id, "") and bodies[a.id][0].islower()
         )
 
         # Embedded bold headings
@@ -91,7 +107,7 @@ def run_db_checks() -> dict:
         bold_close = "\u00ab/B\u00bb"
         embedded = 0
         for a in articles:
-            body = a.body or ""
+            body = bodies.get(a.id, "")
             search_body = body[20:] if len(body) > 20 else ""
             for m in re.finditer(
                 re.escape(bold_open) + r"([A-Z][A-Z\s,.\-']+)" + re.escape(bold_close),
@@ -107,15 +123,9 @@ def run_db_checks() -> dict:
                 break
         results["embedded_bold_headings"] = embedded
 
-        # Cross-references
-        resolved = session.query(CrossReference).filter(
-            CrossReference.status == "resolved"
-        ).count()
-        unresolved = session.query(CrossReference).filter(
-            CrossReference.status == "unresolved"
-        ).count()
-        results["xrefs_resolved"] = resolved
-        results["xrefs_unresolved"] = unresolved
+        # Cross-references (from the exported JSON)
+        results["xrefs_resolved"] = _xr_resolved
+        results["xrefs_unresolved"] = _xr_unresolved
 
         # Uncovered pages (mid-volume only)
         uncovered_mid = 0

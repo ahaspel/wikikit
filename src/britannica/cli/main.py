@@ -6,7 +6,7 @@ from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
 from britannica.pipeline.stages.prepare_wikitext import prepare_wikitext
 from britannica.db.models import (
-    Article, ArticleSegment, CrossReference, SourcePage)
+    Article, ArticleSegment, SourcePage)
 from britannica.pipeline.stages.detect_boundaries import (
     persist_articles, wipe_articles)
 from britannica.pipeline.stages.super_detect import detect_boundaries
@@ -16,10 +16,6 @@ from britannica.pipeline.stages.classify_articles import classify_articles_for_v
 from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 from britannica.pipeline.stages.extract_images import extract_images_for_volume
-from britannica.review.reports import (
-    get_unresolved_xrefs_report,
-    get_backlinks_report,
-)
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -118,46 +114,6 @@ def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
     print(f"Detected and created {count} articles for volume {volume}.")
 
 
-@app.command("list-articles")
-def list_articles(volume: int = typer.Option(None)) -> None:
-    session = SessionLocal()
-    try:
-        query = session.query(Article)
-        if volume is not None:
-            query = query.filter(Article.volume == volume)
-
-        for article in query.order_by(Article.volume, Article.page_start).all():
-            body = repr(article.body[:60])
-            print(
-                f"vol={article.volume} pages={article.page_start}-{article.page_end} "
-                f"title={article.title!r} body={body}"
-            )
-    finally:
-        session.close()
-        
-@app.command("list-xrefs")
-def list_xrefs(volume: int = typer.Option(None)) -> None:
-    session = SessionLocal()
-    try:
-        query = session.query(CrossReference, Article).join(
-            Article, CrossReference.article_id == Article.id
-        )
-        if volume is not None:
-            query = query.filter(Article.volume == volume)
-
-        rows = query.order_by(Article.title, CrossReference.id).all()
-
-        for xref, article in rows:
-            print(
-                f"article={article.title!r} "
-                f"type={xref.xref_type!r} "
-                f"surface={xref.surface_text!r} "
-                f"target={xref.normalized_target!r} "
-                f"status={xref.status!r}"
-            )
-    finally:
-        session.close()
-        
 @app.command("extract-images")
 def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
     count = extract_images_for_volume(volume)
@@ -183,50 +139,6 @@ def classify_articles_cmd(volume: int = typer.Argument(...)) -> None:
         print(f"  {article_type}: {count}")
     print(f"Classified {sum(counts.values())} articles for volume {volume}.")
 
-
-@app.command("report-unresolved-xrefs")
-def report_unresolved_xrefs(volume: int = typer.Argument(...)) -> None:
-    report = get_unresolved_xrefs_report(volume)
-
-    if not report:
-        print(f"No unresolved cross-references for volume {volume}.")
-        return
-
-    total = 0
-
-    for article_title, xrefs in report.items():
-        print(f"{article_title}:")
-        for xref in xrefs:
-            print(
-                f"  - type={xref.xref_type!r} "
-                f"surface={xref.surface_text!r} "
-                f"target={xref.normalized_target!r}"
-            )
-            total += 1
-
-    print(f"\nTotal unresolved cross-references: {total}")
-
-@app.command("report-backlinks")
-def report_backlinks(volume: int = typer.Argument(...)) -> None:
-    report = get_backlinks_report(volume)
-
-    if not report:
-        print(f"No backlinks for volume {volume}.")
-        return
-
-    total = 0
-
-    for target_title, xrefs in report.items():
-        print(f"{target_title} ←")
-        for xref in xrefs:
-            print(
-                f"  - from_article_id={xref.article_id} "
-                f"type={xref.xref_type!r} "
-                f"surface={xref.surface_text!r}"
-            )
-            total += 1
-
-    print(f"\nTotal backlinks: {total}")
 
 @app.command("export-articles")
 def export_articles_cmd(

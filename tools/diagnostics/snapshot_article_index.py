@@ -28,7 +28,7 @@ sys.stdout.reconfigure(encoding="utf-8") if hasattr(
     sys.stdout, "reconfigure") else None
 
 from britannica.db.session import SessionLocal
-from britannica.db.models import Article, CrossReference
+from britannica.db.models import Article
 from britannica.export.pages import _printed_page
 
 
@@ -61,26 +61,27 @@ def main():
                     f"{a.article_type or 'article'}\t{a.title}\n")
         print(f"Wrote {len(articles)} articles → {out_articles}")
 
-        # Index articles by id for xref source lookup
-        art_by_id = {a.id: a for a in articles}
-        xrefs = (s.query(CrossReference)
-                 .order_by(CrossReference.article_id,
-                           CrossReference.xref_type,
-                           CrossReference.surface_text)
-                 .all())
+        # Xrefs live in the exported JSON now, not the DB.
+        import glob
+        import json
+        rows = []
+        for fp in sorted(glob.glob("data/derived/articles/*.json")):
+            if fp.endswith(("index.json", "contributors.json")):
+                continue
+            rec = json.loads(Path(fp).read_text(encoding="utf-8"))
+            for x in rec.get("xref_list", []):
+                rows.append((
+                    rec.get("volume", ""), rec.get("title", ""),
+                    x.get("xref_type", ""), x.get("surface_text", ""),
+                    x.get("status", ""), x.get("normalized_target", ""),
+                ))
+        rows.sort(key=lambda r: (str(r[0]), str(r[1]), str(r[2]), str(r[3])))
         with out_xrefs.open("w", encoding="utf-8") as f:
             f.write("source_vol\tsource_title\txref_type\tsurface_text\t"
-                    "status\ttarget_title\n")
-            for x in xrefs:
-                src = art_by_id.get(x.article_id)
-                if not src:
-                    continue
-                tgt = art_by_id.get(x.target_article_id)
-                tgt_title = tgt.title if tgt else ""
-                f.write(
-                    f"{src.volume}\t{src.title}\t{x.xref_type}\t"
-                    f"{x.surface_text}\t{x.status}\t{tgt_title}\n")
-        print(f"Wrote {len(xrefs)} xrefs → {out_xrefs}")
+                    "status\ttarget\n")
+            for r in rows:
+                f.write("\t".join(str(c) for c in r) + "\n")
+        print(f"Wrote {len(rows)} xrefs → {out_xrefs}")
     finally:
         s.close()
 
