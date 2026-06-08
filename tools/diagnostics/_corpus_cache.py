@@ -51,11 +51,11 @@ def _build() -> list[tuple[int, int, int, str]]:
     for aid, seg_text, pg, v in rows:
         if aid != cur_id:
             if cur_id is not None:
-                out.append((cur_id, vol, page0, "\n".join(parts)))
+                out.append((cur_id, vol, page0, "".join(parts)))
             cur_id, vol, page0, parts = aid, v, pg, []
-        parts.append(f"\x01PAGE:{pg}\x01{seg_text or ''}")
+        parts.append(seg_text or "")
     if cur_id is not None:
-        out.append((cur_id, vol, page0, "\n".join(parts)))
+        out.append((cur_id, vol, page0, "".join(parts)))
     return out
 
 
