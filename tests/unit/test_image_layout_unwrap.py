@@ -177,7 +177,7 @@ def test_sewing_machines_fig1_image_and_caption():
 def test_abbey_02_float_is_faithful_figtable():
     """`{{img float|cap=…}}` is a FLOATED faithful figtable, not a captioned
     IMG.  The image is a pure leaf (caption None); the cap text rides in a
-    cell with its «SC»/«BR» markup intact — there is no "caption" concept on
+    cell with its «SC» markup intact and its <br>s carried as HTML — there is no
     images and no clean_caption flattening."""
     body = _transform_text_v2(ABBEY_02_FLOAT, volume=1, page_number=44)
     assert 'class="figtable"' in body and "float:" in body
@@ -189,7 +189,7 @@ def test_abbey_02_float_is_faithful_figtable():
     # Caption is a cell with markup preserved (NOT flattened to prose).
     assert "«SC»Fig. 2.«/SC»" in body
     assert "Plan of Coptic Monastery" in body
-    assert "«BR»" in body  # the source <br>s survive as line breaks
+    assert "<br" in body  # source <br>s carried verbatim (renderable), not «BR»
 
 
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────

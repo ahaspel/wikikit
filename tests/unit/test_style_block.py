@@ -1,14 +1,14 @@
 """Style-unification, Step 1: the ONE style-marker emitter `style_block`.
 
-`style_block` consolidates the scattered emit-side style producers — `_ts_block`
+`style_block` consolidated the scattered emit-side style producers — `_ts_block`
 (`<p>`/`{{Ts}}`), `_style_marker` (`{{center}}`/`{{csc}}`/`<div>`), `styled_marker`
-(`<span style>`) — into one function.  These tests pin it BYTE-IDENTICAL to the
-emitters it will replace, so wiring them onto it (Step 2+) is provably inert.
+(`<span style>`) — into one function.  These tests pin its behaviour against the
+local `_ts_block_ref` and the live `styled_marker`.  (The `_style_marker`
+byte-identity cross-check retired with that producer in the figure collapse.)
 """
 from __future__ import annotations
 
 from britannica.pipeline.stages.elements._tables import style_block, styled_marker
-from britannica.pipeline.stages.elements._figure_faithful import _style_marker
 
 
 def _ts_block_ref(css_list, content):
@@ -27,21 +27,6 @@ def test_matches_ts_block():
                      ["text-indent:-2em", "padding-left:4em"]):
         assert style_block("BODY", css=";".join(css_list)) == \
             _ts_block_ref(css_list, "BODY")
-
-
-def test_matches_style_marker():
-    # `_style_marker` is block-only (tag defaults to DIV); centre/small-caps/css.
-    for kwargs in (dict(), dict(ctr=True), dict(sc=True),
-                   dict(sc=True, ctr=True),           # csc → «CTR»«SC»…«/SC»«/CTR»
-                   dict(css="padding:1em"),
-                   dict(css="text-align:center"),     # _style_marker has no css→ctr,
-                   ):                                   # but style_block derives it
-        expected = _style_marker("BODY", **{k: v for k, v in kwargs.items()
-                                            if k in ("ctr", "sc", "css")})
-        # _style_marker doesn't derive «CTR» from css, so reconcile that one case:
-        if kwargs.get("css") == "text-align:center" and not kwargs.get("ctr"):
-            expected = "«CTR»BODY«/CTR»"
-        assert style_block("BODY", **kwargs) == expected
 
 
 def test_matches_span_carry():

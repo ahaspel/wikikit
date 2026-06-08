@@ -20,11 +20,10 @@ from __future__ import annotations
 import pytest
 
 from britannica.pipeline.stages.elements import process_elements, ElementContext
-from britannica.pipeline.stages.transform_articles.body_text import _apply_markup
 
 
 def _render(text: str) -> str:
-    return process_elements(text, _apply_markup, ElementContext(volume=1, page_number=1))
+    return process_elements(text, ElementContext(volume=1, page_number=1))
 
 
 # Each fixture is a self-contained construct whose producer is NOT body-text:

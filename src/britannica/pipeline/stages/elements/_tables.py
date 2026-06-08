@@ -1221,8 +1221,8 @@ def _is_verse_table(inner: str) -> bool:
 def _process_table_unified(
     raw: str,
     inner: str,
-    inner_registry: "ElementRegistry | None" = None,
-    context=None,
+    inner_registry: "ElementRegistry | None",
+    context,
 ) -> str:
     """The ONE table producer: `table → row → cell → body-text`, emitting
     full-style ``«HTMLTABLE»`` for every grid label (DATA_TABLE / COMPLEX_HTML /
@@ -1256,13 +1256,12 @@ def _process_table_unified(
     # second body-text pass), so a styled wrapper / fraction / nested table /
     # math in a cell is handled as the element it is.  `_allow_figure=False`: a
     # bare `[[File:]]` in a cell is an inline image leaf, not a re-recognized
-    # figure.  Only when `context` is threaded (so far the article TABLE path);
-    # legacy callers without it keep the body-text cell path.
-    cell_recurse = None
-    if context is not None:
-        from britannica.pipeline.stages.elements import process_elements
-        cell_recurse = (lambda c: process_elements(
-            c, context, _allow_figure=False))
+    # figure.  Unconditional: a cell is prose in a box, so it ALWAYS recurses;
+    # `context` is a required arg (no None default) — recursion is the floor,
+    # never an opt-in, and there is no no-recurse fallback.
+    from britannica.pipeline.stages.elements import process_elements
+    cell_recurse = (lambda c: process_elements(
+        c, context, _allow_figure=False))
     # No `_html_cell_clean` preclean: an HTML cell recurses RAW through
     # `process_elements` exactly like a wiki cell — its `<sub>`/`<br>`/styler/
     # nested-table content is handled as the element it is, not flattened in
