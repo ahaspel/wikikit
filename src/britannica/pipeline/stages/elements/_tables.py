@@ -94,7 +94,7 @@ def split_wiki_row(row_text: str) -> list[tuple[str, str, str]]:
     # space-join doesn't flatten their internal line breaks.  In the
     # production data-table path cells carry child elements as `\x03`
     # placeholders (never raw `<poem>`), so this matches nothing there —
-    # byte-identical; it bites only the faithful-figure path, which feeds
+    # byte-identical; it bites only the unified producer's figure path, which feeds
     # raw source through here and owns a `<poem>` legend's per-entry lines.
     nlblocks: list[str] = []
 
@@ -1280,7 +1280,7 @@ def _process_table_unified(
     # (`class=wikitable` / `border=N` / `rules=`) → bordered `data-table`;
     # everything else (layout `{|`, verse / single-column quotes) → borderless
     # `figtable`.  We carry the source's verdict, not a default — same rule
-    # faithful's own table branch uses.
+    # `_process_table_unified`'s own table branch uses.
     if flavor == "html":
         om = re.match(r"\s*<table\b([^>]*)>", raw, re.I)
     else:

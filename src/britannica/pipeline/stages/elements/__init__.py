@@ -323,7 +323,7 @@ _BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
 def _styled_br_to_marker(text: str) -> str:
     """A styled wrapper is a display block (centred equations, stacked labels);
     its OWN `<br>` is a meaningful line break, so carry it as the canonical
-    «BR» (matching the prior faithful-figure rendering).  Only TOP-LEVEL `<br>`
+    «BR» (matching the prior figure producer's rendering).  Only TOP-LEVEL `<br>`
     is converted — a `<br>` inside a nested balanced construct (table cell,
     nested wrapper) belongs to that construct's own producer, so we skip every
     nested span whole via the walker's one `_construct_end` matcher.  Without
@@ -372,7 +372,7 @@ def _process_styled(raw, inner, context, inner_registry):
     pure-centred block, `«DIV[style:CSS]»` / `«SPAN[style:CSS]»` otherwise.
 
     Subsumes body-text's `_p_ts` / `_div_ts` / `_span_ts` (the `<p>`/`<div>`/
-    `<span>` `{{Ts}}`-opener rewriters) and the styled-`<div>`→faithful gate.
+    `<span>` `{{Ts}}`-opener rewriters) and the styled-`<div>`→figure gate.
     The `_p_ts` image-drop defect is fixed for free: an `<p {{Ts}}>[[Image]]…</p>`
     nested where figure-recognition is off now recurses its inner through
     `process_elements`, so the image is produced rather than dropped."""
@@ -523,7 +523,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
         _process_chemistry_layout(raw, inner, reg),
     # Single-label kinds — element_type == label.
-    # DJVU_CROP — a `{{Css image crop}}` is just another image; the faithful
+    # DJVU_CROP — a `{{Css image crop}}` is just another image; the unified
     # figure producer recognizes it as an image leaf (stateless filename) and,
     # for the `{|`-wrapped form, recurses the caption/attribution cells.
     "DJVU_CROP": lambda raw, inner, ctx, reg:
@@ -538,12 +538,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # IMAGE is just a figure whose raw the old `_process_image` folded (caption
     # into the marker) and refused to recurse (dropping sibling blocks like a
     # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
-    # faithful recursive producer: image → leaf, caption → its own «CTR» block.
+    # unified recursive producer (`_process_table_unified`): image → leaf, caption → its own «CTR» block.
     "IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
-    # INLINE_IMAGE is the one image label faithful can't own: an inline glyph
+    # INLINE_IMAGE is the one image label the unified producer can't own: an inline glyph
     # needs `align=inline` (so the viewer renders it at source size in the
-    # prose flow), and faithful's leaf is label-blind — it works from raw and
+    # prose flow), and the unified producer's leaf is label-blind — it works from raw and
     # can't know the walker classified this one inline.  Keep the inline-aware
     # producer (a retained leaf utility) for it.
     "INLINE_IMAGE": lambda raw, inner, ctx, reg:
@@ -664,7 +664,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
 
 
 # ── ONE figure/image producer ─────────────────────────────────────────────
-# Route the ENTIRE figure/image family through the single faithful recursive
+# Route the ENTIRE figure/image family through the single unified recursive
 # producer.  With one producer, the classifier's figure-label distinctions
 # (LAYOUT_WRAPPER vs LEGENDED vs CAPTIONED_FIGURE_INLINE vs IMAGE vs …) no longer
 # change the output — every one decomposes to the ground identically — so a
