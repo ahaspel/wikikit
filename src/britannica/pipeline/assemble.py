@@ -2,7 +2,7 @@
 decorate > serialize, with no per-article DB body/xref/title writes.
 
 Walks every article into an in-memory ``{id: body}`` corpus (plus a
-parallel ``{id: title_display}`` map) via ``produce_article``, builds the
+parallel ``{id: title_display}`` map) via ``walk_article``, builds the
 resolution index off that corpus, then serializes each volume through the
 export's decorator path (``body_override`` + ``title_display_override`` +
 ``link_index``).  This is the single pass that replaces the
@@ -16,7 +16,7 @@ from britannica.db.models import Article
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.stages.resolve_xrefs import build_resolution_index
-from britannica.pipeline.stages.transform_articles import produce_article
+from britannica.pipeline.stages.transform_articles import walk_article
 
 
 def assemble_corpus(session):
@@ -33,7 +33,7 @@ def assemble_corpus(session):
     corpus: dict[int, str] = {}
     title_display: dict[int, str | None] = {}
     for article in all_articles:
-        body, disp = produce_article(session, article)
+        body, disp = walk_article(session, article)
         corpus[article.id] = body
         title_display[article.id] = disp
     return all_articles, corpus, title_display

@@ -44,6 +44,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_PAGE,
     SHAPE_SECTION,
     SHAPE_STYLED,
+    SHAPE_TITLE,
 )
 from britannica.pipeline.stages.elements._figure import (
     figure_tail_end,
@@ -397,6 +398,11 @@ def _is_inline_image_position(text: str, pos: int) -> bool:
 # export reads it off the tree.
 _PAGE_RE = re.compile(r"\x01PAGE:\d+\x01")
 
+# TITLE — the «TITLE»…«/TITLE» stamp injected by `preprocess_article` around the carved
+# title span, so the title rides the ONE walk (recursed into the title node) instead of
+# a re-walked side field.  Non-greedy: a title never nests another «TITLE».
+_TITLE_RE = re.compile(r"«TITLE».*?«/TITLE»", re.DOTALL)
+
 
 # Recognizer dispatch table in opener-specificity order.  At each
 # opener-hint position the linear scanner walks this list and uses
@@ -418,6 +424,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_PAGE,              _PAGE_RE),
+    (SHAPE_TITLE,             _TITLE_RE),
 ]
 
 
@@ -429,6 +436,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
 # triggers dispatch); the order below is just readable grouping.
 _OPENER_HINT_RE = re.compile(
     r"\x01PAGE:"                    # PAGE break bookkeeping marker
+    r"|«TITLE"                      # TITLE stamp (preprocess_article)
     r"|\{\{chart2/start"             # CHART2
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref

@@ -60,6 +60,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_PAGE,
     SHAPE_SECTION,
     SHAPE_STYLED,
+    SHAPE_TITLE,
     strip_outer,
 )
 from britannica.pipeline.stages.elements._walker import walk
@@ -380,6 +381,8 @@ def _derive_label(
         return "CENTER"  # only the c-family reaches SHAPE_CENTER (walker)
     if shape == SHAPE_STYLED:
         return "STYLED"  # styled <div>/<p>/<span> (walker); producer derives CSS
+    if shape == SHAPE_TITLE:
+        return "TITLE"  # «TITLE»…«/TITLE» stamp (preprocess_article); producer recurses
     raise ValueError(f"Unknown shape: {shape!r}")
 
 

@@ -630,6 +630,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         f"[hieroglyph: {inner}]",
     "OUTLINE": lambda raw, inner, ctx, reg: _process_outline(inner),
     "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
+    # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  Recurses its inner
+    # (the carved title span) like any wrapper; produce_tree substitutes the children,
+    # so the node carries the fully-walked title = today's `title_display`.  The export
+    # reads it off the tree and strips the «TITLE:…«/TITLE» wrapper.
+    "TITLE": lambda raw, inner, ctx, reg: f"«TITLE:{inner}«/TITLE»",
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).

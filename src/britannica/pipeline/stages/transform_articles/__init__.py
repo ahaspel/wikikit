@@ -68,103 +68,16 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
 # and not just a short word in a data table cell.
 
 
-def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
-    """Transform an article's raw wikitext body into the internal marker
-    format.
+def preprocess_article(session, article) -> str:
+    """Per-article preprocessing: assemble the article's segments into one raw text
+    and stamp ``«TITLE»…«/TITLE»`` around the carved title span, so the title rides the
+    SINGLE walk as a recognized node instead of a re-walked side field.
 
-    Hand-off is honest: corrections-only raw goes straight to
-    ``process_elements`` (walker → classifier → producer).  Producers
-    transform; classifiers may call Layer-A utilities internally as
-    diagnostics but pass the raw they received to the producer unchanged.
-    Post-extraction steps below (chart injection, hyphenation rejoin,
-    paragraph reflow, blank-line collapse) operate on the producer
-    output's body shape, not on the raw.
-
-    The body is expected to arrive title-clean: detect_boundaries chops
-    the title out at source (see ``_extract_bold_delimited_title`` +
-    ``produce_title``).  No title-bold strip happens here.  Articles in
-    the DB whose segment_text was persisted BEFORE the chop-up fix will
-    show a leading bold title duplicate in their output until they are
-    re-detected — that's a documented chop-up failure, not something to
-    sweep.
+    The title bracket is a transform, legitimately placed here: ``preprocess_article``
+    runs per article, so ``beginning`` and ``once`` are free (the article IS the unit,
+    there is no "first" to hunt), and it is preprocessing — one of the two transform
+    homes.  (PAGE stamping stays here for now; it moves to recognition in its own step.)
     """
-    from britannica.pipeline.stages.elements import (
-        ElementContext, process_elements)
-
-    # Source-text corrections (transcription typos in wikisource) are
-    # applied once during prepare_wikitext, mutating `wikitext` so all
-    # downstream stages — including this one — operate on already-
-    # corrected text.  Producers receive the corrected raw and transform
-    # internally; Layer-A utilities remain available for producers /
-    # classifiers to call privately, but the pipeline-style chain that
-    # used to thread their outputs across stages here has been deleted.
-    # Source cleaning (noinclude strip, fine-print token strip) now happens
-    # ONCE in `preprocess` on the whole volume stream, before slicing — so the
-    # segments reaching here arrive clean.  Verified no-op for the article path:
-    # 0 `<noinclude>` and 0 fine-print tokens in article segments (the only
-    # residual fine-print tokens are in PLATE segments, which go through
-    # `parse_plate`, not this function).
-    context = ElementContext(volume=volume, page_number=page_number)
-    # Author signature footer ({{EB1911 footer [double] initials|…}}, usually
-    # wrapped in {{Fs|108%|…}}) is REDUNDANT in the body (the author is shown in
-    # the top attribution line, built from the contributor sources; SAFE because
-    # extract_contributors reads the signature from segment_text, not this body).
-    # Now consumed by the WALKER: the footer is a CONTRIBUTOR_FOOTER element
-    # (empty body output) and {{Fs}} a recognized styler that recurses it.  The
-    # old named-removal re.sub is DELETED — its greedy trailing `\}+` ate the
-    # enclosing {{Fine block}}'s closing braces, unbalancing it (the holdover
-    # `{{Fine block|`/`{{Fs|108%|` leak).
-    #
-    # Author attribution is a FIELD, like the title: cut the footer + {{right}}/
-    # {{float right}} signature BEFORE the walker.  They're bound to the DB from the raw
-    # by extract_contributors and re-rendered as the export byline, so the in-body copy
-    # is redundant.  The cut is SCOPED to the signature shapes, so prose [[Author:…]]
-    # citations are untouched.  Subsumes the old CONTRIBUTOR_FOOTER walker element.
-    from britannica.pipeline.stages.extract_contributors import strip_attributions
-    raw_wikitext = strip_attributions(raw_wikitext)
-    text = process_elements(raw_wikitext, context)
-
-    # (chart2 genealogical-tree images are substituted at source in
-    # `make_stream`/preprocess now — the old post-walker injection loop is gone.)
-
-    # Page-transition seams are healed ONCE, in `preprocess`, on the continuous
-    # stream; the article body is a faithful slice of that clean stream, so the
-    # text reaching here is already clean.  No seam handling between preprocess
-    # and the walker; the former post-producer reflow/hyphenation passes (illegal
-    # — producer output is the final body) are deleted.
-
-    # (No paragraph reflow: a hard-wrapped single \n is already a space to the
-    # viewer's `<p>` (white-space:normal), \n\n is preserved as a real break, and
-    # block-marker internal whitespace is ignored by KaTeX/HTML.  reflow_paragraphs
-    # was therefore render-neutral and is deleted — verify at the rebuild sweep.)
-
-    # (No leading-comma strip: the title cut owns its trailing comma —
-    # `produce_title` already lstrips `" \t,."` off the body at the cut — and the
-    # body now begins with a `\x01PAGE\x01` marker anyway, so a `^[\s,]+` strip
-    # could never match.  Verified dead (0 articles) and deleted.)
-
-    # (No orphan-punctuation cleanup.  The old `, ,`/`, ;`/`, .` collapse claimed
-    # to fix templates "stripped without display text" — but honest producers
-    # recurse the display, so that never happens now.  What it actually did, across
-    # 335 firing articles, was CORRUPT legitimate content: it mangled table ditto
-    # marks (`,, ,,` → `,,,`) and editorialised source typos (`S. Cal,;` →
-    # `S. Cal;`).  Both unfaithful; source quality is end-stage — render what's
-    # there.  Deleted.)
-
-    # (No blank-line collapse: the viewer splits on `\n\n`, so it already treats
-    # `\n\n\n+` as a single paragraph break — the surplus newline becomes an empty
-    # paragraph that's dropped.  `\n{3,}`->`\n\n` was render-neutral and is
-    # deleted; verify at the rebuild sweep.)
-
-    return text
-
-
-
-
-def produce_article(session, article) -> tuple[str, str | None]:
-    """Walk one article's segments into ``(body, title_display)`` — the body
-    production shared by ``transform_articles`` (which persists it) and the
-    in-memory assemble (which holds it).  No DB write here."""
     segments = (
         session.query(ArticleSegment)
         .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
@@ -173,20 +86,65 @@ def produce_article(session, article) -> tuple[str, str | None]:
         .add_columns(SourcePage.page_number)
         .all()
     )
-    joined_raw = "".join(
+    joined = "".join(
         f"\x01PAGE:{page_number}\x01{seg.segment_text or ''}"
         for seg, page_number in segments)
-    body = _transform_text_v2(
-        joined_raw, article.volume,
-        segments[0][1] if segments else 0,
-    ) if joined_raw else ""
-    title_display = None
     if article.title_raw:
-        _disp = _transform_text_v2(
-            article.title_raw, article.volume,
-            segments[0][1] if segments else article.page_start,
-        ).strip()
-        title_display = _disp if (
-            _disp and (re.search(r"«(?:I|SC|FN)", _disp)
-                       or _disp.count("«B»") > 1)) else None
+        return f"«TITLE»{article.title_raw}«/TITLE»{joined}"
+    return joined
+
+
+_TITLE_NODE_RE = re.compile(r"«TITLE:(.*?)«/TITLE»", re.DOTALL)
+
+
+def walk_article(session, article) -> tuple[str, str | None]:
+    """Walk one article in a SINGLE pass and split off its title node.
+
+    ``preprocess_article`` stamps «TITLE» around the carved title; the walk
+    recurses it into a ``«TITLE:…«/TITLE»`` node alongside the body; we split
+    that node off here.  Replaces ``produce_article``'s two-walk shape (body walk
+    + a separate ``title_raw`` walk) — the title now rides the ONE walk, verified
+    byte-identical title_display + body.
+
+    (``strip_attributions`` is still applied here as the interim footer cut; it
+    moves to the contributor decorator, which will consume the recognized
+    CONTRIBUTOR_FOOTER nodes instead of pre-stripping the footer.)
+    """
+    from britannica.pipeline.stages.elements import (
+        ElementContext, process_elements)
+    from britannica.pipeline.stages.extract_contributors import strip_attributions
+
+    raw = strip_attributions(preprocess_article(session, article))
+    if not raw:
+        return "", None
+    walked = process_elements(
+        raw, ElementContext(volume=article.volume,
+                            page_number=article.page_start))
+    m = _TITLE_NODE_RE.search(walked)
+    if not m:
+        return walked, None
+    title_disp = m.group(1)
+    title_display = title_disp if (
+        re.search(r"«(?:I|SC|FN)", title_disp)
+        or title_disp.count("«B»") > 1) else None
+    body = _TITLE_NODE_RE.sub("", walked, count=1)
     return body, title_display
+
+
+def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
+    """Walk a raw article body to the internal marker format — thin shim.
+
+    The PRODUCTION body producer is now ``walk_article`` (one walk, title as a
+    recognized node).  This remains ONLY for the tests/diagnostics that walk a raw
+    string directly; it is ``strip_attributions`` + ``process_elements`` and nothing
+    else.  It collapses to a bare ``process_elements`` call — at which point those
+    callers use that directly — once the contributor decorator removes the
+    ``strip_attributions`` pre-cut.
+    """
+    from britannica.pipeline.stages.elements import (
+        ElementContext, process_elements)
+    from britannica.pipeline.stages.extract_contributors import strip_attributions
+
+    return process_elements(
+        strip_attributions(raw_wikitext),
+        ElementContext(volume=volume, page_number=page_number))

@@ -47,8 +47,10 @@ class TestShapeVocabulary:
         # wiping `<noinclude>` tags upstream in `_transform_text_v2`
         # — chrome content owned by explicit template recognizers,
         # plate pipeline uses its own walker.
-        # Bump this count alongside ``_shapes.SHAPES``.
-        assert len(SHAPES) == 15
+        # Bump this count alongside ``_shapes.SHAPES``.  Includes PAGE
+        # (``\x01PAGE:N\x01``) and TITLE (the ``«TITLE»…«/TITLE»`` stamp from
+        # ``preprocess_article``) — both injected markers recognized as elements.
+        assert len(SHAPES) == 17
         assert SHAPE_FIGURE in SHAPES
         assert SHAPE_SECTION in SHAPES
         assert SHAPE_STYLED in SHAPES

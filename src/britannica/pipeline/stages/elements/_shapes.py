@@ -38,6 +38,7 @@ SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">co
 SHAPE_CENTER            = "CENTER"             # {{NAME/s}}…{{NAME/e}} paired-wrapper span
 SHAPE_STYLED            = "STYLED"             # <div>/<p>/<span> carrying {{Ts}}/style=/align=
 SHAPE_PAGE              = "PAGE"               # page-break bookkeeping marker (\x01PAGE:N\x01)
+SHAPE_TITLE             = "TITLE"              # «TITLE»…«/TITLE» stamp (preprocess_article)
 
 
 SHAPES: frozenset[str] = frozenset({
@@ -57,6 +58,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_CENTER,
     SHAPE_STYLED,
     SHAPE_PAGE,
+    SHAPE_TITLE,
 })
 
 
@@ -194,5 +196,12 @@ def strip_outer(shape: str, raw: str) -> str:
         # pair inside survives into the inner for the recursive walk.
         s = re.sub(r"^\{\{\s*[^{}]*?/s\s*\}\}", "", raw, flags=re.IGNORECASE)
         s = re.sub(r"\{\{\s*[^{}]*?/e\s*\}\}\s*$", "", s, flags=re.IGNORECASE)
+        return s
+    if shape == SHAPE_TITLE:
+        # Peel the «TITLE»…«/TITLE» stamp; the inner is the carved title span
+        # (markers + raw <ref>/{{sc}}), handed back to the walker so the title node
+        # is produced recursively into the same string as today's `title_display`.
+        s = re.sub(r"^«TITLE»", "", raw)
+        s = re.sub(r"«/TITLE»\s*$", "", s)
         return s
     raise ValueError(f"Unknown shape: {shape!r}")
