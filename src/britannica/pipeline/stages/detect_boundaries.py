@@ -2048,7 +2048,7 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
 
 def wipe_articles(volume: int) -> int:
     """Delete every Article in ``volume`` and all FK-dependent rows
-    (ArticleSegment, ArticleImage, ArticleContributor, CrossReference).
+    (ArticleSegment, ArticleContributor, CrossReference).
     Returns the count of articles deleted.
 
     SourcePages are kept (they're owned by the import stage).  Callers
@@ -2060,7 +2060,7 @@ def wipe_articles(volume: int) -> int:
     than deleted, so the originating volume's resolution work survives.
     """
     from britannica.db.models import (
-        ArticleImage, ArticleContributor, CrossReference)
+        ArticleContributor, CrossReference)
     session = SessionLocal()
     try:
         art_ids = [a[0] for a in session.query(Article.id).filter(
@@ -2077,9 +2077,6 @@ def wipe_articles(volume: int) -> int:
         ).delete(synchronize_session=False)
         session.query(ArticleContributor).filter(
             ArticleContributor.article_id.in_(art_ids)
-        ).delete(synchronize_session=False)
-        session.query(ArticleImage).filter(
-            ArticleImage.article_id.in_(art_ids)
         ).delete(synchronize_session=False)
         session.query(ArticleSegment).filter(
             ArticleSegment.article_id.in_(art_ids)

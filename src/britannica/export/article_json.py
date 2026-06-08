@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 from britannica.export.sections import detect_sections
 from britannica.db.models import (
-    Article, ArticleContributor, ArticleImage, ArticleSegment,
+    Article, ArticleContributor, ArticleSegment,
     Contributor, ContributorInitials, CrossReference, SourcePage,
 )
 from britannica.db.session import SessionLocal
@@ -694,20 +694,6 @@ def export_articles_to_json(
                 "body": cleaned_body,
                 "sections": detect_sections(cleaned_body),
                 "xrefs": xref_list,
-                "images": [
-                    {
-                        "filename": img.filename,
-                        "caption": img.caption,
-                        "commons_url": img.commons_url,
-                        "source_page_id": img.source_page_id,
-                    }
-                    for img in (
-                        session.query(ArticleImage)
-                        .filter(ArticleImage.article_id == article.id)
-                        .order_by(ArticleImage.source_page_id, ArticleImage.sequence_in_article)
-                        .all()
-                    )
-                ],
                 "plates": [
                     {
                         "title": plate_info["title"],

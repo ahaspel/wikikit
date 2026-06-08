@@ -1,10 +1,10 @@
 """Single source-of-truth parser for the Wikisource ``{{img float}}`` template.
 
 Used to live as three independent regexes — one in
-``pipeline.stages.elements`` (for body rendering), one in
-``pipeline.stages.extract_images`` (for ArticleImage rows), and one in
-the pre-split ``clean_pages`` (a salvage fallback for leaked templates;
-since removed when ``prepare_wikitext`` was tightened to two ops).
+``pipeline.stages.elements`` (for body rendering, the sole survivor), one in
+the old ``extract_images`` stage (deleted with the ArticleImage table), and one
+in the pre-split ``clean_pages`` (a salvage fallback for leaked templates;
+removed when ``prepare_wikitext`` was tightened to two ops).
 Each had its own subtly-different ``\\|file=…`` pattern.
 A 2026-05 rebuild silently dropped 110 image references because two
 of the three regexes lacked whitespace tolerance around the

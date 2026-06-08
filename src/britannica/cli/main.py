@@ -15,7 +15,6 @@ from britannica.pipeline.assemble import assemble_and_export
 from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
 from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
-from britannica.pipeline.stages.extract_images import extract_images_for_volume
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -112,12 +111,6 @@ def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
     detected = detect_boundaries(volume)
     count = persist_articles(detected)
     print(f"Detected and created {count} articles for volume {volume}.")
-
-
-@app.command("extract-images")
-def extract_images_cmd(volume: int = typer.Argument(...)) -> None:
-    count = extract_images_for_volume(volume)
-    print(f"Extracted {count} images for volume {volume}.")
 
 
 @app.command("extract-contributors")

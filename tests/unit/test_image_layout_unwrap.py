@@ -23,7 +23,7 @@ Fixtures (nasty-case catalog):
     a clean caption.
 * WEIGHING_MACHINES — `{{raw image|…}}` followed by a separate
     `{{c|{{smaller|…}}  {{sc|Fig.}} 19.—caption}}` block.  Exercises
-    the wrapper-caption detection in extract_images / elements.
+    the wrapper-caption detection in the element/figure producers.
 
 Tests on current (buggy) code are marked with the bug they expose via
 `pytest.mark.xfail(strict=True, reason=...)`.  Fixing the bug flips the
