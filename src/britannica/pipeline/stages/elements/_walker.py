@@ -146,6 +146,12 @@ _HIEROGLYPH_TMPL_RE = re.compile(
 # (The bare `{{EB1911 XYZ}}` sign-off shortcut is NOT recognized here — decorator's too.)
 _CONTRIBUTOR_FOOTER_OPENER_RE = re.compile(
     r"\{\{\s*EB1911\s+footer\b", re.IGNORECASE)
+# `{{EB1911 TAs}}` — the bare-initials sign-off SHORTCUT (Thomas Ashby etc.), the
+# squashed twin of the footer.  The CLOSED full-form regex (capital-led, immediately
+# closed) so it claims ONLY the shortcuts, never the lowercase-word EB1911 templates;
+# classified CONTRIBUTOR_FOOTER, produced as the initials signoff.
+_CONTRIBUTOR_SHORTCUT_RE = re.compile(
+    r"\{\{\s*[Ee][Bb]1911\s+[A-Z][A-Za-z*.\-]{0,5}\s*\}\}")
 # `{{section|Name}}` — Wikisource subsection ANCHOR (link target, no visual output;
 # distinct from the `<section>` boundary tag).  Opener-only; span closes via
 # `_construct_end`.  Carried so same-article `[[#Name]]` / cross-article `…#Name`
@@ -818,6 +824,7 @@ def _walk_balanced_shapes(
                             _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
                             _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
                             _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
+                            _CONTRIBUTOR_SHORTCUT_RE,
                             _SECTION_ANCHOR_OPENER_RE,
                             _INTRA_ARTICLE_LINK_OPENER_RE):
                 if _opener.match(text, opener_pos):

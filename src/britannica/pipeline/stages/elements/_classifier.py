@@ -160,6 +160,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # CONTRIBUTOR_FOOTER node; the byline + removal are the decorator's job, not here.
     if re.match(r"\{\{\s*EB1911\s+footer\b", raw, re.IGNORECASE):
         return "CONTRIBUTOR_FOOTER"
+    # `{{EB1911 TAs}}` etc. — the bare-initials sign-off SHORTCUT (capital-led,
+    # immediately closed): the squashed twin of the footer.  Same node, so the
+    # producer renders its initials and the harvest binds the contributor.
+    if re.match(r"\{\{\s*[Ee][Bb]1911\s+[A-Z][A-Za-z*.\-]{0,5}\s*\}\}", raw):
+        return "CONTRIBUTOR_FOOTER"
     # Spacer / rule / char-escape leaves — em/gap/clear/anchor/ditto/dhr/rule/bar/shy
     # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).
     if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
