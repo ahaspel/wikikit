@@ -311,6 +311,22 @@ def _process_nowiki(raw):
     return re.sub(r"</nowiki>\s*$", "", inner, flags=re.IGNORECASE)
 
 
+def _process_coordinates(inner):
+    """`{{EB1911 Coordinates|D|M[|S]|H}}` (one lat OR lon) → `D°M′[S″]H`.  Real
+    place data the old body-text handler used to format and which then leaked raw.
+    The trailing N/S/E/W is the hemisphere; the leading numerics are
+    degrees/minutes/seconds (2-arg form `D|M` carries no hemisphere)."""
+    parts = [p.strip() for p in inner.split("|")]
+    args = [p for p in parts[1:] if p and "=" not in p]  # drop name + named params
+    if not args:
+        return ""
+    hemi = args[-1].upper() if args[-1].upper() in ("N", "S", "E", "W") else ""
+    nums = args[:-1] if hemi else args
+    syms = ("°", "′", "″")  # ° ′ ″
+    body = "".join(f"{n}{syms[i]}" for i, n in enumerate(nums[:3]))
+    return body + hemi
+
+
 _SUB_MAP = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
 _SUP_MAP = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾")
 # Spans that `_process_subsup` must pass through untranslated: emitted markers
@@ -619,6 +635,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "LB": lambda raw, inner, ctx, reg: _process_lb(inner),
     # NOWIKI — `<nowiki>X</nowiki>` wiki-escape; unwrap to the literal inner.
     "NOWIKI": lambda raw, inner, ctx, reg: _process_nowiki(raw),
+    # INCLUDEONLY — `<includeonly>X</includeonly>` transclusion complement of
+    # noinclude: its inner IS the transcluded content → unwrap, keep the recursed
+    # inner (non-opaque, so `inner` is already walked).
+    "INCLUDEONLY": lambda raw, inner, ctx, reg: inner,
+    # COORDINATES — `{{EB1911 Coordinates|D|M[|S]|H}}` geographic coordinate → D°M′[S″]H.
+    "COORDINATES": lambda raw, inner, ctx, reg: _process_coordinates(inner),
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates

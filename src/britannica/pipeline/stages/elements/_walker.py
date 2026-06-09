@@ -175,6 +175,11 @@ _EB1911_ARTICLE_LINK_OPENER_RE = re.compile(
 _TARGET_FIRST_LINK_OPENER_RE = re.compile(
     r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\s*\|",
     re.IGNORECASE)
+# `{{EB1911 Coordinates|D|M[|S]|H}}` — a single geographic coordinate (one lat or
+# lon).  Opener-only; the one matcher bounds the span.  Real place data; the
+# producer formats it `D°M′[S″]H` instead of leaking the raw template.
+_COORDINATES_OPENER_RE = re.compile(
+    r"\{\{\s*EB1911\s+Coordinates\s*\|", re.IGNORECASE)
 # Spacer / layout-primitive LEAVES — `{{em}}`/`{{gap}}` (space), `{{ditto}}` (″),
 # `{{dhr}}`/`{{rule}}` (rule markers), `{{clear}}`/`{{anchor}}` (no glyph).  Atomic;
 # the producer emits a char/marker, nothing recurses.
@@ -481,7 +486,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
-    r"|<(?:table|poem|math|score|hiero|nowiki)\b"  # HTML_TAG tag variants
+    r"|<(?:table|poem|math|score|hiero|nowiki|includeonly)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
@@ -530,7 +535,8 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
-_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "nowiki"})
+_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "nowiki",
+                           "includeonly"})
 # Tags the one matcher will BOUND by depth (superset of the auto-extracted
 # elements).  `div`/`p`/`span` are boundable so a styled wrapper can be matched
 # to its right `</div>`/`</p>`/`</span>` and nested same-tags skipped — but they
@@ -837,7 +843,7 @@ def _walk_balanced_shapes(
                             _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
                             _CONTRIBUTOR_SHORTCUT_RE,
                             _SECTION_ANCHOR_OPENER_RE,
-                            _INTRA_ARTICLE_LINK_OPENER_RE):
+                            _INTRA_ARTICLE_LINK_OPENER_RE, _COORDINATES_OPENER_RE):
                 if _opener.match(text, opener_pos):
                     end = _construct_end(text, opener_pos)
                     if end is not None:

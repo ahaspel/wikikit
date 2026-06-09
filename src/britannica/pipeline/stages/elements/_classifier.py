@@ -94,6 +94,7 @@ _HTML_TAG_LABEL: dict[str, str] = {
     "table": "TABLE",
     "hiero": "HIEROGLYPH",
     "nowiki": "NOWIKI",
+    "includeonly": "INCLUDEONLY",
 }
 
 
@@ -169,6 +170,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # producer renders its initials and the harvest binds the contributor.
     if re.match(r"\{\{\s*[Ee][Bb]1911\s+[A-Z][A-Za-z*.\-]{0,5}\s*\}\}", raw):
         return "CONTRIBUTOR_FOOTER"
+    # `{{EB1911 Coordinates|D|M[|S]|H}}` — a single geographic coordinate (lat or
+    # lon).  Real place data; the COORDINATES producer formats it `D°M′[S″]H`.
+    if re.match(r"\{\{\s*EB1911\s+Coordinates\b", raw, re.IGNORECASE):
+        return "COORDINATES"
     # Spacer / rule / char-escape leaves — em/gap/clear/anchor/ditto/dhr/rule/bar/shy
     # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).
     if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
