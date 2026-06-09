@@ -426,8 +426,12 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     )
 
     def _resolve_link(m: re.Match) -> str:
+        from britannica.xrefs.normalizer import normalize_xref_target
         target_text, display = m.group(1), m.group(2)
-        fn = link_targets.get(target_text.strip().lower())
+        # Normalize before the lookup so a `#section` target collapses to the same
+        # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
+        # target would otherwise miss (the key is normalized, the raw target isn't).
+        fn = link_targets.get(normalize_xref_target(target_text).lower())
         if fn:
             return f"«LN:{fn}|{target_text}|{display}«/LN»"
         return m.group(0)  # leave unresolved as-is (2-part)

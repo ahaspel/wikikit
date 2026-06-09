@@ -81,21 +81,24 @@ def process_target_first_link(inner: str) -> str:
 def process_eb1911_selfref_link(inner: str) -> str:
     """`[[1911 Encyclopædia Britannica/Article#Section|Display]]` — an internal EB1911
     cross-reference in raw bracket form (the `{{EB1911 article link}}` template's twin).
-    Emit «LN:Article|Display»: strip the `1911 Encyclopædia Britannica/` prefix and the
-    `#Section` anchor (the export resolves «LN» targets by article name; there is no
-    anchor resolution yet).  A bare `[[1911 Encyclopædia Britannica|Disp]]` (the work as
-    a whole, no article) has no target → emit the display as plain prose."""
+    Emit «LN:Article#Section|Display»: strip the `1911 Encyclopædia Britannica/` prefix
+    and KEEP the `#Section` fragment (resolve_one splits it → article + section, so the
+    link lands on that subsection's «ANCHOR»).  A bare `[[1911 Encyclopædia Britannica|
+    Disp]]` (the work as a whole, no article) has no target → emit the display as prose."""
     target_raw, _sep, display = inner.partition("|")
     target_raw = target_raw.strip()
     display = display.strip()
     rest = re.sub(r"^1911\s+[Ee]ncyclop[^/]*/", "", target_raw, flags=re.IGNORECASE)
     if rest == target_raw:                      # no `/Article` — a ref to the work itself
         return display or target_raw
-    article = rest.split("#", 1)[0].strip()
+    article, _hash, fragment = rest.partition("#")
+    article = article.strip()
+    fragment = fragment.strip()
     display = display or article
     if not article:
         return display
-    return f"«LN:{article}|{display}«/LN»"
+    target = f"{article}#{fragment}" if fragment else article
+    return f"«LN:{target}|{display}«/LN»"
 
 
 def process_author_link(raw: str, inner: str, ctx) -> str:

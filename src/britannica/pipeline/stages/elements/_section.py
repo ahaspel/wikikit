@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.util.strings import section_slug
+
 _SECTION_NAME_RE = re.compile(
     r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
 
@@ -40,13 +42,6 @@ def _process_section(raw: str) -> str:
 # anchor so those links resolve instead of dangling.
 
 _SECTION_ANCHOR_RE = re.compile(r"\{\{\s*section\s*\|([^}]*)\}\}", re.IGNORECASE)
-
-
-def section_slug(name: str) -> str:
-    """Anchor slug for a section name (spaces → underscores).  The single source
-    of the key, so the producer (the anchor) and extract_xrefs (the `#frag` link)
-    compute the identical string."""
-    return re.sub(r"\s+", "_", name.strip())
 
 
 def _process_section_anchor(raw: str) -> str:
