@@ -818,19 +818,57 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "brace2":           {},  # grouping brace → content (decoration not rendered)
     "11co":             {},  # column wrapper → content
     "u":                {"css": "text-decoration:underline", "tag": "SPAN"},
+    # ── BROKEN-leak backlog stylers (2026-06-09).  Each was a styler the walk
+    # leaked raw; same rows, same mechanism.  CSS grounded in the
+    # Module:Table_style mirror (_ts_codes.py) where the name maps.
+    "hi":               {"css": "padding-left:2em; text-indent:-2em"},  # hanging indent (block); hi→it
+    "fine":             {"css": "font-size:92%", "tag": "SPAN"},  # fine→fs092 (inline)
+    "strikethrough":    {"css": "text-decoration:line-through", "tag": "SPAN"},  # strike→tds
+    "sp":               {"css": "letter-spacing:0.25em", "tag": "SPAN"},  # spaced-out lettering
+    "zfloat right":     {"css": "float:right"},  # z-prefixed float variant of float right
+    # Language/script wrappers → content bare (the script IS the glyphs), like greek/hebrew.
+    "arabic":           {},
+    "he":               {},
+    "latin":            {},
+    # ── Batch-2 simple wrappers (forms confirmed in walked context).
+    "smb":              {"sc": True},  # small-caps era markers (B.C./A.D.)
+    "bc":               {"ctr": True},  # block-centre (centred display equations)
+    "float center":     {"ctr": True},  # centred block
+    "fs70":             {"css": "font-size:70%", "tag": "SPAN"},  # small fractions
+    "0":                {"css": "visibility:hidden", "tag": "SPAN"},  # {{0|x}} reserves x's width, invisible
+    "di":               {},  # drop initial → the letter (decorative drop-cap deferred to render)
+    "blackletter":      {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},
+    "bl":               {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},  # blackletter math variables
 }
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(
     r"\{\{\s*(" + "|".join(re.escape(n) for n in sorted(
         _TEMPLATE_STYLE_WRAPPERS, key=len, reverse=True)) + r")\s*\|",
     re.IGNORECASE)
-# Param-bearing style wrappers — `{{Fs|108%|X}}` / `{{font size|N%|X}}` — same
-# styler family, but the CSS value is the FIRST arg, not a fixed string.  Folded
-# in so an element nested inside one (a contributor footer, math) recurses
-# instead of being pulled out mid-template and splitting it (the `{{Fs|…{{EB1911
-# footer initials}}}}` holdover).  `_process_styled` reads arg-1 as the size.
+# Param-bearing style wrappers — `{{name|VALUE|content}}`: the CSS value rides in
+# arg-1, the content is arg-2+ (unlike the fixed-value registry above).  ONE
+# registry (name → (css template with `{v}`, percent flag)); the walker's
+# _STYLED_OPEN_RE auto-syncs off the regex built from these names, exactly like
+# the fixed-value registry.  `pct=True` means a bare-integer arg-1 is a percentage
+# (the font-size family: `{{Fs|108|X}}` → 108%).  Folding the font-size family in
+# here keeps a nested element (a contributor footer, math) recursing instead of
+# being pulled out mid-template and splitting it (the `{{Fs|…{{EB1911 footer
+# initials}}}}` holdover).
+_TEMPLATE_PARAM_STYLE_WRAPPERS: dict[str, tuple[str, bool]] = {
+    "fs":             ("font-size:{v}", True),
+    "font size":      ("font-size:{v}", True),
+    "font-size":      ("font-size:{v}", True),
+    "rotate":         ("transform:rotate({v}deg);display:inline-block", False),
+    "letter-spacing": ("letter-spacing:{v}", False),
+    "lsp":            ("letter-spacing:{v}", False),
+    "font-stretch":   ("transform:scaleX({v});display:inline-block", False),
+    "word-spacing":   ("word-spacing:{v}", False),  # currency-column alignment (was preprocess-stripped)
+}
 _TEMPLATE_PARAM_STYLE_RE = re.compile(
-    r"\{\{\s*(fs|font\s+size|font-size)\s*\|", re.IGNORECASE)
+    r"\{\{\s*(" + "|".join(
+        re.escape(n).replace(r"\ ", r"\s+")
+        for n in sorted(_TEMPLATE_PARAM_STYLE_WRAPPERS, key=len, reverse=True))
+    + r")\s*\|", re.IGNORECASE)
 # Shoulder heading — `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` (+ the
 # `…HeadingSmall` and `{{EB9 Margin Note}}` synonyms): a marginal SECTION label
 # (`detect_sections` keys on the «SH» marker it produces).  Recognized at the

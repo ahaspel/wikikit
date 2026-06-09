@@ -174,10 +174,26 @@ def _center_wrap(text: str) -> str:
 
 
 def _process_center(raw, inner, context, inner_registry):
-    """CENTER paired-wrapper (`{{c/s}}…{{c/e}}` etc.) → «CTR» around the
-    transformed inner.  Child placeholders (a figure/table inside the span)
-    are preserved for the framework's marker substitution."""
-    return _center_wrap(inner)
+    """CENTER paired-wrapper (`{{NAME/s}}…{{NAME/e}}`) → the marker for NAME's
+    styler, dispatched on the wrapper name via the shared `_TEMPLATE_STYLE_WRAPPERS`
+    registry (the SAME registry the pipe form uses — one styler, two spellings):
+
+      * centring family (`c`/`block center`/`center block` → «CTR») keeps the
+        paragraph-wise `_center_wrap` (byte-identical to before);
+      * a non-centring block styler (`fine block`/`EB1911 fine print`/`smaller
+        block` → font-size) wraps the inner in ONE `style_block` div.
+
+    The inner is already recursively classified (child figures/tables are
+    placeholders), so wrapping it preserves those children for marker substitution."""
+    from britannica.pipeline.stages.elements._tables import (
+        _TEMPLATE_STYLE_WRAPPERS, style_block)
+    m = re.match(r"^\s*\{\{\s*([^{}/]*?)\s*/s\s*\}\}", raw, re.IGNORECASE)
+    name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
+    spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
+    if spec and spec.get("css") and not spec.get("ctr"):
+        return style_block(inner.strip(), css=spec["css"],
+                           tag=spec.get("tag", "DIV"))
+    return _center_wrap(inner)   # centring family — unchanged
 
 
 def _plain_image_disentangle(raw, context):
@@ -382,7 +398,8 @@ def _process_styled(raw, inner, context, inner_registry):
     `process_elements`, so the image is produced rather than dropped."""
     from britannica.pipeline.stages.elements._tables import (
         _cell_styles, style_block, _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS,
-        _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE)
+        _TEMPLATE_PARAM_STYLE_RE, _TEMPLATE_PARAM_STYLE_WRAPPERS,
+        _SHOULDER_HEADING_RE)
     from britannica.pipeline.stages.elements._walker import (
         _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
     # `<span title="T">X</span>` — transliteration TOOLTIP when X is Greek/Hebrew (carry T
@@ -422,17 +439,21 @@ def _process_styled(raw, inner, context, inner_registry):
     # percent.
     pm = _TEMPLATE_PARAM_STYLE_RE.match(raw)
     if pm:
+        name = re.sub(r"\s+", " ", pm.group(1).strip().lower())
+        tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
         rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
         bar = rest.find("|")
         value = (rest[:bar] if bar >= 0 else "").strip()
         inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
         content = process_elements(
             inner_raw, context, _allow_figure=False).strip()
-        size = value + "%" if value.isdigit() else value
-        # FS is just a styler — one uniform inline `«SPAN[style:font-size:…]»`,
-        # same as every other styler, NOT a special per-context marker.  Structure
-        # (a section heading) is carried by «SH», never inferred from this size.
-        return style_block(content, css=f"font-size:{size}" if size else "",
+        if pct and value.isdigit():
+            value += "%"             # font-size family: bare int is a percent
+        elif not value and "letter-spacing" in tmpl:
+            value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
+        # The styler is one uniform inline `«SPAN[style:…]»`, same as every other
+        # styler — the CSS property comes from the registry, the value from arg-1.
+        return style_block(content, css=tmpl.format(v=value) if value else "",
                            tag="SPAN")
     # Template-form wrapper — `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / …
     # The SAME producer as the HTML form: a `{{center|X}}` is handled identically

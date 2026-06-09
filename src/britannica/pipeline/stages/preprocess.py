@@ -28,7 +28,6 @@ from britannica.pipeline.stages.source_cleanup import (
     close_unclosed_attr_quotes,
     strip_html_comments,
     strip_noinclude_blocks,
-    strip_word_spacing_templates,
 )
 
 # The 5 ``{{chart2/start}}…{{chart2/end}}`` genealogical-tree blocks render to an
@@ -75,12 +74,13 @@ def _tree_to_img(block: str, fn: str) -> str:
 # KEEP everything unless we're REALLY sure it's noise.  So ``strip_noinclude_blocks``
 # drops the chrome but PRESERVES the table markers.
 
-# Print-economy small-type block wrappers — transparent: drop the delimiter
-# tokens, keep the inner content (it flows into the normal walk).
-_FINE_PRINT = re.compile(
-    r"\{\{\s*(?:EB1911\s+fine\s+print|fine\s+block|smaller\s+block)\s*/[se]\s*\}\}",
-    re.IGNORECASE,
-)
+# NOTE: the print-economy small-type block wrappers (`{{fine block/s}}…/e}}`,
+# `{{EB1911 fine print/s}}`, `{{smaller block/s}}`) are NO LONGER stripped here.
+# They are STYLERS (font-size:83% blocks); dropping them lost the styling and hid
+# the styler work from the leak audit.  They now ride the CENTER paired-wrapper
+# family (`{{NAME/s}}…{{NAME/e}}`), carried via the shared `_TEMPLATE_STYLE_WRAPPERS`
+# registry — same as their pipe-form siblings.  Likewise `{{word-spacing|N|X}}` is a
+# `word-spacing` styler (the param-styler registry), not a strip.
 
 # ``{{nop}}`` is a MediaWiki no-op — invisible output, used in the source only to
 # force block separation that our renderer doesn't need.  It is chrome; drop it
@@ -211,12 +211,10 @@ def preprocess(stream: str) -> str:
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
-    stream = _FINE_PRINT.sub("", stream)
-    stream = _NOP.sub("", stream)                          # {{nop}} chrome + its line
+    stream = _NOP.sub("", stream)                          # {{nop}} no-op chrome + its line
     stream = _REF_FOLLOW_LINE.sub(r"\1", stream)           # <ref follow> chrome line
     stream = strip_html_comments(stream)
     stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
-    stream = strip_word_spacing_templates(stream)
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
     return stream

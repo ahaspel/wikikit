@@ -19,22 +19,10 @@ from __future__ import annotations
 
 import re
 
-# ── word-spacing strip ─────────────────────────────────────────────
-# `{{word-spacing|<size>|content}}` is a CSS-only styling template
-# used in FISHERIES vol 10 p448 (and similar) to align currency
-# columns.  The wrapper interferes with `unfold_folded_rows` because
-# its template-internal `<br>` would otherwise be treated as a real
-# row separator, chopping the wrapper open and leaving
-# `{{word-spacing|3px|6 7` fragments in cells.  Stripping early keeps
-# the unfold pass structurally correct AND avoids per-cell template
-# handling downstream.
-_WORD_SPACING_RE = re.compile(
-    r"\{\{word-spacing\|[^{}|]*\|([^{}]*)\}\}", re.IGNORECASE
-)
-
-
-def strip_word_spacing_templates(text: str) -> str:
-    return _WORD_SPACING_RE.sub(r"\1", text)
+# `{{word-spacing|<size>|content}}` was stripped here (CSS-only currency-column
+# alignment, for the now-retired `unfold_folded_rows`).  It is a STYLER, not chrome:
+# it now rides the param-styler registry (`word-spacing:{v}`) in `_tables.py` and is
+# carried, not dropped.  Removed so preprocess stops hiding the styler work.
 
 
 # ── section tag strip ──────────────────────────────────────────────

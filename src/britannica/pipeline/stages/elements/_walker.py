@@ -488,7 +488,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
     r"|\[\["                        # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
+    r"|\{\{\s*(?:c|block\s*center|center\s*block|fine\s*block|EB1911\s+fine\s+print|smaller\s*block)\s*/s\s*\}\}"  # CENTER / small-type-block paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*section\s*\|"  # DOUBLE_BRACE {{section|Name}} subsection anchor
     r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
@@ -667,6 +667,11 @@ def _new_placeholder() -> str:
 # elements re-processed the block inner badly and dropped those children.
 _CENTER_PAIRED_NAMES: tuple[str, ...] = (
     "center block", "block center", "c",
+    # Print-economy small-type block wrappers — STYLERS (font-size), not centring.
+    # `_process_center` dispatches by name via `_TEMPLATE_STYLE_WRAPPERS`; the inner
+    # is classified to placeholders first, so a nested figure/table is a preserved
+    # CHILD (was preprocess-stripped before, which dropped the styling).
+    "fine block", "eb1911 fine print", "smaller block",
 )
 _PAIRED_OPENER_RE = re.compile(
     r"\{\{\s*(" + "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
