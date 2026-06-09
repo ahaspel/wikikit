@@ -209,6 +209,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # body-text `_convert_lb_dash` re.sub, which only fired in the flat body-text pass).
     if name == "lb-":
         return "LB"
+    # `{{cite|Work Title}}` — a cited-work-title wrapper (the title may carry a
+    # `[[link]]`, extracted as a child).  The producer italicizes it; the walker
+    # only extracts `{{cite|` (pipe), so a `{{cite book|…}}` would not reach here.
+    if name == "cite":
+        return "CITE"
     # `{{sub|x}}` / `{{sup|x}}` — sub/superscript typography (out of body-text's
     # `_convert_sub_sup`); the producer recurses the slot + Unicode-translates.
     if name in {"sub", "sup"}:

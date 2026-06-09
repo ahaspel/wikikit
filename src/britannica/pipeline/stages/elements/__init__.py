@@ -311,6 +311,17 @@ def _process_nowiki(raw):
     return re.sub(r"</nowiki>\s*$", "", inner, flags=re.IGNORECASE)
 
 
+def _process_cite(inner):
+    """`{{cite|Title}}` → «I»Title«/I» (the work-title italic the template supplies;
+    the title is not pre-italicized in source).  `inner` is the framework-recursed
+    DOUBLE_BRACE body (`cite|<title>`), so an embedded `[[link]]` already rode
+    through as a substituted child — the producer only strips the name and
+    italic-wraps; it does NOT recurse."""
+    _name, _bar, title = inner.partition("|")
+    title = title.strip()
+    return f"«I»{title}«/I»" if title else ""
+
+
 def _process_coordinates(inner):
     """`{{EB1911 Coordinates|D|M[|S]|H}}` (one lat OR lon) → `D°M′[S″]H`.  Real
     place data the old body-text handler used to format and which then leaked raw.
@@ -641,6 +652,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "INCLUDEONLY": lambda raw, inner, ctx, reg: inner,
     # COORDINATES — `{{EB1911 Coordinates|D|M[|S]|H}}` geographic coordinate → D°M′[S″]H.
     "COORDINATES": lambda raw, inner, ctx, reg: _process_coordinates(inner),
+    # CITE — `{{cite|Work Title}}` → «I»title«/I»; the framework already recursed any
+    # embedded `[[link]]` in the (placeholdered) inner.
+    "CITE": lambda raw, inner, ctx, reg: _process_cite(inner),
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates

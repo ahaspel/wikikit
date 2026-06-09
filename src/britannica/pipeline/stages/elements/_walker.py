@@ -181,6 +181,12 @@ _TARGET_FIRST_LINK_OPENER_RE = re.compile(
 # producer formats it `D°M′[S″]H` instead of leaking the raw template.
 _COORDINATES_OPENER_RE = re.compile(
     r"\{\{\s*EB1911\s+Coordinates\s*\|", re.IGNORECASE)
+# `{{cite|Work Title}}` — a cited-work-title wrapper (single positional; the title
+# may carry a `[[link]]`).  Opener-only so the balanced matcher bounds a nested
+# `[[…]]`; the producer recurses the title and italicizes it (work-title
+# convention — the title is not pre-italicized in source).  `cite\s*\|` so a
+# hypothetical `{{cite book|…}}` (space, not pipe) does NOT match.
+_CITE_OPENER_RE = re.compile(r"\{\{\s*cite\s*\|", re.IGNORECASE)
 # Spacer / layout-primitive LEAVES — `{{em}}`/`{{gap}}` (space), `{{ditto}}` (″),
 # `{{dhr}}`/`{{rule}}` (rule markers), `{{clear}}`/`{{anchor}}` (no glyph).  Atomic;
 # the producer emits a char/marker, nothing recurses.
@@ -499,6 +505,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:c|block\s*center|center\s*block|fine\s*block|EB1911\s+fine\s+print|smaller\s*block)\s*/s\s*\}\}"  # CENTER / small-type-block paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
     r"|\{\{\s*(?:EB9|9link|CE\s+lkpl|1911\s+article\s+link)"  # EB9/CE/9link cross-edition links → «LN» (resolve to EB11)
+    r"|\{\{\s*cite\s*\|"  # {{cite|Work Title}} → «I»title«/I» (work-title italic)
     r"|\{\{\s*section\s*\|"  # DOUBLE_BRACE {{section|Name}} subsection anchor
     r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
     r"|\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b"  # content extractors
@@ -845,7 +852,8 @@ def _walk_balanced_shapes(
                             _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
                             _CONTRIBUTOR_SHORTCUT_RE,
                             _SECTION_ANCHOR_OPENER_RE,
-                            _INTRA_ARTICLE_LINK_OPENER_RE, _COORDINATES_OPENER_RE):
+                            _INTRA_ARTICLE_LINK_OPENER_RE, _COORDINATES_OPENER_RE,
+                            _CITE_OPENER_RE):
                 if _opener.match(text, opener_pos):
                     end = _construct_end(text, opener_pos)
                     if end is not None:
