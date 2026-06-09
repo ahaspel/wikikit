@@ -353,6 +353,12 @@ _PLAIN_IMAGE_OPENER_RE = re.compile(
 _IMAGE_RE = re.compile(
     r"\[\[(?:File|Image):[^\]]+\]\]", re.IGNORECASE)
 
+# DOUBLE_BRACKET generic wiki cross-reference — any `[[Target]]` / `[[Target|Disp]]`
+# NOT claimed by the specific recognizers (File/Image, SELFREF, Author, `#`).  LAST in
+# the bracket recognizer order so it's the catch for plain links; classified WIKILINK,
+# produced as «LN», resolved by the internal → external → strip ladder.
+_GENERIC_WIKILINK_RE = re.compile(r"\[\[[^\]]*\]\]")
+
 # DOUBLE_BRACKET self-reference — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`,
 # an internal EB1911 cross-link in raw bracket form (vs the `{{EB1911 article link}}`
 # template form).  Recognized here, classified EB1911_SELFREF, produced as «LN».  The
@@ -453,6 +459,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
     (SHAPE_DOUBLE_BRACKET,    _FRAGMENT_LINK_RE),
+    (SHAPE_DOUBLE_BRACKET,    _GENERIC_WIKILINK_RE),  # catch-all bracket link — LAST
     (SHAPE_PAGE,              _PAGE_RE),
     (SHAPE_TITLE,             _TITLE_RE),
 ]
@@ -479,10 +486,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
-    r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
-    r"|\[\[\s*#"                    # DOUBLE_BRACKET bare anchor link [[#Section]]
-    r"|\[\[\s*1911\s+[Ee]ncyclop"   # DOUBLE_BRACKET EB1911 self-reference cross-link
-    r"|\[\[\s*Author:"              # DOUBLE_BRACKET Author link (contributor or xref)
+    r"|\[\["                        # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates

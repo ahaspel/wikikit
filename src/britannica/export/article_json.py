@@ -433,8 +433,18 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         # target would otherwise miss (the key is normalized, the raw target isn't).
         fn = link_targets.get(normalize_xref_target(target_text).lower())
         if fn:
-            return f"«LN:{fn}|{target_text}|{display}«/LN»"
-        return m.group(0)  # leave unresolved as-is (2-part)
+            return f"«LN:{fn}|{target_text}|{display}«/LN»"   # internal — the link target
+        # Internal miss → external fallback: link out to Wikisource IFF the page really
+        # exists (verified against the all-titles dump), else strip to plain display.
+        # Interwiki (w:/wikt:/d:) aren't WS pages → strip.  «XL» never reaches the panel
+        # (it harvests «LN» only), so external links stay inline-only — the EB11 web in
+        # the panel stays internal.
+        from britannica.xrefs.ws_titles import is_ws_page
+        if is_ws_page(target_text):
+            url = ("https://en.wikisource.org/wiki/"
+                   + target_text.strip().replace(" ", "_"))
+            return f"«XL:{url}|{display}«/XL»"
+        return display  # unresolvable — strip the markup, keep the text
     body = re.sub(
         r"«LN:([^|]*)\|([^«]*)«/LN»",
         _resolve_link, body,
@@ -697,7 +707,10 @@ def export_articles_to_json(
                 "parent_article": parent_article_info,
                 "body": cleaned_body,
                 "sections": detect_sections(cleaned_body),
-                "xrefs": xref_list,
+                # Panel = the article's resolved INTERNAL cross-references only.
+                # Unresolved entries and external «XL» links never enter it — the EB11
+                # web downstairs stays internal (external links live inline, as «XL»).
+                "xrefs": [e for e in xref_list if e["status"] == "resolved"],
                 "plates": [
                     {
                         "title": plate_info["title"],

@@ -126,7 +126,10 @@ def _derive_double_bracket_label(raw: str) -> str:
     # reads the leading `#` as "this article, section Section".
     if re.match(r"\[\[\s*#", raw):
         return "FRAGMENT_LINK"
-    raise ValueError(f"Unknown DOUBLE_BRACKET prefix: {raw[:40]!r}")
+    # Any other `[[Target]]` / `[[Target|Display]]` — a generic wiki cross-reference.
+    # Recognition is shape-only (it's a bracket link); the resolution ladder decides
+    # internal «LN» / external «XL» / strip.  No raise — every `[[…]]` is a link.
+    return "WIKILINK"
 
 
 def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:

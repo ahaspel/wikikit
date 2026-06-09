@@ -31,7 +31,7 @@ from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
     process_eb1911_article_link, process_target_first_link,
     process_eb1911_selfref_link, process_author_link,
-    process_fragment_link, process_intra_article_link)
+    process_fragment_link, process_intra_article_link, process_wikilink)
 from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
@@ -629,6 +629,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # INTRA_ARTICLE_LINK — `{{EB1911 intra-article link|Section}}`, its template twin.
     "INTRA_ARTICLE_LINK": lambda raw, inner, ctx, reg:
         process_intra_article_link(inner),
+    # WIKILINK — generic `[[Target]]` cross-reference → «LN», resolved by the ladder.
+    "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(inner),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;

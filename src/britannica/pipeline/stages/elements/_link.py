@@ -152,3 +152,28 @@ def process_intra_article_link(inner: str) -> str:
     section = positional[0]
     display = positional[1] if len(positional) > 1 else section
     return f"«LN:#{section}|{display}«/LN»"
+
+
+def _strip_link_prefix(t: str) -> str:
+    """Drop a single leading `word:` namespace/interwiki prefix (w:/Portal:/…); the
+    colon must be followed by a non-space, so the section colon form `Europe: History`
+    is NOT treated as a prefix.  Mirrors the resolver's normalizer strip."""
+    i = t.find(":")
+    if 0 < i < len(t) - 1 and " " not in t[:i] and not t[i + 1].isspace():
+        return t[i + 1:].strip()
+    return t
+
+
+def process_wikilink(inner: str) -> str:
+    """`[[Target]]` / `[[Target|Display]]` — a generic wiki cross-reference (anything
+    not claimed by the File / Author / SELFREF / `#` recognizers).  Emit
+    «LN:Target|Display» with the target's prefix preserved (the resolver needs it); the
+    ladder tries internal EB11 first, then the WS-verified external fallback, then
+    strips.  With no explicit display, show the bare name — the w:/Portal: prefix is
+    source noise the reader shouldn't see."""
+    target, _sep, display = inner.partition("|")
+    target = target.strip()
+    display = display.strip() or _strip_link_prefix(target)
+    if not target:
+        return display
+    return f"«LN:{target}|{display}«/LN»"
