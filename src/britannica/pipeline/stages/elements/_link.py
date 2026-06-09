@@ -96,3 +96,27 @@ def process_eb1911_selfref_link(inner: str) -> str:
     if not article:
         return display
     return f"«LN:{article}|{display}«/LN»"
+
+
+def process_author_link(raw: str, inner: str, ctx) -> str:
+    """`[[Author:Name|Display]]` — route on the display, element-alone.
+
+    A contributor signature (the display's initials are a known contributor,
+    per ``ctx.contributor_initials``) → render just the initials; everything
+    else → `«LN:Name|Display»`, an xref to the *referenced* author.
+
+    The index decision reads the RAW display so a `{{sc|…}}` shell or `(…)`
+    parens fold to bare initials via `_normalize_initials`; the rendered output
+    uses the recursed `inner`, so a contributor's small-caps survive.  No
+    surrounding context is consulted — recursion already delivered a lone link.
+    """
+    from britannica.pipeline.stages.extract_contributors import _normalize_initials
+    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    _t, _s, disp_raw = body.partition("|")                 # literal display
+    target_raw, _s2, disp_out = inner.partition("|")        # recursed display
+    target = re.sub(r"^\s*Author:\s*", "", target_raw, flags=re.IGNORECASE).strip()
+    disp_out = disp_out.strip() or target
+    key = _normalize_initials(disp_raw.strip("() "))
+    if key and key in ctx.contributor_initials:
+        return disp_out                                    # contributor → initials
+    return f"«LN:{target}|{disp_out}«/LN»"                  # reference → xref

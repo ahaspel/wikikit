@@ -30,7 +30,9 @@ from britannica.pipeline.stages.elements._image import (
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
     process_eb1911_article_link, process_target_first_link,
-    process_eb1911_selfref_link)
+    process_eb1911_selfref_link, process_author_link)
+from britannica.pipeline.stages.elements._contributor import (
+    _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
@@ -597,13 +599,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_math_equation(inner),
     "MATH_NE": lambda raw, inner, ctx, reg:
         _process_math_equation(inner),
-    # CONTRIBUTOR_FOOTER — the `{{EB1911 footer …}}` signature, RECOGNIZED as a bounded
-    # node that CARRIES the footer raw (no deletion here).  The contributor decorator is
-    # the sole owner of what comes next — read it for the byline, then remove it.  Inert
-    # in the live pipeline today (the footer is still cut pre-walk by `strip_attributions`);
-    # it comes alive when the decorator drops that strip and consumes these nodes.
+    # CONTRIBUTOR_FOOTER — the `{{EB1911 footer …}}` signature.  Renders ONLY the initials
+    # signoff a reader sees (right-aligned parenthetical); the byline binding is harvested
+    # separately by extract_contributors off those initials, via the vol-29/front-matter index.
     "CONTRIBUTOR_FOOTER": lambda raw, inner, ctx, reg:
-        f"«CONTRIBUTOR_FOOTER:{raw}«/CONTRIBUTOR_FOOTER»",
+        _process_contributor_footer(raw),
     # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
     # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
     # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
@@ -613,6 +613,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # display producer, target-first convention.
     "TARGET_FIRST_LINK": lambda raw, inner, ctx, reg:
         process_target_first_link(inner),
+    # AUTHOR_LINK — `[[Author:Name|Display]]`.  Routed on the display: a contributor's
+    # initials (in ctx.contributor_initials) → render the initials; else → «LN» xref.
+    "AUTHOR_LINK": lambda raw, inner, ctx, reg:
+        process_author_link(raw, inner, ctx),
     # EB1911_SELFREF — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`, the internal
     # cross-link in raw bracket form; same «LN» family as the template links above.
     "EB1911_SELFREF": lambda raw, inner, ctx, reg:

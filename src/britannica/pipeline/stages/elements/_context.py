@@ -8,6 +8,11 @@ Carries the small amount of cross-element state a handler may need:
   * ``ref_bodies`` — name → resolved-footnote-body map, built once per
     article by ``resolve_ref_bodies`` and consumed by ``<ref name=X/>``
     anchors.
+  * ``contributor_initials`` — normalized initials of every known
+    contributor (front-matter + vol-29 index), loaded once by the caller.
+    The Author-link producer routes on membership: a display whose initials
+    are in here is a contributor signature → render the initials; everything
+    else → «LN» (xref).
 """
 
 from __future__ import annotations
@@ -20,3 +25,4 @@ class ElementContext:
     volume: int = 0
     page_number: int = 0
     ref_bodies: dict[str, str] = field(default_factory=dict)
+    contributor_initials: frozenset[str] = field(default_factory=frozenset)

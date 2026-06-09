@@ -100,6 +100,24 @@ def preprocess_article(session, article) -> str:
 _TITLE_NODE_RE = re.compile(r"«TITLE:(.*?)«/TITLE»", re.DOTALL)
 
 
+_CONTRIBUTOR_INITIALS_CACHE: frozenset[str] | None = None
+
+
+def _contributor_initials(session) -> frozenset[str]:
+    """Normalized initials of every known contributor — loaded once and cached.
+
+    Built upstream from the per-volume front-matter tables + the vol-29 master
+    index (``ContributorInitials``), static for a run.  The Author-link producer
+    routes on membership: a display whose initials are in here is a contributor
+    signature → render the initials; everything else → «LN» xref."""
+    global _CONTRIBUTOR_INITIALS_CACHE
+    if _CONTRIBUTOR_INITIALS_CACHE is None:
+        from britannica.db.models import ContributorInitials
+        _CONTRIBUTOR_INITIALS_CACHE = frozenset(
+            ci.initials for ci in session.query(ContributorInitials).all())
+    return _CONTRIBUTOR_INITIALS_CACHE
+
+
 def walk_article(session, article) -> tuple[str, str | None]:
     """Walk one article in a SINGLE pass and split off its title node.
 
@@ -109,20 +127,20 @@ def walk_article(session, article) -> tuple[str, str | None]:
     + a separate ``title_raw`` walk) — the title now rides the ONE walk, verified
     byte-identical title_display + body.
 
-    (``strip_attributions`` is still applied here as the interim footer cut; it
-    moves to the contributor decorator, which will consume the recognized
-    CONTRIBUTOR_FOOTER nodes instead of pre-stripping the footer.)
+    (The footer is no longer pre-stripped — it rides through and is carried as
+    recognized CONTRIBUTOR_FOOTER nodes / Author-link signatures; the contributor
+    harvest reads the initials off those downstream.)
     """
     from britannica.pipeline.stages.elements import (
         ElementContext, process_elements)
-    from britannica.pipeline.stages.extract_contributors import strip_attributions
 
-    raw = strip_attributions(preprocess_article(session, article))
+    raw = preprocess_article(session, article)
     if not raw:
         return "", None
     walked = process_elements(
         raw, ElementContext(volume=article.volume,
-                            page_number=article.page_start))
+                            page_number=article.page_start,
+                            contributor_initials=_contributor_initials(session)))
     m = _TITLE_NODE_RE.search(walked)
     if not m:
         return walked, None
@@ -134,20 +152,7 @@ def walk_article(session, article) -> tuple[str, str | None]:
     return body, title_display
 
 
-def _transform_text_v2(raw_wikitext: str, volume: int, page_number: int) -> str:
-    """Walk a raw article body to the internal marker format — thin shim.
-
-    The PRODUCTION body producer is now ``walk_article`` (one walk, title as a
-    recognized node).  This remains ONLY for the tests/diagnostics that walk a raw
-    string directly; it is ``strip_attributions`` + ``process_elements`` and nothing
-    else.  It collapses to a bare ``process_elements`` call — at which point those
-    callers use that directly — once the contributor decorator removes the
-    ``strip_attributions`` pre-cut.
-    """
-    from britannica.pipeline.stages.elements import (
-        ElementContext, process_elements)
-    from britannica.pipeline.stages.extract_contributors import strip_attributions
-
-    return process_elements(
-        strip_attributions(raw_wikitext),
-        ElementContext(volume=volume, page_number=page_number))
+# `_transform_text_v2` (the raw-string shim = strip_attributions + process_elements)
+# was deleted: callers now compose `process_elements(raw, ElementContext(...))`
+# directly.  strip_attributions is dropped from that path — the footer rides
+# through to be claimed by the contributor work.

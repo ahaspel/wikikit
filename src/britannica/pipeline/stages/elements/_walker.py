@@ -344,6 +344,12 @@ _IMAGE_RE = re.compile(
 _EB1911_SELFREF_RE = re.compile(
     r"\[\[\s*1911\s+[Ee]ncyclop[^\]]*\]\]", re.IGNORECASE)
 
+# DOUBLE_BRACKET Author link — `[[Author:Name|Display]]`.  Recognized here,
+# classified AUTHOR_LINK, routed by the producer: a contributor's initials
+# (in the index) → render the initials; else → «LN» xref to the author.
+_AUTHOR_RE = re.compile(
+    r"\[\[\s*Author:[^\]]*\]\]", re.IGNORECASE)
+
 
 # Inline-image structural recognition.  At the moment the walker has just
 # matched an `[[File:…]]` (no EXTCAP), it checks the text immediately AFTER
@@ -423,6 +429,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACE,      _LB_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
+    (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
     (SHAPE_PAGE,              _PAGE_RE),
     (SHAPE_TITLE,             _TITLE_RE),
 ]
@@ -451,6 +458,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
     r"|\[\[\s*1911\s+[Ee]ncyclop"   # DOUBLE_BRACKET EB1911 self-reference cross-link
+    r"|\[\[\s*Author:"              # DOUBLE_BRACKET Author link (contributor or xref)
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates

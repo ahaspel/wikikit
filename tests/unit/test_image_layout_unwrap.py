@@ -37,24 +37,17 @@ import re
 import pytest
 
 from britannica.pipeline.stages.prepare_wikitext import _convert_quote_runs
-from britannica.pipeline.stages.transform_articles import (
-    _transform_text_v2 as _raw_transform,
-)
+from britannica.pipeline.stages.elements import ElementContext, process_elements
 
 
-def _transform_text_v2(src: str, volume: int, page_number: int) -> str:
-    """Mirror the production pipeline.
-
-    In production, `_transform_text_v2` is called on wikitext that has
-    already passed through `prepare_wikitext` — meaning
-    `_convert_quote_runs` has converted `'''X'''` / `''Y''` to
-    `«B»X«/B»` / `«I»Y«/I»` markers upstream.  Tests that pass raw
-    wikitext directly to the unwrapped `_transform_text_v2` skip that
-    step, and legend / multi-col extraction silently fails to
-    recognise the still-`''`-wrapped italic labels.  This wrapper
-    re-establishes the production call shape.
-    """
-    return _raw_transform(_convert_quote_runs(src), volume, page_number)
+def _transform(src: str, volume: int, page_number: int) -> str:
+    """Mirror the production transform on a raw string: `_convert_quote_runs`
+    (run by `prepare_wikitext` upstream in production) then `process_elements`.
+    Without the quote-run conversion, legend / multi-col extraction silently
+    fails to recognise still-`''`-wrapped italic labels."""
+    return process_elements(
+        _convert_quote_runs(src),
+        ElementContext(volume=volume, page_number=page_number))
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────
@@ -165,7 +158,7 @@ def assert_faithful(body, *, img=None, content=(), absent=()):
 
 def test_sewing_machines_fig1_image_and_caption():
     """Image+caption wikitable → image leaf + caption text, present exactly once."""
-    body = _transform_text_v2(SEWING_MACHINES_2, volume=24, page_number=774)
+    body = _transform(SEWING_MACHINES_2, volume=24, page_number=774)
     assert_faithful(body, img="EB1911 Sewing Machine - Howe's original.jpg",
                     content=["Howe's original Machine"])
     assert len(extract_imgs(body)) == 1
@@ -179,7 +172,7 @@ def test_abbey_02_float_is_faithful_figtable():
     IMG.  The image is a pure leaf (caption None); the cap text rides in a
     cell with its «SC» markup intact and its <br>s carried as HTML — there is no
     images and no clean_caption flattening."""
-    body = _transform_text_v2(ABBEY_02_FLOAT, volume=1, page_number=44)
+    body = _transform(ABBEY_02_FLOAT, volume=1, page_number=44)
     assert 'class="figtable"' in body and "float:" in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
@@ -197,7 +190,7 @@ def test_abbey_02_float_is_faithful_figtable():
 def test_air_engine_fig1_faithful_figtable():
     """AIR_ENGINE Fig 1 `{{Img float}}` → floated figtable: a pure image leaf
     plus the caption carried in a cell (markup intact, not an IMG caption)."""
-    body = _transform_text_v2(AIR_ENGINE_1, volume=1, page_number=482)
+    body = _transform(AIR_ENGINE_1, volume=1, page_number=482)
     assert 'class="figtable"' in body and "float:" in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
@@ -214,7 +207,7 @@ def test_air_engine_fig1_faithful_figtable():
 def test_weighing_machines_fig19_caption_attached():
     """Loose `{{c|...}}` wrapper after `{{raw image|...}}` is the image's
     caption; the Fig. 19 text must not appear as a sibling paragraph."""
-    body = _transform_text_v2(
+    body = _transform(
         WEIGHING_MACHINES, volume=28, page_number=495)
     assert_faithful(body,
                     img="EB1911 Weighing Machines - Automatic Coal.jpg",
@@ -226,7 +219,7 @@ def test_weighing_machines_fig19_caption_attached():
 def test_abbey_3_single_img_with_caption():
     """Image + caption + nested legend table → exactly one IMG marker
     with the Fig. 3 caption folded in."""
-    body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
+    body = _transform(ABBEY_3, volume=1, page_number=44)
     assert_faithful(body, img="Abbey_3.png",
                     content=["Ground-plan of St Gall", "High altar",
                              "Altar of St Paul", "House for blood-letting",
@@ -238,7 +231,7 @@ def test_abbey_3_single_img_with_caption():
 def test_abbey_3_no_duplicate_caption():
     """The Fig. 3 caption text must not appear outside the IMG marker.
     Prior to fix: it leaked as a sibling paragraph."""
-    body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
+    body = _transform(ABBEY_3, volume=1, page_number=44)
     # Faithful renders the caption as a sibling \u00abCTR\u00bb block (not bundled in
     # the IMG leaf); the invariant is that it appears exactly once.
     assert body.count("Ground-plan of St Gall") == 1
@@ -249,7 +242,7 @@ def test_abbey_3_legend_preserved():
     the body — we absorb the caption into IMG but keep the legend as
     a sibling block. Previous failure mode: legend dropped entirely
     when bundling fired."""
-    body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
+    body = _transform(ABBEY_3, volume=1, page_number=44)
     assert "High altar" in body, (
         f"Legend content missing from body:\n{body[:600]!r}")
     assert "House for blood-letting" in body
@@ -257,7 +250,7 @@ def test_abbey_3_legend_preserved():
 
 def test_abbey_3_no_loose_pipes():
     """Output must not contain stray `|   |` table-row artifacts."""
-    body = _transform_text_v2(ABBEY_3, volume=1, page_number=44)
+    body = _transform(ABBEY_3, volume=1, page_number=44)
     # Outside of TABLE/HTMLTABLE markers, no loose `|   |`
     masked = re.sub(r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", body)
     masked = re.sub(r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
@@ -383,7 +376,7 @@ def assert_no_leaks(body: str):
 # ── Tests: WIKI_IMG_INLINE_LEGEND (Abbey_01) ──────────────────────────
 
 def test_abbey_01_single_img_with_caption():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_01_INLINE_LEGEND, volume=1, page_number=43)
     assert_faithful(body, img="Abbey_01.png",
                     content=["Santa Laura", "Mount Athos"])
@@ -391,7 +384,7 @@ def test_abbey_01_single_img_with_caption():
 
 
 def test_abbey_01_legend_preserved_and_ordered():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_01_INLINE_LEGEND, volume=1, page_number=43)
     # Faithful renders the legend as source-order cells; the durable
     # invariant is that every entry's text survives in the body.
@@ -402,7 +395,7 @@ def test_abbey_01_legend_preserved_and_ordered():
 
 
 def test_abbey_01_no_leaks():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_01_INLINE_LEGEND, volume=1, page_number=43)
     assert_no_leaks(body)
 
@@ -410,14 +403,14 @@ def test_abbey_01_no_leaks():
 # ── Tests: WIKI_IMG_MULTICOL_LEGEND (Cluny vol 1 p. 46) ───────────────
 
 def test_cluny_single_img_with_caption():
-    body = _transform_text_v2(
+    body = _transform(
         CLUNY_MULTICOL_LEGEND, volume=1, page_number=46)
     assert_faithful(body, img="pg. 46 img 2.png", content=["Abbey of Cluny"])
     assert len(extract_imgs(body)) == 1
 
 
 def test_cluny_legend_in_reading_order():
-    body = _transform_text_v2(
+    body = _transform(
         CLUNY_MULTICOL_LEGEND, volume=1, page_number=46)
     # Faithful renders the multicol legend as source-order cells; all
     # entries' text survives (no reading-order sort is imposed).
@@ -430,7 +423,7 @@ def test_cluny_legend_in_reading_order():
 
 
 def test_cluny_no_leaks():
-    body = _transform_text_v2(
+    body = _transform(
         CLUNY_MULTICOL_LEGEND, volume=1, page_number=46)
     assert_no_leaks(body)
 
@@ -438,7 +431,7 @@ def test_cluny_no_leaks():
 # ── Tests: WIKI_IMG_POEM_LEGEND WITH SUBHEADINGS (Abbey_3 full) ───────
 
 def test_abbey_3_sub_single_img_with_caption():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
     assert_faithful(body, img="Abbey_3.png",
                     content=["Ground-plan of St Gall"])
@@ -446,7 +439,7 @@ def test_abbey_3_sub_single_img_with_caption():
 
 
 def test_abbey_3_sub_subheadings_preserved():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
     # Faithful renders the csc subheadings as centred small-caps blocks;
     # their text survives.
@@ -455,7 +448,7 @@ def test_abbey_3_sub_subheadings_preserved():
 
 
 def test_abbey_3_sub_entries_preserved():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
     assert_faithful(body, content=["High altar", "Cloister",
                                    "House for blood-letting", "Factory",
@@ -463,7 +456,7 @@ def test_abbey_3_sub_entries_preserved():
 
 
 def test_abbey_3_sub_no_leaks():
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
     assert_no_leaks(body)
 
@@ -472,7 +465,7 @@ def test_abbey_3_sub_source_order():
     """Subheadings must appear BEFORE the entries they introduce, not
     collected together at the top. Previous bug: all `### X.` lines
     clustered first, then all entries."""
-    body = _transform_text_v2(
+    body = _transform(
         ABBEY_3_WITH_SUBHEADINGS, volume=1, page_number=44)
     # Source order is preserved end-to-end: each subheading appears before
     # the entries it introduces (faithful renders cells/poems in source order).
@@ -499,7 +492,7 @@ def test_hydromedusae_fig29_attribution_preserved():
         "{{sc|Fig. 29.}}—''Tiaropsis rosea'' showing the eight Statocysts.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=154)
+    body = _transform(src, volume=14, page_number=154)
     assert_faithful(body, img="Tiaropsis rosea.jpg",
                     content=["Tiaropsis rosea", "After O. Maas"])
 
@@ -529,7 +522,7 @@ def test_hydromedusae_fig30_comma_label_legend():
         "|''st.c'',&nbsp;||Cavity of statocyst.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=155)
+    body = _transform(src, volume=14, page_number=155)
     assert_faithful(body, img="Statocyst.jpg",
                     content=["Section of a Statocyst", "Ex-umbral",
                              "Sub-umbral", "Circular canal", "Velum",
@@ -558,7 +551,7 @@ def test_sponges_fig2_multiword_labels():
         "|align=\"right\"|''osc. div.'',||&nbsp;Diverticula from which new oscula arise.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=25, page_number=738)
+    body = _transform(src, volume=25, page_number=738)
     assert_faithful(body, content=["Leucosolenia", "Osculum",
                                    "Closed osculum", "Closed oscula",
                                    "Diverticula"])
@@ -579,7 +572,7 @@ def test_fulminic_acid_not_classified_as_legend():
         '|Steiner,&#8193; || colspan=2|Divers,&#8193; ||Scholl,&#8193; ||Nef.\n'
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=11, page_number=312)
+    body = _transform(src, volume=11, page_number=312)
     assert "{{LEGEND:" not in body, (
         f"False-positive LEGEND for chemistry-formula table:\n{body[:500]!r}")
 
@@ -606,7 +599,7 @@ def test_hydromedusae_fig26_prime_mark_labels():
         "|''k''\u2032,||Sporosac.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=154)
+    body = _transform(src, volume=14, page_number=154)
     assert_faithful(body, content=["Carmarina hastata", "Nerve ring",
                                    "Radial nerve", "Tentaculocyst",
                                    "Ovary", "Sporosac", "′", "″"])
@@ -630,7 +623,7 @@ def test_hydromedusae_fig49_nowrap_wrapped_label():
         "|&emsp;''g''\u2032,||Hydranth contracted.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=162)
+    body = _transform(src, volume=14, page_number=162)
     assert_faithful(body, content=["Hydrocaulus (stem)",
                                    "Hydrorhiza (root)", "Hydranth"])
 
@@ -658,7 +651,7 @@ def test_hydromedusae_fig55_nested_plain_paragraph_legend():
         '|}\n'
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=164)
+    body = _transform(src, volume=14, page_number=164)
     assert_faithful(body, img="Oral Surface.jpg",
                     content=["Oral Surface", "Genital glands",
                              "Manubrium", "Otocysts",
@@ -689,7 +682,7 @@ def test_hydromedusae_fig73_nested_pipe_pair_legend():
         '|}\n'
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=171)
+    body = _transform(src, volume=14, page_number=171)
     assert_faithful(body, img="Physophora hydrostatica.jpg",
                     content=["Physophora", "Pneumatocyst", "Palpons",
                              "Axis of the colony", "Nectocalyx"])
@@ -713,7 +706,7 @@ def test_hydromedusae_fig5_is_not_multicol():
         "B, ''C. multicornis'', natural size.\n"
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=14, page_number=149)
+    body = _transform(src, volume=14, page_number=149)
     # No bogus LEGEND should be emitted for this attribution+caption
     # layout (there is no ||-separated multi-column legend here).
     assert "{{LEGEND:" not in body, (
@@ -741,7 +734,7 @@ def test_kirkstall_numeric_legend():
         '20.&emsp;Infirmary or abbot\u2019s house.</poem>\n'
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=1, page_number=49)
+    body = _transform(src, volume=1, page_number=49)
     assert_faithful(body, img="pg. 49 img 2.png",
                     content=["Kirkstall", "Church", "Chapels",
                              "Cellars", "Common room", "Uncertain",
@@ -768,7 +761,7 @@ def test_mosque_amr_full_entry_per_cell():
         '| 4. Dakka. || 8. Latrines.\n'
         '|}\n'
     )
-    body = _transform_text_v2(src, volume=2, page_number=450)
+    body = _transform(src, volume=2, page_number=450)
     assert_faithful(body, content=["Mosque of", "Kibla", "Mimbar",
                                    "Dakka", "Fountain for Ablution",
                                    "Rooms built later", "Minaret",
@@ -802,14 +795,14 @@ P.{{em|1.1}}Gateway.</poem>
 
 
 def test_clairvaux_poem_columns_single_img_with_caption():
-    body = _transform_text_v2(
+    body = _transform(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
     assert_faithful(body, img="pg. 47 img 1.png", content=["Clairvaux"])
     assert len(extract_imgs(body)) == 1
 
 
 def test_clairvaux_poem_columns_legend_entries():
-    body = _transform_text_v2(
+    body = _transform(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
     assert_faithful(body, content=["Cloisters", "Ovens", "St Bernard",
                                    "Stables", "Wine-press", "Parlour",
@@ -819,13 +812,13 @@ def test_clairvaux_poem_columns_legend_entries():
 def test_clairvaux_poem_columns_no_orphan_caption():
     """The Fig. 6 caption must not appear outside the IMG marker
     (previous failure: duplicate caption rendered as body paragraph)."""
-    body = _transform_text_v2(
+    body = _transform(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
     assert body.count("Clairvaux, No. 1") == 1
 
 
 def test_clairvaux_poem_columns_no_leaks():
-    body = _transform_text_v2(
+    body = _transform(
         CLAIRVAUX_POEM_COLUMNS, volume=1, page_number=47)
     assert_faithful(body)
 
@@ -848,7 +841,7 @@ def test_legend_entry_label_variants():
         "|}\n"
         "|}\n"
     )
-    body = _transform_text_v2(src, volume=1, page_number=44)
+    body = _transform(src, volume=1, page_number=44)
     assert_faithful(body, content=["Scriptorium", "Guest-house",
                                    "Mills", "Chambers"])
 

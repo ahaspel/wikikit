@@ -118,6 +118,8 @@ def _derive_double_bracket_label(raw: str) -> str:
     m = _BRACKET_PREFIX_RE.match(raw)
     if m and m.group(1).lower() in {"file", "image"}:
         return "IMAGE"
+    if m and m.group(1).lower() == "author":
+        return "AUTHOR_LINK"
     if re.match(r"\[\[\s*1911\s+[Ee]ncyclop", raw, re.IGNORECASE):
         return "EB1911_SELFREF"
     raise ValueError(f"Unknown DOUBLE_BRACKET prefix: {raw[:40]!r}")
