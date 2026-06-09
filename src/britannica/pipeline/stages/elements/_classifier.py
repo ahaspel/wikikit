@@ -165,6 +165,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         raise ValueError(
             f"DOUBLE_BRACE raw doesn't open with a template: {raw[:40]!r}")
     name = m.group(1).lower()
+    # `{{section|Name}}` — Wikisource subsection ANCHOR (link target, no visual
+    # output).  Distinct from the `<section>` boundary tag; carried so same-article
+    # `[[#Name]]` and cross-article `…#Name` xrefs resolve against it.
+    if name == "section":
+        return "SECTION_ANCHOR"
     # Fraction family (sfrac/mfrac/frac/over/EB1911 tfrac/…) — a styler lifted
     # as an element; the FRACTION producer recurses its slots.  Matched on the
     # raw opener (so `{{EB1911 sfrac|…}}` routes here, not to the `eb1911`

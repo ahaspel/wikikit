@@ -146,6 +146,12 @@ _HIEROGLYPH_TMPL_RE = re.compile(
 # (The bare `{{EB1911 XYZ}}` sign-off shortcut is NOT recognized here — decorator's too.)
 _CONTRIBUTOR_FOOTER_OPENER_RE = re.compile(
     r"\{\{\s*EB1911\s+footer\b", re.IGNORECASE)
+# `{{section|Name}}` — Wikisource subsection ANCHOR (link target, no visual output;
+# distinct from the `<section>` boundary tag).  Opener-only; span closes via
+# `_construct_end`.  Carried so same-article `[[#Name]]` / cross-article `…#Name`
+# xrefs resolve against it.
+_SECTION_ANCHOR_OPENER_RE = re.compile(
+    r"\{\{\s*section\s*\|", re.IGNORECASE)
 # `{{EB1911 article link|Display|Target}}` — a cross-reference LINK.  OPENER-only regex;
 # the span is closed by the one balanced matcher (`_construct_end`, exactly like the
 # fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
@@ -462,6 +468,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block)\s*/s\s*\}\}"  # CENTER paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*section\s*\|"  # DOUBLE_BRACE {{section|Name}} subsection anchor
     r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
     r"|\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b"  # content extractors
     r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over|binom)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
@@ -798,7 +805,8 @@ def _walk_balanced_shapes(
             for _opener in (_IMAGE_FLOAT_OPENER_RE, _PLAIN_IMAGE_OPENER_RE,
                             _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
                             _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
-                            _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE):
+                            _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
+                            _SECTION_ANCHOR_OPENER_RE):
                 if _opener.match(text, opener_pos):
                     end = _construct_end(text, opener_pos)
                     if end is not None:

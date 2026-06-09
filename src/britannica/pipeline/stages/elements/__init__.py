@@ -65,6 +65,7 @@ from britannica.pipeline.stages.elements._outline import (
 )
 from britannica.pipeline.stages.elements._section import (
     _process_section,
+    _process_section_anchor,
 )
 from britannica.pipeline.stages.elements._tables import (
     _CHEM_BRACKET_IMG_RE,
@@ -643,6 +644,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
     "SECTION": lambda raw, inner, ctx, reg: _process_section(raw),
+    # SECTION_ANCHOR — `{{section|Name}}` subsection link target; carried as a
+    # point anchor `«ANCHOR:slug»` so `[[#Name]]` / `…#Name` xrefs resolve.
+    "SECTION_ANCHOR": lambda raw, inner, ctx, reg: _process_section_anchor(raw),
     # PAGEQUALITY — `<pagequality level=N user=X />` Wikisource metadata.
     # Previously inside a `<noinclude>` block claimed by NOINCLUDE.  With
     # noinclude wiped in `_transform_text_v2`, this self-closing tag sits

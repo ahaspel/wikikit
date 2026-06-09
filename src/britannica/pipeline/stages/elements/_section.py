@@ -30,3 +30,30 @@ def _process_section(raw: str) -> str:
     """A section transclusion marker renders to nothing — it's a boundary
     signal, not content.  (The name is boundary metadata, handled elsewhere.)"""
     return ""
+
+
+# ── {{section|Name}} — the subsection ANCHOR (a different "section" construct) ──
+# Not the `<section>` boundary tag above: this is a Wikisource link TARGET.  The
+# same-article `[[#Name]]` links, the cross-article `…/Article#Name` xrefs, and the
+# reader's-guide references all point at it.  No visual output — the run-in
+# ``''Name''.—`` heading beside it is the visible text; we carry it as a point
+# anchor so those links resolve instead of dangling.
+
+_SECTION_ANCHOR_RE = re.compile(r"\{\{\s*section\s*\|([^}]*)\}\}", re.IGNORECASE)
+
+
+def section_slug(name: str) -> str:
+    """Anchor slug for a section name (spaces → underscores).  The single source
+    of the key, so the producer (the anchor) and extract_xrefs (the `#frag` link)
+    compute the identical string."""
+    return re.sub(r"\s+", "_", name.strip())
+
+
+def _process_section_anchor(raw: str) -> str:
+    """`{{section|Name}}` → an invisible point anchor ``«ANCHOR:slug»``."""
+    m = _SECTION_ANCHOR_RE.match(raw.strip())
+    if not m:
+        return ""
+    # first non-empty pipe-arg (one source has a stray `{{section||Name}}`)
+    name = next((a.strip() for a in m.group(1).split("|") if a.strip()), "")
+    return f"«ANCHOR:{section_slug(name)}»" if name else ""
