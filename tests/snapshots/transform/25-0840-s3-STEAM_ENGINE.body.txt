@@ -134,11 +134,11 @@ the main boiler; E is
 filled while cold and a
 fire is lighted under it;
 it then acts like the
-vessel of De Gaus in
+vessel of De&nbsp;Gaus in
 forcing a supply of feed-water
 into the main
-boiler F. The gauge
-cocks G, G are an interesting
+boiler&nbsp;F. The gauge
+cocks G,&nbsp;G are an interesting
 feature in detail.
 Another form of Savery’s
 engine had only one displacement-chamber
@@ -179,7 +179,7 @@ But as far as the water is, the said vessel will be cold and wet
 where any water has fallen on it; which cold and moisture
 vanishes as fast as the steam in its descent takes the place of
 the water.” Before Savery’s engine was entirely displaced
-by its successor, Newcomen’s, it was improved by J. T. Desaguliers,
+by its successor, Newcomen’s, it was improved by J.&nbsp;T. Desaguliers,
 who applied to it the safety valve (invented by Papin),
 and substituted condensation by a jet of cold water within the
 vessel for the surface condensation used by Savery. To Savery
@@ -216,7 +216,7 @@ the piston had risen the fire was removed, the steam was allowed
 to cool, and the piston did work in its down-stroke under the
 pressure of the atmosphere. After hearing of Savery’s engine
 in 1705 Papin turned his attention to improving it, and devised
-a modified form, shown in fig. 3, in which the displacement-chamber
+a modified form, shown in fig.&nbsp;3, in which the displacement-chamber
 A was a cylinder, with a floating diaphragm or piston
 on the top of the water to keep the water and steam from direct
 contact with one another. The water was delivered into a
@@ -244,7 +244,7 @@ to condense the steam. This was Thomas Newcomen,
 «HTMLTABLE:<table class="figtable" style="float:right;width:230px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 4.jpg|width=230}}</td></tr><tr><td>«SC»Fig«/SC». 4.—Newcomen’s Atmospheric Engine, 1705.</td></tr></table>«/HTMLTABLE»
 who in 1705, with his assistant, John Cawley,
 gave the steam engine
-the form shown in fig. 4.
+the form shown in fig.&nbsp;4.
 Steam admitted from
 the boiler to the cylinder
 allowed the piston
@@ -337,7 +337,7 @@ out through a steam-tight stuffing-box, and allowed steam
 instead of air to press upon the piston’s upper surface. The
 idea of using a separate condenser had no sooner occurred to
 Watt than he put it to the test by constructing the apparatus
-shown in fig. 5. There A is the cylinder, B a surface condenser,
+shown in fig.&nbsp;5. There A is the cylinder, B a surface condenser,
 and C the air-pump. The cylinder was filled with steam above
 the piston, and a vacuum was formed in the surface condenser B.
 On opening the stop-cock D the steam rushed over from the
@@ -346,10 +346,10 @@ weight. After several trials Watt patented his improvements
 in 1769; they are described in his specification in the following
 words, which, apart from their immense historical interest,
 deserve careful study as a statement of principles which to this
-day guide the scientific development of the steam engine:—
+day guide the scientific development of the steam «SPAN[style:white-space:nowrap]»engine:—«/SPAN»
 
 «DIV[style:font-size:83%]»“My method of lessening the consumption of steam, and consequently
-fuel, in fire-engines, consists of the following principles:—
+fuel, in fire-engines, consists of the following «SPAN[style:white-space:nowrap]»principles:—«/SPAN»
 
 “«I»First«/I», That vessel in which the powers of steam are to be employed
 to work the engine, which is called the cylinder in common
@@ -409,7 +409,7 @@ condenser made up of small tubes, in every essential respect
 like the condensers now used in marine engines.«FN:An interesting detailed narrative of the steps leading to his
 invention was written by Watt as a note to the article “Steam
 Engine” in Robison’s «I»System of Mechanical Philosophy«/I» (1822).
-See Ewing, «I»The Steam Engine and other Heat Engines«/I», pp. 15–19.«/FN»
+See Ewing, «I»The Steam Engine and other Heat Engines«/I», pp.&nbsp;15–19.«/FN»
 
 «DIV[style:font-size:83%]»12. Fig. 6 is an example of the Watt pumping engine of this
 period. It should be noticed that, although the top of the cylinder
@@ -458,7 +458,7 @@ each side of the piston alternately. The other
 «SH»Other Inventions«BR»of Watt.«/SH»
 in other words the plan (now used in all engines that
 aim at economy of fuel) of stopping the admission of steam
-«HTMLTABLE:<table class="figtable" style="float:right;width:235px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 7.jpg|width=235}}</td></tr><tr><td>«SC»Fig«/SC». 7.—Watt’s Double-Acting«BR»Engine, 1782.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:right;width:235px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 7.jpg|width=235}}</td></tr><tr><td>«SC»Fig«/SC». 7.—Watt’s Double-Acting<br>Engine, 1782.</td></tr></table>«/HTMLTABLE»
 when the piston had
 made only a part of its
 stroke, and allowing the
@@ -485,7 +485,7 @@ a double conical pendulum,
 which controlled
 the speed by acting on
 the throttle-valve. The stage of development reached at this
-time is illustrated by the engine of fig. 7 (from Stuart’s
+time is illustrated by the engine of fig.&nbsp;7 (from Stuart’s
 «I»History of the Steam Engine«/I»), which shows the parallel
 motion 𝑝𝑝, the governor 𝑔, the throttle-valve 𝑡, and a pair of
 steam and exhaust valves at each end of the cylinder. Among
@@ -501,13 +501,13 @@ utmost success, and held the field against all rivals in spite of
 severe assaults on the validity of his patents. Notwithstanding
 his accurate knowledge of the advantage to be gained by using
 steam expansively, he continued to employ only low pressures—seldom
-more than 7 lb per sq. in. over that of the atmosphere.
+more than 7&nbsp;℔ per sq.&nbsp;in. over that of the atmosphere.
 His boilers were fed, as Newcomen’s had been, through
 an open pipe which rose high enough to let the column of water
 in it balance the pressure of the steam. He gave a definite
 numerical significance to the term “«LN:Horse-power|horse-power«/LN»” (q.v.) as a
 mode of rating engines, defining it as the rate at which work is
-done when 33,000 lb are raised one foot in one minute.
+done when 33,000&nbsp;℔ are raised one foot in one minute.
 
 15. In the fourth claim in Watt’s first patent the second
 sentence describes a non-condensing engine, which would have
@@ -518,7 +518,7 @@ non-condensing engine had been described by Jacob Leupold
 «SH»Non-condensing Engine.«/SH»
 in his «I»Theatrum machinarum«/I». Leupold’s proposed engine
 «HTMLTABLE:<table class="figtable" style="float:right;width:215px"><tr><td>{{IMG:EB1911 Steam Engine - Fig. 8.jpg|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 8.—Leupold’s Non-Condensing Engine, 1725.</td></tr></table>«/HTMLTABLE»
-is shown in fig. 8, which
+is shown in fig.&nbsp;8, which
 makes its action sufficiently
 clear. Watt’s aversion to
 high-pressure steam was
@@ -625,7 +625,7 @@ heavy rod which operated a pump at the foot of the shaft.
 Steam was admitted above the piston for a short portion of the
 stroke, thereby raising the pump-rod, and was allowed to expand
 for the remainder. Then an equilibrium valve, connecting the
-space above and below the piston, as in fig. 6, was opened, and
+space above and below the piston, as in fig.&nbsp;6, was opened, and
 the pump-rod descended, doing work in the pump and raising
 the engine piston. The large mass which had to be started
 and stopped at each stroke served by its inertia to counterbalance
@@ -650,12 +650,12 @@ of work done per bushel or (in some cases) per cwt. of coal. The
 average duty of engines in the Cornwall district rose from
 about 18 millions of foot-pounds per cwt. of coal in 1813 to 68
 millions in 1844; after which less effort seems to have been made
-to maintain a high efficiency («I»Proc«/I». «I»Inst«/I». C.E., 1863, vol. 23).
+to maintain a high efficiency («I»Proc«/I». «I»Inst«/I». C.E., 1863, vol.&nbsp;23).
 In individual cases much higher results were reported, as in the
 Fowey Consols engine, which in 1835 was stated to have a duty
 of 125 millions. This (to use a more modern mode of reckoning)
 is equivalent to the consumption of only a little more than
-1¾ lb of coal per horse-power per hour—a result surpassed by
+«SPAN[style:white-space:nowrap]»1¾ ℔«/SPAN» of coal per horse-power per hour—a result surpassed by
 very few engines in even the best recent practice. It is difficult
 to credit figures which, even in exceptional instances, place the
 Cornish engine of that period on a level with the most efficient
@@ -679,7 +679,7 @@ cylinder whose piston acted on the beam between the centre
 and the flywheel end. Steam of higher pressure than had formerly been used, after doing work in the new cylinder, passed into the old or low-pressure cylinder, where it was further expanded. Many engines whose power was proving insufficient for the extended machinery they had to drive were “M‘Naughted” in this way, and after conversion were found not only to yield more power but to show a marked economy of fuel. The compound form was selected by William Pole for
 the pumping engines of Lambeth and other waterworks about
 1850; in 1854 John Elder began to use it in marine engines;
-in 1857 E. A. Cowper added a steam-jacketed intermediate
+in 1857 E.&nbsp;A. Cowper added a steam-jacketed intermediate
 reservoir for steam between the high and low pressure Cylinders,
 which made it unnecessary for the low-pressure piston to be just
 beginning when the other piston was just ending its stroke.
@@ -740,23 +740,23 @@ it gradually became practicable to use higher steam pressures
 and higher piston speeds, and consequently to
 obtain not only greater efficiency, but also a greater
 amount of power from engines of given bulk. In
-1872 Sir F. J. Bramwell, describing the typical
+1872 Sir F.&nbsp;J. Bramwell, describing the typical
 «SH»Rise in Steam Pressure and in Piston Speed.«/SH»
 marine practice of that time, gave a list of engines,
 all compound, in which the boiler pressure ranged
-from 45 to 60 lb, the mean piston speed was 350 ft. per
-minute, and the consumption of coal 2 to 2½ lb per hour
-per indicated horse-power. In 1881 F. C. Marshall gave
-a similar list, in which the boiler pressure was 77 lb, the speed
-460 ft. per minute, and the consumption a trifle under 2 lb.
+from 45 to 60&nbsp;℔, the mean piston speed was 350&nbsp;ft. per
+minute, and the consumption of coal 2 to «SPAN[style:white-space:nowrap]»2½ ℔«/SPAN» per hour
+per indicated horse-power. In 1881 F.&nbsp;C. Marshall gave
+a similar list, in which the boiler pressure was 77&nbsp;℔, the speed
+460&nbsp;ft. per minute, and the consumption a trifle under 2&nbsp;℔.
 These were compound engines with expansion in two stages.
-The triple expansion engine, introduced by Dr A. C. Kirk
+The triple expansion engine, introduced by Dr A.&nbsp;C. Kirk
 in 1874, did not come into general use until after
 1881. It became the normal type of marine engine,
 with pressures ranging, as a rule, from 150 to
-200 lb, piston speeds generally of 500 or 600 ft. per minute,
+200&nbsp;℔, piston speeds generally of 500 or 600&nbsp;ft. per minute,
 but sometimes as high as 900 or 1000, and coal consumption
-of about 1½ lb per hour per indicated horse-power. In some
+of about «SPAN[style:white-space:nowrap]»1½ ℔«/SPAN» per hour per indicated horse-power. In some
 «SH»Triple and Quadruple Expansion.«/SH»
 instances quadruple expansion has been preferred, with somewhat
 higher pressures, but it can scarcely be said to be
@@ -770,8 +770,8 @@ horse-power exceeding 30,000. But even these figures are
 eclipsed in ships which are driven by turbine engines. The
 cruisers of the “Invincible” class have turbine engines of
 41,000 horse-power, and the turbines of the great Cunarders
-“Lusitania” and “Mauretania” (1907) develop about 70,000 h.p.
-in propelling these ships at a speed of 25 knots. It may be
+“Lusitania” and “Mauretania” (1907) develop about 70,000&nbsp;h.p.
+in propelling these ships at a speed of 25&nbsp;knots. It may be
 questioned whether such gigantic concentrations of power for
 the propulsion of a ship would have been practicable had it not
 been for the new possibilities which the introduction of the
@@ -928,17 +928,17 @@ Black’s doctrine of latent heat; but there was no philosophy
 of the relation of work to heat until long after the inventions
 of Watt were complete. The theory of the steam
 engine as a heat engine dates from 1824, when
-N. L. Sadi Carnot published his «I»Réflexions sur«/I»
+N.&nbsp;L. Sadi Carnot published his «I»Réflexions sur«/I»
 «SH»Theory of Steam Engine.«/SH»
 «I»la puissance motrice du feu«/I», and showed that heat does work
 only by being let down from a higher to a lower temperature.
 But Carnot had no idea that any of the heat disappears
 in the process, and it was not until the doctrine of the conservation
 of energy was established in 1843 by the experiments of
-J. P. Joule that the theory of heat engines began a vigorous
+J.&nbsp;P. Joule that the theory of heat engines began a vigorous
 growth. From 1849 onwards the science of thermodynamics
-was developed with extraordinary rapidity by R. J. M. Clausius,
-W. J. Macquorn Rankine and William Thomson (Lord Kelvin)
+was developed with extraordinary rapidity by R.&nbsp;J.&nbsp;M. Clausius,
+W.&nbsp;J. Macquorn Rankine and William Thomson (Lord Kelvin)
 and was applied, especially by Rankine, to practical problems
 in the use of steam. The publication in 1859 of Rankine’s
 «I»Manual of the Steam Engine«/I» formed an epoch in the history of
@@ -977,6 +977,7 @@ of submitting them to any comprehensive theoretical treatment,
 and information is rather to be sought from the scientific analysis
 of experiments with actual machines.
 
+
 27. «I»Formation of Steam under Constant Pressure«/I».—In attempting
 a brief sketch of steam engine theory it is necessary to begin by giving
 some account of the properties of steam, so far as they are relevant.
@@ -989,10 +990,10 @@ formed is a long upright cylinder fitted with a piston which may be
 loaded so that it exerts a constant pressure on the fluid below. Let
 there be, to begin with, at the foot of the cylinder a quantity of
 water (which for convenience of numerical statement we shall take
-as 1 lb), at any temperature 𝑡₀; and let the piston press on the surface
-of the water with a force of 𝑝 lb per square foot. Let heat now be
+as 1&nbsp;℔), at any temperature 𝑡<sub>0</sub>; and let the piston press on the surface
+of the water with a force of 𝑝&nbsp;℔ per square foot. Let heat now be
 applied to the bottom of the cylinder. As it enters the water it
-will produce the following effects in three stages:—
+will produce the following effects in three «SPAN[style:white-space:nowrap]»stages:—«/SPAN»
 
 1. The temperature of the water rises until a certain temperature
 𝑡 is reached, at which steam begins to be formed. The value of
@@ -1004,7 +1005,7 @@ the piston.
 is supposed to exert a constant pressure) rises. No further increase
 of temperature occurs during this stage, which continues until all
 the water is converted into steam. During this stage the steamPAGE:847which is formed is said to be saturated. The volume which the piston
-encloses at the end of this stage—the volume, namely, of 1 lb of
+encloses at the end of this stage—the volume, namely, of 1&nbsp;℔ of
 saturated steam at pressure 𝑝 (and temperature 𝑡)—will be denoted
 by 𝑣 in cubic feet.
 
@@ -1035,11 +1036,11 @@ the Centigrade scale; the second gives the corresponding pressure
 in pounds per square inch.
 
 29. «I»Relation of Volume and Temperature.«/I»—The same table shows
-the volume 𝑣 in cubic feet occupied by 1 lb of saturated steam at
+the volume 𝑣 in cubic feet occupied by 1&nbsp;℔ of saturated steam at
 each temperature. This is based on the investigations of H. L.
 Callendar who has shown (see «LN:Thermodynamics|Thermodynamics«/LN» and «LN:Vaporization|Vaporization«/LN»)
 that an equation of the form
-«CTR»𝑣=Rτ/𝑝 + 𝑏 − 𝑐«/CTR»
+«CTR»𝑣＝Rτ/𝑝 + 𝑏 − 𝑐«/CTR»
 is applicable to water vapour, whether saturated or superheated,
 within the limits of experimental error throughout the range of
 pressure that is important in engineering practice. In this equation
@@ -1050,7 +1051,7 @@ experiments on the latent heat and other properties of steam,
 Callendar has shown that it is possible to frame expressions from which
 numerical values of all the important properties of steam may be
 derived throughout a range of saturation temperatures extending
-from 0° C. to 200° C. or so. The values so obtained are thermodynamically
+from 0°&nbsp;C. to 200°&nbsp;C. or so. The values so obtained are thermodynamically
 consistent with one another, and are in good agreement
 with the most authoritative experimental results. They are
 accordingly to be accepted in lieu of those given in earlier steam
@@ -1066,21 +1067,21 @@ as we proceed.
 30. «I»Supply of Heat in Formation of Steam under Constant Pressure.«/I»—We
 have next to consider the supply of heat in the imaginary
 experiment of § 27. During the first stage, until the temperature
-rises from its initial value 𝑡₀ to 𝑡, the temperature at which steam
+rises from its initial value 𝑡<sub>0</sub> to 𝑡, the temperature at which steam
 begins to form under the given pressure, heat is required only to
 warm the water. Since the specific heat of water is nearly constant,
 the amount of heat taken in during the first stage is approximately
-𝑡—𝑡₀ thermal units, or J (𝑡—𝑡₀) foot-pounds, J being Joule’s equivalent,
+𝑡—𝑡<sub>0</sub> thermal units, or J (𝑡—𝑡<sub>0</sub>) foot-pounds, J being Joule’s equivalent,
 and this expression for it will generally serve with sufficient
 accuracy in practical calculations. More exactly, however, the heat
 taken in is somewhat greater than this at high temperatures, for
 Regnault’s experiments show that the specific heat of water increases
 slightly as the temperature rises. In stating the amount of heat
 required for this first stage, to must be taken as a known temperature;
-for convenience in numerical statement the temperature 0° C.
+for convenience in numerical statement the temperature 0°&nbsp;C.
 is usually chosen as an arbitrary starting-point from which the reception
 of heat is to be reckoned. We shall employ the symbol ℎ to
-designate the heat required to raise 1 lb of water from 0° C. to the
+designate the heat required to raise 1&nbsp;℔ of water from 0°&nbsp;C. to the
 temperature 𝑡 at which steam begins to form. During the first
 stage, sensibly all the heat supplied goes to increase the stock of
 internal energy which the fluid possesses, the amount of external
@@ -1090,28 +1091,30 @@ The heat taken in during the second stage is what is called the
 «I»latent heat«/I» of steam, and is denoted by L. Of it a part is spent in
 doing external work, namely, 𝑝 multiplied by the excess of the volume
 of the steam 𝑣 over the volume of the water 𝑤, and the remainder is
-the difference of internal energy between 1 lb of steam at 𝑡 and 1 lb of
+the difference of internal energy between 1&nbsp;℔ of steam at 𝑡 and 1&nbsp;℔ of
 water at 𝑡.
 
 31. «I»Total Heat of Steam.«/I»—Adding together the heat taken in
 during the first and second stages, we have a quantity designated
-by H which may be called the heat of formation of 1 lb of saturated
+by H which may be called the heat of formation of 1&nbsp;℔ of saturated
 steam:—
 
-«CTR»H=ℎ+L.«/CTR»
-The heat of formation of 1 lb of steam, when formed under constant
-pressure from water at any temperature to, is H−ℎ₀, where ℎ₀
-corresponds to 𝑡₀.
+«CTR»H＝ℎ+L.«/CTR»
+The heat of formation of 1 ℔ of steam, when formed under constant
+pressure from water at any temperature to, is H−ℎ<sub>0</sub>, where ℎ<sub>0</sub>
+corresponds to 𝑡<sub>0</sub>.
 
-It has been pointed out by Mollier that for the purpose of calculations in technical thermodynamics it is convenient to add to the heat of formation the quantity 𝑝𝑤/J, which represents the thermal equivalent of the work spent in introducing the water under the piston, against the constant pressure 𝑝, before the operation of heating imagined in § 27 begins, 𝑤 being the volume of the water. We thus obtain a quantity which in its numerical values differs only very slightly from H, namely
+It has been pointed out by Mollier that for the purpose of calculations in technical thermodynamics it is convenient to add to the heat of formation the quantity 𝑝𝑤/J, which represents the thermal equivalent of the work spent in introducing the water under the piston, against the constant pressure 𝑝, before the operation of heating imagined in §&nbsp;27 begins, 𝑤 being the volume of the water. We thus obtain a quantity which in its numerical values differs only very slightly from H, namely
 
-«CTR»I=H+𝑝𝑤/J.«/CTR»
+«CTR»I＝H+𝑝𝑤/J.«/CTR»
 We shall call this the total heat of saturated steam. Values of I
-are stated in the table. Since the volume of 1 lb of water is only
-0·016 cub. ft. the term 𝑝𝑤/J is numerically insignificant except
+are stated in the table. Since the volume of 1&nbsp;℔ of water is only
+0·016 cub.&nbsp;ft. the term 𝑝𝑤/J is numerically insignificant except
 at the highest pressures. Similarly, in reckoning the total heat
-of water I𝑤 we add 𝑝𝑤/J to ℎ, and this quantity is also given in the table. The latent heat L is to be found from the table by subtracting I𝑤, the total heat of water, from the total heat of steam. We shall use the centigrade scale of temperature throughout this article, and accordingly the total heats are expressed in terms of a unit involving the centigrade degree, namely, the quantity of heat required to raise the temperature of unit mass of water through 1° C. at 15° C. With this unit of heat the mechanical equivalent J is 1400 foot-pounds when the unit of mass is the lb, and is 427 kilogram-metres when the unit of mass is the kilogramme.
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><caption>«I»Properties of Saturated Steam.«/I»</caption><tr><td rowspan="2" style="border:1px solid">Temperature.«BR»Centigrade.</td><td rowspan="2" style="border:1px solid">Pressure«BR»lb per«BR»sq. in.</td><td rowspan="2" style="border:1px solid">Volume«BR»cub. ft.«BR»per lb.</td><td colspan="2" style="border:1px solid">Total Heat.</td><td colspan="2" style="border:1px solid">Entropy.</td></tr><tr><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td></tr><tr><td> 0</td><td>0·089</td><td>3283. </td><td>0</td><td>594·7</td><td>0</td><td>2·178</td></tr><tr><td> 5</td><td>0·127</td><td>2354. </td><td>5·0</td><td>597·1</td><td>0·018</td><td>2·148</td></tr><tr><td>10</td><td>0·178</td><td>1708. </td><td>10·0</td><td>599·4</td><td>0·036</td><td>2·119</td></tr><tr><td>15</td><td>0·246</td><td>1253. </td><td>15·0</td><td>601·8</td><td>0·054</td><td>2·091</td></tr><tr><td>20</td><td>0·336</td><td>931.</td><td>20·0</td><td>604·1</td><td>0·071</td><td>2·064</td></tr><tr><td>25</td><td>0·455</td><td>699·5</td><td>25·0</td><td>606·5</td><td>0·088</td><td>2·039</td></tr><tr><td>30</td><td>0·610</td><td>530·7</td><td>30·0</td><td>608·8</td><td>0·104</td><td>2·015</td></tr><tr><td>35</td><td>0·809</td><td>406·8</td><td>35·0</td><td>611·1</td><td>0·121</td><td>1·991</td></tr><tr><td>40</td><td>1·062</td><td>314·8</td><td>40·1</td><td>613·5</td><td>0·137</td><td>1·969</td></tr><tr><td>45</td><td>1·381</td><td>245·8</td><td>45·1</td><td>615·8</td><td>0·153</td><td>1·947</td></tr><tr><td>50</td><td>1·78</td><td>193·7</td><td>50·1</td><td>618·0</td><td>0·169</td><td>1·927</td></tr><tr><td>55</td><td>2·27</td><td>153·9</td><td>55·1</td><td>620·3</td><td>0·184</td><td>1·907</td></tr><tr><td>60</td><td>2·88</td><td>123·3</td><td>60 1</td><td>622·6</td><td>0·199</td><td>1·888</td></tr><tr><td>65</td><td>3·61</td><td>99·5</td><td>65·2</td><td>624·8</td><td>0·214</td><td>1·870</td></tr><tr><td>70</td><td>4·51</td><td>80·9</td><td>70·2</td><td>627·0</td><td>0·229</td><td>1·852</td></tr><tr><td>75</td><td>5·58</td><td>66·24</td><td>75·3</td><td>629·2</td><td>0·244</td><td>1·835</td></tr><tr><td>80</td><td>6·86</td><td>54·60</td><td>80·3</td><td>631·3</td><td>0·258</td><td>1·819</td></tr><tr><td>85</td><td>8·38</td><td>45·29</td><td>85·3</td><td>633·5</td><td>0·272</td><td>1·803</td></tr><tr><td>90</td><td>10·16</td><td>37·79</td><td>90·4</td><td>635·6</td><td>0·286</td><td>1·788</td></tr><tr><td>95</td><td>12·26</td><td>31·71</td><td>95·5</td><td>637·6</td><td>0·300</td><td>1·773</td></tr><tr><td>100</td><td>14·70</td><td>26·75</td><td>100·5</td><td>639·7</td><td>0·314</td><td>1·759</td></tr><tr><td>105</td><td>17·52</td><td>22·69</td><td>105·6</td><td>641·7</td><td>0·327</td><td>1·745</td></tr><tr><td>110</td><td>20·79</td><td>19·34</td><td>110·7</td><td>643·6</td><td>0·340</td><td>1·732</td></tr><tr><td>115</td><td>24·55</td><td>16·56</td><td>115·8</td><td>645·5</td><td>0·354</td><td>1·719</td></tr><tr><td>120</td><td>28·83</td><td>14·25</td><td>120·9</td><td>647·4</td><td>0·367</td><td>1·706</td></tr><tr><td>125</td><td>33·72</td><td>12·30</td><td>126·0</td><td>649·2</td><td>0·379</td><td>1·694</td></tr><tr><td>130</td><td>39·26</td><td>10·67</td><td>131·1</td><td>651·0</td><td>0·392</td><td>1·682</td></tr><tr><td>135</td><td>45·51</td><td>9·29</td><td>136·2</td><td>652·8</td><td>0·405</td><td>1·671</td></tr><tr><td>140</td><td>52·56</td><td>8·12</td><td>141·3</td><td>654·5</td><td>0·417</td><td>1·660</td></tr><tr><td>145</td><td>60·42</td><td>7·13</td><td>146·4</td><td>656·1</td><td>0·430</td><td>1·649</td></tr><tr><td>150</td><td>69·24</td><td>6·274</td><td>151·6</td><td>657·8</td><td>0·442</td><td>1·638</td></tr><tr><td>155</td><td>79·04</td><td>5·542</td><td>156·7</td><td>659·3</td><td>0·454</td><td>1·628</td></tr><tr><td>160</td><td>89·93</td><td>4·910</td><td>161·9</td><td>660·8</td><td>0·466</td><td>1·618</td></tr><tr><td>165</td><td>101·98</td><td>4·363</td><td>167·1</td><td>662·3</td><td>0·478</td><td>1·608</td></tr><tr><td>170</td><td>115·27</td><td>3·891</td><td>172·2</td><td>663·7</td><td>0·489</td><td>1·599</td></tr><tr><td>175</td><td>129·9</td><td>3·478</td><td>177·4</td><td>665·0</td><td>0·501</td><td>1·589</td></tr><tr><td>180</td><td>145·9</td><td>3·116</td><td>182·6</td><td>666·3</td><td>0·512</td><td>1·580</td></tr><tr><td>185</td><td>163·4</td><td>2·800</td><td>187·9</td><td>667·6</td><td>0·524</td><td>1·571</td></tr><tr><td>190</td><td>182·6</td><td>2·523</td><td>193·1</td><td>668·8</td><td>0·535</td><td>1·563</td></tr><tr><td>195</td><td>203·4</td><td>2·279</td><td>198·3</td><td>670·0</td><td>0·546</td><td>1·554</td></tr><tr><td>200</td><td>226·0</td><td>2·063</td><td>203·6</td><td>671·1</td><td>0·557</td><td>1·546</td></tr><tr><td>205</td><td>250·5</td><td>1·874</td><td>208·9</td><td>672·2</td><td>0·568</td><td>1·538</td></tr><tr><td>210</td><td>277·2</td><td>1·703</td><td>214·1</td><td>673·2</td><td>0·579</td><td>1·530</td></tr><tr><td>215</td><td>306·8</td><td>1·546</td><td>219·4</td><td>674·1</td><td>0·590</td><td>1·522</td></tr></table>«/HTMLTABLE»
+of water I<sub>𝑤</sub> we add 𝑝𝑤/J to ℎ, and this quantity is also given in the table. The latent heat L is to be found from the table by subtracting I<sub>𝑤</sub>, the total heat of water, from the total heat of steam. We shall use the centigrade scale of temperature throughout this article, and accordingly the total heats are expressed in terms of a unit involving the centigrade degree, namely, the quantity of heat required to raise the temperature of unit mass of water through 1°&nbsp;C. at 15°&nbsp;C. With this unit of heat the mechanical equivalent J is 1400 foot-pounds when the unit of mass is the ℔, and is 427 kilogram-metres when the unit of mass is the kilogramme.
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><caption>«I»Properties of Saturated Steam.«/I»</caption><tr><td rowspan="2" style="border:1px solid">Tempera-<br>ture.<br>Centigrade.</td><td rowspan="2" style="border:1px solid">Pressure<br>℔ per<br>sq. in.</td><td rowspan="2" style="border:1px solid">Volume<br>cub. ft.<br>per ℔.</td><td colspan="2" style="border:1px solid">Total Heat.</td><td colspan="2" style="border:1px solid">Entropy.</td></tr><tr><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td></tr><tr><td>&numsp;0</td><td>0·089</td><td>3283.&numsp;</td><td> 0</td><td>594·7</td><td>0 </td><td>2·178</td></tr><tr><td>&numsp;5</td><td>0·127</td><td>2354.&numsp;</td><td>5·0</td><td>597·1</td><td>0·018</td><td>2·148</td></tr><tr><td>10</td><td>0·178</td><td>1708.&numsp;</td><td>10·0</td><td>599·4</td><td>0·036</td><td>2·119</td></tr><tr><td>15</td><td>0·246</td><td>1253.&numsp;</td><td>15·0</td><td>601·8</td><td>0·054</td><td>2·091</td></tr><tr><td>20</td><td>0·336</td><td>931.</td><td>20·0</td><td>604·1</td><td>0·071</td><td>2·064</td></tr><tr><td>25</td><td>0·455</td><td>699·5</td><td>25·0</td><td>606·5</td><td>0·088</td><td>2·039</td></tr><tr><td>30</td><td>0·610</td><td>530·7</td><td>30·0</td><td>608·8</td><td>0·104</td><td>2·015</td></tr><tr><td>35</td><td>0·809</td><td>406·8</td><td>35·0</td><td>611·1</td><td>0·121</td><td>1·991</td></tr><tr><td>40</td><td>1·062</td><td>314·8</td><td>40·1</td><td>613·5</td><td>0·137</td><td>1·969</td></tr><tr><td>45</td><td>1·381</td><td>245·8</td><td>45·1</td><td>615·8</td><td>0·153</td><td>1·947</td></tr><tr><td>50</td><td>1·78</td><td>193·7</td><td>50·1</td><td>618·0</td><td>0·169</td><td>1·927</td></tr><tr><td>55</td><td>2·27</td><td>153·9</td><td>55·1</td><td>620·3</td><td>0·184</td><td>1·907</td></tr><tr><td>60</td><td>2·88</td><td>123·3</td><td>60 1</td><td>622·6</td><td>0·199</td><td>1·888</td></tr><tr><td>65</td><td>3·61</td><td>99·5</td><td>65·2</td><td>624·8</td><td>0·214</td><td>1·870</td></tr><tr><td>70</td><td>4·51</td><td>80·9</td><td>70·2</td><td>627·0</td><td>0·229</td><td>1·852</td></tr><tr><td>75</td><td>5·58</td><td>66·24</td><td>75·3</td><td>629·2</td><td>0·244</td><td>1·835</td></tr><tr><td>80</td><td>6·86</td><td>54·60</td><td>80·3</td><td>631·3</td><td>0·258</td><td>1·819</td></tr><tr><td>85</td><td>8·38</td><td>45·29</td><td>85·3</td><td>633·5</td><td>0·272</td><td>1·803</td></tr><tr><td>90</td><td>10·16</td><td>37·79</td><td>90·4</td><td>635·6</td><td>0·286</td><td>1·788</td></tr><tr><td>95</td><td>12·26</td><td>31·71</td><td>95·5</td><td>637·6</td><td>0·300</td><td>1·773</td></tr><tr><td>100</td><td>14·70</td><td>26·75</td><td>100·5</td><td>639·7</td><td>0·314</td><td>1·759</td></tr><tr><td>105</td><td>17·52</td><td>22·69</td><td>105·6</td><td>641·7</td><td>0·327</td><td>1·745</td></tr><tr><td>110</td><td>20·79</td><td>19·34</td><td>110·7</td><td>643·6</td><td>0·340</td><td>1·732</td></tr><tr><td>115</td><td>24·55</td><td>16·56</td><td>115·8</td><td>645·5</td><td>0·354</td><td>1·719</td></tr><tr><td>120</td><td>28·83</td><td>14·25</td><td>120·9</td><td>647·4</td><td>0·367</td><td>1·706</td></tr><tr><td>125</td><td>33·72</td><td>12·30</td><td>126·0</td><td>649·2</td><td>0·379</td><td>1·694</td></tr><tr><td>130</td><td>39·26</td><td>10·67</td><td>131·1</td><td>651·0</td><td>0·392</td><td>1·682</td></tr><tr><td>135</td><td>45·51</td><td>9·29</td><td>136·2</td><td>652·8</td><td>0·405</td><td>1·671</td></tr><tr><td>140</td><td>52·56</td><td>8·12</td><td>141·3</td><td>654·5</td><td>0·417</td><td>1·660</td></tr><tr><td>145</td><td>60·42</td><td>7·13</td><td>146·4</td><td>656·1</td><td>0·430</td><td>1·649</td></tr><tr><td>150</td><td>69·24</td><td>6·274</td><td>151·6</td><td>657·8</td><td>0·442</td><td>1·638</td></tr><tr><td>155</td><td>79·04</td><td>5·542</td><td>156·7</td><td>659·3</td><td>0·454</td><td>1·628</td></tr><tr><td>160</td><td>89·93</td><td>4·910</td><td>161·9</td><td>660·8</td><td>0·466</td><td>1·618</td></tr><tr><td>165</td><td>101·98</td><td>4·363</td><td>167·1</td><td>662·3</td><td>0·478</td><td>1·608</td></tr><tr><td>170</td><td>115·27</td><td>3·891</td><td>172·2</td><td>663·7</td><td>0·489</td><td>1·599</td></tr><tr><td>175</td><td>129·9</td><td>3·478</td><td>177·4</td><td>665·0</td><td>0·501</td><td>1·589</td></tr><tr><td>180</td><td>145·9</td><td>3·116</td><td>182·6</td><td>666·3</td><td>0·512</td><td>1·580</td></tr><tr><td>185</td><td>163·4</td><td>2·800</td><td>187·9</td><td>667·6</td><td>0·524</td><td>1·571</td></tr><tr><td>190</td><td>182·6</td><td>2·523</td><td>193·1</td><td>668·8</td><td>0·535</td><td>1·563</td></tr><tr><td>195</td><td>203·4</td><td>2·279</td><td>198·3</td><td>670·0</td><td>0·546</td><td>1·554</td></tr><tr><td>200</td><td>226·0</td><td>2·063</td><td>203·6</td><td>671·1</td><td>0·557</td><td>1·546</td></tr><tr><td>205</td><td>250·5</td><td>1·874</td><td>208·9</td><td>672·2</td><td>0·568</td><td>1·538</td></tr><tr><td>210</td><td>277·2</td><td>1·703</td><td>214·1</td><td>673·2</td><td>0·579</td><td>1·530</td></tr><tr><td>215</td><td>306·8</td><td>1·546</td><td>219·4</td><td>674·1</td><td>0·590</td><td>1·522</td></tr></table>«/HTMLTABLE»
+
+
 
 32. «I»Internal Energy«/I».—Of the heat of steam the part 𝑝𝑣/J is spent in doing external work. The remainder has gone to increase the stock of internal energy which the substance possesses.
 
@@ -1119,11 +1122,11 @@ In dealing with the heat required to produce steam we adopted
 the state of water at 0°C. as an arbitrary starting-point from which to reckon the reception of heat. In the same way it is convenientPAGE:848to use this arbitrary starting-point in reckoning what may be called
 the «I»internal energy«/I» of the substance, which is the excess of the heat
 taken in over the external work done by the substance during its
-reception of heat. Thus the internal energy E of 1 lb of saturated
+reception of heat. Thus the internal energy E of 1&nbsp;℔ of saturated
 steam at pressure 𝑝 is equal to the total heat I, less that part of the
 total heat which is spent in doing external work, or
 
-«CTR»E=I−𝑝𝑣/J.«/CTR»
+«CTR»E＝I−𝑝𝑣/J.«/CTR»
 
 The notion of internal energy is useful in calculating the heat taken
 in or rejected by steam during any stage of its expansion or compression
@@ -1131,7 +1134,7 @@ in an engine. When a working substance passes from
 one condition to another its gain or loss of heat is determined by
 the equation
 
-«CTR»Heat taken in=increase of internal energy+external work.«/CTR»
+«CTR»Heat taken in＝increase of internal energy+external work.«/CTR»
 
 Any of the terms of this equation may be negative; the last term
 is negative when work is done, not by but upon the substance.
@@ -1145,7 +1148,7 @@ water have the same temperature, and the steam is saturated. The
 dryness of wet steam is measured by the proportion 𝑞 of dry steam
 in each pound of the mixed substance. When that is known it is
 easy to determine the other physical constants: thus—
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>Latent heat of 1 lb of wet steam</td><td>=𝑞L;</td></tr><tr><td>Total heat of 1 lb of wet steam</td><td>=I𝑤+𝑞L;</td></tr><tr><td>Volume of 1 lb of wet steam</td><td>=𝑞𝑣+(1−𝑞)𝑤</td></tr><tr><td></td><td>=𝑞𝑣 very nearly,</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>Latent heat of 1 ℔ of wet steam</td><td>＝𝑞L;</td></tr><tr><td>Total heat of 1 ℔ of wet steam</td><td>＝I<sub>𝑤</sub>+𝑞L;</td></tr><tr><td>Volume of 1 ℔ of wet steam</td><td>＝𝑞𝑣+(1−𝑞)<sub>𝑤</sub></td></tr><tr><td></td><td>＝𝑞𝑣 very nearly,</td></tr></table>«/HTMLTABLE»
 unless the steam is so wet as to consist mainly of water.
 
 34. «I»Superheated Steam«/I».—Steam is superheated when its temperature
@@ -1162,16 +1165,16 @@ determination to be made of the total heat of superheated steam
 of given temperature and pressure, and from this, by comparison
 with the total heat of saturated steam at the same pressure, the mean
 specific heat over any stated range of superheating, may be found.
-Calling I𝑠, the total heat of steam in the saturated condition, when
+Calling I<sub>𝑠</sub>, the total heat of steam in the saturated condition, when
 the temperature is 𝑡, κ the mean specific heat in superheating at
 constant pressure to a higher temperature 𝑡′ and I′ the total heat
 in the superheated state, we have
 
-«CTR»I′=I𝑠, +κ(𝑡′−𝑡).«/CTR»
+«CTR»I′＝I<sub>𝑠</sub>, +κ(𝑡′−𝑡).«/CTR»
 
 The following are values of κ:—
 
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr style="border:1px solid"><td rowspan="2" style="border:1px solid">Temperature of«BR»Superheat 𝑡′ in °C.</td><td colspan="5">Temperature of Saturation 𝑡 in °C.</td></tr><tr style="border:1px solid"><td>80°</td><td>120°</td><td>160°</td><td>180°</td><td>200°</td></tr><tr><td>100°</td><td>0·49</td><td></td><td></td><td></td><td></td></tr><tr><td>150°</td><td>0·49</td><td>0·51</td><td></td><td></td><td></td></tr><tr><td>200°</td><td>0·49</td><td>0·51</td><td>0·54</td><td>0·57</td><td></td></tr><tr><td>250°</td><td>0·48</td><td>0·50</td><td>0·53</td><td>0·56</td><td>0·59</td></tr><tr><td>300°</td><td>0·48</td><td>0·50</td><td>0·52</td><td>0·54</td><td>0·57</td></tr><tr><td>350°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·53</td><td>0·56</td></tr><tr><td>400°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·55</td></tr><tr><td>450°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·54</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr style="border:1px solid"><td rowspan="2" style="border:1px solid">Temperature of<br>Superheat 𝑡′ in °C.&nbsp;</td><td colspan="5">Temperature of Saturation 𝑡 in °C.</td></tr><tr style="border:1px solid"><td>80°</td><td>120°</td><td>160°</td><td>180°</td><td>200°</td></tr><tr><td>100°</td><td>0·49</td><td></td><td></td><td></td><td></td></tr><tr><td>150°</td><td>0·49</td><td>0·51</td><td></td><td></td><td></td></tr><tr><td>200°</td><td>0·49</td><td>0·51</td><td>0·54</td><td>0·57</td><td></td></tr><tr><td>250°</td><td>0·48</td><td>0·50</td><td>0·53</td><td>0·56</td><td>0·59</td></tr><tr><td>300°</td><td>0·48</td><td>0·50</td><td>0·52</td><td>0·54</td><td>0·57</td></tr><tr><td>350°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·53</td><td>0·56</td></tr><tr><td>400°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·55</td></tr><tr><td>450°</td><td>0·48</td><td>0·49</td><td>0·51</td><td>0·52</td><td>0·54</td></tr></table>«/HTMLTABLE»
 
 35. «I»Isothermal Expansion of Steam«/I».—The expansion of volume
 which occurs during the conversion of water into steam under
@@ -1191,16 +1194,16 @@ particles suspended throughout the mass. The temperature and
 pressure fall; and, as that part of the substance which remains
 uncondensed is saturated, the relation of pressure to temperature
 throughout the expansion is that which holds for saturated steam.
-Before expansion let the initial dryness of the steam be 𝑞₁ and its
+Before expansion let the initial dryness of the steam be 𝑞<sub>1</sub> and its
 absolute temperature τ. Then, if it expand adiabatically until its
 temperature falls to τ, its dryness after expansion may be shown
 to be
 
-«CTR»𝑞=τ/L «SPAN[style:font-size:184%]»(«/SPAN»𝑞₁L₁/τ₁ + logετ₁/τ«SPAN[style:font-size:184%]»)«/SPAN».«/CTR»
+«CTR»𝑞＝τ/L «SPAN[style:font-size:184%]»(«/SPAN»𝑞<sub>1</sub>L<sub>1</sub>/τ<sub>1</sub> + log<sub>ε</sub>τ<sub>1</sub>/τ«SPAN[style:font-size:184%]»)«/SPAN».«/CTR»
 
-L₁, and L are the latent heats (in thermal units) of 1 lb of steam
+L<sub>1</sub>, and L are the latent heats (in thermal units) of 1 ℔ of steam
 before and after expansion respectively. When the steam is dry to
-begin with, 𝑞₁=1.
+begin with, 𝑞<sub>1</sub>＝1.
 
 This formula is easily applied to the construction of the adiabatic
 curve when the initial pressure and the pressure after expansion
@@ -1219,13 +1222,13 @@ readily be shown that when the conditions are such as to make this
 difference as great as possible—in other words, to make the efficiency
 reach its ideal limit—the ratio of the heat taken in to the heat
 rejected depends only on the temperature at which reception and
-rejection of heat occur. Calling τ₁ and τ₂ the absolute temperatures
-at which heat is taken in and rejected respectively, and Q₁ and Q₂ the
+rejection of heat occur. Calling τ<sub>1</sub> and τ<sub>2</sub> the absolute temperatures
+at which heat is taken in and rejected respectively, and Q<sub>1</sub> and Q<sub>2</sub> the
 quantities of heat taken in and rejected, the limit of efficiency is
-reached when Q₁/Q₂=τ₁/τ₂. The efficiency then has the value
+reached when Q<sub>1</sub>/Q<sub>2</sub>＝τ<sub>1</sub>/τ<sub>2</sub>. The efficiency then has the value
 
-«CTR»(Q₁−Q₂)/Q₁=(τ₁ − τ₂)/τ₁«/CTR»
-and W, the work done, is Q₁(τ₁ − τ₂)/τ₁.
+«CTR»(Q<sub>1</sub>−Q<sub>2</sub>)/Q<sub>1</sub>＝(τ<sub>1</sub> − τ<sub>2</sub>)/τ<sub>1</sub>«/CTR»
+and W, the work done, is Q<sub>1</sub>(τ<sub>1</sub> − τ<sub>2</sub>)/τ<sub>1</sub>.
 
 In the ideal engine imagined by Carnot the action is of this simple
 character. The working substance is brought by adiabatic compression
@@ -1241,49 +1244,49 @@ steam as the working substance. To simplify the first consideration
 as far as possible, let it be supposed that we have a long cylinder
 composed of non-conducting material except at the base, and fitted
 with a non-conducting piston; also a source of heat A at some
-temperature τ₁; a receiver of heat, or, as we may now call it, a condenser
-C, at a lower temperature τ₂; and a non-conducting cover B.
+temperature τ<sub>1</sub>; a receiver of heat, or, as we may now call it, a condenser
+C, at a lower temperature τ<sub>2</sub>; and a non-conducting cover B.
 Then We can perform as follows the ideal reversible cycle of operations
 first described by Carnot, which gives the highest possible efficiency
 attainable in any heat engine. To fix the ideas, suppose that there
-is 1 lb of water in the cylinder to begin with, at the temperature τ₁:—
-«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td></td><td>«SPAN[style:position: relative;bottom: 2.5em]»«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.«/SPAN»</td></tr></table>«/HTMLTABLE»
+is 1&nbsp;℔ of water in the cylinder to begin with, at the «SPAN[style:white-space:nowrap]»temperature τ<sub>1</sub>:—«/SPAN»
+«HTMLTABLE:<table class="figtable" style="float:right;width:225px"><tr><td colspan="2">{{IMG:EB1911 Steam Engine Fig. 9.png|align=right|width=210}}</td></tr><tr><td> </td><td>«SPAN[style:position: relative;bottom: 2.5em]»«SC»Fig«/SC». 9.—Carnot’s Cycle with«BR»water and steam for working«BR»substance.«/SPAN»</td></tr></table>«/HTMLTABLE»
 1. Apply A, and allow the piston to rise. The water will take
 in heat and be converted into steam, expanding isothermally at
-constant pressure 𝑝₁. This part
+constant pressure 𝑝<sub>1</sub>. This part
 of the operation is shown
-by the line 𝑎𝑏 in fig. 9.
+by the line 𝑎𝑏 in fig.&nbsp;9.
 
 2. Remove A and apply
 B. Allow the expansion to
 continue adiabatically (𝑏𝑐),
 with falling pressure, until
-the temperature falls to τ₂.
-The pressure will then be 𝑝₂,
+the temperature falls to τ<sub>2</sub>.
+The pressure will then be 𝑝<sub>2</sub>,
 namely, the pressure given
 in the table corresponding
-to τ₂.
+to τ<sub>2</sub>.
 
 3. Remove B, apply C,
 and compress. Steam is condensed
 by rejecting heat to
 C. The action is isothermal,
 and the pressure remains
-𝑝₂. Let this be continued
+𝑝<sub>2</sub>. Let this be continued
 until a certain point 𝑑 is
 reached, after which adiabatic compression will complete the cycle.
 
 4. Remove C and apply B. Continue the compression, which
 is now adiabatic. If the point 𝑑 has been rightly chosen, this will
 complete the cycle by restoring,the working fluid to the state of
-water at temperature τ₁.
+water at temperature τ<sub>1</sub>.
 
 The “indicator diagram” or diagram exhibiting the relation of
-pressure to volume for such a cycle is given in fig. 9. Since the
-process is reversible, and since heat is taken in only at τ₁ and rejected
-only at τ₂, the ideal conditions for perfect efficiency are satisfied, and
-accordingly the efficiency is (τ₁−τ₂)/τ₁. The heat taken in per lb of
-the fluid is L₁, and the work done is L₁(τ₁−τ₂)/τ₁, a result which
+pressure to volume for such a cycle is given in fig.&nbsp;9. Since the
+process is reversible, and since heat is taken in only at τ<sub>1</sub> and rejected
+only at τ<sub>2</sub>, the ideal conditions for perfect efficiency are satisfied, and
+accordingly the efficiency is (τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub>. The heat taken in per ℔ of
+the fluid is L<sub>1</sub>, and the work done is L<sub>1</sub>(τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub>, a result which
 may be used to check the calculation of the diagram.
 
 39. «I»Efficiency of a Perfect Steam Engine: Limits of Temperature«/I».—
@@ -1295,13 +1298,13 @@ and therefore on the pressure, at which the steam was produced and
 condensed. The temperature of condensation is limited by the
 consideration that there must be an abundant supply of some
 substance to absorb the rejected heat; water is actually used for
-this purpose, so that τ₂ has for its lower limit the temperature of
+this purpose, so that τ<sub>2</sub> has for its lower limit the temperature of
 the available water-supply.
 
-To the higher temperature τ₁ a practical limit is set by the
+To the higher temperature τ<sub>1</sub> a practical limit is set by the
 mechanical difficulties, with regard to strength and to lubrication,
 which attend the use of high-pressure steam. In engines of ordinary
-construction the pressure is rarely so much as 250 lb per sq. in.PAGE:849It must not be supposed that the efficiency (τ₁−τ₂)/τ₁ is actually 
+construction the pressure is rarely so much as 250&nbsp;℔ per sq.&nbsp;in.PAGE:849It must not be supposed that the efficiency (τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub> is actually 
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
 the causes of imperfection cannot be removed.
@@ -1309,16 +1312,16 @@ the causes of imperfection cannot be removed.
 «HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|align=inline|width=225}}«BR»
 «SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
 40. «I»Engine with Separate Organs«/I».—In the ideal engine represented
-in fig. 10 the functions of boiler, cylinder and condenser are combined
+in fig.&nbsp;10 the functions of boiler, cylinder and condenser are combined
 in a single vessel; but, provided the working substance passes
 through the same cycle of operations, it is indifferent whether these
 are performed in several vessels or in one. To approach a little
 more closely the conditions that hold in practice, we may think of
 the engine as consisting of
-a boiler A (fig. 10) kept at
-τ₁, a non-conducting cylinder
+a boiler A (fig.&nbsp;10) kept at
+τ<sub>1</sub>, a non-conducting cylinder
 and piston B, a surface condenser
-C kept at τ₂, and a
+C kept at τ<sub>2</sub>, and a
 feed-pump D which restores
 the condensed water to the
 boiler. When the several
@@ -1326,7 +1329,7 @@ organs of the engine are
 separated in this way we
 can still carry out the first
 three stages of the cyclic
-process described in § 38.
+process described in §&nbsp;38.
 The first stage of that cycle
 corresponds to the «I»admission«/I»
 of steam from the boiler
@@ -1371,46 +1374,46 @@ ideal reached in the cycle of Carnot.
 
 But the principle still applies that with respect to each portion
 of the heat that is taken in, the fraction convertible into work under
-ideally favourable conditions is measured by (τ−τ₂)/τ, where τ is the
+ideally favourable conditions is measured by (τ−τ<sub>2</sub>)/τ, where τ is the
 absolute temperature at which that portion of heat is received,
-and τ₂ is the temperature at which heat is rejected. Accordingly,
+and τ<sub>2</sub> is the temperature at which heat is rejected. Accordingly,
 we may investigate as follows the ideal performance of an engine
 following the Rankine cycle. Let δQ represent that portion of
 the whole heat which is taken in at any temperature τ. Then the
 greatest amount of work obtainable from that portion of heat is
-δQ(τ−τ₂)/τ, and the whole amount of work ideally obtainable in
-the complete process is found by calculating, ΣδQ(τ−τ₂)/τ where
+δQ(τ−τ<sub>2</sub>)/τ, and the whole amount of work ideally obtainable in
+the complete process is found by calculating, ΣδQ(τ−τ<sub>2</sub>)/τ where
 the summation includes all the heat that is taken in. In a steam
 engine using saturated steam the principal item in this sum is the
-latent heat L₁, which is taken in at constant temperature τ₁, during
+latent heat L<sub>1</sub>, which is taken in at constant temperature τ<sub>1</sub>, during
 the change of state from water to steam. But there is, in addition,
 the heat taken in by the feed-water before it reaches the temperature
 at which steam is formed, and this may be represented as the sum
 of a series of elements σδτ taken in at varying temperatures τ,
 where σ is the specific heat of water. Thus if W represents the thermal
-equivalent of the work theoretically obtainable per lb of steam, under
+equivalent of the work theoretically obtainable per ℔ of steam, under
 ideally favourable conditions,
 
-«CTR»W=Σσδτ(τ−τ₂)/τ + L₁(τ₁−τ₂)/τ₁.«/CTR»
+«CTR»W＝Σσδτ(τ−τ<sub>2</sub>)/τ + L<sub>1</sub>(τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub>.«/CTR»
 
 The experiments of Regnault show that σ, within the limits of
 temperature that obtain in boilers, is a nearly constant quantity,
 and no serious error will be introduced in this integration by
 treating it as a constant, with a value equal to the mean value, as
-determined by Regnault, between the limits of τ₁ and τ₂. On this
+determined by Regnault, between the limits of τ<sub>1</sub> and τ<sub>2</sub>. On this
 basis
 
-«CTR»W=σ(τ₁−τ₂)−στ₂ logετ₁/τ₂ + L₁(τ₁−τ₂)/τ₁.«/CTR»
+«CTR»W＝σ(τ<sub>1</sub>−τ<sub>2</sub>)−στ<sub>2</sub> log<sub>ε</sub>τ<sub>1</sub>/τ<sub>2</sub> + L<sub>1</sub>(τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub>.«/CTR»
 
 It is usual to take σ as practically equal to 1, which makes
 
-«CTR»W=(τ−τ₂)«XL»(«/XL»1 + L₁/τ₁«XL»)«/XL» − τ₂ logετ₁/τ₂.«/CTR»
+«CTR»W＝(τ−τ<sub>2</sub>)«SPAN[style:font-size:144%]»(«/SPAN»1 + L<sub>1</sub>/τ<sub>1</sub>«SPAN[style:font-size:144%]»)«/SPAN» − τ<sub>2</sub> log<sub>ε</sub>τ<sub>1</sub>/τ<sub>2</sub>.«/CTR»
 
 This expresses the greatest amount of work which each pound of steam
-can yield when the temperature τ₁ at which it reaches the engine
-and the temperature τ₂ at which it leaves the engine are assigned.
+can yield when the temperature τ<sub>1</sub> at which it reaches the engine
+and the temperature τ<sub>2</sub> at which it leaves the engine are assigned.
 It consequently serves as a standard with which the actual performance
-may usefully be compared. The actual yield per lb
+may usefully be compared. The actual yield per&nbsp;℔
 of steam is always considerably less, chiefly because the ideal
 condition of adiabatic expansion from the higher to the lower
 extreme of temperature is never satisfied.
@@ -1419,27 +1422,27 @@ A more simple expression for the work theoretically obtainable
 per lb of steam when expanded adiabatically under the conditions
 of the Rankine cycle, is
 
-«CTR»I₁−I₂,«/CTR»
+«CTR»I<sub>1</sub>−I<sub>2</sub>,«/CTR»
 
-where I₁ is the total heat of the working substance in the initial
-state, before the adiabatic expansion, and I₂ is its total heat after
+where I<sub>1</sub> is the total heat of the working substance in the initial
+state, before the adiabatic expansion, and I<sub>2</sub> is its total heat after
 that expansion. For it may readily be proved that, in an adiabatic
 process,
 
-«CTR»I₁−I₂=1/J«MATH:\int_{p_2}^{p_1}«/MATH»𝑣𝑑𝑝,«/CTR»
+«CTR»I<sub>1</sub>−I<sub>2</sub>＝1/J«MATH:\int_{p_2}^{p_1}«/MATH»𝑣𝑑𝑝,«/CTR»
 
 and this integral is the area of the indicator diagram when the
-substance is taken in at 𝑝₁, expanded to 𝑝₂ and discharged at 𝑝₂.
+substance is taken in at 𝑝<sub>1</sub>, expanded to 𝑝<sub>2</sub> and discharged at 𝑝<sub>2</sub>.
 
 This expression applies whether the steam is initially superheated
-or not. I₂ will in general be the total heat of a wet mixture, and to
+or not. I<sub>2</sub> will in general be the total heat of a wet mixture, and to
 calculate it we must know the condition as to wetness which results
 from the expansion. This is most easily found, especially when
 there has been initial superheat, by making use of the entropy-temperature
 diagram to be presently described, or by other graphic
 methods, for an account of which the reader should refer to the paper
-by Mollier already cited, or to J. A. Ewing’s «I»The Steam Engine and«/I»
-«I»other Heat Engines«/I» (3rd ed.).
+by Mollier already cited, or to J.&nbsp;A. Ewing’s «I»The Steam Engine and«/I»
+«I»other Heat Engines«/I» (3rd&nbsp;ed.).
 
 42. «I»Entropy«/I».—The study of steam-engine problems is greatly
 assisted by introducing the idea of entropy and making use of diagrams
@@ -1452,14 +1455,14 @@ is τ, the substance gains or loses entropy by the amount
 process which involves the taking in or rejection of heat at more
 than one temperature. We shall denote entropy by φ, and consider
 it as reckoned per unit of mass of the substance. Since by definition
-of entropy δφ=δQ/τ, τδφ=δQ, and hence if a curve be drawn
+of entropy δφ＝δQ/τ, τδφ＝δQ, and hence if a curve be drawn
 with τ and φ for ordinates to exhibit the action of a working substance,
 the area under the curve, or ∫τ𝑑φ, being equal to ΣδQ, measures
 the heat which the substance has received or rejected during the
 operation which the curve represents.
 
 In a reversible cycle of operations Carnot’s principle shows that
-ΣδQ/τ=0, and it is obvious in such a case that the entropy returns
+ΣδQ/τ＝0, and it is obvious in such a case that the entropy returns
 at the end of the cycle to its primitive value. The same result may
 be extended to a cycle which includes any non-reversible step, by
 taking account of the heat generated within the substance by such
@@ -1471,7 +1474,7 @@ adiabatic expansion, together with the communication to the substance,
 as heat, of the work which is lost in consequence of the
 irreversible expansion through the throttle-valve taking the place
 of adiabatic expansion against a piston. If this heat be included
-in the reckoning ΣδQ/τ=0 for the complete cycle.
+in the reckoning ΣδQ/τ＝0 for the complete cycle.
 
 The entropy-temperature diagram for any complete cyclic process
 is a closed curve, and the area it encloses, being the excess of the
@@ -1482,9 +1485,9 @@ heat received and the heat rejected by the areas under the forward
 and backward limbs of the curve. To draw the entropy-temperature
 diagram for the ideal steam engine (namely, the engine following
 the Rankine cycle), we have to reckon first the entropy which water
-acquires in being heated, and next the entropy L₁/τ₁ which is acquired
+acquires in being heated, and next the entropy L<sub>1</sub>/τ<sub>1</sub> which is acquired
 when the conversion into steam has taken place. Reckoning from
-any standard temperature τ₀, in the heating of the feed-water up
+any standard temperature τ<sub>0</sub>, in the heating of the feed-water up
 to any temperature τ, the entropy acquired is
 
 «CTR»«MATH:\phi_w = \int_{\tau^0}^\tau \frac{\sigma d \tau}{\tau},«/MATH»«/CTR»
@@ -1493,12 +1496,12 @@ and taking σ as sensibly constant,
 
 «CTR»«MATH:\phi_w = \sigma (\log_\epsilon\tau - \log_\epsilon - \log_\epsilon\tau_0).«/MATH»«/CTR»
 
-During evaporation at τ₁ a quantity of heat L₁ is taken in at
-temperature τ₁, and hence the entropy of the steam
+During evaporation at τ<sub>1</sub> a quantity of heat L<sub>1</sub> is taken in at
+temperature τ<sub>1</sub>, and hence the entropy of the steam
 
 «CTR»«MATH:\phi_s = \phi_w + \text{L}_1/\tau_1 = \sigma(\log_\epsilon \tau_1 - \log_\epsilon \tau_0) + \text{L}_1/\tau_1.«/MATH»«/CTR»PAGE:850Values of the entropy of water and steam are given in the table. 
 The entropy-temperature diagram for a Rankine cycle is illustrated 
-in fig. 11, where 𝑎𝑏, a 
+in fig.&nbsp;11, where 𝑎𝑏, a 
 logarithmic curve, represents
 the process of heating
 the feed-water, and 
@@ -1508,9 +1511,9 @@ of steam. The diagram
 is drawn to scale for a 
 case in which steam is 
 formed at a pressure of 
-180 lb per sq. in., and 
+180 lb per sq.&nbsp;in., and 
 condensed at a pressure 
-of 1 lb per sq. in. After 
+of 1&nbsp;℔ per sq.&nbsp;in. After 
 the formation of the 
 steam, the next step in 
 the ideal process is 
@@ -1523,7 +1526,7 @@ the vertical straight line
 being also isentropic. Finally, the cycle is completed by 𝑑𝑎, which represents
 the condensation of the steam after its temperature has been 
 reduced by adiabatic expansion to the lower limit of temperature. 
-The area 𝑎𝑏𝑐𝑑 represents the work done, and its value per lb of 
+The area 𝑎𝑏𝑐𝑑 represents the work done, and its value per ℔ of 
 steam is identical with W as reckoned above. The area 𝑚𝑎𝑏𝑐𝑝 is 
 the whole heat taken in, and the area 𝑚𝑎𝑑𝑝 is the heat rejected. 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 11.png|align=inline|width=275}}«BR»«SC»Fig«/SC». 11«/CTR»
@@ -1548,7 +1551,7 @@ In this way the ideal process may be exhibited for steam with any
 assumed degree of initial wetness. Further, the entropy-temperature 
 diagram admits of ready application to the case of incomplete 
 expansion. Suppose, for example, that after adiabatic expansion 
-from 𝑐 to 𝑐′ (fig. 12) the steam is directly cooled to the lower-limit 
+from 𝑐 to 𝑐′ (fig.&nbsp;12) the steam is directly cooled to the lower-limit 
 temperature by the application of cooling water instead of by continued
 expansion. This process is represented by the line 𝑐′𝑒𝑑, 
 which is a curve of constant volume. Its form is determined by 
@@ -1556,6 +1559,7 @@ the consideration that at any point 𝑒 the proportion of steam still
 uncondensed, or 𝑙𝑒/𝑙𝑘, is such that the mixture fills the same volume 
 as was filled at 𝑐′. 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 12.png|align=inline|width=295}}«BR»«SC»Fig«/SC». 12«/CTR»
+
 
 43. «I»Entropy«/I»-«I»Temperature Diagrams extended to the Case of Superheated Steam«/I».—In
 the diagrams which have been sketched, it has 
@@ -1579,10 +1583,10 @@ represent as before the
 mean specific heat of steam
 at constant pressure, the 
 addition of entropy during
-the process of superheating from τ₁ to τ′ is κ(τ′ − τ₁). The value of 
+the process of superheating from τ<sub>1</sub> to τ′ is κ(τ′&#x202f;−&#x202f;τ<sub>1</sub>). The value of 
 κ may be treated as approximately constant, and the addition to 
-the entropy may then be written as κ(log τ − log τ₁). This gives a 
-line such as 𝑐𝑟 on the entropy diagram (fig. 13), and increases 
+the entropy may then be written as κ(log τ&#x202f;−&#x202f;log τ<sub>1</sub>). This gives a 
+line such as 𝑐𝑟 on the entropy diagram (fig.&nbsp;13), and increases 
 the value of W by the amount 
 
 «CTR»«MATH:\int_{\tau_1}^{\tau'} \frac{\kappa d\tau(\tau - \tau_2)}{\tau}«/MATH»«/CTR»
@@ -1606,21 +1610,21 @@ ot heat between the steam and the metal.
 calculated by considering that the change of entropy in the conversion
 from water to steam will be 𝑞L/τ if the steam is wet, 𝑞 being
 the dryness Accordingly the entropy of wet steam at any temperature
-τ is σ(logετ − logετ₀)+𝑞L/τ. Further, since σ for water is
+τ is σ(log<sub>ε</sub>τ&#x202f;−&#x202f;log<sub>ε</sub>τ<sub>0</sub>)+𝑞L/τ. Further, since σ for water is
 practically equal to unity this expression may be written
 
-«CTR»φ=logετ − logετ₀+𝑞L/τ.«/CTR»
+«CTR»φ＝log<sub>ε</sub>τ − log<sub>ε</sub>τ<sub>0</sub>+𝑞L/τ.«/CTR»
 
 We may apply this expression to trace the development of wetness 
 in steam when it expands adiabatically. In adiabatic expansion 
-φ=constant. Using the suffix 1 to distinguish the initial state, 
+φ＝constant. Using the suffix 1 to distinguish the initial state, 
 we therefore have at any stage in the expansion 
 
-«CTR»logετ − logετ₀=logετ₁ − logετ₀ +𝑞₁L₁/τ₁,«/CTR»
+«CTR»log<sub>ε</sub>τ − log<sub>ε</sub>τ<sub>0</sub>＝log<sub>ε</sub>τ<sub>1</sub> − log<sub>ε</sub>τ<sub>0</sub> +𝑞<sub>1</sub>L<sub>1</sub>/τ<sub>1</sub>,«/CTR»
 
 from which the dryness at that stage is found, namely, 
 
-«CTR»𝑞=τ/L«XXL»(«/XXL»𝑞₁L₁/τ₁ + logετ₁/τ₁«XXL»)«/XXL».«/CTR»
+«CTR»𝑞＝τ/L«SPAN[style:font-size:173%]»(«/SPAN»𝑞<sub>1</sub>L<sub>1</sub>/τ<sub>1</sub> + log<sub>ε</sub>τ<sub>1</sub>/τ<sub>1</sub>«SPAN[style:font-size:173%]»)«/SPAN».«/CTR»
 
 The expression is not applicable to steam which is initially superheated.
 In either case the graphic method of tracing the change 
@@ -1664,18 +1668,18 @@ complete, and the entropy
 diagram for the real process 
 of expansion takes a form 
 such as is indicated by the 
-line 𝑐′𝑐″ in fig. 14. The heat
+line 𝑐′𝑐″ in fig.&nbsp;14. The heat
 supplied is still measured by 
 the area under 𝑎𝑏𝑐. The 
 condensation from 𝑐 to 𝑐′ occurs by contact with the walls of the 
 cylinder; and though part of the heat thus abstracted is restored 
-before release occurs at 𝑐″, the general result is to make a large 
+before release occurs at 𝑐″ , the general result is to make a large 
 reduction in the area of the diagram. 
 
 46. «I»Exchanges of Heat between the Steam and the Metal«/I».—The
 exchanges of heat between steam and metal in the engine cylinder 
 have been made the subject of an elaborate experimental examinationPAGE:851by Professors Callendar and Nicolson («I»Proc. Inst. C.E.«/I»
-cxxxi. 147), who studied the cyclic variations of temperature 
+cxxxi.&nbsp;147), who studied the cyclic variations of temperature 
 throughout the metal by means of thermo-electric junctions set
 at various depths. They found that the range of temperature
 through which the surface of the metal fluctuates is much less than
@@ -1701,7 +1705,7 @@ In the alternate condensation and re-evaporation of steam in the
 cylinder more heat is given to the metal by each pound of steam that
 is condensed than is taken from the metal by each pound of steam
 that is re-evaporated, the temperature of condensation being higher
-than that of re-evaporation. The quantity H₁−H₂, namely, the
+than that of re-evaporation. The quantity H<sub>1</sub>−H<sub>2</sub>, namely, the
 difference in the heat of formation at the two temperatures, represents
 this excess of heat. Unless this is in some way abstracted
 from the metal, the process cannot occur. Hence the action of the
@@ -1744,8 +1748,8 @@ chance of escaping without being re-evaporated, a circumstance
 which contributes largely to reduce the exchange of heat between
 the working substance and the metal. Thus a horizontal triple-expansion
 engine with drop valves, by Messrs Sulzer, using saturated
-steam at an absolute pressure of 160 lb per sq. in., and indicating
-not much more than 200 h.p., is reported, in a test by
+steam at an absolute pressure of 160 lb per sq.&nbsp;in., and indicating
+not much more than 200&nbsp;h.p., is reported, in a test by
 Professor Stodola, to have used only 11·52 lb of steam per indicated
 horse-power-hour (see «I»Engineer«/I», July 1, 1898; also summary of
 trials by B. Donkin, ibid., Oct. 13, 1899). The performance in this
@@ -1762,12 +1766,12 @@ the jacket may prove in reducing the evils of initial condensation.
 In the mean of several apparently authoritative trials by different
 observers on different engines the consumption of steam was 12·2 lb
 per horse-power-hour, at an absolute pressure of about 140 lb per
-sq. in., which corresponds to 66% of the ideal performance.
+sq.&nbsp;in., which corresponds to 66% of the ideal performance.
 It should be added that these figures are exceptional. A consumption
 of 13 or 14 lb of steam per horse-power-hour is much more usual
 even in large and well-designed triple-expansion engines; and with 
 two-cylinder compound engines, using steam with an absolute
-pressure of 100 or 120 lb per sq. in., anything from 14 to 15 lb
+pressure of 100 or 120 lb per sq.&nbsp;in., anything from 14 to 15 lb
 may be reckoned a good performance.
 
 48. «I»Superheated Steam«/I».—The advantage of superheated steam,
@@ -1785,20 +1789,20 @@ superheating effected an average saving in coal to the extent of
 about 20%, when the superheater was simply placed in the boiler
 flue, so that it utilized what would otherwise be waste heat, and
 about 12% when the superheater was separately fired. In those
-cases the steam was superheated only about 30° to 45° C. above the
+cases the steam was superheated only about 30° to 45°&nbsp;C. above the
 temperature of saturation, but in more recent practice much greater
 amounts of superheat have been successfully applied. Professor
-Schroter has tested a factory engine of 1000 h.p., using steam superheated
-by some 50° C., and has shown that this amount of superheat
+Schroter has tested a factory engine of 1000&nbsp;h.p., using steam superheated
+by some 50°&nbsp;C., and has shown that this amount of superheat
 is not sufficient to prevent some of the steam from becoming
 condensed on the walls during admission to the cylinder («I»Zeitschrift«/I»
-«I»des Vereins deutscher Ingenieure«/I», vol. xl., 1896). It follows that still
+«I»des Vereins deutscher Ingenieure«/I», vol.&nbsp;xl., 1896). It follows that still
 larger amounts of superheat will be thermodynamically advantageous.
 That this is the case has been demonstrated by the remarkable results
 which have been obtained with highly superheated steam by W.
 Schmidt in stationary engines and locomotives. Using a somewhat
 special design, Schmidt has shown that it is perfectly practicable to
-employ steam superheated to a temperature of 400° C., and that an
+employ steam superheated to a temperature of 400°&nbsp;C., and that an
 efficiency not attainable from steam in any other way is thereby
 reached. In several authentic trials of Schmidt engines the consumption
 of steam has been considerably less than 10 lb per indicated
@@ -1806,7 +1810,7 @@ horse-power-hour—a figure which, after allowance is made for the
 heat taken up during the process of superheating, represents a better
 performance than that of the best engines using saturated or slightly
 superheated steam. It has been found that the consumption of
-coal, in the boiler and superheater together, need not exceed {{lb-|1⅓
+coal, in the boiler and superheater together, need not exceed {{lb-|1⅓}}
 per indicated horse-power even with engines of small power. To
 attain this remarkable result it is of course necessary that, after the
 hot gases from the furnace have passed the superheater, a further
@@ -1826,15 +1830,15 @@ receiver a portion of the heat which is conveyed to the engine
 by the highly superheated steam; and when this is done, the steam
 may properly receive a still higher degree of initial superheat.
 Accordingly, though the initial temperature of the steam may be
-400° C. or more, this is reduced to about 320 by transfer to steam in
+400°&nbsp;C. or more, this is reduced to about 320 by transfer to steam in
 the superheater before the high-pressure steam is admitted to the
 cylinder. In tests by the present writer of a Schmidt plant indicating
-180 h.p., in which this device was employed, the steam
-was superheated to 397° C. and 10·4 lb were used per horse-power-hour.
+180&nbsp;h.p., in which this device was employed, the steam
+was superheated to 397°&nbsp;C. and 10·4 lb were used per horse-power-hour.
 In this trial the temperature of the chimney gases was
-reduced, by the use of Schmidt’s feed-water heater, to 175° C, and
+reduced, by the use of Schmidt’s feed-water heater, to 175°&nbsp;C, and
 the consumption of coal was 1·31 lb per indicated horse-power-hour.
-In another trial, of a larger engine with steam superheated to 425° C,
+In another trial, of a larger engine with steam superheated to 425°&nbsp;C,
 the consumption of steam per horse-power-hour was only 9·0 lb.
 
 49. «I»The Indicator«/I».—The actual behaviour of steam in the cylinder of a steam engine is studied by means of the indicator, which serves not only to measure the work done but to examine the operation of the valves and generally to give much useful information regarding the action of the engine. The indicator, which was invented by Watt, and improved by Richards, is a device for automatically drawing a diagram showing the pressure at all points of the piston’s stroke. In its most usual form it consists of a small steam cylinder fitted with a piston which slides easily within it and is pressed down by a spiral spring of steel wire. The cylinder of the indicator is connected by a pipe below this piston to one or other end of the cylinder of the engine, so that the piston of the indicator rises and falls in response to the fluctuations of pressure which occur in the engine cylinder. The indicator piston actuates a pencil, which rises and falls with it and traces the diagram on a sheet of paper fixed to a drum that is caused to rotate back and forth through a certain arc, in unison with the motion of the engine piston. InPAGE:852M‘Naught’s indicator the pencil is directly attached to the indicator 
@@ -1851,7 +1855,7 @@ as a means of guiding the piston-rod in beam engines. In several
 recent forms of indicator lighter linkages are adopted, and other 
 changes have been made with the object of fitting the instrument 
 better for high-speed work. One of these modified forms of 
-Richards’s indicator (the Crosby) is shown in fig. 15.
+Richards’s indicator (the Crosby) is shown in fig.&nbsp;15.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 15.png|align=inline|width=326}}«BR»
 «SC»Fig«/SC». 15.—Crosby Indicator.«/CTR»
 
@@ -1872,9 +1876,9 @@ taken out and replaced by a more or less stiff one when higher or
 lower pressures have to be dealt with. 
 
 50. «I»Errors in Indicator Diagrams«/I».—To register correctly, an 
-indicator must satisfy two conditions: (1) the motion of the piston 
+indicator must satisfy two conditions: (1)&nbsp;the motion of the piston 
 must be proportional to the change of steam pressure in the engine 
-cylinder: and (2) the motion of the drum must be proportional to 
+cylinder: and (2)&nbsp;the motion of the drum must be proportional to 
 that of the engine piston. 
 
 The first of these requires that the pipe which connects the 
@@ -1904,7 +1908,7 @@ should be drawn midway between the crests and hollows of the
 undulations. To keep them within reasonable compass in high-speed
 work a stiff spring must be used and an indicator with light 
 parts should be selected. Care must be taken that the spring is 
-graduated to suit the temperature (about 100° C.) to which it is 
+graduated to suit the temperature (about 100°&nbsp;C.) to which it is 
 exposed when in use;. its stiffness at this temperature is about 3% 
 less than when cold. 
 
@@ -1916,13 +1920,13 @@ effective pressure in pounds per square inch., This has to be multiplied
 by the effective area of the piston in square inches and by the 
 length of the piston stroke in feet to find the work done per stroke 
 in foot-pounds on that side of the piston to which the diagram refers.
-Let A₁ be the area of the piston on one side and A₂ on the other; 
-𝑝₁ and 𝑝₂ the mean effective pressures on the two sides respectively; 
+Let A<sub>1</sub> be the area of the piston on one side and A<sub>2</sub> on the other; 
+𝑝<sub>1</sub> and 𝑝<sub>2</sub> the mean effective pressures on the two sides respectively; 
 L the length of the stroke in feet; and 𝑛 the number of complete 
 double strokes or revolutions per minute. Then the indicated 
 horse-power 
 
-«CTR»I.H.P.=𝑛L(𝑝₁A₁+𝑝₂A₂)/33000.«/CTR»
+«CTR»I.H.P.＝𝑛L(𝑝<sub>1</sub>A<sub>1</sub>+𝑝<sub>2</sub>A<sub>2</sub>)/33000.«/CTR»
 
 In finding the mean pressure the area of the diagram may be 
 conveniently measured by a planimeter. A less accurate plan, 
@@ -1949,7 +1953,7 @@ amount of work ideally obtainable, if the engine followed the perfect
 Rankine cycle already discussed. To make a complete engine trial 
 the engine is caused to work not only at full power, but at various 
 fractions of its greatest load. The results are very conveniently 
-represented (in a manner due to P. W. Willans) by drawing a curve, 
+represented (in a manner due to P.&nbsp;W. Willans) by drawing a curve, 
 the co-ordinates of which are the horse-power and the total consumption
 of steam per hour. This “Willans Line,” as it is called, is in
 most cases straight or nearly straight. Another useful curve is 
@@ -2022,11 +2026,11 @@ and the same expansion, inasmuch as it reduces the exchange of
 heat between the working substance and the cylinder walls and so 
 makes the process of expansion more nearly adiabatic. The compound
 engine has also a mechanical advantage which will be presently
-described. The ultimate ratio of expansion in any compound «HTMLTABLE:<table class="figtable" style="float:left;width:250px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 16.png|width=250}}</td></tr><tr><td>«SC»Fig«/SC». 16.—Compound Diagrams:«BR»Woolf type.</td></tr></table>«/HTMLTABLE»
+described. The ultimate ratio of expansion in any compound «HTMLTABLE:<table class="figtable" style="float:left;width:250px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 16.png|width=250}}</td></tr><tr><td>«SC»Fig«/SC». 16.—Compound Diagrams:<br>Woolf type.</td></tr></table>«/HTMLTABLE»
 engine is the ratio of the volume of the low-pressure cylinder to the 
 volume of steam admitted to 
 the high-pressure cylinder. 
-Fig. 16 illustrates the combined
+Fig.&nbsp;16 illustrates the combined
 action of the two cylinders
 in a hypothetical compound engine of the Woolf 
 type, in which for simplicity 
@@ -2116,13 +2120,13 @@ in part to this, and in part to the thermodynamic advantage which
 has been discussed above. 
 
 59. «I»Ratio of Cylinder Volumes«/I».—In a two-cylinder compound 
-engine, using steam at 80 to 100 lb pressure, the large cylinder has 
+engine, using steam at 80 to 100&nbsp;℔ pressure, the large cylinder has 
 3 or 4 times the volume of the small cylinder. In triple engines 
-the pressure is rarely less than 150 lb; the low-pressure cylinder has 
+the pressure is rarely less than 150&nbsp;℔; the low-pressure cylinder has 
 generally 6 or 7 times, and the intermediate cylinder 2½ to 2¾ times 
 the volume of the high-pressure cylinder. In naval practice the 
-ratios are about 1: 2¼: 5 for a pressure of 160 lb and 1: 2·6: 7 for a 
-pressure of 250 lb. In the mercantile marine the engines are normally
+ratios are about «SPAN[style:white-space:nowrap]»1 : 2¼ : 5«/SPAN» for a pressure of 160&nbsp;℔ and «SPAN[style:white-space:nowrap]»1 : 2·6 : 7«/SPAN» for a 
+pressure of 250&nbsp;℔. In the mercantile marine the engines are normally
 working at full power, whereas in the navy most of the working 
 is at greatly reduced powers, the cruising speed requiring very much 
 less than the full output. Consequently, for the same boiler pressure, 
@@ -2159,7 +2163,7 @@ eccentricity, or distance from the centre of the shaft to the centre
 of the eccentric sheave. The eccentric rod is generally so long that 
 the motion of the valve is sensibly the same as that which it would 
 receive were the rod infinitely long. Thus if 
-a circle (fig. 19) be drawn to represent the path 
+a circle (fig.&nbsp;19) be drawn to represent the path 
 of the eccentric centre during a revolution of 
 the engine, and a perpendicular PM be drawn 
 from any point P on a diameter AB, the distance 
@@ -2169,7 +2173,7 @@ centre is at P. AB is the whole travel of the
 valve. 
 
 61. «I»Lap and Lead«/I».—If the valve when in its 
-middle position did not overlap the steam ports (fig. 20), any 
+middle position did not overlap the steam ports (fig.&nbsp;20), any 
 movement to the right or the left would admit steam, and 
 the admission would continue until the valve had returned to 
 its middle position, or, in other words, for half a revolution of 
@@ -2178,10 +2182,10 @@ working, and as regards the relative position of the crank and
 eccentric it would have to be set so that its middle position 
 coincided with the extreme position of the piston; in other words, 
 the eccentric radius would make a right angle with the crank.
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;line-height:110%"><tr><td colspan="3">{{IMG:EB1911 Steam Engine Fig. 20-21.png|width=320}}</td></tr><tr><td>«SC»Fig«/SC». 20.—Slide-Valve«BR»without Lap.</td><td></td><td style="padding-left:2em">«SC»Fig«/SC». 21.—Slide-Valve«BR»with Lap.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;line-height:110%"><tr><td colspan="3">{{IMG:EB1911 Steam Engine Fig. 20-21.png|width=320}}</td></tr><tr><td>«SC»Fig«/SC». 20.—Slide-Valve<br>without Lap.</td><td></td><td style="padding-left:2em">«SC»Fig«/SC». 21.—Slide-Valve<br>with Lap.</td></tr></table>«/HTMLTABLE»
 Expansive working, however, becomes possible when we give the 
 valve what is called “lap,” by making it project over the edges of 
-the steam ports, as in fig. 21, where is the “outside lap” and 𝑖 is 
+the steam ports, as in fig.&nbsp;21, where is the “outside lap” and 𝑖 is 
 the “inside lap.” Admission of steam (to either side) then begins 
 only when the displacement of the valve from its middle position 
 exceeds the amount of the outside lap, and continues only until the 
@@ -2190,7 +2194,7 @@ Further, exhaust begins only when the valve has moved past the
 middle by a distance equal to 𝑖, and continues until the valve has
 again returned to a distance 𝑖 from its middle position. Thus on
 the diagram of the eccentric’s travel
-(fig. 22) we find, by setting off 𝑜 and 𝑖 «HTMLTABLE:<table class="figtable" style="float:left;width:140px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 22.png|width=140}}</td></tr><tr><td>«SC»Fig«/SC». 22.</td></tr></table>«/HTMLTABLE»
+(fig.&nbsp;22) we find, by setting off 𝑜 and 𝑖 «HTMLTABLE:<table class="figtable" style="float:left;width:140px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 22.png|width=140}}</td></tr><tr><td>«SC»Fig«/SC». 22.</td></tr></table>«/HTMLTABLE»
 on the two sides of the centre, the positions
 𝑎, 𝑏, 𝑐 and 𝑑 of the eccentric radius
 at which the four events of admission, 
@@ -2220,14 +2224,14 @@ would occupy if the primitive arrangement without lap were adopted.
 The quantities lap, lead and angular advance (θ) are connected by
 the equation 
 
-«CTR»outside lap+lead=half travel × cos θ.«/CTR»
+«CTR»outside lap＋lead＝half travel ✕ cos θ.«/CTR»
 An effect of lead is to cause «I»preadmission«/I», that is to say, admission
 before the end of the back stroke, which, together with the
 compression of steam left in the cylinder when the exhaust port
 closes, produces the mechanical effect of “cushioning,” to which
 reference has already been made. To examine the distribution of
 steam throughout the piston’s stroke, we may now draw a circle to
-represent the path of the crank pin (fig. 23, where the dotted lines
+represent the path of the crank pin (fig.&nbsp;23, where the dotted lines
 have been added to show the assumed configuration of piston, connecting-rod
 and crank) and transfer to it from the former diagram
 the angular positions 𝑎, 𝑏, 𝑐 and 𝑑 at which the four events occur.
@@ -2242,24 +2246,24 @@ which represents the piston’s path, by circular arcs drawn with a
 radius equal to the length of the connecting-rod, we find 𝑝, the 
 position of the piston at which admission
 occurs during the back stroke,
-also 𝑞 and 𝑟, the position at cut-off 
+also 𝑞  and 𝑟, the position at cut-off 
 and release, during the stroke which 
 takes place in the direction of the 
 arrow, and 𝑠, the point at which 
 compression begins. It is obviously
 unnecessary to draw the two circles 
-of figs. 22 and 23 separately; the 
-single diagram (fig. 24) contains the 
+of figs.&nbsp;22 and 23 separately; the 
+single diagram (fig.&nbsp;24) contains the 
 solution of the steam distribution with 
 a slide-valve whose laps, travel and 
 angular advance are known, the same circle serving, on two scales, 
 to show the motion of the crank and of the eccentric. 
 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 24.png|width=180}}</td><td></td><td>{{IMG:EB1911 Steam Engine Fig. 25.png|width=110}}</td></tr><tr><td>«SC»Fig«/SC». 24.</td><td></td><td>«SC»Fig«/SC». 25.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 24.png|width=180}}</td><td> </td><td>{{IMG:EB1911 Steam Engine Fig. 25.png|width=110}}</td></tr><tr><td>«SC»Fig«/SC». 24.</td><td></td><td>«SC»Fig«/SC». 25.</td></tr></table>«/HTMLTABLE»
 «I»Zeuner’s Diagram«/I».—The graphic construction most usually 
 employed in slide-valve investigations is the ingenious diagram 
 published by Dr G. Zeuner in the «I»Civilingenieur«/I» in 1856.«FN[832f1]:Zeuner, «I»Treatise on Valve Gears«/I», trans, by M. Müller (1868).«/FN» On the 
-line AB (fig. 25), which represents the travel of 
+line AB (fig.&nbsp;25), which represents the travel of 
 the valve, let a pair of circles (called valve-circles)
 be drawn, each with diameter equal 
 to the half travel. A radius vector CP, drawn 
@@ -2267,32 +2271,32 @@ in the direction of the eccentric at any instant,
 is cut by one of the circles at Q, so that CQ represents
 the corresponding displacement of the 
 valve from its middle position. That this is so 
-will be seen by drawing PM (as in fig. 19) and
-joining QB, when it is obvious that CQ=CM, 
+will be seen by drawing PM (as in fig.&nbsp;19) and
+joining QB, when it is obvious that CQ＝CM, 
 which is the displacement of the valve. The line AB with the circle 
 on it may now be turned back through an angle of 90°+θ (θ being the 
 angular advance), so that the valve-circles take the position shown 
-to a larger scale in fig. 26.
+to a larger scale in fig.&nbsp;26.
 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 26.png|align=inline|width=380}}«BR»
 «SC»Fig«/SC». 26.—Zeuner’s Slide-Valve Diagram.«/CTR»
 
 This makes the direction of CQ (the 
 eccentric) coincide on the paper with the simultaneous direction ofPAGE:855the crank, and hence to find the displacement of the valve at any 
-position of the crank we have only to draw CQ in fig. 26 parallel
+position of the crank we have only to draw CQ in fig.&nbsp;26 parallel
 to the crank, when CQ represents the«HTMLTABLE:<table class="figtable" style="float:left;width:160px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 27.png|width=160}}</td></tr><tr><td>«SC»Fig«/SC». 27.</td></tr></table>«/HTMLTABLE»
 displacement of the valve to the scale
 on which the diameter of each valve
 circle represents the half-travel of the
-valve. CQ₀ is the valve displacement
+valve. CQ<sub>0</sub> is the valve displacement
 at the beginning of the stroke shown
 by the arrow. Draw circular arcs 𝑎𝑏
 and 𝑐𝑑 with C as centre and with radii
 equal to the outside lap and the
 inside lap 𝑖 respectively. C𝑎 is the
 position of the crank at which preadmission
-occurs. The lead is 𝑎₀Q₀.
-The greatest steam opening is 𝑎₁B.
+occurs. The lead is 𝑎<sub>0</sub>Q<sub>0</sub>.
+The greatest steam opening is 𝑎<sub>1</sub>B.
 The cut-off occurs when the crank has
 the direction C𝑏. C𝑐 is the position
 of the crank at release, and C𝑑 marks the end of the exhaust.
@@ -2301,25 +2305,25 @@ of the crank at release, and C𝑑 marks the end of the exhaust.
 of the crank and their intercepts by the valve circles determine 
 the corresponding displacement of the valve. It remains to find the
 corresponding displacement of the piston. For this Zeuner employs
-a supplementary graphic construction, shown in fig. 27. Here 𝑎𝑏
+a supplementary graphic construction, shown in fig.&nbsp;27. Here 𝑎𝑏
 or 𝑎′𝑏′ represents the connecting rod, and 𝑏𝑐 or 𝑏′𝑐 the crank. With
 centre 𝑐 and radius 𝑎𝑐 a circle 𝑎𝑝 is drawn, and with centre 𝑏 and
 radius 𝑎𝑏 another circle 𝑎𝑞. Then for any position of the crank, as
 𝑐𝑏′, the intercept 𝑝𝑞 between the circles is easily seen to be equal to
 𝑎𝑎′, and is therefore the distance by which the piston has moved
 from its extreme position at the beginning of the stroke. In practice
-this diagram is combined with that of fig. 26, by drawing both about
+this diagram is combined with that of fig.&nbsp;26, by drawing both about
 the same centre and using different scales for valve and piston travel
 A radius vector drawn from the centre parallel to the crank in any
 position then shows the valve’s displacement from the valve’s
-middle position by the intercept CQ of fig. 26, and the piston’s
+middle position by the intercept CQ of fig.&nbsp;26, and the piston’s
 displacement from the beginning of the piston’s motion by the
-intercept 𝑝𝑞 of fig. 27.
+intercept 𝑝𝑞 of fig.&nbsp;27.
 
 64. In the figures which have been sketched the events refer 
 to the front end of the cylinder, that is, the end nearest to the crank
-(see fig. 23). To determine the events of steam distribution at the
-back end, the lap circles shown by dotted lines in fig. 26 must
+(see fig.&nbsp;23). To determine the events of steam distribution at the
+back end, the lap circles shown by dotted lines in fig.&nbsp;26 must
 also be drawn, C𝑎′ being the outside lap for the back end, and C𝑐′
 the inside lap. These laps are not necessarily equal to those at the
 other end of the valve. From the diagrams it will be seen that,
@@ -2346,7 +2350,7 @@ increase in the ratio of expansion.
 in the direction of the valve’s motion is determined with reference
 to the volume of the exhaust steam to be discharged in a given time
 the area of the ports being generally such that the mean velocity
-of the steam during discharge is less than 100 ft. per second The
+of the steam during discharge is less than 100&nbsp;ft. per second The
 travel is made great enough to keep the cylinder port fully open
 during the greater part of the exhaust; for this purpose it is 2½ or 3 times the breadth of the steam port. To facilitate the exit of steam the inside lap is always small, and is often wanting or even
 «I»negative«/I». During admission the steam port is rarely quite uncovered,
@@ -2356,10 +2360,10 @@ steam, with more sharply-defined cut-off, compression and release
 but this advantage is secured at the cost of more work spent in
 moving the valve and more wear of the faces. To lessen the necessary
 travel without reducing the area of steam ports, double-ported
-valves are often used. An example is shown below in fig. 39.
+valves are often used. An example is shown below in fig.&nbsp;39.
 
 67. «I»Reversal of Motion with Slide«/I»-«I»Valve«/I».—The eccentric must
-stand in advance of the crank by the angle 90° + θ, as in fig. 28, where CK is the crank, and CE the corresponding
+stand in advance of the crank by the angle 90° + θ, as in fig.&nbsp;28, where CK is the crank, and CE the corresponding
 position of the eccentric when the engine is running
 in the direction of the arrow 𝑎. To set the engine«HTMLTABLE:<table class="figtable" style="float:left;width:80px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 28.png|width=80}}</td></tr><tr><td>«SC»Fig«/SC». 28.</td></tr></table>«/HTMLTABLE»
 in gear to run in the opposite direction (𝑏) it is
@@ -2382,10 +2386,10 @@ engines which require to be often and easily reversed.
 and the ends of their rods are connected by a link. In Stephenson’s
 link-motion—the earliest and still the most usual form—the link
 is a slotted bar or pair of bars curved to the same radius as the
-eccentric rods (fig. 29), and capable of being shifted up or down by
+eccentric rods (fig.&nbsp;29), and capable of being shifted up or down by
 a suspension rod. The valve-rod ends in a block which slides within
 the link, and when the link is placed so that this block is nearly in
-line with the forward eccentric rod (R. fig. 29) the valve moves in
+line with the forward eccentric rod (R. fig.&nbsp;29) the valve moves in
 nearly the same way as if it were driven directly by a single eccentric.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 29.png|align=inline|width=360}}«BR»
 «SC»Fig«/SC». 29.—Stephenson’s Link-Motion.«/CTR»
@@ -2403,7 +2407,7 @@ greater. In mid gear the steam distribution is such that scarcely
 any work is done in the cylinder. The movement of the link, is
 effected by a hand-lever, or by a screw, or (in large engines) by
 an auxiliary steam engine. A usual arrangement of hand-lever,
-sketched in fig. 29, has given rise to the phrase “notching up,”
+sketched in fig.&nbsp;29, has given rise to the phrase “notching up,”
 to describe the setting of the link to give a greater degree of expansion.
 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 30.png|align=inline|width=310}}«BR»
@@ -2416,7 +2420,7 @@ In Gooch’s link-motion (fig. 30) the link is not moved up in
 shifting from forward to backward gear, but a radius rod between
 the valve-rod and the link (which is curved to suit this radius rod)
 is raised or lowered—a plan which has the advantage that the lead
-is the same in all gears. In Allan’s motion (fig. 31) the change of
+is the same in all gears. In Allan’s motion (fig.&nbsp;31) the change of
 gear is effected partly by shifting the link and partly by shifting
 a radius rod, and the link is straight.
 
@@ -2424,13 +2428,13 @@ a radius rod, and the link is straight.
 driven by a link-motion may be very fully and exactly analysed by
 drawing with the aid of a template the positions of the centre line
 of the link corresponding to a number of successive positions of the
-crank. Thus, in fig. 32, two circular arcs passing through 𝑒 and 𝑒′
+crank. Thus, in fig.&nbsp;32, two circular arcs passing through 𝑒 and 𝑒′
 are drawn with E and E′ as centres and the eccentric rods are radii.
 These are loci of two known points of the link, and a third locus is
 the circle 𝑎 in which the point of suspension must lie. By placing
 on the paper a template of the link, with these three points markedPAGE:856on it, the position of the link is readily found, and by repeating the 
 process for other positions of the eccentrics a diagram of positions 
-(fig. 32) is drawn for the assigned state of the gear. A line AB 
+(fig.&nbsp;32) is drawn for the assigned state of the gear. A line AB 
 drawn across this diagram in the path of the valve’s travel determines
 the displacements of the valve, and enables the oval diagram 
 to be drawn, which is shown to a larger scale in another part of fig. 
@@ -2454,7 +2458,7 @@ use of two eccentrics, and in some both eccentrics are dispensed with.
 Hackworth’s gear, the parent of several others, to which the general 
 name of radial gears is 
 applied, has a single eccentric
-E (fig. 33) opposite the 
+E (fig.&nbsp;33) opposite the 
 crank, with an eccentric-rod 
 EQ, whose mean position is 
 perpendicular to the travel of 
@@ -2482,19 +2486,19 @@ in the valve’s motion by constraining the motion of the point
 Q, not by a sliding-guide, but a suspension-link, which makes 
 the path of Q a circular arc instead of a straight line; 
 to reverse the gear the centre of suspension R of this link 
-is thrown over to the position R′ (fig. 34). In the example 
+is thrown over to the position R′ (fig.&nbsp;34). In the example 
 sketched P is beyond Q, but P may be between Q and the crank 
-(as in fig. 33), in which case the eccentric is set at 180° from the 
+(as in fig.&nbsp;33), in which case the eccentric is set at 180° from the 
 crank. This gear has been applied in a number of marine 
 engines. In Joy’s gear, which is extensively used in locomotives, 
 no eccentric is required; and the rod corresponding to the 
 eccentric rod in Hackworth’s gear receives its motion from a 
-point in the connecting rod by the linkage shown in fig. 35, and is 
+point in the connecting rod by the linkage shown in fig.&nbsp;35, and is 
 either suspended, as in Marshall’s form, by a rod whose suspension 
 centre R is thrown over to reverse the motion, or constrained, as 
 in Hackworth’s, by a slot-guide whose inclination is reversed. Fig. 
 36 shows Joy’s gear as applied to a locomotive. A slot-guide E is 
-used, and it is curved to allow for the obliquity of the valve connecting-rod AE.
+used, and it is curved to allow for the obliquity of the valve connecting-rod&nbsp;AE.
 C is the crank-pin, B the piston path and D a fixed 
 centre. 
 
@@ -2529,6 +2533,7 @@ the other events being determined as usual by the slide-valve.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 36.png|align=inline|width=350}}«BR»
 «SC»Fig«/SC». 36.—Joy’s Gear as applied to a Locomotive.«/CTR» 
 
+
 Such expansion-valves belong generally to one or other of two types. 
 In one the expansion-valve cuts off the supply of steam to the chest 
 In which the main valve works. 
@@ -2538,11 +2543,11 @@ In which the main valve works.
 
 In the other the expansion-valve slides on the back of the main «HTMLTABLE:<table class="figtable" style="float:left;width:125px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 38.png|width=125}}</td></tr><tr><td>«SC»Fig«/SC». 38.</td></tr></table>«/HTMLTABLE»
 slide-valve, which is provided with through ports which the expansion-valve
-opens and closes. Fig. 37 shows 
+opens and closes. Fig.&nbsp;37 shows 
 one form of this type. Here the resultant 
 relative motion of the expansion-valve and 
-main-valve has to be considered. If 𝑟𝑎 and 
-𝑟 (fig. 38) are the eccentrics working the 
+main-valve has to be considered. If 𝑟<sub>𝑎</sub> and 
+𝑟 (fig.&nbsp;38) are the eccentrics working the 
 main and expansion valves respectively, then 
 CR drawn equal and parallel to ME is the 
 «I»resultant«/I» eccentric which determines the 
@@ -2556,7 +2561,7 @@ Expansion-valves furnish a convenient means of «I»varying«/I» the
 expansion, which may be done by altering their lap, travel or angular 
 advance. Alteration of lap, or rather of the distance 𝑙 in the figures, 
 is often effected by having the expansion-valve in two parts (as in 
-fig. 37) and holding them on one rod by right- and left-handed screws 
+fig.&nbsp;37) and holding them on one rod by right- and left-handed screws 
 respectively; by turning the valve-rod the parts are made to approach 
 or recede from each other. In large valves the adjustment is more 
 conveniently made by varying the travel of the valve, which is done 
@@ -2569,7 +2574,7 @@ excludes steam from the greater part of the back of
 the valve. The ring fits steam-tight into a recess in 
 the cover of the steam-chest, and is pressed by springs 
 against the back of the valve, which is planed smooth 
-to slide under the ring. Fig. 39 shows a relief ring 
+to slide under the ring. Fig.&nbsp;39 shows a relief ring 
 of this kind fitted on the back of a large double-ported
 slide-valve for a marine engine. Another 
 plan is to fit the ring into a recess on the back of the 
@@ -2599,11 +2604,11 @@ cylinder pistons by metallic rings, and
 the ports are crossed here and there by 
 diagonal bars to keep the rings from 
 springing out as the valve moves over 
-them. Fig. 40 shows a form of piston 
+them. Fig.&nbsp;40 shows a form of piston 
 valve for the supply of high-pressure 
 steam to a large marine engine. P, P are 
 the cylinder ports. 
-«HTMLTABLE:<table class="figtable" style="float:left;width:165px;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 40.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 40.—Piston«BR»Slide-Valve.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="float:left;width:165px;text-align:center"><tr><td>{{IMG:EB1911 Steam Engine Fig. 40.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 40.—Piston<br>Slide-Valve.</td></tr></table>«/HTMLTABLE»
 74. «I»Balance Piston«/I».—Fig. 39 illustrates 
 an arrangement common in all heavy 
 slide-valves whose travel is vertical—the 
@@ -2627,7 +2632,7 @@ stationary engines, especially on the continent
 of Europe, lift or mushroom valves 
 are used, worked by tappets, cams or 
 eccentrics. Lift-valves are generally of 
-the Cornish or double-beat type (fig. 41), 
+the Cornish or double-beat type (fig.&nbsp;41), 
 in which equilibrium is secured by the use of two conical faces 
 which open or close together. In Cornish pumping engines, which 
 retain the single action of Watt’s early engine, three double-beat 
@@ -2696,7 +2701,7 @@ in moving out they act on the regulator
 of the engine, which may be a throttle-valve
 or some form of automatic expansion
 gear. In the conical pendulum 
-governor of Watt (fig. 42) the revolving 
+governor of Watt (fig.&nbsp;42) the revolving 
 masses are balls attached to a vertical 
 spindle by links, and the controlling force 
 is furnished by the weight of the balls, 
@@ -2705,11 +2710,11 @@ obliged to rise. When the speed exceeds
 or falls short of its normal value they move out or in, and so raise 
 or lower a collar 𝑐 which is in connexion by a lever with the 
 throttle-valve. 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 Steam Engine Fig. 42.png|width=140}}</td><td></td><td>{{IMG:EB1911 Steam Engine Fig. 43.png|width=160}}</td></tr><tr><td>«SC»Fig«/SC». 42.—Watt’s Governor.</td><td></td><td>«SC»Fig«/SC». 43.—Loaded Governor.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>{{IMG:EB1911 Steam Engine Fig. 42.png|width=140}}</td><td> </td><td>{{IMG:EB1911 Steam Engine Fig. 43.png|width=160}}</td></tr><tr><td>«SC»Fig«/SC». 42.—Watt’s Governor.</td><td></td><td>«SC»Fig«/SC». 43.—Loaded Governor.</td></tr></table>«/HTMLTABLE»
 77. «I»Loaded Governor«/I».—In a modified form, known as the loaded 
 governor, a supplementary controlling force 
 is given by placing a weight on the sliding 
-collar (fig. 43). This is equivalent to increasing
+collar (fig.&nbsp;43). This is equivalent to increasing
 the weight of the balls without 
 altering their mass. In other governors the 
 controlling force is wholly or partly produced 
@@ -2725,9 +2730,9 @@ controlling force may be treated as a force F
 acting on each ball in the direction of the 
 radius towards the axis of revolution. Then, 
 if M be the mass of the ball, 𝑛 the number of revolutions per second and 𝑟 the radius of the ball’s path, the governor will revolve in 
-equilibrium when F=4π²𝑛²𝑟M (in absolute units), or 
+equilibrium when F＝4π<sup>2</sup>𝑛<sup>2</sup>𝑟M (in absolute units), or 
 
-«CTR»𝑛=1/2π«XXL»√«/XXL»F/M𝑟.«/CTR»
+«CTR»𝑛＝1/2π«SPAN[style:font-size:173%]»√«/SPAN»F/M𝑟.«/CTR»
 
 In order that the configuration of the governor should be stable, F must increase more rapidly than 𝑟, as the balls move outwards. 
 It is obvious that no stable governor maintains a strictly constant speed in the engine which it controls. If the boiler pressure or the demand for work is changed, a certain amount of permanent displacement of the balls is necessary to alter the steam-supply, and the balls can retain their displaced position only by virtue of a permanent change in the speed. The maximum range of speed depends on that amount of change of 𝑛 which suffices to alter the configurationPAGE:858of the governor from the position which gives no steam-supply to 
@@ -2735,9 +2740,9 @@ the position which gives full steam-supply, and the governor is said to be sensi
 
 To find the configuration which the governor will assume at any 
 particular speed, or the speed corresponding to a particular configuration, it is only necessary to determine the whole 
-controlling force F per ball acting along the radius towards the axis for various values of 𝑟. Let a curve 𝑎𝑏 (fig. 44) be drawn«HTMLTABLE:<table class="figtable" style="float:left;width:100px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 44.png|width=100}}</td></tr><tr><td>«SC»Fig«/SC». 44.</td></tr></table>«/HTMLTABLE» showing the relation of F to 𝑟. At any assigned value of 𝑟 set up an ordinate QC = 4π²𝑛²𝑟M. Join OC. The point 𝑐, in which OC cuts the curve, determines the value of 𝑟 at which the balls will revolve at the assigned speed 𝑛. Or, if that is given, and the value of 𝑛
+controlling force F per ball acting along the radius towards the axis for various values of 𝑟. Let a curve 𝑎𝑏 (fig.&nbsp;44) be drawn«HTMLTABLE:<table class="figtable" style="float:left;width:100px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 44.png|width=100}}</td></tr><tr><td>«SC»Fig«/SC». 44.</td></tr></table>«/HTMLTABLE» showing the relation of F to 𝑟. At any assigned value of 𝑟 set up an ordinate QC = 4π<sup>2</sup>𝑛<sup>2</sup>𝑟M. Join OC. The point 𝑐, in which OC cuts the curve, determines the value of 𝑟 at which the balls will revolve at the assigned speed 𝑛. Or, if that is given, and the value of 𝑛
 is to be found, the line O𝑐 produced will determine 
-C, and then 𝑛² = 4π²𝑛²𝑟M. The sensibility of the governor is 
+C, and then 𝑛<sup>2</sup> = 4π<sup>2</sup>𝑛<sup>2</sup>𝑟M. The sensibility of the governor is 
 determined by taking points 𝑎 and 𝑏 corresponding to full steam 
 and no steam respectively, and drawing lines through them to 
 determine the corresponding values of QA and QB. When the 
@@ -2770,7 +2775,7 @@ throttle-valve, as introduced by Watt, was originally a disk turning on a transv
 
 81. «I»Trip-Gear«/I».—In large stationary engines the most usual plan 
 of automatically regulating the expansion is to employ some form of 
-trip-gear, the earliest type of which was introduced in 1849 by G. H. 
+trip-gear, the earliest type of which was introduced in 1849 by G.&nbsp;H. 
 Corliss (1817–1888), of Providence, U.S.A. In the Corliss system the 
 valves which admit steam are distinct from the exhaust-valves. The 
 latter are opened and closed by a reciprocating piece which takes its 
@@ -2789,12 +2794,12 @@ cylinder. Often, however, the admission-valves in trip-gear engines
 are of the disk or double-beat type, and spring into their seats whenPAGE:859the trip-gear acts. Messrs Sulzer have developed, this type with 
 much success. Many forms of trip-gear have been invented by 
 Corliss himself and by others. One of these, the Spencer Inglis 
-trip-gear, by Messrs Hick, Hargreaves & Co., is shown in figs. 45 and 
+trip-gear, by Messrs Hick, Hargreaves & Co., is shown in figs.&nbsp;45 and 
 46. A wrist-plate A, which turns on a pin on the outside of the 
 cylinder, receives a motion of oscillation from an eccentric. It 
 opens the cylindrical rocking-valve B by pulling the link C, which 
 consists of two parts, connected to each other by a pair of spring 
-clips 𝑎, 𝑎. Between the clips there is a rocking-cam 𝑏, and as the 
+clips 𝑎,&nbsp;𝑎. Between the clips there is a rocking-cam 𝑏, and as the 
 link is pulled down this cam places itself more and more athwart 
 the link, until at a certain point it forces the clips open. Then the 
 upper part of the link springs back and allows the valve B to close by 
@@ -2807,7 +2812,7 @@ more athwart the link C, and therefore causes the clips to be released
 at an earlier point in the stroke. A precisely similar arrangement 
 governs the admission of steam to the other end of the cylinder. 
 The exhaust-valves are situated at the bottom of the cylinder, and 
-receive an oscillating motion from a separate wrist-plate, behind A.
+receive an oscillating motion from a separate wrist-plate, behind&nbsp;A.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 46.png|align=inline|width=370}}«BR»
 «SC»Fig«/SC». 46.—Corliss Valve-Gear, Spencer Inglis form.«/CTR»
 
@@ -2856,10 +2861,10 @@ pressure of the steam in finding the effective thrust. The effect
 is to reduce the effective thrust at the beginning of the stroke and 
 to increase it at the end. The greatest acceleration 𝑎 occurs in the 
 extreme position of the piston, most distant from the crank-shaft 
-centre, and its value there is 4π²𝑛²𝑟(1 + 𝑟/𝑙) where 𝑟 is the radius 
+centre, and its value there is 4π<sup>2</sup>𝑛<sup>2</sup>𝑟(1 + 𝑟/𝑙) where 𝑟 is the radius 
 of the crank, 𝑙 the length of the connecting-rod and 𝑛 the number 
 of turns per second. When the piston is in the other extreme 
-position, nearest to the shaft, the value of 𝑎 is 4π²𝑛²𝑟(1 − 𝑟/𝑙). The 
+position, nearest to the shaft, the value of 𝑎 is 4π<sup>2</sup>𝑛<sup>2</sup>𝑟(1 − 𝑟/𝑙). The 
 exact calculation of inertia effects for the connecting-rod is complicated,
 but its influence on the thrust is approximately found by 
 treating the mass of the rod as divided into two parts, one of which 
@@ -2874,11 +2879,11 @@ diagrams of the steam
 thrust and of the forces due to 
 inertia a diagram is obtained 
 showing the true thrust throughout
-the stroke. Fig. 47 gives an«HTMLTABLE:<table class="figtable" style="float:left;width:185px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 47.png|width=185}}</td></tr><tr><td>«SC»Fig«/SC» 47.</td></tr></table>«/HTMLTABLE»
+the stroke. Fig.&nbsp;47 gives an«HTMLTABLE:<table class="figtable" style="float:left;width:185px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 47.png|width=185}}</td></tr><tr><td>«SC»Fig«/SC» 47.</td></tr></table>«/HTMLTABLE»
 example: there the line 𝑎𝑏 is 
 drawn to show the inertia forces 
 for an engine in which the connecting-rod
-has 3½ times the 
+has «SPAN[style:white-space:nowrap]»3½ times«/SPAN» the 
 length of the crank. The straight
 line 𝑐𝑑 shows what the inertia
 force would be if the connecting-rod were treated as being so long 
@@ -2891,12 +2896,12 @@ but this process cannot be carried beyond a point at which the forces
 due to inertia become so great as to produce unsafely high alternating 
 stresses in the piston-rods and other parts. In some torpedo-boat 
 destroyers, where the reduction of weight has been carried as far 
-as is practicable, the mean piston speed approaches 1200 ft. per 
-minute with nearly 400 revolutions per minute and an 18-in. stroke. 
-These engines develop 6000 h.p., and the weight of engines and 
-boiler together is only 50 lb per indicated h.p. Such a figure is, 
-however, to be regarded as exceptional; weights of 150 to 200 lb 
-per h.p. are more usual even in conditions like those of high-speed 
+as is practicable, the mean piston speed approaches 1200&nbsp;ft. per 
+minute with nearly 400&nbsp;revolutions per minute and an 18-in. stroke. 
+These engines develop 6000&nbsp;h.p., and the weight of engines and 
+boiler together is only 50&nbsp;℔ per indicated h.p. Such a figure is, 
+however, to be regarded as exceptional; weights of 150 to 200&nbsp;℔ 
+per&nbsp;h.p. are more usual even in conditions like those of high-speed 
 cruisers where saving of weight is specially desirable. 
 
 84. «I»Balancing«/I».—Another aspect in which the inertia of the 
@@ -2914,7 +2919,7 @@ with vibrations so violent as to be inconvenient and even dangerous.
 Even in land engines a want of balance causes enough vibration 
 to constitute a serious nuisance in the neighbourhood. 
 
-85. In considering the question of balance, the system of eccentrically revolving masses and the system of reciprocating masses have to be considered separately. A reciprocating mass such as a piston cannot be balanced by the use of revolving masses, for the forces which are due to the inertia of the piston necessarily act along the line of its stroke, while those due to revolving masses are continually changing their direction. The inertia of each connecting-rod may be approximately treated by resolving its mass into two constituents, one of which moves with the crank-pin, and is therefore an addition to the revolving system, while the other moves with the cross-head, and is therefore an addition to the reciprocating system. The mass of the rod may be divided for this purpose into parts which are inversely proportional to the distances of its centre of gravity from the crank-pin and the cross-head respectively. Let M₁, M₂, M₃, &c., represent the various revolving masses 𝑟₁, 𝑟₁, 𝑟₁, &c, their effective radii of rotation, and 𝑎₁, 𝑎₂, 𝑎₃, &c, their distances from any assumed plane of reference taken perpendicular to the shaft. Then the conditions necessary for balance amongst them are that the vector sum of M 𝑎 𝑟 shall vanish, and also that the vector sum of M 𝑟 shall vanish, this latter quantity being the resultant of the moments of the centrifugal forces with respect to the plane of reference. In a four-crank engine there is no serious difficulty in arranging the revolving masses in such a manner that these conditions shall be satisfied, so far as those masses are concerned. The problem, as Professor W. E. Dalby has shown, lends itself readily to graphical treatment (see his treatise on «I»Balancing of Engines«/I»). With respect to the reciprocating masses, a first approximation towards balance is attained by satisfying the conditions which would secure balance if the motions were simply harmonic. These conditions are identical with those which have just been stated for the revolving masses, when 𝑟 is interpreted as the semi-amplitude of the harmonic motion. When the conditions in question are satisfied, the only remaining source of disturbance is that which comes from the fact that the reciprocating masses are connected to the cranks by rods of finite length; in other words, that the motions are not simply harmonic. For this reason the force required to accelerate each piston is greater when the piston is at the end of the stroke farthest from the shaft than when it is at the other end, and consequently the balance, which would be perfect if the connecting-rods werePAGE:860indefinitely long, is disturbed by the presence of forces which vary periodically with a frequency twice that of the rotation. When three cranks, 120° apart, are employed, it will be found that the effect of the shortness of the connecting-rods in causing forces to act in the line of the stroke is reduced to a couple tending to tilt the engine in a fore and aft direction, which may in its turn be balanced by using a second set of three cranks on the same shaft, the second set being so arranged that the couple to which it gives rise neutralizes the couple due to the first set. A six-crank engine may be arranged in this way to secure an extremely close approximation to perfect balance, and the same state of balance can be secured when the number of cranks is reduced to five.
+85. In considering the question of balance, the system of eccentrically revolving masses and the system of reciprocating masses have to be considered separately. A reciprocating mass such as a piston cannot be balanced by the use of revolving masses, for the forces which are due to the inertia of the piston necessarily act along the line of its stroke, while those due to revolving masses are continually changing their direction. The inertia of each connecting-rod may be approximately treated by resolving its mass into two constituents, one of which moves with the crank-pin, and is therefore an addition to the revolving system, while the other moves with the cross-head, and is therefore an addition to the reciprocating system. The mass of the rod may be divided for this purpose into parts which are inversely proportional to the distances of its centre of gravity from the crank-pin and the cross-head respectively. Let M<sub>1</sub>, M<sub>2</sub>, M<sub>3</sub>, &c., represent the various revolving masses 𝑟<sub>1</sub>,  𝑟<sub>1</sub>,  𝑟<sub>1</sub>, &c, their effective radii of rotation, and 𝑎<sub>1</sub>, 𝑎<sub>2</sub>, 𝑎<sub>3</sub>, &c, their distances from any assumed plane of reference taken perpendicular to the shaft. Then the conditions necessary for balance amongst them are that the vector sum of M&nbsp;𝑎&nbsp;𝑟 shall vanish, and also that the vector sum of M&nbsp;𝑟 shall vanish, this latter quantity being the resultant of the moments of the centrifugal forces with respect to the plane of reference. In a four-crank engine there is no serious difficulty in arranging the revolving masses in such a manner that these conditions shall be satisfied, so far as those masses are concerned. The problem, as Professor W.&nbsp;E. Dalby has shown, lends itself readily to graphical treatment (see his treatise on «I»Balancing of Engines«/I»). With respect to the reciprocating masses, a first approximation towards balance is attained by satisfying the conditions which would secure balance if the motions were simply harmonic. These conditions are identical with those which have just been stated for the revolving masses, when 𝑟 is interpreted as the semi-amplitude of the harmonic motion. When the conditions in question are satisfied, the only remaining source of disturbance is that which comes from the fact that the reciprocating masses are connected to the cranks by rods of finite length; in other words, that the motions are not simply harmonic. For this reason the force required to accelerate each piston is greater when the piston is at the end of the stroke farthest from the shaft than when it is at the other end, and consequently the balance, which would be perfect if the connecting-rods werePAGE:860indefinitely long, is disturbed by the presence of forces which vary periodically with a frequency twice that of the rotation. When three cranks, 120° apart, are employed, it will be found that the effect of the shortness of the connecting-rods in causing forces to act in the line of the stroke is reduced to a couple tending to tilt the engine in a fore and aft direction, which may in its turn be balanced by using a second set of three cranks on the same shaft, the second set being so arranged that the couple to which it gives rise neutralizes the couple due to the first set. A six-crank engine may be arranged in this way to secure an extremely close approximation to perfect balance, and the same state of balance can be secured when the number of cranks is reduced to five.
 
 86. The most usual arrangement adopted in marine engines, when
 questions of balance are taken into account, is to have four cranks, and consequently four sets of reciprocating masses. In the “Yarrow-Schlick-Tweedy” system of balancing engines four cranks are employed, and by adjusting the relative weights of the four pistons, as well as their distances apart, and by selecting suitable angles for the relative positions of the cranks (differing somewhat from 90°), a close approximation to complete balance is obtained. In triple expansion this arrangement is readily applied when two low-pressure cylinders are used instead of one, the steam from the intermediate cylinder being divided between them, and it is also of course applicable to quadruple expansion engines.
@@ -2924,6 +2929,7 @@ which has been used in various electric power stations, especially
 in America, in which a revolving mass might be employed to balance
 completely the inertia effects of two pistons. This is a compound
 engine in which the cylinders stand at right angles to one another, one being horizontal and the other vertical. If the piston masses were made equal it is clear that the inertia effect of a revolving mass could be resolved into two components which would balance both. It does not appear, however, that advantage has been taken of this property in the design of actual engines of this type. In the London County Council power station at Greenwich, where the engines are of this class, the unbalanced effects of inertia are so considerable as to affect the instruments at the Observatory half a mile away. One of the conspicuous merits of the steam turbine is that it avoids the use of reciprocating parts and so escapes the inconveniences and limitations to which the inertia of reciprocating parts gives rise.
+
 
 88. «I»Types of Engine«/I».—In classifying engines with regard to
 their general arrangement of parts and mode of working, account
@@ -3035,7 +3041,7 @@ secure, however, that the connecting-rod should always push
 and never pull against the crank-pin there had to be much 
 cushioning during the out stroke on account of the fact that 
 from about the middle of that stroke to the end the reciprocating
-mass was being retarded. In engines designed by P. W. 
+mass was being retarded. In engines designed by P.&nbsp;W. 
 Willans, which were highly successful examples of this class, 
 the cushioning was provided by means of a supplementary 
 piston which compressed air during the out stroke; the energy 
@@ -3074,7 +3080,7 @@ sufficiently to fill the small clearance. This difficulty, which
 exists when lubrication is carried out in the ordinary way, 
 is overcome in the Belliss engine by feeding the bearings with 
 a continuous supply of oil, which is pumped in under a pressure 
-of about 15 lb per sq. in. The presence of a film of oil 
+of about 15&nbsp;℔ per sq.&nbsp;in. The presence of a film of oil 
 is thereby continuously secured, and knocking is prevented 
 although the brasses are not set very close. Notable examples 
 in which double action is combined with a relatively high 
@@ -3110,7 +3116,7 @@ the system adjusts itself to give, at the plunger end, the nearly
 uniform effort which the pump requires. In other words, the 
 motion, instead of being almost simple harmonic as it is in 
 rotative engines, is such that the form of the inertia curve when 
-drawn as in fig. 47 is nearly the same as that of the steam curve, 
+drawn as in fig.&nbsp;47 is nearly the same as that of the steam curve, 
 with the result that the distance between the two, which represents
 the net effort on the pump-plunger, is nearly constant.
 The massive pump-rods act in such a way as to form a 
@@ -3146,25 +3152,25 @@ each high-pressure cylinder having a low-pressure cylinder
 tandem with it on the same rod. To allow of expansive working «HTMLTABLE:<table class="figtable" style="float:left;width:165px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 49.png|width=165}}</td></tr><tr><td>«SC»Fig«/SC». 49.</td></tr></table>«/HTMLTABLE»
 a device is added which compensates for the inequality of effort
 resulting from an early cut-off. A 
-cross-head A (fig. 40) fixed to each 
+cross-head A (fig.&nbsp;40) fixed to each 
 of the piston-rods is connected to 
 the piston-rods of a pair of oscillating
-cylinders «I»B«/I», «I»B«/I», which contain 
+cylinders «I»B«/I»,&nbsp;«I»B«/I», which contain 
 water and communicate with a 
 reservoir full of air compressed to 
-a pressure of about 300 lb per square 
+a pressure of about 300&nbsp;℔ per square 
 inch. When the stroke (which 
 takes place in the direction of the 
 arrow) begins the pistons are at first 
 forced in, and work is at first done 
 by the main piston-rod, through the compensating cylinders 
-«I»B«/I», «I»B«/I», on the compressed air in the reservoir. This continues 
+«I»B«/I»,&nbsp;«I»B«/I», on the compressed air in the reservoir. This continues 
 until the cross-head has advanced so that the cylinders stand 
 at right angles to the line of stroke. Then for the remainder 
 of the stroke the compensating cylinders assist in driving the 
 main piston, and the compressed air gives out the energy which 
 it stored in the earlier portion. The volume of the air reservoir 
-is so much greater than the volume of the cylinders, «I»B«/I», «I»B«/I», that 
+is so much greater than the volume of the cylinders, «I»B«/I»,&nbsp;«I»B«/I», that 
 the air pressure remains nearly constant throughout the stroke. 
 Any leakage from the cylinder or reservoir is made good by a 
 small pump which the engine drives. 
@@ -3173,22 +3179,22 @@ small pump which the engine drives.
 engine without cylinder or piston, which may be regarded 
 as the modern representative of the
 engine of Savery. The sectional view,
-fig. 50, shows its principal parts. There
-are two chambers A, A′, narrowing
+fig.&nbsp;50, shows its principal parts. There
+are two chambers A,&nbsp;A′, narrowing
 towards the top, where the steam-pipe
 B enters. A ball-valve C allows steam to «HTMLTABLE:<table class="figtable" style="float:left;width:130px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 50.png|width=130}}</td></tr><tr><td>«SC»Fig«/SC». 50. Pulsometer.</td></tr></table>«/HTMLTABLE»
 pass into one of the chambers and closes
 the other. Steam entering (say) the
 right-hand chamber forces water out of it
-past the clack-valve V into a delivery
-passage D, which is connected with an
+past the clack-valve&nbsp;V into a delivery
+passage&nbsp;D, which is connected with an
 air-vessel. When the water level in A
 sinks so far that steam begins to blow
 through the delivery passage, the water
 and steam are disturbed and so brought
 into intimate contact, the steam in A
 is condensed, and a partial vacuum is 
-formed. This causes the ball-valve C to
+formed. This causes the ball-valve&nbsp;C to
 rock over and close the top of A, while water rises from the
 suction-pipe E to fill that chamber. At the same time
 steam begins to enter the other chamber A′, discharging
@@ -3259,7 +3265,7 @@ fixed gudgeon at or near the middle of their length. The two
 levers were joined at their other ends by a cross-tail, from which a connecting-rod
 was taken to the crank above. The side-lever
 engine is now obsolete. In American practice, engines
-of the beam type, with a braced-beam supported on «B»«LG»A«/LG»«/B» frames
+of the beam type, with a braced-beam supported on «B»«SPAN[style:transform:scaleX(.6);display:inline-block]»«SPAN[style:font-size:120%]»A«/SPAN»«/SPAN»«/B» frames
 above the deck, are still common in river-steamers and coasters.
 An old form of direct-acting paddle-engine was the «I»steeple«/I»
 engine, in which the cylinder was set vertically below the crank.
@@ -3267,7 +3273,7 @@ Two piston-rods projected through the top of the cylinder, one
 on each side of the shaft and of the crank. They were united 
 by a crosshead sliding in vertical guides, and from this a return-connecting-rod
 led to the crank. Modern paddle-wheel engines 
-are usually of one of the following types. (1) In «I»oscillating«/I»
+are usually of one of the following types. (1)&nbsp;In «I»oscillating«/I»
 «I»cylinder«/I» engines the cylinders are set under the crank-shaft, 
 and the piston-rods are directly connected to the cranks. The 
 cylinders are supported on trunnions which give them the necessary
@@ -3278,7 +3284,7 @@ of the cylinders is inclined instead of vertical; and oscillating
 engines have been arranged with one cylinder before and another 
 behind the shaft, both pistons working on one crank. The
 oscillating cylinder type is best adapted for what would now
-be considered comparatively low pressures of steam. (2) «I»Diagonal«/I»
+be considered comparatively low pressures of steam. (2)&nbsp;«I»Diagonal«/I»
 engines are direct-acting engines of the ordinary
 connecting-rod type, with the cylinders fixed on an inclined
 bed and the guides sloping up towards the shaft. 
@@ -3314,7 +3320,7 @@ are arranged in twin sets, on two shafts with twin screw
 propellers. 
 
 The marine engine is always furnished with a surface condenser,
-consisting of a multitude of brass tubes about ¾ in. in 
+consisting of a multitude of brass tubes about «SPAN[style:white-space:nowrap]»¾&nbsp;in.«/SPAN» in 
 diameter cooled by sea-water which is caused to circulate 
 through the condenser by means of a circulating pump. This 
 pump and also the air pump are often driven independently of 
@@ -3322,21 +3328,21 @@ the main engine.
 
 103. It is in marine practice that the largest examples of 
 engines are to be found. The triple expansion engines of the 
-“Campania” and “Lucania,” which develop 30,000 h.p., 
+“Campania” and “Lucania,” which develop 30,000&nbsp;h.p., 
 consist of twin sets, on two shafts, each set having three cranks 
-and five cylinders, two of 37 in., one of 70 in. and two of 98 in. 
-diameter, with a stroke of 69 in. In the “Kaiser Wilhelm 
+and five cylinders, two of 37&nbsp;in., one of 70&nbsp;in. and two of 98&nbsp;in. 
+diameter, with a stroke of 69&nbsp;in. In the “Kaiser Wilhelm 
 der Grosse” engines of the same power are arranged in twin 
-sets, each set consisting of four cylinders, one of 52 in. diameter, 
+sets, each set consisting of four cylinders, one of 52&nbsp;in. diameter, 
 one of 89 and two of 96·4, the four giving triple expansion and 
 working on four cranks. The “Deutschland” develops 36,000 
 h.p. with twin sets, each of which comprises two 36·6-in. 
 cylinders, one 73·6-in., one 103·9-in. and two 106·3-in. with a 
-stroke of 72·8 in. In the “Kaiser Wilhelm II.” each of the twin 
+stroke of 72·8&nbsp;in. In the “Kaiser Wilhelm&nbsp;II.” each of the twin 
 shafts is driven by two 3-crank 4-cylinder quadruple expansion
-engines, the diameters being 37·4, 49·2, 74·8 and 112·2 in. 
-and a stroke of 70·9 in. With a working pressure of 225 lb 
-per square inch these engines develop in all 40,000 h.p. These 
+engines, the diameters being 37·4, 49·2, 74·8 and 112·2&nbsp;in. 
+and a stroke of 70·9&nbsp;in. With a working pressure of 225&nbsp;℔ 
+per square inch these engines develop in all 40,000&nbsp;h.p. These 
 are examples of the most powerful reciprocating engines used 
 in the propulsion of ships, but the successful application of the 
 Parsons turbine to marine use has enabled even these powers 
@@ -3381,7 +3387,7 @@ about a point some distance behind the axis of the wheels. This
 has the advantage of combining lateral with radial movement 
 of the wheels, both being required if the wheel base is to be 
 properly accommodated to the curve. Another method of 
-getting lateral and radial freedom is the plan used by F. W. 
+getting lateral and radial freedom is the plan used by F.&nbsp;W. 
 Webb of carrying the leading axle in a box curved to the arc 
 of a circle, and free to slide laterally for a short distance, under 
 the control of springs, in curved guides.«FN[841f2]:«I»Proc. Inst. Mech. Eng.«/I» (1883).«/FN»
@@ -3405,7 +3411,7 @@ which the bottom of the smoke-box sits.
 The slide-valves are on the tops of the
 cylinders, and are worked through rocking
 levers from an ordinary link-motion.
-Fig. 51, which is a half section through
+Fig.&nbsp;51, which is a half section through
 one cylinder of an American locomotive,
 by the Baldwin Company of Philadelphia,
 shows the position of the cylinders and
@@ -3432,7 +3438,7 @@ and crank-pins, and to strengthen the crank-cheeks.
 The principle of compounding has often been applied to 
 locomotive engines, but without much advantage. On this 
 subject the reader should refer to the article «LN:Railway|Railways/Locomotive Power«/LN»: 
-§ «I»Locomotive Power«/I». A more important modern departure is 
+§&nbsp;«I»Locomotive Power«/I». A more important modern departure is 
 the use of highly superheated steam, which in many locomotives 
 has been attended with conspicuous success. PAGE:864105. «I»Steam Turbines«/I».—Steam turbines are distinguished from 
 all other types of steam engine by the fact that their action 
@@ -3445,19 +3451,19 @@ steam turbine more intelligible.
 
 106. «I»Theory of the Steam«/I»-«I»jet«/I».—Consider an element of steam, of 
 unit mass, acquiring kinetic energy in the expansion of the steam 
-through a nozzle or other channel, from a region of pressure 𝑝₁ to 
-a region of lower pressure 𝑝₂. Its volume changes from 𝑣₁ to 𝑣₂ in 
-the process. The work done upon it by steam from behind is 𝑝₁𝑣₁. 
-The work which it does on the steam in front is 𝑝₂𝑣₂. The net 
-amount of work done upon it is therefore 𝑝₁𝑣₁−𝑝₂𝑣₂. Its velocity 
-changes from V₁ to V₂; the kinetic energy which it gains is therefore 
-(V₂²−V₁²)/2𝑔. The internal energy changes from E₁ to E₂. Hence 
+through a nozzle or other channel, from a region of pressure 𝑝<sub>1</sub> to 
+a region of lower pressure 𝑝<sub>2</sub> . Its volume changes from 𝑣<sub>1</sub> to 𝑣<sub>2</sub> in 
+the process. The work done upon it by steam from behind is 𝑝<sub>1</sub>𝑣<sub>1</sub>. 
+The work which it does on the steam in front is 𝑝<sub>2</sub>𝑣<sub>2</sub>. The net 
+amount of work done upon it is therefore 𝑝<sub>1</sub>𝑣<sub>1</sub>−𝑝<sub>2</sub>𝑣<sub>2</sub>. Its velocity 
+changes from V<sub>1</sub> to V<sub>2</sub>; the kinetic energy which it gains is therefore 
+(V<sub>2</sub><sup>2</sup>−V<sub>1</sub><sup>2</sup>)/2𝑔. The internal energy changes from E<sub>1</sub> to E<sub>2</sub>. Hence 
 by the conservation of energy 
 
-«CTR»(V₂²−V₁²)/2𝑔=J(E₁−E₂)+𝑝₁𝑣₁−𝑝₂𝑣₂«/CTR»
+«CTR»(V<sub>2</sub><sup>2</sup>−V<sub>1</sub><sup>2</sup>)/2𝑔＝J(E<sub>1</sub>−E<sub>2</sub>)+𝑝<sub>1</sub>𝑣<sub>1</sub>−𝑝<sub>2</sub>𝑣<sub>2</sub>«/CTR»
 
 which may be written
-«CTR»(V₂²−V₁²)/2𝑔=J(I₁−I₂),«/CTR»
+«CTR»(V<sub>2</sub><sup>2</sup>−V<sub>1</sub><sup>2</sup>)/2𝑔＝J(I<sub>1</sub>−I<sub>2</sub>),«/CTR»
 
 where I is the total heat (§ 31), which is equal to E+𝑝𝑣/J. It is 
 assumed here that the action is adiabatic in the sense that no heat 
@@ -3469,19 +3475,19 @@ the steam undergoes in acquiring velocity. When the heat drop
 is known the gain in velocity is readily found, as above. In determining
 the best drop account must, of course, be taken of the wetness 
 of the steam, or of its superheat if it has any. Thus, for superheated 
-steam I=I𝑠+κ(𝑡′−𝑡) where I𝑠 is the total heat of saturated steam 
+steam I＝I<sub>𝑠</sub>+κ(𝑡′−𝑡) where I<sub>𝑠</sub> is the total heat of saturated steam 
 at the same pressure and κ(𝑡′−𝑡) represents the heat taken up in 
 the process of superheating to the actual temperature 𝑡′ from the 
-temperature of saturation 𝑡. And for wet steam I=I𝑤+𝑞L where 
-I𝑤 is the total heat of water, L the latent heat, and 𝑞 is the dryness 
+temperature of saturation 𝑡. And for wet steam I＝I<sub>𝑤</sub>+𝑞L where 
+I<sub>𝑤</sub> is the total heat of water, L the latent heat, and 𝑞 is the dryness 
 fraction. 
 
 During this process of expansion, which we assume to be adiabatic, 
 the steam becomes wet, and the value of 𝑞 accordingly falls. As 
-has been shown in § 36, the dryness may be found at any stage in 
-adiabatic expansion from the formula—
+has been shown in §&nbsp;36, the dryness may be found at any stage in 
+adiabatic expansion from the «SPAN[style:white-space:nowrap]»formula—«/SPAN»
 
-«CTR»𝑞=τ/L«XXL»(«/XXL»𝑞₁L₁/τ₁+log ετ₁/τ«XXL»)«/XXL»,«/CTR»
+«CTR»𝑞＝τ/L«SPAN[style:font-size:173%]»(«/SPAN»𝑞<sub>1</sub>L<sub>1</sub>/τ<sub>1</sub>+log ετ<sub>1</sub>/τ«SPAN[style:font-size:173%]»)«/SPAN»,«/CTR»
 
 or it may be determined by measurement from the entropy-temperature
 diagram. A still more convenient diagram in which the heat 
@@ -3494,12 +3500,12 @@ means of finding the heat drop «HTMLTABLE:<table class="figtable" style="float:
 or energy available for transformation.
 Consider steam or 
 any other gas supplied at 
-pressure 𝑝₁ and expanding to 
-pressure 𝑝₂, at which pressure 
+pressure 𝑝<sub>1</sub> and expanding to 
+pressure 𝑝<sub>2</sub>, at which pressure 
 it is discharged. The work 
 which it does is measured by 
 the area ABCD of the pressure-volume
-diagram (fig. 52), 
+diagram (fig.&nbsp;52), 
 namely, 
 
 «CTR»«MATH:\int_{p_1}^{p_2}vdp«/MATH».«/CTR»
@@ -3507,23 +3513,23 @@ namely,
 If this work is wholly done upon this steam in giving it velocity, 
 the kinetic energy acquired is equal to it, that is 
 
-«CTR»V₂²−V₁²/2𝑔=«MATH:\int_{p_1}^{p_2}vdp«/MATH».«/CTR»
+«CTR»V<sub>2</sub><sup>2</sup>−V<sub>1</sub><sup>2</sup>/2𝑔＝«MATH:\int_{p_1}^{p_2}vdp«/MATH».«/CTR»
 
 We have already seen (§ 41) that in adiabatic expansion this integral 
-measures the heat drop, being equal to I₁−I₂. 
+measures the heat drop, being equal to I<sub>1</sub>−I<sub>2</sub>. 
 
-If the mode of expansion is such as to make 𝑝𝑣𝑛=constant, 𝑛 
+If the mode of expansion is such as to make 𝑝𝑣<sup>𝑛</sup>＝constant, 𝑛 
 being any index, then 
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>«MATH:\int_{p_1}^{p_2}vdp«/MATH»</td><td>=𝑛/𝑛−1«XXL»(«/XXL»𝑝₁𝑣₁ − 𝑝₂𝑣₂«XXL»)«/XXL»</td></tr><tr><td></td><td>=𝑛/𝑛−1«XXL»(«/XXL»1 − D<sup>𝑛−1/𝑛</sup>«XXL»)«/XXL»𝑝₁𝑣₁,</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>«MATH:\int_{p_1}^{p_2}vdp«/MATH»</td><td>＝𝑛/𝑛−1«SPAN[style:font-size:173%]»(«/SPAN»𝑝<sub>1</sub>𝑣<sub>1</sub> − 𝑝<sub>2</sub>𝑣<sub>2</sub>«SPAN[style:font-size:173%]»)«/SPAN»</td></tr><tr><td></td><td>＝𝑛/𝑛−1«SPAN[style:font-size:173%]»(«/SPAN»1 − D<sup>𝑛−1/𝑛</sup>«SPAN[style:font-size:173%]»)«/SPAN»𝑝<sub>1</sub>𝑣<sub>1</sub>,</td></tr></table>«/HTMLTABLE»
 
-where D is the ratio in which the pressure falls, namely 𝑝₂/𝑝₁. 
+where D is the ratio in which the pressure falls, namely 𝑝<sub>2</sub>/𝑝<sub>1</sub>. 
 
 Now the adiabatic expansion of steam, starting from an initially 
 dry saturated state, is very approximately represented by the formula 
-𝑝𝑣¹·¹³⁵=constant. Hence the area of the pressure-volume diagram, 
+𝑝𝑣<sup>1·135</sup>＝constant. Hence the area of the pressure-volume diagram, 
 which under these conditions measures the work theoretically 
-obtainable, is equal to 8·41(1—D⁰·¹¹⁹)𝑝₁𝑣₁, a quantity which will 
-be found on evaluation to agree closely with the value of I₁−I₂.
+obtainable, is equal to 8·41(1—D<sup>0·119</sup>)𝑝<sub>1</sub>𝑣<sub>1</sub>, a quantity which will 
+be found on evaluation to agree closely with the value of I<sub>1</sub>−I<sub>2</sub>.
 
 107. «I»Form of the Jet in Adiabatic Expansion«/I».—As expansion proceeds
 the volume of the steam, per pound, at any stage is found by
@@ -3541,78 +3547,78 @@ volume 𝑣 at each stage of the velocity V acquired up to that stage,
 and the ratio 𝑣/V at first diminishes and afterwards increases as 
 the expansion proceeds. Take, for instance, as a numerical example, 
 a case in which dry saturated steam is admitted to a nozzle at an 
-absolute pressure of 213 lb per sq. in., and expands adiabatically, 
-giving itself velocity, until the, pressure falls to 1·7 per sq. in. It 
+absolute pressure of 213 lb per sq.&nbsp;in., and expands adiabatically, 
+giving itself velocity, until the, pressure falls to 1·7 per sq.&nbsp;in. It 
 will be found on working out numerical values that until the pressure 
-falls to about 123 lb per sq. in. the steam is gaining velocity so rapidly 
+falls to about 123&nbsp;℔ per sq.&nbsp;in. the steam is gaining velocity so rapidly 
 that though its volume is expanding the stream-lines are convergent. 
 Below that pressure, however, the augmentation of volume is relatively
 so great that a larger and larger area of section has to be 
-provided for the flow. Thus, when the pressure is 123 lb per sq. in. 
-the dryness 𝑞 is 0·96, the volume per pound is 3·51 cub. ft., the 
-heat drop is 25¼ thermal units, giving a velocity of 1510 ft. per second. 
-Consequently, the area of the stream is 0·00233 sq. ft. per pound of 
+provided for the flow. Thus, when the pressure is 123&nbsp;℔ per sq.&nbsp;in. 
+the dryness 𝑞 is 0·96, the volume per pound is 3·51 cub.&nbsp;ft., the 
+heat drop is 25¼ thermal units, giving a velocity of 1510&nbsp;ft. per second. 
+Consequently, the area of the stream is 0·00233 sq.&nbsp;ft. per pound of 
 flow, and this is the minimum value. When the pressure falls 
-to 1·7 lb per sq. in. the dryness 𝑞 is 0·784, the volume per pound 
-is 157·8 cub. ft., the heat drop is 175·7 thermal units, giving a 
-velocity of 3980 ft. per second, and consequently the area of the 
-stream is 0·0396 sq. ft. per pound of flow. 
+to 1·7 lb  per sq.&nbsp;in. the dryness 𝑞 is 0·784, the volume per pound 
+is 157·8 cub.&nbsp;ft., the heat drop is 175·7 thermal units, giving a 
+velocity of 3980&nbsp;ft. per second, and consequently the area of the 
+stream is 0·0396 sq.&nbsp;ft. per pound of flow. 
 
 108. «I»De Laval’s Divergent Nozzle«/I».—It is on this basis that De 
 Laval’s divergent nozzle is designed. The “throat” or smallest «HTMLTABLE:<table class="figtable" style="float:left;width:215px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 53.png|width=215}}</td></tr><tr><td>«SC»Fig«/SC». 53</td></tr></table>«/HTMLTABLE»
 section is approached by a more or less rounded entrance, allowing 
 the stream-lines to converge, and from the throat outwards the nozzle 
 expands in any gradual manner, generally in fact as a simple cone 
-(fig. 53). In the example just 
+(fig.&nbsp;53). In the example just 
 given the final area of section
 would be seventeen times that 
 of the throat to provide for 
 adiabatic expansion down to 
-a pressure of 1·7 lb per sq. in. 
+a pressure of 1·7&nbsp;℔ per sq.&nbsp;in. 
 With any final area less than 
 this the pressure at exit would 
-be higher than 1·7 lb; it would 
+be higher than 1·7&nbsp;℔; it would 
 in fact adjust itself to give a value of 𝑣/V corresponding to
 the area, and the remainder of the pressure drop would be wasted. 
-For expansion to atmospheric pressure (14·7 per sq. in.) the area 
+For expansion to atmospheric pressure (14·7 per sq.&nbsp;in.) the area 
 at exit would be 3·14 times that of the throat. 
 
 The equation of velocity 
 
-«CTR»V²/2𝑔 =𝑛/𝑛−1 «XXL»(«/XXL»1 − D𝑛−1/𝑛«XXL»)«/XXL»𝑝₁𝑣₁«/CTR»
+«CTR»V<sup>2</sup>/2𝑔 ＝𝑛/𝑛−1 «SPAN[style:font-size:173%]»(«/SPAN»1 − D𝑛−1/𝑛«SPAN[style:font-size:173%]»)«/SPAN»𝑝<sub>1</sub>𝑣<sub>1</sub>«/CTR»
 
 may be applied to calculate generally the discharge per square foot of 
 stream section, and hence to find at what point in the fall of pressure 
 this discharge becomes a maximum—in other words, to determine 
-the pressure at the throat. Since 𝑝𝑣𝑛=𝑝₁𝑣₁𝑛 
+the pressure at the throat. Since 𝑝𝑣<sup>𝑛</sup>＝𝑝<sub>1</sub>𝑣<sub>1</sub><sup>𝑛</sup> 
 
-«CTR»𝑣=𝑣₁/D<sup>1/𝑛</sup> where D=𝑝/𝑝₁.«/CTR»
+«CTR»𝑣＝𝑣<sub>1</sub>/D<sup>1/𝑛</sup> where D＝𝑝/𝑝<sub>1</sub>.«/CTR»
 
 The discharge per square foot when the volume is 𝑣 is
 
-«CTR»Q=V/𝑣=VD1/𝑛/𝑣₁=«XXL»√ {«/XXL»2𝑔𝑛/𝑛 − 1 · 𝑝₁/𝑣₁ «XXL»(«/XXL» D<sup>2/𝑛</sup> − D<sup>𝑛+1/𝑛</sup>«XXL») } «/XXL».«/CTR»
+«CTR»Q＝V/𝑣＝VD<sup>1/𝑛</sup>/𝑣<sub>1</sub>＝«SPAN[style:font-size:173%]»√ {«/SPAN»2𝑔𝑛/𝑛 − 1 · 𝑝<sub>1</sub>/𝑣<sub>1</sub> «SPAN[style:font-size:173%]»(«/SPAN» D<sup>2/𝑛</sup> − D<sup>𝑛+1/𝑛</sup>«SPAN[style:font-size:173%]») }«/SPAN».«/CTR»
 
 Q will be a maximum when 𝑑Q/𝑑D is zero, which occurs when 
 
-«CTR»D=«XXL»(«/XXL»2/𝑛 + 1 «XXL»)«/XXL»<sup>𝑛/𝑛−1</sup>.«/CTR»
+«CTR»D＝«SPAN[style:font-size:173%]»(«/SPAN»2/𝑛 + 1 «SPAN[style:font-size:173%]»)«/SPAN»<sup>𝑛/𝑛−1</sup>.«/CTR»
 
 This result is general for any gas. With saturated steam, 𝑛 being 
-1·135, Q is a maximum when D=0·577, that is to say, the pressure 
+1·135, Q is a maximum when D＝0·577, that is to say, the pressure 
 at the throat is 57·7% of the initial pressure, a result which agrees 
 with the figures quoted above for a particular case. 
 
 The maximum value of Q, namely the discharge in pounds per 
 square foot at the throat, is 
 
-«CTR»3·6√(𝑝₁/𝑣₁),«/CTR»
+«CTR»3·6√(𝑝<sub>1</sub>/𝑣<sub>1</sub>),«/CTR»
 
-and the velocity there is 5·85√(𝑝₁𝑣₁). In these expressions 𝑝₁ is the 
+and the velocity there is 5·85√(𝑝<sub>1</sub>𝑣<sub>1</sub>). In these expressions 𝑝<sub>1</sub> is the 
 initial pressure in pounds per square foot. 
 
 109. From these considerations it follows that, provided the final 
 pressure is less than 0·577 times the initial pressure, the total discharge depends simply on the least area of section of the nozzle and on the initial pressure, and is independent of the final pressure. By continuing the expansion in a divergent nozzle, after the throat is passed, the amount of discharge is not increased, but the steam is caused to acquire a greater velocity of exit, namely the velocity corresponding to the augmented pressure range. 
 
-110. When the pressure drop is small (𝑝₂ greater than 0·577 𝑝₁) 
+110. When the pressure drop is small (𝑝<sub>2</sub> greater than 0·577 𝑝<sub>1</sub>) 
 the full velocity due to the drop is obtained without the use of aPAGE:865divergent nozzle. This is the case, for instance, in the Parsons 
 turbine, where the whole expansion is divided into many stages each
 of which involves only a small drop in pressure. 
@@ -3626,7 +3632,7 @@ which is restored to it as heat. Thus, at every stage in the process
 the velocity acquired is less than it would be in frictionless adiabatic expansion,
 but the steam is drier and its volume is greater in consequence
 of the restored heat. Referring to the entropy-temperature diagram«HTMLTABLE:<table class="figtable" style="float:left;width:150px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 54.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 54.</td></tr></table>«/HTMLTABLE»
-(fig. 54) the process of expansion under
+(fig.&nbsp;54) the process of expansion under
 conditions involving friction is represented 
 not by the adiabatic line 𝑐𝑑 but by some
 such line as 𝑐𝑔 lying between the adiabatic
@@ -3654,12 +3660,12 @@ the divergent nozzle.
 energy of steam in a steam turbine, it will be clear from the
 figures that have been given that if the whole heat drop is allowed
 to give kinetic energy to the steam in one operation, as in the
-De Laval nozzle, a velocity of about 4000 ft. per second has to
+De Laval nozzle, a velocity of about 4000&nbsp;ft. per second has to
 be dealt with. To take advantage of a jet in the most efficient
 manner in a turbine consisting of a single wheel the velocity
 of the buckets against which the steam impinges should be nearly
 one half the velocity of the stream. But a peripheral velocity
-approaching 2000 ft. per second is impracticable. Apart from
+approaching 2000&nbsp;ft. per second is impracticable. Apart from
 the difficulties which it would involve as regards gearing down
 to such a speed as would serve for the driving of other machines,
 which are to employ the power, there are no materials of construction
@@ -3696,7 +3702,7 @@ run at an enormous velocity, and the speed of the shaft which
 carries them is so great that gearing down is resorted to before
 the motion is applied to useful purposes. The general arrangement
 of the steam nozzle and turbine blades is illustrated
-in fig. 55. The blades project from the circumference of
+in fig.&nbsp;55. The blades project from the circumference of
 a disk-shaped wheel and «HTMLTABLE:<table class="figtable" style="float:left;width:225px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 55.png|width=225}}</td></tr><tr><td>«SC»Fig«/SC». 55.</td></tr></table>«/HTMLTABLE»
 form a complete ring round
 it, only a few of the blades 
@@ -3716,14 +3722,14 @@ lower pressure. It is only in the smaller sizes of these
 turbines that a single nozzle is used; in the larger steam turbines, 
 as in large Pelton wheels, several nozzles are applied at intervals 
 along the circumference of the disk. The peripheral velocity 
-of the blades ranges from about 500 ft. per second in the smallest
-sizes (5 h.p.) up to nearly 1400 ft. per second in turbines of
-300 h.p. In a 50 h.p. De Laval turbine the shaft which carries
+of the blades ranges from about 500&nbsp;ft. per second in the smallest
+sizes (5&nbsp;h.p.) up to nearly 1400&nbsp;ft. per second in turbines of
+300&nbsp;h.p. In a 50&nbsp;h.p. De Laval turbine the shaft which carries
 the turbine disk makes 16,000 revolutions per minute; in the
-5 h.p. size it makes as many as 30,000 revolutions per minute.
-A turbine developing 300 h.p. uses a wheel 30 in. in diameter,
+5&nbsp;h.p. size it makes as many as 30,000 revolutions per minute.
+A turbine developing 300&nbsp;h.p. uses a wheel 30&nbsp;in. in diameter,
 running at over 10,000 revolutions per minute, with a peripheral
-speed of nearly 1400 ft. per second. These enormous
+speed of nearly 1400&nbsp;ft. per second. These enormous
 speeds are made possible by the ingenious device of using a
 flexible shaft, which protects the bearings and foundations
 from the vibration which any want of balance would otherwise
@@ -3737,26 +3743,26 @@ the motion is taken, by direct coupling or otherwise, to the
 machine which the turbine is to drive. The wheel carrying 
 the buckets is much thickened towards the axis to adapt it to 
 withstand the high stresses arising from its rotation. Turbines 
-of this class in sizes up to 300 or 400 h.p. are now in extensive 
+of this class in sizes up to 300 or 400&nbsp;h.p. are now in extensive 
 use for driving dynamos, fans and centrifugal pumps. Compared
 with the Parsons turbine, De Laval’s lends itself well 
 to work where small amounts of power are wanted, and there «HTMLTABLE:<table class="figtable" style="float:left;width:150px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 56.png|width=150}}</td></tr><tr><td>«SC»Fig«/SC». 56.</td></tr></table>«/HTMLTABLE»
 it achieves a higher efficiency, but in large sizes the Parsons
 turbine is much the more efficient of the two. Trials of a De
 Laval turbine used with a condenser, and developing about
-63 h.p., have shown an average steam consumption at the rate
-of about 20 lb per brake-horse-power-hour,
+63&nbsp;h.p., have shown an average steam consumption at the rate
+of about 20&nbsp;℔ per brake-horse-power-hour,
 and even better results are 
 reported in turbines of a larger size. 
 
 114. «I»Action of the Jet in De Laval’s«/I»
 «I»Turbine«/I».—In entering the turbine the jet 
 is inclined at an angle a to the plane of 
-the wheel. Calling its initial velocity V₁
+the wheel. Calling its initial velocity V<sub>1</sub>
 and the velocity of the buckets 𝑢 we 
-have, as in fig. 56, V₂ for the velocity of the 
+have, as in fig.&nbsp;56, V<sub>2</sub> for the velocity of the 
 steam relatively to the wheel on admission.
-A line AB parallel to V₂ therefore 
+A line AB parallel to V<sub>2</sub> therefore 
 determines the proper angle of the blade 
 or bucket on the entrance side if the steam 
 is to enter without shock. As the steam 
@@ -3768,17 +3774,17 @@ action is one of pure impulse; there is
 no change of pressure during the passage, 
 and consequently no acceleration of the 
 steam through drop in pressure after 
-once it has left the nozzle. Hence V₃, 
-the relative velocity at exit may (neglecting friction) be taken as equal to V₂
-The direction of V₃ or BC is tangent to the exit side of the bucket.PAGE:866Compounding V₃ with 𝑢 we find V₄, which is the absolute velocity 
+once it has left the nozzle. Hence V<sub>3</sub>, 
+the relative velocity at exit may (neglecting friction) be taken as equal to V<sub>2</sub>
+The direction of V<sub>3</sub> or BC is tangent to the exit side of the bucket.PAGE:866Compounding V<sub>3</sub> with 𝑢 we find V<sub>4</sub>, which is the absolute velocity 
 of the steam after exit, and this should be no greater than is required 
 to get the steam clear of the wheel. The most favourable condition 
-of running would be when the bucket velocity 𝑢 is such that V₄ is 
-perpendicular to the plane of the wheel, for V₄ would then have its 
+of running would be when the bucket velocity 𝑢 is such that V<sub>4</sub> is 
+perpendicular to the plane of the wheel, for V<sub>4</sub> would then have its 
 least possible value. Assuming the angle of discharge β′ to be 
-equal to β, we should in that event have 𝑢=½V₁cos α, which 
-approximates more and more closely to ½V₁ the smaller α is made. 
-The ideal efficiency would be (V₁²−V₄²)/V₁² or 1−sin²α in a 
+equal to β, we should in that event have 𝑢＝½V<sub>1</sub>cos&nbsp;α, which 
+approximates more and more closely to ½V<sub>1</sub> the smaller α is made. 
+The ideal efficiency would be (V<sub>1</sub><sup>2</sup>−V<sub>4</sub><sup>2</sup>)/V<sub>1</sub><sup>2</sup> or 1−sin<sup>2</sup>α in a 
 turbine in which the jet enters the buckets Without shock and 
 travels over them without friction. In practice α is about 20°. 
 Owing to the impossibility of making the bucket speed so high as 
@@ -3819,7 +3825,7 @@ the next drop in pressure.
 division of the heat drop or pressure drop into stages Curtis 
 follows Parsons. The distinctive feature in Curtis is the multi-impulse
 action which occurs at each pressure stage. This is 
-illustrated in the diagram (fig. 57), which shows the nozzle and 
+illustrated in the diagram (fig.&nbsp;57), which shows the nozzle and 
 blades of a two-stage Curtis turbine, with three rings of moving 
 blades or buckets in each stage, arranged, of course, round the 
 periphery of a wheel. 
@@ -3833,9 +3839,9 @@ extracted as the steam pursues its sinuous course between moving
 and fixed blades, and it leaves the third ring in each case with 
 only a small residual velocity, the direction of which is approximately
 parallel to the axis of the wheel. The changes of velocity
-are illustrated in fig. 58, which, for the sake of simplification,
+are illustrated in fig.&nbsp;58, which, for the sake of simplification,
 is drawn for the ideal case of no friction. There 𝑢 is the
-velocity of the buckets, V₁ the initial velocity of the jet, and the initial relative velocity on entrance to the first moving ring. V₃ is the absolute velocity on entering the second moving ring, and V₄ the relative velocity. V₅ is the absolute velocity on entering the third moving ring and V₆ the relative velocity. Finally, V₇ is the absolute velocity on leaving the third moving 
+velocity of the buckets, V<sub>1</sub> the initial velocity of the jet, and the initial relative velocity on entrance to the first moving ring. V<sub>3</sub> is the absolute velocity on entering the second moving ring, and V<sub>4</sub> the relative velocity. V<sub>5</sub> is the absolute velocity on entering the third moving ring and V<sub>6</sub> the relative velocity. Finally, V<sub>7</sub> is the absolute velocity on leaving the third moving 
 ring, and this in the example here drawn is parallel to the axis 
 of the turbine. The first moving blades have sides parallel to
 OB, BP; the first fixed blades have sides parallel to CP, PD.
@@ -3851,10 +3857,10 @@ velocity afresh, which it loses as before in passing through a set
 of three rings of moving buckets. In some Curtis turbines
 this is followed by a third and often a fourth similar process
 before the condenser is reached. In a four-stage Curtis turbine
-the speed of the buckets is usually about 400 ft. per second;
+the speed of the buckets is usually about 400&nbsp;ft. per second;
 the steam issues from each set of nozzles with a velocity of about
-2000 ft. per second, and each set of moving rings reduces this
-by something like 400 ft. per second. The losses due to steam
+2000&nbsp;ft. per second, and each set of moving rings reduces this
+by something like 400&nbsp;ft. per second. The losses due to steam
 friction are somewhat serious, although the blade speed in each
 set is sufficient to let the steam enter without shock; on the
 other hand, the Curtis turbine escapes to a great extent losses
@@ -3880,12 +3886,12 @@ of the expansion. Tests of Curtis turbines show that they
 maintain a very uniform efficiency throughout a wide range 
 of loads, and are capable of being much overloaded withoutPAGE:867material increase in the ratio of steam consumption to output. 
 In tests of a 9000 kilowatt Curtis turbine using steam of about 
-200 lb pressure and 80° C. superheat, with a vacuum of 295 in. 
-the consumption of steam is reported to have been only 13 lb 
+200 ℔ pressure and 80°&nbsp;C. superheat, with a vacuum of 295&nbsp;in. 
+the consumption of steam is reported to have been only 13&nbsp;℔ 
 per kilowatt-hour, and this figure remained almost constant 
 for loads ranging from 8000 to 12,000 kilowatts. In a 5000 
 kilowatt turbine under very similar conditions the consumption 
-is reported to have been 135 lb per kilowatt-hour. In the 
+is reported to have been 135&nbsp;℔ per kilowatt-hour. In the 
 usual arrangement of the Curtis turbine the shaft is vertical 
 and the wheels lie in horizontal planes, the weight of the revolving
 parts being taken by a footstep bearing with forced 
@@ -3933,7 +3939,7 @@ efficiency, the blade speeds cannot be kept high without making
 the diameters unduly great, and consequently more stages are 
 required: in such turbines the number of stages may be from 
 100 to 200. The general relation of fixed to moving blades 
-and the characteristic form of both will be seen from fig. 59. 
+and the characteristic form of both will be seen from fig.&nbsp;59. 
 
 Fig. 60 shows a complete Parsons turbine of 1000 kilowatts 
 capacity in longitudinal section through the casing. The 
@@ -3994,7 +4000,7 @@ with distance pieces which hold them at the proper angle and
 proper distance apart, and the distance pieces are caulked to fix 
 them. The length of the blades ranges from a fraction of an inch 
 upwards. In the longest blades of the largest marine steam 
-turbines it is as much as 22 in. When over an inch or so long 
+turbines it is as much as 22&nbsp;in. When over an inch or so long 
 they are strengthened by a ring of stout wire let into a notch 
 near the tip and extending round the whole circumference. 
 Each blade is “laced” to this by a fine copper binding wire, 
@@ -4040,7 +4046,7 @@ designed, provision is often made to allow steam to enter at
 the full admission pressure beyond the first set of rows of 
 blades: this increases the quantity admitted, and, though the 
 action is somewhat less efficient, more power is developed. An 
-orifice will be seen in fig. 60 a little to the right of the main 
+orifice will be seen in fig.&nbsp;60 a little to the right of the main 
 steam admission orifice, the purpose of which is to allow steam 
 to enter direct to the second set of blades, missing the first 
 seven stages, so that the turbine may cope with overloads. 
@@ -4061,9 +4067,9 @@ and the Parsons turbine is accordingly designed with, as far as possible, a cons
 
 If the spindle or drum carrying the moving blades were of the 
 same diameter throughout, the blades at the exhaust end would 
-have to be exceedingly long in order to give passage to the rarefied steam. By increasing the diameter towards the exhaust end the peripheral velocity is increased, and hence the proper velocity for the steam is also increased. The amount of heat drop per ring is consequently greater towards the low-pressure end: in other words, the number of rings for a given drop is reduced. Taking the turbine as a whole, the number of rings will depend on the blade velocity at each step, the relation being such that Σ𝑛V𝑏²=constant for a given total drop from admission to exhaust, 𝑛 being the number of rings whose blade velocity is V𝑏. It appears that a usual value of this constant is about 1,500,000«FN[846f1]:Speakman, “The Determination of the Principal Dimensions 
+have to be exceedingly long in order to give passage to the rarefied steam. By increasing the diameter towards the exhaust end the peripheral velocity is increased, and hence the proper velocity for the steam is also increased. The amount of heat drop per ring is consequently greater towards the low-pressure end: in other words, the number of rings for a given drop is reduced. Taking the turbine as a whole, the number of rings will depend on the blade velocity at each step, the relation being such that Σ𝑛V<sub>𝑏</sub><sup>2</sup>＝constant for a given total drop from admission to exhaust, 𝑛 being the number of rings whose blade velocity is V<sub>𝑏</sub>. It appears that a usual value of this constant is about 1,500,000«FN[846f1]:Speakman, “The Determination of the Principal Dimensions 
 of the Steam Turbine with special reference to Marine Work,” «I»Proc.«/I» 
-«I»Inst. Engineers & Shipbuilders in Scotland«/I» (October 1905). On this subject see also Reed, “The Design of Marine Steam Turbines,” «I»Proc. Inst. Civ. Eng.«/I» (February 1909).«/FN» for the whole range from an admission pressure which may be nearly 200 lb per sq. in. down to condenser pressure. 
+«I»Inst. Engineers & Shipbuilders in Scotland«/I» (October 1905). On this subject see also Reed, “The Design of Marine Steam Turbines,” «I»Proc. Inst. Civ. Eng.«/I» (February 1909).«/FN» for the whole range from an admission pressure which may be nearly 200&nbsp;℔ per sq.&nbsp;in. down to condenser pressure. 
 PAGE:869The increased diameter at the low-pressure end not only allows 
 the steam velocity to be increased but by enlarging the annulus 
 enables a sufficient area of passage to be provided without unduly 
@@ -4085,23 +4091,24 @@ of the annulus.
 Fig. 61 A shows a representative pair of fixed and moving 
 blades of a Parsons turbine, and fig. 61 B the corresponding 
 velocity diagram for the steam, neglecting effects of friction. 
-V₁ is the exit velocity from the fixed blades, the delivery 
-edges of which are tangent to the direction of V₁.
+V<sub>1</sub> is the exit velocity from the fixed blades, the delivery 
+edges of which are tangent to the direction of V<sub>1</sub>.
 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 61.png|align=inline|width=390}}«BR»
 «SC»Fig«/SC». 61.«/CTR»
 
+
 The blade 
-velocity is 𝑢 which is ½V₁. V₂ is consequently the relative 
+velocity is 𝑢 which is ½V<sub>1</sub>. V<sub>2</sub> is consequently the relative 
 velocity with which the steam enters the moving blades. Approximately,
-the back surface of these blades is parallel to V₂, but the 
+the back surface of these blades is parallel to V<sub>2</sub> , but the 
 blades are so thick near the entrance side that their front faces have 
 a considerably different slope and there is therefore some shock at 
 entrance. In passing through the moving blades the relative 
-velocity of the steam over the blades changes from V₂ to V₃. Allowing
+velocity of the steam over the blades changes from V<sub>2</sub> to V<sub>3</sub>. Allowing
 for the velocity 𝑢 of the blades themselves, this corresponds to 
-an absolute velocity V₄, with which the steam enters the next set of 
-fixed blades. In these blades it is again accelerated to V₁ and so on.
+an absolute velocity V<sub>4</sub>, with which the steam enters the next set of 
+fixed blades. In these blades it is again accelerated to V<sub>1</sub> and so on.
 
 126. «I»Calculation of Velocity at each Stage«/I».—The acceleration of 
 the steam in each row of blades results from a definite heat drop. 
@@ -4117,18 +4124,18 @@ numbers it is easy to calculate the work done at each stage in the
 expansion, the pressure 𝑝 and drop in pressure δ𝑝 being known. 
 In the ideal case with no losses we should have 
 
-«CTR»(V₁²−V₄²)/2𝑔=(𝑝𝑣)δ𝑝/𝑝«/CTR»
-or V₁²=2𝑔(𝑝𝑣)δ𝑝/𝑝+V₄²
+«CTR»(V<sub>1</sub><sup>2</sup>−V<sub>4</sub><sup>2</sup>)/2𝑔＝(𝑝𝑣)δ𝑝/𝑝«/CTR»
+{{rh|or|V<sub>1</sub><sup>2</sup>＝2𝑔(𝑝𝑣)δ𝑝/𝑝+V<sub>4</sub><sup>2</sup> |}}
 
-where V₄ is the velocity before the acceleration due to the drop δ𝑝 
-and V₁ is the velocity after. 
+where V<sub>4</sub> is the velocity before the acceleration due to the drop δ𝑝 
+and V<sub>1</sub> is the velocity after. 
 
 But under actual conditions the gain of velocity is less than this, 
 owing to blade friction, shock and other sources of loss. The actual 
 velocity depends on the efficiency and on the shape and angles of 
 the blades. It appears that under the conditions which hold in 
 practice in Parsons turbines it is very nearly such that 
-«CTR»V₁²=2𝑔(𝑝𝑣)δ𝑝/𝑝.«/CTR»
+«CTR»V<sub>1</sub><sup>2</sup>＝2𝑔(𝑝𝑣)δ𝑝/𝑝.«/CTR»
 
 In this formula, which serves as a means of estimating approximately
 the velocity for purposes of design, it is to be understood
@@ -4151,8 +4158,8 @@ The blade speeds used in Parsons turbines rarely exceed 350 ft.
 per second and are generally a good deal less. In marine forms, 
 where the number of revolutions per minute is limited by considerations
 of efficiency in the action of the screw propeller, the blade 
-speeds generally range from about 120 to 150 ft. per second, though 
-speeds as low as 80 ft. per second have been used. 
+speeds generally range from about 120 to 150&nbsp;ft. per second, though 
+speeds as low as 80&nbsp;ft. per second have been used. 
 
 127. «I»Parsons Marine Turbines«/I».—Marine turbines are divided 
 into distinct high and low pressure parts through which the 
@@ -4179,28 +4186,28 @@ The astern turbine, being connected to the condenser, runs
 wastes little or no power. 
 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 62.png|align=inline|width=780}}«BR»
-«SC»Fig«/SC». 62.—Parsons Marine Turbine: High Pressure Part.«BR»
-Upper half: sectional elevation. Lower half: external view.«/CTR»
+«SC»Fig«/SC». 62.—Parsons Marine Turbine : High Pressure Part.«BR»
+Upper half : sectional elevation. Lower half : external view.«/CTR»
 Figs. 62 and 63 are sections of the high pressure and low pressure 
 portions of a typical Parsons marine steam turbine, as designed 
 for the three-shaft arrangement in which the low pressure portion 
 is duplicated. In each figure A is the fixed casing and B is the 
-revolving drum. Steam enters the high pressure turbine (fig. 62) 
+revolving drum. Steam enters the high pressure turbine (fig.&nbsp;62) 
 through J and passes out through H. There are 4 “expansions” 
-or steps, with 9 stages or double rows of blades in the first, 9 in thePAGE:870second, 8 in the third and 8 in the fourth, or 34 stages in all. The low pressure turbine (fig. 63) comprises 28 more stages stepped as shown in the figure. The reversing turbine which is seen on the left-hand side in fig. 63, at the place where the rotor is reduced in diameter, has 26 stages in 4 steps. These turbines have a total normal horse power of 12,500, and run at 450 revolutions per minute. 
+or steps, with 9 stages or double rows of blades in the first, 9 in thePAGE:870second, 8 in the third and 8 in the fourth, or 34 stages in all. The low pressure turbine (fig.&nbsp;63) comprises 28 more stages stepped as shown in the figure. The reversing turbine which is seen on the left-hand side in fig.&nbsp;63, at the place where the rotor is reduced in diameter, has 26 stages in 4 steps. These turbines have a total normal horse power of 12,500, and run at 450 revolutions per minute. 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 63.png|align=inline|width=1000}}«BR»
 «SC»Fig«/SC». 63.—Parsons Marine Turbine: Low Pressure and Astern Part.«BR»
 Upper half: sectional elevation. Lower half: external view.«/CTR»
 128. «I»Longitudinal Forces in Marine Turbines«/I».—In a marine steam 
-turbine the size of the dummy is reduced so that instead of balancing the whole steam thrust it leaves a resultant force which nearly balances the propeller thrust. Consequently only a small thrust block has to be provided to take any difference there may be between these forces. This thrust block is shown on the extreme right in each figure, beyond the gland and bearing. The dummy (at D in the figures) is made up of some 22 rings of brass fixed in the case in close proximity to the faces of projecting rings on the rotor (fig. 64) with a longitudinal clearance of 0·015 in. 
+turbine the size of the dummy is reduced so that instead of balancing the whole steam thrust it leaves a resultant force which nearly balances the propeller thrust. Consequently only a small thrust block has to be provided to take any difference there may be between these forces. This thrust block is shown on the extreme right in each figure, beyond the gland and bearing. The dummy (at D in the figures) is made up of some 22 rings of brass fixed in the case in close proximity to the faces of projecting rings on the rotor (fig. 64) with a longitudinal clearance of 0·015&nbsp;in. 
 «CTR»{{IMG:EB1911 Steam Engine Fig. 64, 65.png|align=inline|width=362}}«BR»
 «SC»Fig«/SC». 64. «SC»Fig«/SC». 65.«/CTR»
 
-This form of dummy is suitable for the end near the thrust block, where exact longitudinal adjustment is possible, but the astern turbine in fig. 63 
+This form of dummy is suitable for the end near the thrust block, where exact longitudinal adjustment is possible, but the astern turbine in fig.&nbsp;63 
 requires a different form because some longitudinal play is necessarily
 brought about there by differences in expansion of the rotor 
 and stator. Accordingly, the astern dummy is of the “radial”
-form shown in fig. 65 where the fine clearance is round the circumference
+form shown in fig.&nbsp;65 where the fine clearance is round the circumference
 of the brass rings set in the rotor and stator alternately. The 
 whole dummy includes about sixteen of these rings. 
 
@@ -4224,8 +4231,8 @@ the corresponding
 low pressure turbine and 
 also a turbine for reversing.
 This arrangement is followed in the “Lusitania” and
-“Mauretania” where the low pressure turbines have drums 188 in.
-in diameter, are about 17½ ft. in diameter over all and 50 ft. long, and weigh 300 tons. Each turbine has 8 steps with about 16 stages in each step in the high pressure turbine and 8 in the low. They run at 180 revolutions per minute. 
+“Mauretania”  where the low pressure turbines have drums 188&nbsp;in.
+in diameter, are about «SPAN[style:white-space:nowrap]»17½ ft.«/SPAN» in diameter over all and 50&nbsp;ft. long, and weigh 300&nbsp;tons. Each turbine has 8&nbsp;steps with about 16&nbsp;stages in each step in the high pressure turbine and 8 in the low. They run at 180 revolutions per minute. 
 
 130. «I»Cruising Turbines in War«/I»-«I»Ships«/I».—In turbines for the propulsion
 of war-ships it is necessary to secure a fairly high economy at speeds greatly short of those for which the turbines are designed when working at full power, for the normal cruising speed of such vessels is usually from half to two-thirds of the speed at full power.
@@ -4239,7 +4246,7 @@ run at cruising speed. In the three-shaft arrangement the cruising
 turbines are fitted on the wing propeller shafts, which carry also 
 the low pressure and astern turbines. They form a high and intermediate
 pressure pair through which the steam may pass in seriesPAGE:871before going on to the main turbines. This arrangement is shown 
-in fig. 67, where C.H.P. and C.I.P. are the two cruising turbines. In cruising at low speeds the whole group of turbines is used in series: when the speed is increased a larger amount of power is got by admitting steam direct to the second cruiser turbine; and finally at the highest speed both cruiser turbines are cut out. The arrangement shown in fig. 67 has been used in some torpedo-boat destroyers and small cruisers. In some large cruisers and battleships a four-shaft system is employed and a longitudinal bulkhead divides the whole group into two independent sets. On each of the outer shafts there is a high-pressure ahead and also a separate high-pressure astern turbine. On each of the inner shafts there is a combined low-pressure ahead and astern turbine and also a cruising turbine. All four shafts can be reversed. 
+in fig.&nbsp;67, where C.H.P. and C.I.P. are the two cruising turbines. In cruising at low speeds the whole group of turbines is used in series: when the speed is increased a larger amount of power is got by admitting steam direct to the second cruiser turbine; and finally at the highest speed both cruiser turbines are cut out. The arrangement shown in fig.&nbsp;67 has been used in some torpedo-boat destroyers and small cruisers. In some large cruisers and battleships a four-shaft system is employed and a longitudinal bulkhead divides the whole group into two independent sets. On each of the outer shafts there is a high-pressure ahead and also a separate high-pressure astern turbine. On each of the inner shafts there is a combined low-pressure ahead and astern turbine and also a cruising turbine. All four shafts can be reversed. 
 
 131. «I»Application of Parsons Turbine«/I».—The Parsons was the 
 earliest steam turbine to be made commercially successful, and 
@@ -4270,9 +4277,9 @@ is especially important in the turbine to secure a good vacuum:
 any increase in condenser pressure during a turbine test at 
 once shows its influence in making a marked reduction of steam 
 economy. In the region of usual condenser pressures a difference
-of 1 in. changes the steam consumption by about 5%. 
+of 1&nbsp;in. changes the steam consumption by about 5%. 
 With this in mind Mr Parsons has invented a device called a 
-vacuum augmenter, shown in fig. 68.
+vacuum augmenter, shown in fig.&nbsp;68.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 68.png|align=inline|width=400}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 68.—Parsons Vacuum Augmenter.«/SPAN»«/CTR»
 
@@ -4318,54 +4325,54 @@ size and weight of turbine, but also makes the blades become
 so short (by augmenting the circumference of the annulus) 
 that the leakage loss over the tips becomes excessive. This 
 consideration confines the practical application of turbines to 
-vessels whose speed is over say 15 knots. But by restricting the 
+vessels whose speed is over say 15&nbsp;knots. But by restricting the 
 turbine to the lower part of the pressure range and using a piston 
 and cylinder engine for the upper part a higher economy is 
 possible than could be reached by the use of either form of 
 engine alone, the turbine being specially well adapted to make 
 the most of the final stages of expansion, whereas the ordinary 
 reciprocating engine in such vessels makes little or no use of 
-pressure below about 7 lb per sq. in. 
+pressure below about 7&nbsp;℔ per sq.&nbsp;in. 
 
 135. «I»Consumption of Steam in the Parsons Turbine«/I».—In large 
 sizes the Parsons turbine requires less steam per horse-power-hour 
 than any form of reciprocating engine using steam under similar 
 conditions. Trials made in April 1900, by the present writer, of 
-a 2000 h.p. turbine coupled to an electric generator showed a consumption
-of 18¼ lb per kilowatt hour, with steam at 155 lb per sq. in. 
-superheated 84° F. Since 1 kilowatt is 1·34 h.p. this consumption 
-is equal to 13·6 lb per electrical horse-power-hour. The best piston 
+a 2000&nbsp;h.p. turbine coupled to an electric generator showed a consumption
+of «SPAN[style:white-space:nowrap]»18¼ ℔«/SPAN» per kilowatt hour, with steam at 155&nbsp;℔ per sq.&nbsp;in. 
+superheated 84°&nbsp;F. Since 1 kilowatt is 1·34&nbsp;h.p. this consumption 
+is equal to 13·6&nbsp;℔ per electrical horse-power-hour. The best piston 
 engines when driving dynamos convert about 84% of their indicated 
 power into electric power. Hence the above result is as good, in 
 the relation of electric power to steam consumption, as would be 
-got from a piston engine using only 11·4 lb of steam per indicated 
+got from a piston engine using only 11·4&nbsp;℔ of steam per indicated 
 horse-power-hour. An important characteristic of the steam turbine 
 is that it retains a high efficiency under comparatively light loads. 
 The figures below illustrate this by giving the results of a series of 
 trials of the same machine under various loads. 
 
-«HTMLTABLE:<table class="figtable"><tr><td>Load in kilowatts.
+«HTMLTABLE:<table class="figtable"><tr><td>&nbsp;Load in kilowatts.
 </td><td>
-</td><td style="border-left:1px solid;text-align:center">1450 
-</td><td style="border-left:1px solid;text-align:center">1250 
-</td><td style="border-left:1px solid;text-align:center">1000 
+</td><td style="border-left:1px solid;text-align:center">&nbsp;1450&nbsp;
+</td><td style="border-left:1px solid;text-align:center">&nbsp;1250&nbsp;
+</td><td style="border-left:1px solid;text-align:center">&nbsp;1000&nbsp;
 </td><td style="border-left:1px solid;text-align:center">750
 </td><td style="border-left:1px solid;text-align:center">500
 </td><td style="border-left:1px solid;text-align:center">250
-</td></tr><tr><td>Steam used per kilo watt-hour in pounds 
-</td><td>«BRACE2[2|r]»
+</td></tr><tr><td>&nbsp;Steam used per kilo-<br>&emsp;watt-hour in pounds&nbsp;
+</td><td>2|r
 </td><td style="border-left:1px solid;text-align:center">18·1
 </td><td style="border-left:1px solid;text-align:center">18·5
 </td><td style="border-left:1px solid;text-align:center">19·2
-</td><td style="border-left:1px solid;text-align:center">20·3 
-</td><td style="border-left:1px solid;text-align:center">22·6 
-</td><td style="border-left:1px solid;text-align:center">34·0 
+</td><td style="border-left:1px solid;text-align:center">&nbsp;20·3&nbsp;
+</td><td style="border-left:1px solid;text-align:center">&nbsp;22·6&nbsp;
+</td><td style="border-left:1px solid;text-align:center">&nbsp;34·0&nbsp;
 </td></tr></table>«/HTMLTABLE»
 
 Still better results have been obtained in more recent examples, 
 in turbines of greater power. A Parsons turbine, rated as of 3500 
-but working up to over 5000 kilowatts tested in 1907 at the Carville power station of the Newcastle-on-Tyne Electric Supply Company, showed a consumption of only 13·19 lb of steam per kilowatt-hour, with steam of 200 lb pressure by gauge and 67° C. superheat (temperature 264·7° C.), the vacuum being 29·04 in. (barometer 30 in.). It is interesting to compare this performance with the ideal amount of work obtainable per pound of steam, or in other words with the ideal “heat drop.” At the temperature and pressure of supply the total heat I₁ is 709. After expansion to the pressure corresponding to the stated vacuum (0·96 in.) the total heat of the wet mixture would be 486, the dryness being then 0·792, if the expansion took place under ideal adiabatic conditions. Hence the heat drop I₁−I₂ is 223 units, and this represents the work ideally obtainable under the actual conditions as to temperature and pressure of supply and exhaust. Since 1 kilowatt-hour is 1896 thermal units (lb–degree C.), each pound of steam was generating an amount of electrical energy equivalent to 1896/13·19 or 143·7 thermal units, and the electric
-output consequently corresponds to 64½% of the ideal work. If 
+but working up to over 5000 kilowatts tested in 1907 at the Carville power station of the Newcastle-on-Tyne Electric Supply Company, showed a consumption of only 13·19&nbsp;℔ of steam per kilowatt-hour, with steam of 200&nbsp;℔ pressure by gauge and 67°&nbsp;C. superheat (temperature 264·7°&nbsp;C.), the vacuum being 29·04&nbsp;in. (barometer 30&nbsp;in.). It is interesting to compare this performance with the ideal amount of work obtainable per pound of steam, or in other words with the ideal “heat drop.” At the temperature and pressure of supply the total heat I<sub>1</sub> is 709. After expansion to the pressure corresponding to the stated vacuum (0·96&nbsp;in.) the total heat of the wet mixture would be 486, the dryness being then 0·792, if the expansion took place under ideal adiabatic conditions. Hence the heat drop I<sub>1</sub>−I<sub>2</sub> is 223 units, and this represents the work ideally obtainable under the actual conditions as to temperature and pressure of supply and exhaust. Since 1 kilowatt-hour is 1896 thermal units (℔–degree&nbsp;C.), each pound of steam was generating an amount of electrical energy equivalent to 1896/13·19 or 143·7 thermal units, and the electric
+output consequently corresponds to «SPAN[style:white-space:nowrap]»64½%«/SPAN» of the ideal work. If 
 we allow for the loss in the electric generator by taking the electrical output as 92% of the mechanical power, this implies that 70% of the ideal work in the steam was mechanically utilized. 
 
 136. «I»Torsion Meters for Power«/I».—No measurement corresponding to the “indicating” of a piston engine is possible with aPAGE:872steam turbine. In the tests that have been quoted the useful 
@@ -4377,8 +4384,8 @@ for determining the horse-power from observations of the
 elastic twist in a portion of the propeller shaft as it revolves. 
 In Denny & Johnson’s torsion meter two light gun-metal wheels 
 are fixed on the shaft as far apart as is practicable, generally 
-15 or 20 ft., and their relative angular displacement is found 
+15 or 20&nbsp;ft., and their relative angular displacement is found 
 by comparing the inductive effects produced on fixed coils by 
 magnets which are carried on the wheels. In Hopkinson & 
 Thring’s torsion meter a short length of shaft—a foot or so—suffices. A small mirror is carried by a collar fixed to the shaft, and a second collar fixed a little way along is geared to the mirror in such a way as to deflect the mirror to an extent proportional to the twist: the deflexion is read by means of a lamp and scale fixed alongside. As the shaft revolves the light reflected from the mirror is momentarily seen at each revolution 
-and its position along the scale is easily read. 
+and its position along the scale is easily read. «DIV[style:float:right]»(J. A. E.)«/DIV»
