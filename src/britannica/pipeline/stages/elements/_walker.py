@@ -168,12 +168,13 @@ _INTRA_ARTICLE_LINK_OPENER_RE = re.compile(
 # fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
 # no hand-rolled brace-balancer.  The producer recurses the display.
 _EB1911_ARTICLE_LINK_OPENER_RE = re.compile(
-    r"\{\{\s*EB1911\s+article\s+link\s*\|", re.IGNORECASE)
+    r"\{\{\s*(?:EB1911|EB9)\s+article\s+link\s*\|", re.IGNORECASE)
 # Target-first link siblings — `{{EB1911/DNB lkpl|…}}`, `{{1911link|…}}`,
 # `{{11link|…}}`, `{{EB1911 link|…}}` (NOT `EB1911 article link`, which is display-first
 # above).  Opener-only; the one matcher bounds the span at any nesting depth.
 _TARGET_FIRST_LINK_OPENER_RE = re.compile(
-    r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\s*\|",
+    r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE)\s+lkpl|1911link|11link|EB1911\s+link"
+    r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link)\s*\|",
     re.IGNORECASE)
 # `{{EB1911 Coordinates|D|M[|S]|H}}` — a single geographic coordinate (one lat or
 # lon).  Opener-only; the one matcher bounds the span.  Real place data; the
@@ -497,6 +498,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
     r"|\{\{\s*(?:c|block\s*center|center\s*block|fine\s*block|EB1911\s+fine\s+print|smaller\s*block)\s*/s\s*\}\}"  # CENTER / small-type-block paired-wrapper
     r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
+    r"|\{\{\s*(?:EB9|9link|CE\s+lkpl|1911\s+article\s+link)"  # EB9/CE/9link cross-edition links → «LN» (resolve to EB11)
     r"|\{\{\s*section\s*\|"  # DOUBLE_BRACE {{section|Name}} subsection anchor
     r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
     r"|\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b"  # content extractors

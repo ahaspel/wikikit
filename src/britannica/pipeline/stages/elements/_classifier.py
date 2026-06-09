@@ -151,14 +151,21 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "PLAIN_IMAGE"
     # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
-    if re.match(r"\{\{\s*EB1911\s+article\s+link\b", raw, re.IGNORECASE):
+    if re.match(r"\{\{\s*(?:EB1911|EB9)\s+article\s+link\b", raw, re.IGNORECASE):
         return "EB1911_ARTICLE_LINK"
     # `{{EB1911 intra-article link|Section}}` — a same-article subsection link (the
     # `[[#Section]]` bracket form's template twin).  Matched on the raw opener.
     if re.match(r"\{\{\s*EB1911\s+intra-article\s+link\b", raw, re.IGNORECASE):
         return "INTRA_ARTICLE_LINK"
-    # Target-first link siblings — lkpl / 1911link / EB1911 link (NOT "article link").
-    if re.match(r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\b",
+    # Target-first link siblings — lkpl / 1911link / EB1911 link, plus the EB9/CE
+    # cross-edition family (`{{9link}}`, `{{EB9link}}`, `{{EB9 lkpl}}`, `{{CE lkpl}}`,
+    # `{{1911 article link}}` target-first, `{{EB9 Intra-Article Link}}`).  A link is
+    # a link: «LN» + the ladder hunts EB11 first, then external WS, then strips —
+    # so a 9th-edition ref to a topic EB11 also covers resolves to OUR article.
+    # (NOT the display-first "EB9/EB1911 article link" above, NOT the EB1911
+    # self-fragment "intra-article link" below.)
+    if re.match(r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE)\s+lkpl|1911link|11link|EB1911\s+link"
+                r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
     # `{{EB1911 footer …}}` — the contributor signature footer.  RECOGNIZED as a bounded

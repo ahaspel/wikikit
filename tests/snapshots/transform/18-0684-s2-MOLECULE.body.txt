@@ -19,7 +19,7 @@ writers, and “molecules” by modern ones) has at all times
 played an important part in metaphysics and natural science.
 The leading historical stages in the evolution of the modern
 conception of the molecular structure of matter are treated in
-the following passage from James Clerk Maxwell’s article {{EB9 article link|Atom}}
+the following passage from James Clerk Maxwell’s article «LN:Atom|Atom«/LN»
 in the 9th edition of the «I»Ency. Brit.«/I»
 
 “Atom«FN[654f1]:It will be noted that Clerk Maxwell’s “atom” and “atomic
