@@ -122,6 +122,10 @@ def _derive_double_bracket_label(raw: str) -> str:
         return "AUTHOR_LINK"
     if re.match(r"\[\[\s*1911\s+[Ee]ncyclop", raw, re.IGNORECASE):
         return "EB1911_SELFREF"
+    # `[[#Section]]` — a bare same-article anchor link (no `prefix:`); the resolver
+    # reads the leading `#` as "this article, section Section".
+    if re.match(r"\[\[\s*#", raw):
+        return "FRAGMENT_LINK"
     raise ValueError(f"Unknown DOUBLE_BRACKET prefix: {raw[:40]!r}")
 
 
@@ -144,6 +148,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
     if re.match(r"\{\{\s*EB1911\s+article\s+link\b", raw, re.IGNORECASE):
         return "EB1911_ARTICLE_LINK"
+    # `{{EB1911 intra-article link|Section}}` — a same-article subsection link (the
+    # `[[#Section]]` bracket form's template twin).  Matched on the raw opener.
+    if re.match(r"\{\{\s*EB1911\s+intra-article\s+link\b", raw, re.IGNORECASE):
+        return "INTRA_ARTICLE_LINK"
     # Target-first link siblings — lkpl / 1911link / EB1911 link (NOT "article link").
     if re.match(r"\{\{\s*(?:(?:EB1911|DNB)\s+lkpl|1911link|11link|EB1911\s+link)\b",
                 raw, re.IGNORECASE):

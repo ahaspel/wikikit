@@ -152,6 +152,11 @@ _CONTRIBUTOR_FOOTER_OPENER_RE = re.compile(
 # xrefs resolve against it.
 _SECTION_ANCHOR_OPENER_RE = re.compile(
     r"\{\{\s*section\s*\|", re.IGNORECASE)
+# `{{EB1911 intra-article link|Section}}` — same-article subsection link (the
+# `[[#Section]]` bracket form's template twin).  Opener-only; span closes via
+# `_construct_end`.
+_INTRA_ARTICLE_LINK_OPENER_RE = re.compile(
+    r"\{\{\s*EB1911\s+intra-article\s+link\s*\|", re.IGNORECASE)
 # `{{EB1911 article link|Display|Target}}` — a cross-reference LINK.  OPENER-only regex;
 # the span is closed by the one balanced matcher (`_construct_end`, exactly like the
 # fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
@@ -350,6 +355,11 @@ _IMAGE_RE = re.compile(
 _EB1911_SELFREF_RE = re.compile(
     r"\[\[\s*1911\s+[Ee]ncyclop[^\]]*\]\]", re.IGNORECASE)
 
+# DOUBLE_BRACKET bare anchor link — `[[#Section]]` / `[[#Section|Display]]`, a
+# same-article subsection reference.  Recognized here, classified FRAGMENT_LINK,
+# produced as «LN:#Section».  The leading `#` (no `prefix:`) is the signal.
+_FRAGMENT_LINK_RE = re.compile(r"\[\[\s*#[^\]]*\]\]")
+
 # DOUBLE_BRACKET Author link — `[[Author:Name|Display]]`.  Recognized here,
 # classified AUTHOR_LINK, routed by the producer: a contributor's initials
 # (in the index) → render the initials; else → «LN» xref to the author.
@@ -436,6 +446,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
+    (SHAPE_DOUBLE_BRACKET,    _FRAGMENT_LINK_RE),
     (SHAPE_PAGE,              _PAGE_RE),
     (SHAPE_TITLE,             _TITLE_RE),
 ]
@@ -463,6 +474,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
     r"|\[\[(?:File|Image):"         # DOUBLE_BRACKET image
+    r"|\[\[\s*#"                    # DOUBLE_BRACKET bare anchor link [[#Section]]
     r"|\[\[\s*1911\s+[Ee]ncyclop"   # DOUBLE_BRACKET EB1911 self-reference cross-link
     r"|\[\[\s*Author:"              # DOUBLE_BRACKET Author link (contributor or xref)
     r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
@@ -806,7 +818,8 @@ def _walk_balanced_shapes(
                             _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
                             _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
                             _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
-                            _SECTION_ANCHOR_OPENER_RE):
+                            _SECTION_ANCHOR_OPENER_RE,
+                            _INTRA_ARTICLE_LINK_OPENER_RE):
                 if _opener.match(text, opener_pos):
                     end = _construct_end(text, opener_pos)
                     if end is not None:

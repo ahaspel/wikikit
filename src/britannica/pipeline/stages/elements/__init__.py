@@ -30,7 +30,8 @@ from britannica.pipeline.stages.elements._image import (
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
     process_eb1911_article_link, process_target_first_link,
-    process_eb1911_selfref_link, process_author_link)
+    process_eb1911_selfref_link, process_author_link,
+    process_fragment_link, process_intra_article_link)
 from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
@@ -622,6 +623,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # cross-link in raw bracket form; same «LN» family as the template links above.
     "EB1911_SELFREF": lambda raw, inner, ctx, reg:
         process_eb1911_selfref_link(inner),
+    # FRAGMENT_LINK — `[[#Section]]`, a bare same-article anchor link → «LN:#Section».
+    "FRAGMENT_LINK": lambda raw, inner, ctx, reg:
+        process_fragment_link(inner),
+    # INTRA_ARTICLE_LINK — `{{EB1911 intra-article link|Section}}`, its template twin.
+    "INTRA_ARTICLE_LINK": lambda raw, inner, ctx, reg:
+        process_intra_article_link(inner),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;

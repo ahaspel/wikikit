@@ -123,3 +123,32 @@ def process_author_link(raw: str, inner: str, ctx) -> str:
     if key and key in ctx.contributor_initials:
         return disp_out                                    # contributor → initials
     return f"«LN:{target}|{disp_out}«/LN»"                  # reference → xref
+
+
+def process_fragment_link(inner: str) -> str:
+    """`[[#Section]]` / `[[#Section|Display]]` — a bare same-article anchor link.
+
+    Emit `«LN:#Section|Display»`: the leading-`#` target the resolver reads as "this
+    article, section Section" (the producer is context-free, so it can't name the
+    article — the resolver fills it from `xref.article_id`).  Display defaults to the
+    section name."""
+    target, _sep, display = inner.partition("|")
+    section = target.strip().lstrip("#").strip()
+    display = display.strip() or section
+    if not section:
+        return display
+    return f"«LN:#{section}|{display}«/LN»"
+
+
+def process_intra_article_link(inner: str) -> str:
+    """`{{EB1911 intra-article link|Section}}` / `{{…|Section|Display}}` — the template
+    twin of the bare `[[#Section]]` anchor.  Slot 0 is the template name; the section is
+    the first positional, display the second (falls back to the section).  Same
+    self-fragment target as the bracket form: `«LN:#Section|Display»`."""
+    parts = [p.strip() for p in _split_top_pipes(inner)]
+    positional = [p for p in parts[1:] if "=" not in p and p]
+    if not positional:
+        return ""
+    section = positional[0]
+    display = positional[1] if len(positional) > 1 else section
+    return f"«LN:#{section}|{display}«/LN»"
