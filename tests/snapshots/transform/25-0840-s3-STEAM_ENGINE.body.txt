@@ -1810,7 +1810,7 @@ horse-power-hour—a figure which, after allowance is made for the
 heat taken up during the process of superheating, represents a better
 performance than that of the best engines using saturated or slightly
 superheated steam. It has been found that the consumption of
-coal, in the boiler and superheater together, need not exceed {{lb-|1⅓}}
+coal, in the boiler and superheater together, need not exceed 1⅓ lb
 per indicated horse-power even with engines of small power. To
 attain this remarkable result it is of course necessary that, after the
 hot gases from the furnace have passed the superheater, a further

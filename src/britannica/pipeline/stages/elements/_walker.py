@@ -221,11 +221,14 @@ _FRACTION_OPENER_RE = re.compile(
     r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
     r"|sfracN|sfrac|mfrac|frac|over|binom)\s*\|", re.IGNORECASE)
 # `{{lb-|N}}` → `N lb` / bare `{{lb-}}` → `lb`: the pound-weight glyph (℔
-# unwrapped to literal "lb" for search/copy-paste).  A LEAF, recognized at the
-# walker so it carries in EVERY context — not just the body-text pass it used to
-# live in, which leaked it inside math/italic/centred blocks (the lb-/sup
-# context-leak: a body-text handler is context-dependent).
-_LB_RE = re.compile(r"\{\{\s*lb-\s*(?:\|[^{}]*)?\}\}", re.IGNORECASE)
+# unwrapped to literal "lb" for search/copy-paste).  Recognized at the walker so
+# it carries in EVERY context — not just the body-text pass it used to live in,
+# which leaked it inside math/italic/centred blocks (the lb-/sup context-leak).
+# OPENER-ONLY (like sub/sup): the arg can carry a nested template (`{{lb-|9{{tfrac
+# |2|3}}}}`), so the one balanced matcher bounds the whole span at any depth and
+# the arg RECURSES — a flat `\|[^{}]*\}\}` match failed on the nested fraction,
+# orphaning the outer `{{lb-…}}` once the inner tfrac was extracted.
+_LB_RE = re.compile(r"\{\{\s*lb-", re.IGNORECASE)
 # `{{sub|x}}` / `{{sup|x}}` — subscript/superscript TYPOGRAPHY (chem subscripts,
 # math exponents, ordinals, footnote markers).  Content can nest (`{{sup|{{sfrac
 # |1|n}}}}`); opener-only, the one balanced matcher bounds it at any depth.  The
@@ -454,7 +457,6 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     # outer tail into body-text).
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
     (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
-    (SHAPE_DOUBLE_BRACE,      _LB_RE),
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
@@ -479,7 +481,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
-    r"|<(?:table|poem|math|score|hiero)\b"  # HTML_TAG tag variants
+    r"|<(?:table|poem|math|score|hiero|nowiki)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
     r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
@@ -528,7 +530,7 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
-_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score"})
+_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "nowiki"})
 # Tags the one matcher will BOUND by depth (superset of the auto-extracted
 # elements).  `div`/`p`/`span` are boundable so a styled wrapper can be matched
 # to its right `</div>`/`</p>`/`</span>` and nested same-tags skipped — but they
@@ -830,7 +832,7 @@ def _walk_balanced_shapes(
         # broke on a lone `{` inside `<math>`.
         if matched is None:
             for _opener in (_IMAGE_FLOAT_OPENER_RE, _PLAIN_IMAGE_OPENER_RE,
-                            _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE,
+                            _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE, _LB_RE,
                             _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
                             _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
                             _CONTRIBUTOR_SHORTCUT_RE,

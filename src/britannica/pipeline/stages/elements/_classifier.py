@@ -93,6 +93,7 @@ _HTML_TAG_LABEL: dict[str, str] = {
     "score": "SCORE",
     "table": "TABLE",
     "hiero": "HIEROGLYPH",
+    "nowiki": "NOWIKI",
 }
 
 

@@ -289,12 +289,26 @@ def _image_leaf(raw):
     return build_img_marker(filename)
 
 
-def _process_lb(raw):
-    """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph leaf).
-    Relocated verbatim from body-text's `_convert_lb_dash` so it carries in EVERY
-    context, not just content that body-text used to process."""
-    m = re.match(r"\{\{\s*lb-\s*\|\s*([^{}|]+?)\s*\}\}", raw, re.IGNORECASE)
-    return f"{m.group(1).strip()} lb" if m else "lb"
+def _process_lb(inner):
+    """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph ℔ unwrapped
+    to literal "lb").  `inner` is the RECURSED DOUBLE_BRACE body (`lb-|N`), so a
+    nested fraction in N (`{{lb-|9{{tfrac|2|3}}}}`) rides through as a child
+    placeholder the framework substitutes — peel the `lb-` name + optional pipe;
+    the rest is the already-recursed quantity.  (Was a flat regex on `raw` that
+    read the arg flat and dropped the nested fraction.)"""
+    rest = re.sub(r"^\s*lb-\s*\|?\s*", "", inner, flags=re.IGNORECASE).strip()
+    return f"{rest} lb" if rest else "lb"
+
+
+def _process_nowiki(raw):
+    """`<nowiki>X</nowiki>` → X verbatim: drop the wiki-escape tags, keep the
+    literal inner.  Lifted as a walker element (the walker already treats
+    `<nowiki>` opaque) so the inner — which may hold a `|` that nowiki exists to
+    protect from cell/template splitting — is placeholdered BEFORE structural
+    parsing and never re-exposed.  This is why it is NOT a preprocess unwrap,
+    which would re-expose that `|` to the walker."""
+    inner = re.sub(r"^\s*<nowiki>", "", raw, flags=re.IGNORECASE)
+    return re.sub(r"</nowiki>\s*$", "", inner, flags=re.IGNORECASE)
 
 
 _SUB_MAP = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
@@ -602,7 +616,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "FRACTION": lambda raw, inner, ctx, reg:
         _process_fraction(inner),
     # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
-    "LB": lambda raw, inner, ctx, reg: _process_lb(raw),
+    "LB": lambda raw, inner, ctx, reg: _process_lb(inner),
+    # NOWIKI — `<nowiki>X</nowiki>` wiki-escape; unwrap to the literal inner.
+    "NOWIKI": lambda raw, inner, ctx, reg: _process_nowiki(raw),
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates
