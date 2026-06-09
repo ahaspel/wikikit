@@ -1,17 +1,9 @@
-import json
 import re
-from pathlib import Path
 
-from britannica.corrections import apply_corrections
 from britannica.db.models import (
-    Article, ArticleContributor, Contributor, ContributorInitials, SourcePage,
+    Article, ArticleContributor, Contributor, ContributorInitials,
 )
 from britannica.db.session import SessionLocal
-
-
-_RAW_DIRS = [
-    Path("data/raw/wikisource"),
-]
 
 # Matches: {{EB1911 footer initials|Full Name|Initials|name2=Name2|initials2=Init2}}
 #   or:    {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
@@ -21,76 +13,6 @@ _FOOTER_PATTERN = re.compile(
     r"\{\{\s*EB1911\s+footer(?:\s+double)?\s+initials\s*\|([^}]+)\}\}",
     re.IGNORECASE,
 )
-
-# Sister pattern: {{right|…}} / {{float right|…}} carrying [[Author:NAME|INITIALS]]
-# — the inline author-signature shape (~159 {{right}} + 6 {{float right}}); the
-# wiki-link carries the contributor identity directly, `;`-separated for multiples.
-# Canonical case: THUCYDIDES (vol 26).  Audit: tools/_scratch/signature_shapes_audit.md.
-# NOTE: the `(?:[^{}]|\{\{[^{}]*\}\})*?` is a brace-balancer — a nested-regex smell we'll
-# fix later.  It's load-bearing for now: it scopes the match to the SIGNATURE, which is
-# what keeps prose `[[Author:…]]` CITATIONS out of both the bind and the cut.
-_RIGHT_AUTHOR_PATTERN = re.compile(
-    r"\{\{\s*(?:float\s+)?right\s*\|\s*"
-    r"((?:[^{}]|\{\{[^{}]*\}\})*?"
-    r"\[\[Author:[^\]]+\]\]"
-    r"(?:[^{}]|\{\{[^{}]*\}\})*?)"
-    r"\}\}",
-    re.IGNORECASE | re.DOTALL,
-)
-
-
-def strip_attributions(text: str) -> str:
-    """Delete the in-body author attributions — the `{{EB1911 footer initials}}` footer
-    and the `{{right}}`/`{{float right}}` signature — BEFORE the walker sees them.  They
-    are redundant: bound to the DB by `extract_contributors` (which reads the raw, so
-    this in-memory cut doesn't touch it) and re-rendered as the export byline.
-
-    We reuse the very patterns the bind reads, so the cut removes EXACTLY the recorded
-    shapes — a bare `[[Author:…]]` citation in prose is not one of these shapes, so it
-    stays.  A footer's `{{Fs|…}}` wrapper is left empty; the walker's styler collapses it
-    to ``""``.  (Same matching we already use; refining it is a later concern.)"""
-    text = _FOOTER_PATTERN.sub("", text)
-    # bare-initials sign-off shortcut (`{{EB1911 TAs}}` etc.) — the second shape the
-    # deleted CONTRIBUTOR_FOOTER element used to swallow.
-    text = re.sub(r"\{\{\s*EB1911\s+[A-Z][A-Za-z*\-]{0,4}\s*\}\}", "", text,
-                  flags=re.IGNORECASE)
-    return _RIGHT_AUTHOR_PATTERN.sub("", text)
-
-# Inside the `{{right|...}}` body, each contributor is one wiki-link
-# `[[Author:Full Name|Initials]]`.  The full-name comes from the
-# wiki-link target; the initials from the display text.
-_AUTHOR_LINK_RE = re.compile(
-    r"\[\[Author:([^|\]]+)\|([^\]]+)\]\]",
-    re.IGNORECASE,
-)
-
-
-def _parse_right_author_contributors(
-    template_content: str,
-) -> list[dict[str, str]]:
-    """Parse `[[Author:NAME|INITIALS]]` wiki-links from a
-    ``{{right|…}}`` template body.
-
-    Each link encodes (full_name, initials) directly.  The initials
-    may be wrapped in small-caps templates (``{{small-caps|W. MacD.}}``,
-    ``{{sc|…}}``); unwrap before delegating to `_clean_footer_initials`
-    which does the rest of the canonicalization.
-    """
-    results: list[dict[str, str]] = []
-    for m in _AUTHOR_LINK_RE.finditer(template_content):
-        name = m.group(1).strip()
-        init_raw = m.group(2).strip()
-        # Unwrap small-caps / styling templates around the initials.
-        init = re.sub(
-            r"\{\{\s*(?:small-caps|sc|csc|small)\s*\|([^{}]*)\}\}",
-            r"\1", init_raw, flags=re.IGNORECASE)
-        for clean in _clean_footer_initials(init):
-            results.append({
-                "full_name": name,
-                "initials": clean,
-            })
-    return results
-
 
 def _clean_footer_initials(initials: str) -> list[str]:
     """Clean and split footer initials string.
@@ -173,20 +95,6 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     return results
 
 
-def _load_raw_wikitext(volume: int, page_number: int) -> str | None:
-    """Load the original wikitext from the cached JSON file on disk."""
-    padded = f"vol{volume:02d}-page{page_number:04d}.json"
-    for raw_dir in _RAW_DIRS:
-        for subdir in sorted(raw_dir.iterdir()) if raw_dir.exists() else []:
-            if not subdir.is_dir():
-                continue
-            path = subdir / padded
-            if path.exists():
-                data = json.loads(path.read_text(encoding="utf-8"))
-                return data.get("raw_text", "")
-    return None
-
-
 def _normalize_initials(initials: str) -> str:
     """Canonicalize a contributor signature so equivalent forms compare
     equal.
@@ -266,121 +174,68 @@ def _normalize_initials(initials: str) -> str:
     return s
 
 
-_initials_cache: dict[str, Contributor | None] = {}
+_SIGNATURE_RE = re.compile(r"\(([^()]{1,80})\)")
+_SIG_MARKER_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 
 
-def _find_contributor(session, initials: str) -> Contributor | None:
-    """Find a contributor by initials via the contributor_initials table.
+def _harvest_signature_contributors(
+    body: str, initials_map: dict[str, int]
+) -> list[int]:
+    """Ordered, de-duplicated contributor_ids from the rendered signoffs in a
+    walked article body.
 
-    The contributor table is pre-built from front matter. This function
-    only looks up — it never creates records. Uses normalization as
-    a fallback when exact match fails.
-    """
-    norm = _normalize_initials(initials)
-
-    if norm in _initials_cache:
-        return _initials_cache[norm]
-
-    # Try exact match against contributor_initials table
-    ci = (
-        session.query(ContributorInitials)
-        .filter(ContributorInitials.initials == initials)
-        .first()
-    )
-    if ci:
-        contributor = session.query(Contributor).get(ci.contributor_id)
-        _initials_cache[norm] = contributor
-        return contributor
-
-    # Try normalized match
-    for ci in session.query(ContributorInitials).all():
-        if _normalize_initials(ci.initials) == norm:
-            contributor = session.query(Contributor).get(ci.contributor_id)
-            _initials_cache[norm] = contributor
-            return contributor
-
-    _initials_cache[norm] = None
-    return None
+    The footer producer renders ``{{EB1911 footer …}}`` to ``(initials)`` and
+    the Author-link producer renders a contributor signature to its initials, so
+    footers, Author signoffs, and bare parentheticals all reduce to one shape: a
+    ``(…)`` whose marker-stripped, normalized content is a known contributor's
+    initials.  The index is the discriminator — prose parentheticals (dates,
+    ``op. cit.``) and reference «LN» name-displays never match."""
+    found: list[int] = []
+    seen: set[int] = set()
+    for sig in _SIGNATURE_RE.finditer(body):
+        for part in sig.group(1).split(";"):
+            cid = initials_map.get(
+                _normalize_initials(_SIG_MARKER_RE.sub("", part).strip()))
+            if cid is not None and cid not in seen:
+                seen.add(cid)
+                found.append(cid)
+    return found
 
 
 def extract_contributors_for_volume(volume: int) -> int:
-    session = SessionLocal()
+    """Bind each article to its contributors by scanning its WALKED body for
+    rendered initials signoffs — no raw re-parse, no position matching.
 
+    The body↔contributor link can't drift: the signoff renders inside the
+    article's own body, so one ``(…)`` scan gated on the vol-29 / front-matter
+    index picks up footers, Author signoffs, and bare parentheticals uniformly
+    and attributes each to the article it sits in.  Assumes a clean slate
+    (``rebuild_contributors`` truncates ``article_contributors`` first)."""
+    from britannica.db.models import ContributorInitials
+    from britannica.pipeline.stages.transform_articles import walk_article
+
+    session = SessionLocal()
     try:
-        pages = (
-            session.query(SourcePage)
-            .filter(SourcePage.volume == volume)
-            .order_by(SourcePage.page_number)
+        initials_map = {
+            ci.initials: ci.contributor_id
+            for ci in session.query(ContributorInitials).all()
+        }
+        articles = (
+            session.query(Article)
+            .filter(Article.volume == volume,
+                    Article.article_type != "plate")
+            .order_by(Article.page_start, Article.id)
             .all()
         )
-
-        # Pre-load all segments per page so we can match each footer
-        # signature to the article whose segment contains it.
-        from britannica.db.models import ArticleSegment
-        segments_by_page: dict[int, list[ArticleSegment]] = {}
-        for seg in (
-            session.query(ArticleSegment)
-            .join(Article, ArticleSegment.article_id == Article.id)
-            .filter(Article.volume == volume)
-            .all()
-        ):
-            segments_by_page.setdefault(seg.source_page_id, []).append(seg)
-
         created = 0
-
-        for page in pages:
-            raw = _load_raw_wikitext(volume, page.page_number)
-            if not raw:
-                continue
-            raw = apply_corrections(raw, volume)
-
-            page_segs = segments_by_page.get(page.id, [])
-            if not page_segs:
-                continue
-
-            def _attribute(match, contributors):
-                nonlocal created
-                article_id = _article_for_footer(match, raw, page_segs)
-                if article_id is None:
-                    return
-                for i, contrib in enumerate(contributors):
-                    contributor = _find_contributor(
-                        session, contrib["initials"])
-                    if not contributor:
-                        continue
-                    existing = (
-                        session.query(ArticleContributor)
-                        .filter(
-                            ArticleContributor.article_id == article_id,
-                            ArticleContributor.contributor_id == contributor.id,
-                        )
-                        .first()
-                    )
-                    if existing:
-                        continue
-                    session.add(
-                        ArticleContributor(
-                            article_id=article_id,
-                            contributor_id=contributor.id,
-                            sequence=i + 1,
-                        )
-                    )
-                    created += 1
-
-            for match in _FOOTER_PATTERN.finditer(raw):
-                # Attribute this footer to the article whose segment
-                # contains it. Multiple articles can share a page
-                # (MALONIC ACID ends, MALORY ends, MALOT ends on ws513);
-                # each footer belongs to the article it sits within.
-                _attribute(match, _parse_contributors(match.group(1)))
-
-            # Sister signal: `{{right|([[Author:Name|Init]]; …)}}` shape
-            # (~152 articles).  Same article-attribution logic.
-            for match in _RIGHT_AUTHOR_PATTERN.finditer(raw):
-                _attribute(
-                    match,
-                    _parse_right_author_contributors(match.group(1)))
-
+        for article in articles:
+            body, _disp = walk_article(session, article)
+            for seq, cid in enumerate(
+                    _harvest_signature_contributors(body, initials_map),
+                    start=1):
+                session.add(ArticleContributor(
+                    article_id=article.id, contributor_id=cid, sequence=seq))
+                created += 1
         session.commit()
         return created
 
@@ -388,44 +243,3 @@ def extract_contributors_for_volume(volume: int) -> int:
         session.close()
 
 
-def _article_for_footer(match, raw: str, page_segs: list) -> int | None:
-    """Find which article's segment contains this footer match.
-
-    A footer `{{EB1911 footer initials|…}}` at the end of an article
-    is preceded by that article's content. We find the segment whose
-    text ends with content near the footer's position.
-    """
-    footer_start = match.start()
-    footer_text = match.group(0)
-
-    # Try each segment: does its text contain this exact footer?
-    # (segment_text has the footer literal since it hasn't been
-    # transformed yet at contributor-extraction time.)
-    candidates = []
-    for seg in page_segs:
-        if seg.segment_text and footer_text in seg.segment_text:
-            candidates.append(seg)
-
-    if not candidates:
-        # Fallback: attribute to the article whose segment ends closest
-        # to (but not past) the footer position in raw text.
-        best = None
-        best_dist = None
-        for seg in page_segs:
-            if not seg.segment_text:
-                continue
-            # Find where this segment's text ends in raw.
-            tail = seg.segment_text[-40:] if len(seg.segment_text) >= 40 else seg.segment_text
-            pos = raw.rfind(tail)
-            if pos < 0:
-                continue
-            seg_end = pos + len(tail)
-            if seg_end <= footer_start:
-                dist = footer_start - seg_end
-                if best_dist is None or dist < best_dist:
-                    best_dist = dist
-                    best = seg
-        return best.article_id if best else None
-
-    # Pick the most specific match (usually only one)
-    return candidates[0].article_id
