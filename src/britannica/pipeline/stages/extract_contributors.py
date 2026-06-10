@@ -188,14 +188,37 @@ def _harvest_signature_contributors(
     the Author-link producer renders a contributor signature to its initials, so
     footers, Author signoffs, and bare parentheticals all reduce to one shape: a
     ``(…)`` whose marker-stripped, normalized content is a known contributor's
-    initials.  The index is the discriminator — prose parentheticals (dates,
-    ``op. cit.``) and reference «LN» name-displays never match."""
+    initials.  The index is the discriminator for MULTI-initial signatures
+    (``(E. V.)``) — prose parentheticals (dates, ``op. cit.``) and reference «LN»
+    name-displays never match.
+
+    A SINGLE initial is explicitly NOT bound, even when it is in the index: a
+    one-letter parenthetical ``(M.)``/``(B.)`` collides with figure-key labels
+    (ABBEY's plan is ``A. Gateway … M. Tower``), cross-references, and abbreviations
+    everywhere, so binding it attributes whole articles to whatever contributor
+    happens to sign with that one letter (ABBEY → 11 bogus "authors").  Single-
+    initial contributors are recovered from the front-matter / vol-29 attribution
+    passes instead, where the article binding is explicit, not inferred."""
     found: list[int] = []
     seen: set[int] = set()
     for sig in _SIGNATURE_RE.finditer(body):
         for part in sig.group(1).split(";"):
-            cid = initials_map.get(
-                _normalize_initials(_SIG_MARKER_RE.sub("", part).strip()))
+            stripped = _SIG_MARKER_RE.sub("", part).strip()
+            # Two structural gates, because a false attribution is far worse than
+            # a miss (misses are recovered from the explicit front-matter passes):
+            #   (1) the producer renders a signature as SPACED initials ("A. D.",
+            #       "E. He."); a run-together form ("A.D.", "q.v.") is a source
+            #       date / abbreviation, never a signoff — and this also drops the
+            #       lone single initial ("M."), which has no space and collides
+            #       with figure-key labels everywhere (ABBEY → 11 bogus authors);
+            #   (2) a contributor's first initial is ALWAYS capitalized, so a
+            #       lower-case lead ("q. v.", "l. c.") is not a signoff.
+            if " " not in stripped:
+                continue
+            norm = _normalize_initials(stripped)
+            if not norm[:1].isupper():
+                continue
+            cid = initials_map.get(norm)
             if cid is not None and cid not in seen:
                 seen.add(cid)
                 found.append(cid)
