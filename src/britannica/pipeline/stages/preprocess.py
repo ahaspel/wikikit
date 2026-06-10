@@ -20,6 +20,7 @@ consumes ``<section begin>`` for stable-ID names; they drop after detection.
 """
 from __future__ import annotations
 
+import html
 import re
 
 from britannica.cleaners.hyphenation import fix_hyphenation
@@ -205,6 +206,28 @@ def heal_page_seams(text: str) -> str:
 _EDITORIAL_DEL = re.compile(r"<del\b[^>]*>.*?</del>", re.IGNORECASE | re.DOTALL)
 
 
+# Presentational HTML entities (`&nbsp;`, `&mdash;`, `&alpha;`, `&ldquo;`, `&emsp;`,
+# …) are display sugar the SOURCE spells as entities; carried verbatim, the uniform-
+# escaping viewer turns `&name;` into a visible `&name;` leak.  Decode them to their
+# Unicode char here, mechanically (`html.unescape`) — no content decision, a step-1
+# source-clean like the `<del>` corrections.  KEEP ONLY the tag-forging escapers
+# `&lt;`/`&gt;` (incl. numeric/hex `<`/`>`) literal: decoding those would forge a tag.
+# `&amp;`/`&quot;`/`&apos;` DO decode — the viewer re-escapes a raw `&`/`"`/`'`
+# correctly, and that fixes their leak too.
+_KEEP_ENTITY = re.compile(
+    r"&(?:lt|gt|#0*(?:60|62)|#[xX]0*3[ce]);", re.IGNORECASE)
+
+
+def _decode_entities(text: str) -> str:
+    out, last = [], 0
+    for m in _KEEP_ENTITY.finditer(text):
+        out.append(html.unescape(text[last:m.start()]))
+        out.append(m.group(0))
+        last = m.end()
+    out.append(html.unescape(text[last:]))
+    return "".join(out)
+
+
 def preprocess(stream: str) -> str:
     """Source-clean + heal page transitions on the continuous stream; return
     the frozen clean stream."""
@@ -217,4 +240,5 @@ def preprocess(stream: str) -> str:
     stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
+    stream = _decode_entities(stream)             # presentational HTML entities → chars
     return stream

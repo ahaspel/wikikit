@@ -890,7 +890,7 @@ _SHOULDER_HEADING_RE = re.compile(
 # Recognized at the walker so the inner stylers / «MATH» recurse; the producer
 # renders the three cells as a flex row.
 _RUNNING_HEADER_RE = re.compile(
-    r"\{\{\s*(?:rh|running\s+header)\s*\|", re.IGNORECASE)
+    r"\{\{\s*(?:rh|running\s*header)\s*\|", re.IGNORECASE)  # rh / Running header / RunningHeader
 
 
 def _parse_ts_codes(codes_str: str) -> list[str]:

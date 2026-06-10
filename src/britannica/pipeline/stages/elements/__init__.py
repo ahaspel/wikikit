@@ -502,7 +502,7 @@ def _process_styled(raw, inner, context, inner_registry):
             for c in cells)
         return (
             "«DIV[style:display:flex;align-items:baseline]»"
-            f"«SPAN»{left}«/SPAN»"
+            f"«SPAN[style:text-align:left]»{left}«/SPAN»"
             f"«SPAN[style:flex:1;text-align:center]»{center}«/SPAN»"
             f"«SPAN[style:text-align:right]»{right}«/SPAN»«/DIV»")
     # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same

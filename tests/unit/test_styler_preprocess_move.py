@@ -57,3 +57,16 @@ def test_del_still_stripped_in_preprocess():
 
 def test_nop_still_stripped_in_preprocess():
     assert "{{nop}}" not in _run("text{{nop}}\nmore")
+
+
+def test_presentational_entities_decode_to_chars():
+    # Display-sugar entities decode to their Unicode char so the uniform-escaping
+    # viewer renders them rather than leaking a visible `&name;` (ABBEY's NBSP).
+    assert _run("23&nbsp;ft. &mdash; &alpha;&beta; &ldquo;x&rdquo;") == (
+        "23 ft. — αβ “x”")
+
+
+def test_amp_decodes_but_tag_forgers_kept_literal():
+    # `&amp;`→`&` (viewer re-escapes it); `&lt;`/`&gt;` stay literal so the decode
+    # can never forge a `<tag>` out of escaped data.
+    assert _run("A&amp;B a&lt;b x&gt;y") == "A&B a&lt;b x&gt;y"
