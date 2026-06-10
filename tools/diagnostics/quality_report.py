@@ -14,7 +14,10 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.markers import RENDERED_MARKER_OPENS  # noqa: E402
+from britannica.markers import (  # noqa: E402
+    RENDERED_MARKER_OPENS,
+    RENDERED_GUILLEMET_MARKER_NAMES,
+)
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -45,12 +48,23 @@ def run_db_checks() -> dict:
             if not _f.endswith(("index.json", "contributors.json"))
         ]
         bodies = {r["id"]: (r.get("body") or "") for r in _recs}
-        _xr_resolved = sum(
-            1 for r in _recs for x in r.get("xref_list", [])
-            if x.get("status") == "resolved")
-        _xr_unresolved = sum(
-            1 for r in _recs for x in r.get("xref_list", [])
-            if x.get("status") == "unresolved")
+        # Xref totals come from the export's index.json aggregate fields:
+        # `xref_count` (total found in the body) and `resolved_count`.  The
+        # per-article files carry ONLY the resolved entries (key "xrefs",
+        # filtered to status=="resolved" in article_json.py) — unresolved is
+        # recoverable only as (total − resolved) from the index.  The old
+        # `r.get("xref_list", …)` read a field that never existed in the
+        # export, so both counts silently sat at zero.
+        _xr_resolved = 0
+        _xr_unresolved = 0
+        _index_path = "data/derived/articles/index.json"
+        if os.path.exists(_index_path):
+            _index = json.loads(open(_index_path, encoding="utf-8").read())
+            for _e in _index:
+                _total = _e.get("xref_count", 0)
+                _res = _e.get("resolved_count", 0)
+                _xr_resolved += _res
+                _xr_unresolved += max(0, _total - _res)
 
         results = {}
 
@@ -276,13 +290,18 @@ def run_file_checks() -> dict:
         if "''" in clean:
             issues["stray_wiki_italic"] += 1
 
-        # Bare HTML tags.  IMG-caption interiors can legitimately
-        # contain ``<br>``/``<sup>`` used as typographical formatting
-        # inside the figure caption, which the viewer renders as real
-        # HTML.  Strip ``{{IMG:…}}`` blocks before this check so only
-        # tags leaking into prose get flagged.
+        # Bare HTML tags.  The carried presentational set
+        # ``<sub>/<sup>/<small>/<big>/<br>`` is NOT flagged: the producer
+        # keeps these raw (CHEM/MATH classifiers key on them) and the
+        # viewer un-escapes + renders them uniformly on every path
+        # (decodeInlineMarkers, viewer.html ~2165).  Only STRUCTURAL tags
+        # that should have become markers leak here — table chrome
+        # (``<table>/<tr>/<td>/<th>`` outside «HTMLTABLE»), un-regularized
+        # ``<div>/<span>`` (should be «DIV»/«SPAN»), ``<ref>`` (→«FN»),
+        # ``<poem>`` (→VERSE), ``<score>``/``<math>``.  Strip ``{{IMG:…}}``
+        # first so a tag-shaped filename can't trip the prose check.
         tag_clean = re.sub(r"\{\{IMG:[^}]*\}\}", "", clean)
-        if re.search(r"<(?:table|tr|td|th|div|span|br|sub|sup|ref|poem|score|math)\b[^>]*>",
+        if re.search(r"<(?:table|tr|td|th|div|span|ref|poem|score|math)\b[^>]*>",
                       tag_clean, re.I):
             issues["html_tag"] += 1
 
@@ -329,9 +348,17 @@ def run_file_checks() -> dict:
                 issues[f"stray_control_x0{i}"] += 1
                 break
 
-        # Leaked template names (skip HTMLTABLE blocks which intentionally contain these)
+        # Leaked table attributes (skip HTMLTABLE blocks which intentionally
+        # contain these).  Match the genuine LEAK shape — the attribute's
+        # ``name=`` form (``colspan="2"``, raw ``{|cellpadding="5"`` wikitable
+        # openers) — NOT a bare substring.  ``nowrap`` in particular is now
+        # carried legitimately as the CSS value ``white-space:nowrap`` inside
+        # ``«SPAN[style:…]»`` (the producer's regularized ``{{nowrap}}``); a
+        # blanket ``/nowrap/`` matched all ~1.7k of those carried styles as
+        # false leaks.  A raw ``<span class="nowrap">`` that does leak is
+        # already counted by the ``html_tag`` check above.
         check = _strip_htmltable_blocks(body)
-        if re.search(r"nowrap|colspan|rowspan|cellpadding", check):
+        if re.search(r"(?:colspan|rowspan|cellpadding|nowrap)\s*=", check, re.I):
             issues["leaked_html_attr"] += 1
 
         # Unhandled inline markers inside HTMLTABLE blocks. formatCell
@@ -352,7 +379,13 @@ def run_file_checks() -> dict:
             # HTMLTABLE/CHEM markers \u2014 the viewer's depth-aware
             # rendering handles those; flagging them as leaks is a
             # metric false positive.
-            _MARKER_NAMES = "B|I|SC|FN|MATH|LN|LEGEND|SEC|SH|HTMLTABLE|CHEM|PRE"
+            # The complete viewer-decoded `«…»` vocabulary (single source
+            # of truth in britannica.markers), sorted longest-first so an
+            # alternation prefix (`XL`) can't shadow a longer sibling
+            # (`XXL`).  Stripping these leaves only genuinely-unhandled
+            # markers behind for the leak check below.
+            _MARKER_NAMES = "|".join(
+                sorted(RENDERED_GUILLEMET_MARKER_NAMES, key=len, reverse=True))
             # Strip opener TOKEN only (no content consumption).  The
             # earlier `(?::[^\u00ab\u00bb]*)?` form greedily ate VERSE content
             # past an inner FN's boundary in SHIP \u2014 `\u00abFN:text\u00ab/FN\u00bb\n

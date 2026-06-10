@@ -183,6 +183,30 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
 )
 
 
+# Guillemet («…») marker NAMES the viewer decodes — the companion to
+# RENDERED_MARKER_OPENS for the `«NAME…»` family (RENDERED_MARKER_OPENS
+# covers only the `{{X:…}}` braces).  Single source of truth, mirrored
+# verbatim in viewer.html's `decodeInlineMarkers` + `applySizeMarkers` +
+# `formatCell` (and the block-level EQN/SEC/SH/HTMLTABLE/CHEM handlers).
+# The quality report references this to tell a legitimate rendered marker
+# from stray residue: a `«NAME…»` whose NAME is here renders; anything
+# else is a leak.  Add a new entry here AND mirror it in the viewer
+# whenever you introduce a new `«…»` marker — keeping the two in lockstep
+# is exactly what this constant exists to enforce (see the IMG-INLINE
+# stray_close_braces drift note on RENDERED_MARKER_OPENS above).  NAME
+# only — no delimiters, no `[attr]` payload (`DIV`/`SPAN`/sizes carry one).
+RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
+    # inline styling / typography (decodeInlineMarkers + applySizeMarkers)
+    "B", "I", "SC", "SS", "SR", "U", "STK", "MIRROR", "CTR", "FR", "FL",
+    "DIV", "SPAN", "BR", "BAR", "DHR", "BRACE2",
+    "XXL", "XL", "LG", "XXS", "XS", "SM", "FS", "LH",
+    # links / anchors
+    "LN", "ANCHOR",
+    # cell- and block-level content
+    "FN", "MATH", "HTMLTABLE", "CHEM", "EQNGROUP", "EQN", "SEC", "SH",
+)
+
+
 # ── TABLE cell grammar ────────────────────────────────────────────────
 # Inside ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` the body is rows joined
 # by ``\n`` and cells joined by `` | ``.  A cell may carry an OPTIONAL prefix
