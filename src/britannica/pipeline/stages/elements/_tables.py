@@ -858,6 +858,7 @@ _TEMPLATE_PARAM_STYLE_WRAPPERS: dict[str, tuple[str, bool]] = {
     "fs":             ("font-size:{v}", True),
     "font size":      ("font-size:{v}", True),
     "font-size":      ("font-size:{v}", True),
+    "lh":             ("font-size:{v}", True),  # plate caption line — size in arg-1, == {{fs}}
     "rotate":         ("transform:rotate({v}deg);display:inline-block", False),
     "letter-spacing": ("letter-spacing:{v}", False),
     "lsp":            ("letter-spacing:{v}", False),
@@ -881,6 +882,15 @@ _TEMPLATE_PARAM_STYLE_RE = re.compile(
 _SHOULDER_HEADING_RE = re.compile(
     r"\{\{\s*(?:EB1911\s+shoulder\s+heading\w*|EB9\s+margin\s+note)\s*\|",
     re.IGNORECASE)
+# Running header — `{{rh|left|center|right}}` and its `{{Running header|…}}`
+# alias: a 3-COLUMN left|center|right frame.  Page-furniture rh is stripped
+# upstream, so what survives into the body is CONTENT — plate title bars
+# (`Plate II. | PLASTIC ART |`), captioned figures (` | Fig. 1.—… | credit`),
+# and displayed-equation layouts in math articles (`1. | H = wL²/8y |`).
+# Recognized at the walker so the inner stylers / «MATH» recurse; the producer
+# renders the three cells as a flex row.
+_RUNNING_HEADER_RE = re.compile(
+    r"\{\{\s*(?:rh|running\s+header)\s*\|", re.IGNORECASE)
 
 
 def _parse_ts_codes(codes_str: str) -> list[str]:

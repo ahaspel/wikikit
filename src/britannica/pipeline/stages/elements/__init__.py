@@ -440,7 +440,7 @@ def _process_styled(raw, inner, context, inner_registry):
     from britannica.pipeline.stages.elements._tables import (
         _cell_styles, style_block, _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS,
         _TEMPLATE_PARAM_STYLE_RE, _TEMPLATE_PARAM_STYLE_WRAPPERS,
-        _SHOULDER_HEADING_RE)
+        _SHOULDER_HEADING_RE, _RUNNING_HEADER_RE)
     from britannica.pipeline.stages.elements._walker import (
         _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
     # `<span title="T">X</span>` — transliteration TOOLTIP when X is Greek/Hebrew (carry T
@@ -469,10 +469,42 @@ def _process_styled(raw, inner, context, inner_registry):
         from britannica.pipeline.stages.elements._link import (
             _split_top_pipes)
         rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
-        label = _styled_br_to_marker(_split_top_pipes(rest)[-1])
+        label = _split_top_pipes(rest)[-1]
+        # A shoulder heading is ONE marginal label that wrapped in the narrow
+        # margin column, so its `<br>`s are typography, not content.  Heal them
+        # BEFORE `<br>`→«BR» — left raw the break leaks into the heading AND
+        # poisons the `detect_sections` slug (`premonst-br-ratensians`):
+        #   lowercase continuation = end-of-line hyphenation → rejoin the split
+        #     word (`Premonst-<br>ratensians` → `Premonstratensians`);
+        #   capitalized continuation = a real hyphen that merely wrapped → keep
+        #     the hyphen (`Anglo-<br>Saxon` → `Anglo-Saxon`);
+        #   a bare wrap → a space (`quarrel<br>with` → `quarrel with`).
+        label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*(?=[a-z])", "", label)
+        label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*", "-", label)
+        label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
+        label = _styled_br_to_marker(label)
         content = process_elements(
             label, context, _allow_figure=False).strip()
         return f"«SH»{content}«/SH»"
+    # Running header — `{{rh|left|center|right}}` / `{{Running header|…}}` alias.
+    # A 3-COLUMN frame: plate title bars, captioned figures, and displayed-
+    # equation layouts (margin label/number | centred equation | number).  Split
+    # the top-level pipes (a nested `{{…|…}}` / «MATH» stays intact), recurse each
+    # cell, and emit a flex row so the centre stays centred between the margins.
+    rh = _RUNNING_HEADER_RE.match(raw)
+    if rh:
+        from britannica.pipeline.stages.elements._link import (
+            _split_top_pipes)
+        cells = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
+        cells = (cells + ["", "", ""])[:3]
+        left, center, right = (
+            process_elements(c, context, _allow_figure=False).strip()
+            for c in cells)
+        return (
+            "«DIV[style:display:flex;align-items:baseline]»"
+            f"«SPAN»{left}«/SPAN»"
+            f"«SPAN[style:flex:1;text-align:center]»{center}«/SPAN»"
+            f"«SPAN[style:text-align:right]»{right}«/SPAN»«/DIV»")
     # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same
     # styler family, but the size is arg-1.  Split value | content on the first
     # pipe (content keeps its own pipes), recurse the content, carry as an INLINE
