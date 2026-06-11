@@ -30,14 +30,15 @@ def _frac(num: str, den: str) -> str:
                                  f"{num.strip()}/{den.strip()}")
 
 
-def _render_fraction(args: str) -> str:
-    """Produce one fraction from its already-recursed ``|``-joined slot string (which
-    begins with the leading ``|``).  Drops ``name=value`` styling args; the positional
-    count selects mixed / num-den / 1-n."""
+def _render_fraction(args: str, recurse) -> str:
+    """Produce one fraction from its ``|``-joined slot string (which begins with the
+    leading ``|``).  Drops ``name=value`` styling args; each positional slot is RETURNED
+    through the loop via ``recurse`` (so a `{{Greek}}`/`{{sub}}`/`<math>` in a numerator
+    is produced, not left raw); the positional count selects mixed / num-den / 1-n."""
     parts = _split_top_pipes(args)
     if parts and parts[0] == "":          # empty slot before the first `|`
         parts = parts[1:]
-    pos = [p for p in parts if not re.match(r"^[a-zA-Z_-]+=", p)]
+    pos = [recurse(p) for p in parts if not re.match(r"^[a-zA-Z_-]+=", p)]
     if len(pos) >= 3:
         return f"{pos[0].strip()}{_frac(pos[1], pos[2])}"
     if len(pos) == 2:

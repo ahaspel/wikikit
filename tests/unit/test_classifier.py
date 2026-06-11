@@ -29,16 +29,25 @@ from britannica.pipeline.stages.elements._shapes import (
 
 class TestAtomicLabels:
     def test_math(self):
+        # The math body now recurses like any inner content: it becomes a
+        # single BODY child carrying the raw, and inner_text is that child's
+        # placeholder (SHAPE_BODY — task #14).
         ce = classify(SHAPE_HTML_TAG, "<math>x^2</math>")
         assert ce.label == "MATH"
         assert ce.raw == "<math>x^2</math>"
-        assert ce.inner_text == "x^2"
-        assert ce.inner_registry == {}
+        assert len(ce.inner_registry) == 1
+        (child,) = ce.inner_registry.values()
+        assert child.label == "BODY"
+        assert child.raw == "x^2"
+        assert ce.inner_text in ce.inner_registry
 
     def test_poem(self):
         ce = classify(SHAPE_HTML_TAG, "<poem>line one\nline two</poem>")
         assert ce.label == "POEM"
-        assert ce.inner_text == "line one\nline two"
+        # Inner prose is carried as a single BODY child.
+        (child,) = ce.inner_registry.values()
+        assert child.label == "BODY"
+        assert child.raw == "line one\nline two"
 
     def test_ref(self):
         ce = classify(SHAPE_HTML_TAG, "<ref>note text</ref>")
@@ -103,10 +112,11 @@ class TestNestedClassification:
         ce = classify(SHAPE_HTML_TAG,
                        "<poem>verse <ref>note</ref> end</poem>")
         assert ce.label == "POEM"
-        # One REF child registered after recursion.
-        assert len(ce.inner_registry) == 1
-        ref_ce = next(iter(ce.inner_registry.values()))
-        assert ref_ce.label == "REF"
+        # Recursion now registers the surrounding prose as BODY children too:
+        # BODY("verse ") + REF + BODY(" end").  Exactly one REF among them.
+        labels = [c.label for c in ce.inner_registry.values()]
+        assert labels == ["BODY", "REF", "BODY"]
+        ref_ce = next(c for c in ce.inner_registry.values() if c.label == "REF")
         assert ref_ce.raw == "<ref>note</ref>"
 
     def test_simple_data_table(self):
@@ -116,20 +126,24 @@ class TestNestedClassification:
 
     def test_table_with_one_math_child_is_data(self):
         # One math child isn't math-dominant (predicate needs ≥2) → plain TABLE.
+        # The table keeps its inner as raw bytes (decomposed later by the unified
+        # table producer); the classifier no longer pre-registers cell children.
         ce = classify(SHAPE_BRACE_PIPE, "{|\n|<math>x</math>\n|}")
         assert ce.label == "TABLE"
-        assert len(ce.inner_registry) == 1
-        child = next(iter(ce.inner_registry.values()))
-        assert child.label == "MATH"
+        assert ce.inner_registry == {}
+        assert "<math>x</math>" in ce.inner_text
 
     def test_math_cell_wikitable_is_plain_table(self):
         # `<math>` is a self-labeling leaf, so a wikitable of math cells is
-        # just a TABLE whose cells recurse to MATH leaves — no special
-        # math-layout classification (that machinery was collapsed away).
+        # just a TABLE — no special math-layout classification (that machinery
+        # was collapsed away).  The cells stay in the table's raw inner and are
+        # recursed to MATH leaves by the producer, not the classifier registry.
         raw = "{|\n|<math>x</math>\n|<math>y</math>\n|}"
         ce = classify(SHAPE_BRACE_PIPE, raw)
         assert ce.label == "TABLE"
-        assert [c.label for c in ce.inner_registry.values()] == ["MATH", "MATH"]
+        assert ce.inner_registry == {}
+        assert "<math>x</math>" in ce.inner_text
+        assert "<math>y</math>" in ce.inner_text
 
     def test_captioned_figure_image_with_caption_row(self):
         # A single-image wikitable with a caption row is NOT a figure family —

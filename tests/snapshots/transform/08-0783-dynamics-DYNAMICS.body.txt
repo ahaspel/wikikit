@@ -1,18 +1,10 @@
-PAGE:783(from Gr. «SPAN[title:dýnamis]»δύναμις«/SPAN», strength), the name of a branch of the science of «LN:Mechanics|Mechanics«/LN» («I»q.v.«/I»). The term was at one time restricted to the treatment of motion as affected by force, being thus opposed to Statics, which investigated equilibrium or conditions of rest. In more recent times the word has been applied comprehensively to the action of force on bodies either at rest or in motion, thus including “dynamics” (now termed kinetics) in the restricted sense and “statics.”
-
-«SC»Analytical Dynamics.«/SC»—The fundamental principles of dynamics, and their application to special problems, are explained in the articles «LN:Mechanics|Mechanics«/LN» and «LN:Motion, Laws of|Motion, Laws of«/LN», where brief indications are also given of the more general methods of investigating the properties of a dynamical system, independently of the accidents of its particular constitution, which were inaugurated by J.&nbsp;L. Lagrange. These methods, in addition to the unity and breadth which they have introduced into the treatment of pure dynamics, have a peculiar interest in relation to modern physical speculation, which finds itself confronted in various directions with the problem of explaining on dynamical principles the properties of systems whose ultimate mechanism can at present only be vaguely conjectured. In determining the properties of such systems the methods of analytical geometry and of the infinitesimal calculus (or, more generally, of mathematical analysis) are necessarily employed; for this reason the subject has been named Analytical Dynamics. The following article is devoted to an outline of such portions of general dynamical theory as seem to be most important from the physical point of view.
-
-«CTR»1. «I»General Equations of Impulsive Motion«/I».«/CTR»
-
-The systems contemplated by Lagrange are composed of discrete particles, or of rigid bodies, in finite number, connected (it may be) in various ways by invariable geometrical relations, the fundamental postulate being that the position of every particle of the system at any time can be completely specified by means of the instantaneous values of a finite number of independent variables «MATH:q_{1}, q_{2}, \ldots q_{n}«/MATH», each of which admits of continuous variation over a certain range, so that if «MATH:x, y, z\!«/MATH» be the Cartesian co-ordinates of any one particle, we have for example
+PAGE:783(from Gr. «SPAN[title:dýnamis]»δύναμις«/SPAN», strength), the name of a branch of the science of «LN:Mechanics|Mechanics«/LN» («I»q.v.«/I»). The term was at one time restricted to the treatment of motion as affected by force, being thus opposed to Statics, which investigated equilibrium or conditions of rest. In more recent times the word has been applied comprehensively to the action of force on bodies either at rest or in motion, thus including “dynamics” (now termed kinetics) in the restricted sense and “statics.”«P»«SC»Analytical Dynamics.«/SC»—The fundamental principles of dynamics, and their application to special problems, are explained in the articles «LN:Mechanics|Mechanics«/LN» and «LN:Motion, Laws of|Motion, Laws of«/LN», where brief indications are also given of the more general methods of investigating the properties of a dynamical system, independently of the accidents of its particular constitution, which were inaugurated by J. L. Lagrange. These methods, in addition to the unity and breadth which they have introduced into the treatment of pure dynamics, have a peculiar interest in relation to modern physical speculation, which finds itself confronted in various directions with the problem of explaining on dynamical principles the properties of systems whose ultimate mechanism can at present only be vaguely conjectured. In determining the properties of such systems the methods of analytical geometry and of the infinitesimal calculus (or, more generally, of mathematical analysis) are necessarily employed; for this reason the subject has been named Analytical Dynamics. The following article is devoted to an outline of such portions of general dynamical theory as seem to be most important from the physical point of view.«P»«CTR»1. «I»General Equations of Impulsive Motion«/I».«/CTR»«P»The systems contemplated by Lagrange are composed of discrete particles, or of rigid bodies, in finite number, connected (it may be) in various ways by invariable geometrical relations, the fundamental postulate being that the position of every particle of the system at any time can be completely specified by means of the instantaneous values of a finite number of independent variables «MATH:q_{1}, q_{2}, \ldots q_{n}«/MATH», each of which admits of continuous variation over a certain range, so that if «MATH:x, y, z\!«/MATH» be the Cartesian co-ordinates of any one particle, we have for example
 
 
 «EQN:1»«MATH:x = f(q_{1}, q_{2}, \ldots q_{n}), y = \And\!\!\!\text{c.}, z =\! \And\!\!\!\text{c.},«/MATH»«/EQN»
 
 
-where the functions «MATH:f\!«/MATH» differ (of course) from particle to particle. In modern language, the variables «MATH:q_{1}, q_{2}, \ldots q_{n}«/MATH» are «I»generalized co-ordinates«/I» serving to specify the «I»configuration«/I» of the system; their derivatives with respect to the time are denoted by «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}«/MATH», and are called the «I»generalized components of velocity«/I». The continuous sequence of configurations assumed by the system in any actual or imagined motion (subject to the given connexions) is called the «I»path«/I».
-
-For the purposes of a connected outline of the whole subject it is convenient to deviate somewhat from the historical order of development, and to begin with the consideration of «I»impulsive«/I» motion. Whatever the actual motion of the system at any instant, we may conceive it to be generated instantaneously from rest by «SH»Impulsive motion.«/SH»the application of proper impulses. On this view we have, if «MATH:x, y, z\!«/MATH» be the rectangular co-ordinates of any particle «MATH:m\!«/MATH»,
+where the functions «MATH:f\!«/MATH» differ (of course) from particle to particle. In modern language, the variables «MATH:q_{1}, q_{2}, \ldots q_{n}«/MATH» are «I»generalized co-ordinates«/I» serving to specify the «I»configuration«/I» of the system; their derivatives with respect to the time are denoted by «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}«/MATH», and are called the «I»generalized components of velocity«/I». The continuous sequence of configurations assumed by the system in any actual or imagined motion (subject to the given connexions) is called the «I»path«/I».«P»For the purposes of a connected outline of the whole subject it is convenient to deviate somewhat from the historical order of development, and to begin with the consideration of «I»impulsive«/I» motion. Whatever the actual motion of the system at any instant, we may conceive it to be generated instantaneously from rest by «SH»Impulsive motion.«/SH»the application of proper impulses. On this view we have, if «MATH:x, y, z\!«/MATH» be the rectangular co-ordinates of any particle «MATH:m\!«/MATH»,
 
 
 «EQN:2»«MATH:m\dot{x} = \mathrm{X}', m\dot{y} = \mathrm{Y}', m\dot{z} = \mathrm{Z}',«/MATH»«/EQN»
@@ -38,17 +30,13 @@ where the sign «MATH:\Sigma«/MATH» indicates (as throughout this article) a s
 and therefore
 
 
-«EQN:6»«MATH[popout]:\Sigma m(\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots)\delta q_{1} + (\mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots)\delta q_{2} + \ldots,«/MATH»«/EQN»
+«EQN:6»«MATH:\Sigma m(\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots)\delta q_{1} + (\mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots)\delta q_{2} + \ldots,«/MATH»«/EQN»
 
 
-where
-
-«HTMLTABLE:<table class="figtable" style="width:100px"><tr><td>width:5%|</td><td style="width:90%;text-align:center">«MATH[fs=85]:\left.\begin{align} \mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»
-
-If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
+where«P»«HTMLTABLE:<table class="figtable" style="width:100px"><tr><td>width:5%|</td><td style="width:90%;text-align:center">«MATH:\left.\begin{align} \mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»«P»If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
 
 
-«EQN:8»«MATH[fs=95]:2\mathrm{T} = \Sigma m(\dot{x}^2 + \dot{y}^2 + \dot{z}^2) = \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 \ldots 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots«/MATH»«/EQN»
+«EQN:8»«MATH:2\mathrm{T} = \Sigma m(\dot{x}^2 + \dot{y}^2 + \dot{z}^2) = \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 \ldots 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots«/MATH»«/EQN»
 
 
 The coefficients «MATH:\mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12}, \ldots«/MATH» are by an obvious analogy called the «I»coefficients of inertia«/I» of the system; they are in general functions of the co-ordinates «MATH:q_{1}, q_{2},\ldots«/MATH». The equation (6) may now be written
@@ -75,9 +63,7 @@ The quantities «MATH:\mathrm{Q}_{1}, \mathrm{Q}_{2}, \ldots«/MATH» are called
 «EQN:12»«MATH:\frac{\partial\mathrm{T} }{\partial\dot{q}_{1}} = \mathrm{Q}'_{1}, \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}} = \mathrm{Q}'_{2}, \ldots«/MATH»«/EQN»
 
 
-These are the general equations of impulsive motion.
-
-It is now usual to write
+These are the general equations of impulsive motion.«P»It is now usual to write
 
 
 «EQN:13»«MATH:p_{r} = \frac{\partial\mathrm{T} }{\partial\dot{q}_{r}}.«/MATH»«/EQN»
@@ -95,9 +81,7 @@ Also, since «MATH:\mathrm{T}\!«/MATH» is a homogeneous quadratic function of 
 «EQN:15»«MATH:2\mathrm{T} = p_{1}\dot{q}_{1} + p_{2}\dot{q}_{2} + \ldots«/MATH»«/EQN»
 
 
-This follows independently from (14), assuming the special variations «MATH:\delta x = \dot{x}dt«/MATH», &c., and therefore «MATH:\delta q_{1} = \dot{q}_{1}dt, \delta q_{2} = \dot{q}_{2}dt, \ldots«/MATH»
-
-Again, if the values of the velocities and the momenta in any other motion of the system through the same configuration be distinguished by accents, we have the identity«SH»Reciprocal theorems.«/SH»
+This follows independently from (14), assuming the special variations «MATH:\delta x = \dot{x}dt«/MATH», &c., and therefore «MATH:\delta q_{1} = \dot{q}_{1}dt, \delta q_{2} = \dot{q}_{2}dt, \ldots«/MATH»«P»Again, if the values of the velocities and the momenta in any other motion of the system through the same configuration be distinguished by accents, we have the identity«SH»Reciprocal theorems.«/SH»
 
 
 «EQN:16»«MATH:p_{1}\dot{q}'_{1} + p_{2}\dot{q}'_{2} + \ldots = p'_{1}\dot{q}_{1} + p'_{2}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
@@ -108,23 +92,19 @@ each side being equal to the symmetrical expression
 
 «EQN:17»«MATH:\mathrm{A}_{11}\dot{q}_{1}\dot{q}'_{1} + \mathrm{A}_{22}\dot{q}_{2}\dot{q}'_{2} + \ldots+ \mathrm{A}_{12}(\dot{q}_{1}\dot{q}'_{2} + \dot{q}'_{1}\dot{q}_{2}) + \ldots«/MATH»«/EQN»
 
-
-
-The theorem (16) leads to some important reciprocal relations. Thus, let us suppose that the momenta «MATH:p_{1}, p_{2}, \ldots«/MATH» all vanish with the exception of «MATH:p_{1}\!«/MATH», and similarly that the momenta «MATH:p'_{1}, p'_{2}, \ldots«/MATH» all vanish except «MATH:p'_{2}\!«/MATH». We have then «MATH:p_{1}\dot{q}'_{1} = p'_{2}\dot{q}_{2}«/MATH», or
+«P»The theorem (16) leads to some important reciprocal relations. Thus, let us suppose that the momenta «MATH:p_{1}, p_{2}, \ldots«/MATH» all vanish with the exception of «MATH:p_{1}\!«/MATH», and similarly that the momenta «MATH:p'_{1}, p'_{2}, \ldots«/MATH» all vanish except «MATH:p'_{2}\!«/MATH». We have then «MATH:p_{1}\dot{q}'_{1} = p'_{2}\dot{q}_{2}«/MATH», or
 
 
 «EQN:18»«MATH:\dot{q}_{2}: p_{1} = \dot{q}'_{1}: p'_{2}«/MATH»«/EQN»
 
 
-The interpretation is simplest when the co-ordinates «MATH:q_{1}, q_{2}\!«/MATH» are both of the same kind, «I»e.g.«/I» both lines or both angles. We may then conveniently put «MATH:p_{1} = p'_{2}\!«/MATH», and assert that the velocity of the first type due to an impulse of the second type is equal to the velocity of the second type due to an equal impulse of the first type. As an example, suppose we have a chain of straight links hinged each to the next, extended in a straight line, and free to move. A blow at right angles to the chain, at any point «MATH:\mathrm{P}\!«/MATH», will produce a certain velocity at any other point «MATH:\mathrm{Q}\!«/MATH»; the theorem asserts that an equal velocity will be produced at «MATH:\mathrm{P}\!«/MATH» by an equal blow at «MATH:\mathrm{Q}\!«/MATH». Again, an impulsive couple acting on any link «MATH:\mathrm{A}\!«/MATH» will produce a certain angular velocity in any other link «MATH:\mathrm{B}«/MATH»; an equal couple applied to «MATH:\mathrm{B}\!«/MATH» will produce an equal angular velocity in «MATH:\mathrm{A}\!«/MATH». Also if an impulse «MATH:\mathrm{F}\!«/MATH» applied at «MATH:\mathrm{P}\!«/MATH» produce an angular velocity «MATH:\omega\!«/MATH» in a link «MATH:\mathrm{A}\!«/MATH», a couple «MATH:\mathrm{F}a«/MATH» applied to «MATH:\mathrm{A}\!«/MATH» will produce a linear velocity «MATH:\omega a«/MATH» at «MATH:\mathrm{P}\!«/MATH». Historically, we may note that reciprocal relations in dynamics were first recognized by H.&nbsp;L.&nbsp;F. Helmholtz in the domain of acoustics; their use has been greatly extended by Lord Rayleigh.
-
-The equations (13) determine the momenta «MATH:p_{1}, p_{2},\ldots«/MATH» as linear functions of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2},\ldots«/MATH» Solving these, we can express «MATH:\dot{q}_{1}, \dot{q}_{2} \ldots«/MATH» as linear functions of «MATH:p_{1}, p_{2},\ldots«/MATH» The resulting equations give us the velocities produced by any given system of impulses. Further, by substitution in (8), we can express the kinetic «SH»Velocities in terms of momenta.«/SH»energy as a homogeneous quadratic function of the momenta «MATH:p_{1}, p_{2},\ldots«/MATH» The kinetic energy, «I»as so expressed«/I», will be denoted by «MATH:\mathrm{T}'\!«/MATH»; thus
+The interpretation is simplest when the co-ordinates «MATH:q_{1}, q_{2}\!«/MATH» are both of the same kind, «I»e.g.«/I» both lines or both angles. We may then conveniently put «MATH:p_{1} = p'_{2}\!«/MATH», and assert that the velocity of the first type due to an impulse of the second type is equal to the velocity of the second type due to an equal impulse of the first type. As an example, suppose we have a chain of straight links hinged each to the next, extended in a straight line, and free to move. A blow at right angles to the chain, at any point «MATH:\mathrm{P}\!«/MATH», will produce a certain velocity at any other point «MATH:\mathrm{Q}\!«/MATH»; the theorem asserts that an equal velocity will be produced at «MATH:\mathrm{P}\!«/MATH» by an equal blow at «MATH:\mathrm{Q}\!«/MATH». Again, an impulsive couple acting on any link «MATH:\mathrm{A}\!«/MATH» will produce a certain angular velocity in any other link «MATH:\mathrm{B}«/MATH»; an equal couple applied to «MATH:\mathrm{B}\!«/MATH» will produce an equal angular velocity in «MATH:\mathrm{A}\!«/MATH». Also if an impulse «MATH:\mathrm{F}\!«/MATH» applied at «MATH:\mathrm{P}\!«/MATH» produce an angular velocity «MATH:\omega\!«/MATH» in a link «MATH:\mathrm{A}\!«/MATH», a couple «MATH:\mathrm{F}a«/MATH» applied to «MATH:\mathrm{A}\!«/MATH» will produce a linear velocity «MATH:\omega a«/MATH» at «MATH:\mathrm{P}\!«/MATH». Historically, we may note that reciprocal relations in dynamics were first recognized by H. L. F. Helmholtz in the domain of acoustics; their use has been greatly extended by Lord Rayleigh.«P»The equations (13) determine the momenta «MATH:p_{1}, p_{2},\ldots«/MATH» as linear functions of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2},\ldots«/MATH» Solving these, we can express «MATH:\dot{q}_{1}, \dot{q}_{2} \ldots«/MATH» as linear functions of «MATH:p_{1}, p_{2},\ldots«/MATH» The resulting equations give us the velocities produced by any given system of impulses. Further, by substitution in (8), we can express the kinetic «SH»Velocities in terms of momenta.«/SH»energy as a homogeneous quadratic function of the momenta «MATH:p_{1}, p_{2},\ldots«/MATH» The kinetic energy, «I»as so expressed«/I», will be denoted by «MATH:\mathrm{T}'\!«/MATH»; thus
 
 
 «EQN:19»«MATH:2\mathrm{T}' = \mathrm{A}'_{11}p_{1}^2 + \mathrm{A}'_{22}p_{2}^2 + \ldots+ 2\mathrm{A}'_{12}p - p_{2} + \ldots«/MATH»«/EQN»
 
 
-where «MATH:\mathrm{A}'_{11}, \mathrm{A}'_{22},\ldots \mathrm{A}'_{12},\ldots«/MATH» are certain coefficients depending on the configuration. They have been called by Maxwell the «I»coefficients of mobility«/I» of the system. When the form (19) is given, the valuesPAGE:784of the velocities in terms of the momenta can be expressed in a remarkable form due to Sir W.&nbsp;R. Hamilton. The formula (15) may be written
+where «MATH:\mathrm{A}'_{11}, \mathrm{A}'_{22},\ldots \mathrm{A}'_{12},\ldots«/MATH» are certain coefficients depending on the configuration. They have been called by Maxwell the «I»coefficients of mobility«/I» of the system. When the form (19) is given, the valuesPAGE:784of the velocities in terms of the momenta can be expressed in a remarkable form due to Sir W. R. Hamilton. The formula (15) may be written
 
 
 «EQN:20»«MATH:p_{1}\dot{q}_{1} + p_{2}\dot{q}_{2} + \ldots = \mathrm{T} + \mathrm{T}',«/MATH»«/EQN»
@@ -133,7 +113,7 @@ where «MATH:\mathrm{A}'_{11}, \mathrm{A}'_{22},\ldots \mathrm{A}'_{12},\ldots«
 where «MATH:\mathrm{T}\!«/MATH» is supposed expressed as in (8), and «MATH:\mathrm{T}'\!«/MATH» as in (19). Hence if, for the moment, we denote by «MATH:\delta\!«/MATH» a variation affecting the velocities, and therefore the momenta, but not the configuration, we have
 
 
-«EQN:21»«MATH[popout]:p_{1}\delta\dot{q}_{1} + \dot{q}_{1}\delta p + p_{2}\delta\dot{q}_{2} + \dot{q}_{2}\delta p_{2} + \ldots = \delta \mathrm{T} + \delta \mathrm{T}' = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} + \ldots+ \frac{\partial\mathrm{T}'}{\partial p_{1}}\delta p_{1} + \frac{\partial\mathrm{T}'}{\partial p_{2}}\delta p_{2} + \ldots«/MATH»«/EQN»
+«EQN:21»«MATH:p_{1}\delta\dot{q}_{1} + \dot{q}_{1}\delta p + p_{2}\delta\dot{q}_{2} + \dot{q}_{2}\delta p_{2} + \ldots = \delta \mathrm{T} + \delta \mathrm{T}' = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} + \ldots+ \frac{\partial\mathrm{T}'}{\partial p_{1}}\delta p_{1} + \frac{\partial\mathrm{T}'}{\partial p_{2}}\delta p_{2} + \ldots«/MATH»«/EQN»
 
 
 In virtue of (13) this reduces to
@@ -147,11 +127,7 @@ Since «MATH:\delta p_{1}, \delta p_{2}, \ldots\!«/MATH» may be taken to be in
 
 «EQN:23»«MATH:\dot{q}_{1} = \frac{\partial\mathrm{T}'}{\partial p_{1}}, \qquad\qquad\dot{q}_{2} = \frac{\partial\mathrm{T}'}{\partial p_{2}}, \ldots«/MATH»«/EQN»
 
-
-
-In the very remarkable exposition of the matter given by James Clerk Maxwell in his «I»Electricity and Magnetism«/I», the Hamiltonian expressions (23) for the velocities in terms of the impulses are obtained directly from first principles, and the formulae (13) are then deduced by an inversion of the above argument.
-
-An important modification of the above process was introduced by E. J. Routh and Lord Kelvin and P. G. Tait. Instead of expressing the kinetic energy in terms of the velocities alone, or in terms of the momenta alone, we may express it in terms of the velocities corresponding to some of the co-ordinates, say «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», and «SH»Routh’s modification.«/SH»of the momenta corresponding to the remaining co-ordinates, which (for the sake of distinction) we may denote by «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». Thus, «MATH:\mathrm{T}\!«/MATH» being expressed as a homogeneous quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH», the momenta corresponding to the co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» may be written
+«P»In the very remarkable exposition of the matter given by James Clerk Maxwell in his «I»Electricity and Magnetism«/I», the Hamiltonian expressions (23) for the velocities in terms of the impulses are obtained directly from first principles, and the formulae (13) are then deduced by an inversion of the above argument.«P»An important modification of the above process was introduced by E. J. Routh and Lord Kelvin and P. G. Tait. Instead of expressing the kinetic energy in terms of the velocities alone, or in terms of the momenta alone, we may express it in terms of the velocities corresponding to some of the co-ordinates, say «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», and «SH»Routh’s modification.«/SH»of the momenta corresponding to the remaining co-ordinates, which (for the sake of distinction) we may denote by «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». Thus, «MATH:\mathrm{T}\!«/MATH» being expressed as a homogeneous quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH», the momenta corresponding to the co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» may be written
 
 
 «EQN:24»«MATH:\kappa = \frac{\partial\mathrm{T} }{\partial\dot{\chi}}, \qquad\kappa' = \frac{\partial\mathrm{T} }{\partial\dot{\chi}'}, \qquad\kappa'' = \frac{\partial\mathrm{T} }{\partial\dot{\chi}''}, \ldots«/MATH»«/EQN»
@@ -166,7 +142,7 @@ These equations, when written out in full, determine «MATH:\dot{\chi}, \dot{\ch
 supposed expressed, by means of the above relations in terms of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH». Performing the operation «MATH:\delta\!«/MATH» on both sides of (25), we have
 
 
-«EQN:26»«MATH[popout]:\frac{\partial\mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{T} }{\partial\dot{\chi}}\delta\dot{\chi} + \ldots- \kappa\partial\dot{\chi} - \dot{\chi}\delta\kappa- \ldots,«/MATH»«/EQN»
+«EQN:26»«MATH:\frac{\partial\mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{T} }{\partial\dot{\chi}}\delta\dot{\chi} + \ldots- \kappa\partial\dot{\chi} - \dot{\chi}\delta\kappa- \ldots,«/MATH»«/EQN»
 
 
 where, for brevity, only one term of each type has been exhibited. Omitting the terms which cancel in virtue of (24), we have
@@ -186,9 +162,7 @@ and
 
 «EQN:29»«MATH:\dot{\chi} = - \frac{\partial\mathrm{R}}{\partial\kappa}, \qquad\dot{\chi}' = - \frac{\partial\mathrm{R}}{\partial\kappa'}, \qquad\dot{\chi}'' = - \frac{\partial\mathrm{R}}{\partial\kappa''}, \ldots«/MATH»«/EQN»
 
-
-
-An important property of the present transformation is that, when expressed in terms of the new variables, the kinetic energy is the sum of two homogeneous quadratic functions, thus
+«P»An important property of the present transformation is that, when expressed in terms of the new variables, the kinetic energy is the sum of two homogeneous quadratic functions, thus
 
 
 «EQN:30»«MATH:\mathrm{T} = \mathfrak{T} + \mathrm{K},«/MATH»«/EQN»
@@ -200,17 +174,7 @@ where «MATH:\mathfrak{T}«/MATH» involves the velocities «MATH:\dot{q}_{1}, \
 «EQN:31»«MATH:\mathrm{T} = \mathrm{R} - \left(\kappa\frac{\partial\mathrm{R}}{\partial\kappa} + \kappa'\frac{\partial\mathrm{R}}{\partial\kappa'} + \kappa''\frac{\partial\mathrm{R}}{\partial\kappa''} + \ldots\right),«/MATH»«/EQN»
 
 
-and it is evident that the terms in «MATH:\mathrm{R}\!«/MATH» which are bilinear in respect of the two sets of variables «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH» and «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» will disappear from the right-hand side.
-
-It may be noted that the formula (30) gives immediate proof of two important theorems due to Bertrand and to Lord Kelvin respectively. Let us suppose, in the first place, that the system is started by given impulses of certain types, but is otherwise free. J. L. F. Bertrand’s theorem is to the effect that the kinetic «SH»Maximum and minimum energy.«/SH»energy is «I»greater«/I» than if by impulses of the remaining types the system were constrained to take any other course. We may suppose the co-ordinates to be so chosen that the constraint is expressed by the vanishing of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH», whilst the given impulses are «MATH:\kappa, \kappa', \kappa'',\ldots\!«/MATH». Hence the energy in the actual motion is greater than in the constrained motion by the amount «MATH:\mathfrak{T}«/MATH».
-
-Again, suppose that the system is started with prescribed velocity components «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH», by means of proper impulses of the corresponding types, but is otherwise free, so that in the motion actually generated we have «MATH:\kappa = 0, \kappa'= 0, \kappa''= 0, \ldots\!«/MATH» and therefore \mathrm{K} = 0. The kinetic energy is therefore «I»less«/I» than in any other motion consistent with the prescribed velocity-conditions by the value which «MATH:\mathrm{K}\!«/MATH» assumes when «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» represent the impulses due to the constraints.
-
-Simple illustrations of these theorems are afforded by the chain of straight links already employed. Thus if a point of the chain be held fixed, or if one or more of the joints be made rigid, the energy generated by any given impulses is less than if the chain had possessed its former freedom.
-
-«CTR»2. «I»Continuous Motion of a System«/I».«/CTR»
-
-We may proceed to the continuous motion of a system. The equations of motion of any particle of the system are of the form«SH»Lagrange’s equations.«/SH»
+and it is evident that the terms in «MATH:\mathrm{R}\!«/MATH» which are bilinear in respect of the two sets of variables «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH» and «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» will disappear from the right-hand side.«P»It may be noted that the formula (30) gives immediate proof of two important theorems due to Bertrand and to Lord Kelvin respectively. Let us suppose, in the first place, that the system is started by given impulses of certain types, but is otherwise free. J. L. F. Bertrand’s theorem is to the effect that the kinetic «SH»Maximum and minimum energy.«/SH»energy is «I»greater«/I» than if by impulses of the remaining types the system were constrained to take any other course. We may suppose the co-ordinates to be so chosen that the constraint is expressed by the vanishing of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH», whilst the given impulses are «MATH:\kappa, \kappa', \kappa'',\ldots\!«/MATH». Hence the energy in the actual motion is greater than in the constrained motion by the amount «MATH:\mathfrak{T}«/MATH».«P»Again, suppose that the system is started with prescribed velocity components «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH», by means of proper impulses of the corresponding types, but is otherwise free, so that in the motion actually generated we have «MATH:\kappa = 0, \kappa'= 0, \kappa''= 0, \ldots\!«/MATH» and therefore \mathrm{K} = 0. The kinetic energy is therefore «I»less«/I» than in any other motion consistent with the prescribed velocity-conditions by the value which «MATH:\mathrm{K}\!«/MATH» assumes when «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» represent the impulses due to the constraints.«P»Simple illustrations of these theorems are afforded by the chain of straight links already employed. Thus if a point of the chain be held fixed, or if one or more of the joints be made rigid, the energy generated by any given impulses is less than if the chain had possessed its former freedom.«P»«CTR»2. «I»Continuous Motion of a System«/I».«/CTR»«P»We may proceed to the continuous motion of a system. The equations of motion of any particle of the system are of the form«SH»Lagrange’s equations.«/SH»
 
 
 «EQN:1»«MATH:m\ddot{x} = \mathrm{X}, \qquad m\ddot{y} = \mathrm{Y}, \qquad m\ddot{z} = \mathrm{Z}«/MATH»«/EQN»
@@ -222,16 +186,14 @@ Now let «MATH:x + \delta x, y + \delta y, z + \delta z\!«/MATH» be the co-ord
 «EQN:2»«MATH:\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \Sigma(\mathrm{X}\delta x + \mathrm{Y}\delta y + \mathrm{Z}\delta z)«/MATH»«/EQN»
 
 
-Lagrange’s investigation consists in the transformation of (2) into an equation involving the independent variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\delta q_{n}\!«/MATH».
-
-It is important to notice that the symbols «MATH:\delta\!«/MATH» and «MATH:d/dt\!«/MATH» are commutative, since
+Lagrange’s investigation consists in the transformation of (2) into an equation involving the independent variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\delta q_{n}\!«/MATH».«P»It is important to notice that the symbols «MATH:\delta\!«/MATH» and «MATH:d/dt\!«/MATH» are commutative, since
 
 
 «EQN:3»«MATH:\delta\dot{x} = \frac{d}{dt}(x + \delta x) - \frac{dx}{dt} = \frac{d}{dt}\delta x, \And\!\!\!\text{c.}«/MATH»«/EQN»
 
 
 Hence
-«CTR»«MATH[popout]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»«/CTR»
+«CTR»«MATH:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»«/CTR»
 
 
 «EQN:4»«MATH:= \frac{d}{dt}(p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots) - \delta\mathrm{T},«/MATH»«/EQN»
@@ -240,17 +202,15 @@ Hence
 by § 1 (14). The last member may be written
 
 
-«EQN:5»«MATH[popout]:\dot{p}_{1}\delta q_{1} + p_{1}\delta\dot{q}_{1} + \dot{p}_{2}\delta q_{2} + p_{2}\delta\dot{q}_{2} + \ldots- \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\delta q_{1} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\delta q_{2} - \ldots«/MATH»«/EQN»
+«EQN:5»«MATH:\dot{p}_{1}\delta q_{1} + p_{1}\delta\dot{q}_{1} + \dot{p}_{2}\delta q_{2} + p_{2}\delta\dot{q}_{2} + \ldots- \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\delta q_{1} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\delta q_{2} - \ldots«/MATH»«/EQN»
 
 
 Hence, omitting the terms which cancel in virtue of § 1 (13), we find
 
 
-«EQN:6»«MATH[fs=85]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \left(\dot{p}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\right) \delta q_{2} + \ldots«/MATH»«/EQN»
+«EQN:6»«MATH:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \left(\dot{p}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\right) \delta q_{2} + \ldots«/MATH»«/EQN»
 
-
-
-For the right-hand side of (2) we have
+«P»For the right-hand side of (2) we have
 
 
 «EQN:7»«MATH:\Sigma(\mathrm{X}\delta x + \mathrm{Y}\delta y + \mathrm{Z}\delta z) = \mathrm{Q}_{1}\delta q_{1} + \mathrm{Q}_{2}\delta q_{2} + \ldots,«/MATH»«/EQN»
@@ -262,9 +222,7 @@ where
 «EQN:8»«MATH:\mathrm{Q}_{r} = \Sigma\left(\mathrm{X}\frac{\partial x}{\partial q_{r}} + \mathrm{Y}\frac{\partial y}{\partial q_{r}} + \mathrm{Z}\frac{\partial z}{\partial q_{r}}\right).«/MATH»«/EQN»
 
 
-The quantities «MATH:\mathrm{Q}_{1}, \mathrm{Q}_{2}, \ldots\!«/MATH» are called the «I»generalized components of force«/I» acting on the system.
-
-Comparing (6) and (7) we find
+The quantities «MATH:\mathrm{Q}_{1}, \mathrm{Q}_{2}, \ldots\!«/MATH» are called the «I»generalized components of force«/I» acting on the system.«P»Comparing (6) and (7) we find
 
 
 «EQN:9»«MATH:\dot{p}_{1} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}} = \mathrm{Q}_{1}, \qquad\dot{p}_{2} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}} = \mathrm{Q}_{2}, \ldots,«/MATH»«/EQN»
@@ -276,11 +234,7 @@ or, restoring the values of «MATH:p_{1}, p_{2}, \ldots\!«/MATH»,
 «EQN:10»«MATH:\frac{d}{dt}\left(\frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\right) - \frac{\partial\mathrm{T} }{\partial q_{1}} = \mathrm{Q}_{1}, \qquad\frac{d}{dt}\left(\frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\right) - \frac{\partial\mathrm{T} }{\partial q_{2}} = \mathrm{Q}_{2}, \ldots«/MATH»«/EQN»
 
 
-These are Lagrange’s general equations of motion. Their number is of course equal to that of the co-ordinates «MATH:q_{1}, q_{2}, \ldots\!«/MATH» to be determined.
-
-Analytically, the above proof is that given by Lagrange, but the terminology employed is of much more recent date, having been first introduced by Lord Kelvin and P.&nbsp;G. Tait; it has greatly promoted the physical application of the subject. Another proof of the equations (10), by direct transformation of co-ordinates, has been given by Hamilton and independently by other writers (see «LN:Mechanics|Mechanics«/LN»), but the variational method of Lagrange is that which stands in closest relation to the subsequent developments of the subject. The chapter of Maxwell, already referred to, is a most instructive commentary on the subject from the physical point of view, although the proof there attempted of the equations (10) is fallacious.
-
-In a “conservative system” the work which would have to be done by extraneous forces to bring the system from rest in some standard configuration to rest in the configuration «MATH:(q_{1}, q_{2}, \ldots q_{n})\!«/MATH» is independent of the path, and may therefore be regarded as a definite function of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH». Denoting this function (the «I»potential energy«/I») by «MATH:\mathrm{V}\!«/MATH», we have, if there be no extraneous force on the system,
+These are Lagrange’s general equations of motion. Their number is of course equal to that of the co-ordinates «MATH:q_{1}, q_{2}, \ldots\!«/MATH» to be determined.«P»Analytically, the above proof is that given by Lagrange, but the terminology employed is of much more recent date, having been first introduced by Lord Kelvin and P. G. Tait; it has greatly promoted the physical application of the subject. Another proof of the equations (10), by direct transformation of co-ordinates, has been given by Hamilton and independently by other writers (see «LN:Mechanics|Mechanics«/LN»), but the variational method of Lagrange is that which stands in closest relation to the subsequent developments of the subject. The chapter of Maxwell, already referred to, is a most instructive commentary on the subject from the physical point of view, although the proof there attempted of the equations (10) is fallacious.«P»In a “conservative system” the work which would have to be done by extraneous forces to bring the system from rest in some standard configuration to rest in the configuration «MATH:(q_{1}, q_{2}, \ldots q_{n})\!«/MATH» is independent of the path, and may therefore be regarded as a definite function of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH». Denoting this function (the «I»potential energy«/I») by «MATH:\mathrm{V}\!«/MATH», we have, if there be no extraneous force on the system,
 
 
 «EQN:11»«MATH:\Sigma(\mathrm{X}\delta x + \mathrm{Y}\delta y + \mathrm{Z}\delta z) = - \delta \mathrm{V},«/MATH»«/EQN»
@@ -304,9 +258,7 @@ or, again,
 «EQN:14»«MATH:\dot{p}_{r} = - \frac{\partial}{\partial q_{r}}(\mathrm{V} - \mathrm{T}).«/MATH»«/EQN»
 
 
-It has been proposed by Helmholtz to give the name «I»kinetic potential«/I» to the combination «MATH:\mathrm{V} - \mathrm{T}«/MATH».
-
-As shown under «LN:Mechanics|Mechanics«/LN», § 22, we derive from (10)
+It has been proposed by Helmholtz to give the name «I»kinetic potential«/I» to the combination «MATH:\mathrm{V} - \mathrm{T}«/MATH».«P»As shown under «LN:Mechanics|Mechanics«/LN», § 22, we derive from (10)
 
 
 «EQN:15»«MATH:\frac{d\mathrm{T}}{dt} = \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
@@ -318,11 +270,7 @@ and therefore in the case of a conservative system free from extraneous force,
 «EQN:16»«MATH:\frac{d}{dt}(\mathrm{T} + \mathrm{V}) = 0\text{ or }\mathrm{T} + \mathrm{V} = \text{const.},«/MATH»«/EQN»
 
 
-which is the equation of energy. For examples of the application of the formula (13) see «LN:Mechanics|Mechanics«/LN», § 22.
-
-«CTR»3. «I»Constrained Systems.«/I»«/CTR»
-
-It has so far been assumed that the geometrical relations, if any, which exist between the various parts of the system are of the type § 1 (1), and so do not contain «MATH:t«/MATH» explicitly. The extension of Lagrange’s equations to the case of “varying relations” of the type«SH»Case of varying relations.«/SH»
+which is the equation of energy. For examples of the application of the formula (13) see «LN:Mechanics|Mechanics«/LN», § 22.«P»«CTR»3. «I»Constrained Systems.«/I»«/CTR»«P»It has so far been assumed that the geometrical relations, if any, which exist between the various parts of the system are of the type § 1 (1), and so do not contain «MATH:t«/MATH» explicitly. The extension of Lagrange’s equations to the case of “varying relations” of the type«SH»Case of varying relations.«/SH»
 
 
 «EQN:1»«MATH:x = f(t, q_{1}, q_{2}, \ldots q_{n}), y = \And\text{c.}, z = \And\text{c.},«/MATH»«/EQN»
@@ -342,7 +290,7 @@ was made by J. M. L. Vieille. We now have
 so that the expression § 1 (8) for the kinetic energy is to be replaced by
 
 
-«EQN:4»«MATH[fs=80]:2\mathrm{T} = \alpha_{0} + 2\alpha_{1}\dot{q}_{1} + 2\alpha_{2}\dot{q}_{2} + \ldots+ \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots + \mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
+«EQN:4»«MATH:2\mathrm{T} = \alpha_{0} + 2\alpha_{1}\dot{q}_{1} + 2\alpha_{2}\dot{q}_{2} + \ldots+ \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots + \mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
 
 
 where
@@ -352,18 +300,16 @@ where
 
 
 and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given by § 1 (7). It is to be remembered that the coefficients «MATH:\alpha_{0}, \alpha_{1}, \alpha_{2}, \ldots \mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12} \ldots\!«/MATH» will in general involve «MATH:t\!«/MATH» explicitly as well as implicitly through the co-ordinates «MATH:q_{1}, q_{2},\ldots\!«/MATH». Again, we find
-«CTR»«MATH[popout]:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»«/CTR»
+«CTR»«MATH:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»«/CTR»
 
 
 «EQN:6»«MATH:= \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta q_{1} + \frac{\partial \mathrm{T}}{\partial\dot{q}_{2}}\delta q_{2} + \ldots= p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots,«/MATH»«/EQN»
 
 
-where «MATH:p_{r}\!«/MATH» is defined as in § 1 (13). The derivation of Lagrange’s equations then follows exactly as before. It is to be noted that the equation § 2 (15) does not as a rule now hold. The proof involved the assumption that «MATH:\mathrm{T}\!«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}\ldots\!«/MATH».
-
-It has been pointed out by R. B. Hayward that Vieille’s case can be brought under Lagrange’s by introducing a new co-ordinate («MATH:\chi\!«/MATH») in place of «MATH:t\!«/MATH», so far as it appears explicitly in the relations (1). We have then
+where «MATH:p_{r}\!«/MATH» is defined as in § 1 (13). The derivation of Lagrange’s equations then follows exactly as before. It is to be noted that the equation § 2 (15) does not as a rule now hold. The proof involved the assumption that «MATH:\mathrm{T}\!«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}\ldots\!«/MATH».«P»It has been pointed out by R. B. Hayward that Vieille’s case can be brought under Lagrange’s by introducing a new co-ordinate («MATH:\chi\!«/MATH») in place of «MATH:t\!«/MATH», so far as it appears explicitly in the relations (1). We have then
 
 
-«EQN:7»«MATH[popout]:2\mathrm{T} = \alpha_{0}\dot{\chi}^2 + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots+ 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots.«/MATH»«/EQN»
+«EQN:7»«MATH:2\mathrm{T} = \alpha_{0}\dot{\chi}^2 + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots+ 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots.«/MATH»«/EQN»
 
 
 The equations of motion will be as in § 2 (10), with the additional equation
@@ -372,18 +318,16 @@ The equations of motion will be as in § 2 (10), with the additional equation
 «EQN:8»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{\chi}} - \frac{\partial \mathrm{T}}{\partial\chi} = \mathrm{X},«/MATH»«/EQN»
 
 
-where «MATH:\mathrm{X}\!«/MATH» is the force corresponding to the co-ordinate «MATH:\chi«/MATH». We may suppose «MATH:\mathrm{X}«/MATH» to be adjusted so as to make «MATH:\ddot{\chi} = 0«/MATH», and in the remaining equations nothing is altered if we write «MATH:t«/MATH» for «MATH:\chi«/MATH» before, instead of after, the differentiations. The reason why the equation §&nbsp;2 (15) no longer holds is that we should require to add a term «MATH:\mathrm{X}\dot{\chi}«/MATH» on the right-hand side; this represents the rate at which work is being done by the constraining forces required to keep «MATH:\dot{\chi}«/MATH» constant.
-
-As an example, let «MATH:x, y, z\!«/MATH» be the co-ordinates of a particle relative to axes fixed in a solid which is free to rotate about the axis of «MATH:z\!«/MATH». If «MATH:\phi\!«/MATH» be the angular co-ordinate of the solid, we find without difficulty
+where «MATH:\mathrm{X}\!«/MATH» is the force corresponding to the co-ordinate «MATH:\chi«/MATH». We may suppose «MATH:\mathrm{X}«/MATH» to be adjusted so as to make «MATH:\ddot{\chi} = 0«/MATH», and in the remaining equations nothing is altered if we write «MATH:t«/MATH» for «MATH:\chi«/MATH» before, instead of after, the differentiations. The reason why the equation § 2 (15) no longer holds is that we should require to add a term «MATH:\mathrm{X}\dot{\chi}«/MATH» on the right-hand side; this represents the rate at which work is being done by the constraining forces required to keep «MATH:\dot{\chi}«/MATH» constant.«P»As an example, let «MATH:x, y, z\!«/MATH» be the co-ordinates of a particle relative to axes fixed in a solid which is free to rotate about the axis of «MATH:z\!«/MATH». If «MATH:\phi\!«/MATH» be the angular co-ordinate of the solid, we find without difficulty
 
 
-«EQN:9»«MATH[fs=95]:2\mathrm{T} = m (\dot{x}^2 + \dot{y}^2 +\dot{z}^2) + 2\dot{\phi}m (x\dot{y} - y\dot{x}) + {\mathrm{I} + m (x^2 + y^2)} \dot{\phi}^2,«/MATH»«/EQN»
+«EQN:9»«MATH:2\mathrm{T} = m (\dot{x}^2 + \dot{y}^2 +\dot{z}^2) + 2\dot{\phi}m (x\dot{y} - y\dot{x}) + {\mathrm{I} + m (x^2 + y^2)} \dot{\phi}^2,«/MATH»«/EQN»
 
 
 where «MATH:\mathrm{I}\!«/MATH» is the moment of inertia of the solid. The equations of motion, viz.
 
 
-«EQN:10»«MATH[fs=85]:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{x}} - \frac{\partial \mathrm{T}}{\partial x} = \mathrm{X}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{y}} - \frac{\partial \mathrm{T}}{\partial y} = \mathrm{Y}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{z}} - \frac{\partial \mathrm{T}}{\partial z} = \mathrm{Z},«/MATH»«/EQN»
+«EQN:10»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{x}} - \frac{\partial \mathrm{T}}{\partial x} = \mathrm{X}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{y}} - \frac{\partial \mathrm{T}}{\partial y} = \mathrm{Y}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{z}} - \frac{\partial \mathrm{T}}{\partial z} = \mathrm{Z},«/MATH»«/EQN»
 
 
 and
@@ -395,7 +339,7 @@ and
 become
 
 
-«EQN:12»«MATH[fs=85]:m (\ddot{x} - 2\dot{\phi}\dot{y} - x\dot{\phi}^2 - y\ddot{\phi}) = \mathrm{X}, m (\ddot{y} + 2\dot{\phi}\dot{x} - y\dot{\phi}^2 + x\ddot{\phi}) = \mathrm{Y}, m\ddot{z} = \mathrm{Z},«/MATH»«/EQN»
+«EQN:12»«MATH:m (\ddot{x} - 2\dot{\phi}\dot{y} - x\dot{\phi}^2 - y\ddot{\phi}) = \mathrm{X}, m (\ddot{y} + 2\dot{\phi}\dot{x} - y\dot{\phi}^2 + x\ddot{\phi}) = \mathrm{Y}, m\ddot{z} = \mathrm{Z},«/MATH»«/EQN»
 
 
 and
@@ -416,12 +360,10 @@ where «MATH:\omega\!«/MATH» has been written for «MATH:\phi\!«/MATH». Thes
 «EQN:15»«MATH:2\mathrm{T} = m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) + 2m\omega(x\dot{y} - y\dot{x}) + m\omega^2 (x^2 + y^2),«/MATH»«/EQN»
 
 
-which gives the kinetic energy of the particle referred to axes rotating with the constant angular velocity «MATH:\omega\!«/MATH». (See «LN:Mechanics|Mechanics«/LN», § 13.)
-
-More generally, let us suppose that we have a certain group of co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» whose absolute values do not affect the expression for the kinetic energy, and that by suitable forces of the corresponding types the velocity-components «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH» are maintained constant. The remaining co-ordinates being denoted by «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», we may write
+which gives the kinetic energy of the particle referred to axes rotating with the constant angular velocity «MATH:\omega\!«/MATH». (See «LN:Mechanics|Mechanics«/LN», § 13.)«P»More generally, let us suppose that we have a certain group of co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» whose absolute values do not affect the expression for the kinetic energy, and that by suitable forces of the corresponding types the velocity-components «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH» are maintained constant. The remaining co-ordinates being denoted by «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», we may write
 
 
-«EQN:16»«MATH[fs=80]:2\mathrm{T} = \mathfrak{T} + \mathrm{T}_{0} + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + 2(\alpha'_{1}\dot{q}_{1} + \alpha'_{2}\dot{q}_{2} + \ldots) \dot{\chi}' + \ldots,«/MATH»«/EQN»
+«EQN:16»«MATH:2\mathrm{T} = \mathfrak{T} + \mathrm{T}_{0} + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + 2(\alpha'_{1}\dot{q}_{1} + \alpha'_{2}\dot{q}_{2} + \ldots) \dot{\chi}' + \ldots,«/MATH»«/EQN»
 
 
 where «MATH:\mathfrak{T}«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» of the type § 1 (8), whilst «MATH:\mathrm{T}_{0}\!«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH» alone. The remaining terms, which are bilinear in respect of the two sets of velocities, are indicated more fully. The formulae (10) of § 2 give «MATH:n«/MATH» equations of the type
@@ -453,9 +395,7 @@ or, in case the forces «MATH:\mathrm{Q}_{r}\!«/MATH» depend only on the co-or
 
 «EQN:21»«MATH:\mathfrak{T} + \mathrm{V} - \mathrm{T}_{0} = \text{const.}«/MATH»«/EQN»
 
-
-
-The conditions that the equations (17) should be satisfied by zero values of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» are
+«P»The conditions that the equations (17) should be satisfied by zero values of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» are
 
 
 «EQN:22»«MATH:\mathrm{Q}_{r} = - \frac{\partial \mathrm{T}_{0}}{\partial q_{r}},«/MATH»«/EQN»
@@ -467,9 +407,7 @@ or in the case of conservative forces
 «EQN:23»«MATH:\frac{\partial}{\partial q_{r}}(\mathrm{V} - \mathrm{T}_{0}) = 0,«/MATH»«/EQN»
 
 
-«I»i.e.«/I» the value of «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH» must be «I»stationary«/I».
-
-We may apply this to the case of a system whose configuration relative to axes rotating with constant angular velocity («MATH:\omega\!«/MATH») is defined by means of the «MATH:n«/MATH» co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH». This is important on account of its bearing on the kinetic theory of the tides. Since the Cartesian co-ordinates «MATH:x, y, z\!«/MATH» of any particle «MATH:m«/MATH» of «SH»Rotating axes.«/SH»the system relative to the moving axes are functions of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», of the form § 1 (1), we have, by (15)
+«I»i.e.«/I» the value of «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH» must be «I»stationary«/I».«P»We may apply this to the case of a system whose configuration relative to axes rotating with constant angular velocity («MATH:\omega\!«/MATH») is defined by means of the «MATH:n«/MATH» co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH». This is important on account of its bearing on the kinetic theory of the tides. Since the Cartesian co-ordinates «MATH:x, y, z\!«/MATH» of any particle «MATH:m«/MATH» of «SH»Rotating axes.«/SH»the system relative to the moving axes are functions of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», of the form § 1 (1), we have, by (15)
 
 
 «EQN:24»«MATH:2\mathfrak{T} = \Sigma m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2), \qquad 2\mathrm{T}_{0} = \omega^2\Sigma m (x^2 + y^2),«/MATH»«/EQN»
@@ -486,21 +424,15 @@ whence
 «EQN:26»«MATH:(r, s) = 2\omega\cdot \Sigma m\frac{\partial(x, y)}{\partial(q_{s}, q_{r})}.«/MATH»«/EQN»
 
 
-The conditions of relative equilibrium are given by (23).
-
-It will be noticed that this expression «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH», which is to be stationary, differs from the true potential energy by a term which represents the potential energy of the system in relation to fictitious “centrifugal forces.” The question of stability of relative equilibrium will be noticed later (§ 6).
-
-It should be observed that the remarkable formula (20) may in the present case be obtained directly as follows. From (15) and (14) we find
+The conditions of relative equilibrium are given by (23).«P»It will be noticed that this expression «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH», which is to be stationary, differs from the true potential energy by a term which represents the potential energy of the system in relation to fictitious “centrifugal forces.” The question of stability of relative equilibrium will be noticed later (§ 6).«P»It should be observed that the remarkable formula (20) may in the present case be obtained directly as follows. From (15) and (14) we find
 
 
-«EQN:27»«MATH[fs=80]:\frac{d\mathrm{T}}{dt} = \frac{d}{dt}(\mathfrak{T} + \mathrm{T}_{0}) + \omega\cdot \Sigma m (x\ddot{y} - y\ddot{x}) = \frac{d}{dt}(\mathfrak{T} - \mathrm{T}_{0}) + \omega\cdot \Sigma(x\mathrm{Y} - y\mathrm{X}).«/MATH»«/EQN»
+«EQN:27»«MATH:\frac{d\mathrm{T}}{dt} = \frac{d}{dt}(\mathfrak{T} + \mathrm{T}_{0}) + \omega\cdot \Sigma m (x\ddot{y} - y\ddot{x}) = \frac{d}{dt}(\mathfrak{T} - \mathrm{T}_{0}) + \omega\cdot \Sigma(x\mathrm{Y} - y\mathrm{X}).«/MATH»«/EQN»
 
 
 PAGE:786This must be equal to the rate at which the forces acting on the system do work, viz. to
-«CTR»«MATH:\omega\Sigma(x\mathrm{Y} - y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH»«/CTR»
-where the first term represents the work done in virtue of the rotation.
-
-We have still to notice the modifications which Lagrange’s equations undergo when the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» are not all independently variable. In the first place, we may suppose them connected by a number «MATH:m (< n)\!«/MATH» of relations of the type«SH»Constrained systems.«/SH»
+«CTR»«MATH:\omega\Sigma(x\mathrm{Y} -  y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH»«/CTR»
+where the first term represents the work done in virtue of the rotation.«P»We have still to notice the modifications which Lagrange’s equations undergo when the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» are not all independently variable. In the first place, we may suppose them connected by a number «MATH:m (< n)\!«/MATH» of relations of the type«SH»Constrained systems.«/SH»
 
 
 «EQN:28»«MATH:\mathrm{A} (t, q_{1}, q_{2}, \ldots q_{n}) = 0, \qquad \mathrm{B} (t, q_{1}, q_{2}, \ldots q_{n}) = 0, \And\text{c.}«/MATH»«/EQN»
@@ -509,7 +441,7 @@ We have still to notice the modifications which Lagrange’s equations undergo w
 These may be interpreted as introducing partial constraints into a previously free system. The variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\delta q_{n}\!«/MATH» in the expressions (6) and (7) of § 2 which are to be equated are no longer independent, but are subject to the relations
 
 
-«EQN:29»«MATH[fs=90]:\frac{\partial \mathrm{A}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{A}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \qquad\frac{\partial \mathrm{B}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{B}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \And\text{c.}«/MATH»«/EQN»
+«EQN:29»«MATH:\frac{\partial \mathrm{A}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{A}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \qquad\frac{\partial \mathrm{B}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{B}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \And\text{c.}«/MATH»«/EQN»
 
 
 Introducing indeterminate multipliers «MATH:\lambda, \mu, \ldots\!«/MATH», one for each of these equations, we obtain in the usual manner «MATH:n\!«/MATH» equations of the type
@@ -518,14 +450,10 @@ Introducing indeterminate multipliers «MATH:\lambda, \mu, \ldots\!«/MATH», on
 «EQN:30»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{q}_{r}} - \frac{\partial \mathrm{T}}{\partial q_{r}} = \mathrm{Q}_{r} + \lambda\frac{\partial \mathrm{A}}{\partial q_{r}} + \mu\frac{\partial \mathrm{B}}{\partial q_{r}} + \ldots,«/MATH»«/EQN»
 
 
-in place of § 2 (10). These equations, together with (28), serve to determine the «MATH:n\!«/MATH» co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» and the «MATH:m\!«/MATH» multipliers «MATH:\lambda, \mu, \ldots\!«/MATH».
-
-When «MATH:t\!«/MATH» does not occur explicitly in the relations (28) the system is said to be «I»holonomic«/I». The term connotes the existence of integral (as opposed to differential) relations between the co-ordinates, independent of the time.
-
-Again, it may happen that although there are no prescribed relations between the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», yet from the circumstances of the problem certain geometrical conditions are imposed on their «I»variations«/I», thus
+in place of § 2 (10). These equations, together with (28), serve to determine the «MATH:n\!«/MATH» co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» and the «MATH:m\!«/MATH» multipliers «MATH:\lambda, \mu, \ldots\!«/MATH».«P»When «MATH:t\!«/MATH» does not occur explicitly in the relations (28) the system is said to be «I»holonomic«/I». The term connotes the existence of integral (as opposed to differential) relations between the co-ordinates, independent of the time.«P»Again, it may happen that although there are no prescribed relations between the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», yet from the circumstances of the problem certain geometrical conditions are imposed on their «I»variations«/I», thus
 
 
-«EQN:31»«MATH[fs=95]:\mathrm{A}_{1}\delta q_{1} + \mathrm{A}_{2}\delta q_{2} + \ldots = 0, \qquad \mathrm{B}_{1}\delta q_{1} + \mathrm{B}_{2}\delta q_{2} + \ldots = 0, \And\text{c.},«/MATH»«/EQN»
+«EQN:31»«MATH:\mathrm{A}_{1}\delta q_{1} + \mathrm{A}_{2}\delta q_{2} + \ldots = 0, \qquad \mathrm{B}_{1}\delta q_{1} + \mathrm{B}_{2}\delta q_{2} + \ldots = 0, \And\text{c.},«/MATH»«/EQN»
 
 
 where the coefficients are functions of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» and (possibly) of «MATH:t\!«/MATH». It is assumed that these equations are not integrable as regards the variables «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH»; otherwise, we fall back on the previous conditions. Cases of the present type arise, for instance, in ordinary dynamics when we have a solid rolling on a (fixed or moving) surface. The six co-ordinates which serve to specify the position of the solid at any instant are not subject to any necessary relation, but the conditions to be satisfied at the point of contact impose three conditions of the form (31). The general equations of motion are obtained, as before, by the method of indeterminate multipliers, thus
@@ -540,11 +468,7 @@ The co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}«/MATH», and the indetermina
 «EQN:33»«MATH:\mathrm{A}_{1}\dot{q}_{1} + \mathrm{A}_{2}\dot{q}_{2} + \ldots = 0, \qquad \mathrm{B}_{1}\dot{q}_{1} + \mathrm{B}_{2}\dot{q}_{2} + \ldots = 0, \And\!\!\!\text{c.}«/MATH»«/EQN»
 
 
-Systems of this kind, where the relations (31) are not integrable, are called «I»non-holonomic«/I».
-
-«CTR»4. «I»Hamiltonian Equations of Motion«/I».«/CTR»
-
-In the Hamiltonian form of the equations of motion of a conservative system with unvarying relations, the kinetic energy is supposed expressed in terms of the momenta «MATH:p_{1}, p_{2}, \ldots\!«/MATH» and the co-ordinates «MATH:q_{1}, q_{2}, \ldots\!«/MATH», as in § 1 (19). Since the symbol «MATH:\delta\!«/MATH» now denotes a variation extending to the co-ordinates as well as to the momenta, we must add to the last member of § 1 (21) terms of the types
+Systems of this kind, where the relations (31) are not integrable, are called «I»non-holonomic«/I».«P»«CTR»4. «I»Hamiltonian Equations of Motion«/I».«/CTR»«P»In the Hamiltonian form of the equations of motion of a conservative system with unvarying relations, the kinetic energy is supposed expressed in terms of the momenta «MATH:p_{1}, p_{2}, \ldots\!«/MATH» and the co-ordinates «MATH:q_{1}, q_{2}, \ldots\!«/MATH», as in § 1 (19). Since the symbol «MATH:\delta\!«/MATH» now denotes a variation extending to the co-ordinates as well as to the momenta, we must add to the last member of § 1 (21) terms of the types
 
 
 «EQN:1»«MATH:\frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{T}'}{\partial q_{2}}\delta q_{2} + \ldots«/MATH»«/EQN»
@@ -580,16 +504,12 @@ If to these we join the equations
 «EQN:6»«MATH:\dot{q}_{1} = \frac{\partial \mathrm{H}}{\partial p_{1}}, \qquad\dot{q}_{2} = \frac{\partial \mathrm{H}}{\partial p_{2}}, \ldots,«/MATH»«/EQN»
 
 
-which follow at once from § 1 (23), since «MATH:\mathrm{V}\!«/MATH» does not involve «MATH:p_{1}, p_{2}, \ldots\!«/MATH», we obtain a complete system of differential equations «I»of the first order«/I» for the determination of the motion.
-
-The equation of energy is verified immediately by (5) and (6), since these make
+which follow at once from § 1 (23), since «MATH:\mathrm{V}\!«/MATH» does not involve «MATH:p_{1}, p_{2}, \ldots\!«/MATH», we obtain a complete system of differential equations «I»of the first order«/I» for the determination of the motion.«P»The equation of energy is verified immediately by (5) and (6), since these make
 
 
 «EQN:7»«MATH:\frac{d\mathrm{H}}{dt} = \frac{\partial \mathrm{H}}{\partial p_{1}}\dot{p}_{1} + \frac{\partial \mathrm{H}}{\partial p_{2}}\dot{p}_{2} + \ldots + \frac{\partial \mathrm{H}}{\partial q_{1}}\dot{q}_{1} + \frac{\partial \mathrm{H}}{\partial q_{2}}\dot{q}_{2} + \ldots = 0.«/MATH»«/EQN»
 
-
-
-The Hamiltonian transformation is extended to the case of varying relations as follows. Instead of (4) we write
+«P»The Hamiltonian transformation is extended to the case of varying relations as follows. Instead of (4) we write
 
 
 «EQN:8»«MATH:\mathrm{H} = p_{1}\dot{q}_{1} + p_{2}\dot{q}_{2} + \ldots- \mathrm{T} + \mathrm{V},«/MATH»«/EQN»
@@ -619,13 +539,7 @@ It follows from (11) that
 «EQN:12»«MATH:\dot{p}_{1} = - \frac{\partial \mathrm{H}}{\partial q_{1}}, \qquad\dot{p}_{2} = - \frac{\partial \mathrm{H}}{\partial q_{2}}, \ldots.«/MATH»«/EQN»
 
 
-The equations (10) and (12) have the same form as above, but «MATH:\mathrm{H}«/MATH» is no longer equal to the energy of the system.
-
-«CTR»5. «I»Cyclic Systems«/I».«/CTR»
-
-A «I»cyclic«/I» or «I»gyrostatic«/I» system is characterized by the following properties. In the first place, the kinetic energy is not affected if we alter the absolute values of certain of the co-ordinates, which we will denote by «MATH:\chi, \chi', \chi'', \ldots\!«/MATH», provided the remaining co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» and the velocities, including of course the velocities «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH», are unaltered. Secondly, there are no forces acting on the system of the types «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». This case arises, for example, when the system includes gyrostats which are free to rotate about their axes, the co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» then being the angular co-ordinates of the gyrostats relatively to their frames. Again, in theoretical hydrodynamics we have the problem of moving solids in a frictionless liquid; the ignored co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» then refer to the fluid, and are infinite in number. The same question presents itself in various physical speculations where certain phenomena are ascribed to the existence of «I»latent motions«/I» in the ultimate constituents of matter. The general theory of such systems has been treated by E. J. Routh, Lord Kelvin, and H. L. F. Helmholtz.
-
-If we suppose the kinetic energy «MATH:\mathrm{T}\!«/MATH» to be expressed, as in Lagrange’s method, in terms of the co-ordinates and the velocities, the equations of motion corresponding to «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» reduce, in virtue of the above hypotheses, to the forms«SH»Routh’s equations.«/SH»
+The equations (10) and (12) have the same form as above, but «MATH:\mathrm{H}«/MATH» is no longer equal to the energy of the system.«P»«CTR»5. «I»Cyclic Systems«/I».«/CTR»«P»A «I»cyclic«/I» or «I»gyrostatic«/I» system is characterized by the following properties. In the first place, the kinetic energy is not affected if we alter the absolute values of certain of the co-ordinates, which we will denote by «MATH:\chi, \chi', \chi'', \ldots\!«/MATH», provided the remaining co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» and the velocities, including of course the velocities «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH», are unaltered. Secondly, there are no forces acting on the system of the types «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». This case arises, for example, when the system includes gyrostats which are free to rotate about their axes, the co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» then being the angular co-ordinates of the gyrostats relatively to their frames. Again, in theoretical hydrodynamics we have the problem of moving solids in a frictionless liquid; the ignored co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» then refer to the fluid, and are infinite in number. The same question presents itself in various physical speculations where certain phenomena are ascribed to the existence of «I»latent motions«/I» in the ultimate constituents of matter. The general theory of such systems has been treated by E. J. Routh, Lord Kelvin, and H. L. F. Helmholtz.«P»If we suppose the kinetic energy «MATH:\mathrm{T}\!«/MATH» to be expressed, as in Lagrange’s method, in terms of the co-ordinates and the velocities, the equations of motion corresponding to «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» reduce, in virtue of the above hypotheses, to the forms«SH»Routh’s equations.«/SH»
 
 
 «EQN:1»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{\chi}} = 0, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{\chi}'} = 0, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{\chi}''} = 0, \ldots,«/MATH»«/EQN»
@@ -637,16 +551,14 @@ whence
 «EQN:2»«MATH:\frac{\partial \mathrm{T}}{\partial\dot{\chi}} = \kappa, \qquad\frac{\partial \mathrm{T}}{\partial\dot{\chi}'} = \kappa', \qquad\frac{\partial \mathrm{T}}{\partial\dot{\chi}''} = \kappa'', \ldots,«/MATH»«/EQN»
 
 
-where «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» are the constant momenta corresponding to the cyclic co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». These equations are linear in «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH»; solving them with respect to these quantities and substituting in the remaining Lagrangian equations, we obtain «MATH:m\!«/MATH» differential equations to determine the remaining co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The object of the present investigation is to ascertain the general form of the resulting equations. The retained co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» may be called (for distinction) the «I»palpable«/I» co-ordinates of the system; in many practical questions they are the only co-ordinates directly in evidence.
-
-If, as in § 1 (25), we write
+where «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» are the constant momenta corresponding to the cyclic co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH». These equations are linear in «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH»; solving them with respect to these quantities and substituting in the remaining Lagrangian equations, we obtain «MATH:m\!«/MATH» differential equations to determine the remaining co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The object of the present investigation is to ascertain the general form of the resulting equations. The retained co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» may be called (for distinction) the «I»palpable«/I» co-ordinates of the system; in many practical questions they are the only co-ordinates directly in evidence.«P»If, as in § 1 (25), we write
 
 
 «EQN:3»«MATH:\mathrm{R} = \mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \kappa''\dot{\chi}'' - \ldots,«/MATH»«/EQN»
 
 
 and imagine «MATH:\mathrm{R}«/MATH» to be expressed by means of (2) as a quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH» with coefficients which are in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», then, performing the operation «MATH:\delta\!«/MATH» on both sides, we find
-«CTR»«MATH[popout]:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»«/CTR»
+«CTR»«MATH:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots  = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»«/CTR»
 
 
 «EQN:4»«MATH:+ \frac{\partial \mathrm{T}}{\partial\dot{\chi}}\delta\dot{\chi} + \ldots + \frac{\partial \mathrm{T}}{\partial\chi_{1}}\delta q_{1} + \ldots- \kappa\delta\dot{\chi} - \dot{\chi}\delta\kappa- \ldots.«/MATH»«/EQN»
@@ -667,31 +579,23 @@ and imagine «MATH:\mathrm{R}«/MATH» to be expressed by means of (2) as a quad
 
 «EQN:7»«MATH:\dot{\chi} = - \frac{\partial \mathrm{R}}{\partial\kappa}, \qquad\dot{\chi}' = - \frac{\partial \mathrm{R}}{\partial\kappa'}, \qquad\dot{\chi}'' = - \frac{\partial \mathrm{R}}{\partial\kappa''}, \ldots«/MATH»«/EQN»
 
-
-
-Substituting in § 2 (10), we have
+«P»Substituting in § 2 (10), we have
 
 
 «EQN:8»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}} - \frac{\partial \mathrm{R}}{\partial q_{1}} = \mathrm{Q}_{1}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{2}} - \frac{\partial \mathrm{R}}{\partial q_{2}} = \mathrm{Q}_{2}, \ldots«/MATH»«/EQN»
 
 
-These are Routh’s forms of the modified Lagrangian equations. Equivalent forms were obtained independently by Helmholtz at a later date.
-
-The function «MATH:\mathrm{R}\!«/MATH» is made up of three parts, thus
+These are Routh’s forms of the modified Lagrangian equations. Equivalent forms were obtained independently by Helmholtz at a later date.«P»The function «MATH:\mathrm{R}\!«/MATH» is made up of three parts, thus
 
 
 «EQN:9»«MATH:\mathrm{R} = \mathrm{R}_{2, 0} + \mathrm{R}_{1, 1} + \mathrm{R}_{0, 2}, \ldots«/MATH»«/EQN»
 
-
-
-where «MATH:\mathrm{R}_{2, 0}\!«/MATH» is a homogeneous quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \mathrm{R}_{0, 2}\!«/MATH» is a homogeneous quadratic function of «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», whilst «MATH:\mathrm{R}_{1, 1}\!«/MATH» consists of products of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH» into the momenta «MATH:\kappa, \kappa', \kappa''\ldots\!«/MATH». Hence from (3) and (7) we have«SH»Kelvin’s equations.«/SH»
+«P»where «MATH:\mathrm{R}_{2, 0}\!«/MATH» is a homogeneous quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \mathrm{R}_{0, 2}\!«/MATH» is a homogeneous quadratic function of «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», whilst «MATH:\mathrm{R}_{1, 1}\!«/MATH» consists of products of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}\!«/MATH» into the momenta «MATH:\kappa, \kappa', \kappa''\ldots\!«/MATH». Hence from (3) and (7) we have«SH»Kelvin’s equations.«/SH»
 
 
 «EQN:10»«MATH:\mathrm{T} = \mathrm{R} - \left(\kappa\frac{\partial \mathrm{R}}{\partial\kappa} + \kappa'\frac{\partial \mathrm{R}}{\partial\kappa'} + \kappa''\frac{\partial \mathrm{R}}{\partial\kappa''} + \ldots\right) = \mathrm{R}_{2, 0} - \mathrm{R}_{0, 2}.«/MATH»«/EQN»
 
-
-
-If, as in § 1 (30), we write this in the form
+«P»If, as in § 1 (30), we write this in the form
 
 
 «EQN:11»«MATH:\mathrm{T} = \mathfrak{T} + \mathrm{K},«/MATH»«/EQN»
@@ -712,7 +616,7 @@ where «MATH:\beta_{1}, \beta_{2}, \ldots\!«/MATH» are linear functions of «M
 the coefficients «MATH:\alpha_{r}, \alpha'_{r}, \alpha''_{r}, \ldots\!«/MATH» being in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». Evidently «MATH:\beta_{r}\!«/MATH» denotes that part of the momentum-component «MATH:\partial \mathrm{R} / \partial\dot{q}_{r}\!«/MATH» which is due to the cyclic motions. Now
 
 
-«EQN:14»«MATH[fs=95]:\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{r}} =\frac{d}{dt}\left(\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \beta_{r}\right) = \frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \frac{\partial\beta_{r}}{\partial q_{1}}\dot{q}_{1} + \frac{\partial\beta_{r}}{\partial q_{2}}\dot{q}_{2}+ \ldots,«/MATH»«/EQN»
+«EQN:14»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{r}} =\frac{d}{dt}\left(\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \beta_{r}\right) = \frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \frac{\partial\beta_{r}}{\partial q_{1}}\dot{q}_{1} + \frac{\partial\beta_{r}}{\partial q_{2}}\dot{q}_{2}+ \ldots,«/MATH»«/EQN»
 
 
 
@@ -723,7 +627,7 @@ the coefficients «MATH:\alpha_{r}, \alpha'_{r}, \alpha''_{r}, \ldots\!«/MATH»
 Hence, substituting in (8), we obtain the typical equation of motion of a gyrostatic system in the form
 
 
-«EQN:16»«MATH[fs=85]:\frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} - \frac{\partial\mathfrak{T}}{\partial q_{r}} + (r, 1) \dot{q}_{1} + (r, 2) \dot{q}_{2} + \ldots + (r, s) \dot{q}_{s} + \ldots + \frac{\partial \mathrm{K}}{\partial q_{r}} = \mathrm{Q}_{r},«/MATH»«/EQN»
+«EQN:16»«MATH:\frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} - \frac{\partial\mathfrak{T}}{\partial q_{r}} + (r, 1) \dot{q}_{1} + (r, 2) \dot{q}_{2} + \ldots + (r, s) \dot{q}_{s} + \ldots + \frac{\partial \mathrm{K}}{\partial q_{r}} = \mathrm{Q}_{r},«/MATH»«/EQN»
 
 
 where
@@ -731,16 +635,12 @@ where
 
 «EQN:17»«MATH:(r, s) = \frac{\partial\beta_{r}}{\partial q_{s}} - \frac{\partial\beta_{s}}{\partial q_{r}}.«/MATH»«/EQN»
 
-
-
-This form is due to Lord Kelvin. When «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» have been determined, as functions of the time, the velocities corresponding to the cyclic co-ordinates can be found, if required, from the relations (7), which may be written
+«P»This form is due to Lord Kelvin. When «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» have been determined, as functions of the time, the velocities corresponding to the cyclic co-ordinates can be found, if required, from the relations (7), which may be written
 
 
 «EQN:18»«MATH:\left.\begin{align}\dot{\chi} &= \frac{\partial \mathrm{K}}{\partial\kappa} - \alpha_{1}\dot{q}_{1} - \alpha_{2}\dot{q}_{2} - \ldots,\\ \dot{\chi}' &= \frac{\partial \mathrm{K}}{\partial\kappa'} - \alpha'_{1}\dot{q}_{1} - \alpha'_{2}\dot{q}_{2} - \ldots,\\ &\qquad\And\!\!\!\text{c.}, \And\!\!\!\text{c.}\end{align}\right\}«/MATH»«/EQN»
 
-
-
-It is to be particularly noticed that
+«P»It is to be particularly noticed that
 
 
 «EQN:19»«MATH:(r, r) = 0, (r, s) = - (s, r).«/MATH»«/EQN»
@@ -758,21 +658,13 @@ or, in the case of a conservative system
 «EQN:21»«MATH:\mathfrak{T} + \mathrm{V} + \mathrm{K} = \text{const.},«/MATH»«/EQN»
 
 
-which is the equation of energy.
-
-The equation (16) includes § 3 (17) as a particular case, the eliminated co-ordinate being the angular co-ordinate of a rotating solid having an infinite moment of inertia.
-
-In the particular case where the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» are all zero, (16) reduces to
+which is the equation of energy.«P»The equation (16) includes § 3 (17) as a particular case, the eliminated co-ordinate being the angular co-ordinate of a rotating solid having an infinite moment of inertia.«P»In the particular case where the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» are all zero, (16) reduces to
 
 
 «EQN:22»«MATH:\frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} - \frac{\partial\mathfrak{T}}{\partial q_{r}} = \mathrm{Q}_{r}.«/MATH»«/EQN»
 
 
-The form is the same as in § 2, and the system now behaves, as regards the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», exactly like the acyclic type there contemplated. These co-ordinates do not, however, now fix the position of every particle of the system. For example, if by suitable forces the system be brought back to its initial configuration (so far as this is defined by «MATH:q_{1}, q_{2}, \ldots, q_{m})\!«/MATH», after performing any evolutions, the ignored co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» will not in general return to their original values.
-
-If in Lagrange’s equations § 2 (10) we reverse the sign of the time-element «MATH:dt\!«/MATH», the equations are unaltered. The motion is therefore reversible; that is to say, if as the system is passing through any configuration its velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH» be all reversed, it will (if the forces be the same in the same configuration) retrace its former path. But it is important to observe that the statement does not in general hold of a gyrostatic system; the terms of (16), which are linear in «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH», change sign with dt, whilst the others do not. Hence the motion of a gyrostatic system is not reversible, unless indeed we reverse the cyclic motions as well as the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH». For instance, the precessional motion of a top cannot be reversed unless we reverse the spin.
-
-The «I»conditions of equilibrium«/I» of a system with latent cyclic motions are obtained by putting «MATH:\dot{q}_{1} = 0, \dot{q}_{2} = 0, \ldots\dot{q}_{m} = 0«/MATH» in (16); viz. they are«SH»Kineto-statics.«/SH»
+The form is the same as in § 2, and the system now behaves, as regards the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», exactly like the acyclic type there contemplated. These co-ordinates do not, however, now fix the position of every particle of the system. For example, if by suitable forces the system be brought back to its initial configuration (so far as this is defined by «MATH:q_{1}, q_{2}, \ldots, q_{m})\!«/MATH», after performing any evolutions, the ignored co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» will not in general return to their original values.«P»If in Lagrange’s equations § 2 (10) we reverse the sign of the time-element «MATH:dt\!«/MATH», the equations are unaltered. The motion is therefore reversible; that is to say, if as the system is passing through any configuration its velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH» be all reversed, it will (if the forces be the same in the same configuration) retrace its former path. But it is important to observe that the statement does not in general hold of a gyrostatic system; the terms of (16), which are linear in «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH», change sign with dt, whilst the others do not. Hence the motion of a gyrostatic system is not reversible, unless indeed we reverse the cyclic motions as well as the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots, \dot{q}_{m}\!«/MATH». For instance, the precessional motion of a top cannot be reversed unless we reverse the spin.«P»The «I»conditions of equilibrium«/I» of a system with latent cyclic motions are obtained by putting «MATH:\dot{q}_{1} = 0, \dot{q}_{2} = 0, \ldots\dot{q}_{m} = 0«/MATH» in (16); viz. they are«SH»Kineto-statics.«/SH»
 
 
 «EQN:23»«MATH:\mathrm{Q}_{1} = \frac{\partial \mathrm{K}}{\partial q_{1}}, \qquad \mathrm{Q}_{2} = \frac{\partial \mathrm{K}}{\partial q_{2}}, \ldots«/MATH»«/EQN»
@@ -784,9 +676,7 @@ These may of course be obtained independently. Thus if the system be guided from
 «EQN:24»«MATH:\mathrm{Q}_{1}\delta q_{1} + \mathrm{Q}_{2}\delta q_{2} + \ldots = \delta \mathrm{K},«/MATH»«/EQN»
 
 
-which is equivalent to (23). The conditions are the same as for the equilibrium of a system without latent motion, but endowed with potential energy «MATH:\mathrm{K}\!«/MATH». This is important from a physical point of view, as showing how energy which is apparently potential may in its ultimate essence be kinetic.
-
-By means of the formulae (18), which now reduce to
+which is equivalent to (23). The conditions are the same as for the equilibrium of a system without latent motion, but endowed with potential energy «MATH:\mathrm{K}\!«/MATH». This is important from a physical point of view, as showing how energy which is apparently potential may in its ultimate essence be kinetic.«P»By means of the formulae (18), which now reduce to
 
 
 «EQN:25»«MATH:\dot{\chi} = \frac{\partial \mathrm{K}}{\partial\kappa}, \qquad\dot{\chi}' = \frac{\partial \mathrm{K}}{\partial\kappa'}, \qquad\dot{\chi}'' = \frac{\partial \mathrm{K}}{\partial\kappa''}, \ldots,«/MATH»«/EQN»
@@ -809,9 +699,7 @@ so that the formulae (23) become
 
 «EQN:28»«MATH:\mathrm{Q}_{1} = - \frac{\partial \mathrm{T}_{0}}{\partial q_{1}}, \qquad \mathrm{Q}_{2} = - \frac{\partial \mathrm{T}_{0}}{\partial q_{2}}, \ldots«/MATH»«/EQN»
 
-
-
-A simple example is furnished by the top («LN:Mechanics|Mechanics«/LN», § 22). The cyclic co-ordinates being «MATH:\psi, \phi\!«/MATH», we find
+«P»A simple example is furnished by the top («LN:Mechanics|Mechanics«/LN», § 22). The cyclic co-ordinates being «MATH:\psi, \phi\!«/MATH», we find
 «CTR»«MATH:2\mathfrak{T} = \mathrm{A}\dot{\theta}^2, \qquad 2\mathrm{K} = \frac{(\mu - \nu\cos\theta)^2}{\mathrm{A} \sin^2 \theta} + \frac{\nu^2}{\mathrm{C}},«/MATH»«/CTR»
 
 
@@ -824,27 +712,13 @@ whence we may verify that «MATH:\partial \mathrm{T}_{0} / \partial\theta = - \p
 «EQN:30»«MATH:\frac{\partial \mathrm{K}}{\partial\theta} = - \frac{\partial \mathrm{V}}{\partial\theta}«/MATH»«/EQN»
 
 
-gives the condition of steady precession.
-
-«CTR»6. «I»Stability of Steady Motion«/I».«/CTR»
-
-The small oscillations of a conservative system about a configuration of equilibrium, and the criterion of stability, are discussed in «LN:Mechanics|Mechanics«/LN», § 23. The question of the stability of given types of motion is more difficult, owing to the want of a sufficiently general, and at the same time precise, definition of what we mean by “stability.” A number of definitions which have been propounded by different writers are examined by F. Klein and A. Sommerfeld in their work «I»Über die Theorie des Kreisels«/I» (1897–1903). Rejecting previous definitions, they base their criterion of stability on the character of the changes produced in the «I»path«/I» of the system by small arbitrary disturbing impulses. If the undisturbed path be the «I»limiting form«/I» of the disturbed path when the impulses are indefinitely diminished, it is said to be stable, but not otherwise. For instance, the vertical fall of a particle under gravity is reckoned as stable, although for a «I»given«/I» impulsive disturbance, however small, the deviation of the particle’s position at any time «MATH:t«/MATH» from the position which it would have occupied in the original motion increases indefinitely with «MATH:t«/MATH». Even this criterion, as the writers quoted themselves recognize, is not free from ambiguity unless the phrase “limiting form,” as applied to a path, be strictly defined. It appears, moreover, that a definition which is analytically precise may not in all cases be easy to reconcile with geometrical prepossessions. Thus a particle moving in a circle about a centre of force varying inversely as the cube of the distance will if slightly disturbed either fall into the centre, or recede to infinity, after describing in either case a spiral with an infinite number ofPAGE:788convolutions. Each of these spirals has, analytically, the circle as its limiting form, although the motion in the circle is most naturally described as unstable.
-
-A special form of the problem, of great interest, presents itself in the steady motion of a gyrostatic system, when the non-eliminated co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» all vanish (see § 5). This has been discussed by Routh, Lord Kelvin and Tait, and Poincaré. These writers treat the question, by an extension of Lagrange’s method, as a problem of small oscillations. Whether we adopt the notion of stability which this implies, or take up the position of Klein and Sommerfeld, there is no difficulty in showing that stability is ensured if «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» be a minimum as regards variations of «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The proof is the same as that of Dirichlet for the case of statical stability.
-
-We can illustrate this condition from the case of the top, where, in our previous notation,
+gives the condition of steady precession.«P»«CTR»6. «I»Stability of Steady Motion«/I».«/CTR»«P»The small oscillations of a conservative system about a configuration of equilibrium, and the criterion of stability, are discussed in «LN:Mechanics|Mechanics«/LN», § 23. The question of the stability of given types of motion is more difficult, owing to the want of a sufficiently general, and at the same time precise, definition of what we mean by “stability.” A number of definitions which have been propounded by different writers are examined by F. Klein and A. Sommerfeld in their work «I»Über die Theorie des Kreisels«/I» (1897–1903). Rejecting previous definitions, they base their criterion of stability on the character of the changes produced in the «I»path«/I» of the system by small arbitrary disturbing impulses. If the undisturbed path be the «I»limiting form«/I» of the disturbed path when the impulses are indefinitely diminished, it is said to be stable, but not otherwise. For instance, the vertical fall of a particle under gravity is reckoned as stable, although for a «I»given«/I» impulsive disturbance, however small, the deviation of the particle’s position at any time «MATH:t«/MATH» from the position which it would have occupied in the original motion increases indefinitely with «MATH:t«/MATH». Even this criterion, as the writers quoted themselves recognize, is not free from ambiguity unless the phrase “limiting form,” as applied to a path, be strictly defined. It appears, moreover, that a definition which is analytically precise may not in all cases be easy to reconcile with geometrical prepossessions. Thus a particle moving in a circle about a centre of force varying inversely as the cube of the distance will if slightly disturbed either fall into the centre, or recede to infinity, after describing in either case a spiral with an infinite number ofPAGE:788convolutions. Each of these spirals has, analytically, the circle as its limiting form, although the motion in the circle is most naturally described as unstable.«P»A special form of the problem, of great interest, presents itself in the steady motion of a gyrostatic system, when the non-eliminated co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» all vanish (see § 5). This has been discussed by Routh, Lord Kelvin and Tait, and Poincaré. These writers treat the question, by an extension of Lagrange’s method, as a problem of small oscillations. Whether we adopt the notion of stability which this implies, or take up the position of Klein and Sommerfeld, there is no difficulty in showing that stability is ensured if «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» be a minimum as regards variations of «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The proof is the same as that of Dirichlet for the case of statical stability.«P»We can illustrate this condition from the case of the top, where, in our previous notation,
 
 
 «EQN:1»«MATH:\mathrm{V} + \mathrm{K} = \mathrm{M}gh \cos\theta + \frac{(\mu - \nu\cos\theta)^2}{2\mathrm{A} \sin^2 \theta} + \frac{\nu^2}{2\mathrm{C}}.«/MATH»«/EQN»
 
 
-To examine whether the steady motion with the centre of gravity vertically above the pivot is stable, we must put «MATH:\mu = \nu\!«/MATH». We then find without difficulty that «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» is a minimum provided «MATH:\nu^2 \geqq 4\mathrm{AM}gh\!«/MATH». The method of small oscillations gave us the condition «MATH:\nu^2 > 4\mathrm{AM}gh\!«/MATH», and indicated instability in the cases «MATH:\nu^2 \leqq 4\mathrm{AM}gh\!«/MATH». The present criterion can also be applied to show that the steady precessional motions in which the axis has a constant inclination to the vertical are stable.
-
-The question remains, as before, whether it is «I»essential«/I» for stability that «MATH:\mathrm{V} + \mathrm{K}«/MATH» should be a minimum. It appears that from the point of view of the theory of small oscillations it is not essential, and that there may even be stability when «MATH:\mathrm{V} + \mathrm{K}«/MATH» is a maximum. The precise conditions, which are of a somewhat elaborate character, have been formulated by Routh. An important distinction has, however, been established by Thomson and Tait, and by Poincaré, between what we may call «I»ordinary«/I» or «I»temporary«/I» stability (which is stability in the above sense) and «I»permanent«/I» or «I»secular«/I» stability, which means stability when regard is had to possible dissipative forces called into play whenever the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» vary. Since the total energy of the system at any instant is given (in the notation of § 5) by an expression of the form «MATH:\mathfrak{T} + \mathrm{V} + \mathrm{K}«/MATH», where «MATH:\mathfrak{T}«/MATH» cannot be negative, the argument of Thomson and Tait, given under «LN:Mechanics|Mechanics«/LN», § 23, for the statical question, shows that it is a necessary as well as a sufficient condition for secular stability that «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» should be a minimum. When a system is “ordinarily” stable, but “secularly” unstable, the operation of the frictional forces is to induce a gradual increase in the amplitude of the free vibrations which are called into play by accidental disturbances.
-
-There is a similar theory in relation to the constrained systems considered in § 3 above. The equation (21) there given leads to the conclusion that for secular stability of any type of motion in which the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» are zero it is necessary and sufficient that the function «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH» should be a minimum.
-
-The simplest possible example of this is the case of a particle at the lowest point of a smooth spherical bowl which rotates with constant angular velocity («MATH:\omega\!«/MATH») about the vertical diameter. This position obviously possesses “ordinary” stability. If «MATH:a\!«/MATH» be the radius of the bowl, and «MATH:\theta\!«/MATH» denote angular distance from the lowest point, we have
+To examine whether the steady motion with the centre of gravity vertically above the pivot is stable, we must put «MATH:\mu = \nu\!«/MATH». We then find without difficulty that «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» is a minimum provided «MATH:\nu^2 \geqq 4\mathrm{AM}gh\!«/MATH». The method of small oscillations gave us the condition «MATH:\nu^2 > 4\mathrm{AM}gh\!«/MATH», and indicated instability in the cases «MATH:\nu^2 \leqq 4\mathrm{AM}gh\!«/MATH». The present criterion can also be applied to show that the steady precessional motions in which the axis has a constant inclination to the vertical are stable.«P»The question remains, as before, whether it is «I»essential«/I» for stability that «MATH:\mathrm{V} + \mathrm{K}«/MATH» should be a minimum. It appears that from the point of view of the theory of small oscillations it is not essential, and that there may even be stability when «MATH:\mathrm{V} + \mathrm{K}«/MATH» is a maximum. The precise conditions, which are of a somewhat elaborate character, have been formulated by Routh. An important distinction has, however, been established by Thomson and Tait, and by Poincaré, between what we may call «I»ordinary«/I» or «I»temporary«/I» stability (which is stability in the above sense) and «I»permanent«/I» or «I»secular«/I» stability, which means stability when regard is had to possible dissipative forces called into play whenever the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» vary. Since the total energy of the system at any instant is given (in the notation of § 5) by an expression of the form «MATH:\mathfrak{T} + \mathrm{V} + \mathrm{K}«/MATH», where «MATH:\mathfrak{T}«/MATH» cannot be negative, the argument of Thomson and Tait, given under «LN:Mechanics|Mechanics«/LN», § 23, for the statical question, shows that it is a necessary as well as a sufficient condition for secular stability that «MATH:\mathrm{V} + \mathrm{K}\!«/MATH» should be a minimum. When a system is “ordinarily” stable, but “secularly” unstable, the operation of the frictional forces is to induce a gradual increase in the amplitude of the free vibrations which are called into play by accidental disturbances.«P»There is a similar theory in relation to the constrained systems considered in § 3 above. The equation (21) there given leads to the conclusion that for secular stability of any type of motion in which the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» are zero it is necessary and sufficient that the function «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH» should be a minimum.«P»The simplest possible example of this is the case of a particle at the lowest point of a smooth spherical bowl which rotates with constant angular velocity («MATH:\omega\!«/MATH») about the vertical diameter. This position obviously possesses “ordinary” stability. If «MATH:a\!«/MATH» be the radius of the bowl, and «MATH:\theta\!«/MATH» denote angular distance from the lowest point, we have
 
 
 «EQN:2»«MATH:\mathrm{V} - \mathrm{T}_{0} = mga(1 - \cos\theta) - \tfrac{1}{2}m\omega^2a^2 \sin^2 \theta;«/MATH»«/EQN»
@@ -880,13 +754,7 @@ where
 «EQN:7»«MATH:\beta_{1} = \tfrac{1}{2}k (1 - \omega/p), \qquad\beta_{2} = \tfrac{1}{2}k (1 + \omega/p).«/MATH»«/EQN»
 
 
-This represents two superposed circular vibrations, in opposite directions, of period «MATH:2\pi/p\!«/MATH». If «MATH:\omega< p\!«/MATH», the amplitude of each of these diminishes asymptotically to zero, and the position «MATH:x = 0, y = 0\!«/MATH» is permanently stable. But if «MATH:\omega> p\!«/MATH» the amplitude of that circular vibration which agrees in sense with the rotation «MATH:\omega\!«/MATH» will continually increase, and the particle will work its way in an ever-widening spiral path towards the eccentric position of secular stability. If the bowl be not spherical but ellipsoidal, the vertical diameter being a principal axis, it may easily be shown that the lowest position is permanently stable only so long as the period of the rotation is longer than that of the slower of the two normal modes in the absence of rotation (see «LN:Mechanics|Mechanics«/LN», § 13).
-
-«CTR»7. «I»Principle of Least Action«/I».«/CTR»
-
-The preceding theories give us statements applicable to the system at any one instant of its motion. We now come to a series of theorems relating to the whole motion of the system between any two configurations through which it passes, «SH»Stationary Action.«/SH» viz. we consider the actual motion and compare it with other imaginable motions, differing infinitely little from it, between the same two configurations. We use the symbol «MATH:\delta\!«/MATH» to denote the transition from the actual to any one of the hypothetical motions.
-
-The best-known theorem of this class is that of «I»Least Action«/I», originated by P. L. M. de Maupertuis, but first put in a definite form by Lagrange. The “action” of a single particle in passing from one position to another is the space-integral of the momentum, or the time-integral of the «I»vis viva«/I». The action of a dynamical system is the sum of the actions of its constituent particles, and is accordingly given by the formula
+This represents two superposed circular vibrations, in opposite directions, of period «MATH:2\pi/p\!«/MATH». If «MATH:\omega< p\!«/MATH», the amplitude of each of these diminishes asymptotically to zero, and the position «MATH:x = 0, y = 0\!«/MATH» is permanently stable. But if «MATH:\omega> p\!«/MATH» the amplitude of that circular vibration which agrees in sense with the rotation «MATH:\omega\!«/MATH» will continually increase, and the particle will work its way in an ever-widening spiral path towards the eccentric position of secular stability. If the bowl be not spherical but ellipsoidal, the vertical diameter being a principal axis, it may easily be shown that the lowest position is permanently stable only so long as the period of the rotation is longer than that of the slower of the two normal modes in the absence of rotation (see «LN:Mechanics|Mechanics«/LN», § 13).«P»«CTR»7. «I»Principle of Least Action«/I».«/CTR»«P»The preceding theories give us statements applicable to the system at any one instant of its motion. We now come to a series of theorems relating to the whole motion of the system between any two configurations through which it passes, «SH»Stationary Action.«/SH» viz. we consider the actual motion and compare it with other imaginable motions, differing infinitely little from it, between the same two configurations. We use the symbol «MATH:\delta\!«/MATH» to denote the transition from the actual to any one of the hypothetical motions.«P»The best-known theorem of this class is that of «I»Least Action«/I», originated by P. L. M. de Maupertuis, but first put in a definite form by Lagrange. The “action” of a single particle in passing from one position to another is the space-integral of the momentum, or the time-integral of the «I»vis viva«/I». The action of a dynamical system is the sum of the actions of its constituent particles, and is accordingly given by the formula
 
 
 «EQN:1»«MATH:\mathrm{A} = \Sigma \int mvds = \Sigma \int mv^2dt = 2 \int \mathrm{T}dt.«/MATH»«/EQN»
@@ -898,19 +766,17 @@ The theorem referred to asserts that the free motion of a conservative system be
 «EQN:2»«MATH:\delta\mathrm{A} = 0,«/MATH»«/EQN»
 
 
-provided the total energy have the same constant value in the varied motion as in the actual motion.
-
-If «MATH:t, t'\!«/MATH» be the times of passing through the initial and final configurations respectively, we have
+provided the total energy have the same constant value in the varied motion as in the actual motion.«P»If «MATH:t, t'\!«/MATH» be the times of passing through the initial and final configurations respectively, we have
 
 
 «EQN:3»«MATH:\begin{align}\delta\mathrm{A} &= \delta\int^{t'}_{t} \Sigma m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) dt\\ &= \int^{t'}_{t} \delta Tdt + 2\mathrm{T}'\delta t' + 2\mathrm{T}\delta t,\end{align}«/MATH»«/EQN»
 
 
 since the upper and lower limits of the integral must both be regarded as variable. This may be written
-«CTR»«MATH[fs=90]:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH»«/CTR»
+«CTR»«MATH:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH»«/CTR»
 
 
-«EQN:4» «MATH[popout]:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
+«EQN:4» «MATH:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
 
 
 Now, by d’Alembert’s principle,
@@ -937,17 +803,13 @@ Since the terminal configurations are unaltered, we must have at the lower limit
 «EQN:8»«MATH:\delta x + \dot{x}\delta t = 0, \qquad\delta y + \dot{y}\delta t = 0, \qquad\delta z + \dot{z}\delta t = 0,«/MATH»«/EQN»
 
 
-with similar relations at the upper limit. These reduce (7) to the form (2).
-
-The equation (2), it is to be noticed, merely expresses that the variation of «MATH:\mathrm{A}\!«/MATH» vanishes «I»to the first order«/I»&#8198;; the phrase «I»stationary action«/I» has therefore been suggested as indicating more accurately what has been proved. The action in the free path between two given configurations is in fact not invariably a minimum, and even when a minimum it need not be the «I»least possible«/I» subject to the given conditions. Simple illustrations are furnished by the case of a single particle. A particle moving on a smooth surface, and free from extraneous force, will have its velocity constant; hence the theorem in this case resolves itself into
+with similar relations at the upper limit. These reduce (7) to the form (2).«P»The equation (2), it is to be noticed, merely expresses that the variation of «MATH:\mathrm{A}\!«/MATH» vanishes «I»to the first order«/I» ; the phrase «I»stationary action«/I» has therefore been suggested as indicating more accurately what has been proved. The action in the free path between two given configurations is in fact not invariably a minimum, and even when a minimum it need not be the «I»least possible«/I» subject to the given conditions. Simple illustrations are furnished by the case of a single particle. A particle moving on a smooth surface, and free from extraneous force, will have its velocity constant; hence the theorem in this case resolves itself into
 
 
 «EQN:9»«MATH:\delta\int ds = 0,«/MATH»«/EQN»
 
 
-«I»i.e.«/I» the path must be a geodesic line. Now a geodesic is not necessarily the «I»shortest«/I» path between two given points on it; for example, on the sphere a great-circle arc ceases to be the shortest path between its extremities when it exceeds 180°. More generally, taking any surface, let a point «MATH:\mathrm{P}\!«/MATH», starting from «MATH:\mathrm{O}«/MATH», move along a geodesic; this geodesic will be a minimum path from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» until «MATH:\mathrm{P}«/MATH» passes through a point «MATH:\mathrm{O}'«/MATH» (if such exist), which is the intersection with a consecutive geodesic through «MATH:\mathrm{O}«/MATH». After this point the minimum property ceases. On an anticlastic surface two geodesics cannot intersect more than once, and each geodesic is therefore a minimum path between any two of its points. These illustrations are due to K.&nbsp;G.&nbsp;J. Jacobi, who has also formulated the general criterion, applicable to all dynamical systems, as follows:—Let «MATH:\mathrm{O}«/MATH» and «MATH:\mathrm{P}«/MATH» denote any two configurations on a natural path of the system. If this be the sole free path from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» with the prescribed amount of energy, the action from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» is a minimum. But ifPAGE:789there be several distinct paths, let «MATH:\mathrm{P}\!«/MATH» vary from coincidence with «MATH:\mathrm{O}\!«/MATH» along the first-named path; the action will then cease to be a minimum when a configuration «MATH:\mathrm{O}'\!«/MATH» is reached such that two of the possible paths from «MATH:\mathrm{O}\!«/MATH» to «MATH:\mathrm{O}'\!«/MATH» coincide. For instance, if «MATH:\mathrm{O}\!«/MATH» and «MATH:\mathrm{P}\!«/MATH» be positions on the parabolic path of a projectile under gravity, there will be a second path (with the same energy and therefore the same velocity of projection from «MATH:\mathrm{O}«/MATH»), these two paths coinciding when «MATH:\mathrm{P}\!«/MATH» is at the other extremity («MATH:\mathrm{O}'\!«/MATH», say) of the focal chord through «MATH:\mathrm{O}\!«/MATH». The action from «MATH:\mathrm{O}\!«/MATH» to «MATH:\mathrm{P}\!«/MATH» will therefore be a minimum for all positions of «MATH:\mathrm{P}\!«/MATH» short of «MATH:\mathrm{O}'\!«/MATH». Two configurations such as «MATH:\mathrm{O}\!«/MATH» and «MATH:\mathrm{O}'\!«/MATH» in the general statement are called conjugate «I»kinetic foci«/I». Cf. «LN:Variations, Calculus of|Variations, Calculus of«/LN».
-
-Before leaving this topic the connexion of the principle of stationary action with a well-known theorem of optics may be noticed. For the motion of a particle in a conservative field of force the principle takes the form
+«I»i.e.«/I» the path must be a geodesic line. Now a geodesic is not necessarily the «I»shortest«/I» path between two given points on it; for example, on the sphere a great-circle arc ceases to be the shortest path between its extremities when it exceeds 180°. More generally, taking any surface, let a point «MATH:\mathrm{P}\!«/MATH», starting from «MATH:\mathrm{O}«/MATH», move along a geodesic; this geodesic will be a minimum path from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» until «MATH:\mathrm{P}«/MATH» passes through a point «MATH:\mathrm{O}'«/MATH» (if such exist), which is the intersection with a consecutive geodesic through «MATH:\mathrm{O}«/MATH». After this point the minimum property ceases. On an anticlastic surface two geodesics cannot intersect more than once, and each geodesic is therefore a minimum path between any two of its points. These illustrations are due to K. G. J. Jacobi, who has also formulated the general criterion, applicable to all dynamical systems, as follows:—Let «MATH:\mathrm{O}«/MATH» and «MATH:\mathrm{P}«/MATH» denote any two configurations on a natural path of the system. If this be the sole free path from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» with the prescribed amount of energy, the action from «MATH:\mathrm{O}«/MATH» to «MATH:\mathrm{P}«/MATH» is a minimum. But ifPAGE:789there be several distinct paths, let «MATH:\mathrm{P}\!«/MATH» vary from coincidence with «MATH:\mathrm{O}\!«/MATH» along the first-named path; the action will then cease to be a minimum when a configuration «MATH:\mathrm{O}'\!«/MATH» is reached such that two of the possible paths from «MATH:\mathrm{O}\!«/MATH» to «MATH:\mathrm{O}'\!«/MATH» coincide. For instance, if «MATH:\mathrm{O}\!«/MATH» and «MATH:\mathrm{P}\!«/MATH» be positions on the parabolic path of a projectile under gravity, there will be a second path (with the same energy and therefore the same velocity of projection from «MATH:\mathrm{O}«/MATH»), these two paths coinciding when «MATH:\mathrm{P}\!«/MATH» is at the other extremity («MATH:\mathrm{O}'\!«/MATH», say) of the focal chord through «MATH:\mathrm{O}\!«/MATH». The action from «MATH:\mathrm{O}\!«/MATH» to «MATH:\mathrm{P}\!«/MATH» will therefore be a minimum for all positions of «MATH:\mathrm{P}\!«/MATH» short of «MATH:\mathrm{O}'\!«/MATH». Two configurations such as «MATH:\mathrm{O}\!«/MATH» and «MATH:\mathrm{O}'\!«/MATH» in the general statement are called conjugate «I»kinetic foci«/I». Cf. «LN:Variations, Calculus of|Variations, Calculus of«/LN».«P»Before leaving this topic the connexion of the principle of stationary action with a well-known theorem of optics may be noticed. For the motion of a particle in a conservative field of force the principle takes the form
 
 
 «EQN:10»«MATH:\delta\int vds = 0.«/MATH»«/EQN»
@@ -958,33 +820,27 @@ On the corpuscular theory of light «MATH:v\!«/MATH» is proportional to the re
 
 «EQN:11»«MATH:\delta\int\mu ds = 0.«/MATH»«/EQN»
 
-
-
-In the formula (2) the energy in the hypothetical motion is prescribed, whilst the time of transit from the initial to the final configuration is variable. In another and generally more convenient theorem, due to Hamilton, the time of transit is prescribed to be the same as in the actual motion, whilst the energy may be «SH»Hamiltonian principle.«/SH»different and need not (indeed) be constant. Under these conditions we have
+«P»In the formula (2) the energy in the hypothetical motion is prescribed, whilst the time of transit from the initial to the final configuration is variable. In another and generally more convenient theorem, due to Hamilton, the time of transit is prescribed to be the same as in the actual motion, whilst the energy may be «SH»Hamiltonian principle.«/SH»different and need not (indeed) be constant. Under these conditions we have
 
 
 «EQN:12»«MATH:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = 0,«/MATH»«/EQN»
 
 
 where «MATH:t, t'\!«/MATH» are the prescribed times of passing through the given initial and final configurations. The proof of (12) is simple; we have
-«CTR»«MATH[fs=80]:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»«/CTR»
+«CTR»«MATH:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»«/CTR»
 
 
-«EQN:13» «MATH[fs=90]:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
+«EQN:13» «MATH:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
 
 
-The integrated terms vanish at both limits, since by hypothesis the configurations at these instants are fixed; and the terms under the integral sign vanish by d’Alembert’s principle.
-
-The fact that in (12) the variation does not affect the time of transit renders the formula easy of application in any system of co-ordinates. Thus, to deduce Lagrange’s equations, we have
-«CTR»«MATH[fs=85]:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»«/CTR»
+The integrated terms vanish at both limits, since by hypothesis the configurations at these instants are fixed; and the terms under the integral sign vanish by d’Alembert’s principle.«P»The fact that in (12) the variation does not affect the time of transit renders the formula easy of application in any system of co-ordinates. Thus, to deduce Lagrange’s equations, we have
+«CTR»«MATH:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»«/CTR»
 
 
-«EQN:14»«MATH[popout]:= \Big[p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots\Big]^{t'}_{t}\ - \int^{t'}_{t} \left\{\left[\dot{p}_{1} - \frac{\partial \mathrm{T}}{\partial q_{1}} + \frac{\partial \mathrm{V}}{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial \mathrm{T}}{\partial q_{2}} + \frac{\partial \mathrm{V}}{\partial q_{2}}\right) \delta q_{2} + \ldots\right\} dt.«/MATH»«/EQN»
+«EQN:14»«MATH:= \Big[p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots\Big]^{t'}_{t}\ - \int^{t'}_{t} \left\{\left[\dot{p}_{1} - \frac{\partial \mathrm{T}}{\partial q_{1}} + \frac{\partial \mathrm{V}}{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial \mathrm{T}}{\partial q_{2}} + \frac{\partial \mathrm{V}}{\partial q_{2}}\right) \delta q_{2} + \ldots\right\} dt.«/MATH»«/EQN»
 
 
-The integrated terms vanish at both limits; and in order that the remainder of the right-hand member may vanish it is necessary that the coefficients of «MATH:\delta q_{1}, \delta q_{2}, \ldots\!«/MATH» under the integral sign should vanish for all values of «MATH:t«/MATH», since the variations in question are independent, and subject only to the condition of vanishing at the limits of integration. We are thus led to Lagrange’s equation of motion for a conservative system. It appears that the formula (12) is a convenient as well as a compact embodiment of the whole of ordinary dynamics.
-
-The modification of the Hamiltonian principle appropriate to the case of cyclic systems has been given by J. Larmor. If we write, as in § 1 (25),«SH»Extension to cyclic systems.«/SH»
+The integrated terms vanish at both limits; and in order that the remainder of the right-hand member may vanish it is necessary that the coefficients of «MATH:\delta q_{1}, \delta q_{2}, \ldots\!«/MATH» under the integral sign should vanish for all values of «MATH:t«/MATH», since the variations in question are independent, and subject only to the condition of vanishing at the limits of integration. We are thus led to Lagrange’s equation of motion for a conservative system. It appears that the formula (12) is a convenient as well as a compact embodiment of the whole of ordinary dynamics.«P»The modification of the Hamiltonian principle appropriate to the case of cyclic systems has been given by J. Larmor. If we write, as in § 1 (25),«SH»Extension to cyclic systems.«/SH»
 
 
 «EQN:15»«MATH:\mathrm{R} = \mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \kappa''\dot{\chi}'' - \ldots,«/MATH»«/EQN»
@@ -996,19 +852,15 @@ we shall have
 «EQN:16»«MATH:\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt = 0,«/MATH»«/EQN»
 
 
-provided that the variation does not affect the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», and that the configurations at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» are unaltered, so far as they depend on the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The initial and final values of the ignored co-ordinates will in general be affected.
-
-To prove (16) we have, on the above understandings,
+provided that the variation does not affect the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», and that the configurations at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» are unaltered, so far as they depend on the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The initial and final values of the ignored co-ordinates will in general be affected.«P»To prove (16) we have, on the above understandings,
 
 
-«EQN:17»«MATH[fs=90]:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
+«EQN:17»«MATH:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
 
 
 where terms have been cancelled in virtue of § 5 (2). The last member of (17) represents a variation of the integral
 «CTR»«MATH:\int^{t'}_{t} (\mathrm{T} - \mathrm{V}) dt«/MATH»«/CTR»
-on the supposition that «MATH:\delta \mathrm{X} = 0, \delta \mathrm{X}' = 0, \delta \mathrm{X}'' = 0, \ldots\!«/MATH» throughout, whilst «MATH:\delta q_{1}, \delta q_{2}, \delta q_{m}\!«/MATH» vanish at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH»; «I»i.e.«/I» it is a variation in which the initial and final configurations are absolutely unaltered. It therefore vanishes as a consequence of the Hamiltonian principle in its original form.
-
-Larmor has also given the corresponding form of the principle of least action. He shows that if we write
+on the supposition that «MATH:\delta \mathrm{X} = 0, \delta \mathrm{X}' = 0, \delta \mathrm{X}'' = 0, \ldots\!«/MATH» throughout, whilst «MATH:\delta q_{1}, \delta q_{2}, \delta q_{m}\!«/MATH» vanish at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH»; «I»i.e.«/I» it is a variation in which the initial and final configurations are absolutely unaltered. It therefore vanishes as a consequence of the Hamiltonian principle in its original form.«P»Larmor has also given the corresponding form of the principle of least action. He shows that if we write
 
 
 «EQN:18»«MATH:\mathrm{A} = \int(2\mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \kappa''\dot{\chi}'' - \ldots) dt,«/MATH»«/EQN»
@@ -1020,11 +872,7 @@ then
 «EQN:19»«MATH:\delta \mathrm{A} = 0,«/MATH»«/EQN»
 
 
-provided the varied motion takes place with the same constant value of the energy, and with the same constant cyclic momenta, between the same two configurations, these being regarded as defined by the palpable co-ordinates alone.
-
-«CTR»§ 8. «I»Hamilton’s Principal and Characteristic Functions.«/I»«/CTR»
-
-In the investigations next to be described a more extended meaning is given to the symbol «MATH:\delta\!«/MATH». We will, in the first instance, denote by it an infinitesimal variation of the most general kind, affecting not merely the values of the co-ordinates at any instant, but also the initial and final configurations and the times of «SH»Principal function.«/SH»passing through them. If we put
+provided the varied motion takes place with the same constant value of the energy, and with the same constant cyclic momenta, between the same two configurations, these being regarded as defined by the palpable co-ordinates alone.«P»«CTR»§ 8. «I»Hamilton’s Principal and Characteristic Functions.«/I»«/CTR»«P»In the investigations next to be described a more extended meaning is given to the symbol «MATH:\delta\!«/MATH». We will, in the first instance, denote by it an infinitesimal variation of the most general kind, affecting not merely the values of the co-ordinates at any instant, but also the initial and final configurations and the times of «SH»Principal function.«/SH»passing through them. If we put
 
 
 «EQN:1»«MATH:\mathrm{S} = \int^{t'}_{t} (\mathrm{T} - \mathrm{V}) dt,«/MATH»«/EQN»
@@ -1033,11 +881,9 @@ In the investigations next to be described a more extended meaning is given to t
 we have, then,
 
 
-«EQN:2»«MATH[fs=95]:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
+«EQN:2»«MATH:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
 
-
-
-Let us now denote by «MATH:x' + \delta x', y' + \delta y', z' + \delta z'\!«/MATH», the final co-ordinates («I»i.e.«/I» at time «MATH:t' + \delta t'\!«/MATH») of a particle «MATH:m\!«/MATH». In the terms in (2) which relate to the upper limit we must therefore write «MATH:\delta x' - \dot{x}'\delta t', \delta y' - \dot{y}'\delta t', \delta z' - \dot{z}'\delta t'\!«/MATH» for «MATH:\delta x, \delta y, \delta z\!«/MATH». With a similar modification at the lower limit, we obtain
+«P»Let us now denote by «MATH:x' + \delta x', y' + \delta y', z' + \delta z'\!«/MATH», the final co-ordinates («I»i.e.«/I» at time «MATH:t' + \delta t'\!«/MATH») of a particle «MATH:m\!«/MATH». In the terms in (2) which relate to the upper limit we must therefore write «MATH:\delta x' - \dot{x}'\delta t', \delta y' - \dot{y}'\delta t', \delta z' - \dot{z}'\delta t'\!«/MATH» for «MATH:\delta x, \delta y, \delta z\!«/MATH». With a similar modification at the lower limit, we obtain
 
 
 «EQN:3»«MATH:\begin{align}\delta \mathrm{S} = - \mathrm{H}\delta\tau &+ \Sigma m (\dot{x}'\delta x' + \dot{y}'\delta y' + \dot{z}'\delta z')\\ &- \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z),\end{align}«/MATH»«/EQN»
@@ -1067,9 +913,7 @@ and
 «EQN:7»«MATH:\mathrm{T}' + \mathrm{V} = \mathrm{H}«/MATH»«/EQN»
 
 
-becomes a partial differential equation to be satisfied by «MATH:\mathrm{S}\!«/MATH». It has been shown by Jacobi that the dynamical problem resolves itself into obtaining a “complete” solution of this equation, involving «MATH:n + 1«/MATH» arbitrary constants. This aspect of the subject, as a problem in partial differential equations, has received great attention at the hands of mathematicians, but must be passed over here.
-
-There is a similar theory for the function«SH»Characteristic function.«/SH»
+becomes a partial differential equation to be satisfied by «MATH:\mathrm{S}\!«/MATH». It has been shown by Jacobi that the dynamical problem resolves itself into obtaining a “complete” solution of this equation, involving «MATH:n + 1«/MATH» arbitrary constants. This aspect of the subject, as a problem in partial differential equations, has received great attention at the hands of mathematicians, but must be passed over here.«P»There is a similar theory for the function«SH»Characteristic function.«/SH»
 
 
 «EQN:8»«MATH:\mathrm{A} = 2 \int \mathrm{T}dt = \mathrm{S} + \mathrm{H}\tau«/MATH»«/EQN»
@@ -1093,9 +937,7 @@ and
 «EQN:11»«MATH:\tau = \frac{\partial \mathrm{A}}{\partial \mathrm{H}}.«/MATH»«/EQN»
 
 
-«MATH:\mathrm{A}«/MATH» is called by Hamilton the «I»characteristic function«/I»; it represents, of course, the “action” of the system in the free motion (with prescribed energy) between the two configurations. Like «MATH:\mathrm{S}«/MATH», it satisfies a partial differential equation, obtained by substitution from (10) in (7).
-
-The preceding theorems are easily adapted to the case of cyclic systems. We have only to write
+«MATH:\mathrm{A}«/MATH» is called by Hamilton the «I»characteristic function«/I»; it represents, of course, the “action” of the system in the free motion (with prescribed energy) between the two configurations. Like «MATH:\mathrm{S}«/MATH», it satisfies a partial differential equation, obtained by substitution from (10) in (7).«P»The preceding theorems are easily adapted to the case of cyclic systems. We have only to write
 
 
 «EQN:12»«MATH:\mathrm{S} = \int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt = \int^{t'}_{t} (\mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \ldots- \mathrm{V}) dt«/MATH»«/EQN»
@@ -1107,12 +949,7 @@ in place of (1), and
 «EQN:13»«MATH:\mathrm{A} = \int(2\mathrm{T} - \kappa\dot{\chi} - \kappa'\dot{\chi}' - \ldots) dt,«/MATH»«/EQN»
 
 
-in place of (8); cf. § 7 «I»ad fin«/I». It is understood, of course, that in (12) «MATH:\mathrm{S}«/MATH» is regarded as a function of the initial and final values of the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}«/MATH», and of the time of transit «MATH:\tau\!«/MATH», the cyclic momenta being invariable. Similarly in (13), «MATH:\mathrm{A}«/MATH» is regarded as a function of the initial and final values of «MATH:q_{1}, q_{2}, \ldots q_{m}«/MATH», and of the total energy «MATH:\mathrm{H}«/MATH», with the cyclic momenta invariable. It will be found that the forms of (4) and (9) will be conserved, provided the variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\!«/MATH» be understood to refer to the palpable co-ordinates alone. It follows that the equations (5), (6) and (10), (11) will still hold under the new meanings of the symbols.
-
-
-«CTR»9. «I»Reciprocal Properties of Direct and Reversed Motions.«/I»«/CTR»
-
-We may employ Hamilton’s principal function to prove a very remarkable formula connecting any «I»two«/I» slightly disturbed natural motions of the system. If we use the symbols «MATH:\delta\!«/MATH» and «MATH:\Delta\!«/MATH» to denote the corresponding variations, the theorem is«SH»Lagrange’s formula.«/SH»
+in place of (8); cf. § 7 «I»ad fin«/I». It is understood, of course, that in (12) «MATH:\mathrm{S}«/MATH» is regarded as a function of the initial and final values of the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}«/MATH», and of the time of transit «MATH:\tau\!«/MATH», the cyclic momenta being invariable. Similarly in (13), «MATH:\mathrm{A}«/MATH» is regarded as a function of the initial and final values of «MATH:q_{1}, q_{2}, \ldots q_{m}«/MATH», and of the total energy «MATH:\mathrm{H}«/MATH», with the cyclic momenta invariable. It will be found that the forms of (4) and (9) will be conserved, provided the variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\!«/MATH» be understood to refer to the palpable co-ordinates alone. It follows that the equations (5), (6) and (10), (11) will still hold under the new meanings of the symbols.«P»«CTR»9. «I»Reciprocal Properties of Direct and Reversed Motions.«/I»«/CTR»«P»We may employ Hamilton’s principal function to prove a very remarkable formula connecting any «I»two«/I» slightly disturbed natural motions of the system. If we use the symbols «MATH:\delta\!«/MATH» and «MATH:\Delta\!«/MATH» to denote the corresponding variations, the theorem is«SH»Lagrange’s formula.«/SH»
 
 
 «EQN:1»«MATH:\frac{d}{dt}\Sigma(\delta p_{r}\cdot \Delta q_{r} - \Delta p_{r}\cdot \delta q_{r}) = 0;«/MATH»«/EQN»
@@ -1139,15 +976,13 @@ we have
 with a similar expression for «MATH:\Delta p_{r}«/MATH». Hence the right-hand side of (2) becomes
 
 
-«EQN:5»«MATH[popout]:- \Sigma_{r} {\Sigma_{s}(r, s) \delta q_{s} + \Sigma_{s}(r, s') \delta q'_{s}} \Delta q_{r} + \Sigma_{r} {\Sigma_{s}(r, s)\Delta q_{s} + \Sigma_{s}(r, s') \Delta q'_{s}} \delta q_{r} = \Sigma_{r}\Sigma_{s}(r, s') {\delta q_{r}\cdot \Delta q'_{s} - \Delta q_{r}\cdot \delta q'_{s}}.«/MATH»«/EQN»
+«EQN:5»«MATH:- \Sigma_{r} {\Sigma_{s}(r, s) \delta q_{s} + \Sigma_{s}(r, s') \delta q'_{s}} \Delta q_{r} + \Sigma_{r} {\Sigma_{s}(r, s)\Delta q_{s} + \Sigma_{s}(r, s') \Delta q'_{s}} \delta q_{r} = \Sigma_{r}\Sigma_{s}(r, s') {\delta q_{r}\cdot \Delta q'_{s} - \Delta q_{r}\cdot \delta q'_{s}}.«/MATH»«/EQN»
 
 
-The same value is obtained in like manner for the expression on the left hand of (2); hence the theorem, which, in the form (1), is due to Lagrange, and was employed by him as the basis of his method of treating the dynamical theory of «I»Variation of Arbitrary Constants«/I».
-
-The formula (2) leads at once to some remarkable reciprocal relations which were first expressed, in their complete form, by Helmholtz. Consider any natural motion of a conservative system between two configurations «MATH:\mathrm{O}«/MATH» and «MATH:\mathrm{O}'\!«/MATH» through which it passes at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» respectively, and let «MATH:t' - t = \tau\!«/MATH». «SH»Helmholtz’s reciprocal theorems.«/SH»As the system is passing through «MATH:\mathrm{O}\!«/MATH» let a small impulse «MATH:\delta p_{r}\!«/MATH» be given to it, and let the consequent alteration in the co-ordinate «MATH:q_{s}\!«/MATH» after the time «MATH:\tau\!«/MATH» be «MATH:\delta q'_{s}«/MATH». Next consider the «I»reversed«/I» motion of the system, in which it would, if undisturbed, pass from «MATH:\mathrm{O}'\!«/MATH» to «MATH:\mathrm{O}«/MATH» in the same time «MATH:\tau\!«/MATH». Let a small impulse «MATH:\delta p'_{s}\!«/MATH» be applied as the system is passing through «MATH:\mathrm{O}'\!«/MATH», and let the consequent change in the co-ordinate «MATH:q_{r}\!«/MATH» after a time «MATH:\tau\!«/MATH» be «MATH:\delta q_{r}\!«/MATH». Helmholtz’s first theorem is to the effect that
+The same value is obtained in like manner for the expression on the left hand of (2); hence the theorem, which, in the form (1), is due to Lagrange, and was employed by him as the basis of his method of treating the dynamical theory of «I»Variation of Arbitrary Constants«/I».«P»The formula (2) leads at once to some remarkable reciprocal relations which were first expressed, in their complete form, by Helmholtz. Consider any natural motion of a conservative system between two configurations «MATH:\mathrm{O}«/MATH» and «MATH:\mathrm{O}'\!«/MATH» through which it passes at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» respectively, and let «MATH:t' - t = \tau\!«/MATH». «SH»Helmholtz’s reciprocal theorems.«/SH»As the system is passing through «MATH:\mathrm{O}\!«/MATH» let a small impulse «MATH:\delta p_{r}\!«/MATH» be given to it, and let the consequent alteration in the co-ordinate «MATH:q_{s}\!«/MATH» after the time «MATH:\tau\!«/MATH» be «MATH:\delta q'_{s}«/MATH». Next consider the «I»reversed«/I» motion of the system, in which it would, if undisturbed, pass from «MATH:\mathrm{O}'\!«/MATH» to «MATH:\mathrm{O}«/MATH» in the same time «MATH:\tau\!«/MATH». Let a small impulse «MATH:\delta p'_{s}\!«/MATH» be applied as the system is passing through «MATH:\mathrm{O}'\!«/MATH», and let the consequent change in the co-ordinate «MATH:q_{r}\!«/MATH» after a time «MATH:\tau\!«/MATH» be «MATH:\delta q_{r}\!«/MATH». Helmholtz’s first theorem is to the effect that
 
 
-«EQN:6»«MATH:\delta q_{r} : \delta p'_{s} = \delta q'_{s} : \delta p_{r}.«/MATH»«/EQN»
+«EQN:6»«MATH:\delta q_{r}: \delta p'_{s} = \delta q'_{s}: \delta p_{r}.«/MATH»«/EQN»
 
 
 To prove this, suppose, in (2), that all the «MATH:\delta q\!«/MATH» vanish, and likewise all the «MATH:\delta p\!«/MATH» with the exception of «MATH:\delta p_{r}\!«/MATH». Further, suppose all the «MATH:\Delta q'\!«/MATH» to vanish, and likewise all the «MATH:\Delta p'\!«/MATH» except «MATH:\Delta p'_{s}\!«/MATH», the formula then gives
@@ -1162,19 +997,11 @@ which is equivalent to Helmholtz’s result, since we may suppose the symbol «M
 «EQN:8»«MATH:\frac{\beta}{\mathrm{V}'\delta\theta'} =\frac{\beta'}{\mathrm{V}\delta\theta},«/MATH»«/EQN»
 
 
-or, in optical language, the “apparent distance” of «MATH:\mathrm{O}«/MATH» from «MATH:\mathrm{O}'\!«/MATH» is to that of «MATH:\mathrm{O}'\!«/MATH» from «MATH:\mathrm{O}«/MATH» in the ratio of the refractive indices at «MATH:\mathrm{O}'\!«/MATH» and «MATH:\mathrm{O}«/MATH» respectively.
-
-In the second reciprocal theorem of Helmholtz the configuration «MATH:\mathrm{O}\!«/MATH» is slightly varied by a change «MATH:\delta q_{r}\!«/MATH» in one of the co-ordinates, the momenta being all unaltered, and «MATH:\delta q'_{s}\!«/MATH» is the consequent variation in one of the momenta after time «MATH:\tau\!«/MATH». Similarly in the reversed motion a change «MATH:\delta p'_{s}\!«/MATH» produces after time «MATH:\tau\!«/MATH» a «SH»Helmholtz’s second reciprocal theorem.«/SH»change of momentum «MATH:\delta p_{r}\!«/MATH». The theorem asserts that
+or, in optical language, the “apparent distance” of «MATH:\mathrm{O}«/MATH» from «MATH:\mathrm{O}'\!«/MATH» is to that of «MATH:\mathrm{O}'\!«/MATH» from «MATH:\mathrm{O}«/MATH» in the ratio of the refractive indices at «MATH:\mathrm{O}'\!«/MATH» and «MATH:\mathrm{O}«/MATH» respectively.«P»In the second reciprocal theorem of Helmholtz the configuration «MATH:\mathrm{O}\!«/MATH» is slightly varied by a change «MATH:\delta q_{r}\!«/MATH» in one of the co-ordinates, the momenta being all unaltered, and «MATH:\delta q'_{s}\!«/MATH» is the consequent variation in one of the momenta after time «MATH:\tau\!«/MATH». Similarly in the reversed motion a change «MATH:\delta p'_{s}\!«/MATH» produces after time «MATH:\tau\!«/MATH» a «SH»Helmholtz’s second reciprocal theorem.«/SH»change of momentum «MATH:\delta p_{r}\!«/MATH». The theorem asserts that
 
 
-«EQN:9»«MATH:\delta p'_{s} : \delta q_{r} = \delta p_{r} : \delta q'_{s}«/MATH»«/EQN»
+«EQN:9»«MATH:\delta p'_{s}: \delta q_{r} = \delta p_{r}: \delta q'_{s}«/MATH»«/EQN»
 
 
-This follows at once from (2) if we imagine all the «MATH:\delta p\!«/MATH» to vanish, and likewise all the «MATH:\delta q\!«/MATH» save «MATH:\delta q_{r}\!«/MATH», and if (further) we imagine all the «MATH:\Delta p'\!«/MATH» to vanish, and all the «MATH:\Delta q'\!«/MATH» save «MATH:\Delta q'_{s}\!«/MATH». Reverting to the optical illustration, if «MATH:\mathrm{F}, \mathrm{F}'\!«/MATH», be principal foci, we can infer that the convergence at «MATH:\mathrm{F}'\!«/MATH» of a parallel beam from «MATH:\mathrm{F}«/MATH» is to the convergence at «MATH:\mathrm{F}«/MATH» of a parallel beam from «MATH:\mathrm{F}'\!«/MATH» in the inverse ratio of the refractive indices at «MATH:\mathrm{F}'\!«/MATH» and «MATH:\mathrm{F}«/MATH». This is equivalent to Gauss’s relation between the two principal focal lengths of an optical instrument. It may be obtained otherwise as a particular case of (8).
-
-We have by no means exhausted the inferences to be drawn from Lagrange’s formula. It may be noted that (6) includes as particular cases various important reciprocal relations in optics and acoustics formulated by R.&nbsp;J.&nbsp;E. Clausius, Helmholtz, Thomson (Lord Kelvin) and Tait, and Lord Rayleigh. In applying the theorem care must be taken that in the reversed motion the reversal is complete, and extends to every velocity in the system; in particular, in a cyclic system the cyclic motions must be imagined to be reversed with the rest. Conspicuous instances of the failure of the theorem through incomplete reversal are afforded by the propagation of sound in a wind and the propagation of light in a magnetic medium.
-
-It may be worth while to point out, however, that there is no such limitation to the use of Lagrange’s formula (1). In applying it to cyclic systems, it is convenient to introduce conditions already laid down, viz. that the co-ordinates «MATH:q_{r}«/MATH» are the palpable co-ordinates and that the cyclic momenta are invariable. Special inference can then be drawn as before, but the interpretation cannot be expressed so neatly owing to the non-reversibility of the motion.
-
-«DIV[style:font-size:83%]»«SC»Authorities.«/SC»—The most important and most accessible early authorities are J. L. Lagrange, «I»Mécanique analytique«/I» (1st ed. Paris, 1788, 2nd ed. Paris, 1811; reprinted in «I»Œuvres«/I», vols. xi., xii., Paris, 1888–89); Hamilton, “On a General Method in Dynamics,” «I»Phil. Trans.«/I» 1834 and 1835; C. G. J. Jacobi, «I»Vorlesungen über Dynamik«/I» (Berlin, 1866, reprinted in «I»Werke«/I», Supp.-Bd., Berlin, 1884). An account of the extensive literature on the differential equations of dynamics and on the theory of variation of parameters is given by A. Cayley, “Report on Theoretical Dynamics,” «I»Brit. Assn. Rep.«/I» (1857), «I»Mathematical Papers«/I», vol. iii. (Cambridge, 1890). For the modern developments reference may be made to Thomson and Tait, «I»Natural Philosophy«/I» (1st ed. Oxford, 1867, 2nd ed. Cambridge, 1879); Lord Rayleigh, «I»Theory of Sound«/I», vol. i. (1st ed. London, 1877; 2nd ed. London, 1894); E.&nbsp;J. Routh, «I»Stability of Motion«/I» (London, 1877), and «I»Rigid Dynamics«/I» (4th ed. London, 1884); H. Helmholtz, “Über die physikalische Bedeutung des Prinzips der kleinsten Action,” «I»Crelle«/I», vol. c., 1886, reprinted (with other cognate papers) in «I»Wiss. Abh.«/I» vol. iii. (Leipzig, 1895); J. Larmor, “On Least Action,” «I»Proc. Lond. Math. Soc.«/I» vol. xv. (1884); E.&nbsp;T. Whittaker, «I»Analytical Dynamics«/I» (Cambridge, 1904). As to the question of stability, reference may be made to H. Poincaré, “Sur l’équilibre d’une masse fluide animée d’un mouvement de rotation” «I»Acta math.«/I» vol. vii. (1885); F. Klein and A. Sommerfeld, «I»Theorie des Kreisels«/I», pts. 1, 2 (Leipzig, 1897–1898); A. Lioupanoff and J. Hadamard, «I»Liouville«/I», 5me série, vol. iii. (1897); T.&nbsp;J.&nbsp;I. Bromwich, Proc. Lond. Math. Soc. vol. xxxiii. (1901). A remarkable interpretation of various dynamical principles is given by H. Hertz in his posthumous work «I»Die Prinzipien der Mechanik«/I» (Leipzig, 1894), of which an English translation appeared in 1900. «SPAN[style:font-size:108%]»«DIV[style:float:right]»(H. Lb.)«/DIV»«/SPAN»«/DIV»
+This follows at once from (2) if we imagine all the «MATH:\delta p\!«/MATH» to vanish, and likewise all the «MATH:\delta q\!«/MATH» save «MATH:\delta q_{r}\!«/MATH», and if (further) we imagine all the «MATH:\Delta p'\!«/MATH» to vanish, and all the «MATH:\Delta q'\!«/MATH» save «MATH:\Delta q'_{s}\!«/MATH». Reverting to the optical illustration, if «MATH:\mathrm{F}, \mathrm{F}'\!«/MATH», be principal foci, we can infer that the convergence at «MATH:\mathrm{F}'\!«/MATH» of a parallel beam from «MATH:\mathrm{F}«/MATH» is to the convergence at «MATH:\mathrm{F}«/MATH» of a parallel beam from «MATH:\mathrm{F}'\!«/MATH» in the inverse ratio of the refractive indices at «MATH:\mathrm{F}'\!«/MATH» and «MATH:\mathrm{F}«/MATH». This is equivalent to Gauss’s relation between the two principal focal lengths of an optical instrument. It may be obtained otherwise as a particular case of (8).«P»We have by no means exhausted the inferences to be drawn from Lagrange’s formula. It may be noted that (6) includes as particular cases various important reciprocal relations in optics and acoustics formulated by R. J. E. Clausius, Helmholtz, Thomson (Lord Kelvin) and Tait, and Lord Rayleigh. In applying the theorem care must be taken that in the reversed motion the reversal is complete, and extends to every velocity in the system; in particular, in a cyclic system the cyclic motions must be imagined to be reversed with the rest. Conspicuous instances of the failure of the theorem through incomplete reversal are afforded by the propagation of sound in a wind and the propagation of light in a magnetic medium.«P»It may be worth while to point out, however, that there is no such limitation to the use of Lagrange’s formula (1). In applying it to cyclic systems, it is convenient to introduce conditions already laid down, viz. that the co-ordinates «MATH:q_{r}«/MATH» are the palpable co-ordinates and that the cyclic momenta are invariable. Special inference can then be drawn as before, but the interpretation cannot be expressed so neatly owing to the non-reversibility of the motion.«P»«DIV[style:font-size:83%]»«SC»Authorities.«/SC»—The most important and most accessible early authorities are J. L. Lagrange, «I»Mécanique analytique«/I» (1st ed. Paris, 1788, 2nd ed. Paris, 1811; reprinted in «I»Œuvres«/I», vols. xi., xii., Paris, 1888–89); Hamilton, “On a General Method in Dynamics,” «I»Phil. Trans.«/I» 1834 and 1835; C. G. J. Jacobi, «I»Vorlesungen über Dynamik«/I» (Berlin, 1866, reprinted in «I»Werke«/I», Supp.-Bd., Berlin, 1884). An account of the extensive literature on the differential equations of dynamics and on the theory of variation of parameters is given by A. Cayley, “Report on Theoretical Dynamics,” «I»Brit. Assn. Rep.«/I» (1857), «I»Mathematical Papers«/I», vol. iii. (Cambridge, 1890). For the modern developments reference may be made to Thomson and Tait, «I»Natural Philosophy«/I» (1st ed. Oxford, 1867, 2nd ed. Cambridge, 1879); Lord Rayleigh, «I»Theory of Sound«/I», vol. i. (1st ed. London, 1877; 2nd ed. London, 1894); E. J. Routh, «I»Stability of Motion«/I» (London, 1877), and «I»Rigid Dynamics«/I» (4th ed. London, 1884); H. Helmholtz, “Über die physikalische Bedeutung des Prinzips der kleinsten Action,” «I»Crelle«/I», vol. c., 1886, reprinted (with other cognate papers) in «I»Wiss. Abh.«/I» vol. iii. (Leipzig, 1895); J. Larmor, “On Least Action,” «I»Proc. Lond. Math. Soc.«/I» vol. xv. (1884); E. T. Whittaker, «I»Analytical Dynamics«/I» (Cambridge, 1904). As to the question of stability, reference may be made to H. Poincaré, “Sur l’équilibre d’une masse fluide animée d’un mouvement de rotation” «I»Acta math.«/I» vol. vii. (1885); F. Klein and A. Sommerfeld, «I»Theorie des Kreisels«/I», pts. 1, 2 (Leipzig, 1897–1898); A. Lioupanoff and J. Hadamard, «I»Liouville«/I», 5me série, vol. iii. (1897); T. J. I. Bromwich, Proc. Lond. Math. Soc. vol. xxxiii. (1901). A remarkable interpretation of various dynamical principles is given by H. Hertz in his posthumous work «I»Die Prinzipien der Mechanik«/I» (Leipzig, 1894), of which an English translation appeared in 1900. «SPAN[style:font-size:108%]»«DIV[style:float:right]»(H. Lb.)«/DIV»«/SPAN»«/DIV»
 PAGE:791

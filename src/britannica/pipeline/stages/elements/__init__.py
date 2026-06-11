@@ -140,18 +140,22 @@ def _passthrough_inner(raw, inner, context,
 
 
 def _produce_body(raw, inner, context, inner_registry):
-    """BODY producer: emits the residual prose run as-is — no markup pass
-    (whitespace collapse, ``\\xa0`` → space, paragraph-break normalization,
-    line-leading ``:``/``;`` sigil strip, body-only ``<br>`` → space rule).
+    """BODY producer — also the «\\n\\n producer».  The body run is the inert text
+    between element markers; the one thing this producer does to it is turn a
+    blank line into a paragraph-OPEN marker «P».
 
-    The walker emits SHAPE_BODY for it.  The run is NOT a pure leaf — it
-    carries inline element markers («SC», «LN», …) and child placeholders
-    the walker produced, which ``produce_tree`` substitutes; an across-the-
-    board pass here would reach into content the body doesn't own.  So the
-    body transforms nothing and article assembly is pure ordered
-    concatenation of element markers.
+    «P» is open-only on purpose: the viewer maps «P»→`<p>` and the BROWSER
+    auto-closes each `<p>` at the next `<p>` or at any block element — so
+    paragraph-closing and block-break-out are the browser's native job, computed
+    by nobody in this pipeline and needing no look-ahead.  A run with no blank
+    line emits no «P» and simply rides inside whichever paragraph is open; the
+    inline child placeholders it carries are still substituted by ``produce_tree``.
+
+    Placed here, not in ``preprocess()``: preprocess runs BEFORE detect-boundaries
+    and the walker, both of which read raw `\\n\\n`; swapping it there blinds them.
+    By the time the body producer runs, every `\\n\\n`-dependent stage is done.
     """
-    return raw
+    return re.sub(r"\n{2,}", "«P»", raw)
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
@@ -289,14 +293,13 @@ def _image_leaf(raw):
     return build_img_marker(filename)
 
 
-def _process_lb(inner):
+def _process_lb(inner, context):
     """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph ℔ unwrapped
-    to literal "lb").  `inner` is the RECURSED DOUBLE_BRACE body (`lb-|N`), so a
-    nested fraction in N (`{{lb-|9{{tfrac|2|3}}}}`) rides through as a child
-    placeholder the framework substitutes — peel the `lb-` name + optional pipe;
-    the rest is the already-recursed quantity.  (Was a flat regex on `raw` that
-    read the arg flat and dropped the nested fraction.)"""
+    to literal "lb").  Peel the `lb-` name + optional pipe, then RETURN the quantity
+    through the loop (a nested `{{tfrac}}`/`{{sub}}` in N is produced by its own
+    producer) — DOUBLE_BRACE is a leaf, so the producer recurses its own content."""
     rest = re.sub(r"^\s*lb-\s*\|?\s*", "", inner, flags=re.IGNORECASE).strip()
+    rest = process_elements(rest, context, _allow_figure=False).strip()
     return f"{rest} lb" if rest else "lb"
 
 
@@ -311,14 +314,13 @@ def _process_nowiki(raw):
     return re.sub(r"</nowiki>\s*$", "", inner, flags=re.IGNORECASE)
 
 
-def _process_cite(inner):
+def _process_cite(inner, context):
     """`{{cite|Title}}` → «I»Title«/I» (the work-title italic the template supplies;
-    the title is not pre-italicized in source).  `inner` is the framework-recursed
-    DOUBLE_BRACE body (`cite|<title>`), so an embedded `[[link]]` already rode
-    through as a substituted child — the producer only strips the name and
-    italic-wraps; it does NOT recurse."""
+    the title is not pre-italicized in source).  Strip the name, then RETURN the title
+    through the loop (an embedded `[[link]]`/`{{sc}}` is produced by its own producer),
+    italic-wrap — DOUBLE_BRACE is a leaf, so the producer recurses its own content."""
     _name, _bar, title = inner.partition("|")
-    title = title.strip()
+    title = process_elements(title.strip(), context, _allow_figure=False).strip()
     return f"«I»{title}«/I»" if title else ""
 
 
@@ -562,20 +564,20 @@ def _process_styled(raw, inner, context, inner_registry):
     return style_block(content, css=css, tag=marker_tag)
 
 
-def _process_fraction(inner):
+def _process_fraction(inner, context):
     """FRACTION producer: a `{{sfrac|n|d}}`-family styler (sfrac / mfrac / frac /
     over / EB1911 tfrac / …) lifted as a bounded element so its slots RECURSE.
-    The `<math>` numerator/denominator are MATH children (the framework
-    substitutes their markers); text slots pass through unchanged; then
-    ``_render_fraction`` assembles num-over-den.  Replaces body-text's
-    ``_expand_fractions`` flatten, which leaked the `{{sfrac|` the moment a slot
-    held an extracted element or the template spanned a body-run `\\n\\n`."""
+    Each numerator/denominator slot is RETURNED through the loop (the producer
+    transforms its outer — the `name` token + the bar-fraction scaffold — and hands
+    each slot to ``process_elements``), so a `{{Greek}}`/`{{sub}}`/`<math>` inside is
+    produced by its own producer.  Replaces body-text's ``_expand_fractions`` flatten."""
     from britannica.pipeline.stages.elements._fraction import (
         _render_fraction)
+    recurse = (lambda s: process_elements(s, context, _allow_figure=False))
     bar = inner.find("|")                       # strip the `name` token
     if bar < 0:
         return inner
-    rendered = _render_fraction(inner[bar:])
+    rendered = _render_fraction(inner[bar:], recurse)
     if inner[:bar].strip().lower() == "binom":
         # Binomial coefficient — a GROUPED pair (parens), not a bare bar-fraction.
         return f"({rendered})"
@@ -673,9 +675,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # FRACTION — the `{{sfrac|n|d}}` family, a STYLER lifted as an element so
     # its slots recurse (the dual-line model for a two-slot wrapper).
     "FRACTION": lambda raw, inner, ctx, reg:
-        _process_fraction(inner),
+        _process_fraction(inner, ctx),
     # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
-    "LB": lambda raw, inner, ctx, reg: _process_lb(inner),
+    "LB": lambda raw, inner, ctx, reg: _process_lb(inner, ctx),
     # NOWIKI — `<nowiki>X</nowiki>` wiki-escape; unwrap to the literal inner.
     "NOWIKI": lambda raw, inner, ctx, reg: _process_nowiki(raw),
     # INCLUDEONLY — `<includeonly>X</includeonly>` transclusion complement of
@@ -686,7 +688,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "COORDINATES": lambda raw, inner, ctx, reg: _process_coordinates(inner),
     # CITE — `{{cite|Work Title}}` → «I»title«/I»; the framework already recursed any
     # embedded `[[link]]` in the (placeholdered) inner.
-    "CITE": lambda raw, inner, ctx, reg: _process_cite(inner),
+    "CITE": lambda raw, inner, ctx, reg: _process_cite(inner, ctx),
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates
@@ -701,11 +703,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # into prose, and body-text's `_convert_sfrac` / `_convert_sub_sup`
     # own them.
     "MATH_EQUATION": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner),
+        _process_math_equation(inner, ctx),
     "MATH_FORMULA_LABELED": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner),
+        _process_math_equation(inner, ctx),
     "MATH_NE": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner),
+        _process_math_equation(inner, ctx),
     # CONTRIBUTOR_FOOTER — the `{{EB1911 footer …}}` signature.  Renders ONLY the initials
     # signoff a reader sees (right-aligned parenthetical); the byline binding is harvested
     # separately by extract_contributors off those initials, via the vol-29/front-matter index.
@@ -715,11 +717,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
     # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
     "EB1911_ARTICLE_LINK": lambda raw, inner, ctx, reg:
-        process_eb1911_article_link(inner),
+        process_eb1911_article_link(inner, ctx),
     # Target-first link siblings — lkpl / 1911link / EB1911 link.  Same recurse-the-
     # display producer, target-first convention.
     "TARGET_FIRST_LINK": lambda raw, inner, ctx, reg:
-        process_target_first_link(inner),
+        process_target_first_link(inner, ctx),
     # AUTHOR_LINK — `[[Author:Name|Display]]`.  Routed on the display: a contributor's
     # initials (in ctx.contributor_initials) → render the initials; else → «LN» xref.
     "AUTHOR_LINK": lambda raw, inner, ctx, reg:
@@ -727,21 +729,21 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # EB1911_SELFREF — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`, the internal
     # cross-link in raw bracket form; same «LN» family as the template links above.
     "EB1911_SELFREF": lambda raw, inner, ctx, reg:
-        process_eb1911_selfref_link(inner),
+        process_eb1911_selfref_link(raw, ctx),
     # FRAGMENT_LINK — `[[#Section]]`, a bare same-article anchor link → «LN:#Section».
     "FRAGMENT_LINK": lambda raw, inner, ctx, reg:
-        process_fragment_link(inner),
+        process_fragment_link(raw, ctx),
     # INTRA_ARTICLE_LINK — `{{EB1911 intra-article link|Section}}`, its template twin.
     "INTRA_ARTICLE_LINK": lambda raw, inner, ctx, reg:
-        process_intra_article_link(inner),
+        process_intra_article_link(inner, ctx),
     # WIKILINK — generic `[[Target]]` cross-reference → «LN», resolved by the ladder.
-    "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(inner),
+    "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(raw, ctx),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
     # lang/sic/dropinitial/fqm unwrap to the display arg.
     "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
-        process_content_extract(inner),
+        process_content_extract(inner, ctx),
     "POEM": lambda raw, inner, ctx, reg: _process_poem(inner),
     "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner),
     "ORDERED_LIST": lambda raw, inner, ctx, reg: _process_ordered_list(raw),

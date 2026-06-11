@@ -15,6 +15,7 @@ from __future__ import annotations
 import pytest
 
 from britannica.pipeline.stages.elements._shapes import (
+    SHAPE_BODY,
     SHAPE_BRACE_PIPE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
@@ -25,16 +26,29 @@ from britannica.pipeline.stages.elements._shapes import (
 from britannica.pipeline.stages.elements._walker import walk
 
 
+def _non_body(extracts):
+    """Real (non-prose) extracts: BODY is now its own element shape, emitted
+    for every residual prose run between other elements.  These tests pin the
+    structural (non-BODY) elements, so filter the interleaved BODY runs out."""
+    return [e for e in extracts if e[1] != SHAPE_BODY]
+
+
 class TestWalkOutput:
     def test_empty_text(self):
+        # Plain prose is now its own BODY element: the walker emits one
+        # SHAPE_BODY extract carrying the run and a placeholder in its place.
         text_out, extracts = walk("just plain prose")
-        assert text_out == "just plain prose"
-        assert extracts == []
+        assert len(extracts) == 1
+        ph, shape, raw = extracts[0]
+        assert shape == SHAPE_BODY
+        assert raw == "just plain prose"
+        assert text_out == ph
 
     def test_math_tag(self):
         text_out, extracts = walk("body <math>x^2</math> end")
-        assert len(extracts) == 1
-        ph, shape, raw = extracts[0]
+        real = _non_body(extracts)
+        assert len(real) == 1
+        ph, shape, raw = real[0]
         assert shape == SHAPE_HTML_TAG
         assert raw == "<math>x^2</math>"
         assert ph in text_out
@@ -45,15 +59,17 @@ class TestWalkOutput:
         # walker emits a more specific label so producers (figure /
         # inline-glyph) can dispatch without re-recognising.
         text_out, extracts = walk("body [[File:Foo.jpg]] end")
-        assert len(extracts) == 1
-        _ph, shape, raw = extracts[0]
+        real = _non_body(extracts)
+        assert len(real) == 1
+        _ph, shape, raw = real[0]
         assert shape == SHAPE_INLINE_IMAGE
         assert raw.startswith("[[File:")
 
     def test_self_closing_ref(self):
         text_out, extracts = walk("see <ref name=foo/>")
-        assert len(extracts) == 1
-        _ph, shape, _raw = extracts[0]
+        real = _non_body(extracts)
+        assert len(real) == 1
+        _ph, shape, _raw = real[0]
         assert shape == SHAPE_HTML_SELF_CLOSING
 
     def test_brace_pipe_table(self):
@@ -122,8 +138,9 @@ class TestWalkOutput:
         text_out, extracts = walk(
             "before <math>x</math> middle [[File:F.jpg]] end"
         )
-        assert len(extracts) == 2
-        shapes = sorted(s for _ph, s, _raw in extracts)
+        real = _non_body(extracts)
+        assert len(real) == 2
+        shapes = sorted(s for _ph, s, _raw in real)
         # `<math>` → HTML_TAG; `[[File:F.jpg]]` in inline-prose
         # context → INLINE_IMAGE (more specific than DOUBLE_BRACKET).
         assert shapes == [SHAPE_HTML_TAG, SHAPE_INLINE_IMAGE]
@@ -159,8 +176,9 @@ class TestOneLevelOnly:
         text_out, extracts = walk(
             "before <poem>verse <ref>note</ref> end</poem> after"
         )
-        assert len(extracts) == 1
-        ph, shape, raw = extracts[0]
+        real = _non_body(extracts)
+        assert len(real) == 1
+        ph, shape, raw = real[0]
         assert shape == SHAPE_HTML_TAG
         assert raw == "<poem>verse <ref>note</ref> end</poem>"
         # The ref is embedded as raw bytes in the poem's extract,

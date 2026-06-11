@@ -97,12 +97,26 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # SECTION — a `<section begin/end/>` transclusion marker; no inner content,
     # the producer reads the raw tag (its name is boundary metadata).
     SHAPE_SECTION,
-    # BODY — article-level prose run between other elements.  The body
-    # producer owns it end-to-end (markup conversion + body finishing);
-    # the walker does NOT recurse into it (any extractable shape would
-    # already have been pulled out as its own element before the BODY
-    # wrapper ran).
+    # BODY — a prose run between other elements, at any depth.  The body
+    # producer owns it end-to-end; it is a leaf (no inner — that's what makes
+    # it body text), so the walker never recurses into it.
     SHAPE_BODY,
+    # BRACE_PIPE — a `{|…|}` table.  Its inner is a GRID (`|-`, `|` row/cell
+    # delimiters) — the table's own structure, NOT body text.  The producer
+    # (`_process_table_unified`) decomposes the grid from raw and `cell_recurse`s
+    # each cell's content through `process_elements` (so cell prose → BODY →
+    # «P»).  A leaf here so the generic walk doesn't grab the grid as body text
+    # (table→row→cell→body lives in the producer, not the classifier).
+    SHAPE_BRACE_PIPE,
+    # DOUBLE_BRACE — a `{{name|arg|arg}}` template (link, fraction, image, footer,
+    # coordinate, …).  Its inner is PIPE-SEPARATED ARGS — the template's own
+    # structure, NOT body text.  The producer chews the whole arg string (splits
+    # the pipes, pulls target/display/params) and stops; a content slot that needs
+    # markup recursion is the producer's own `process_elements` call.  A leaf so
+    # the generic walk doesn't wrap the args into one BODY (which left link
+    # producers a placeholder with no pipes → empty link).  The label derives from
+    # `raw`, so no child registry is needed.
+    SHAPE_DOUBLE_BRACE,
     # PAGE — the `\x01PAGE:N\x01` page-break marker; a leaf, the producer
     # re-emits the raw.  Folding it in retires the page-marker strip the
     # outline recognizer used to need.

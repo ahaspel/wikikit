@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import re
 
-from britannica.captions import clean_caption, strip_cell_attrs
 from britannica.pipeline.stages.elements._image import _process_image_from_raw
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
@@ -1298,8 +1297,19 @@ def _process_table_unified(
     # single-syntax HTML extractor — it saw only the `<td>` cells and dropped
     # the wiki `|` rows, spilling their `{{Ts}}` to body-text.)
     flavor = "html" if raw.lstrip().startswith("<table") else "wiki"
+    # The table OWNS its grid, so parse it from `raw`, NOT the recursed `inner`.  A
+    # wiki `{|` is a leaf, so its `inner` already IS the raw grid; but an HTML
+    # `<table>` is HTML_TAG (non-leaf), so the body-text-as-element walk wrapped its
+    # `<tr>`/`<td>` rows into a BODY placeholder — `inner` has no rows and the whole
+    # table evaporated.  Re-deriving from `raw` (peel the `<table …>…</table>` shell)
+    # restores the symmetry; `cell_recurse` recurses each cell's content downstream.
     if flavor == "html":
-        inner = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
+        grid = re.sub(r"</table\s*>\s*$", "",
+                      re.sub(r"^\s*<table\b[^>]*>", "", raw, count=1, flags=re.I),
+                      count=1, flags=re.I)
+        grid = re.sub(r"<!--.*?-->", "", grid, flags=re.DOTALL)
+    else:
+        grid = inner
     # THE collapse: each cell's body recurses through `process_elements` (not a
     # second body-text pass), so a styled wrapper / fraction / nested table /
     # math in a cell is handled as the element it is.  `_allow_figure=False`: a
@@ -1315,7 +1325,7 @@ def _process_table_unified(
     # nested-table content is handled as the element it is, not flattened in
     # place.  The flattener was the source of the cell-context style leaks.
     caption_raw, rows, _has_header, _has_span = produce_table_rows(
-        inner, flavor=flavor,
+        grid, flavor=flavor,
         cell_preclean=None,
         cell_recurse=cell_recurse)
     if not rows:
@@ -1343,7 +1353,11 @@ def _process_table_unified(
     attrs = f' class="{cls}"' + (f' style="{";".join(styles)}"' if styles else "")
     caption_html = ""
     if caption_raw:
-        ct = strip_cell_attrs(caption_raw)
+        # A caption is prose in a box, same as a cell — recurse the RAW through
+        # the loop so a `{{sc}}`/`{{c}}`/footnote is produced.  NOT strip_cell_attrs
+        # first: its `[|{}]`→space cleanup shreds a raw `{{sc|…}}` into `sc …`
+        # (it only ever saw pre-produced «SC» markers under the old non-leaf classify).
+        ct = cell_recurse(caption_raw).strip()
         if ct:
             caption_html = f"<caption>{ct}</caption>"
     return body.replace(

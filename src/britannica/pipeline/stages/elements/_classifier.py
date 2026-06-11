@@ -496,13 +496,14 @@ def classify_article(
     of its span) suppresses figure recognition so it doesn't re-recognize —
     and recurse on — its own span.
 
-    Article-level walk runs with ``_wrap_body=True`` so residual prose
-    between extracted elements becomes its own SHAPE_BODY extracts.
-    After this call the placeholderized text contains only placeholders
-    — every byte of the article is owned by some classified element.
+    The walk emits a SHAPE_BODY extract for every body-text run between
+    elements — at this depth and (via ``classify``'s recursion) every deeper
+    one — so after this call the placeholderized text contains only
+    placeholders: every byte is owned by some classified element, body
+    text included.
     """
     placeholderized_text, extracts = walk(
-        text, _allow_figure=_allow_figure, _wrap_body=True)
+        text, _allow_figure=_allow_figure)
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)

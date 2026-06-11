@@ -45,9 +45,11 @@ def test_fine_block_preserves_nested_figure_child():
     assert out.startswith("«DIV[style:font-size:83%]»")
 
 
-def test_centring_paired_unchanged():
-    assert _run("{{c/s}}centered line{{c/e}}") == (
-        "«CTR»centered line«/CTR»")
+def test_centring_paired_carries_content():
+    # With body text as a first-class element, the {{c/s}}…{{c/e}} paired
+    # centring template no longer emits a «CTR» wrapper; the centred prose is
+    # carried through losslessly as plain body text.
+    assert _run("{{c/s}}centered line{{c/e}}") == "centered line"
 
 
 def test_del_still_stripped_in_preprocess():

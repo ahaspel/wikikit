@@ -715,28 +715,65 @@ def _paired_wrapper_end(text: str, pos: int) -> int | None:
 
 
 def _walk_balanced_shapes(
-    text: str, _allow_figure: bool = True,
+    text: str, _allow_outline: bool = True, _allow_figure: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
-    """Single linear pass: find every position where a recognizer's
-    opener could match, dispatch in opener-specificity order, take
-    the first successful match.  Returns the placeholderized text
-    plus the extract tuples in source order.
+    """Single linear walk over `text`, at one depth.
+
+    Walks gap → element → gap → element.  Every construct is emitted as an
+    extract — and so is every run of text BETWEEN constructs: that run is body
+    text, an element in its own right, emitted as a SHAPE_BODY extract the
+    instant the walk passes it.  An outline (a line-list) living in such a run
+    is its own element too, recognized here so body text doesn't grab it.
+
+    The walk recognizes everything at this depth — brackets, outlines, body —
+    and `classify` runs it at every depth, so body text is recognized
+    everywhere by the same code.  No later wrap, no flag, no scoop.
     """
     extracts: list[tuple[str, str, str]] = []
     output: list[str] = []
+    body_buf: list[str] = []
     pos = 0
     n = len(text)
     figures = _allow_figure
 
+    def _flush_body() -> None:
+        """Emit the body-text run accumulated so far.  An outline inside it is
+        its own element (extracted first); the remaining prose becomes
+        SHAPE_BODY.  Called the moment the walk reaches a construct (and at the
+        end) — the body run before it is complete."""
+        if not body_buf:
+            return
+        run = "".join(body_buf)
+        body_buf.clear()
+        if not run:
+            return
+        if _allow_outline:
+            run, outline_extracts = _walk_outline(run)
+            extracts.extend(outline_extracts)
+        last = 0
+        for m in _PLACEHOLDER_RE.finditer(run):
+            prose = run[last:m.start()]
+            if prose:
+                bph = _new_placeholder()
+                output.append(bph)
+                extracts.append((bph, SHAPE_BODY, prose))
+            output.append(m.group(0))
+            last = m.end()
+        tail = run[last:]
+        if tail:
+            bph = _new_placeholder()
+            output.append(bph)
+            extracts.append((bph, SHAPE_BODY, tail))
+
     while pos < n:
         hint = _OPENER_HINT_RE.search(text, pos)
         if hint is None:
-            output.append(text[pos:])
+            body_buf.append(text[pos:])
             break
 
         opener_pos = hint.start()
         if opener_pos > pos:
-            output.append(text[pos:opener_pos])
+            body_buf.append(text[pos:opener_pos])
 
         # Try every recognizer at this position in specificity order.
         # First successful match wins.
@@ -918,17 +955,20 @@ def _walk_balanced_shapes(
             # no recognizer fully matched (no closer found, or the
             # full pattern didn't fit).  Advance past one character
             # and continue scanning — same fail-safe as today's
-            # regex.sub which silently skips no-match positions.
-            output.append(text[opener_pos])
+            # regex.sub which silently skips no-match positions.  The
+            # char is body text, so it joins the body buffer.
+            body_buf.append(text[opener_pos])
             pos = opener_pos + 1
             continue
 
         end_pos, shape, raw = matched
+        _flush_body()  # the body element before this construct is complete
         ph = _new_placeholder()
         output.append(ph)
         extracts.append((ph, shape, raw))
         pos = end_pos
 
+    _flush_body()  # trailing body element
     return "".join(output), extracts
 
 
@@ -1128,29 +1168,16 @@ def walk(
     text: str,
     _allow_outline: bool = True,
     _allow_figure: bool = True,
-    _wrap_body: bool = False,
 ) -> tuple[str, list[tuple[str, str, str]]]:
-    """One-level shape-emitting walker.
+    """One-level walk: emit every element at this depth — brackets, outlines,
+    AND the body-text runs between them — in a single scan.
 
-    Linear scan + optional OUTLINE phase + optional BODY-wrap phase.
-    Returns the placeholderized text plus `(placeholder, shape, raw)`
-    tuples.
-
-    ``_allow_outline=False`` is passed when the parent shape is
-    OUTLINE so the outline scanner doesn't re-trigger on its own
-    bytes.  ``_allow_figure=False`` is passed for every recursive
-    (inside-an-element) descent so a figure — a body-level construct —
-    is only recognized at the article level, never inside another
-    element or the figure producer's own re-processing of its span.
-    ``_wrap_body=True`` is passed at the article entry point so
-    residual prose between extracted elements becomes its own SHAPE_BODY
-    extracts; recursive walks (inside cells, captions, figure interiors)
-    pass False — those contexts don't have an article-level "body."
+    ``classify`` runs this at every depth, so body text is recognized
+    everywhere by the same code: no article-level special case, no later
+    body-wrap, no flag.  ``_allow_outline=False`` when the parent is OUTLINE so
+    the outline recognizer doesn't re-trigger on its own bytes.
+    ``_allow_figure=False`` for every recursive descent so a figure — a
+    body-level construct — is recognized only at the article level.
     """
-    text, extracts = _walk_balanced_shapes(text, _allow_figure)
-    if _allow_outline:
-        text, outline_extracts = _walk_outline(text)
-        extracts.extend(outline_extracts)
-    if _wrap_body:
-        text, extracts = _wrap_body_runs(text, extracts)
-    return text, extracts
+    return _walk_balanced_shapes(
+        text, _allow_outline=_allow_outline, _allow_figure=_allow_figure)

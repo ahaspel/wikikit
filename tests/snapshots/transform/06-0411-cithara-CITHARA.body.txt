@@ -3,7 +3,7 @@ Heb. «I»kinura, kinnor«/I»), one of the most ancient stringed
 instruments, traced back to 1700 «SC»B.C.«/SC» among the Semitic races,
 in Egypt, Assyria, Asia Minor, Greece and the Roman empire,
 whence the use of it spread over Europe. The main feature of
-the Greek «I»kithara«/I», its shallow sound-chest, being the most«HTMLTABLE:<table class="figtable" style="float:left;width:240px"><tr><td>{{IMG:EB1911 Cithara Fig. 1.jpg|width=240}}</td></tr><tr><td>&#8193;«SC»Fig.«/SC» 1.—Nero Citharoedus («I»Mus.<br />&#8193;Pio-Clementino«/I»), showing back of a <br />&#8193;Roman Cithara.</td></tr></table>«/HTMLTABLE»
+the Greek «I»kithara«/I», its shallow sound-chest, being the most«HTMLTABLE:<table class="figtable" style="float:left;width:240px"><tr><td>{{IMG:EB1911 Cithara Fig. 1.jpg|width=240}}</td></tr><tr><td>«SC»Fig.«/SC» 1.—Nero Citharoedus («I»Mus.<br /> Pio-Clementino«/I»), showing back of a <br /> Roman Cithara.</td></tr></table>«/HTMLTABLE»
 important part of it, is also that in which developments are most
 noticeable; its contour varied considerably during the many
 musical ages, but the characteristic in respect of which it fore-shadowed
@@ -59,22 +59,12 @@ constructed with horizontal bars resting
 on arms of equal length, the pitch of the
 strings being varied by thickness and
 tension, instead of by length. (For the
-Berlin cithara see «LN:Lyre|Lyre«/LN».)
-
-The number of strings with which the cithara was strung varied from 4 to 19 or 20 at different times; they were added less for the purpose of increasing the compass in the modern sense than to enable the performer to play in the different modes of the Greek musical system. Terpander is credited with having increased the number of strings to seven; Euclid, quoting him as his authority, states that “loving no more the tetrachordal chant, we will sing aloud new hymns to a seven-toned phorminx.”
-
-What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum («SPAN[title:plē̂ktron]»πλῆκτρον«/SPAN», from «SPAN[title:plḗssein]»πλήσσειν«/SPAN», to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossiblePAGE:412with a rigid plectrum.«FN:See Plutarch, «I»Apophthegm. Lacon.«/I»«/FN» Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.
-
-Quotations from the classics abound to show what was the
+Berlin cithara see «LN:Lyre|Lyre«/LN».)«P»The number of strings with which the cithara was strung varied from 4 to 19 or 20 at different times; they were added less for the purpose of increasing the compass in the modern sense than to enable the performer to play in the different modes of the Greek musical system. Terpander is credited with having increased the number of strings to seven; Euclid, quoting him as his authority, states that “loving no more the tetrachordal chant, we will sing aloud new hymns to a seven-toned phorminx.”«P»What has been said of the scale of the lyre applies also to the cithara, and need therefore not be repeated here. The strings were vibrated by means of the fingers or plectrum («SPAN[title:plē̂ktron]»πλῆκτρον«/SPAN», from «SPAN[title:plḗssein]»πλήσσειν«/SPAN», to strike; Lat. «I»plectrum«/I», from «I»plango«/I», I strike). Twanging with the fingers for strings of gut, hemp or silk was undoubtedly the more artistic method, since the player was able to command various shades of expression which are impossiblePAGE:412with a rigid plectrum.«FN:See Plutarch, «I»Apophthegm. Lacon.«/I»«/FN» Loudness of accent and great brilliancy of tone, however, can only be obtained by the use of the plectrum.«P»Quotations from the classics abound to show what was the
 practice of the Greeks and Romans in this respect. The plectrum
 was held in the right hand, with elbow outstretched and palm
 bent inwards, and the strings were plucked with the straightened
 fingers of the left hand.«FN:Philostratus the Elder, «I»Imagines«/I», No. 10, “Amphion,” and Philostratus the Younger, «I»Imagines«/I», No. 7, “Orpheus,” p. 403.«/FN» Both methods were used with intention according to the dictates of art for the sake of the variation in tone colour obtainable thereby.«FN:Tibullus, «I»Eleg.«/I» iii. 4. 39.«/FN»
-
-
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265}}</td></tr><tr><td style="font-size:92%;line-height:130%;padding-left:3em">«SC»Fig«/SC». 3.—Apollo Citharoedus, showing<br/>Cithara with box tail-pieces.</td></tr></table>«/HTMLTABLE»
-
-The strings of the cithara were either knotted round the
+«P»«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:Britannica Cithara Apollo Citharoedus.jpg|width=265}}</td></tr><tr><td style="font-size:92%;line-height:130%;padding-left:3em">«SC»Fig«/SC». 3.—Apollo Citharoedus, showing<br/>Cithara with box tail-pieces.</td></tr></table>«/HTMLTABLE»«P»The strings of the cithara were either knotted round the
 transverse tuning bar itself («I»zugon«/I») or to rings threaded over
 the bar, which enabled the performer to increase or decrease
 the tension by shifting the knots or rings; or else they were
@@ -95,11 +85,7 @@ the same work that of Apollo Citharoedus (fig. 3 above).«/FN»
 are visible across the space that
 would be filled by the strings,
 which are always carved in a solid
-block.
-
-Like the lyre the cithara was made in many sizes, conditioned by the pitch and the use to which the instrument was to be put. These instruments may have been distinguished by different names; the «I»pectis«/I», for instance, is declared by Sappho (22nd fragment) to have been small and shrill; the «I»phorminx«/I», on the other hand, seems to have been identical with the cithara.«FN:See «I»Od.«/I» i. 153, 155; «I»Il.«/I» xviii. 569-570. In Homer the form is always «SPAN[title:kítharis]»κίθαρις«/SPAN».«/FN»
-
-The Greek «I»kithara«/I» was the instrument of the professional singer
+block.«P»Like the lyre the cithara was made in many sizes, conditioned by the pitch and the use to which the instrument was to be put. These instruments may have been distinguished by different names; the «I»pectis«/I», for instance, is declared by Sappho (22nd fragment) to have been small and shrill; the «I»phorminx«/I», on the other hand, seems to have been identical with the cithara.«FN:See «I»Od.«/I» i. 153, 155; «I»Il.«/I» xviii. 569-570. In Homer the form is always «SPAN[title:kítharis]»κίθαρις«/SPAN».«/FN»«P»The Greek «I»kithara«/I» was the instrument of the professional singer
 or citharoedus («SPAN[title:kitharōidós]»κιθαρῳδός«/SPAN») and of
 the instrumentalist or citharista («SPAN[title:kitharistḗs]»κιθαριστής«/SPAN»), and thus served
 the double purpose of (1) accompanying the voice—a use
@@ -145,11 +131,7 @@ over the python and
 of the defeat of the
 monster.«FN:For a description of the «I»Nomos Pythikos«/I» in its relation to Greek
 music see «LN:Kathleen Schlesinger|Kathleen Schlesinger«/LN», “Researches into the Origin of the Organs of the Ancients,” «I»Intern. Mus. Ges.«/I» Sbd. ii. (1901), 2, p. 177, and Strabo ix. p. 421.«/FN»
-
-
-«HTMLTABLE:<table class="figtable"><tr><td>&nbsp;{{IMG:Britannica Cithara Phorminx.jpg|width=300}}</td></tr><tr><td style="font-size:92%;line-height:130%;text-align:center">«SC»Fig«/SC». 4.—Cithara or Phorminx, from a vase<br/>in the British Museum.</td></tr></table>«/HTMLTABLE»
-
-The Pythian Games
+«P»«HTMLTABLE:<table class="figtable"><tr><td> {{IMG:Britannica Cithara Phorminx.jpg|width=300}}</td></tr><tr><td style="font-size:92%;line-height:130%;text-align:center">«SC»Fig«/SC». 4.—Cithara or Phorminx, from a vase<br/>in the British Museum.</td></tr></table>«/HTMLTABLE»«P»The Pythian Games
 survived the classic
 Greek period and
 were continued under
@@ -176,9 +158,7 @@ so charmed with the music of the Spanish competitors that he
 sent some to Rome for the festivals, where the impression created
 was so great that the Spanish citharoedi obtained a permanent
 footing in Rome. Aulus Gellius («I»Noct. Att.«/I») describes an incident
-at a banquet which corroborates this statement.
-
-The degeneration of music as an art among the Romans, and its gradual degradation by association with the sensual amusements of corrupt Rome, nearly brought about its extinction at the end of the 4th century, when the condemnation of the Church closed the theatres, and the great national games came to an end. Instrumental music was banished from civil life and from religious rites, and thenceforth the slender threads which connect the musical instruments of Greeks and Romans with those ofPAGE:413the middle ages must be sought among the unconverted barbarians
+at a banquet which corroborates this statement.«P»The degeneration of music as an art among the Romans, and its gradual degradation by association with the sensual amusements of corrupt Rome, nearly brought about its extinction at the end of the 4th century, when the condemnation of the Church closed the theatres, and the great national games came to an end. Instrumental music was banished from civil life and from religious rites, and thenceforth the slender threads which connect the musical instruments of Greeks and Romans with those ofPAGE:413the middle ages must be sought among the unconverted barbarians
 of northern and western Europe, who kept alive the
 traditions taught them by conquerors and colonists; but as
 civilization was in its infancy with them the instruments sent
@@ -189,11 +169,7 @@ in the transition from cithara into «LN:guitar|Guitar«/LN»«FN:For a discussi
 «I»The Instruments of the Orchestra«/I», part ii., and especially chapters on
 the cithara in transition during the middle ages, and the question
 of the origin of the Utrecht Psalter, in which the evolution of the
-cithara is traced at some length.«/FN» («I»q.v.«/I») took place.
-
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr style="font-size:92%;line-height:130%;padding-left:0.5em"><td>«SC»Fig«/SC». 5.—Asiatic Cithara in<br/>transition (or rotta). From a<br/>fresco at Beni-Hasan<br/>(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in<br/>transition, of the Lycian<br/>Apollo (Rome Mus. Capit.).<br/>&nbsp;</td></tr></table>«/HTMLTABLE»
-
-The first of these steps produced the «LN:rotta|Rotta«/LN» («I»q.v.«/I»), by the
+cithara is traced at some length.«/FN» («I»q.v.«/I») took place.«P»«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:Britannica Cithara Asiatic Cithara.jpg|width=176}}</td><td style="text-align:center">{{IMG:Britannica Cithara Roman Cithara.jpg|width=111}}</td></tr><tr style="font-size:92%;line-height:130%;padding-left:0.5em"><td>«SC»Fig«/SC». 5.—Asiatic Cithara in<br/>transition (or rotta). From a<br/>fresco at Beni-Hasan<br/>(«I»c«/I». 1700 «SC»B.C.«/SC»).</td><td style="padding-left:3em">«SC»Fig«/SC». 6.—Roman Cithara in<br/>transition, of the Lycian<br/>Apollo (Rome Mus. Capit.).<br/> </td></tr></table>«/HTMLTABLE»«P»The first of these steps produced the «LN:rotta|Rotta«/LN» («I»q.v.«/I»), by the
 construction of body, arms and transverse bar in one piece.
 The Semitic races used the rotta at a very remote period (1700
 «SC»B.C.«/SC»), as we know from a fresco at Beni-Hasan, dating from the

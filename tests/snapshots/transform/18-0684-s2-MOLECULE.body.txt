@@ -11,18 +11,14 @@ of atoms, generally two or more. For the detailed chemical
 significance of these terms, see «LN:Chemistry|Chemistry«/LN»; and for the atomic
 theory of the chemist (as distinguished from the atomic or
 molecular theory of the physicist) see «LN:Atom|Atom«/LN»; reference may
-also be made to the article «LN:Matter|Matter«/LN».
-
-The doctrine that matter can be divided into, or regarded as
+also be made to the article «LN:Matter|Matter«/LN».«P»The doctrine that matter can be divided into, or regarded as
 composed of, discrete particles (termed “atoms” by early
 writers, and “molecules” by modern ones) has at all times
 played an important part in metaphysics and natural science.
 The leading historical stages in the evolution of the modern
 conception of the molecular structure of matter are treated in
 the following passage from James Clerk Maxwell’s article «LN:Atom|Atom«/LN»
-in the 9th edition of the «I»Ency. Brit.«/I»
-
-“Atom«FN[654f1]:It will be noted that Clerk Maxwell’s “atom” and “atomic
+in the 9th edition of the «I»Ency. Brit.«/I»«P»“Atom«FN[654f1]:It will be noted that Clerk Maxwell’s “atom” and “atomic
 theory” have the significance which we now attach to “molecule”
 and “molecular theory.”«/FN» («SPAN[title:átomos]»ἄτομος«/SPAN») is a body which cannot be cut in two. The
 atomic theory is a theory of the constitution of bodies which asserts
@@ -35,28 +31,20 @@ these smaller drops can be divided again, and the theory goes on
 to assert that there is nothing in the nature of things to hinder this
 process of division from being repeated over and over again, times
 without end. This is the doctrine of the infinite divisibility of
-bodies, and it is in direct contradiction with the theory of atoms.
-
-“The atomists assert that after a certain number of such divisions
+bodies, and it is in direct contradiction with the theory of atoms.«P»“The atomists assert that after a certain number of such divisions
 the parts would be no longer divisible, because each of them would
 be an atom. The advocates of the continuity of matter assert that
 the smallest conceivable body has parts, and that Whatever has
-parts may be divided.
-
-“In ancient times Democritus was the founder of the atomic
+parts may be divided.«P»“In ancient times Democritus was the founder of the atomic
 theory, while Anaxagoras propounded that of continuity, under the
 name of the doctrine of homoeomeria (Ὁμοιομέρια), or of the similarity
 of the parts of a body to the whole. The arguments of the atomists,
 and their replies to the objections of Anaxagoras, are to be found in
-Lucretius.
-
-“In modern times the study of nature has brought to light many
+Lucretius.«P»“In modern times the study of nature has brought to light many
 properties of bodies which appear to depend on the magnitude and
 motions of their ultimate constituents, and the question of the existence
 of atoms has once more become conspicuous among scientific
-inquiries.
-
-“We shall begin by stating the opposing doctrines of atoms and
+inquiries.«P»“We shall begin by stating the opposing doctrines of atoms and
 of continuity. The most ancient philosophers whose speculations
 are known to us seem to have discussed the ideas of number and of
 continuous magnitude, of space and time, of matter and motion,
@@ -86,9 +74,7 @@ Bayle does not see any force in this statement of Aristotle, but
 continues to admire the paradox of Zeno (Bayle’s «I»Dictionary«/I», art.
 ‘Zeno’). Thus the direction of true scientific progress was for many
 ages towards the recognition of the infinite divisibility of space and
-time.
-
-“It was easy to attempt to apply similar arguments to matter.
+time.«P»“It was easy to attempt to apply similar arguments to matter.
 If matter is extended and fills space, the same mental operation by
 which we recognize the divisibility of space may be applied, in imagination
 at least, to the matter which occupies space. From this
@@ -107,32 +93,24 @@ Res possent; namque, officium quod corporis exstat,
 Officere atque obstare, id in omni tempore adesset
 Omnibus: haud igitur quicquam procedere posset,
 Principium quoniam cedendi nulla daret res.’
- «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»
-
-“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
+ «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»«P»“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
 «CTR»{{VERSE:‘Cedere squamigeris latices nitentibus aiunt
 Et liquidas aperire vias, quia post loca pisces
 Linquant, quo possint cedentes confluere undae.’
- Ibid. i. 373.}VERSE}«/CTR»
-
-“In modern times Descartes held that, as it is of the essence of
+ Ibid. i. 373.}VERSE}«/CTR»«P»“In modern times Descartes held that, as it is of the essence of
 matter to be extended in length, breadth and thickness, so it is of
 the essence of extension to be occupied by matter, for extension
-cannot be an extension of nothing.
-
-“&thinsp;‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
+cannot be an extension of nothing.«P»“ ‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
 quod in aliquo vase continetur, et nullum aliud in ablati locum
 venire permittat? respondendum est, vasis latera sibi invicem hoc
 ipso fore contigua. Cum enim inter duo corpora nihil interjacet,
 necesse est ut se mutuo tangant, ac manifeste repugnat ut distent,
 sive ut inter ipsa sit distantia, et tamen ut ista distantia sit nihil;
 quia omnis distantia est modus extensionis, et ideo sine substantia
-extensa esse non potest.’—«I»Principia«/I», ii.&nbsp;18.
-
-“This identification of extension with substance runs through the
+extensa esse non potest.’—«I»Principia«/I», ii. 18.«P»“This identification of extension with substance runs through the
 whole of Descartes’s works, and it forms one of the ultimate foundations
 of the system of Spinoza. Descartes, consistently with this
 doctrine, denies the existence of atoms as parts of matter, which by
@@ -142,9 +120,7 @@ sense, that no creature should be able to divide them. These particles,
 however, would be still divisible by their own nature, because
 the Deity cannot diminish his own power, and therefore must retain
 his power of dividing them. Leibniz, on the other hand, regarded
-his monad as the ultimate element of everything.
-
-“There are thus two modes of thinking about the constitution of
+his monad as the ultimate element of everything.«P»“There are thus two modes of thinking about the constitution of
 bodies, which have had their adherents both in ancient and in modern
 times. They correspond to the two methods of regarding quantity—the
 arithmetical and the geometrical. To the atomist the true
@@ -152,9 +128,7 @@ method of estimating the quantity of matter in a body is to count the
 atoms of it. The void spaces between the atoms count for nothing.
 To those who identify matter with extension, the volume of space
 occupied by a body is the only measure of the quantity of matter
-in it.
-
-“Of the different forms of the atomic theory that of R. J.
+in it.«P»“Of the different forms of the atomic theory that of R. J.
 Boscovich may be taken as an example of the purest monadism.
 According to Boscovich matter is made up of atoms. Each atom
 is an indivisible point, having position in space, capable of motion
@@ -198,9 +172,7 @@ There is no such thing in nature as actual contact between
 two bodies. When two bodies are said in ordinary language to be in
 contact, all that is meant is that they are so near together that the
 repulsion between the nearest pairs of atoms belonging to the two
-bodies is very great.
-
-“Thus, in Boscovich’s theory, the atom has continuity of existence
+bodies is very great.«P»“Thus, in Boscovich’s theory, the atom has continuity of existence
 in time and space. At any instant of time it is at some point of
 space, and it is never in more than one place at a time. It passes
 from one place to another along a continuous path. It has a definite
@@ -212,9 +184,7 @@ its geometrical aspect it is a mere geometrical point. It has no
 extension in space. It has not the so-called property, of impenetrability,
 for two atoms may exist in the same place. This we may
 regard as one extreme of the various opinions about the constitution
-of bodies.
-
-“The opposite extreme, that of Anaxagoras—the theory that
+of bodies.«P»“The opposite extreme, that of Anaxagoras—the theory that
 bodies apparently homogeneous and continuous are so in reality—is,
 in its extreme form, a theory incapable of development. To explain
 the properties of any substance by this theory is impossible.
@@ -251,17 +221,13 @@ a worm has to make his way through the gravel, it makes the greatest
 possible difference to him whether he tries to push right against
 a piece of gravel, or directs his course through one of the intervals
 between the pieces; to him, therefore, the gravel is by no means a
-homogeneous and continuous substance.
-
-“In the same way, a theory that some particular substance, say
+homogeneous and continuous substance.«P»“In the same way, a theory that some particular substance, say
 water, is homogeneous and continuous may be a good working
 theory up to a certain point, but may fail when we come to deal
 with quantities so minute or so attenuated that their heterogeneity
 of structure comes into prominence. Whether this heterogeneity of
 structure is or is not consistent with homogeneity and continuity
-of substance is another question.
-
-“The extreme form of the doctrine of continuity is that stated by
+of substance is another question.«P»“The extreme form of the doctrine of continuity is that stated by
 Descartes, who maintains that the whole universe is equally full of
 matter, and that this matter is all of one kind, having no essential
 property besides that of extension. All the properties which we
@@ -275,11 +241,7 @@ motion of systems of bodies such as Descartes imagined. But the
 hydrodynamical discovery of Helmholtz that a vortex in a perfect
 liquid possesses certain permanent characteristics has been applied
 by Sir W. Thomson (Lord Kelvin) to form a theory of vortex atoms
-in a homogeneous, incompressible and frictionless liquid.”
-
-«CTR»«SC»The Molecular Structure of Matter«/SC»«/CTR»
-
-An enormous mass of experimental evidence now shows quite
+in a homogeneous, incompressible and frictionless liquid.”«P»«CTR»«SC»The Molecular Structure of Matter«/SC»«/CTR»«P»An enormous mass of experimental evidence now shows quite
 conclusively that matter cannot be regarded as having a continuous
 structure, but that it is ultimately composed of discrete
 parts. The smallest unit of matter with which physical phenomena
@@ -297,41 +259,37 @@ Gases.” The results of this theory have placed the molecularPAGE:686concepti
 without this theory there is such an accumulation of electrical
 and optical evidence in favour of the molecular conception of
 matter that the tenability of this conception could not be
-regarded as open to question.
-
-«I»The Scale of Molecular Structure«/I».—Apart from speculation,
+regarded as open to question.«P»«I»The Scale of Molecular Structure«/I».—Apart from speculation,
 the first definite evidence for the molecular structure of matter
 occurs when it is found that certain physical phenomena change
 their whole nature as soon as we deal with matter of which the
 linear dimensions are less than a certain amount. As a single
 instance of this may be mentioned some experiments of Lord
-Rayleigh («I»Proc. Roy. Soc.«/I», 1890, 47, p.&nbsp;364), who found that
+Rayleigh («I»Proc. Roy. Soc.«/I», 1890, 47, p. 364), who found that
 a film of olive oil spread over the surface of water produced a
 perceptible effect on small floating pieces of camphor, at places
-at which the thickness of the film was 10·6×10<sup>−8</sup>&nbsp;cms., but
+at which the thickness of the film was 10·6×10<sup>−8</sup> cms., but
 produced no perceptible effect at all at places where the thickness
-of the film was 8·1×10<sup>−8</sup>&nbsp;cms. Thus a certain phenomenon,
+of the film was 8·1×10<sup>−8</sup> cms. Thus a certain phenomenon,
 of the nature of capillary action, is seen to depend for its existence
 on the linear dimensions of the film of oil; the physical properties
-of a film of thickness 10·6×10<sup>−8</sup>&nbsp;cms. are found to be in some
+of a film of thickness 10·6×10<sup>−8</sup> cms. are found to be in some
 way qualitatively different from those of a film of thickness
-8·1×10<sup>−8</sup>&nbsp;cms. Here is proof that the film of oil is not a continuous
+8·1×10<sup>−8</sup> cms. Here is proof that the film of oil is not a continuous
 homogeneous structure, and we are led to suspect that
 the scale on which the structure is formed has a unit of length
-comparable with 8×10<sup>−8</sup>&nbsp;cms. The probability of this conjecture
+comparable with 8×10<sup>−8</sup> cms. The probability of this conjecture
 is strengthened when it is discovered that in all phenomena
 of this type the critical length connected with the stage
 at which the phenomenon changes its nature is of the order of
-magnitude of 10<sup>−8</sup>&nbsp;cms.
-
-Lord Rayleigh («I»Phil. Mag.«/I» 1890 [5], 30, p.&nbsp;474) has pointed
+magnitude of 10<sup>−8</sup> cms.«P»Lord Rayleigh («I»Phil. Mag.«/I» 1890 [5], 30, p. 474) has pointed
 out that the earliest known attempt to estimate the size of
 molecules, made by Thomas Young in 1805, was based upon the
 consideration of phenomena of the kind just mentioned. Discussing
 the theory of capillary attractions, Young«FN[656f1]:“On the Cohesions of Fluids,” «I»Phil. Trans.«/I» (1805); Young’s
 «I»Coll. Works«/I», i. 461.«/FN» found that
 at a rough estimate “the extent of the cohesive force must be
-limited to about the 250-millionth of an inch” (＝10<sup>−8</sup>&nbsp;cms.),
+limited to about the 250-millionth of an inch” (＝10<sup>−8</sup> cms.),
 and then argues that “within similar limits of uncertainty we
 may obtain something like a conjectural estimate of the mutual
 distance of the particles of vapours, and even of the actual
@@ -340,18 +298,14 @@ tolerably safe to conclude that, whatever errors may have
 affected the determination, the diameter or distance of the
 particles of water is between the two thousand and the ten
 thousand millionth of an inch” (＝between ·125×10<sup>−8</sup> and
-·025×10<sup>−8</sup>&nbsp;cms.).
-
-The best estimates which we now possess of the sizes of molecules
+·025×10<sup>−8</sup> cms.).«P»The best estimates which we now possess of the sizes of molecules
 are provided by calculations based upon the kinetic theory
 of gases. In the following table are given the values of the
 diameters of the molecules of six substances with which it is
 easy to experiment in the gaseous state, these values being
 calculated in different ways from formulae supplied by the
 kinetic theory.
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="margin-right:auto;margin-left:auto;text-align:center;font-size:92%;line-height:120%"><tr><td rowspan="2">Gas</td><td colspan="5">Diameter calculated by the kinetic theory of gases.</td></tr><tr style="border:1px solid;font-size:92%"><td>From devia-&nbsp;<br>tions from <br>Boyle’s law.</td><td>From co-<br> efficient of&ensp;<br>viscosity.</td><td>From co-<br>efficient of<br>conduction of <br>heat.</td><td>From co-<br>efficient of<br>conduction of <br>diffusion.</td><td>Mean value.</td></tr><tr><td style="text-align:left">Hydrogen</td><td>2·05×10<sup>−8</sup></td><td>2·05×10<sup>−8</sup></td><td>1·99×10<sup>−8</sup></td><td>2·02×10<sup>−8</sup></td><td>2·03×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Carbon monoxide&nbsp;</td><td>—</td><td>2·90×10<sup>−8</sup></td><td>2·74×10<sup>−8</sup></td><td>2·92×10<sup>−8</sup></td><td>2·85×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Nitrogen</td><td>3·12×10<sup>−8</sup></td><td>2·90×10<sup>−8</sup></td><td>2·74×10<sup>−8</sup></td><td>—</td><td>2·92×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Air</td><td>2·90×10<sup>−8</sup></td><td>2·86×10<sup>−8</sup></td><td>2·72×10<sup>−8</sup></td><td>—</td><td>2·83×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Oxygen</td><td>—</td><td>2·81×10<sup>−8</sup></td><td>2·58×10<sup>−8</sup></td><td>2·70×10<sup>−8</sup></td><td>2·70×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Carbon dioxide</td><td>3·00×10<sup>−8</sup></td><td>3·47×10<sup>−8</sup></td><td>3·58×10<sup>−8</sup></td><td>3·28×10<sup>−8</sup></td><td>3·33×10<sup>−8</sup></td></tr></table>«/HTMLTABLE»
-
-The agreement of the values obtained for the same quantity
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="margin-right:auto;margin-left:auto;text-align:center;font-size:92%;line-height:120%"><tr><td rowspan="2">Gas</td><td colspan="5">Diameter calculated by the kinetic theory of gases.</td></tr><tr style="border:1px solid;font-size:92%"><td>From devia- <br>tions from <br>Boyle’s law.</td><td>From co-<br> efficient of <br>viscosity.</td><td>From co-<br>efficient of<br>conduction of <br>heat.</td><td>From co-<br>efficient of<br>conduction of <br>diffusion.</td><td>Mean value.</td></tr><tr><td style="text-align:left">Hydrogen</td><td>2·05×10<sup>−8</sup></td><td>2·05×10<sup>−8</sup></td><td>1·99×10<sup>−8</sup></td><td>2·02×10<sup>−8</sup></td><td>2·03×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Carbon monoxide</td><td>—</td><td>2·90×10<sup>−8</sup></td><td>2·74×10<sup>−8</sup></td><td>2·92×10<sup>−8</sup></td><td>2·85×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Nitrogen</td><td>3·12×10<sup>−8</sup></td><td>2·90×10<sup>−8</sup></td><td>2·74×10<sup>−8</sup></td><td>—</td><td>2·92×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Air</td><td>2·90×10<sup>−8</sup></td><td>2·86×10<sup>−8</sup></td><td>2·72×10<sup>−8</sup></td><td>—</td><td>2·83×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Oxygen</td><td>—</td><td>2·81×10<sup>−8</sup></td><td>2·58×10<sup>−8</sup></td><td>2·70×10<sup>−8</sup></td><td>2·70×10<sup>−8</sup></td></tr><tr><td style="text-align:left">Carbon dioxide</td><td>3·00×10<sup>−8</sup></td><td>3·47×10<sup>−8</sup></td><td>3·58×10<sup>−8</sup></td><td>3·28×10<sup>−8</sup></td><td>3·33×10<sup>−8</sup></td></tr></table>«/HTMLTABLE»«P»The agreement of the values obtained for the same quantity
 by different methods provides valuable confirmation of the
 truth of the molecular theory and of the validity of the methods
 of the kinetic theory of gases. That. the results do not agree even
@@ -365,9 +319,7 @@ of force surrounding such a solid is above a certain intensity),
 and the mean has to be taken in different ways in the different
 phenomena. This and the difficulty of obtaining accurate
 experimental results fully account for the differences «I»inter se«/I»
-in the values of the quantities calculated.
-
-«I»Heat a Manifestation of Molecular Motion«/I».—An essential
+in the values of the quantities calculated.«P»«I»Heat a Manifestation of Molecular Motion«/I».—An essential
 feature of the modern view of the structure of matter is that
 the molecules are supposed to be in rapid motion relatively to
 one another. We are led to this conception by a number of
@@ -391,9 +343,7 @@ things is very different; an odour is known to spread rapidly
 through great distances, even in the stillest air, and a gaseous
 poison or corrosive will attack not only those objects which are
 in contact with its source but also all those which can be reached
-by the motion of its molecules.
-
-As a preliminary to examining further into the nature of
+by the motion of its molecules.«P»As a preliminary to examining further into the nature of
 molecular motion and the differences of character of this motion,
 let us try to picture the state of things which would exist in
 a mass of solid matter in which all the molecules are imagined
@@ -439,9 +389,7 @@ relatively to one another would be a body devoid of heat. This
 conception of the nature of heat leads at once to an absolute
 zero of temperature—a temperature of no heat-motion—which
 is identical, as will be seen later, with that reached in other
-ways, namely, about −273°&nbsp;C.
-
-The point of view which has now been gained enables us to
+ways, namely, about −273° C.«P»The point of view which has now been gained enables us to
 interpret most of the thermal properties of solids in terms of
 molecular theory. Suppose for instance that two bodies, both
 devoid of heat, are placed in contact with one another, and
@@ -469,9 +417,7 @@ possible that the repulsive force they exert when at a distance
 at a distance «I»a«/I» + ε. If so, it is clear that their mean distance
 apart, averaged through a sufficiently long interval of their
 motion, will be greater than «I»a«/I». A body made up of molecules of
-this kind will expand on heating.
-
-As the temperature of a body increases the average energy
+this kind will expand on heating.«P»As the temperature of a body increases the average energy
 of the molecules will increase, and therefore the range of their
 excursions from their positions of equilibrium will increase also.
 At a certain temperature a. stage will be reached in which it
@@ -483,9 +429,7 @@ are not permanently fixed, so that the body is no longer of
 unalterable shape: it has assumed a plastic or molten condition.
 The substance attains to a perfectly liquid state as soon as the
 energy of motion of the molecules is such that there is a constant
-rearrangement of position among them.
-
-A molecule escaping from its original position in a body will
+rearrangement of position among them.«P»A molecule escaping from its original position in a body will
 usually fall into a new position in which it will be held in
 equilibrium by the forces from a new set of neighbouring molecules.
 But if the wandering molecule was originally close to
@@ -499,9 +443,7 @@ the molecules which escape are, on the whole, those with
 the greatest energy. The average energy of the molecules of
 the liquid is accordingly lowered by evaporation. In this we see
 the explanation of the fall of temperature which accompanies
-evaporation.
-
-When a liquid undergoing evaporation is contained in a closed
+evaporation.«P»When a liquid undergoing evaporation is contained in a closed
 vessel, a molecule which has left the liquid will, after a certain
 number of collisions with other free molecules and with the sides
 of the vessel, fall back again into the liquid. Thus the process
@@ -514,9 +456,7 @@ before this stage is attained, a state will exist in which the vessel
 is occupied solely by free molecules, describing paths which
 are disturbed only by encounters with other free molecules or
 the sides of the vessel. This is the conception which the
-molecular theory compels us to form of the gaseous state.
-
-At normal temperature and pressure the density of a substance
+molecular theory compels us to form of the gaseous state.«P»At normal temperature and pressure the density of a substance
 in the gaseous state is of the order of one-thousandth of the
 density of the same substance in the solid or liquid state. It
 follows that the average distance apart of the molecules in the
@@ -536,9 +476,7 @@ theory this indicates that the total energy of the gas is the sum
 of the separate energies of its different molecules: the potential
 energy arising from intermolecular forces between pairs of
 molecules may be treated as negligible when the matter is in
-the gaseous state.
-
-These two simplifying facts bring the properties of the gaseous
+the gaseous state.«P»These two simplifying facts bring the properties of the gaseous
 state of matter within the range of mathematical treatment.
 The kinetic theory of gases attempts to give a mathematical
 account, in terms of the molecular structure of matter, of all
@@ -547,9 +485,7 @@ remainder of this article is devoted to a brief statement of the
 methods and results of the kinetic theory. No attempt will
 be made to follow the historic order of development, but the
 present theory will be set out in its most logical form and order.
-«CTR»«I»The Kinetic Theory of Gases«/I».«/CTR»
-
-A number of molecules moving in obedience to dynamical
+«CTR»«I»The Kinetic Theory of Gases«/I».«/CTR»«P»A number of molecules moving in obedience to dynamical
 laws will pass through a series of configurations which can be,
 theoretically determined as soon as the structure of each molecule
 and the initial position and velocity of every part of it are known.
@@ -561,71 +497,34 @@ structure. We are therefore called upon, not to trace the series
 of configurations of any single gas, starting from definite initial
 conditions, but to search for features and properties common to
 all series of configurations, independently of the particular
-initial conditions from which the gas may have started.
-
-We begin with a general dynamical theorem, whose special application,
+initial conditions from which the gas may have started.«P»We begin with a general dynamical theorem, whose special application,
 when the dynamical system is identified with a gas, will
 appear later. Let «I»q«/I»<sub>1</sub>, «I»q«/I»<sub>2</sub>, ... «I»q<sub>n</sub>«/I», . be the generalized co-ordinates
 of any dynamical system, and let «I»p«/I»<sub>1</sub>, «I»p«/I»<sub>2</sub>, ... «I»p<sub>n</sub>«/I»«SH»Dynamical Basis.«/SH»
 be the corresponding momenta. If the system is
 supposed to obey the conservation of energy and to move solely
 under its own internal forces, the changes in the co-ordinates and
-momenta can be found from the Hamiltonian equations
-
-
+momenta can be found from the Hamiltonian equations«P»
 
 «EQN:1»«I»q̇<sub>r</sub>«/I»＝∂E/∂«I»p<sub>r</sub>«/I», «I»ṗ<sub>r</sub>«/I»＝−∂E/∂«I»q<sub>r</sub>«/I»,«/EQN»
 
-
-
-where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I»&#8202;/«I»dt«/I», &c., and E is the total energy expressed as
+«P»where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I» /«I»dt«/I», &c., and E is the total energy expressed as
 function of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», . When the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub> ...
 «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», are given, the motion can be traced completely from these
-equations.
-
-Let us suppose that an infinite number of exactly similar systems
+equations.«P»Let us suppose that an infinite number of exactly similar systems
 start simultaneously from all possible values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I»,
 each moving solely under its own internal forces, and therefore in
 accordance with equations (1). Let us confine our attention to thosePAGE:688systems for which the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I» lie within
-a range such that
-
-«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> and «I»p«/I»<sub>1</sub> +«I»dp«/I»<sub>1</sub> 
-
-«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> and «I»q«/I»<sub>1</sub> +«I»dq«/I»<sub>1</sub> and so on.«/CTR»
-
-Let the product «I»dp«/I»<sub>1</sub> «I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>«/I», «I»dq<sub>n</sub>«/I» be spoken of as the “extension”
-of this range of values.
-
-After a time «I»dt«/I» the value of «I»p«/I»<sub>1</sub> will have increased to «I»p«/I»<sub>1</sub>+«I»p«/I»<sub>1</sub>«I»dt«/I»,
+a range such that«P»«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> and «I»p«/I»<sub>1</sub> +«I»dp«/I»<sub>1</sub> «P»«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> and «I»q«/I»<sub>1</sub> +«I»dq«/I»<sub>1</sub> and so on.«/CTR»«P»Let the product «I»dp«/I»<sub>1</sub> «I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>«/I», «I»dq<sub>n</sub>«/I» be spoken of as the “extension”
+of this range of values.«P»After a time «I»dt«/I» the value of «I»p«/I»<sub>1</sub> will have increased to «I»p«/I»<sub>1</sub>+«I»p«/I»<sub>1</sub>«I»dt«/I»,
 where «I»p«/I»<sub>1</sub> is given by equations (1), and there will be similar changes
 in «I»q«/I»<sub>1</sub>, «I»p«/I»<sub>2</sub>, «I»q«/I»<sub>2</sub>, ... «I»q<sub>n</sub>«/I». Thus after a time «I»dt«/I» the values of the co-ordinates
 and momenta of the small group of systems under consideration
-will lie within a range such that
-
-«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> + «I»ṗ«/I»<sub>1</sub>«I»dt«/I» and «I»p«/I»<sub>1</sub>+«I»dp«/I»<sub>1</sub> +«SPAN[style:font-size:200%]»(«/SPAN»«I»ṗ«/I»<sub>1</sub>+∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub>«I»dp«/I»<sub>1</sub>«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»
-
-«CTR»«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> + «I»q̇«/I»<sub>1</sub>«I»dt«/I» and «I»q«/I»<sub>1</sub>+«I»dq«/I»<sub>1</sub> +«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»<sub>1</sub>+∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub>«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»
-
-and so on. Thus the extension of the range after the interval «I»dt«/I» is
-
-«CTR»«I»dp«/I»<sub>1</sub> «SPAN[style:font-size:200%]»(«/SPAN»1+∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub>«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN»«I»dq«/I»<sub>1</sub>«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»<sub>1</sub>+∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN» . . .«/CTR»
-
-or, expanding as far as first powers of «I»dt«/I»,
-
-«CTR»«I»dp«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>dq<sub>n</sub>«/I» «MATH:\Big\{«/MATH»1+ Σ<sub>1<sup>«I»n«/I»</sup></sub>«MATH:\Big(«/MATH»∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub> + ∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«MATH:\Big)«/MATH»«I»dt«/I»«MATH:\Big\}«/MATH».«/CTR»
-
-From equations (1), we find that
-
-«CTR»∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub> + ∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>＝0.«/CTR»
-
-
-so that the extension of the new range is seen to be «I»dp«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>dq<sub>n</sub>«/I»,
+will lie within a range such that«P»«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> + «I»ṗ«/I»<sub>1</sub>«I»dt«/I» and «I»p«/I»<sub>1</sub>+«I»dp«/I»<sub>1</sub> +«SPAN[style:font-size:200%]»(«/SPAN»«I»ṗ«/I»<sub>1</sub>+∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub>«I»dp«/I»<sub>1</sub>«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»«P»«CTR»«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> + «I»q̇«/I»<sub>1</sub>«I»dt«/I» and «I»q«/I»<sub>1</sub>+«I»dq«/I»<sub>1</sub> +«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»<sub>1</sub>+∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub>«SPAN[style:font-size:200%]»)«/SPAN»«I»dt«/I»«/CTR»«P»and so on. Thus the extension of the range after the interval «I»dt«/I» is«P»«CTR»«I»dp«/I»<sub>1</sub> «SPAN[style:font-size:200%]»(«/SPAN»1+∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub>«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN»«I»dq«/I»<sub>1</sub>«SPAN[style:font-size:200%]»(«/SPAN»«I»q̇«/I»<sub>1</sub>+∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«I»dt«/I»«SPAN[style:font-size:200%]»)«/SPAN» . . .«/CTR»«P»or, expanding as far as first powers of «I»dt«/I»,«P»«CTR»«I»dp«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>dq<sub>n</sub>«/I» «MATH:\Big\{«/MATH»1+ Σ<sub>1<sup>«I»n«/I»</sup></sub>«MATH:\Big(«/MATH»∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub> + ∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>«MATH:\Big)«/MATH»«I»dt«/I»«MATH:\Big\}«/MATH».«/CTR»«P»From equations (1), we find that«P»«CTR»∂«I»ṗ«/I»<sub>1</sub>/∂«I»p«/I»<sub>1</sub> + ∂«I»q̇«/I»<sub>1</sub>/∂«I»q«/I»<sub>1</sub>＝0.«/CTR»«P»so that the extension of the new range is seen to be «I»dp«/I»<sub>1</sub>«I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>dq<sub>n</sub>«/I»,
 and therefore equal to the initial extension. Since the values of the
 co-ordinates and momenta at any instant during the motion may be
 treated as “initial” values, it is clear that the “extension” of the
-range must remain constant throughout the whole motion.
-
-This result at once disposes of the possibility of all the systems
+range must remain constant throughout the whole motion.«P»This result at once disposes of the possibility of all the systems
 acquiring any common characteristic in the course of their motion
 through a tendency for their co-ordinates or momenta to concentrate
 about any particular set, or series of sets, of values. But the result
@@ -639,31 +538,21 @@ the whole motion of the systems. Thus, if there is any characteristic
 which is common to all the systems after the motion has been
 in progress for any interval of time, this same characteristic must
 equally have been common to all the systems initially. It must,
-in fact, be a characteristic of all possible states of the systems.
-
-It is accordingly clear that there can be no property common to
+in fact, be a characteristic of all possible states of the systems.«P»It is accordingly clear that there can be no property common to
 all systems, but it can be shown that when the system contains
 a gas (or any other aggregation of similar molecules) as part of it
 there are properties which are common to all possible states, except
 for a number which form an insignificant fraction of the whole.
 These properties are found to account for the physical properties of
-gases.
+gases.«P»Let the whole energy E of the system be supposed equal to E<sub>1</sub>+E<sub>2</sub>,
+where E<sub>2</sub> is of the form«P»
 
-Let the whole energy E of the system be supposed equal to E<sub>1</sub>+E<sub>2</sub>,
-where E<sub>2</sub> is of the form
+«EQN:2»E<sub>2</sub>＝½«MATH:\sum_s«/MATH»(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... +α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)+½«MATH:\sum_s'«/MATH»(«I»m«/I»′«I»u«/I»′+«I»m«/I»′«I»v«/I»′<sup>2</sup>+«I»mw«/I»′<sup>2</sup>+β<sub>1</sub>φ<sub>1</sub><sup>2</sup>+β<sub>2</sub>φ<sub>2</sub><sup>2</sup>+... +β<sub>«I»n«/I»′</sub>φ<sub>«I»n«/I»′</sub><sup>2</sup>)«/EQN»
 
-
-
-«EQN:2»E<sub>2</sub>＝½«MATH:\sum_s«/MATH»(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... +α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)+½«MATH:\sum_s'«/MATH»(«I»m«/I»′«I»u«/I»′+«I»m«/I»′«I»v«/I»′<sup>2</sup>+«I»mw«/I»′<sup>2</sup>+β<sub>1</sub>φ<sub>1</sub><sup>2</sup>+β<sub>2</sub>φ<sub>2</sub><sup>2</sup>+ ... +β<sub>«I»n«/I»′</sub>φ<sub>«I»n«/I»′</sub><sup>2</sup>)«/EQN»
-
-
-
-where θ<sub>1</sub>,θ<sub>2</sub>, ... θ<sub>«I»n«/I»</sub> and similarly φ<sub>1</sub>,φ<sub>2</sub>, ... φ<sub>«I»n«/I»′</sub> are any momenta
+«P»where θ<sub>1</sub>,θ<sub>2</sub>, ... θ<sub>«I»n«/I»</sub> and similarly φ<sub>1</sub>,φ<sub>2</sub>, ... φ<sub>«I»n«/I»′</sub> are any momenta
 or functions of the co-ordinates and momenta or co-ordinates alone
 which are subject only to the condition that they do not enter into
-the coefficients α<sub>1</sub>, α<sub>2</sub>, &c.
-
-In this expression the first line may be supposed to represent the
+the coefficients α<sub>1</sub>, α<sub>2</sub>, &c.«P»In this expression the first line may be supposed to represent the
 energy (or part of the energy) of «I»s«/I» similar molecules of a kind which
 we shall call the first kind, the terms ½(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>) being
 the kinetic energy of translation, and the remaining terms arising
@@ -676,20 +565,14 @@ state. Considering only those states of the system which have a
 given Value of E<sub>2</sub>, it can be proved, as a theorem in pure mathematics«FN:See Jeans, «I»Dynamical Theory of Gases«/I» (1904), ch. v.«/FN»
 that when «I»s«/I», «I»s«/I»′,  .  are very large, then, for all states except an
 infinitesimal fraction of the whole number, the values of u, 1/, w lie
-within ranges such that
-
-(i) the values of «I»u«/I» (and similarly of «I»v«/I», «I»w«/I») are distributed among
+within ranges such that«P»(i) the values of «I»u«/I» (and similarly of «I»v«/I», «I»w«/I») are distributed among
 the «I»s«/I» molecules of the first kind according to the law of trial and error;
-and similarly of course for the molecules of other kinds:
-
-{{rh|(ii)|«MATH:\sum_s«/MATH»½ «I»mu«/I»<sup>2</sup>/«I»s«/I»＝ «MATH:\sum_s«/MATH»½ «I»mv«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ «I»mw«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ α<sub>1</sub>θ<sub>1</sub><sup>2</sup>/«I»s«/I»＝ . . .|  }}
+and similarly of course for the molecules of other kinds:«P»«DIV[style:display:flex;align-items:baseline]»«SPAN[style:text-align:left]»(ii)«/SPAN»«SPAN[style:flex:1;text-align:center]»«MATH:\sum_s«/MATH»½ «I»mu«/I»<sup>2</sup>/«I»s«/I»＝ «MATH:\sum_s«/MATH»½ «I»mv«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ «I»mw«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ α<sub>1</sub>θ<sub>1</sub><sup>2</sup>/«I»s«/I»＝ . . .«/SPAN»«SPAN[style:text-align:right]»«/SPAN»«/DIV»
 
 
 «EQN:3»＝«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′<sup>2</sup>/«I»s«/I»′＝«MATH:\sum_s«/MATH»½ β<sub>1</sub>φ<sub>1</sub><sup>2</sup>/«I»s«/I»′＝... «/EQN»
 
-
-
-A state of the system in which these two properties are true
+«P»A state of the system in which these two properties are true
 will be called a “normal state”; other states will be spoken of as
 “abnormal.” Let all possible states of the system be
 divided into small ranges of equal extension, and of
@@ -707,59 +590,37 @@ which start from the P normal ranges, We see that there is a probability
 «I»p«/I»/(P+«I»p«/I») which vanishes in the limit, that a system selected
 at random from these will be in an abnormal state after a sufficient
 time. Thus, subject to a probability of error which is infinitesimal
-in the limit, we may state as general laws «SPAN[style:white-space:nowrap]»that—«/SPAN»
-
-«I»A system starting from an abnormal state tends to assume the normal«/I»
-«I»state«/I»; while
-
-«I»A system starting from the normal state will remain in the normal«/I»
-«I»state«/I».
-
-It will now be found that the various properties of gases follow
-from the supposition that the gas is in the normal state.
-
-If each of the fractions (3) is put equal to 1/4«I»h«/I», it is readily found,
+in the limit, we may state as general laws «SPAN[style:white-space:nowrap]»that—«/SPAN»«P»«I»A system starting from an abnormal state tends to assume the normal«/I»
+«I»state«/I»; while«P»«I»A system starting from the normal state will remain in the normal«/I»
+«I»state«/I».«P»It will now be found that the various properties of gases follow
+from the supposition that the gas is in the normal state.«P»If each of the fractions (3) is put equal to 1/4«I»h«/I», it is readily found,
 from the first property of the normal state, that, of the
-«I»s«/I» molecules of the first kind, a number«SH»Law of Distribution of Velocities.«/SH»
-
-
+«I»s«/I» molecules of the first kind, a number«SH»Law of Distribution of Velocities.«/SH»«P»
 
 «EQN:4»«MATH:s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
 
-
-
-have velocities of which the components lie between «I»u«/I» and «I»u«/I»+«I»du«/I»,
+«P»have velocities of which the components lie between «I»u«/I» and «I»u«/I»+«I»du«/I»,
 «I»v«/I» and «I»v«/I»+«I»dv«/I», «I»w«/I» and «I»w«/I»+«I»dw«/I», while the corresponding number of molecules
-of the second kind is, similarly,
-
-
+of the second kind is, similarly,«P»
 
 «EQN:5»«MATH:s'\sqrt{(h^3m'^3 \mbox{/}\pi^3)}e^{-hm'(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
 
-
-
-If «I»c«/I» is the resultant velocity of a molecule, so that «I»c«/I»<sup>2</sup>=«I»u«/I»<sup>2</sup>+«I»v«/I»<sup>2</sup>+«I»w«/I»<sup>2</sup>,
+«P»If «I»c«/I» is the resultant velocity of a molecule, so that «I»c«/I»<sup>2</sup>=«I»u«/I»<sup>2</sup>+«I»v«/I»<sup>2</sup>+«I»w«/I»<sup>2</sup>,
 it is readily found from formula (4) that the number of molecules
 of the first kind of which the resultant velocity lies between «I»c«/I» and
-«I»c«/I»+«I»dc«/I» is
-
-
+«I»c«/I»+«I»dc«/I» is«P»
 
 «EQN:6»«MATH:4\pi s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hmc^2)}c^2dc«/MATH»«/EQN»
 
-
-
-These formulae express the “law of distribution of velocities”
-in the normal state: the law is often called «I»Maxwell’s Law of Distribution«/I».
-
-If «MATH:\tfrac{1}{2}\overline{mu^2}«/MATH» denote the mean value of «MATH:\tfrac{1}{2}mu^2«/MATH» averaged over the
+«P»These formulae express the “law of distribution of velocities”
+in the normal state: the law is often called «I»Maxwell’s Law of Distribution«/I».«P»If «MATH:\tfrac{1}{2}\overline{mu^2}«/MATH» denote the mean value of «MATH:\tfrac{1}{2}mu^2«/MATH» averaged over the
 «I»s«/I» molecules of the first kind, equations (3) may be written in the form
 
 
 «EQN:7»«MATH:\tfrac{1}{2}\overline{mu^2}=\tfrac{1}{2}\overline{mv^2} =\tfrac{1}{2}\overline{mw^2}=\tfrac{1}{2}\overline{\alpha_1\theta^2_1} \cdots =1/4h«/MATH»«/EQN»
 
 
-«SH»Equipartition«BR»of Energy.«/SH»
+«SH»Equipartition of Energy.«/SH»
 showing that the mean energy represented by each
 term in E<sub>2</sub> (formula 2) is the same. These equations
 express the “law equipartition of energy,” commonly spoken
@@ -779,9 +640,7 @@ scale, and then have equations (7) in the form
 
 «EQN:8»«MATH:\overline{mu^2}=\overline{mv^2} \mbox{RT.}«/MATH»«/EQN»
 
-
-
-When a system is composed of a mixture of different kinds of
+«P»When a system is composed of a mixture of different kinds of
 molecules, the fact that «I»h«/I» is the same for each constituent [cf.
 formulae. (5) and (6)] shows that in the normal state the different
 substances are all at the same temperature. For instance, if the
@@ -792,60 +651,44 @@ the normal state the gas has the same temperature as the boundary.
 The process of equalization of temperature is now seen to be a special
 form of the process of motion towards the normal state: the general
 laws which have been stated above in connexion with the normal
-state are seen to include as special cases the following laws:—
-
-«I»Matter originally at non-uniform temperature tends to assume a«/I»
-«I»uniform temperature«/I»; while
-
-«I»Matter at uniform temperature will remain at uniform temperature.«/I»
-
-It will at once be apparent that the kinetic theory of matter enables
+state are seen to include as special cases the following laws:—«P»«I»Matter originally at non-uniform temperature tends to assume a«/I»
+«I»uniform temperature«/I»; while«P»«I»Matter at uniform temperature will remain at uniform temperature.«/I»«P»It will at once be apparent that the kinetic theory of matter enables
 us to place the second law of thermodynamics upon a purely dynamical
 basis. So far it has not been necessary to suppose the matter
 to be in the gaseous state. We now pass to the consideration of laws
-and properties which are peculiar to the gaseous state.
-
-A simple approximate calculation of the pressure exerted by a
+and properties which are peculiar to the gaseous state.«P»A simple approximate calculation of the pressure exerted by a
 gas on its containing vessel can be made by supposing that the molecules
 are so small in comparison with their distances
 apart that they may be treated as of infinitesimal size.
-Let a mixture of gases contain per unit volume «I»v«/I» molecules«SH»Pressure of«BR»a Gas.«/SH»
+Let a mixture of gases contain per unit volume «I»v«/I» molecules«SH»Pressure of a Gas.«/SH»
 of the first kind, «I»v«/I»′ of the second kind, and so on. Let
 us fix our attention on a small area «I»d«/I»S of the boundary of thePAGE:689vessel, and let co-ordinate axes be taken such that the origin is in
 «I»d«/I»S, and the axis of «I»x«/I» is the normal at the origin into the gas. The
 number of molecules of the first kind of gas, whose components
 of velocity lie within the ranges between «I»u«/I» and «I»u«/I»+«I»du«/I», «I»v«/I» and «I»v«/I»+«I»dv«/I»,
-«I»w«/I» and «I»w«/I»+«I»dw«/I», will, by formula (5), be
-
-
+«I»w«/I» and «I»w«/I»+«I»dw«/I», will, by formula (5), be«P»
 
 «EQN:9»«MATH:v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
 
-
-
-per unit volume. Construct a small cylinder inside the gas, having
+«P»per unit volume. Construct a small cylinder inside the gas, having
 «I»d«/I»S as base and edges such that the projections of each on the coordinate
 axes are «I»udt«/I», «I»vdt«/I», «I»wdt«/I». Each of the molecules enumerated
-in expression&nbsp;(9) will move parallel to the edge of this cylinder, and
+in expression (9) will move parallel to the edge of this cylinder, and
 each will describe a length equal to its edge in time «I»dt«/I». Thus
 each of these molecules which is initially inside the cylinder, will
 impinge on the area «I»d«/I»S within an interval «I»dt«/I». The cylinder is of
-volume «I»u&nbsp;dt&nbsp;d«/I»S, so that the product of this and expression&nbsp;(9) must
+volume «I»u dt d«/I»S, so that the product of this and expression (9) must
 give the number of impacts between the area «I»d«/I»S and molecules of
 the kind under consideration within the interval «I»dt«/I». Each impinging
 molecule exerts an impulsive pressure equal to «I»mu«/I» on the boundary
 before the component of velocity of its centre of gravity normal to
 the boundary is reduced to zero. Thus the contribution to the total
 impulsive pressure exerted on the area «I»d«/I»S in time «I»dt«/I» from this cause
-is
-
-
+is«P»
 
 «EQN:10»«MATH:mu \times udtd\mbox{S} \times v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
 
-
-
-The total pressure exerted in bringing the centres of gravity of
+«P»The total pressure exerted in bringing the centres of gravity of
 all the colliding molecules to rest normally to the boundary is obtained
 by first integrating this expression with respect to «I»u«/I», «I»v«/I», «I»w«/I»,
 the limits being all values for which collisions are possible (namely
@@ -859,227 +702,141 @@ by expression (10), integrated with respect to «I»u«/I» from 0 to ∞, and
 with respect to «I»v«/I» and «I»w«/I» from −∞ to +∞, and then summed for all
 kinds of molecules in the gas. On combining the two parts of the
 pressure which have been calculated, the aggregate impulsive
-pressure on «I»d«/I»S in time «I»dt«/I» is found to be
-
-
-«CTR»«MATH[fs=80]:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»
-
-where Σ denotes summation over all kinds of molecules. This is
-equivalent to a steady pressure «I»p«/I»<sub>1</sub> per unit area where
-
-«CTR»«MATH[popout]:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»
-
-
-Clearly the integral is the sum of the values of «I»mu«/I»<sup>2</sup> for all the
-molecules of the first kind in unit volume, thus
-
-
+pressure on «I»d«/I»S in time «I»dt«/I» is found to be«P»«CTR»«MATH:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»«P»where Σ denotes summation over all kinds of molecules. This is
+equivalent to a steady pressure «I»p«/I»<sub>1</sub> per unit area where«P»«CTR»«MATH:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»«P»Clearly the integral is the sum of the values of «I»mu«/I»<sup>2</sup> for all the
+molecules of the first kind in unit volume, thus«P»
 
 «EQN:11»«MATH:p=v \overline{mu^2} + v' \overline{m'u^2} + \cdots«/MATH»«/EQN»
 
+«P»On substituting from equations (7) and (8), this expression assumes
+the forms«P»
 
+«EQN:12»«I»p«/I»＝(«I»v«/I»+«I»v«/I» ′+...)/2«I»h«/I»«/EQN»
 
-On substituting from equations (7) and (8), this expression assumes
-the forms
+«P»
 
+«EQN:13»＝(«I»v«/I»+«I»v«/I» ′+...)RT«/EQN»
 
-
-«EQN:12»«I»p«/I»＝(«I»v«/I»+«I»v«/I»&#8202;′+...)/2«I»h«/I»«/EQN»
-
-
-
-
-
-«EQN:13»&ensp;＝(«I»v«/I»+«I»v«/I»&#8202;′+...)RT«/EQN»
-
-
-
-The number of molecules per unit volume in a gas at normal temperature
+«P»The number of molecules per unit volume in a gas at normal temperature
 and pressure is known to be about 2·75 X 10<sup>19</sup>. If in formula
-(13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I»&#8202;′+ ...)2·75×10<sup>19</sup>
+(13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I» ′+ ...)2·75×10<sup>19</sup>
 T＝273, we obtain R＝1·35×10<sup>−16</sup> and this enables us
 to determine the mean velocities produced by heat«SH»Molecular Velocities.«/SH»
 motion in molecules of any given «I»mass«/I». For molecules of known
 gases the calculation is still easier. If ρ is the density corresponding
-to pressure «I»p«/I», we find that formula (11) assumes the form
-
-«CTR»«I»p«/I»＝⅓ρC<sup>2</sup>,«/CTR»
-
-where C is a velocity such that the gas would have its actual translational
+to pressure «I»p«/I», we find that formula (11) assumes the form«P»«CTR»«I»p«/I»＝⅓ρC<sup>2</sup>,«/CTR»«P»where C is a velocity such that the gas would have its actual translational
 energy if each molecule moved with the same velocity C. By
 substituting experimentally determined pairs of values of «I»p«/I» and ρ
 we can calculate C for different gases, and so obtain a knowledge
 of the magnitudes of the molecular velocities. For instance, it is
 found that
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>&numsp;0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C＝&numsp;49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>&numsp;0° Cent. C＝&numsp;18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
-and other velocities can readily be calculated.
-
-From the value R＝1·35×10<sup>−16</sup> it is readily calculated that a molecule,
+«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C＝ 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>0° Cent. C＝ 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
+and other velocities can readily be calculated.«P»From the value R＝1·35×10<sup>−16</sup> it is readily calculated that a molecule,
 or aggregation of molecules, of mass 10<sup>−12</sup> grammes, ought to
-have a mean velocity of about 2&nbsp;millimetres a second at
-0°&nbsp;C. Such a velocity ought accordingly to be set up in a
+have a mean velocity of about 2 millimetres a second at
+0° C. Such a velocity ought accordingly to be set up in a
 particle of 10<sup>−12</sup> grammes mass immersed in air or liquid«SH»“Brownian Movements.”«/SH»
-at 0°&nbsp;C., by the continual jostling of the surrounding molecules or
+at 0° C., by the continual jostling of the surrounding molecules or
 particles. A particle of this mass is easily visible microscopically,
-and a velocity of 2&nbsp;mm. per second would of course be visible if
+and a velocity of 2 mm. per second would of course be visible if
 continued for a sufficient length of time. Each bombardment will,
 however, change the motion of the particle, so that changes are too
 frequent for the separate motions to be individually visible. But
 it can be shown that from the aggregation of these separate short
 motions the particle ought to have a resultant motion, described .
-with an average velocity which, although much smaller than 2&nbsp;mm.
+with an average velocity which, although much smaller than 2 mm.
 a second, ought still to be microscopically visible. It has been shown
 by R. von. S. Smoluchowski («I»Ann. d. Phys.«/I», 1906, 21, p. 756) that this
 theoretically predicted motion is simply that seen in the “Brownian
 movements” first observed by the botanist Robert Brown in 1827.
 Thus the “Brownian movements” provide visual demonstration
-of the reality of the heat-motion postulated by the kinetic theory.
-
-«I»Dalton’s Law«/I».—The pressure as given by formula (12) can be written
+of the reality of the heat-motion postulated by the kinetic theory.«P»«I»Dalton’s Law«/I».—The pressure as given by formula (12) can be written
 as the sum of a number of separate terms, one for each
 gas in the mixture. Hence we have Dalton’s law:
 «I»The pressure of a mixture of gases is the sum of the pressures«/I»
-«I»which would be exerted separately by the several«/I»«SH»Pressure, Volume and«BR»Temperature Relations.«/SH»
+«I»which would be exerted separately by the several«/I»«SH»Pressure, Volume and Temperature Relations.«/SH»
 «I»constituents if each alone were present«/I».
 
-«I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I»&#8202;′+  . . .,
+«I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I» ′+  . . .,
 the total number of molecules per unit volume, is determined when
 «I»p«/I», T and the constant R are given. Hence we have Avogadro’s law:
 «I»Different gases, at the same temperature and pressure, contain equal«/I»
-«I»numbers of molecules per unit volume«/I».
-
-«I»Boyle’s and Charles’ Laws«/I».—If «I»v«/I» is the volume of a homogeneous
-mass of gas, and N the total number of its molecules, N＝«I»v«/I»(«I»v«/I»+«I»v«/I»&#8202;′+
-...), so that
-
-
+«I»numbers of molecules per unit volume«/I».«P»«I»Boyle’s and Charles’ Laws«/I».—If «I»v«/I» is the volume of a homogeneous
+mass of gas, and N the total number of its molecules, N＝«I»v«/I»(«I»v«/I»+«I»v«/I» ′+
+...), so that«P»
 
 «EQN:14»«I»pv«/I»＝RNT.«/EQN»
 
-
-
-In this equation we have the combined laws of Boyle and Charles:
+«P»In this equation we have the combined laws of Boyle and Charles:
 «I»When the temperature of a gas is kept constant the pressure varies«/I»
 «I»inversely as the volume, and when the volume is kept constant the«/I»
-«I»pressure varies as the temperature«/I».
-
-Since the volume at constant pressure is exactly proportional to
+«I»pressure varies as the temperature«/I».«P»Since the volume at constant pressure is exactly proportional to
 the absolute temperature, it follows that the coefficients of expansion
 of all gases ought, to within the limits of error introduced by the
-assumptions on which we are working, to have the same value 1/273.
-
-«I»Van der Waals’s Equation«/I».—The laws which have just been stated
+assumptions on which we are working, to have the same value 1/273.«P»«I»Van der Waals’s Equation«/I».—The laws which have just been stated
 are obeyed very approximately, but not with perfect accuracy, by
 all gases of which the density is not too great or the temperature too
 low. Van der Waals, in a famous monograph, «I»On the Continuity«/I»
 «I»of the Liquid and Gaseous States«/I» (Leiden, 1873), has shown that the
-imperfections of equation&nbsp;(14) may be traced to «SPAN[style:white-space:nowrap]»two causes:—«/SPAN»
-
-(i.) The calculation has not allowed for the finite size of the
+imperfections of equation (14) may be traced to «SPAN[style:white-space:nowrap]»two causes:—«/SPAN»«P»(i.) The calculation has not allowed for the finite size of the
 molecules, and their consequent interference with one another’s
-motion, and
-
-(ii.) The calculation has not allowed for the field of inter-molecular
+motion, and«P»(ii.) The calculation has not allowed for the field of inter-molecular
 force between the molecules, which, although small, is known to
 have a real existence. The presence of this field of force results in
 the molecules, when they reach the boundary, being acted on by
 forces in addition to those originating in their impact with the
-boundary.
-
-To allow for the first of these two factors, Van der Waals finds that
-«I»v«/I» in equation&nbsp;(14) must be replaced by «I»v«/I»−«I»b«/I», where «I»b«/I» is four times
+boundary.«P»To allow for the first of these two factors, Van der Waals finds that
+«I»v«/I» in equation (14) must be replaced by «I»v«/I»−«I»b«/I», where «I»b«/I» is four times
 the aggregate space occupied by all the molecules, while to allow for
 the second factor, «I»p«/I» must be replaced by «I»p«/I»+«I»a«/I»/«I»v«/I»<sup>2</sup>. Thus the pressure
-is given by the equation
-
-«CTR»(«I»p«/I»+«I»a«/I»/«I»v«/I»<sup>2</sup>) («I»v«/I»−«I»b«/I»)＝RNT,«/CTR»
-
-which is known as Van der Waals’s equation. This equation is
+is given by the equation«P»«CTR»(«I»p«/I»+«I»a«/I»/«I»v«/I»<sup>2</sup>) («I»v«/I»−«I»b«/I»)＝RNT,«/CTR»«P»which is known as Van der Waals’s equation. This equation is
 found experimentally to be capable of representing the relation
-between «I»p«/I», «I»v«/I», and T over large ranges of values. (See «LN:Condensation of Gases|Condensation of Gases«/LN».)
-
-Let us consider a single gas, consisting of N similar molecules in a
+between «I»p«/I», «I»v«/I», and T over large ranges of values. (See «LN:Condensation of Gases|Condensation of Gases«/LN».)«P»Let us consider a single gas, consisting of N similar molecules in a
 volume «I»v«/I», and let the energy of each molecule, as in
-formula (2) be given by«SH»Calorimetry.«/SH»
-
-
+formula (2) be given by«SH»Calorimetry.«/SH»«P»
 
 «EQN:15»E＝½«MATH:\sum_{\mbox{N}}«/MATH» («I»mu«/I»<sup>2</sup>«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)«/EQN»
 
-
-
-«CTR»＝N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»
-
-
+«P»«CTR»＝N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»«P»
 
 «EQN:16»＝½(«I»n«/I»+3)RNT «/EQN»
 
-
-
-Let a quantity «I»d«/I»Q of energy, measured in work units, be absorbed
+«P»Let a quantity «I»d«/I»Q of energy, measured in work units, be absorbed
 by the gas from some external source, so that its pressure, volume
-and temperature change. The equation of energy is
-
-
+and temperature change. The equation of energy is«P»
 
 «EQN:17»«I»d«/I»Q＝«I»d«/I»E+«I»pdv«/I»,«/EQN»
 
-
-
-expressing that the total energy «I»d«/I»Q is used partly in increasing
+«P»expressing that the total energy «I»d«/I»Q is used partly in increasing
 the internal energy of the gas, and partly in expanding the gas
-against the pressure «I»p«/I». If we take «I»p«/I»＝RNT/«I»v«/I» from equation&nbsp;(14)
-and substitute for E from equation (16), this last equation becomes
-
-
+against the pressure «I»p«/I». If we take «I»p«/I»＝RNT/«I»v«/I» from equation (14)
+and substitute for E from equation (16), this last equation becomes«P»
 
 «EQN:18»«I»d«/I»Q＝½ («I»n«/I»+3)RN«I»d«/I»T+RNT«I»dv«/I»/«I»v«/I»,«/EQN»
 
-
-
-which may be taken as the general equation of calorimetry, for a
-gas which accurately obeys equation&nbsp;(14).
-
-«I»Second Law of Thermodynamics«/I».—If we divide throughout by T,
-we obtain
-
-«CTR»«I»d«/I»Q/T ＝½(«I»n«/I»+3)RN«I»d«/I»T/T+RN«I»dv«/I»/«I»v«/I».«/CTR»
-
-showing that «I»d«/I»Q/T is a perfect differential. This not only verifies
+«P»which may be taken as the general equation of calorimetry, for a
+gas which accurately obeys equation (14).«P»«I»Second Law of Thermodynamics«/I».—If we divide throughout by T,
+we obtain«P»«CTR»«I»d«/I»Q/T ＝½(«I»n«/I»+3)RN«I»d«/I»T/T+RN«I»dv«/I»/«I»v«/I».«/CTR»«P»showing that «I»d«/I»Q/T is a perfect differential. This not only verifies
 that the second law of thermodynamics is obeyed, but enables us
-to identify T with the absolute thermodynamical temperature.
-
-If the volume of the gas is kept constant, we put «I»dv«/I»＝0 in
-equation&nbsp;(18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
-heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH»Specific Heats.«/SH»
-
-
+to identify T with the absolute thermodynamical temperature.«P»If the volume of the gas is kept constant, we put «I»dv«/I»＝0 in
+equation (18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
+heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH»Specific Heats.«/SH»«P»
 
 «EQN:19»C<sub>«I»v«/I»</sub>＝½(«I»n«/I»+3)R/J«I»m«/I»«/EQN»
 
-
-
-On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
+«P»On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
 
 
 «EQN:20»C<sub>«I»p«/I»</sub>＝½(«I»n«/I»+5) R/J«I»m«/I».«/EQN»
 
-
-
-By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for γ, the ratio of the specific heats.
-
-
+«P»By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for γ, the ratio of the specific heats.«P»
 
 «EQN:21»γ＝1 +2/«I»n«/I»+3).«/EQN»
 
-
-
-The comparison of this formula with experiment provides a
+«P»The comparison of this formula with experiment provides a
 striking confirmation of the truth of the kinetic theory but at the
 same time discloses the most formidable difficulty which the theory
-has so far had to encounter.
-
-On giving different values to «I»n«/I» in formula (21), we obtain the
+has so far had to encounter.«P»On giving different values to «I»n«/I» in formula (21), we obtain the
 values for γ:
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;width:300px"><tr><td>«I»n«/I» ＝</td><td>0,</td><td>1,</td><td>2,</td><td>3,</td><td>4,</td><td>5,</td><td></td></tr><tr><td>γ ＝</td><td>1·66,</td><td>1·5,</td><td>1·4,</td><td>1·33,</td><td>1·28,</td><td>1·25,</td><td>&c.</td></tr></table>«/HTMLTABLE»
 Thus, to within the degree of approximation to which our theory
@@ -1089,7 +846,7 @@ with some «SPAN[style:white-space:nowrap]»accuracy:—«/SPAN»
 «HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>Mercury</td><td>1·66</td><td>Nitrogen</td><td>1·40</td></tr><tr><td>Krypton</td><td>1·66</td><td>Carbon monoxide</td><td>1·41</td></tr><tr><td>Helium</td><td>1·65</td><td>Hydrogen</td><td>1·40</td></tr><tr><td>Argon</td><td>1·62</td><td>Oxygen</td><td>1·40</td></tr><tr><td>Air</td><td>1·40</td><td>Hydrochloric acid</td><td>1·39</td></tr></table>«/HTMLTABLE»
 It is clear that for the first four gases «I»n«/I»＝0, while for the remainder
 «I»n«/I»＝2. To examine what is meant by a zero value of «I»n«/I» we refer to
-formula&nbsp;(15). The value of «I»n«/I» is the number of terms in the energy
+formula (15). The value of «I»n«/I» is the number of terms in the energy
 of the molecule beyond that due to translation. Thus when «I»n«/I»＝0,
 the whole energy must be translational: there can be no energy of
 rotation or of internal motion. The molecules of gases for which
@@ -1106,7 +863,7 @@ conjecture, until the contrary is proved, that the atoms of all
 elements are spherical.«FN[660f1]:Very significant confirmation of this conjecture is obtained
 from a study of the specific heats of the elements in the solid
 state. If a solid body is regarded as an aggregation of similar atoms
-each of mass «I»m«/I», its specific heat C is given, as in formula&nbsp;(19) by
+each of mass «I»m«/I», its specific heat C is given, as in formula (19) by
 C＝½(«I»n«/I»+3)R/J«I»m«/I». From Dulong and Petit’s law that C«I»m«/I» is the same
 for all elements, it follows that «I»n«/I»+3 must be the same for all atoms.
 Moreover, the value of C«I»m«/I» shows that «I»n«/I»+3 must be equal to six.
@@ -1115,9 +872,7 @@ about positions of equilibrium, the value of «I»n«/I»+3 is precisely six,
 for we can express the energy of the atom in the form
 «CTR»E＝½(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+«I»x«/I»<sup>2</sup>∂<sup>2</sup>V/∂«I»x«/I»<sup>2</sup> + «I»y«/I»<sup>2</sup>∂<sup>2</sup>V/∂«I»y«/I»<sup>2</sup> + «I»z«/I»<sup>2</sup>∂<sup>2</sup>V/∂«I»z«/I»<sup>2</sup>),«/CTR»
 where V is the potential and «I»x«/I», «I»y«/I», «I»z«/I» are the displacements of the atom
-referred to a certain set of orthogonal axes.«/FN»
-
-The next value which occurs is «I»n«/I»＝2. The kinetic energy of the
+referred to a certain set of orthogonal axes.«/FN»«P»The next value which occurs is «I»n«/I»＝2. The kinetic energy of the
 molecules of these gases must contain two terms in addition to those
 representing translational energy. For a rigid body the kinetic
 energy will, in general, consist of three terms (Aω<sub>1</sub><sup>2</sup>+Bω<sub>2</sub><sup>2</sup>+Cω<sub>3</sub><sup>2</sup>) in
@@ -1128,9 +883,7 @@ suppose that the molecules of gases for which «I»n«/I»＝2 are of this
 shape. Now this is exactly the shape which we should expect to
 find in molecules composed of two spherical atoms distorting one
 another by their mutual forces, and all gases for which «I»n«/I»＝2 are
-diatomic.
-
-No molecule could possibly be imagined for which «I»n«/I» had a negative
+diatomic.«P»No molecule could possibly be imagined for which «I»n«/I» had a negative
 value or the value «I»n«/I»＝1. The theory therefore passes a crucial
 test when it is discovered that no gases exist for which «I»n«/I» is either
 negative or unity. On the other hand, the theory encounters a

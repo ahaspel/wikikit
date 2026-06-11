@@ -55,7 +55,7 @@ _INTERNAL_WHITESPACE_RE = re.compile(r"[ \t]+")
 _SPACE_BEFORE_PUNCT_RE = re.compile(r" +([,.;:!?])")
 
 
-def _process_math_equation(inner: str) -> str:
+def _process_math_equation(inner: str, context) -> str:
     """Render any labeled-display-equation template.
 
     One producer covers three templates that share the
@@ -119,7 +119,12 @@ def _process_math_equation(inner: str) -> str:
                 label = _clean_eqn_label(args[1])
     if not content:
         return ""
-    rendered = content
+    # Return the inner (the equation body) through the loop: a `<math>` /
+    # `{{sfrac}}` / `{{sub}}` / `{{Greek}}` inside is produced by its own producer,
+    # not left raw.  (The old non-leaf classify lifted these to child placeholders;
+    # with DOUBLE_BRACE a leaf, the producer recurses its own content.)
+    from britannica.pipeline.stages.elements import process_elements
+    rendered = process_elements(content, context, _allow_figure=False)
     rendered = rendered.replace("\xa0", " ")
     rendered = _INTERNAL_WHITESPACE_RE.sub(" ", rendered)
     # Strip space-before-punctuation — same as body-text's old
