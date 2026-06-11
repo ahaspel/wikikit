@@ -401,10 +401,9 @@ def _xrefs_from_body(body, article_id, link_index):
 def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                         global_title_to_filename):
     """The body-linking half of the xref decorator, lifted out of
-    export_articles_to_json: wrap resolved qv/see prose in place, then
-    resolve 2-part «EB9»/«LN» markers to 3-part filename links."""
-    body = _wrap_resolved_xrefs_in_body(body, xrefs, self_stable_id, session)
-
+    export_articles_to_json: resolve the 2-part «LN»/«EB9» PRODUCER markers
+    to 3-part filename links FIRST, then wrap resolved qv/see prose in place.
+    Order matters — see the comment on the resolve pass below."""
     link_targets: dict[str, str] = {}  # normalized_target → filename
     for xref in xrefs:
         if xref.target_article_id is not None and xref.normalized_target:
@@ -414,17 +413,14 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                     target, target.title
                 )
 
-    def _resolve_eb9(m: re.Match) -> str:
-        target_text, display = m.group(1), m.group(2)
-        fn = global_title_to_filename.get(target_text.strip().upper())
-        if fn:
-            return f"«LN:{fn}|{target_text}|{display}«/LN»"
-        return display
-    body = re.sub(
-        r"«EB9:([^|]*)\|([^«]*)«/EB9»",
-        _resolve_eb9, body,
-    )
-
+    # Resolve the 2-part producer markers («LN:target|display», «EB9:…») BEFORE any
+    # 3-part «LN:filename|target|display» exists.  `_resolve_link`'s 2-part regex would
+    # otherwise re-match a freshly-written 3-part marker — capturing `target|display` as
+    # its display group ([^«]* spans the inner `|`), missing the filename lookup, and
+    # stripping to that — leaking the pipe (`PLATE|Plate`).  So: producer «LN» first,
+    # then «EB9», then the prose wraps LAST; every 3-part marker is created strictly
+    # after `_resolve_link` has finished.  (A regex guard forbidding `|` in the display
+    # can't work — a legit 2-part display can hold a `|` from an inline `{{IMG:…|…}}`.)
     def _resolve_link(m: re.Match) -> str:
         from britannica.xrefs.normalizer import normalize_xref_target
         target_text, display = m.group(1), m.group(2)
@@ -449,6 +445,21 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         r"«LN:([^|]*)\|([^«]*)«/LN»",
         _resolve_link, body,
     )
+
+    def _resolve_eb9(m: re.Match) -> str:
+        target_text, display = m.group(1), m.group(2)
+        fn = global_title_to_filename.get(target_text.strip().upper())
+        if fn:
+            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+        return display
+    body = re.sub(
+        r"«EB9:([^|]*)\|([^«]*)«/EB9»",
+        _resolve_eb9, body,
+    )
+
+    # Prose-scan wraps LAST: its 3-part markers are final and must not be re-scanned by
+    # `_resolve_link` above (the leak this ordering fixes).
+    body = _wrap_resolved_xrefs_in_body(body, xrefs, self_stable_id, session)
     return body
 
 
@@ -669,8 +680,8 @@ def export_articles_to_json(
             # (MediaWiki `alt=` params, partial `Fig` strings, etc.), so
             # deletion improved output on those.  See
             # `[[total-functions-not-cleanup-passes]]`.
-            # (Title chop-up happens at source in detect_boundaries —
-            # `_extract_bold_delimited_title` + `produce_title`.  No
+            # (Title chop-up happens at source via the sole title
+            # extractor `elements/_title.py:produce_title`.  No
             # downstream sweeper.  Stale DB rows from before the chop-up
             # fix will display the leading title-bold until re-detected.)
 

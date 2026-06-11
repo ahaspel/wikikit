@@ -46,24 +46,33 @@ from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
-    SHAPE_CENTER,
-    SHAPE_CHART2,
+    SHAPE_PAIRED_WRAPPER,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
-    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
-    SHAPE_MIRROR_GLYPH,
-    SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_PAGE,
-    SHAPE_SECTION,
-    SHAPE_STYLED,
     SHAPE_TITLE,
     strip_outer,
 )
-from britannica.pipeline.stages.elements._walker import walk
+from britannica.pipeline.stages.elements._walker import (
+    walk,
+    # Styled-HTML-wrapper attribute recognizers — the SAME regexes the walker
+    # uses to BOUND these spans; here they carve the HTML_TAG label.
+    _STYLED_WRAPPER_RE,
+    _INS_OPEN_RE,
+    _SPAN_TITLE_OPEN_RE,
+)
+from britannica.pipeline.stages.elements._tables import (
+    # Styler / heading template-name recognizers — the SAME regexes the walker
+    # uses to BOUND these `{{…}}` spans; here they carve the DOUBLE_BRACE label.
+    _TEMPLATE_STYLE_RE,
+    _TEMPLATE_PARAM_STYLE_RE,
+    _SHOULDER_HEADING_RE,
+    _RUNNING_HEADER_RE,
+)
 
 
 # ── Per-shape label derivers ──────────────────────────────────────────
@@ -73,6 +82,13 @@ from britannica.pipeline.stages.elements._walker import walk
 # identifier in the raw bytes alone.  Composite BRACE_PIPE wikitables
 # need their children's labels — composites finalise after the inner
 # recursion has unwound.
+
+# The chart2 family inside the PAIRED_WRAPPER shape: a `{{chart2/start}}…
+# {{chart2/end}}` region (the walker's `_CHART2_RE` carves it, optionally with a
+# `{{center|…}}` / `{{EB1911 fine print/s}}` prefix, so the opener isn't always
+# the first token — match anywhere in the raw).  Everything else PAIRED_WRAPPER
+# is the `{{NAME/s}}…{{NAME/e}}` centring family → CENTER.
+_CHART2_FAMILY_RE = re.compile(r"\{\{\s*chart2\s*/\s*start", re.IGNORECASE)
 
 _HTML_TAG_NAME_RE = re.compile(r"^<\s*([A-Za-z][A-Za-z0-9]*)", re.IGNORECASE)
 _TEMPLATE_NAME_RE = re.compile(r"^\{\{\s*([^|{}<>\n\s]+)")
@@ -104,6 +120,28 @@ def _derive_html_tag_label(raw: str) -> str:
         raise ValueError(
             f"HTML_TAG raw doesn't open with a tag: {raw[:40]!r}")
     tag = m.group(1).lower()
+    # `<span style="…{{mirrorH}}…">…</span>` — a horizontally-mirrored glyph span
+    # (ALPHABET's left-right-flipped Etruscan / Italic / Cleonae letters).  The
+    # `mirrorH` token in the style attribute is the signal; the MIRROR_GLYPH
+    # producer emits `«MIRROR:content«/MIRROR»` and the viewer applies
+    # `transform: scaleX(-1)`.
+    if tag == "span" and re.match(
+            r'<span\s+style\s*=\s*"[^"]*\{\{mirrorH\}\}', raw, re.IGNORECASE):
+        return "MIRROR_GLYPH"
+    # `<span title="T">X</span>` — translit-tooltip / editorial-drop.  Checked
+    # BEFORE the styled `_STYLED_WRAPPER_RE` fallthrough (the former
+    # `_process_styled` precedence): a `title=` span is excluded from
+    # `_STYLED_WRAPPER_RE` by construction, so the two are mutually exclusive,
+    # but span-title is the more specific discriminator and is tried first.
+    if _SPAN_TITLE_OPEN_RE.match(raw):
+        return "SPAN_TITLE"
+    # Styled `<div>`/`<p>`/`<span>` (carries `{{Ts}}`/`style=`/`align=`) or
+    # `<ins>` → HTML_STYLE.  The producer (`process_html_style`) derives the CSS
+    # and recurses the inner.  A BARE `<div>`/`<span>`/`<p>` never reaches the
+    # walker as an HTML_TAG (it isn't bounded as one), so this only ever sees the
+    # styled forms the walker lifted.
+    if _STYLED_WRAPPER_RE.match(raw) or _INS_OPEN_RE.match(raw):
+        return "HTML_STYLE"
     if tag not in _HTML_TAG_LABEL:
         raise ValueError(
             f"Unknown HTML tag for HTML_TAG shape: {tag!r}")
@@ -113,6 +151,11 @@ def _derive_html_tag_label(raw: str) -> str:
 def _derive_html_self_closing_label(raw: str) -> str:
     if raw[:13].lower().startswith("<pagequality"):
         return "PAGEQUALITY"
+    # `<section begin="X"/>` / `<section end/>` — Wikisource transclusion marker;
+    # a self-closing structural tag carrying boundary identity, no inner content.
+    # The producer reads the raw tag (its name is boundary metadata).
+    if raw[:9].lower().startswith("<section"):
+        return "SECTION"
     return "REF_SELF"
 
 
@@ -135,6 +178,27 @@ def _derive_double_bracket_label(raw: str) -> str:
 
 
 def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
+    # ── The four template-form STYLED-derived structures ──────────────────
+    # Drained out of the old SHAPE_STRIP / SHAPE_PARAM / SHAPE_SHOULDER /
+    # SHAPE_RUNNING_HEADER walker shapes: recognized by NAME (the SAME regexes
+    # the walker used to bound them) rather than by a dedicated shape.  Placed
+    # FIRST — the walker tried these openers BEFORE the image / link / spacer
+    # families, so the same precedence holds here; none of the four names
+    # collides with the specific checks below.  Producers + dispatch labels
+    # unchanged (`process_strip` / `process_param` / `process_shoulder` /
+    # `process_running_header`).
+    #   `{{center|…}}`/`{{csc|…}}`/`{{left|…}}`/… template-form styler → STRIP.
+    if _TEMPLATE_STYLE_RE.match(raw):
+        return "STRIP"
+    #   `{{Fs|108%|X}}`/`{{font size|N%|X}}`/… param-valued styler → PARAM.
+    if _TEMPLATE_PARAM_STYLE_RE.match(raw):
+        return "PARAM"
+    #   `{{EB1911 Shoulder Heading|…}}` (+ HeadingSmall / EB9 Margin Note) → SHOULDER.
+    if _SHOULDER_HEADING_RE.match(raw):
+        return "SHOULDER"
+    #   `{{rh|left|center|right}}` / `{{Running header|…}}` 3-column frame → RUNNING_HEADER.
+    if _RUNNING_HEADER_RE.match(raw):
+        return "RUNNING_HEADER"
     # Standalone `{{Css image crop|…}}` — routed to the unified figure
     # producer, which treats the crop as just another image: a stateless
     # geometry-hash filename (`djvu_crop_filename`) → `{{IMG:…}}`, the crop
@@ -149,6 +213,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # macro (`_process_plain_image` builds the {{IMG:…}} from the named params).
     if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
         return "PLAIN_IMAGE"
+    # `{{ordered list|…}}` — a nested ordered-list classification (GEOGRAPHY nests
+    # 4 deep).  Matched on the raw opener (the first-token name is the ambiguous
+    # bare "ordered").  A leaf — the ORDERED_LIST producer parses the whole nested
+    # template from raw into one depth-encoded marker.
+    if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
+        return "ORDERED_LIST"
     # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
     if re.match(r"\{\{\s*(?:EB1911|EB9)\s+article\s+link\b", raw, re.IGNORECASE):
@@ -402,26 +472,19 @@ def _derive_label(
         return "INLINE_IMAGE"
     if shape == SHAPE_DOUBLE_BRACE:
         return _derive_double_brace_label(raw, inner_text)
-    if shape == SHAPE_CHART2:
-        return "CHART2"
-    if shape == SHAPE_ORDERED_LIST:
-        return "ORDERED_LIST"
     if shape == SHAPE_OUTLINE:
         return "OUTLINE"
-    if shape == SHAPE_FIGURE:
-        return "FIGURE"
     if shape == SHAPE_PAGE:
         return "PAGE"
-    if shape == SHAPE_SECTION:
-        return "SECTION"
     if shape == SHAPE_BODY:
         return "BODY"
-    if shape == SHAPE_MIRROR_GLYPH:
-        return "MIRROR_GLYPH"
-    if shape == SHAPE_CENTER:
-        return "CENTER"  # only the c-family reaches SHAPE_CENTER (walker)
-    if shape == SHAPE_STYLED:
-        return "STYLED"  # styled <div>/<p>/<span> (walker); producer derives CSS
+    if shape == SHAPE_PAIRED_WRAPPER:
+        # One paired open/close structure, two families distinguished by NAME:
+        # `{{chart2/start}}…{{chart2/end}}` → CHART2; every other
+        # `{{NAME/s}}…{{NAME/e}}` centring wrapper → CENTER.
+        if _CHART2_FAMILY_RE.search(raw):
+            return "CHART2"
+        return "CENTER"
     if shape == SHAPE_TITLE:
         return "TITLE"  # «TITLE»…«/TITLE» stamp (preprocess_article); producer recurses
     raise ValueError(f"Unknown shape: {shape!r}")

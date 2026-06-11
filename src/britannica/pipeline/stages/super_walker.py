@@ -30,11 +30,13 @@ from dataclasses import dataclass
 from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal
 from britannica.pipeline.stages.detect_boundaries import (
-    _detect_letter_article,
     _normalize_title,
     _split_out_plates,
 )
-from britannica.pipeline.stages.elements._title import clean_title
+from britannica.pipeline.stages.elements._title import (
+    _letter_from_dropcap,
+    clean_title,
+)
 from britannica.pipeline.stages.preprocess import make_stream, preprocess
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
@@ -210,8 +212,9 @@ def super_walk(volume: int) -> list[WalkedArticle]:
 
         seen: set[int] = set()
         # Single-letter article: a drop-cap opener (any of the source's six
-        # template shapes), not a bold heading — reuse the proven detector.
-        letter = _detect_letter_article(sec_id, body.lstrip())
+        # template shapes), not a bold heading — the title producer's own
+        # structural detector (sole owner of drop-cap letter extraction).
+        letter = _letter_from_dropcap(body.lstrip())
         if letter:
             seen.add(0)
             out.append(WalkedArticle(

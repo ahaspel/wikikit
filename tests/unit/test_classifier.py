@@ -18,12 +18,12 @@ from britannica.pipeline.stages.elements._classifier import (
 )
 from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BRACE_PIPE,
-    SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
+    SHAPE_PAIRED_WRAPPER,
 )
 
 
@@ -94,11 +94,22 @@ class TestAtomicLabels:
         assert ce.inner_text == ""
         assert ce.inner_registry == {}
 
-    def test_chart2(self):
-        ce = classify(SHAPE_CHART2,
+    def test_paired_wrapper_chart2(self):
+        # The chart2 family of the merged PAIRED_WRAPPER shape — the classifier
+        # routes by name to CHART2 (a leaf: empty inner, no children).
+        ce = classify(SHAPE_PAIRED_WRAPPER,
                        "{{chart2/start}}A{{chart2/end}}")
         assert ce.label == "CHART2"
         assert ce.inner_text == ""
+        assert ce.inner_registry == {}
+
+    def test_paired_wrapper_center(self):
+        # The centring family of the merged PAIRED_WRAPPER shape — the classifier
+        # routes by name to CENTER; strip_outer peels the `{{c/s}}…{{c/e}}`
+        # wrapper, and the (leaf) producer recurses its own inner.
+        ce = classify(SHAPE_PAIRED_WRAPPER, "{{c/s}}centred{{c/e}}")
+        assert ce.label == "CENTER"
+        assert ce.inner_text == "centred"
         assert ce.inner_registry == {}
 
     def test_outline(self):

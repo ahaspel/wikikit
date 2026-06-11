@@ -187,17 +187,37 @@ def _process_center(raw, inner, context, inner_registry):
       * a non-centring block styler (`fine block`/`EB1911 fine print`/`smaller
         block` → font-size) wraps the inner in ONE `style_block` div.
 
-    The inner is already recursively classified (child figures/tables are
-    placeholders), so wrapping it preserves those children for marker substitution."""
+    PAIRED_WRAPPER is a LEAF (it shares the shape with CHART2, a leaf), so the
+    classifier no longer pre-recurses our inner the way it did when CENTER was a
+    non-leaf shape.  We therefore recurse the inner OURSELF — but the wrap must run
+    on the PLACEHOLDERIZED inner (so `_center_wrap`'s `_CTR_PURE_PH_RE` still sees a
+    block child as a bare placeholder, exactly as it did when classify handed the
+    placeholderized inner to the producer), THEN the child markers are substituted.
+    So we replicate the classify → wrap → produce → substitute order verbatim
+    rather than flatten-then-wrap (which would change the pure-block-paragraph and
+    body-only cases)."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_WRAPPERS, style_block)
+    from britannica.pipeline.stages.elements._classifier import (
+        classify_article, produce_tree, substitute_top_level_markers)
+
+    # Walk + classify the inner to a placeholderized body + child tree (figures
+    # off, exactly like classify's own inner descent did), then produce the tree
+    # so each child's marker is populated.
+    placeholderized, tree = classify_article(inner, _allow_figure=False)
+    produce_tree(tree, context)
+
+    # Wrap on the PLACEHOLDERIZED text (block children are still bare
+    # placeholders here), then substitute the produced child markers in.
     m = re.match(r"^\s*\{\{\s*([^{}/]*?)\s*/s\s*\}\}", raw, re.IGNORECASE)
     name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
     spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
     if spec and spec.get("css") and not spec.get("ctr"):
-        return style_block(inner.strip(), css=spec["css"],
-                           tag=spec.get("tag", "DIV"))
-    return _center_wrap(inner)   # centring family — unchanged
+        wrapped = style_block(placeholderized.strip(), css=spec["css"],
+                              tag=spec.get("tag", "DIV"))
+    else:
+        wrapped = _center_wrap(placeholderized)   # centring family — unchanged
+    return substitute_top_level_markers(wrapped, tree)
 
 
 def _plain_image_disentangle(raw, context):
@@ -420,9 +440,92 @@ def _styled_br_to_marker(text: str) -> str:
     return "".join(out)
 
 
-def _process_styled(raw, inner, context, inner_registry):
-    """The ONE styled-wrapper producer: a `<div>`/`<p>`/`<span>` carrying style
-    (`{{Ts}}` / `style=` / `align=`).
+def process_span_title(raw, inner, context, inner_registry):
+    """SPAN_TITLE producer (walker SHAPE_SPAN_TITLE): a `<span title="T">X</span>`.
+
+    Transliteration TOOLTIP when X is Greek/Hebrew (carry T as «SPAN[title:T]»,
+    the HTML twin of {{tooltip}}) vs editorial provenance (drop the wrapper, keep
+    X).  Re-promotes the gutted body-text `_handle_title_spans`.  Body is the
+    verbatim former `sp = …` branch of `_process_styled`, now unconditional
+    (SPAN_TITLE only reaches here when `_SPAN_TITLE_OPEN_RE` matched in the
+    walker)."""
+    from britannica.pipeline.stages.elements._walker import (
+        _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
+    sp = _SPAN_TITLE_OPEN_RE.match(raw)
+    title = (sp.group("q") or sp.group("uq") or "").strip().replace(
+        "]", "").replace("»", "")
+    inner_raw = _styled_br_to_marker(
+        re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
+    content = process_elements(
+        inner_raw, context, _allow_figure=False).strip()
+    if title and _TRANSLIT_CONTENT_RE.search(content):
+        return f"«SPAN[title:{title}]»{content}«/SPAN»"
+    return content  # editorial title → drop the wrapper, keep the content
+
+
+def process_shoulder(raw, inner, context, inner_registry):
+    """SHOULDER producer (walker SHAPE_SHOULDER): a shoulder heading —
+    `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the `…HeadingSmall` /
+    `{{EB9 Margin Note}}` synonyms.
+
+    A marginal SECTION label: emit «SH»…«/SH» (what `detect_sections` keys on for
+    the TOC), recursing the LABEL (after the last top-level pipe, dropping
+    `width=N`) so its inner `{{Fs}}` carries as the styler it is.  Replaces the
+    flat `_convert_shoulder_headings`.  Body is the verbatim former `sh = …`
+    branch of `_process_styled`, now unconditional (SHOULDER only reaches here
+    when `_SHOULDER_HEADING_RE` matched in the walker)."""
+    from britannica.pipeline.stages.elements._tables import _SHOULDER_HEADING_RE
+    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    sh = _SHOULDER_HEADING_RE.match(raw)
+    rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
+    label = _split_top_pipes(rest)[-1]
+    # A shoulder heading is ONE marginal label that wrapped in the narrow
+    # margin column, so its `<br>`s are typography, not content.  Heal them
+    # BEFORE `<br>`→«BR» — left raw the break leaks into the heading AND
+    # poisons the `detect_sections` slug (`premonst-br-ratensians`):
+    #   lowercase continuation = end-of-line hyphenation → rejoin the split
+    #     word (`Premonst-<br>ratensians` → `Premonstratensians`);
+    #   capitalized continuation = a real hyphen that merely wrapped → keep
+    #     the hyphen (`Anglo-<br>Saxon` → `Anglo-Saxon`);
+    #   a bare wrap → a space (`quarrel<br>with` → `quarrel with`).
+    label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*(?=[a-z])", "", label)
+    label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*", "-", label)
+    label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
+    label = _styled_br_to_marker(label)
+    content = process_elements(
+        label, context, _allow_figure=False).strip()
+    return f"«SH»{content}«/SH»"
+
+
+def process_running_header(raw, inner, context, inner_registry):
+    """RUNNING_HEADER producer (walker SHAPE_RUNNING_HEADER): a running header —
+    `{{rh|left|center|right}}` / `{{Running header|…}}` alias.
+
+    A 3-COLUMN frame: plate title bars, captioned figures, and displayed-
+    equation layouts (margin label/number | centred equation | number).  Split
+    the top-level pipes (a nested `{{…|…}}` / «MATH» stays intact), recurse each
+    cell, and emit a flex row so the centre stays centred between the margins.
+    Body is the verbatim former `rh = …` branch of `_process_styled`, now
+    unconditional (RUNNING_HEADER only reaches here when `_RUNNING_HEADER_RE`
+    matched in the walker)."""
+    from britannica.pipeline.stages.elements._tables import _RUNNING_HEADER_RE
+    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    rh = _RUNNING_HEADER_RE.match(raw)
+    cells = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
+    cells = (cells + ["", "", ""])[:3]
+    left, center, right = (
+        process_elements(c, context, _allow_figure=False).strip()
+        for c in cells)
+    return (
+        "«DIV[style:display:flex;align-items:baseline]»"
+        f"«SPAN[style:text-align:left]»{left}«/SPAN»"
+        f"«SPAN[style:flex:1;text-align:center]»{center}«/SPAN»"
+        f"«SPAN[style:text-align:right]»{right}«/SPAN»«/DIV»")
+
+
+def process_html_style(raw, inner, context, inner_registry):
+    """HTML_STYLE producer (walker SHAPE_HTML_STYLE): a `<div>`/`<p>`/`<span>`/
+    `<ins>` carrying style (`{{Ts}}` / `style=` / `align=`).
 
     Style is orthogonal to structure.  This producer (1) derives the wrapper's
     CSS via the EXISTING `_cell_styles` (the same `{{Ts}}` / inline-`style` /
@@ -438,113 +541,12 @@ def _process_styled(raw, inner, context, inner_registry):
     `<span>` `{{Ts}}`-opener rewriters) and the styled-`<div>`→figure gate.
     The `_p_ts` image-drop defect is fixed for free: an `<p {{Ts}}>[[Image]]…</p>`
     nested where figure-recognition is off now recurses its inner through
-    `process_elements`, so the image is produced rather than dropped."""
+    `process_elements`, so the image is produced rather than dropped.
+
+    Body is the verbatim former `m = _STYLED_OPEN_RE.match(raw)` fallthrough of
+    `_process_styled`, keeping its `if not m: return raw` guard."""
     from britannica.pipeline.stages.elements._tables import (
-        _cell_styles, style_block, _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS,
-        _TEMPLATE_PARAM_STYLE_RE, _TEMPLATE_PARAM_STYLE_WRAPPERS,
-        _SHOULDER_HEADING_RE, _RUNNING_HEADER_RE)
-    from britannica.pipeline.stages.elements._walker import (
-        _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
-    # `<span title="T">X</span>` — transliteration TOOLTIP when X is Greek/Hebrew (carry T
-    # as «SPAN[title:T]», the HTML twin of {{tooltip}}) vs editorial provenance (drop the
-    # wrapper, keep X).  Checked FIRST so a styled-AND-titled amendment span is dropped,
-    # not carried.  Re-promotes the gutted body-text `_handle_title_spans`.
-    sp = _SPAN_TITLE_OPEN_RE.match(raw)
-    if sp:
-        title = (sp.group("q") or sp.group("uq") or "").strip().replace(
-            "]", "").replace("»", "")
-        inner_raw = _styled_br_to_marker(
-            re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
-        content = process_elements(
-            inner_raw, context, _allow_figure=False).strip()
-        if title and _TRANSLIT_CONTENT_RE.search(content):
-            return f"«SPAN[title:{title}]»{content}«/SPAN»"
-        return content  # editorial title → drop the wrapper, keep the content
-    # Shoulder heading — `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the
-    # `…HeadingSmall` / `{{EB9 Margin Note}}` synonyms.  A marginal SECTION label:
-    # emit «SH»…«/SH» (what `detect_sections` keys on for the TOC), recursing the
-    # LABEL (after the last top-level pipe, dropping `width=N`) so its inner
-    # `{{Fs}}` carries as the styler it is.  Replaces the flat
-    # `_convert_shoulder_headings`.
-    sh = _SHOULDER_HEADING_RE.match(raw)
-    if sh:
-        from britannica.pipeline.stages.elements._link import (
-            _split_top_pipes)
-        rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
-        label = _split_top_pipes(rest)[-1]
-        # A shoulder heading is ONE marginal label that wrapped in the narrow
-        # margin column, so its `<br>`s are typography, not content.  Heal them
-        # BEFORE `<br>`→«BR» — left raw the break leaks into the heading AND
-        # poisons the `detect_sections` slug (`premonst-br-ratensians`):
-        #   lowercase continuation = end-of-line hyphenation → rejoin the split
-        #     word (`Premonst-<br>ratensians` → `Premonstratensians`);
-        #   capitalized continuation = a real hyphen that merely wrapped → keep
-        #     the hyphen (`Anglo-<br>Saxon` → `Anglo-Saxon`);
-        #   a bare wrap → a space (`quarrel<br>with` → `quarrel with`).
-        label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*(?=[a-z])", "", label)
-        label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*", "-", label)
-        label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
-        label = _styled_br_to_marker(label)
-        content = process_elements(
-            label, context, _allow_figure=False).strip()
-        return f"«SH»{content}«/SH»"
-    # Running header — `{{rh|left|center|right}}` / `{{Running header|…}}` alias.
-    # A 3-COLUMN frame: plate title bars, captioned figures, and displayed-
-    # equation layouts (margin label/number | centred equation | number).  Split
-    # the top-level pipes (a nested `{{…|…}}` / «MATH» stays intact), recurse each
-    # cell, and emit a flex row so the centre stays centred between the margins.
-    rh = _RUNNING_HEADER_RE.match(raw)
-    if rh:
-        from britannica.pipeline.stages.elements._link import (
-            _split_top_pipes)
-        cells = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
-        cells = (cells + ["", "", ""])[:3]
-        left, center, right = (
-            process_elements(c, context, _allow_figure=False).strip()
-            for c in cells)
-        return (
-            "«DIV[style:display:flex;align-items:baseline]»"
-            f"«SPAN[style:text-align:left]»{left}«/SPAN»"
-            f"«SPAN[style:flex:1;text-align:center]»{center}«/SPAN»"
-            f"«SPAN[style:text-align:right]»{right}«/SPAN»«/DIV»")
-    # Param font-size wrapper — `{{Fs|108%|X}}` / `{{font size|N%|X}}`.  Same
-    # styler family, but the size is arg-1.  Split value | content on the first
-    # pipe (content keeps its own pipes), recurse the content, carry as an INLINE
-    # `«SPAN[style:font-size:…]»` (font-size is inline).  A bare integer arg is a
-    # percent.
-    pm = _TEMPLATE_PARAM_STYLE_RE.match(raw)
-    if pm:
-        name = re.sub(r"\s+", " ", pm.group(1).strip().lower())
-        tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
-        rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
-        bar = rest.find("|")
-        value = (rest[:bar] if bar >= 0 else "").strip()
-        inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
-        content = process_elements(
-            inner_raw, context, _allow_figure=False).strip()
-        if pct and value.isdigit():
-            value += "%"             # font-size family: bare int is a percent
-        elif not value and "letter-spacing" in tmpl:
-            value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
-        # The styler is one uniform inline `«SPAN[style:…]»`, same as every other
-        # styler — the CSS property comes from the registry, the value from arg-1.
-        return style_block(content, css=tmpl.format(v=value) if value else "",
-                           tag="SPAN")
-    # Template-form wrapper — `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / …
-    # The SAME producer as the HTML form: a `{{center|X}}` is handled identically
-    # whether X is text, an image, or a table (style ⊥ content).  Peel `{{name|`
-    # + the matching trailing `}}` (the walker already balanced the construct),
-    # recurse, wrap per the registry spec.
-    tm = _TEMPLATE_STYLE_RE.match(raw)
-    if tm:
-        spec = _TEMPLATE_STYLE_WRAPPERS[tm.group(1).lower()]
-        inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
-        inner_raw = _styled_br_to_marker(inner_raw)
-        content = process_elements(
-            inner_raw, context, _allow_figure=False).strip()
-        return style_block(content, css=spec.get("css", ""),
-                           tag=spec.get("tag", "DIV"),
-                           ctr=spec.get("ctr", False), sc=spec.get("sc", False))
+        _cell_styles, style_block)
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
         return raw
@@ -562,6 +564,60 @@ def _process_styled(raw, inner, context, inner_registry):
     css = ";".join(_cell_styles(attrs, ""))
     marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
     return style_block(content, css=css, tag=marker_tag)
+
+
+def process_strip(raw, inner, context, inner_registry):
+    """STRIP producer (walker SHAPE_STRIP): the template-form styler
+    `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / ….
+
+    The SAME producer as the HTML form: a `{{center|X}}` is handled identically
+    whether X is text, an image, or a table (style ⊥ content).  Peel `{{name|`
+    + the matching trailing `}}` (the walker already balanced the construct),
+    recurse, wrap per the registry spec.  Body is the verbatim TEMPLATE branch
+    formerly in `_process_styled`, now unconditional (STRIP only reaches here
+    when `_TEMPLATE_STYLE_RE` matched in the walker)."""
+    from britannica.pipeline.stages.elements._tables import (
+        _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, style_block)
+    tm = _TEMPLATE_STYLE_RE.match(raw)
+    spec = _TEMPLATE_STYLE_WRAPPERS[tm.group(1).lower()]
+    inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+    inner_raw = _styled_br_to_marker(inner_raw)
+    content = process_elements(
+        inner_raw, context, _allow_figure=False).strip()
+    return style_block(content, css=spec.get("css", ""),
+                       tag=spec.get("tag", "DIV"),
+                       ctr=spec.get("ctr", False), sc=spec.get("sc", False))
+
+
+def process_param(raw, inner, context, inner_registry):
+    """PARAM producer (walker SHAPE_PARAM): the param-valued font-size styler
+    `{{Fs|108%|X}}` / `{{font size|N%|X}}`.
+
+    Same styler family as STRIP, but the size is arg-1.  Split value | content
+    on the first pipe (content keeps its own pipes), recurse the content, carry
+    as an INLINE `«SPAN[style:font-size:…]»` (font-size is inline).  A bare
+    integer arg is a percent.  Body is the verbatim PARAM branch formerly in
+    `_process_styled`, now unconditional (PARAM only reaches here when
+    `_TEMPLATE_PARAM_STYLE_RE` matched in the walker)."""
+    from britannica.pipeline.stages.elements._tables import (
+        _TEMPLATE_PARAM_STYLE_RE, _TEMPLATE_PARAM_STYLE_WRAPPERS, style_block)
+    pm = _TEMPLATE_PARAM_STYLE_RE.match(raw)
+    name = re.sub(r"\s+", " ", pm.group(1).strip().lower())
+    tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
+    rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
+    bar = rest.find("|")
+    value = (rest[:bar] if bar >= 0 else "").strip()
+    inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
+    content = process_elements(
+        inner_raw, context, _allow_figure=False).strip()
+    if pct and value.isdigit():
+        value += "%"             # font-size family: bare int is a percent
+    elif not value and "letter-spacing" in tmpl:
+        value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
+    # The styler is one uniform inline `«SPAN[style:…]»`, same as every other
+    # styler — the CSS property comes from the registry, the value from arg-1.
+    return style_block(content, css=tmpl.format(v=value) if value else "",
+                       tag="SPAN")
 
 
 def _process_fraction(inner, context):
@@ -592,14 +648,32 @@ def _process_fraction(inner, context):
 # two-level dispatch (`_ELEMENT_HANDLERS` → `_dispatch_table` →
 # `_TABLE_KIND_HANDLERS`).
 _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
-    # Paired-wrapper span (walker SHAPE_CENTER) → «CTR».
+    # Paired-wrapper span (walker SHAPE_PAIRED_WRAPPER, classifier routes the
+    # `{{NAME/s}}…{{NAME/e}}` centring family → CENTER) → «CTR».
     "CENTER": _process_center,
-    # STYLED — `<div>`/`<p>`/`<span>` carrying style (`{{Ts}}`/`style=`/`align=`).
-    # ONE producer derives the CSS via the shared `_cell_styles`, recurses the
+    # The four structures drained out of the former STYLED shape, each its own
+    # single-structure producer (verbatim former `_process_styled` branch).
+    # SPAN_TITLE — `<span title="T">X</span>` translit-tooltip / editorial-drop.
+    "SPAN_TITLE": process_span_title,
+    # SHOULDER — `{{EB1911 Shoulder Heading|…}}` marginal section label → «SH».
+    "SHOULDER": process_shoulder,
+    # RUNNING_HEADER — `{{rh|l|c|r}}` 3-column flex frame.
+    "RUNNING_HEADER": process_running_header,
+    # HTML_STYLE — `<div>`/`<p>`/`<span>`/`<ins>` carrying style (`{{Ts}}`/`style=`/
+    # `align=`).  Derives the CSS via the shared `_cell_styles`, recurses the
     # inner through the main dispatch, and wraps via `style_block` (`«CTR»` /
     # `«DIV[style]»` / `«SPAN[style]»`).  Subsumes body-text `_p_ts`/`_div_ts`/
     # `_span_ts` and the styled-`<div>`→figure gate.
-    "STYLED": _process_styled,
+    "HTML_STYLE": process_html_style,
+    # STRIP — the template-form styler `{{center|…}}`/`{{csc|…}}`/… (walker
+    # SHAPE_STRIP).  Split out of STYLED: its own single-structure producer
+    # (verbatim former TEMPLATE branch) peels `{{name|`…`}}`, recurses, wraps.
+    "STRIP": process_strip,
+    # PARAM — the param-valued styler `{{Fs|N%|X}}`/`{{font size|N%|X}}`/…
+    # (walker SHAPE_PARAM).  Split out of STYLED: its own single-structure
+    # producer (verbatim former PARAM branch) splits value|content, recurses,
+    # wraps inline.
+    "PARAM": process_param,
     # (Figure `{|`-tables are de-recognized: LEGENDED_FIGURE / CAPTIONED_FIGURE(
     # _INLINE) / LEGENDED_FIGURE_BESIDE/_CHILD / FIGURE_GROUP / UNPAIRED_FIGURE_GROUP
     # / LAYOUT_WRAPPER / FIGURE classify as TABLE and dispatch to the same

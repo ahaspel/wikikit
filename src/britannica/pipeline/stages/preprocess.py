@@ -50,7 +50,8 @@ _CHART2_BLOCK = re.compile(
 # itself is the content and the alternative is the catch-all deleting everything.
 # TODO(cleanup): chart2 + tree are one class — unify the two dicts + block regexes
 # into a single genealogy-image substitution, and delete the now-dead
-# ``_process_chart2`` / SHAPE_CHART2 walker path (preprocess preempts it).
+# ``_process_chart2`` / the chart2 family of the PAIRED_WRAPPER walker path
+# (preprocess preempts it).
 _TREE_BLOCK = re.compile(
     r"\{\{\s*(?:familytree|tree\s*chart)\s*/\s*start[\s\S]*?"
     r"\{\{\s*(?:familytree|tree\s*chart)\s*/\s*end\s*\}\}", re.IGNORECASE)

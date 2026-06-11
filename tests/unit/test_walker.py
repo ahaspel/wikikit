@@ -124,14 +124,16 @@ class TestWalkOutput:
         )
 
     def test_ordered_list_recognized_as_leaf_with_nesting(self):
-        # {{ordered list}} is its own LEAF shape; the balanced scanner must
-        # capture the WHOLE nested template as one extract (not split each
-        # nested level), and the opener must be in _OPENER_HINT_RE.
-        from britannica.pipeline.stages.elements._shapes import SHAPE_ORDERED_LIST
+        # {{ordered list}} is carved by the generic DOUBLE_BRACE shape (a leaf);
+        # the balanced scanner must capture the WHOLE nested template as one
+        # extract (not split each nested level), and the opener must be in
+        # _OPENER_HINT_RE.  The classifier routes the `ordered list` name →
+        # ORDERED_LIST label (verified in test_classifier).
         src = "{{ordered list|type=upper-roman|A|{{ordered list|type=lower-alpha|B|C}}}}"
         _t, extracts = walk(src)
-        ol = [e for e in extracts if e[1] == SHAPE_ORDERED_LIST]
-        assert len(ol) == 1, f"expected 1 ORDERED_LIST extract, got {extracts!r}"
+        ol = [e for e in extracts
+              if e[1] == SHAPE_DOUBLE_BRACE and e[2].startswith("{{ordered list")]
+        assert len(ol) == 1, f"expected 1 ordered-list extract, got {extracts!r}"
         assert ol[0][2] == src, "scanner must capture the full nested template"
 
     def test_multiple_top_level_extracts(self):

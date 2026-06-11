@@ -13,15 +13,12 @@ import pytest
 from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
     SHAPE_BRACE_PIPE,
-    SHAPE_CHART2,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
-    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
-    SHAPE_SECTION,
-    SHAPE_STYLED,
+    SHAPE_PAIRED_WRAPPER,
     SHAPES,
     strip_outer,
 )
@@ -30,19 +27,28 @@ from britannica.pipeline.stages.elements._shapes import (
 class TestShapeVocabulary:
     def test_shape_count(self):
         # 7 delimiter-balanced/text shapes + structural extras:
-        #   FIGURE (image + structural caption run),
-        #   SECTION (``<section begin/end/>``),
         #   INLINE_IMAGE (``[[File:…]]`` in inline-prose context —
         #     more specific than DOUBLE_BRACKET so producers don't
         #     re-recognise),
         #   BODY (residual prose between other elements — task #14:
         #     SHAPE_BODY, owner-of-output principle says every span
         #     maps to one producer),
-        #   MIRROR_GLYPH (``<span style="{{mirrorH}}">…</span>``),
-        #   CENTER (``{{NAME/s}}…{{NAME/e}}`` paired-wrapper span),
-        #   ORDERED_LIST (nested ``{{ordered list|…}}`` classification, a leaf),
-        #   STYLED (``<div>``/``<p>``/``<span>`` carrying {{Ts}}/style=/align= —
-        #     the ONE styled-wrapper element; producer derives CSS + recurses).
+        #   PAIRED_WRAPPER (``{{NAME/s}}…{{NAME/e}}`` paired open/close span —
+        #     the merged former CENTER + CHART2: one STRUCTURE, two families the
+        #     classifier tells apart by NAME (chart2 → CHART2, else → CENTER);
+        #     the producers/labels are unchanged),
+        #   (ORDERED_LIST, SECTION and MIRROR_GLYPH were collapsed back into
+        #     their generic delimiter shapes — DOUBLE_BRACE, HTML_SELF_CLOSING
+        #     and HTML_TAG respectively — with the type carve moved from the
+        #     walker to the classifier; the producers/labels are unchanged.)
+        #   (STRIP / PARAM / SHOULDER / RUNNING_HEADER / SPAN_TITLE / HTML_STYLE
+        #     — the six STYLED-derived structures — were ALSO collapsed back into
+        #     their generic shapes: the four template-form ones (STRIP / PARAM /
+        #     SHOULDER / RUNNING_HEADER) ride DOUBLE_BRACE and the two styled-tag
+        #     ones (SPAN_TITLE / HTML_STYLE) ride HTML_TAG, with the type carve
+        #     moved from the walker to the classifier's two label-derivers; the
+        #     producers/labels (`process_strip` / `process_param` / … /
+        #     `process_html_style`) are unchanged.)
         # NOINCLUDE was removed when the article pipeline started
         # wiping `<noinclude>` tags upstream in `_transform_text_v2`
         # — chrome content owned by explicit template recognizers,
@@ -50,10 +56,15 @@ class TestShapeVocabulary:
         # Bump this count alongside ``_shapes.SHAPES``.  Includes PAGE
         # (``\x01PAGE:N\x01``) and TITLE (the ``«TITLE»…«/TITLE»`` stamp from
         # ``preprocess_article``) — both injected markers recognized as elements.
-        assert len(SHAPES) == 17
-        assert SHAPE_FIGURE in SHAPES
-        assert SHAPE_SECTION in SHAPES
-        assert SHAPE_STYLED in SHAPES
+        # Net −6 vs the 17-shape post-figure-delete state: the six STYLED-derived
+        # shapes (STRIP / PARAM / SHOULDER / RUNNING_HEADER / SPAN_TITLE /
+        # HTML_STYLE) dissolved into the generic DOUBLE_BRACE / HTML_TAG shapes —
+        # recognition by name/attribute is the classifier's job, not the walker's
+        # — leaving 11.
+        assert len(SHAPES) == 11
+        assert SHAPE_HTML_TAG in SHAPES
+        assert SHAPE_DOUBLE_BRACE in SHAPES
+        assert SHAPE_PAIRED_WRAPPER in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)
@@ -61,7 +72,9 @@ class TestShapeVocabulary:
     def test_leaf_shapes_subset(self):
         assert LEAF_SHAPES <= SHAPES
         assert SHAPE_HTML_SELF_CLOSING in LEAF_SHAPES
-        assert SHAPE_CHART2 in LEAF_SHAPES
+        # PAIRED_WRAPPER inherits CHART2's leaf-ness (the producer owns the
+        # whole span; the CENTER family recurses its own inner).
+        assert SHAPE_PAIRED_WRAPPER in LEAF_SHAPES
 
 
 class TestStripOuter:
@@ -123,10 +136,17 @@ class TestStripOuter:
         # OUTLINE has no delimiters — the bytes ARE the content.
         assert strip_outer(SHAPE_OUTLINE, raw) == raw
 
-    def test_chart2_strips_to_empty(self):
-        # CHART2 content isn't walked — its inner is non-wikitext.
+    def test_paired_wrapper_chart2_strips_to_empty(self):
+        # PAIRED_WRAPPER's chart2 family isn't walked — its inner is
+        # non-wikitext, so strip_outer returns "" (the old CHART2 contract).
         raw = "{{chart2/start}}A → B{{chart2/end}}"
-        assert strip_outer(SHAPE_CHART2, raw) == ""
+        assert strip_outer(SHAPE_PAIRED_WRAPPER, raw) == ""
+
+    def test_paired_wrapper_center_peels_wrapper(self):
+        # PAIRED_WRAPPER's centring family peels the `{{NAME/s}}` opener and
+        # `{{NAME/e}}` closer (the old CENTER contract).
+        raw = "{{c/s}}centred text{{c/e}}"
+        assert strip_outer(SHAPE_PAIRED_WRAPPER, raw) == "centred text"
 
     def test_unknown_shape_raises(self):
         with pytest.raises(ValueError, match="Unknown shape"):

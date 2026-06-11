@@ -36,6 +36,12 @@ def assemble_corpus(session):
         body, disp = walk_article(session, article)
         corpus[article.id] = body
         title_display[article.id] = disp
+    # MOVE 2: the title is produced in the transform (`walk_article` sets
+    # `article.title`/`title_raw`/`title_display`), not at detection.  The body
+    # and xrefs stay in-memory only, but `title` is a real DB field that the
+    # export + xref resolution read straight from the DB — so commit the titles
+    # before they're read (covers the fast pipeline, which skips classify).
+    session.commit()
     return all_articles, corpus, title_display
 
 

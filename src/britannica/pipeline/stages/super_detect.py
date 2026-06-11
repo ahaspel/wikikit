@@ -8,8 +8,9 @@ but built from RAW segment slices (recognize-on-view, carry-raw):
   * boundaries come from ``super_walk`` (which consumes nothing — it recognizes
     article-opening headings on the raw volume stream);
   * the article's content is the raw slice between consecutive boundaries;
-  * the title comes from the title producer (``produce_title``), which also
-    hands back the raw heading span for the downstream ``title_display``;
+  * the title is NOT extracted here (MOVE 2): the title rides UNSTRIPPED in
+    segment 0 and is produced in exactly one place downstream —
+    ``transform_articles.preprocess_article`` (which runs ``produce_title``);
   * per-page ``SegmentInfo``s fall out by splitting that raw content on the
     ``«PAGE»`` markers — segments serve only page assembly + page numbers.
 
@@ -27,7 +28,6 @@ from britannica.pipeline.stages.detect_boundaries import (
     SegmentInfo,
     _split_out_plates,
 )
-from britannica.pipeline.stages.elements._title import produce_title
 
 _PAGE_RE = re.compile(r"\x01PAGE:(\d+)\x01")
 _SECBEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
@@ -87,14 +87,12 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         end = bounds[i + 1][0] if i + 1 < len(bounds) else len(raw_stream)
         content = raw_stream[bpos:end]               # the article's raw content
         content = _SECTAG_DROP.sub("", content)      # drop consumed section chrome
-        title, body, title_raw = produce_title(content)
-        # Segments fall out by splitting the title-STRIPPED body on
-        # «PAGE» markers.  Splitting raw `content` instead would put
-        # the title-bold back into segs[0].text, duplicating it (since
-        # `title` is already stored in Article.title): downstream
-        # consumers would then see both the bold and the title field
-        # and we'd be tempted to reach for a sweeper.  The title is
-        # the chop-up's product — never re-pack it into the body.
+        # MOVE 2: detection no longer extracts the title.  The title is
+        # produced in EXACTLY ONE place — `transform_articles.preprocess_article`,
+        # which runs `produce_title` on the assembled segments.  So here the
+        # title rides UNSTRIPPED in segment 0; we split the full `content`
+        # (not a title-stripped `body`) on the «PAGE» markers.
+        body = content
         segs: list[SegmentInfo] = []
         seq = 0
         # Slap the current leaf onto each page-fragment AS WE CUT IT — the «PAGE»
@@ -116,8 +114,8 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         if not segs:
             continue
         out.append(DetectedArticle(
-            title=title, volume=volume,
+            title="", volume=volume,
             page_start=segs[0].page_number, page_end=segs[-1].page_number,
             article_type="article", segments=segs, section_name=sec,
-            title_raw=title_raw))
+            title_raw=""))
     return out

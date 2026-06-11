@@ -29,14 +29,10 @@ SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
 SHAPE_INLINE_IMAGE      = "INLINE_IMAGE"      # [[File:...]] in inline-prose context
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
-SHAPE_ORDERED_LIST      = "ORDERED_LIST"      # nested {{ordered list|…}} classification
-SHAPE_CHART2            = "CHART2"            # {{chart2/start}}…{{chart2/end}} region
-SHAPE_FIGURE            = "FIGURE"            # image + structural caption run
-SHAPE_SECTION           = "SECTION"           # <section begin="X"/> / <section end/>
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
-SHAPE_MIRROR_GLYPH      = "MIRROR_GLYPH"       # <span style="{{mirrorH}}…">content</span>
-SHAPE_CENTER            = "CENTER"             # {{NAME/s}}…{{NAME/e}} paired-wrapper span
-SHAPE_STYLED            = "STYLED"             # <div>/<p>/<span> carrying {{Ts}}/style=/align=
+SHAPE_PAIRED_WRAPPER    = "PAIRED_WRAPPER"     # {{NAME/s}}…{{NAME/e}} paired open/close span
+                                               # (the former CENTER + CHART2 — one structure;
+                                               #  the classifier routes by name to CENTER / CHART2)
 SHAPE_PAGE              = "PAGE"               # page-break bookkeeping marker (\x01PAGE:N\x01)
 SHAPE_TITLE             = "TITLE"              # «TITLE»…«/TITLE» stamp (preprocess_article)
 
@@ -49,14 +45,8 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_INLINE_IMAGE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_OUTLINE,
-    SHAPE_ORDERED_LIST,
-    SHAPE_CHART2,
-    SHAPE_FIGURE,
-    SHAPE_SECTION,
     SHAPE_BODY,
-    SHAPE_MIRROR_GLYPH,
-    SHAPE_CENTER,
-    SHAPE_STYLED,
+    SHAPE_PAIRED_WRAPPER,
     SHAPE_PAGE,
     SHAPE_TITLE,
 })
@@ -67,8 +57,12 @@ SHAPES: frozenset[str] = frozenset({
 # internal parsing it needs.
 #
 # * HTML_SELF_CLOSING — no inner content.
-# * CHART2 — non-wikitext template-pair region; chart-grammar `{{…}}`
-#   tokens inside aren't extractable wikitext.
+# * PAIRED_WRAPPER — the `{{NAME/s}}…{{NAME/e}}` paired open/close span
+#   (former CENTER + CHART2).  A LEAF: the producer owns the whole span.
+#   The CHART2 family is a non-wikitext template-pair region (chart-grammar
+#   `{{…}}` tokens inside aren't extractable wikitext, so its producer reads
+#   raw); the CENTER family's producer recurses its OWN inner through the main
+#   dispatch (figure-recognition off) exactly as the classifier used to.
 # * OUTLINE — line-pattern (indented `;head:desc` ladder); the producer
 #   walks it line-by-line itself.  Balanced shapes inside an outline
 #   body have already been placeholdered by the linear scanner before
@@ -76,27 +70,17 @@ SHAPES: frozenset[str] = frozenset({
 #   recurse into anyway.
 LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
-    SHAPE_CHART2,
+    SHAPE_PAIRED_WRAPPER,
     SHAPE_OUTLINE,
-    # ORDERED_LIST — a nested `{{ordered list|…}}` classification.  The producer
-    # owns the recursion (parses the whole nested template into ONE depth-encoded
-    # OUTLINE marker); the classifier must NOT extract nested same-shape children,
-    # else each level would become a separate marker.
-    SHAPE_ORDERED_LIST,
-    # FIGURE — the producer owns the whole image+caption span: it re-processes
-    # a copy with figure-recognition off and assembles, so the main walk must
-    # NOT recurse into the raw here.
-    SHAPE_FIGURE,
-    # STYLED — a `<div>`/`<p>`/`<span>` carrying style (`{{Ts}}`/`style=`/
-    # `align=`).  The producer owns the whole span: it peels the wrapper, derives
-    # the CSS, and re-processes the INNER through the main dispatch
-    # (`process_elements(..., _allow_figure=False)`) so a table / MATH / CHEM /
-    # nested-wrapper inside is handled by its own producer, not leaked.  The main
-    # walk must NOT recurse into the raw here (the producer does it itself).
-    SHAPE_STYLED,
-    # SECTION — a `<section begin/end/>` transclusion marker; no inner content,
-    # the producer reads the raw tag (its name is boundary metadata).
-    SHAPE_SECTION,
+    # The six STYLED-derived structures (STRIP / PARAM / SHOULDER / RUNNING_HEADER
+    # = `{{…}}` template-form stylers/headings; SPAN_TITLE / HTML_STYLE = `<tag>`
+    # styled wrappers) no longer have their own shapes: they ride the generic
+    # SHAPE_DOUBLE_BRACE / SHAPE_HTML_TAG shapes, with the type carve done by the
+    # classifier's two label-derivers.  Their leaf-ness is inherited from those
+    # generic shapes (both already leaves below); the producers (`process_strip` /
+    # `process_param` / `process_shoulder` / `process_running_header` /
+    # `process_span_title` / `process_html_style`) are unchanged — they read `raw`,
+    # peel their own wrapper, and recurse the inner through the main dispatch.
     # BODY — a prose run between other elements, at any depth.  The body
     # producer owns it end-to-end; it is a leaf (no inner — that's what makes
     # it body text), so the walker never recurses into it.
@@ -152,10 +136,6 @@ def strip_outer(shape: str, raw: str) -> str:
         return s.strip()
     if shape == SHAPE_HTML_SELF_CLOSING:
         return ""
-    if shape == SHAPE_SECTION:
-        # No inner content — the whole tag is the marker; the producer
-        # reads `raw`.
-        return ""
     if shape == SHAPE_PAGE:
         # Leaf — the whole `\x01PAGE:N\x01` token is the marker; the
         # producer re-emits `raw`.
@@ -171,43 +151,26 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_OUTLINE:
         # No delimiters — the raw bytes ARE the indented-line ladder.
         return raw
-    if shape == SHAPE_ORDERED_LIST:
-        # Leaf — the producer reads `raw` and recursively parses the nested
-        # `{{ordered list|…}}` itself; no inner content to hand back.
-        return ""
-    if shape == SHAPE_CHART2:
-        # CHART2's bytes are chart-grammar templates; we never walk
-        # inside.  Return empty so a downstream `walker.walk("")`
-        # trivially yields no extracts.
-        return ""
-    if shape == SHAPE_FIGURE:
-        # Leaf — the producer reads `raw` (re-processes + assembles it); the
-        # main walk needs no inner content here.
-        return ""
-    if shape == SHAPE_STYLED:
-        # Leaf — the producer reads `raw`, peels the `<div>`/`<p>`/`<span>`
-        # wrapper itself (it needs the opener attrs for the CSS) and recurses
-        # the inner through the main dispatch.  No inner content to hand back.
-        return ""
     if shape == SHAPE_BODY:
         # No delimiters — the raw bytes ARE the body prose; the producer
         # transforms them end-to-end.
         return raw
-    if shape == SHAPE_MIRROR_GLYPH:
-        # Strip the wrapping `<span style="…{{mirrorH}}…">…</span>`; the
-        # mirror semantic is now carried by the shape's label.  Inner is
-        # the glyph(s) to mirror, possibly with content-template markup
-        # (`{{larger|𐌔}}`) carried through as a walker-extracted child.
-        s = re.sub(r"^<span\s+style\s*=\s*\"[^\"]*\"\s*>", "", raw,
-                   flags=re.IGNORECASE)
-        s = re.sub(r"</span>\s*$", "", s, flags=re.IGNORECASE)
-        return s
-    if shape == SHAPE_CENTER:
-        # Peel the paired `{{NAME/s}}` opener and `{{NAME/e}}` closer.
-        # Name-agnostic (the label-deriver reads the name for the family);
-        # `[^{}]*?` spans a multi-word name (`EB1911 fine print`) but not
-        # braces, and the closer is anchored at end so a NESTED same-name
-        # pair inside survives into the inner for the recursive walk.
+    if shape == SHAPE_PAIRED_WRAPPER:
+        # The `{{NAME/s}}…{{NAME/e}}` paired open/close span (former CENTER +
+        # CHART2 — one structure, two families distinguished by name).
+        #
+        #   * CHART2 family (`{{chart2/start}}…{{chart2/end}}`): the bytes are
+        #     chart-grammar templates we never walk inside.  Return empty (the
+        #     old CHART2 `strip_outer`), so a downstream `walker.walk("")`
+        #     yields no extracts and the producer reads `raw`.
+        #   * CENTER family (every other paired wrapper): peel the paired
+        #     `{{NAME/s}}` opener and `{{NAME/e}}` closer (the old CENTER
+        #     `strip_outer`).  Name-agnostic; `[^{}]*?` spans a multi-word name
+        #     (`EB1911 fine print`) but not braces, and the closer is anchored
+        #     at end so a NESTED same-name pair inside survives into the inner
+        #     for the producer's own recursive walk.
+        if re.match(r"\{\{\s*chart2\s*/\s*start", raw, flags=re.IGNORECASE):
+            return ""
         s = re.sub(r"^\{\{\s*[^{}]*?/s\s*\}\}", "", raw, flags=re.IGNORECASE)
         s = re.sub(r"\{\{\s*[^{}]*?/e\s*\}\}\s*$", "", s, flags=re.IGNORECASE)
         return s

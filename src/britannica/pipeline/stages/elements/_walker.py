@@ -30,20 +30,14 @@ from britannica.pipeline.stages.elements._registry import (
 from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
-    SHAPE_CENTER,
-    SHAPE_CHART2,
+    SHAPE_PAIRED_WRAPPER,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
-    SHAPE_FIGURE,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_INLINE_IMAGE,
-    SHAPE_MIRROR_GLYPH,
-    SHAPE_ORDERED_LIST,
     SHAPE_OUTLINE,
     SHAPE_PAGE,
-    SHAPE_SECTION,
-    SHAPE_STYLED,
     SHAPE_TITLE,
 )
 from britannica.pipeline.stages.elements._figure import (
@@ -52,6 +46,10 @@ from britannica.pipeline.stages.elements._figure import (
     html_float_figure_end,
     html_ts_figure_end,
 )
+# The styler/heading openers (`_TEMPLATE_STYLE_RE` / `_TEMPLATE_PARAM_STYLE_RE` /
+# `_SHOULDER_HEADING_RE` / `_RUNNING_HEADER_RE`) are still used to BUILD the
+# opener-hint regex below so the scanner jumps to those positions; the
+# classifier carves their type off the generic DOUBLE_BRACE / HTML_TAG shape.
 from britannica.pipeline.stages.elements._tables import (
     _TEMPLATE_STYLE_RE, _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE,
     _RUNNING_HEADER_RE)
@@ -201,7 +199,7 @@ _CONTENT_EXTRACT_OPENER_RE = re.compile(
 # `<span title="T">X</span>` — a transliteration TOOLTIP when X is Greek/Hebrew (T is the
 # romanization, carried as «SPAN[title:T]» — the HTML twin of the {{tooltip}} template);
 # any other title= is editorial provenance, dropped (content kept).  Re-promotes the
-# gutted body-text `_handle_title_spans`; `_process_styled` applies the carry/drop split.
+# gutted body-text `_handle_title_spans`; `process_span_title` applies the carry/drop split.
 _SPAN_TITLE_OPEN_RE = re.compile(
     r'<span\b[^>]*?\btitle\s*=\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
     re.IGNORECASE)
@@ -288,7 +286,8 @@ _LABELED_EQUATION_TEMPLATE_OPENER_RE = re.compile(
 
 # `{{ordered list|…}}` opener — matched with the balanced-brace scanner (not a
 # fixed-depth regex) because the classification nests several levels deep
-# (GEOGRAPHY: 4).  → SHAPE_ORDERED_LIST (a leaf; the producer owns the recursion).
+# (GEOGRAPHY: 4).  → SHAPE_DOUBLE_BRACE (a leaf; the classifier routes the name →
+# ORDERED_LIST, whose producer owns the recursion).
 _ORDERED_LIST_OPENER_RE = re.compile(r"\{\{\s*ordered\s+list\b", re.IGNORECASE)
 
 
@@ -458,9 +457,18 @@ _TITLE_RE = re.compile(r"«TITLE».*?«/TITLE»", re.DOTALL)
 # opener-hint position the linear scanner walks this list and uses
 # the first recognizer whose pattern matches.
 _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
-    (SHAPE_CHART2,            _CHART2_RE),
-    (SHAPE_SECTION,           _SECTION_RE),
-    (SHAPE_MIRROR_GLYPH,      _MIRROR_GLYPH_RE),
+    # The `{{chart2/start}}…{{chart2/end}}` region — a paired open/close span,
+    # so it shares the PAIRED_WRAPPER shape with the `{{NAME/s}}…{{NAME/e}}`
+    # centring family below; the classifier routes the chart2 name → CHART2.
+    (SHAPE_PAIRED_WRAPPER,    _CHART2_RE),
+    # `<section begin/end/>` — a self-closing structural transclusion marker.
+    # Carved by the generic HTML_SELF_CLOSING shape; the classifier routes the
+    # `section` tag name → SECTION label (its producer reads the raw tag).
+    (SHAPE_HTML_SELF_CLOSING, _SECTION_RE),
+    # `<span style="…{{mirrorH}}…">…</span>` — a horizontally-mirrored glyph span.
+    # Carved by the generic HTML_TAG shape (a balanced `<span>…</span>`); the
+    # classifier routes a `mirrorH`-styled span → MIRROR_GLYPH label.
+    (SHAPE_HTML_TAG,          _MIRROR_GLYPH_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
     (SHAPE_HTML_SELF_CLOSING, _PAGEQUALITY_RE),
     # `<table>`/`<ref>`/`<poem>`/`<math>`/`<score>` are bounded by the one
@@ -779,19 +787,22 @@ def _walk_balanced_shapes(
         # First successful match wins.
         matched: tuple[int, str, str] | None = None
 
-        # (SHAPE_FIGURE recognition removed — imposed taxonomy.  A `{{center|…}}`/
+        # (Figure recognition removed — imposed taxonomy.  A `{{center|…}}`/
         # `{{csc|…}}`/`<div style="float:…">` enclosing an image is just a STYLER,
-        # recognized as SHAPE_STYLED below and recursed by `_process_styled` (image
-        # → leaf, caption → recursed content); a bare `[[File:…]]` is an IMAGE.)
+        # bounded below as a generic DOUBLE_BRACE / HTML_TAG span (the classifier
+        # carves the STRIP / HTML_STYLE label) and recursed by its own producer
+        # (image → leaf, caption → recursed content); a bare `[[File:…]]` is an
+        # IMAGE.)
 
-        # Paired-wrapper span `{{NAME/s}}…{{NAME/e}}` → one CENTER node.
-        # Before the regex recognizers (so `{{c/s}}` isn't mis-read as a bare
-        # template) AND before the inner figure/table is carved out — the
-        # inner becomes a recursively-classified child of this node.
+        # Paired-wrapper span `{{NAME/s}}…{{NAME/e}}` → one PAIRED_WRAPPER node
+        # (the classifier routes the name → CENTER).  Before the regex
+        # recognizers (so `{{c/s}}` isn't mis-read as a bare template) AND
+        # before the inner figure/table is carved out — the CENTER producer
+        # recurses its own inner so the inner figure/table becomes a child.
         if matched is None:
             pe = _paired_wrapper_end(text, opener_pos)
             if pe is not None:
-                matched = (pe, SHAPE_CENTER, text[opener_pos:pe])
+                matched = (pe, SHAPE_PAIRED_WRAPPER, text[opener_pos:pe])
 
         # Block HTML element (`<table>`/`<ref>`/`<poem>`/`<math>`/`<score>`)
         # — bounded by the one balanced rule, so a nested construct can't
@@ -806,46 +817,66 @@ def _walk_balanced_shapes(
                     if end is not None:
                         matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
 
-        # Styled `<div>` / `<p>` / `<span>` (carries `{{Ts}}` / `style=` /
-        # `align=`) → STYLED, the ONE styled-wrapper element: the producer
-        # carries the style as a marker and recurses the content through the
-        # main dispatch (so a table / MATH / CHEM / figure inside is handled by
-        # its own producer, not leaked).  A BARE `<div>` / inline `<span>` /
-        # paragraph `<p>` is layout noise and stays transparent (body-text
-        # unwrap).  Bounded by the one matcher (depth-aware over nested
-        # same-tags); unbalanced → None → falls through, no swallow.  Image-
-        # bearing styled wrappers are already claimed above by the figure
-        # recognizers (`html_ts_figure_end` / `html_float_figure_end`); this
-        # catches the styled-TEXT wrappers (centered captions/titles, small-
-        # print credits, indented keys, inline over-bar / limit-notation spans)
-        # that body-text used to rewrite via `_p_ts`/`_div_ts`/`_span_ts`.
+        # The six STYLED-derived structures no longer have their OWN walker
+        # shapes — recognizing them by NAME / ATTRIBUTE is the CLASSIFIER's job.
+        # The walker still BOUNDS each at its opener (same opener regexes, same
+        # `_construct_end` span — identical capture), but emits the GENERIC shape
+        # it actually is; the classifier's `_derive_double_brace_label` /
+        # `_derive_html_tag_label` carve the STRIP / PARAM / SHOULDER /
+        # RUNNING_HEADER / HTML_STYLE / SPAN_TITLE label off the raw.  The order
+        # below is the FORMER per-shape order (STRIP → PARAM → HTML_STYLE →
+        # SPAN_TITLE → SHOULDER → RUNNING_HEADER) so no byte changes which regex
+        # claims it.  Producers + dispatch labels are unchanged.
         #
-        # UNGATED — recognized at EVERY depth (a styled wrapper is recursive: a
-        # styled `<div>` nests inside another, a styled `<span>` sits in a table
-        # cell or a CHEM/MATH layout).  Style is orthogonal to structure, so the
-        # walker carries it uniformly and the producer recurses the content; no
-        # depth flag.  This was historically gated to `figures` (article level)
-        # because extracting a styled `<span>` inside a CHEM/MATH/figure element
-        # replaced it with a placeholder in the inner text those classifiers
-        # inspected, FLIPPING their classification (PRIMULINE's chem grid, the
-        # equation layouts).  The fix was at the root: the chem classifier now
-        # reads RAW (`_is_chemistry_layout_pred` scans raw for bracket/reaction
-        # content), and math equation layouts stopped being a special
-        # classification at all (`<math>` is a self-labeling leaf, so a math-cell
-        # table is just a TABLE) — so extraction can no longer perturb
-        # classification, and the gate is unnecessary.  Image-bearing styled
-        # wrappers are still claimed above by the figure recognizers.
-        if matched is None and (
-                _STYLED_WRAPPER_RE.match(text, opener_pos)
-                or _INS_OPEN_RE.match(text, opener_pos)
-                or _SPAN_TITLE_OPEN_RE.match(text, opener_pos)
-                or _TEMPLATE_STYLE_RE.match(text, opener_pos)
-                or _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos)
-                or _SHOULDER_HEADING_RE.match(text, opener_pos)
-                or _RUNNING_HEADER_RE.match(text, opener_pos)):
+        #   Template-form styler `{{center|…}}`/`{{csc|…}}`/`{{left|…}}`/…
+        #   (`_TEMPLATE_STYLE_RE`) → DOUBLE_BRACE → classifier STRIP.
+        if matched is None and _TEMPLATE_STYLE_RE.match(text, opener_pos):
             end = _construct_end(text, opener_pos)
             if end is not None:
-                matched = (end, SHAPE_STYLED, text[opener_pos:end])
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        #   Param-valued styler `{{Fs|108%|X}}`/`{{font size|N%|X}}`/…
+        #   (`_TEMPLATE_PARAM_STYLE_RE`) → DOUBLE_BRACE → classifier PARAM.
+        if matched is None and _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        #   Styled HTML `<div>`/`<p>`/`<span>` (carries `{{Ts}}`/`style=`/`align=`)
+        #   or `<ins>` → HTML_TAG → classifier HTML_STYLE.  A BARE `<div>` /
+        #   inline `<span>` / paragraph `<p>` is layout noise that doesn't match
+        #   `_STYLED_WRAPPER_RE` and stays transparent (body-text unwrap).  Bounded
+        #   by the one matcher (depth-aware over nested same-tags); unbalanced →
+        #   None → falls through, no swallow.  Image-bearing styled wrappers are
+        #   already claimed above by the figure recognizers.
+        if matched is None and (
+                _STYLED_WRAPPER_RE.match(text, opener_pos)
+                or _INS_OPEN_RE.match(text, opener_pos)):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
+
+        #   `<span title="T">X</span>` translit-tooltip / editorial-drop
+        #   (`_SPAN_TITLE_OPEN_RE`) → HTML_TAG → classifier SPAN_TITLE.  After the
+        #   styled gate above, mirroring the former `_process_styled` precedence.
+        if matched is None and _SPAN_TITLE_OPEN_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
+
+        #   `{{EB1911 Shoulder Heading|…}}` marginal section label
+        #   (`_SHOULDER_HEADING_RE`) → DOUBLE_BRACE → classifier SHOULDER.
+        if matched is None and _SHOULDER_HEADING_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
+
+        #   `{{rh|left|center|right}}` 3-column flex frame (`_RUNNING_HEADER_RE`)
+        #   → DOUBLE_BRACE → classifier RUNNING_HEADER.
+        if matched is None and _RUNNING_HEADER_RE.match(text, opener_pos):
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
 
         # Fraction family (`{{sfrac|…}}` …) — opener matched by regex, span
         # closed by the one balanced matcher so an OPAQUE `<math>` numerator
@@ -908,8 +939,8 @@ def _walk_balanced_shapes(
                     break
 
             # (Figure-tail upgrade removed — a bare `[[File:…]]` stays an IMAGE
-            # leaf; a following `{{center|…}}` caption is its own SHAPE_STYLED
-            # sibling, recursed in place, not folded into a FIGURE span.)
+            # leaf; a following `{{center|…}}` caption is its own STRIP-classified
+            # DOUBLE_BRACE sibling, recursed in place, not folded into a FIGURE span.)
 
             # Inline-image lookahead: a bare `[[File:…]]` (no EXTCAP, no
             # figure-tail upgrade) sitting in same-line prose is structurally
@@ -922,13 +953,16 @@ def _walk_balanced_shapes(
                     and _is_inline_image_position(text, matched[0])):
                 matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
-        # Ordered-list classification — own LEAF shape, balanced-brace
-        # scanner (handles the arbitrary nesting depth a fixed-depth regex
-        # would miss; the producer parses the whole nested template).
+        # Ordered-list classification — a `{{ordered list|…}}` template, carved
+        # by the generic DOUBLE_BRACE shape (a leaf, like the other named
+        # double-brace templates).  The balanced-brace scanner handles the
+        # arbitrary nesting depth a fixed-depth regex would miss; the classifier
+        # routes the `ordered list` name → ORDERED_LIST label, whose producer
+        # parses the whole nested template from raw.
         if matched is None and _ORDERED_LIST_OPENER_RE.match(text, opener_pos):
             end = _find_balanced_template_end(text, opener_pos)
             if end is not None:
-                matched = (end, SHAPE_ORDERED_LIST, text[opener_pos:end])
+                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
 
         # Labeled-display-equation templates use a balanced-brace
         # scanner (not a regex) because `{{ne|<math>...</math>}}`
@@ -1036,10 +1070,11 @@ _HTML_WRAPPER_TAGS: tuple[str, ...] = (
     "div", "span", "small", "big", "p", "ins",
 )
 
-# (Paired `{{NAME/s}}…{{NAME/e}}` wrappers are now recognized as the CENTER
-# shape in `_walk_balanced_shapes` via `_paired_wrapper_end` — extracted as a
-# balanced node, not kept-atomic-then-unwrapped.  Former `_PAIRED_WRAPPER_NAMES`
-# removed with the atomic-span paired loop.)
+# (Paired `{{NAME/s}}…{{NAME/e}}` wrappers are now recognized as the
+# PAIRED_WRAPPER shape in `_walk_balanced_shapes` via `_paired_wrapper_end` —
+# extracted as a balanced node, not kept-atomic-then-unwrapped; the classifier
+# routes the name → CENTER.  Former `_PAIRED_WRAPPER_NAMES` removed with the
+# atomic-span paired loop.)
 
 
 def _find_atomic_wrapper_spans(text: str) -> list[tuple[int, int]]:

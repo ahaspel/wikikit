@@ -2,7 +2,11 @@ from dataclasses import dataclass, field
 
 from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
-from britannica.pipeline.stages.title import produce_title
+from britannica.pipeline.stages.elements._title import (
+    _letter_from_dropcap,
+    _title_span,
+    clean_title,
+)
 import re
 
 # Raw wikitext section-begin tag.
@@ -98,139 +102,12 @@ _SECTION_ID_FIXES = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Bold-delimited title extraction.
-#
-# Empirically (vol-1 prototype: 1275/1369 articles, 93% match against the
-# current regex-based extractor; remaining 7% are *mechanical* differences
-# from un-unwrapped wikilinks / {{sc|}} templates, plus a handful of cases
-# where the new rule is strictly better), the EB1911 invariant is:
-#   - The title begins at the first `«B»` on the heading line.
-#   - The title ends at the LAST `«/B»` that belongs to it, where
-#     "belongs" means: the gap between successive `«B»…«/B»` blocks is
-#     short title-continuation glue (parens, brackets, ` and `, ` or `,
-#     ` & `, comma, space).  Body content (years, prose) is not glue.
-#
-# This rule replaces the old uppercase-run regex + clean_first body
-# slicing.  It naturally handles every known failure pattern:
-#   - NITRIC ACID-class (annotation in title) — single `«B»…«/B»` then
-#     prose, so the parenthetical falls into body, not title.
-#   - ODO OF BAYEUX-class (inner footnote inside bold) — inner `«FN:…«/FN»`
-#     is opaque content inside the bold span, doesn't break extraction.
-#   - ROBESPIERRE-class (name particle outside bold) — whatever's between
-#     the outer `«B»` and `«/B»` is the title; case doesn't matter.
-# ---------------------------------------------------------------------------
-
-_BOLD_DELIMITER_OPEN = "«B»"
-_BOLD_DELIMITER_CLOSE = "«/B»"
-# Glue must not look like body prose.  Reject anything with a year.
-_GLUE_YEAR_RE = re.compile(r"\b1[6-9]\d{2}\b|\b20\d{2}\b|c\.\s*\d{3,4}")
-
-
-def _looks_like_title_glue(text: str) -> bool:
-    """Is `text` (the gap between «/B» and the next «B») plausibly a
-    title-continuation, e.g. `, `, ` and `, ` (or Smith), `?"""
-    if len(text) > 200:
-        return False
-    if _GLUE_YEAR_RE.search(text):
-        return False
-    # Strip markers AND unwrap inline templates (small-caps, sc, etc.)
-    # so the length check measures content, not template wrapping —
-    # `(originally {{small-caps|Schneider}}, then {{small-caps|Schnitter}})`
-    # is short content but long with templates.
-    stripped = re.sub(r"«/?[A-Z]+(?::[^«»]*)?»", "", text)
-    for _ in range(4):
-        before = stripped
-        stripped = re.sub(r"\{\{[^{}|]+\|([^{}|]*)\}\}", r"\1", stripped)
-        stripped = re.sub(r"\{\{[^{}|]+\}\}", "", stripped)
-        if stripped == before:
-            break
-    stripped = stripped.strip()
-    if len(stripped) > 60:
-        return False
-    # Reject sentence breaks (`x. Y...`) — those are body content.
-    # A `[a-z]\.\s+[A-Z]` pattern INSIDE balanced parens is an
-    # abbreviation in a parenthetical translation/note, NOT a
-    # sentence break: ACCURSIUS's `(Ital. Accorso),` is a title-glue
-    # parenthetical, not body prose.  Reject only when the sentence-
-    # break pattern is outside any open paren.
-    for m in re.finditer(r"[a-z]\.\s+[A-Z]", stripped):
-        depth = stripped[:m.start()].count("(") - stripped[:m.start()].count(")")
-        if depth <= 0:
-            return False
-    return True
-
-
-def _extract_bold_delimited_title(text: str) -> tuple[str | None, str]:
-    """Return (title_raw, body_raw).  `title_raw` spans from the first
-    `«B»` (inclusive) to the matching final `«/B»` (inclusive), still
-    carrying its internal markup (wikilinks, templates, refs) for the
-    caller to clean.  `body_raw` is everything after that final `«/B»`,
-    left-trimmed of trivial leading whitespace and punctuation.
-
-    Returns (None, text) when `text` does not begin with a bold span.
-    The bold must be at the START — a `«B»` mid-prose is a body
-    reference (e.g. ``"He was educated at «B»Cambridge«/B»…"``), NOT a
-    new-article heading."""
-    # Allow only insignificant leading whitespace before the first «B».
-    # If anything else precedes it, this section is a continuation
-    # whose first line happens to contain bold text mid-prose.
-    leading = re.match(r"^\s*", text)
-    first_open = leading.end() if leading else 0
-    if not text.startswith(_BOLD_DELIMITER_OPEN, first_open):
-        return None, text
-
-    pos = first_open
-    last_close = -1
-    while True:
-        b_idx = text.find(_BOLD_DELIMITER_OPEN, pos)
-        if b_idx < 0:
-            break
-        e_idx = text.find(_BOLD_DELIMITER_CLOSE, b_idx + len(_BOLD_DELIMITER_OPEN))
-        if e_idx < 0:
-            break  # unbalanced; stop where we are
-        e_idx_end = e_idx + len(_BOLD_DELIMITER_CLOSE)
-        if last_close >= 0:
-            gap = text[last_close:b_idx]
-            if not _looks_like_title_glue(gap):
-                break
-        last_close = e_idx_end
-        pos = e_idx_end
-
-    if last_close < 0:
-        return None, text
-
-    title_raw = text[first_open:last_close]
-    body_raw = text[last_close:]
-    # If the title contains an unbalanced `[` or `(`, the matching
-    # closing bracket/paren is at the start of the body (a multi-bold
-    # title like `«B»MARS, MLLE«/B» [«B»ANNE … BOUTET«/B»]` ends at
-    # the second `«/B»`, before the closing `]`).  Pull the closer in.
-    for opener, closer in (("[", "]"), ("(", ")")):
-        opens = title_raw.count(opener)
-        closes = title_raw.count(closer)
-        if opens > closes:
-            # Find the matching closer in body_raw and extend title.
-            needed = opens - closes
-            i = 0
-            while needed > 0 and i < len(body_raw):
-                if body_raw[i] == closer:
-                    needed -= 1
-                    i += 1
-                    if needed == 0:
-                        title_raw = title_raw + body_raw[:i]
-                        body_raw = body_raw[i:]
-                        break
-                elif body_raw[i] == opener:
-                    # Nested opener inside body, abort balancing.
-                    break
-                else:
-                    i += 1
-    # Recognition only: split the heading from the body. Comma-consumption
-    # (and title cleaning) is the title producer's job — see title.py.
-    return title_raw, body_raw
-
-
+# Bold-delimited title span-finding (the «B»-run heading) is owned by the
+# sole title extractor, ``elements/_title.py:_title_span``.  The former
+# local ``_extract_bold_delimited_title`` (+ its ``_looks_like_title_glue``
+# /``_GLUE_YEAR_RE`` glue helpers) was a second copy of that walk and has
+# been deleted — ``_parse_page_by_sections`` now calls ``_title_span``
+# directly.
 
 
 def _is_article_section_id(sec_id: str) -> bool:
@@ -249,78 +126,21 @@ def _is_article_section_id(sec_id: str) -> bool:
     return True
 
 
-# Letter-article opener: section starts with a drop-cap template
-# (`{{di|X}}` / `{{dropinitial|X}}`), optionally wrapped in `{{Serif|...}}`,
-# `'''...'''` (becomes `«B»...«/B»` post-converter), or both.  The 26
-# letter articles A–Z are the ONLY sections corpus-wide that match this
-# pattern (empirically verified 26/26 across 50,647 sections in
-# `tools/_scratch/scan_dropcap_letter_sections.py`), so a structural
-# match alone is sufficient — no body-keyword check needed.
-_LETTER_OPENER_RE = re.compile(
-    r"^\s*(?:'''|«B»)?\s*"
-    r"(?:\{\{\s*[Ss]erif\s*\|\s*)?"
-    r"\{\{\s*(?:[Dd]rop\s*[Ii]nitial|[Dd]i)\s*\|"
-)
-
-
-def _first_template_arg(text: str) -> str | None:
-    """Return the first positional argument of an open template.
-
-    The caller positions ``text`` right after the opening ``{{name|``;
-    we read until the matching ``|`` (depth-1) or ``}}`` (depth-0),
-    counting nested ``{{...}}`` so a nested template doesn't end the
-    arg early.  Returns the raw arg text or None on imbalance.
-    """
-    depth = 0
-    out = []
-    i = 0
-    while i < len(text):
-        ch = text[i]
-        if text[i:i+2] == "{{":
-            depth += 1
-            out.append("{{"); i += 2; continue
-        if text[i:i+2] == "}}":
-            if depth == 0:
-                return "".join(out)
-            depth -= 1
-            out.append("}}"); i += 2; continue
-        if ch == "|" and depth == 0:
-            return "".join(out)
-        out.append(ch); i += 1
-    return None
-
-
 def _detect_letter_article(sec_id: str, sec_text: str) -> str | None:
-    """Letter-article handler (A, B, C, …, Z; 26 total in EB1911).
+    """Letter-article handler (A, B, C, …, Z; 26 total in EB1911) for the
+    per-page parser.
 
-    Letter articles open with a drop-cap template instead of a bold
-    heading.  Source uses six template shapes for this:
-      * `{{dropinitial|X}}` / `{{di|X}}`
-      * `{{Serif|{{di|X|5em}}}}`
-      * `{{di|{{serif|J}}|4em}}`
-      * `{{dropinitial|'''{{serif|K}}'''|6em}}`
-      * `'''{{di|T}}'''` (becomes `«B»{{di|T}}«/B»` post quote-run conv)
-
-    Match shape: drop-cap at section start with a single-letter arg
-    (after unwrapping at most one level of `{{serif|X}}` wrapper).
-    Returns the uppercased letter, else None.
+    The structural drop-cap parse (the six source spellings) now lives in
+    ``elements/_title.py`` (``_letter_from_dropcap``) — the title producer's
+    own sole-ownership of letter extraction.  This wrapper adds the per-page
+    parser's section-name cross-check: when the enclosing section is named
+    (not ``s1``/``s2``/…), the detected letter must match the section name,
+    so a drop-cap that merely appears inside another article's section isn't
+    misread as a new letter article.  Returns the uppercased letter, else None.
     """
-    m = _LETTER_OPENER_RE.match(sec_text)
-    if not m:
+    letter = _letter_from_dropcap(sec_text)
+    if letter is None:
         return None
-    arg = _first_template_arg(sec_text[m.end():])
-    if arg is None:
-        return None
-    # Unwrap a single layer of `{{name|X}}` (handles `{{serif|J}}`).
-    arg = re.sub(r"\{\{[^{}|]+\|([^{}|]+)\}\}", r"\1", arg)
-    # Strip residual markers, quotes, whitespace.
-    arg = re.sub(r"«/?[A-Z]+»|'''|''", "", arg).strip()
-    if len(arg) != 1 or not arg.isalpha():
-        return None
-    letter = arg.upper()
-    # If the enclosing section is named (not `s1`/`s2`/…), letter must
-    # match the section name — keeps us from misidentifying a
-    # drop-cap that happens to appear inside another article's section.
     if not re.match(r"^s\d+$", sec_id) and letter != sec_id.upper():
         return None
     return letter
@@ -679,11 +499,19 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # this captures ~99.9% of articles cleanly and avoids the
         # destructive-template-strip bug that mangled bodies in the
         # legacy path.  Everything else is a continuation segment.
-        _new_title_raw, _new_body_raw = _extract_bold_delimited_title(
-            first_line_unwrapped)
+        #
+        # Span-finding + cleaning + title-comma consumption are the SOLE
+        # title extractor's job (``elements/_title.py``): ``_title_span``
+        # walks the «B»-run, ``clean_title`` flattens it, and the body is
+        # left-trimmed of the title comma — exactly what the canonical
+        # ``produce_title(opening)`` does for its bold-span branch (we
+        # call the pieces here because the letter-article case is already
+        # handled above and we want only the bold-span branch).
+        _new_title_raw, _new_body_raw = _title_span(first_line_unwrapped)
         if _new_title_raw:
-            _new_title, _new_body_raw = produce_title(
-                _new_title_raw, _new_body_raw)
+            _new_title = re.sub(
+                r"\s+,", ",", clean_title(_new_title_raw)).strip()
+            _new_body_raw = _new_body_raw.lstrip(" \t,.")
         else:
             _new_title = ""
 
@@ -832,8 +660,8 @@ def _parse_page_by_sections(text: str) -> ParsedPage | None:
         # new article when a continuation page's first section had a
         # named `<section begin="X">` matching the article's name but
         # no bold heading (because the heading was on the previous
-        # page).  Under the bold-required rule we adopted (see
-        # `_extract_bold_delimited_title`), a section without a bold
+        # page).  Under the bold-required rule we adopted (the
+        # `_title_span` «B»-run finder), a section without a bold
         # heading is ALWAYS continuation — never a new article.  This
         # fallback was splitting multi-page articles (AIR-ENGINE 481-483,
         # AIRY 483-485, ALECSANDRI 578-579, ALSTRÖMER 801-802 on vol 1)
@@ -1026,11 +854,6 @@ def _split_on_bold_headings(text: str) -> ParsedPage:
     return ParsedPage(prefix_text=prefix, candidates=candidates)
 
 
-def _is_heading(line: str) -> bool:
-    title, _ = _extract_heading(line)
-    return title is not None
-
-
 def _normalize_title(title: str) -> str:
     """Strip parentheticals, trailing periods, and spacing artifacts."""
     # Strip all parenthetical content (etymologies, dates, alternate names)
@@ -1096,107 +919,6 @@ def _has_valid_title_content(title: str) -> bool:
     if len(title) == 2 and title not in _VALID_TWO_LETTER:
         return False
     return bool(re.search(r"[A-Z\u00C0-\u00DE]{2,}", title))
-
-
-def _extract_heading(line: str) -> tuple[str | None, str]:
-    """Extract an all-caps heading from the start of a line.
-
-    Used by _parse_page_by_sections for anonymous sections only.
-    Returns (title, remainder) or (None, line) if no heading found.
-    """
-    line = line.strip()
-    if not line:
-        return None, ""
-
-    # Strip formatting markers before heading detection.  After
-    # clean_pages's `_convert_quote_runs`, bold and italic are «B»/«I»
-    # markers (the raw `'''`/`''` forms no longer exist).
-    clean = (line.replace("«B»", "").replace("«/B»", "")
-                 .replace("«I»", "").replace("«/I»", ""))
-
-    # Match all-caps word(s) at the start, optionally with parenthetical and comma-name
-    m = re.match(
-        r"^([A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019.\-]+"
-        r"(?:[\s]+[A-Z\u00C0-\u00DE][A-Z\u00C0-\u00DE''\u2019.\-]+)*"
-        r"(?:\s+\([^)]*\))?"
-        r"(?:,\s*[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\u2019\-]+(?:\s+[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF''\u2019\-]+)*)?"
-        r")",
-        clean,
-    )
-    if not m:
-        return None, line
-
-    raw_title = m.group(0).strip().rstrip(",.")
-    # Strip parentheticals from title
-    title = re.sub(r"\s*\([^)]*\)", "", raw_title).strip()
-    title = re.sub(r"\.$", "", title)
-
-    if not title or len(title) > 255:
-        return None, line
-
-    # Get remainder from the clean line
-    remainder = clean[m.end():].lstrip(" ,.")
-    return title, remainder
-
-
-def _split_plate_sections(text: str) -> list[tuple[str | None, str]]:
-    """Split a plate page into sections by all-caps headings.
-
-    Returns list of (title, body) tuples. If no headings are found,
-    returns one section with no title.
-    """
-    lines = text.split("\n")
-    sections: list[tuple[str | None, list[str]]] = []
-    current_title: str | None = None
-    current_lines: list[str] = []
-
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        # Check if this is a section heading (all-caps, short, not a marker)
-        if (stripped.upper() == stripped
-                and not stripped.startswith("[[File:")
-                and not stripped.startswith("[[Image:")
-                and not stripped.startswith(("{|", "|-", "|}"))
-                and 2 < len(stripped) <= 60
-                and any(c.isalpha() for c in stripped)
-                and not any(c.isdigit() for c in stripped)):
-            # New section — save the previous one
-            heading = stripped.rstrip(".")
-            if heading != current_title:
-                if current_lines:
-                    sections.append((current_title, "\n\n".join(current_lines)))
-                    current_lines = []
-                current_title = heading
-        else:
-            current_lines.append(stripped)
-
-    # Save the last section
-    if current_lines or current_title:
-        sections.append((current_title, "\n\n".join(current_lines)))
-
-    # If no sections were created, return the whole text as one section
-    if not sections:
-        sections.append((None, text.strip()))
-
-    # Merge initial untitled section into the first titled section
-    if len(sections) > 1 and sections[0][0] is None and sections[1][0] is not None:
-        combined_body = sections[0][1] + "\n\n" + sections[1][1] if sections[0][1] else sections[1][1]
-        sections = [(sections[1][0], combined_body)] + sections[2:]
-
-    # Merge sections with the same title
-    merged: dict[str | None, list[str]] = {}
-    order: list[str | None] = []
-    for title, body in sections:
-        if title not in merged:
-            merged[title] = []
-            order.append(title)
-        if body:
-            merged[title].append(body)
-
-    return [(title, "\n\n".join(merged[title])) for title in order if merged[title]]
 
 
 _PLATE_FIELD_RE = re.compile(
@@ -1668,311 +1390,6 @@ def _is_plate_page(text: str) -> bool:
     return not _rh_has_page_number_in_side_slot(stripped)
 
 
-def _parse_page(text: str) -> ParsedPage:
-    # Split into paragraph blocks (separated by blank lines), preserving structure.
-    raw_lines = text.splitlines()
-
-    # Collapse into non-empty lines, preserving blank-line boundaries as "\n\n".
-    lines: list[str] = []
-    prev_blank = False
-    for raw in raw_lines:
-        stripped = raw.strip()
-        if not stripped:
-            prev_blank = True
-            continue
-        if prev_blank and lines:
-            # Insert a paragraph-break marker before this line
-            lines.append("")
-        lines.append(stripped)
-        prev_blank = False
-
-    # Filter to only non-empty lines for heading detection
-    content_lines = [l for l in lines if l]
-
-    if not content_lines:
-        return ParsedPage(prefix_text="", candidates=[])
-
-    first_heading_index: int | None = None
-    in_table = False
-    for i, line in enumerate(lines):
-        if not line:
-            continue
-        if line.startswith("{|"):
-            in_table = True
-        if in_table:
-            if line.startswith("|}"):
-                in_table = False
-            continue
-        title, _ = _extract_heading(line)
-        if title is not None:
-            first_heading_index = i
-            break
-
-    if first_heading_index is None:
-        return ParsedPage(
-            prefix_text=_join_lines(lines),
-            candidates=[],
-        )
-
-    prefix_lines = lines[:first_heading_index]
-    article_lines = lines[first_heading_index:]
-
-    candidates: list[CandidateArticle] = []
-    current_title: str | None = None
-    current_body_lines: list[str] = []
-    in_table = False
-
-    for line in article_lines:
-        if not line:
-            # Blank line = paragraph break within body
-            current_body_lines.append(line)
-            continue
-
-        # Skip heading detection inside table blocks
-        if line.startswith("{|"):
-            in_table = True
-        if in_table:
-            if current_title is not None:
-                current_body_lines.append(line)
-            if line.startswith("|}"):
-                in_table = False
-            continue
-
-        title, remainder = _extract_heading(line)
-
-        if title is not None:
-            if current_title is not None:
-                candidates.append(
-                    CandidateArticle(
-                        title=current_title,
-                        body=_join_lines(current_body_lines),
-                    )
-                )
-
-            current_title = title
-            current_body_lines = []
-
-            if remainder:
-                current_body_lines.append(remainder)
-        else:
-            if current_title is not None:
-                current_body_lines.append(line)
-
-    if current_title is not None:
-        candidates.append(
-            CandidateArticle(
-                title=current_title,
-                body=_join_lines(current_body_lines),
-            )
-        )
-
-    return ParsedPage(
-        prefix_text=_join_lines(prefix_lines),
-        candidates=candidates,
-    )
-
-
-def _join_lines(lines: list[str]) -> str:
-    """Join lines, treating empty strings as paragraph-break markers.
-
-    Table blocks ({|...|}  in raw wikitext) are preserved with their
-    internal newlines.
-    """
-    paragraphs: list[list[str]] = [[]]
-    in_table = False
-
-    for line in lines:
-        if not line:
-            if not in_table and paragraphs[-1]:
-                paragraphs.append([])
-            continue
-
-        if line.startswith("{|"):
-            in_table = True
-        if in_table:
-            paragraphs[-1].append(line)
-            if line.startswith("|}"):
-                in_table = False
-            continue
-
-        paragraphs[-1].append(line)
-
-    result_parts = []
-    for p in paragraphs:
-        if not p:
-            continue
-        # If this paragraph contains a table, join with newlines
-        if any(l.startswith("{|") for l in p):
-            result_parts.append("\n".join(p))
-        else:
-            result_parts.append(" ".join(p))
-
-    return "\n\n".join(result_parts).strip()
-
-
-def _extract_heading_title(raw: str) -> str | None:
-    """Extract the article title from a page heading template.
-
-    Page headings have the form:
-        {{EB1911 Page Heading|LEFT|TITLE|RIGHT|PAGE}}
-        {{rh|LEFT|TITLE|RIGHT}}
-
-    The title fields contain the first and/or last article on the page.
-    We look for the field that looks most like an article title (all-caps,
-    not a page number, not too short).
-    """
-    m = re.search(
-        r"\{\{(?:EB1911 Page Heading|rh)\|([^}]+)\}\}", raw[:500])
-    if not m:
-        return None
-    fields = m.group(1).split("|")
-    # Strip templates and whitespace from each field
-    candidates = []
-    for f in fields:
-        f = re.sub(r"\{\{[^{}]*\}\}", "", f).strip()
-        f = re.sub(r"&[a-z]+;", " ", f).strip()
-        if not f or f.isdigit() or len(f) < 3:
-            continue
-        # Must be mostly uppercase (article titles are ALL CAPS)
-        if f.upper() == f or f.replace(".", "").replace(",", "").upper() == f.replace(".", "").replace(",", ""):
-            candidates.append(f.rstrip(".,"))
-    if not candidates:
-        return None
-    # Return the longest candidate (most likely to be the article title)
-    return max(candidates, key=len)
-
-
-def _heading_matches(heading_title: str, article_title: str) -> bool:
-    """Check if a page heading title matches the current article title.
-
-    Handles partial matches: the heading might show a shortened or
-    slightly different form of the article title.
-    """
-    h = heading_title.upper().strip()
-    a = article_title.upper().strip()
-    # Exact match
-    if h == a:
-        return True
-    # One contains the other (handles abbreviations like "ROOSEVELT" matching
-    # "ROOSEVELT, THEODORE")
-    if h in a or a in h:
-        return True
-    # First word match (handles "ROORKEE" vs "ROORKEE, INDIA")
-    h_first = h.split(",")[0].split("(")[0].strip()
-    a_first = a.split(",")[0].split("(")[0].strip()
-    if h_first == a_first and len(h_first) > 3:
-        return True
-    return False
-
-
-def _fix_swallowed_pages(articles: list[DetectedArticle],
-                         pages: list) -> list[DetectedArticle]:
-    """Fix articles that swallowed pages belonging to a later article.
-
-    When consecutive pages have no section markers but their page heading
-    matches a later detected article, move those pages from the swallower
-    to the correct article.
-    """
-    # Build a map of article titles to articles (for lookup)
-    title_map = {}
-    for a in articles:
-        title_map[a.title.upper()] = a
-
-    # Build page heading map
-    heading_map = {}  # page_number -> heading title
-    for page in pages:
-        raw = (page.wikitext or "").strip()
-        if not raw:
-            continue
-        m = re.search(r'Page Heading\|[^|]*\|([^|]+)\|', raw[:300])
-        if m:
-            heading_map[page.page_number] = m.group(1).strip().upper().rstrip(",.")
-
-    # For each article, check if trailing pages have headings matching
-    # a different article that starts later
-    for art in articles:
-        if art.article_type != "article":
-            continue
-        if len(art.segments) < 2:
-            continue
-
-        # Find trailing segments whose heading doesn't match this article
-        # and DOES match a later article.  Only consider pages that have
-        # NO section markers — pages with markers are correctly placed
-        # by the main detection logic.
-        pages_with_markers = set()
-        for page in pages:
-            raw = (page.wikitext or "").strip()
-            if re.search(r'<section\s+begin=', raw):
-                pages_with_markers.add(page.page_number)
-
-        mismatch_start = None
-        for i, seg in enumerate(art.segments):
-            if seg.page_number in pages_with_markers:
-                mismatch_start = None  # reset — can't split at/past a marked page
-                continue
-            heading = heading_map.get(seg.page_number, "")
-            if not heading:
-                continue
-            matches_self = (
-                heading in art.title.upper() or
-                art.title.upper() in heading or
-                heading.split(",")[0] == art.title.upper().split(",")[0]
-            )
-            if not matches_self:
-                # Does the heading match any later article?
-                target = None
-                for later in articles:
-                    if later.page_start > art.page_start and later.article_type == "article":
-                        later_upper = later.title.upper()
-                        if (heading in later_upper or later_upper in heading or
-                                heading.split(",")[0] == later_upper.split(",")[0]):
-                            target = later
-                            break
-                if target and mismatch_start is None:
-                    mismatch_start = i
-
-        if mismatch_start is not None:
-            # Move segments from mismatch_start onward to the target article
-            moved_segments = art.segments[mismatch_start:]
-            art.segments = art.segments[:mismatch_start]
-            art.page_end = art.segments[-1].page_number if art.segments else art.page_start
-
-            # Find the target article and prepend the moved segments
-            heading = heading_map.get(moved_segments[0].page_number, "")
-            for target in articles:
-                if target.page_start > art.page_start and target.article_type == "article":
-                    target_upper = target.title.upper()
-                    if (heading in target_upper or target_upper in heading or
-                            heading.split(",")[0] == target_upper.split(",")[0]):
-                        # Strip redundant bold title from the first moved
-                        # segment — when a page has the target's bold
-                        # heading (e.g. `'''[[Author:…|ROOSEVELT, THEODORE]]'''`)
-                        # but no <section> marker, _split_on_bold_headings
-                        # couldn't parse it (wiki-link inside bold).
-                        # The segment body still has the raw `«B»…«/B»`,
-                        # which the transform stage would re-render as
-                        # `«B»…«/B»`, duplicating the article title in
-                        # the body.
-                        first = moved_segments[0]
-                        stripped = re.sub(
-                            r"^\s*«B»(?:\[\[[^\]]*\|)?([^«\]]+)(?:\]\])?«/B»[\s,.\-]*",
-                            "", first.text or "",
-                        )
-                        if stripped != (first.text or ""):
-                            first.text = stripped.lstrip()
-                        # Renumber sequences
-                        offset = len(moved_segments)
-                        for seg in target.segments:
-                            seg.sequence += offset
-                        for j, seg in enumerate(moved_segments):
-                            seg.sequence = j + 1
-                        target.segments = moved_segments + target.segments
-                        target.page_start = moved_segments[0].page_number
-                        break
-
-    return articles
-
 
 # ── Detection (pure) ──────────────────────────────────────────────────
 
@@ -2101,6 +1518,11 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
     session = SessionLocal()
     try:
         for det in detected:
+            # MOVE 2: detection no longer carries a title — `det.title`/`det.title_raw`
+            # are "" (title rides unstripped in segment 0).  The title is produced in
+            # exactly one place, `transform_articles.preprocess_article`/`walk_article`,
+            # which writes `Article.title`/`title_raw`/`title_display`.  `title` is
+            # NOT NULL, so the empty string is the placeholder until the transform runs.
             article = Article(
                 title=det.title,
                 volume=det.volume,

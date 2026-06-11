@@ -64,13 +64,81 @@ def clean_title(raw: str) -> str:
 # link's closing `]]` (after «/B») so clean_title's link-stripper can fire.
 # `\s*` after the pipe: the «B» can sit on the next line (STAWELL).
 _BOLD = re.compile(r"(?:\[\[[^\]|]*\|\s*)?«B».*?«/B»(?:\s*\]\])?", re.DOTALL)
-_DROPINITIAL = re.compile(
-    r"\{\{\s*(?:drop\s*initial|di)\s*\|\s*([^{}|]+)", re.I)
+
+# Letter-article opener: the article opens with a drop-cap template
+# (`{{di|X}}` / `{{dropinitial|X}}`), optionally wrapped in `{{Serif|…}}`,
+# `'''…'''` (becomes `«B»…«/B»` post quote-run conversion), or both.  The 26
+# letter articles A–Z are the only sections corpus-wide that match this shape.
+# Six source spellings are documented (see ``_letter_from_dropcap``).
+_LETTER_OPENER_RE = re.compile(
+    r"^\s*(?:'''|«B»)?\s*"
+    r"(?:\{\{\s*[Ss]erif\s*\|\s*)?"
+    r"\{\{\s*(?:[Dd]rop\s*[Ii]nitial|[Dd]i)\s*\|"
+)
 # [[Author:…|inner]] / [[Portal:…|inner]] link wrapper — unwrapped to its inner
 # heading in the title_raw span so the downstream title_display transform keeps
 # the bold run instead of mangling the link (HOLLAR, WENZEL or WENCESLAUS).
 _AUTHORLINK = re.compile(
     r"\[\[(?:Author|Portal):[^\]|]*\|(.*?)\]\]", re.DOTALL | re.IGNORECASE)
+
+
+def _first_template_arg(text: str) -> str | None:
+    """Return the first positional argument of an open template.
+
+    The caller positions ``text`` right after the opening ``{{name|``;
+    we read until the matching ``|`` (depth-1) or ``}}`` (depth-0),
+    counting nested ``{{...}}`` so a nested template doesn't end the
+    arg early.  Returns the raw arg text or None on imbalance.
+    """
+    depth = 0
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if text[i:i+2] == "{{":
+            depth += 1
+            out.append("{{"); i += 2; continue
+        if text[i:i+2] == "}}":
+            if depth == 0:
+                return "".join(out)
+            depth -= 1
+            out.append("}}"); i += 2; continue
+        if ch == "|" and depth == 0:
+            return "".join(out)
+        out.append(ch); i += 1
+    return None
+
+
+def _letter_from_dropcap(opening: str) -> str | None:
+    """The letter of a letter-article (A, B, C, …, Z; 26 in EB1911), or None.
+
+    Letter articles open with a drop-cap template instead of a bold heading.
+    Source uses six template shapes for this:
+      * ``{{dropinitial|X}}`` / ``{{di|X}}``
+      * ``{{Serif|{{di|X|5em}}}}``
+      * ``{{di|{{serif|J}}|4em}}``
+      * ``{{dropinitial|'''{{serif|K}}'''|6em}}``
+      * ``'''{{di|T}}'''`` (becomes ``«B»{{di|T}}«/B»`` post quote-run conv)
+
+    Match shape: drop-cap at the opening with a single-letter first arg (after
+    unwrapping at most one level of ``{{serif|X}}`` wrapper).  Returns the
+    uppercased letter, else None.  ``produce_title`` runs on an already-bounded
+    article opening, so there is no section-name to cross-check — the structural
+    drop-cap-with-single-letter-arg parse alone is the signal.
+    """
+    m = _LETTER_OPENER_RE.match(opening)
+    if not m:
+        return None
+    arg = _first_template_arg(opening[m.end():])
+    if arg is None:
+        return None
+    # Unwrap a single layer of `{{name|X}}` (handles `{{serif|J}}`).
+    arg = re.sub(r"\{\{[^{}|]+\|([^{}|]+)\}\}", r"\1", arg)
+    # Strip residual markers, quotes, whitespace.
+    arg = re.sub(r"«/?[A-Z]+»|'''|''", "", arg).strip()
+    if len(arg) != 1 or not arg.isalpha():
+        return None
+    return arg.upper()
 
 
 def _is_connective_gap(gap: str) -> bool:
@@ -140,8 +208,10 @@ def produce_title(opening: str) -> tuple[str, str, str]:
         # title_raw (for title_display) keeps markers but unwraps the
         # [[Author:…|…]] link so the transform preserves the bold run.
         return title, rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
-    # Letter articles open with a drop-cap, not a bold heading.
-    dm = _DROPINITIAL.search(opening[:200])
-    if dm:
-        return dm.group(1).strip().upper(), opening, ""
+    # Letter articles open with a drop-cap, not a bold heading.  Parse all six
+    # documented drop-cap shapes structurally (incl. the nested
+    # `{{di|{{serif|J}}|4em}}` form the old `[^{}|]+` regex couldn't reach).
+    letter = _letter_from_dropcap(opening)
+    if letter is not None:
+        return letter, opening, ""
     return clean_title(opening.split("\n", 1)[0]), opening, ""
