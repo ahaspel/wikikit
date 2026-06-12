@@ -886,7 +886,7 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
 
 
 def _process_inline_glyph_wrapper(
-        inner: str,
+        inner: str, context,
         inner_registry: ElementRegistry | None = None) -> str:
     """Render an inline-glyph wrapper as the inline prose it actually is.
 
@@ -905,16 +905,14 @@ def _process_inline_glyph_wrapper(
     form (the block `{{IMG:…}}` produce_tree would otherwise substitute renders
     as a figure and breaks the flow).  No table marker → no pipe leak.
     """
+    from britannica.pipeline.stages.elements import process_elements
     parts = [content for _sep, _attr, content in split_wiki_row(inner)]
     prose = "".join(parts).strip()
-    if inner_registry is not None:
-        for ph, label in list(inner_registry.labels.items()):
-            if label in IMAGE_LABELS and ph in prose:
-                eraw = inner_registry.elements[ph][1]
-                prose = prose.replace(
-                    ph, _process_image_from_raw(eraw,
-                                                inline=True))
-    return prose
+    # RECURSE the joined run through the one dispatch — the docstring's promise,
+    # finally kept.  `<hiero>` → `[hieroglyph: …]`, a glyph IMAGE inline (not a
+    # block figure), `{{nowrap}}`/`«I»`/`&nbsp;` resolved.  It was returned raw
+    # before — the 298-leak bug the comment described but the code skipped.
+    return process_elements(prose, context, _allow_figure=False).strip()
 
 
 def _process_table_unified(

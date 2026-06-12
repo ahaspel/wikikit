@@ -697,7 +697,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # is layout scaffolding, not data.  Producer joins the cells back into
     # inline prose, glyphs inline, no table marker (kills the pipe leak).
     "INLINE_GLYPHS": lambda raw, inner, ctx, reg:
-        _process_inline_glyph_wrapper(inner, reg),
+        _process_inline_glyph_wrapper(inner, ctx),
     # TABLE — every wikitable (`{|`) and HTML `<table>`, whatever its
     # source sub-shape (data grid, single-column text box, verse-quotation,
     # compound/nested, rowspan-complex), decomposes through the ONE

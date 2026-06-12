@@ -86,9 +86,10 @@ _PAGEQUALITY_RE = re.compile(
 # recognizer regexes — they are bounded by the one balanced `_construct_end`
 # rule (see `_ELEMENT_TAGS`).  The old `<tag\b[^>]*>.*?</tag>` non-greedy
 # forms each embedded a false no-nesting assumption and have been deleted.
-# `<hiero>` keeps a regex only because its content alphabet is `[^<]` (glyph
-# codes, no nesting) — a genuine leaf, not a balanced container.
-_HIEROGLYPH_TAG_RE = re.compile(r"<hiero>[^<]*</hiero>", re.IGNORECASE)
+# `<hiero>` is now an OPAQUE `_ELEMENT_TAGS` tag (verbatim glyph-code interior,
+# `</hiero>`-bounded) like `<math>`/`<score>`.  Its old `<hiero>[^<]*</hiero>`
+# regex assumed no internal `<` and so dropped any block with one — 298 raw
+# leaks the viewer's `[hieroglyph:…]` decoder never saw.
 
 # Wikisource transclusion marker `<section begin="X"/>` / `<section end/>`.
 # A self-closing structural tag carrying boundary identity (the name), no inner
@@ -253,9 +254,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     # `_walk_balanced_shapes`), NOT by per-tag non-greedy regexes — those
     # embedded a false no-nesting assumption (table-in-table orphaned the
     # outer tail into body-text).
-    (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
-    # (`{{hieroglyph|…}}` no longer has a recognizer entry here — the generic
-    #  `{{…}}` recognizer bounds it as DOUBLE_BRACE; classifier routes → HIEROGLYPH.)
+    # (`<hiero>` now rides the `_ELEMENT_TAGS` opaque path (no per-tag regex),
+    #  and `{{hieroglyph|…}}` the generic `{{…}}` recognizer; both → HIEROGLYPH.)
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
@@ -312,15 +312,16 @@ _OPENER_HINT_RE = re.compile(
 # their interior is skipped without interpretation.
 _BRACKET_CLOSE = {"{{": "}}", "{|": "|}", "[[": "]]"}
 _OPAQUE_TAGS = frozenset({
-    "math", "nowiki", "score", "pre", "syntaxhighlight", "source", "timeline"})
+    "math", "nowiki", "score", "hiero", "pre", "syntaxhighlight", "source",
+    "timeline"})
 _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # The block-level HTML tags the walker lifts as their own SHAPE_HTML_TAG
 # element (every one bounded by the same `_construct_end` rule; the old
 # per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
-_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "nowiki",
-                           "includeonly"})
+_ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "hiero",
+                           "nowiki", "includeonly"})
 # Tags the one matcher will BOUND by depth (superset of the auto-extracted
 # elements).  `div`/`p`/`span` are boundable so a styled wrapper can be matched
 # to its right `</div>`/`</p>`/`</span>` and nested same-tags skipped — but they
