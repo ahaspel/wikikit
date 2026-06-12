@@ -233,8 +233,12 @@ _ATTR_CSS = {"valign": "vertical-align", "bgcolor": "background-color",
              "color": "color", "width": "width", "height": "height"}
 
 
-def fold_cell_styles(attr_part: str) -> list[str]:
-    """Total attr handling — the attr slot recursed, nothing dropped."""
+def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
+    """Total attr handling — the attr slot recursed, nothing dropped.
+
+    ``table_level`` carries the one cell-vs-table distinction MediaWiki makes: a
+    TABLE's ``align=`` centres/floats the whole table (``margin:auto``/``float``),
+    a CELL's is ``text-align`` (absorbed from the retired ``_cell_styles``)."""
     from britannica.pipeline.stages.elements._tables import _parse_ts_codes
     rules: list[str] = []
     slot = attr_part or ""
@@ -249,12 +253,21 @@ def fold_cell_styles(attr_part: str) -> list[str]:
         if k == "style":
             rules += [d.strip() for d in v.split(";") if d.strip()]
         elif k == "align":
-            rules.append(f"text-align:{'center' if v.startswith('cent') else v}")
+            a = "center" if v.startswith("cent") else v
+            if table_level:                       # a TABLE's align centres/floats it
+                rules.append("margin-right:auto;margin-left:auto" if a == "center"
+                             else f"float:{a}")
+            else:
+                rules.append(f"text-align:{a}")
         elif k in _ATTR_CSS:
+            if k in ("width", "height") and re.fullmatch(r"\d+", v.strip()):
+                v = v.strip() + "px"              # bare integer ⇒ px (HTML default)
             rules.append(f"{_ATTR_CSS[k]}:{v}")
         else:                                      # unrecognised — CARRY it
             rules.append(f"{k}:{v}")
     slot = _KV_RE.sub(" ", slot)
+    if re.search(r"(?<![-\w])nowrap(?![-\w])", slot, re.IGNORECASE):
+        rules.append("white-space:nowrap")        # bare HTML boolean attr
     for frag in slot.split(";"):                  # leftover bare CSS (width:50%)
         frag = frag.strip()
         if ":" in frag and not frag.startswith(("|", "{")):
