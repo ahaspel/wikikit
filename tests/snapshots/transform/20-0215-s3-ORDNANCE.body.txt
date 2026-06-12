@@ -1987,7 +1987,7 @@ hoops, the outer radius must be written 𝑟<sub>2</sub>); the formulas become«
 (6) and (7) or, from (6) or (7) and (3).«P»Subtracting the «I»Powder Stress«/I» from the «I»Firing Stress«/I» the «I»Initial«/I»
 «I»Stress«/I» is obtained, and the various results can be tabulated as
 «SPAN[style:white-space:nowrap]»follows:—«/SPAN»
-«HTMLTABLE:<table class="data-table _tablecolhdborder" style="margin-right:auto;margin-left:auto"><tr><td rowspan="2" colspan="2">At Radius.</td><td colspan="3">Tensions.</td><td colspan="3">Pressures.</td></tr><tr style="border:1px solid black"><td>Firing<br>Stress.</td><td>Powder<br>Stress.</td><td>Initial<br>Stress.</td><td>Firing<br>Stress.</td><td>Powder<br>Stress.</td><td>Initial<br>Stress.</td></tr><tr><td rowspan="2">Barrel 2|l</td><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝2·5</td><td>15·0</td><td>26·25</td><td>−11·25</td><td>21·0</td><td>21·0</td><td>0</td></tr><tr><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝4·1</td><td>3·72</td><td>11·57</td><td>−7·85</td><td>9·72</td><td>6·32</td><td>3·4</td></tr><tr><td rowspan="2">Jacket 2|l</td><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝4·1</td><td>18·0</td><td>11·57</td><td>6·43</td><td>9·72</td><td>6·32</td><td>3·4</td></tr><tr><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝7·5</td><td>8·28</td><td>5·25</td><td>3·03</td><td>0</td><td>0</td><td>0</td></tr></table>«/HTMLTABLE»«P»It is generally stipulated that the initial compression of the
+«HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><tr><td rowspan="2" colspan="2">At Radius.</td><td colspan="3">Tensions.</td><td colspan="3">Pressures.</td></tr><tr style="border:1px solid black"><td>Firing<br>Stress.</td><td>Powder<br>Stress.</td><td>Initial<br>Stress.</td><td>Firing<br>Stress.</td><td>Powder<br>Stress.</td><td>Initial<br>Stress.</td></tr><tr><td rowspan="2">Barrel 2|l</td><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝2·5</td><td>15·0</td><td>26·25</td><td>−11·25</td><td>21·0</td><td>21·0</td><td>0</td></tr><tr><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝4·1</td><td>3·72</td><td>11·57</td><td>−7·85</td><td>9·72</td><td>6·32</td><td>3·4</td></tr><tr><td rowspan="2">Jacket 2|l</td><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝4·1</td><td>18·0</td><td>11·57</td><td>6·43</td><td>9·72</td><td>6·32</td><td>3·4</td></tr><tr><td style="border-left:1px solid transparent">𝑟<sub>0</sub>＝7·5</td><td>8·28</td><td>5·25</td><td>3·03</td><td>0</td><td>0</td><td>0</td></tr></table>«/HTMLTABLE»«P»It is generally stipulated that the initial compression of the
 material at the interior surface of the barrel shall not exceed
 26 tons per square inch, «I»i.e.«/I» (𝑡<sub>0</sub>) =−26 tons; in the example above
 (𝑡<sub>0</sub>) =−11·25 tons only, but in wire-wound guns special attention
@@ -2350,7 +2350,7 @@ second by the goniometric sight or the panorama sight. ThePAGE:247«HTMLTABLE:
 gear found in many modern field guns, which divides between
 two gunners the work of aiming (called «I»laying«/I») the gun, and of
 giving it the elevation required to hit the target.
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 59.png|width=400}}</td></tr><tr><td>«SPAN[style:font-size:83%]»From Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center;font-size:92%">«SC»Fig«/SC». 59.—Diagram illustrating the independent line of sight.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin:auto"><tr><td>{{IMG:EB1911 - Ordnance - Fig. 59.png|width=400}}</td></tr><tr><td>«SPAN[style:font-size:83%]»From Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center;font-size:92%">«SC»Fig«/SC». 59.—Diagram illustrating the independent line of sight.</td></tr></table>«/HTMLTABLE»
 In fig. 59 the gun is shown mounted on an intermediate
 carriage elevated and depressed by the screw A. The telescopic
 or ordinary sight is fixed to this carriage. The gun, in its cradle,
@@ -2661,7 +2661,7 @@ but has a panorama sight. It traverses on the axletree.«P»«I»The Danish Q.F.
 of the heavier or more powerful type of Krupp field gun. The gun
 may be seen supported on the cradle, which contains the hydraulic
 buffer and running-up springs. The wedge breech-block is open.
-«HTMLTABLE:<table class="figtable"><tr><td>{{IMG:EB1911 - Ordnance Fig 63.png|width=800}}</td></tr><tr><td>«SPAN[style:font-size:85%]»Redrawn from Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 63.—The German Q.F. Gun. C. 96. n./A. (1906).</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin:auto"><tr><td>{{IMG:EB1911 - Ordnance Fig 63.png|width=800}}</td></tr><tr><td>«SPAN[style:font-size:85%]»Redrawn from Bethell’s «I»Modern Guns and Gunnery«/I».«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig«/SC». 63.—The German Q.F. Gun. C. 96. n./A. (1906).</td></tr></table>«/HTMLTABLE»
 The arc sight with panorama telescope is seen behind the shield,
 which is curved backwards for better protection. The seats for the
 gunners who lay and attend to the breech are on either side of the
@@ -2865,7 +2865,7 @@ is 1700 f.s. Fixed ammunition is employed, and with an elevation
 of 15° the range is 7600 yds. The weight of the equipment limbered«SH»Guns.«/SH»
 up is given as «SPAN[style:white-space:nowrap]»712/7 cwt.:«/SPAN» it is known as a siege gun.«P»In its general aspect the carriage resembles a field carriage, but of
 stronger type, with a special arrangement of cradle.
-«HTMLTABLE:<table class="figtable"><tr><td colspan="6">{{IMG:EB1911 - Ordnance Fig 71.png|width=400}}</td></tr><tr><td colspan="6">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»<br>
+«HTMLTABLE:<table class="figtable" style="margin:auto"><tr><td colspan="6">{{IMG:EB1911 - Ordnance Fig 71.png|width=400}}</td></tr><tr><td colspan="6">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»<br>
 «CTR»«SC»Fig«/SC». 71.—Diagram of 4·7-in. Siege Gun, U.S.A.«/CTR»</td></tr><tr><td>«I»b«/I»,</td><td>Traversing bracket,</td><td>«I»r«/I»,</td><td>Rails.</td><td>«I»x«/I»,</td><td>Axle.</td></tr><tr><td>«I»p«/I».</td><td>Pintle bearing.</td><td>«I»s«/I».</td><td>Spring cylinders,</td><td>«I»y«/I»,</td><td>Pintle yoke.</td></tr></table>«/HTMLTABLE»
 In fig. 71 two sections are given; the cradle, it will be seen,
 consists of three cylinders (seen in section in the upper figure) which
@@ -3089,7 +3089,7 @@ the platform. Its upper portion consists of two inclined rails along
 which the bed or carriage of the howitzer slides. To check recoil a
 hydraulic buffer is attached to the front of the slide and also to the
 bed.
-«HTMLTABLE:<table class="figtable"><tr><td colspan="4">{{IMG:EB1911 - Ordnance Fig 75.png|width=580}}</td></tr><tr><td colspan="4">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»</td></tr><tr><td colspan="4" style="text-align:center">«SC»Fig«/SC». 75.—Diagram of 6-in. Siege Howitzer, U.S.A.</td></tr><tr><td>«I»b«/I»,</td><td>Hand-wheel actuating wheel</td><td>«I»k«/I»,</td><td>Hook, 1, 2, 3, 4 and mechanism</td></tr><tr><td></td><td>brakes.</td><td></td><td>for loading position.</td></tr><tr><td>«I»e«/I».</td><td>Elevating hand-wheel.</td><td>«I»n«/I»,</td><td>Elevating screw.</td></tr><tr><td>«I»h«/I»,</td><td>Handle.</td><td>«I»t«/I».</td><td>Traversing wheel.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="margin:auto"><tr><td colspan="4">{{IMG:EB1911 - Ordnance Fig 75.png|width=580}}</td></tr><tr><td colspan="4">«SPAN[style:font-size:85%]»From Lieut.-Colonel Ormond M. Lissak’s «I»Ordnance and Gunnery«/I».«/SPAN»</td></tr><tr><td colspan="4" style="text-align:center">«SC»Fig«/SC». 75.—Diagram of 6-in. Siege Howitzer, U.S.A.</td></tr><tr><td>«I»b«/I»,</td><td>Hand-wheel actuating wheel</td><td>«I»k«/I»,</td><td>Hook, 1, 2, 3, 4 and mechanism</td></tr><tr><td></td><td>brakes.</td><td></td><td>for loading position.</td></tr><tr><td>«I»e«/I».</td><td>Elevating hand-wheel.</td><td>«I»n«/I»,</td><td>Elevating screw.</td></tr><tr><td>«I»h«/I»,</td><td>Handle.</td><td>«I»t«/I».</td><td>Traversing wheel.</td></tr></table>«/HTMLTABLE»
 The fighting units of siege artillery in the British service are
 companies and brigades; each company would be armed with
 from 4 to 6 light siege pieces or from 2 to 4 heavy pieces. A company

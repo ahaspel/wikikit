@@ -1947,7 +1947,7 @@ the four interradii, and they arise from the ectoderm, that is to say,
 the germinal epithelium, which later gives rise to the gonads. The
 buds do not appear simultaneously but successively on each of the
 four sides of the manubrium, thus:
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td style="text-align:center">1</td></tr><tr><td>«SPAN[style:white-space:nowrap]»3 4«/SPAN»</td></tr><tr><td style="text-align:center">2</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" cellpadding="0" cellspacing="0" style="margin-right:auto;margin-left:auto"><tr><td style="text-align:center">1</td></tr><tr><td>«SPAN[style:white-space:nowrap]»3 4«/SPAN»</td></tr><tr><td style="text-align:center">2</td></tr></table>«/HTMLTABLE»
 and secondary buds
 may be produced on the medusa-buds before the latter are set free
 as medusae. Each bud arises as a thickening of the epithelium, which

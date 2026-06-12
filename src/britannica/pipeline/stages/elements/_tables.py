@@ -22,6 +22,8 @@ from britannica.pipeline.stages.elements._registry import (
 from britannica.pipeline.stages.elements._text import (
     _strip_br,
 )
+from britannica.pipeline.stages.elements._table_fold import (
+    fold_cell_attrs, fold_cell_styles, format_html_attrs)
 
 
 # Wiki cell-attribute keywords — used in two places (here, _layout) to
@@ -272,79 +274,15 @@ def _table_grid(inner: str) -> list[list[str]]:
     return grid
 
 
-def emit_html_cell(
-    tag: str,
-    content: str,
-    *,
-    rowspan: int = 1,
-    colspan: int = 1,
-    styles: list[str] | None = None,
-) -> str:
-    """Build one HTML table cell with the standard attribute
-    serialisation.
-
-    * ``tag`` — ``'td'`` or ``'th'``.
-    * ``content`` — already-cleaned cell content (templates expanded,
-      entities decoded, etc.).
-    * ``rowspan`` / ``colspan`` — integer cell-span counts; the
-      attribute is emitted only when ``> 1``.
-    * ``styles`` — list of CSS declarations (e.g.
-      ``['text-align:right', 'vertical-align:top']``); joined with
-      ``;`` and emitted as a single ``style="…"`` attribute when
-      non-empty.
-
-    Shared by ``_process_complex_table`` (wiki ``{|…|}`` with spans →
-    HTML) and ``_process_html_table`` (HTML ``<table>`` → marker).
-    Centralising the serialisation here keeps the two output paths
-    byte-identical for the same logical cell."""
-    attrs = ""
-    if rowspan > 1:
-        attrs += f' rowspan="{rowspan}"'
-    if colspan > 1:
-        attrs += f' colspan="{colspan}"'
-    if styles:
-        attrs += f' style="{";".join(styles)}"'
-    return f"<{tag}{attrs}>{content}</{tag}>"
+_OPENER_ATTR_RE = re.compile(
+    r"\s*(?:<table\b([^>]*)>|\{\|([^\n]*))", re.IGNORECASE)
 
 
-def _complex_cell_body(attr_part: str, content: str) -> tuple[list[str], str]:
-    """Cell-body strategy for `_process_complex_table` (the `cell_body`
-    hook of `produce_table_rows`).
-
-    Reproduces the producer's image-vs-text BRANCH: a cell that is
-    wholly an `[[Image:…]]`/`[[File:…]]` becomes a `{{IMG:filename}}`
-    marker, skipping the content recursion AND the leftover-`{{}}` strip
-    that would otherwise delete the marker.  Non-image cells run the
-    bespoke clean: drop stray image links, `{{ditto}}`→″, `{{…}}`→…,
-    lossless `<br>`, strip leftover templates, strip wrapper tags.
-
-    TRANSITIONAL (see `CellBody` in `_table_decompose`): the end-state
-    moves the `{{ditto}}`/`{{…}}`/image template handling into body-text
-    so this branch dissolves and the producer reverts to the default
-    `produce_cell`.  `_cell_styles` is scoped to `attr_part` only (it
-    ignores `content`), so the cell's full styling is independent of the
-    body clean above.
-    """
-    styles = _cell_styles(attr_part, content)
-    img_m = re.match(r"\s*\[\[(?:Image|File):([^|\]]+)[^\]]*\]\]\s*$",
-                     content, re.IGNORECASE)
-    if img_m:
-        return styles, f"{{{{IMG:{img_m.group(1).strip()}}}}}"
-    c = re.sub(r"\[\[(?:Image|File):[^\]]*\]\]", "", content,
-               flags=re.IGNORECASE)
-    c = re.sub(r"\{\{ditto(?:\|[^{}]*)?\}\}", "″", c, flags=re.IGNORECASE)
-    c = re.sub(r"\{\{\.\.\.\}\}", "...", c)
-    # Lossless `<br>` fidelity (see _html_cell_clean): keep the
-    # source/print's deliberate line breaks (stacked-list rows, wrapped
-    # headers); `-<br>` soft-hyphen joins still apply.  emit_html_cell
-    # outputs literal HTML, so the `<br>` renders as a break.
-    c = _strip_br(c, "<br>")
-    c = c.strip()
-    # Transform the OUTER (cell → styles); RECURSE the inner and leave it.
-    # No catch-all `{{…}}` strip, no wrapper sweep — an unhandled template or
-    # <span> in the recursed inner leaks to the audit, never silently deleted;
-    # recognizing them is the walker's job, not a post-recursion sweep here.
-    return styles, c
+def _opener_attr_slot(text: str) -> str:
+    """A table's opener attribute slot — ``<table <attrs>>`` or ``{|<attrs>``,
+    both syntaxes one regex — for the emit to fold (`fold_cell_attrs`)."""
+    m = _OPENER_ATTR_RE.match(text)
+    return (m.group(1) or m.group(2) or "").strip() if m else ""
 
 
 # \u2500\u2500 Chemistry-reaction / structural-formula layouts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -623,6 +561,7 @@ def _process_chemistry_layout(raw: str, inner: str,
         raw_rows = re.split(r"(?:^|\n)\|-[^\n]*", inner)
         _row_cells = _split_chem_row
 
+    from britannica.pipeline.stages.elements._table_decompose import _tag
     html_rows: list[str] = []
     for raw_row in raw_rows:
         if not raw_row.strip():
@@ -630,44 +569,25 @@ def _process_chemistry_layout(raw: str, inner: str,
         cells_html: list[str] = []
         for sep, attr_part, content in _row_cells(raw_row):
             tag = "th" if sep == "!" else "td"
-            rs = re.search(r'rowspan\s*=\s*"?(\d+)"?', attr_part,
-                           re.IGNORECASE)
-            cs = re.search(r'colspan\s*=\s*"?(\d+)"?', attr_part,
-                           re.IGNORECASE)
-            rowspan = int(rs.group(1)) if rs else 1
-            colspan = int(cs.group(1)) if cs else 1
-            # Full Ts + align/valign + inline style extraction.  Previously
-            # the cell-styling was discarded (the chem cell loop only kept
-            # rowspan/colspan structural attrs); the producer emitted
-            # bare `<td>` cells in the CHEM marker.
-            styles = _cell_styles(attr_part, content)
-            content = re.sub(
-                r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
+            # Chem-specific content clean (Ts strip, glyph sentinels); the cell
+            # attr-slot rides raw to `_tag`, which folds it like any cell.
+            content = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
             content = content.strip()
-            # Recurse the inner and leave it — no catch-all `{{…}}` strip, no
-            # wrapper sweep (transform the outer, recurse the inner; leftovers
-            # leak to the audit).
             content = (content.replace("&vert;", "|")
                               .replace("&nbsp;", " "))
             for sentinel, glyph in _CHEM_RESOLVE.items():
                 if sentinel in content:
                     content = content.replace(sentinel, glyph)
-            cells_html.append(emit_html_cell(
-                tag, content, rowspan=rowspan, colspan=colspan,
-                styles=styles,
-            ))
+            cells_html.append(_tag(tag, attr_part, content))
         if cells_html:
             html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
     if not html_rows:
         return ""
-    # Whole-table styling from the `{|<attrs>` opener (extracted from
-    # `raw`, since `inner` has the opener line stripped by `strip_outer`).
-    # Chem layouts often carry `{|{{Ts|ma|sm92}}` for centering / font-
-    # sizing \u2014 apply as inline `style="\u2026"` on the `<table>`.
-    table_styles = _table_opener_styles(raw)
-    table_style_attr = (f' style="{";".join(table_styles)}"'
-                        if table_styles else "")
-    return ("\u00abCHEM:<table" + table_style_attr + ">"
+    # Whole-table styling from the opener, folded at the emit like any tag.
+    css, opener_html = fold_cell_attrs(_opener_attr_slot(raw), table_level=True)
+    table_attrs = (format_html_attrs(opener_html)
+                   + (f' style="{";".join(css)}"' if css else ""))
+    return ("\u00abCHEM:<table" + table_attrs + ">"
             + "".join(html_rows)
             + "</table>\u00ab/CHEM\u00bb")
 
@@ -931,6 +851,17 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
         if ":" in arg:
             rules.append(arg.rstrip(";").strip())
             continue
+        # A `key=val` form (`width=240px`) — a CSS-ish value the source spelled
+        # with `=` not `:`.  Carry it (bare-int width/height get HTML-default px)
+        # rather than dropping it as an unknown code — the "carry, don't drop"
+        # rule the fold applies to plain attrs.
+        if "=" in arg:
+            k, _eq, val = arg.partition("=")
+            k, val = k.strip().lower(), val.strip()
+            if k in ("width", "height") and re.fullmatch(r"\d+", val):
+                val += "px"
+            rules.append(f"{k}:{val}")
+            continue
         for code in arg.split():
             c = code.lower()
             # Alias → canonical (wikisource resolves these first).
@@ -952,225 +883,6 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
                     if d:
                         rules.append(d)
     return rules
-
-
-def _cell_align(attr_part: str, content: str) -> str | None:
-    """Resolved alignment for one cell: ``"right"``/``"center"``/``"left"`` or
-    ``None`` (left default).  Thin wrapper around ``_cell_styles`` for
-    callers that only need alignment (the ``{{TABLE:}`` marker can only
-    encode alignment via ``⟦c⟧``/``⟦r⟧`` codes, not the full styling
-    set)."""
-    for rule in _cell_styles(attr_part, content):
-        if rule.startswith("text-align:"):
-            val = rule.split(":", 1)[1].strip()
-            return val if val in ("right", "center", "left") else None
-    return None
-
-
-def _table_opener_styles(text: str) -> list[str]:
-    """Extract CSS styling from a table's opener — wiki ``{|<attrs>`` OR HTML
-    ``<table <attrs>>``.
-
-    Source ``{|<attrs>\\n…`` carries whole-table styling (``{|{{Ts|ma|bc|fwb}}``
-    centers the table, ``{|class="data-table"`` adds a class, etc.) that
-    was previously discarded — the row decomposition strips the opener
-    line wholesale.  An HTML ``<table {{Ts|bc}} style="border:2px">`` carries
-    the SAME kind of whole-table styling in its opener tag's attribute slot;
-    parsing only the ``{|`` form dropped HTML table-level styling entirely
-    (the table went bare ``class="figtable"``).  Both openers run their
-    captured attr blob through the same ``_cell_styles`` shape as a cell, so
-    e.g. a ``{{Ts|ma|sm92}}`` opener emits ``['margin:0 auto', 'font-size:92%']``
-    for the ``<table>`` element's ``style="…"`` attr — wiki or HTML alike.
-
-    Returns ``[]`` if the text isn't a table opener or carries no
-    extractable styling."""
-    m = re.match(r"^\s*\{\|([^\n]*)", text)
-    if not m:
-        m = re.match(r"^\s*<table\b([^>]*)>", text, re.IGNORECASE)
-    if not m:
-        return []
-    return _cell_styles(m.group(1).strip(), "", table_level=True)
-
-
-def _cell_styles(attr_part: str, content: str,
-                 table_level: bool = False) -> list[str]:
-    """A FAITHFUL attribute CARRIER: every HTML presentation attribute in the
-    slot becomes a CSS declaration — nothing in ``attr_part`` is dropped.
-
-    Carries:
-       * ``align="..."`` → ``text-align`` (cell) / table-float|centre
-         (``table_level``); ``valign="..."`` → ``vertical-align``
-       * ``width=`` / ``height=`` → ``width``/``height`` preserving the unit
-         (``40%``→``width:40%``, ``50``→``width:50px``) — for CELLS, not just
-         the table opener (the old whitelist dropped cell ``width``)
-       * ``bgcolor=`` → ``background-color``; ``color=`` → ``color``
-       * ``nowrap`` (bare boolean attr) → ``white-space:nowrap``
-       * Inline ``style="..."`` declarations (merged verbatim)
-       * ``{{Ts|...}}`` shorthand code template(s) (via ``_parse_ts_codes``)
-    Returns a list of CSS declarations like
-    ``['text-align:right', 'vertical-align:top', 'padding-left:0.5em']``.
-    Empty list means "no styling beyond defaults".
-
-    The one principled exception is a NON-presentational attribute with no CSS
-    mapping (``char=``/``abbr=``/``scope=``/``id=``): those carry no styling, so
-    there is nothing to add to this list — they would ride as literal HTML
-    attributes via a future ``emit_html_cell`` thread, not as CSS here.  No
-    presentational attribute vanishes.
-
-    SCOPED TO ``attr_part`` ONLY.  Cell ``content`` is inline body text that
-    may legitimately contain its own ``<span style="…">``, ``<i>``, ``{{Ts}}``,
-    etc. — those belong to the inline rendering of the cell body and MUST
-    NOT be hoisted to the cell-level ``style="…"`` attr.  ``content`` is kept
-    in the signature so callers that previously scanned both (and the
-    ``_cell_align`` helper) don't have to be touched; it's accepted and
-    ignored.  Historical bugs from scanning content: AFRICA shipped a
-    ``border-bottom:1px dashed red`` from an inner annotation ``<span>``;
-    ALDEHYDES duplicated the Toluicaldehyde cell text after a malformed
-    inline ``<span style="…>"`` (missing closing quote) made the style
-    regex match past the cell boundary.
-    """
-    del content  # intentionally unused — see docstring.
-    rules: list[str] = []
-    blob = attr_part or ""
-    # HTML align="right" → text-align:right for a CELL; for a TABLE OPENER
-    # (`table_level`), MediaWiki treats the opener's align as the whole table's
-    # FLOAT (left/right) or centring (center) — render_markers was right to emit
-    # `float:left` where the generic cell path emitted `text-align:left`.
-    m = _CELL_ALIGN_ATTR_RE.search(blob)
-    if m:
-        a = m.group(1).lower()
-        a = "center" if a.startswith("cent") else a
-        if a in ("right", "center", "left"):
-            if table_level:
-                rules.append("margin-right:auto;margin-left:auto" if a == "center"
-                             else f"float:{a}")
-            else:
-                rules.append(f"text-align:{a}")
-    # `width=` / `height=` → carry the dimension, preserving the SOURCE UNIT:
-    # `40%`→`width:40%`, `50`→`width:50px` (bare integer = pixels, the HTML
-    # default).  Carried for CELLS too, not just `table_level` — a cell's
-    # `width="40%"` is the column's own width and was previously DROPPED on the
-    # cell path (the faithful-carrier fix; nothing in the attr slot vanishes).
-    # The `=` (not `:`) and the `(?<![-\w])` guard keep this from matching a
-    # `width:`/`max-width:` inside an inline `style="…"` or a `{{Ts|width:…}}`.
-    for dim in ("width", "height"):
-        dm = re.search(
-            r"(?<![-\w])" + dim + r"\s*=\s*\"?\s*(\d+\s*%|\d+)",
-            blob, re.IGNORECASE)
-        if dm:
-            v = dm.group(1).replace(" ", "")
-            rules.append(f"{dim}:{v}" if v.endswith("%") else f"{dim}:{v}px")
-    # `bgcolor="…"` → background-color; `color="…"` → color.  The `color`
-    # match's `(?<![-\w])` guard keeps it from re-firing on the `color` inside
-    # a `bgcolor` already consumed above (the `g` is a word char before it).
-    bgm = re.search(r"bgcolor\s*=\s*\"?\s*([#\w]+)", blob, re.IGNORECASE)
-    if bgm:
-        rules.append(f"background-color:{bgm.group(1)}")
-    cm = re.search(r"(?<![-\w])color\s*=\s*\"?\s*([#\w]+)", blob, re.IGNORECASE)
-    if cm:
-        rules.append(f"color:{cm.group(1)}")
-    # HTML valign="top" → vertical-align:top
-    vm = re.search(r"valign\s*=\s*\"?(top|middle|bottom)", blob, re.IGNORECASE)
-    if vm:
-        rules.append(f"vertical-align:{vm.group(1).lower()}")
-    # `nowrap` (bare HTML boolean attribute) → white-space:nowrap.  Bounded so
-    # it never matches inside a word (`nowrap` keyword only).
-    if re.search(r"(?<![-\w])nowrap(?![-\w])", blob, re.IGNORECASE):
-        rules.append("white-space:nowrap")
-    # Inline style="..." — pass through as-is.
-    sm = re.search(r"style\s*=\s*\"([^\"]*)\"", blob, re.IGNORECASE)
-    if sm:
-        for decl in sm.group(1).split(";"):
-            d = decl.strip()
-            if d:
-                rules.append(d)
-    # `{{Ts|code|code|...}}` shorthand — parse codes.
-    for tm in _CELL_TS_RE.finditer(blob):
-        rules.extend(_parse_ts_codes(tm.group(1)))
-    # Dedupe while preserving order — later occurrences override earlier
-    # by removing the earlier match on the same property.
-    seen: dict[str, int] = {}
-    deduped: list[str] = []
-    for r in rules:
-        prop = r.split(":", 1)[0]
-        if prop in seen:
-            deduped[seen[prop]] = r
-        else:
-            seen[prop] = len(deduped)
-            deduped.append(r)
-    return deduped
-
-
-def _extract_table_cells(row_text,
-                         with_attrs=False, with_styles=False):
-    """Extract data cells from a row via the shared `split_wiki_row`
-    helper, then drop any remaining `{{Ts|…}}` cell-styling templates
-    and return each cell's content.
-
-    ``with_attrs=True`` returns ``(content, align)`` tuples — the per-cell
-    alignment the producer must CARRY (resolved before the `{{Ts}}` style
-    codes are stripped) so the viewer renders it instead of guessing.
-
-    ``with_styles=True`` returns ``(content, styles)`` tuples where
-    ``styles`` is the full list of CSS declarations (alignment +
-    vertical-align + padding + borders + width + size + line-height +
-    margin + font-weight, anything `_cell_styles` can extract).  Use
-    this when emitting through `emit_html_cell` which accepts the full
-    styles list; the wiki ``{{TABLE:}`` marker callers stick with
-    ``with_attrs`` since their format only encodes alignment.
-
-    Default (neither flag) returns plain content strings.
-
-    Module-level so the lean data-grid producer (`_process_table`) and
-    the carved shape producers (single-column, etc.) share one cell
-    parser instead of each re-implementing it.
-    """
-    cells = []
-    for sep, attr_part, content in split_wiki_row(row_text):
-        if content in ("}", "{|"):
-            continue
-        if not content:
-            # Preserve as a real empty cell — this is `|` on its
-            # own (AETHER / AQUEDUCT column spacers) or `|attr|`
-            # with a trailing-pipe and empty content (GRASS AND
-            # GRASSLAND's `|width="50%" {{ts|ac|ba}}| ` header-
-            # corner: a real cell carrying only sizing/styling
-            # attributes).  The trailing pipe is the signal that
-            # source intended a real cell.  This is `split_wiki_row`'s
-            # contract: anything it returns is a real cell — and the
-            # mid-line case where source has `|attr-keyword` with NO
-            # trailing pipe gets caught by the `_CELL_ATTR_RE.match`
-            # check on `content` below.
-            empty = (" ", []) if with_styles else (" ", None) if with_attrs else " "
-            cells.append(empty)
-            continue
-        # CARRY, never drop.  Content that LOOKS like a bare attribute
-        # keyword (`colspan=2` with no trailing-pipe boundary in source) is
-        # still real source bytes — dropping it silently loses a cell whose
-        # content the splitter merely couldn't separate from its attr slot.
-        # It rides through as the cell's content (the faithful peel carries
-        # everything; a true attr with no body simply renders harmlessly).
-        # Resolve styling BEFORE stripping the {{Ts|…}} codes that carry
-        # it.  `with_styles` returns the full CSS list (for HTML cell
-        # emission); `with_attrs` returns just alignment (for the wiki
-        # `{{TABLE:}` marker, which only encodes ⟦c⟧/⟦r⟧).
-        styles = _cell_styles(attr_part, content) if with_styles else None
-        align = _cell_align(attr_part, content) if with_attrs else None
-        cleaned = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content).strip()
-        # A layout template like ``{{gap}}`` / ``{{em|N}}`` that resolves
-        # to whitespace can leave stray leading or trailing whitespace at
-        # the cell boundary — render-irrelevant for most consumers but
-        # markup-noisy.  Strip it so the cell's emitted bytes are canonical.  Ascii-space-and-tab only
-        # so visible-on-render non-breaking entities (``&nbsp;`` → ``\xa0``)
-        # the source carried deliberately survive.
-        val = cleaned.strip(" \t") if cleaned else " "
-        if with_styles:
-            cells.append((val, styles or []))
-        elif with_attrs:
-            cells.append((val, align))
-        else:
-            cells.append(val)
-    return cells
 
 
 def _process_inline_glyph_wrapper(
@@ -1227,7 +939,7 @@ def _process_table_unified(
     refs / nested tables ride through as placeholdered children (`produce_tree`
     substitutes their markers), so this path never calls the image producers."""
     from britannica.pipeline.stages.elements._table_decompose import (
-        assemble_html_rows, produce_table_rows,
+        produce_table,
     )
     # Both `{|` and `<table>` are LEAVES now, so the walker hands us `inner` as
     # the bare grid (outer delimiters already peeled) for either syntax — no
@@ -1249,13 +961,9 @@ def _process_table_unified(
     # `process_elements` exactly like a wiki cell — its `<sub>`/`<br>`/styler/
     # nested-table content is handled as the element it is, not flattened in
     # place.  The flattener was the source of the cell-context style leaks.
-    caption_raw, rows, _has_header, _has_span = produce_table_rows(
-        grid,
-        cell_preclean=None,
-        cell_recurse=cell_recurse)
-    if not rows:
+    caption_raw, body = produce_table(grid, cell_recurse)
+    if not body:
         return ""
-    body = assemble_html_rows(rows)  # «HTMLTABLE:<table>…»
     # Stamp class + whole-table styling onto the (bare) outer <table>.
     # Class tracks BORDERS from the source (the scans show wikitable/ruled
     # tables bordered, class-less ones borderless — AUSTRIA 5/5): a real grid
@@ -1264,16 +972,20 @@ def _process_table_unified(
     # `figtable`.  We carry the source's verdict, not a default — same rule
     # `_process_table_unified`'s own table branch uses.
     # Opener attrs from whichever syntax opened the table — one regex, no flavor.
-    om = re.match(r"\s*(?:<table\b([^>]*)>|\{\|([^\n]*))", raw, re.I)
-    opener_attrs = (om.group(1) or om.group(2) or "") if om else ""
+    opener_attrs = _opener_attr_slot(raw)
     src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
     src_cls = src_cls_m.group(1) if src_cls_m else ""
     bordered = re.search(
         r"wikitable|border\s*=\s*[\"']?[1-9]|rules\s*=", opener_attrs, re.I)
     cls = (("data-table " + src_cls).strip() if (bordered or src_cls)
            else "figtable")
-    styles = _table_opener_styles(raw)
-    attrs = f' class="{cls}"' + (f' style="{";".join(styles)}"' if styles else "")
+    # Fold the opener's attr-slot at the emit, same as a cell: style bits → CSS,
+    # the rest → real attrs.  `class` rides as the computed `cls` (data-table/
+    # figtable + the source class), so drop the folded dupe.
+    css, opener_html = fold_cell_attrs(opener_attrs, table_level=True)
+    opener_html.pop("class", None)
+    attrs = (f' class="{cls}"' + format_html_attrs(opener_html)
+             + (f' style="{";".join(css)}"' if css else ""))
     caption_html = ""
     if caption_raw:
         # A caption is prose in a box, same as a cell — recurse the RAW through

@@ -233,14 +233,25 @@ _ATTR_CSS = {"valign": "vertical-align", "bgcolor": "background-color",
              "color": "color", "width": "width", "height": "height"}
 
 
-def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
-    """Total attr handling — the attr slot recursed, nothing dropped.
+def fold_cell_attrs(
+    attr_part: str, table_level: bool = False,
+) -> tuple[list[str], dict[str, str]]:
+    """Total attr handling — the slot recursed, nothing dropped, nothing FAKED.
+
+    Returns ``(css_declarations, html_attrs)``.  The style bits (``{{Ts}}``,
+    inline ``style=``, ``align``/``width``/``valign``/…) become CSS; every other
+    attribute (``class``, ``colspan``, ``cellpadding``, ``summary``…) rides as a
+    real HTML attribute on the tag — NOT a bogus ``key:value`` CSS declaration
+    the browser silently ignores.  The emit splices both onto the tag; this is
+    the faithful carry the retired ``_cell_styles`` whitelist couldn't give (it
+    DROPPED every non-style attr).
 
     ``table_level`` carries the one cell-vs-table distinction MediaWiki makes: a
     TABLE's ``align=`` centres/floats the whole table (``margin:auto``/``float``),
-    a CELL's is ``text-align`` (absorbed from the retired ``_cell_styles``)."""
+    a CELL's is ``text-align``."""
     from britannica.pipeline.stages.elements._tables import _parse_ts_codes
     rules: list[str] = []
+    attrs: dict[str, str] = {}
     slot = attr_part or ""
     for m in _TS_TMPL_RE.finditer(slot):          # {{Ts|…}} → CSS (its producer)
         rules += _parse_ts_codes(m.group(1).lstrip("|"))
@@ -248,8 +259,6 @@ def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
     for m in _KV_RE.finditer(slot):               # key="val" or key=val attributes
         k = m.group(1).lower()
         v = m.group(2) if m.group(2) is not None else m.group(3)
-        if k in ("colspan", "rowspan"):           # structural — emit owns these
-            continue
         if k == "style":
             rules += [d.strip() for d in v.split(";") if d.strip()]
         elif k == "align":
@@ -263,8 +272,8 @@ def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
             if k in ("width", "height") and re.fullmatch(r"\d+", v.strip()):
                 v = v.strip() + "px"              # bare integer ⇒ px (HTML default)
             rules.append(f"{_ATTR_CSS[k]}:{v}")
-        else:                                      # unrecognised — CARRY it
-            rules.append(f"{k}:{v}")
+        else:                                      # not a style → real HTML attr
+            attrs[k] = v
     slot = _KV_RE.sub(" ", slot)
     if re.search(r"(?<![-\w])nowrap(?![-\w])", slot, re.IGNORECASE):
         rules.append("white-space:nowrap")        # bare HTML boolean attr
@@ -272,7 +281,7 @@ def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
         frag = frag.strip()
         if ":" in frag and not frag.startswith(("|", "{")):
             rules.append(frag.rstrip(";").strip())
-    seen: dict[str, int] = {}                      # dedupe, later wins
+    seen: dict[str, int] = {}                      # dedupe CSS, later wins
     out: list[str] = []
     for r in rules:
         p = r.split(":", 1)[0].strip()
@@ -281,4 +290,18 @@ def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
         else:
             seen[p] = len(out)
             out.append(r)
-    return out
+    return out, attrs
+
+
+def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
+    """CSS-only view of :func:`fold_cell_attrs` — for callers that emit only a
+    ``style="…"`` and have no tag to hang HTML attrs on (the styled-wrapper
+    markers, the align-only ``_cell_align``).  Non-style attrs drop here exactly
+    as the retired ``_cell_styles`` dropped them — no junk, nothing faked."""
+    return fold_cell_attrs(attr_part, table_level)[0]
+
+
+def format_html_attrs(attrs: dict[str, str]) -> str:
+    """``{'class': 'x', 'colspan': '2'}`` → ``' class="x" colspan="2"'`` — a
+    leading-space attr string ready to splice into a start tag; ``''`` empty."""
+    return "".join(f' {k}="{v}"' for k, v in attrs.items())

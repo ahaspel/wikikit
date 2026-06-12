@@ -543,8 +543,8 @@ def process_html_style(raw, inner, context, inner_registry):
 
     Body is the verbatim former `m = _STYLED_OPEN_RE.match(raw)` fallthrough of
     `_process_styled`, keeping its `if not m: return raw` guard."""
-    from britannica.pipeline.stages.elements._tables import (
-        _cell_styles, style_block)
+    from britannica.pipeline.stages.elements._tables import style_block
+    from britannica.pipeline.stages.elements._table_fold import fold_cell_styles
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
         return raw
@@ -559,7 +559,7 @@ def process_html_style(raw, inner, context, inner_registry):
     inner_raw = _styled_br_to_marker(inner_raw)
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()
-    css = ";".join(_cell_styles(attrs, ""))
+    css = ";".join(fold_cell_styles(attrs))
     marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
     return style_block(content, css=css, tag=marker_tag)
 

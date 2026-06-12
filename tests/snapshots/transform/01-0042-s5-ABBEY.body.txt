@@ -178,7 +178,7 @@ V. Necessary.
 W. Infirmary (?).
 X. Guest-houses.
 Y. Mill bridge.}VERSE}</td><td style="width:33%">{{VERSE:Z. Gate-house
-«SPAN[style:text-align:center;line-height:200%]»«SC»Abbot’s House.«/SC»«/SPAN»
+«SPAN[style:line-height:200%;text-align:center]»«SC»Abbot’s House.«/SC»«/SPAN»
  1. Passage.
  2. Great hall.
  3. Refectory.
