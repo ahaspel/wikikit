@@ -36,11 +36,20 @@ def assemble_corpus(session):
         body, disp = walk_article(session, article)
         corpus[article.id] = body
         title_display[article.id] = disp
+        # article_type falls out of the body we just walked — no separate
+        # classify pass: a plate stays a plate (boundary detection set it),
+        # a non-empty body is an article, an empty one is front matter.
+        if article.article_type != "plate":
+            new_type = "article" if body.strip() else "front_matter"
+            if article.article_type != new_type:
+                article.article_type = new_type
     # MOVE 2: the title is produced in the transform (`walk_article` sets
     # `article.title`/`title_raw`/`title_display`), not at detection.  The body
-    # and xrefs stay in-memory only, but `title` is a real DB field that the
-    # export + xref resolution read straight from the DB — so commit the titles
-    # before they're read (covers the fast pipeline, which skips classify).
+    # and xrefs stay in-memory only, but `title` and `article_type` are real DB
+    # fields the export + xref resolution read straight from the DB — so commit
+    # them before they're read (covers the fast pipeline, which skips classify).
+    # This folds in the old `classify_articles` stage, which re-walked the whole
+    # corpus solely to recompute that one `article_type` bit.
     session.commit()
     return all_articles, corpus, title_display
 

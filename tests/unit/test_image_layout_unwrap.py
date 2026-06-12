@@ -36,7 +36,7 @@ import re
 
 import pytest
 
-from britannica.pipeline.stages.prepare_wikitext import _convert_quote_runs
+from britannica.pipeline.stages.quote_runs import _convert_quote_runs
 from britannica.pipeline.stages.elements import ElementContext, process_elements
 
 

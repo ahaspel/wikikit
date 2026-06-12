@@ -1,24 +1,15 @@
-"""Article-pipeline preconditions for ``page.wikitext``.
+"""MediaWiki bold/italic quote-run → internal ``«B»``/``«I»`` marker conversion.
 
-Two operations, intentionally minimal:
-  1. ``data/corrections.json`` typo fixes.
-  2. MediaWiki bold/italic quote-run → ``«B»``/``«I»`` marker conversion.
-
-All body-level cleanup happens per-segment in ``transform_articles``,
-not here — keeping this stage minimal stops it from accreting catch-all
-defensive passes (see ``[[feedback_no_catchall_cleanup]]``).
-
-Ancillary content (Editorial Preface, Prefatory Note, vol-29 prefaces,
-abbreviations) is hand-curated static HTML under ``tools/viewer/`` and
-does NOT pass through this stage.
+Extracted verbatim from the deleted per-page ``prepare_wikitext`` stage; now a
+helper that ``preprocess`` (the single source-prep step) calls on the joined
+stream.  Line-scoped (see ``_convert_quote_runs``), so the conversion is
+leaf-local — identical result whether run per-page or on the concatenation.
 """
+from __future__ import annotations
+
 import re
 
 import mwparserfromhell as _mwp
-
-from britannica.corrections import apply_corrections
-from britannica.db.models.source_page import SourcePage
-from britannica.db.session import SessionLocal
 
 
 _QUOTE_RUN_HINT = re.compile(
@@ -52,8 +43,8 @@ def _convert_quote_runs(text: str) -> str:
     ``<table>…</table>``, killing the ``\\n\\n`` boundary that
     detect_boundaries needs before each subsequent bold heading.
 
-    Runs once per page in ``prepare_wikitext`` so every downstream stage
-    sees ``«B»``/``«I»`` instead of ``'''``/``''``.
+    Runs once over the joined stream in ``preprocess`` so every downstream
+    stage sees ``«B»``/``«I»`` instead of ``'''``/``''``.
 
     Replaces the previous regex-based ``_convert_bold_italic`` in
     ``body_text.py`` which couldn't handle:
@@ -162,25 +153,3 @@ def _convert_quote_runs_line(line: str) -> str:
                 # via aliasing).  Skip and continue.
                 continue
     return str(parsed)
-
-
-def prepare_wikitext(volume: int) -> int:
-    """Apply article-pipeline preconditions to ``page.wikitext``.
-
-    Two operations: typo corrections from ``data/corrections.json``
-    and MediaWiki bold/italic quote-run → marker conversion.  Returns
-    the number of pages processed.  Body-level cleanup happens
-    per-segment downstream in ``transform_articles``.
-    """
-    session = SessionLocal()
-    try:
-        pages = session.query(SourcePage).filter(
-            SourcePage.volume == volume).all()
-        for page in pages:
-            if page.wikitext:
-                page.wikitext = apply_corrections(page.wikitext, volume)
-                page.wikitext = _convert_quote_runs(page.wikitext)
-        session.commit()
-        return len(pages)
-    finally:
-        session.close()

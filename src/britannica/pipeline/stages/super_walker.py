@@ -206,7 +206,7 @@ def volume_stream(volume: int) -> str:
         # Mirror the current pipeline: plates are lifted first; article
         # detection runs over the plate-free pages.
         _plates, pages = _split_out_plates(all_pages)
-        return preprocess(make_stream(pages))
+        return preprocess(make_stream(pages), volume)
     finally:
         session.close()
 

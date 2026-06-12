@@ -4,7 +4,6 @@ import typer
 
 from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
-from britannica.pipeline.stages.prepare_wikitext import prepare_wikitext
 from britannica.db.models import (
     Article, ArticleSegment, SourcePage)
 from britannica.pipeline.stages.detect_boundaries import (
@@ -12,7 +11,6 @@ from britannica.pipeline.stages.detect_boundaries import (
 from britannica.pipeline.stages.super_detect import detect_boundaries
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.assemble import assemble_and_export
-from britannica.pipeline.stages.classify_articles import classify_articles_for_volume
 from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 from britannica.pipeline.stages.extract_contributors import extract_contributors_for_volume
 
@@ -81,12 +79,6 @@ def import_sample_pages(
     print(f"Imported {len(pages)} pages.")
 
 
-@app.command("prepare-wikitext")
-def prepare_wikitext_cmd(volume: int = typer.Argument(...)) -> None:
-    count = prepare_wikitext(volume)
-    print(f"Prepared wikitext for {count} pages of volume {volume}.")
-
-
 @app.command("list-pages")
 def list_pages(volume: int = typer.Option(None)) -> None:
     session = SessionLocal()
@@ -123,14 +115,6 @@ def extract_contributors_cmd(volume: int = typer.Argument(...)) -> None:
 def extract_contributor_bios_cmd() -> None:
     count = extract_contributor_bios()
     print(f"Updated {count} contributors with biographical data.")
-
-
-@app.command("classify-articles")
-def classify_articles_cmd(volume: int = typer.Argument(...)) -> None:
-    counts = classify_articles_for_volume(volume)
-    for article_type, count in sorted(counts.items()):
-        print(f"  {article_type}: {count}")
-    print(f"Classified {sum(counts.values())} articles for volume {volume}.")
 
 
 @app.command("export-articles")

@@ -13,9 +13,11 @@ wrapped sentences heal AT THE SEAM here because the continuous stream is the
 only context where both sides of a page transition are visible at once — doing
 it per-page or per-article structurally leaks.
 
-Corrections + quote-run → ``«B»``/``«I»`` are applied upstream
-(``prepare_wikitext``, persisted to ``page.wikitext``); ``make_stream`` consumes
-the prepared text.  Section tags are NOT stripped here — ``detect_boundaries``
+Corrections + quote-run → ``«B»``/``«I»`` are applied HERE, first
+(``apply_corrections`` + ``_convert_quote_runs``), on the joined RAW stream —
+formerly the per-page ``prepare_wikitext`` stage, folded in so this is the ONE
+source-prep step (canonical_path §1).  ``make_stream`` consumes RAW
+``page.wikitext``.  Section tags are NOT stripped here — ``detect_boundaries``
 consumes ``<section begin>`` for stable-ID names; they drop after detection.
 """
 from __future__ import annotations
@@ -23,8 +25,10 @@ from __future__ import annotations
 import html
 import re
 
+from britannica.corrections import apply_corrections
 from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.image_assets import CHART2_IMAGES, TREE_IMAGES
+from britannica.pipeline.stages.quote_runs import _convert_quote_runs
 from britannica.pipeline.stages.source_cleanup import (
     close_unclosed_attr_quotes,
     strip_html_comments,
@@ -248,9 +252,29 @@ def _decode_entities(text: str) -> str:
     return "".join(out)
 
 
-def preprocess(stream: str) -> str:
-    """Source-clean + heal page transitions on the continuous stream; return
-    the frozen clean stream."""
+def preprocess(stream: str, volume: int = 0) -> str:
+    """The single preprocessing step: corrections + quote-run + source-clean +
+    page-transition heal on the continuous RAW stream; return the frozen clean
+    stream.
+
+    Corrections + quote-run run FIRST — formerly the per-page ``prepare_wikitext``
+    stage, now folded in.  They're leaf-local, so running them on the joined
+    stream is identical to per-page, and folding them here makes preprocess the
+    one true source-prep step (canonical_path §1).  ``volume`` keys the
+    corrections (0 ⇒ none — for diagnostic / test callers without a volume;
+    production passes the real volume via ``volume_stream``)."""
+    stream = apply_corrections(stream, volume)     # data/corrections.json typo fixes
+    stream = _convert_quote_runs(stream)           # '''/''/<b>/<i>/{{bold|}} → «B»/«I»
+    return _clean_and_heal(stream)
+
+
+def _clean_and_heal(stream: str) -> str:
+    """The re-appliable half of the pass — source-cleans + page-seam heals, i.e.
+    everything EXCEPT the once-only raw→canonical conversions (corrections,
+    quote-run).  Split out because these are idempotent and safe to re-apply: the
+    transform-snapshot fixtures were captured post-quote-run but pre-clean, so
+    that test applies THESE, not full ``preprocess`` (which would re-run quote-run
+    on already-converted markup)."""
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
