@@ -751,7 +751,7 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "bc":               {"ctr": True},  # block-centre (centred display equations)
     "float center":     {"ctr": True},  # centred block
     "fs70":             {"css": "font-size:70%", "tag": "SPAN"},  # small fractions
-    "0":                {"css": "visibility:hidden", "tag": "SPAN"},  # {{0|x}} reserves x's width, invisible
+    "0":                {"css": "visibility:hidden", "tag": "SPAN", "bare": "0"},  # {{0|x}} reserves x's width; bare {{0}} = one zero
     "di":               {},  # drop initial → the letter (decorative drop-cap deferred to render)
     "blackletter":      {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},
     "bl":               {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},  # blackletter math variables

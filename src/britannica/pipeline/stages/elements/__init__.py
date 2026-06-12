@@ -577,8 +577,16 @@ def process_strip(raw, inner, context, inner_registry):
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, style_block)
     tm = _TEMPLATE_STYLE_RE.match(raw)
-    spec = _TEMPLATE_STYLE_WRAPPERS[tm.group(1).lower()]
-    inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+    if tm is not None:                       # `{{name|content}}` — the pipe form
+        name = tm.group(1).lower()
+        inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+    else:                                    # `{{name}}` — bare form: the classifier
+        # routes a registered styler with OR without content (see _classifier
+        # line ~390), so supply the styler's default content — e.g. `{{0}}` is
+        # one invisible width-reserving zero.
+        name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
+        inner_raw = _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")
+    spec = _TEMPLATE_STYLE_WRAPPERS[name]
     inner_raw = _styled_br_to_marker(inner_raw)
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()

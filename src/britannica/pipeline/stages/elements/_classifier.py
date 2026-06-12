@@ -59,6 +59,7 @@ from britannica.pipeline.stages.elements._shapes import (
 )
 from britannica.pipeline.stages.elements._walker import (
     walk,
+    _OPAQUE_TAGS,
     # Styled-HTML-wrapper attribute recognizers — the SAME regexes the walker
     # uses to BOUND these spans; here they carve the HTML_TAG label.
     _STYLED_WRAPPER_RE,
@@ -703,6 +704,19 @@ def _derive_label(
 # ── Recursive classifier ──────────────────────────────────────────────
 
 
+def _is_leaf_html_tag(raw: str) -> bool:
+    """True for an `HTML_TAG` the classifier must NOT descend into: a `<table>`
+    (the table producer recurses its own grid) or an OPAQUE tag — `<math>`/
+    `<nowiki>`/`<score>`/… — whose interior is verbatim (LaTeX braces, lilypond
+    chords).  Re-walking either tears a child out of content that owns it; the
+    `<math>{{x^p}{y^q}}` brace pair mis-read as a `{{template}}` was that bug."""
+    m = re.match(r"\s*<([A-Za-z][A-Za-z0-9]*)", raw)
+    if not m:
+        return False
+    name = m.group(1).lower()
+    return name == "table" or name in _OPAQUE_TAGS
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -713,14 +727,13 @@ def classify(
     derives the label for this element from the assembled
     inner_registry.
     """
-    # An HTML `<table>` owns its whole grid like a wiki `{|` (a LEAF): the
-    # table producer recurses its own cells, so we do NOT placeholderize its
-    # children.  The old non-leaf path lifted them, then the producer re-derived
-    # the grid from `raw` and ignored the lift — pure waste; leaf-ing it is
-    # output-neutral and drops the wasted placeholdering.
+    # A `<table>` owns its whole grid like a wiki `{|` (the table producer
+    # recurses its own cells); an OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its
+    # verbatim interior (LaTeX braces, lilypond chords).  Both are LEAVES: we do
+    # NOT placeholderize their children, so the re-walk never tears a `{{…}}` out
+    # of a `<math>` to mis-read as a template.
     if shape in LEAF_SHAPES or (
-            shape == SHAPE_HTML_TAG
-            and raw.lstrip()[:6].lower() == "<table"):
+            shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
         # Leaf shapes own their entire payload — the producer reads
         # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
         # and does whatever internal parsing it needs.  We still call

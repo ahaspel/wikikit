@@ -29,17 +29,15 @@ from britannica.pipeline.stages.elements._shapes import (
 
 class TestAtomicLabels:
     def test_math(self):
-        # The math body now recurses like any inner content: it becomes a
-        # single BODY child carrying the raw, and inner_text is that child's
-        # placeholder (SHAPE_BODY — task #14).
+        # `<math>` is an opaque tag — a LEAF.  Its LaTeX interior is verbatim and
+        # never recursed (a `{{…}}` inside is LaTeX grouping, NOT a template), so
+        # the classifier does not descend: empty inner_registry, inner_text is the
+        # raw math content.  Consistent with `<math>`-as-leaf in test_math_cell.
         ce = classify(SHAPE_HTML_TAG, "<math>x^2</math>")
         assert ce.label == "MATH"
         assert ce.raw == "<math>x^2</math>"
-        assert len(ce.inner_registry) == 1
-        (child,) = ce.inner_registry.values()
-        assert child.label == "BODY"
-        assert child.raw == "x^2"
-        assert ce.inner_text in ce.inner_registry
+        assert ce.inner_registry == {}
+        assert ce.inner_text == "x^2"
 
     def test_poem(self):
         ce = classify(SHAPE_HTML_TAG, "<poem>line one\nline two</poem>")

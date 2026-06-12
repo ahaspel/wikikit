@@ -30,14 +30,13 @@ where the sign «MATH:\Sigma«/MATH» indicates (as throughout this article) a s
 and therefore
 
 
-«EQN:6»«MATH:\Sigma m(\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots)\delta q_{1} + (\mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots)\delta q_{2} + \ldots,«/MATH»«/EQN»
+«EQN:6»«MATH[popout]:\Sigma m(\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots)\delta q_{1} + (\mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots)\delta q_{2} + \ldots,«/MATH»«/EQN»
 
 
-where«P»«HTMLTABLE:<table class="figtable" style="width:100%"><tr><td style="width:5%"></td><td style="width:90%;text-align:center">«MATH:\left.\begin{align}
-\mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»«P»If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
+where«P»«HTMLTABLE:<table class="figtable" style="width:100%"><tr><td style="width:5%"></td><td style="width:90%;text-align:center">«MATH[fs=85]:\left.\begin{align} \mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»«P»If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
 
 
-«EQN:8»«MATH:2\mathrm{T} = \Sigma m(\dot{x}^2 + \dot{y}^2 + \dot{z}^2) = \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 \ldots 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots«/MATH»«/EQN»
+«EQN:8»«MATH[fs=95]:2\mathrm{T} = \Sigma m(\dot{x}^2 + \dot{y}^2 + \dot{z}^2) = \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 \ldots 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots«/MATH»«/EQN»
 
 
 The coefficients «MATH:\mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12}, \ldots«/MATH» are by an obvious analogy called the «I»coefficients of inertia«/I» of the system; they are in general functions of the co-ordinates «MATH:q_{1}, q_{2},\ldots«/MATH». The equation (6) may now be written
@@ -114,7 +113,7 @@ where «MATH:\mathrm{A}'_{11}, \mathrm{A}'_{22},\ldots \mathrm{A}'_{12},\ldots«
 where «MATH:\mathrm{T}\!«/MATH» is supposed expressed as in (8), and «MATH:\mathrm{T}'\!«/MATH» as in (19). Hence if, for the moment, we denote by «MATH:\delta\!«/MATH» a variation affecting the velocities, and therefore the momenta, but not the configuration, we have
 
 
-«EQN:21»«MATH:p_{1}\delta\dot{q}_{1} + \dot{q}_{1}\delta p + p_{2}\delta\dot{q}_{2} + \dot{q}_{2}\delta p_{2} + \ldots = \delta \mathrm{T} + \delta \mathrm{T}' = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} + \ldots+ \frac{\partial\mathrm{T}'}{\partial p_{1}}\delta p_{1} + \frac{\partial\mathrm{T}'}{\partial p_{2}}\delta p_{2} + \ldots«/MATH»«/EQN»
+«EQN:21»«MATH[popout]:p_{1}\delta\dot{q}_{1} + \dot{q}_{1}\delta p + p_{2}\delta\dot{q}_{2} + \dot{q}_{2}\delta p_{2} + \ldots = \delta \mathrm{T} + \delta \mathrm{T}' = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} + \ldots+ \frac{\partial\mathrm{T}'}{\partial p_{1}}\delta p_{1} + \frac{\partial\mathrm{T}'}{\partial p_{2}}\delta p_{2} + \ldots«/MATH»«/EQN»
 
 
 In virtue of (13) this reduces to
@@ -143,7 +142,7 @@ These equations, when written out in full, determine «MATH:\dot{\chi}, \dot{\ch
 supposed expressed, by means of the above relations in terms of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH». Performing the operation «MATH:\delta\!«/MATH» on both sides of (25), we have
 
 
-«EQN:26»«MATH:\frac{\partial\mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{T} }{\partial\dot{\chi}}\delta\dot{\chi} + \ldots- \kappa\partial\dot{\chi} - \dot{\chi}\delta\kappa- \ldots,«/MATH»«/EQN»
+«EQN:26»«MATH[popout]:\frac{\partial\mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots = \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots+ \frac{\partial\mathrm{T} }{\partial\dot{\chi}}\delta\dot{\chi} + \ldots- \kappa\partial\dot{\chi} - \dot{\chi}\delta\kappa- \ldots,«/MATH»«/EQN»
 
 
 where, for brevity, only one term of each type has been exhibited. Omitting the terms which cancel in virtue of (24), we have
@@ -194,7 +193,7 @@ Lagrange’s investigation consists in the transformation of (2) into an equatio
 
 
 Hence
-«CTR»«MATH:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»«/CTR»
+«CTR»«MATH[popout]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \frac{d}{dt}\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) - \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z})«/MATH»«/CTR»
 
 
 «EQN:4»«MATH:= \frac{d}{dt}(p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots) - \delta\mathrm{T},«/MATH»«/EQN»
@@ -203,13 +202,13 @@ Hence
 by § 1 (14). The last member may be written
 
 
-«EQN:5»«MATH:\dot{p}_{1}\delta q_{1} + p_{1}\delta\dot{q}_{1} + \dot{p}_{2}\delta q_{2} + p_{2}\delta\dot{q}_{2} + \ldots- \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\delta q_{1} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\delta q_{2} - \ldots«/MATH»«/EQN»
+«EQN:5»«MATH[popout]:\dot{p}_{1}\delta q_{1} + p_{1}\delta\dot{q}_{1} + \dot{p}_{2}\delta q_{2} + p_{2}\delta\dot{q}_{2} + \ldots- \frac{\partial\mathrm{T} }{\partial\dot{q}_{1}}\delta\dot{q}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\delta q_{1} - \frac{\partial\mathrm{T} }{\partial\dot{q}_{2}}\delta\dot{q}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\delta q_{2} - \ldots«/MATH»«/EQN»
 
 
 Hence, omitting the terms which cancel in virtue of § 1 (13), we find
 
 
-«EQN:6»«MATH:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \left(\dot{p}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\right) \delta q_{2} + \ldots«/MATH»«/EQN»
+«EQN:6»«MATH[fs=85]:\Sigma m(\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) = \left(\dot{p}_{1} - \frac{\partial\mathrm{T} }{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial\mathrm{T} }{\partial q_{2}}\right) \delta q_{2} + \ldots«/MATH»«/EQN»
 
 «P»For the right-hand side of (2) we have
 
@@ -291,7 +290,7 @@ was made by J. M. L. Vieille. We now have
 so that the expression § 1 (8) for the kinetic energy is to be replaced by
 
 
-«EQN:4»«MATH:2\mathrm{T} = \alpha_{0} + 2\alpha_{1}\dot{q}_{1} + 2\alpha_{2}\dot{q}_{2} + \ldots+ \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots + \mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
+«EQN:4»«MATH[fs=80]:2\mathrm{T} = \alpha_{0} + 2\alpha_{1}\dot{q}_{1} + 2\alpha_{2}\dot{q}_{2} + \ldots+ \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots + \mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots,«/MATH»«/EQN»
 
 
 where
@@ -301,7 +300,7 @@ where
 
 
 and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given by § 1 (7). It is to be remembered that the coefficients «MATH:\alpha_{0}, \alpha_{1}, \alpha_{2}, \ldots \mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12} \ldots\!«/MATH» will in general involve «MATH:t\!«/MATH» explicitly as well as implicitly through the co-ordinates «MATH:q_{1}, q_{2},\ldots\!«/MATH». Again, we find
-«CTR»«MATH:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»«/CTR»
+«CTR»«MATH[popout]:\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = (\alpha_{1} + \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots) \delta q_{1} + (\alpha_{2} + \mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots) \partial q_{2} + \ldots«/MATH»«/CTR»
 
 
 «EQN:6»«MATH:= \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta q_{1} + \frac{\partial \mathrm{T}}{\partial\dot{q}_{2}}\delta q_{2} + \ldots= p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots,«/MATH»«/EQN»
@@ -310,7 +309,7 @@ and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given
 where «MATH:p_{r}\!«/MATH» is defined as in § 1 (13). The derivation of Lagrange’s equations then follows exactly as before. It is to be noted that the equation § 2 (15) does not as a rule now hold. The proof involved the assumption that «MATH:\mathrm{T}\!«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}\ldots\!«/MATH».«P»It has been pointed out by R. B. Hayward that Vieille’s case can be brought under Lagrange’s by introducing a new co-ordinate («MATH:\chi\!«/MATH») in place of «MATH:t\!«/MATH», so far as it appears explicitly in the relations (1). We have then
 
 
-«EQN:7»«MATH:2\mathrm{T} = \alpha_{0}\dot{\chi}^2 + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots+ 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots.«/MATH»«/EQN»
+«EQN:7»«MATH[popout]:2\mathrm{T} = \alpha_{0}\dot{\chi}^2 + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 + \ldots+ 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots.«/MATH»«/EQN»
 
 
 The equations of motion will be as in § 2 (10), with the additional equation
@@ -322,13 +321,13 @@ The equations of motion will be as in § 2 (10), with the additional equation
 where «MATH:\mathrm{X}\!«/MATH» is the force corresponding to the co-ordinate «MATH:\chi«/MATH». We may suppose «MATH:\mathrm{X}«/MATH» to be adjusted so as to make «MATH:\ddot{\chi} = 0«/MATH», and in the remaining equations nothing is altered if we write «MATH:t«/MATH» for «MATH:\chi«/MATH» before, instead of after, the differentiations. The reason why the equation § 2 (15) no longer holds is that we should require to add a term «MATH:\mathrm{X}\dot{\chi}«/MATH» on the right-hand side; this represents the rate at which work is being done by the constraining forces required to keep «MATH:\dot{\chi}«/MATH» constant.«P»As an example, let «MATH:x, y, z\!«/MATH» be the co-ordinates of a particle relative to axes fixed in a solid which is free to rotate about the axis of «MATH:z\!«/MATH». If «MATH:\phi\!«/MATH» be the angular co-ordinate of the solid, we find without difficulty
 
 
-«EQN:9»«MATH:2\mathrm{T} = m (\dot{x}^2 + \dot{y}^2 +\dot{z}^2) + 2\dot{\phi}m (x\dot{y} - y\dot{x}) + {\mathrm{I} + m (x^2 + y^2)} \dot{\phi}^2,«/MATH»«/EQN»
+«EQN:9»«MATH[fs=95]:2\mathrm{T} = m (\dot{x}^2 + \dot{y}^2 +\dot{z}^2) + 2\dot{\phi}m (x\dot{y} - y\dot{x}) + {\mathrm{I} + m (x^2 + y^2)} \dot{\phi}^2,«/MATH»«/EQN»
 
 
 where «MATH:\mathrm{I}\!«/MATH» is the moment of inertia of the solid. The equations of motion, viz.
 
 
-«EQN:10»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{x}} - \frac{\partial \mathrm{T}}{\partial x} = \mathrm{X}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{y}} - \frac{\partial \mathrm{T}}{\partial y} = \mathrm{Y}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{z}} - \frac{\partial \mathrm{T}}{\partial z} = \mathrm{Z},«/MATH»«/EQN»
+«EQN:10»«MATH[fs=85]:\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{x}} - \frac{\partial \mathrm{T}}{\partial x} = \mathrm{X}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{y}} - \frac{\partial \mathrm{T}}{\partial y} = \mathrm{Y}, \qquad\frac{d}{dt}\,\frac{\partial \mathrm{T}}{\partial\dot{z}} - \frac{\partial \mathrm{T}}{\partial z} = \mathrm{Z},«/MATH»«/EQN»
 
 
 and
@@ -340,7 +339,7 @@ and
 become
 
 
-«EQN:12»«MATH:m (\ddot{x} - 2\dot{\phi}\dot{y} - x\dot{\phi}^2 - y\ddot{\phi}) = \mathrm{X}, m (\ddot{y} + 2\dot{\phi}\dot{x} - y\dot{\phi}^2 + x\ddot{\phi}) = \mathrm{Y}, m\ddot{z} = \mathrm{Z},«/MATH»«/EQN»
+«EQN:12»«MATH[fs=85]:m (\ddot{x} - 2\dot{\phi}\dot{y} - x\dot{\phi}^2 - y\ddot{\phi}) = \mathrm{X}, m (\ddot{y} + 2\dot{\phi}\dot{x} - y\dot{\phi}^2 + x\ddot{\phi}) = \mathrm{Y}, m\ddot{z} = \mathrm{Z},«/MATH»«/EQN»
 
 
 and
@@ -364,7 +363,7 @@ where «MATH:\omega\!«/MATH» has been written for «MATH:\phi\!«/MATH». Thes
 which gives the kinetic energy of the particle referred to axes rotating with the constant angular velocity «MATH:\omega\!«/MATH». (See «LN:Mechanics|Mechanics«/LN», § 13.)«P»More generally, let us suppose that we have a certain group of co-ordinates «MATH:\chi, \chi', \chi'', \ldots\!«/MATH» whose absolute values do not affect the expression for the kinetic energy, and that by suitable forces of the corresponding types the velocity-components «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH» are maintained constant. The remaining co-ordinates being denoted by «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», we may write
 
 
-«EQN:16»«MATH:2\mathrm{T} = \mathfrak{T} + \mathrm{T}_{0} + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + 2(\alpha'_{1}\dot{q}_{1} + \alpha'_{2}\dot{q}_{2} + \ldots) \dot{\chi}' + \ldots,«/MATH»«/EQN»
+«EQN:16»«MATH[fs=80]:2\mathrm{T} = \mathfrak{T} + \mathrm{T}_{0} + 2(\alpha_{1}\dot{q}_{1} + \alpha_{2}\dot{q}_{2} + \ldots) \dot{\chi} + 2(\alpha'_{1}\dot{q}_{1} + \alpha'_{2}\dot{q}_{2} + \ldots) \dot{\chi}' + \ldots,«/MATH»«/EQN»
 
 
 where «MATH:\mathfrak{T}«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{n}\!«/MATH» of the type § 1 (8), whilst «MATH:\mathrm{T}_{0}\!«/MATH» is a homogeneous quadratic function of the velocities «MATH:\dot{\chi}, \dot{\chi}', \dot{\chi}'', \ldots\!«/MATH» alone. The remaining terms, which are bilinear in respect of the two sets of velocities, are indicated more fully. The formulae (10) of § 2 give «MATH:n«/MATH» equations of the type
@@ -428,11 +427,11 @@ whence
 The conditions of relative equilibrium are given by (23).«P»It will be noticed that this expression «MATH:\mathrm{V} - \mathrm{T}_{0}\!«/MATH», which is to be stationary, differs from the true potential energy by a term which represents the potential energy of the system in relation to fictitious “centrifugal forces.” The question of stability of relative equilibrium will be noticed later (§ 6).«P»It should be observed that the remarkable formula (20) may in the present case be obtained directly as follows. From (15) and (14) we find
 
 
-«EQN:27»«MATH:\frac{d\mathrm{T}}{dt} = \frac{d}{dt}(\mathfrak{T} + \mathrm{T}_{0}) + \omega\cdot \Sigma m (x\ddot{y} - y\ddot{x}) = \frac{d}{dt}(\mathfrak{T} - \mathrm{T}_{0}) + \omega\cdot \Sigma(x\mathrm{Y} - y\mathrm{X}).«/MATH»«/EQN»
+«EQN:27»«MATH[fs=80]:\frac{d\mathrm{T}}{dt} = \frac{d}{dt}(\mathfrak{T} + \mathrm{T}_{0}) + \omega\cdot \Sigma m (x\ddot{y} - y\ddot{x}) = \frac{d}{dt}(\mathfrak{T} - \mathrm{T}_{0}) + \omega\cdot \Sigma(x\mathrm{Y} - y\mathrm{X}).«/MATH»«/EQN»
 
 
 PAGE:786This must be equal to the rate at which the forces acting on the system do work, viz. to
-«CTR»«MATH:\omega\Sigma(x\mathrm{Y} -  y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH»«/CTR»
+«CTR»«MATH:\omega\Sigma(x\mathrm{Y} - y\mathrm{X}) + \mathrm{Q}_{1}\dot{q}_{1} + \mathrm{Q}_{2}\dot{q}_{2} + \ldots + \mathrm{Q}_{n}\dot{q}_{n},«/MATH»«/CTR»
 where the first term represents the work done in virtue of the rotation.«P»We have still to notice the modifications which Lagrange’s equations undergo when the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» are not all independently variable. In the first place, we may suppose them connected by a number «MATH:m (< n)\!«/MATH» of relations of the type«SH»Constrained systems.«/SH»
 
 
@@ -442,7 +441,7 @@ where the first term represents the work done in virtue of the rotation.«P»We 
 These may be interpreted as introducing partial constraints into a previously free system. The variations «MATH:\delta q_{1}, \delta q_{2}, \ldots\delta q_{n}\!«/MATH» in the expressions (6) and (7) of § 2 which are to be equated are no longer independent, but are subject to the relations
 
 
-«EQN:29»«MATH:\frac{\partial \mathrm{A}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{A}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \qquad\frac{\partial \mathrm{B}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{B}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \And\text{c.}«/MATH»«/EQN»
+«EQN:29»«MATH[fs=90]:\frac{\partial \mathrm{A}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{A}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \qquad\frac{\partial \mathrm{B}}{\partial q_{1}}\delta q_{1} + \frac{\partial \mathrm{B}}{\partial q_{2}}\delta q_{2} + \ldots = 0, \And\text{c.}«/MATH»«/EQN»
 
 
 Introducing indeterminate multipliers «MATH:\lambda, \mu, \ldots\!«/MATH», one for each of these equations, we obtain in the usual manner «MATH:n\!«/MATH» equations of the type
@@ -454,7 +453,7 @@ Introducing indeterminate multipliers «MATH:\lambda, \mu, \ldots\!«/MATH», on
 in place of § 2 (10). These equations, together with (28), serve to determine the «MATH:n\!«/MATH» co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» and the «MATH:m\!«/MATH» multipliers «MATH:\lambda, \mu, \ldots\!«/MATH».«P»When «MATH:t\!«/MATH» does not occur explicitly in the relations (28) the system is said to be «I»holonomic«/I». The term connotes the existence of integral (as opposed to differential) relations between the co-ordinates, independent of the time.«P»Again, it may happen that although there are no prescribed relations between the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH», yet from the circumstances of the problem certain geometrical conditions are imposed on their «I»variations«/I», thus
 
 
-«EQN:31»«MATH:\mathrm{A}_{1}\delta q_{1} + \mathrm{A}_{2}\delta q_{2} + \ldots = 0, \qquad \mathrm{B}_{1}\delta q_{1} + \mathrm{B}_{2}\delta q_{2} + \ldots = 0, \And\text{c.},«/MATH»«/EQN»
+«EQN:31»«MATH[fs=95]:\mathrm{A}_{1}\delta q_{1} + \mathrm{A}_{2}\delta q_{2} + \ldots = 0, \qquad \mathrm{B}_{1}\delta q_{1} + \mathrm{B}_{2}\delta q_{2} + \ldots = 0, \And\text{c.},«/MATH»«/EQN»
 
 
 where the coefficients are functions of «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH» and (possibly) of «MATH:t\!«/MATH». It is assumed that these equations are not integrable as regards the variables «MATH:q_{1}, q_{2}, \ldots q_{n}\!«/MATH»; otherwise, we fall back on the previous conditions. Cases of the present type arise, for instance, in ordinary dynamics when we have a solid rolling on a (fixed or moving) surface. The six co-ordinates which serve to specify the position of the solid at any instant are not subject to any necessary relation, but the conditions to be satisfied at the point of contact impose three conditions of the form (31). The general equations of motion are obtained, as before, by the method of indeterminate multipliers, thus
@@ -559,7 +558,7 @@ where «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH» are the constant momen
 
 
 and imagine «MATH:\mathrm{R}«/MATH» to be expressed by means of (2) as a quadratic function of «MATH:\dot{q}_{1}, \dot{q}_{2}, \ldots\dot{q}_{m}, \kappa, \kappa', \kappa'', \ldots\!«/MATH» with coefficients which are in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH», then, performing the operation «MATH:\delta\!«/MATH» on both sides, we find
-«CTR»«MATH:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots  = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»«/CTR»
+«CTR»«MATH[popout]:\frac{\partial \mathrm{R}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{R}}{\partial\kappa}\delta\kappa+ \ldots + \frac{\partial \mathrm{R}}{\partial q_{1}}\delta q_{1} + \ldots = \frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots«/MATH»«/CTR»
 
 
 «EQN:4»«MATH:+ \frac{\partial \mathrm{T}}{\partial\dot{\chi}}\delta\dot{\chi} + \ldots + \frac{\partial \mathrm{T}}{\partial\chi_{1}}\delta q_{1} + \ldots- \kappa\delta\dot{\chi} - \dot{\chi}\delta\kappa- \ldots.«/MATH»«/EQN»
@@ -617,7 +616,7 @@ where «MATH:\beta_{1}, \beta_{2}, \ldots\!«/MATH» are linear functions of «M
 the coefficients «MATH:\alpha_{r}, \alpha'_{r}, \alpha''_{r}, \ldots\!«/MATH» being in general functions of the co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». Evidently «MATH:\beta_{r}\!«/MATH» denotes that part of the momentum-component «MATH:\partial \mathrm{R} / \partial\dot{q}_{r}\!«/MATH» which is due to the cyclic motions. Now
 
 
-«EQN:14»«MATH:\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{r}} =\frac{d}{dt}\left(\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \beta_{r}\right) = \frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \frac{\partial\beta_{r}}{\partial q_{1}}\dot{q}_{1} + \frac{\partial\beta_{r}}{\partial q_{2}}\dot{q}_{2}+ \ldots,«/MATH»«/EQN»
+«EQN:14»«MATH[fs=95]:\frac{d}{dt}\,\frac{\partial \mathrm{R}}{\partial\dot{q}_{r}} =\frac{d}{dt}\left(\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \beta_{r}\right) = \frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} + \frac{\partial\beta_{r}}{\partial q_{1}}\dot{q}_{1} + \frac{\partial\beta_{r}}{\partial q_{2}}\dot{q}_{2}+ \ldots,«/MATH»«/EQN»
 
 
 
@@ -628,7 +627,7 @@ the coefficients «MATH:\alpha_{r}, \alpha'_{r}, \alpha''_{r}, \ldots\!«/MATH»
 Hence, substituting in (8), we obtain the typical equation of motion of a gyrostatic system in the form
 
 
-«EQN:16»«MATH:\frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} - \frac{\partial\mathfrak{T}}{\partial q_{r}} + (r, 1) \dot{q}_{1} + (r, 2) \dot{q}_{2} + \ldots + (r, s) \dot{q}_{s} + \ldots + \frac{\partial \mathrm{K}}{\partial q_{r}} = \mathrm{Q}_{r},«/MATH»«/EQN»
+«EQN:16»«MATH[fs=85]:\frac{d}{dt}\,\frac{\partial\mathfrak{T}}{\partial\dot{q}_{r}} - \frac{\partial\mathfrak{T}}{\partial q_{r}} + (r, 1) \dot{q}_{1} + (r, 2) \dot{q}_{2} + \ldots + (r, s) \dot{q}_{s} + \ldots + \frac{\partial \mathrm{K}}{\partial q_{r}} = \mathrm{Q}_{r},«/MATH»«/EQN»
 
 
 where
@@ -774,10 +773,10 @@ provided the total energy have the same constant value in the varied motion as i
 
 
 since the upper and lower limits of the integral must both be regarded as variable. This may be written
-«CTR»«MATH:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH»«/CTR»
+«CTR»«MATH[fs=90]:\delta\mathrm{A} = \int^{t'}_{t} \delta Tdt + \int^{t'}_{t} \Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t«/MATH»«/CTR»
 
 
-«EQN:4» «MATH:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
+«EQN:4» «MATH[popout]:= \int^{t'}_{t} \delta Tdt + \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} \Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) dt + 2\mathrm{T}'\delta t' - 2\mathrm{T}\delta t.«/MATH»«/EQN»
 
 
 Now, by d’Alembert’s principle,
@@ -828,17 +827,17 @@ On the corpuscular theory of light «MATH:v\!«/MATH» is proportional to the re
 
 
 where «MATH:t, t'\!«/MATH» are the prescribed times of passing through the given initial and final configurations. The proof of (12) is simple; we have
-«CTR»«MATH:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»«/CTR»
+«CTR»«MATH[fs=80]:\delta\int^{t'}_{t} (\mathrm{T} - \mathrm{V})dt = \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V})dt = \int^{t'}_{t} {\Sigma m (\dot{x}\delta\dot{x} + \dot{y}\delta\dot{y} + \dot{z}\delta\dot{z}) - \delta \mathrm{V}} dt«/MATH»«/CTR»
 
 
-«EQN:13» «MATH:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
+«EQN:13» «MATH[fs=90]:= \left[ \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t} - \int^{t'}_{t} {\Sigma m (\ddot{x}\delta x + \ddot{y}\delta y + \ddot{z}\delta z) + \delta \mathrm{V}} dt.«/MATH»«/EQN»
 
 
 The integrated terms vanish at both limits, since by hypothesis the configurations at these instants are fixed; and the terms under the integral sign vanish by d’Alembert’s principle.«P»The fact that in (12) the variation does not affect the time of transit renders the formula easy of application in any system of co-ordinates. Thus, to deduce Lagrange’s equations, we have
-«CTR»«MATH:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»«/CTR»
+«CTR»«MATH[fs=85]:\int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt = \int^{t'}_{t} \left\{\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots - \frac{\partial \mathrm{V}}{\partial q_{1}}\delta q_{1} - \ldots\right\} dt«/MATH»«/CTR»
 
 
-«EQN:14»«MATH:= \Big[p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots\Big]^{t'}_{t}\ - \int^{t'}_{t} \left\{\left[\dot{p}_{1} - \frac{\partial \mathrm{T}}{\partial q_{1}} + \frac{\partial \mathrm{V}}{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial \mathrm{T}}{\partial q_{2}} + \frac{\partial \mathrm{V}}{\partial q_{2}}\right) \delta q_{2} + \ldots\right\} dt.«/MATH»«/EQN»
+«EQN:14»«MATH[popout]:= \Big[p_{1}\delta q_{1} + p_{2}\delta q_{2} + \ldots\Big]^{t'}_{t}\ - \int^{t'}_{t} \left\{\left[\dot{p}_{1} - \frac{\partial \mathrm{T}}{\partial q_{1}} + \frac{\partial \mathrm{V}}{\partial q_{1}}\right) \delta q_{1} + \left(\dot{p}_{2} - \frac{\partial \mathrm{T}}{\partial q_{2}} + \frac{\partial \mathrm{V}}{\partial q_{2}}\right) \delta q_{2} + \ldots\right\} dt.«/MATH»«/EQN»
 
 
 The integrated terms vanish at both limits; and in order that the remainder of the right-hand member may vanish it is necessary that the coefficients of «MATH:\delta q_{1}, \delta q_{2}, \ldots\!«/MATH» under the integral sign should vanish for all values of «MATH:t«/MATH», since the variations in question are independent, and subject only to the condition of vanishing at the limits of integration. We are thus led to Lagrange’s equation of motion for a conservative system. It appears that the formula (12) is a convenient as well as a compact embodiment of the whole of ordinary dynamics.«P»The modification of the Hamiltonian principle appropriate to the case of cyclic systems has been given by J. Larmor. If we write, as in § 1 (25),«SH»Extension to cyclic systems.«/SH»
@@ -856,7 +855,7 @@ we shall have
 provided that the variation does not affect the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», and that the configurations at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» are unaltered, so far as they depend on the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The initial and final values of the ignored co-ordinates will in general be affected.«P»To prove (16) we have, on the above understandings,
 
 
-«EQN:17»«MATH:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
+«EQN:17»«MATH[fs=90]:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
 
 
 where terms have been cancelled in virtue of § 5 (2). The last member of (17) represents a variation of the integral
@@ -882,7 +881,7 @@ provided the varied motion takes place with the same constant value of the energ
 we have, then,
 
 
-«EQN:2»«MATH:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
+«EQN:2»«MATH[fs=95]:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
 
 «P»Let us now denote by «MATH:x' + \delta x', y' + \delta y', z' + \delta z'\!«/MATH», the final co-ordinates («I»i.e.«/I» at time «MATH:t' + \delta t'\!«/MATH») of a particle «MATH:m\!«/MATH». In the terms in (2) which relate to the upper limit we must therefore write «MATH:\delta x' - \dot{x}'\delta t', \delta y' - \dot{y}'\delta t', \delta z' - \dot{z}'\delta t'\!«/MATH» for «MATH:\delta x, \delta y, \delta z\!«/MATH». With a similar modification at the lower limit, we obtain
 
@@ -977,7 +976,7 @@ we have
 with a similar expression for «MATH:\Delta p_{r}«/MATH». Hence the right-hand side of (2) becomes
 
 
-«EQN:5»«MATH:- \Sigma_{r} {\Sigma_{s}(r, s) \delta q_{s} + \Sigma_{s}(r, s') \delta q'_{s}} \Delta q_{r} + \Sigma_{r} {\Sigma_{s}(r, s)\Delta q_{s} + \Sigma_{s}(r, s') \Delta q'_{s}} \delta q_{r} = \Sigma_{r}\Sigma_{s}(r, s') {\delta q_{r}\cdot \Delta q'_{s} - \Delta q_{r}\cdot \delta q'_{s}}.«/MATH»«/EQN»
+«EQN:5»«MATH[popout]:- \Sigma_{r} {\Sigma_{s}(r, s) \delta q_{s} + \Sigma_{s}(r, s') \delta q'_{s}} \Delta q_{r} + \Sigma_{r} {\Sigma_{s}(r, s)\Delta q_{s} + \Sigma_{s}(r, s') \Delta q'_{s}} \delta q_{r} = \Sigma_{r}\Sigma_{s}(r, s') {\delta q_{r}\cdot \Delta q'_{s} - \Delta q_{r}\cdot \delta q'_{s}}.«/MATH»«/EQN»
 
 
 The same value is obtained in like manner for the expression on the left hand of (2); hence the theorem, which, in the form (1), is due to Lagrange, and was employed by him as the basis of his method of treating the dynamical theory of «I»Variation of Arbitrary Constants«/I».«P»The formula (2) leads at once to some remarkable reciprocal relations which were first expressed, in their complete form, by Helmholtz. Consider any natural motion of a conservative system between two configurations «MATH:\mathrm{O}«/MATH» and «MATH:\mathrm{O}'\!«/MATH» through which it passes at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» respectively, and let «MATH:t' - t = \tau\!«/MATH». «SH»Helmholtz’s reciprocal theorems.«/SH»As the system is passing through «MATH:\mathrm{O}\!«/MATH» let a small impulse «MATH:\delta p_{r}\!«/MATH» be given to it, and let the consequent alteration in the co-ordinate «MATH:q_{s}\!«/MATH» after the time «MATH:\tau\!«/MATH» be «MATH:\delta q'_{s}«/MATH». Next consider the «I»reversed«/I» motion of the system, in which it would, if undisturbed, pass from «MATH:\mathrm{O}'\!«/MATH» to «MATH:\mathrm{O}«/MATH» in the same time «MATH:\tau\!«/MATH». Let a small impulse «MATH:\delta p'_{s}\!«/MATH» be applied as the system is passing through «MATH:\mathrm{O}'\!«/MATH», and let the consequent change in the co-ordinate «MATH:q_{r}\!«/MATH» after a time «MATH:\tau\!«/MATH» be «MATH:\delta q_{r}\!«/MATH». Helmholtz’s first theorem is to the effect that

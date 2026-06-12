@@ -702,8 +702,8 @@ by expression (10), integrated with respect to «I»u«/I» from 0 to ∞, and
 with respect to «I»v«/I» and «I»w«/I» from −∞ to +∞, and then summed for all
 kinds of molecules in the gas. On combining the two parts of the
 pressure which have been calculated, the aggregate impulsive
-pressure on «I»d«/I»S in time «I»dt«/I» is found to be«P»«CTR»«MATH:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»«P»where Σ denotes summation over all kinds of molecules. This is
-equivalent to a steady pressure «I»p«/I»<sub>1</sub> per unit area where«P»«CTR»«MATH:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»«P»Clearly the integral is the sum of the values of «I»mu«/I»<sup>2</sup> for all the
+pressure on «I»d«/I»S in time «I»dt«/I» is found to be«P»«CTR»«MATH[fs=80]:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»«P»where Σ denotes summation over all kinds of molecules. This is
+equivalent to a steady pressure «I»p«/I»<sub>1</sub> per unit area where«P»«CTR»«MATH[popout]:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»«P»Clearly the integral is the sum of the values of «I»mu«/I»<sup>2</sup> for all the
 molecules of the first kind in unit volume, thus«P»
 
 «EQN:11»«MATH:p=v \overline{mu^2} + v' \overline{m'u^2} + \cdots«/MATH»«/EQN»
