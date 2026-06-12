@@ -54,17 +54,17 @@ from britannica.pipeline.stages.elements._shapes import (
 # scanner tries each recognizer at every "opener hint" position in
 # *opener-specificity* order — most-specific opener first.
 
-# CHART2: the multi-template region carved out by today's bespoke
-# regex (covers `{{missing table}}`, `{{center|...}}`, `{{EB1911 fine
-# print/s}}` wrappers before `{{chart2/start}}…{{chart2/end}}`, plus
-# an optional trailing `<poem>` OCR-garbage and `{{EB1911 fine
-# print/e}}`).  Most-specific opener — `{{chart2/start` is fully
-# unambiguous.
-_CHART2_RE = re.compile(
+# GENEALOGY: the multi-template region for a chart2 / familytree / tree-chart
+# grid macro (covers `{{missing table}}`, `{{center|...}}`, `{{EB1911 fine
+# print/s}}` wrappers before the `…/start`…`…/end` block, plus an optional
+# trailing `<poem>` OCR-garbage and `{{EB1911 fine print/e}}`).  Most-specific
+# opener — the `…/start` of the three families is fully unambiguous.
+_GENEALOGY_RE = re.compile(
     r"(?:\{\{missing table\}\}\s*(?:\x01PAGE:\d+\x01)?\s*)?"
     r"(?:\{\{center\|[^}]*\}\}\s*)?"
     r"(?:\{\{EB1911 fine print/s\}\}\s*)?"
-    r"\{\{chart2/start[^}]*\}\}.*?\{\{chart2/end\}\}"
+    r"\{\{(?:chart2|familytree|tree\s*chart)/start[^}]*\}\}.*?"
+    r"\{\{(?:chart2|familytree|tree\s*chart)/end\}\}"
     r"(?:\s*<poem>.*?</poem>)?"
     r"(?:\s*\{\{EB1911 fine print/e\}\})?",
     re.DOTALL | re.IGNORECASE,
@@ -236,10 +236,8 @@ _TITLE_RE = re.compile(r"«TITLE».*?«/TITLE»", re.DOTALL)
 # opener-hint position the linear scanner walks this list and uses
 # the first recognizer whose pattern matches.
 _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
-    # The `{{chart2/start}}…{{chart2/end}}` region — a paired open/close span,
-    # so it shares the PAIRED_WRAPPER shape with the `{{NAME/s}}…{{NAME/e}}`
-    # centring family below; the classifier routes the chart2 name → CHART2.
-    (SHAPE_PAIRED_WRAPPER,    _CHART2_RE),
+    # (Genealogy `…/start…/end` is bounded in a dedicated block above the generic
+    #  `{{…}}` recognizer — it can't ride this loop, which runs AFTER the generic.)
     # `<section begin/end/>` — a self-closing structural transclusion marker.
     # Carved by the generic HTML_SELF_CLOSING shape; the classifier routes the
     # `section` tag name → SECTION label (its producer reads the raw tag).
@@ -570,6 +568,17 @@ def _walk_balanced_shapes(
             pe = _paired_wrapper_end(text, opener_pos)
             if pe is not None:
                 matched = (pe, SHAPE_PAIRED_WRAPPER, text[opener_pos:pe])
+
+        # Genealogy grid macro `{{chart2/start}}…/end` (+ familytree / tree-chart)
+        # — also a PAIRED_WRAPPER span (classifier routes → CHART2), but it uses
+        # `…/start`…`…/end`, not `/s`…`/e`, so `_paired_wrapper_end` above won't
+        # catch it.  MUST be here, before the generic `{{…}}` recognizer below, or
+        # that claims the bare `{{chart2/start}}` opener as a lone DOUBLE_BRACE and
+        # the block shatters into per-row spacers/frames.
+        if matched is None:
+            gm = _GENEALOGY_RE.match(text, opener_pos)
+            if gm is not None:
+                matched = (gm.end(), SHAPE_PAIRED_WRAPPER, gm.group(0))
 
         # Block HTML element (`<table>`/`<ref>`/`<poem>`/`<math>`/`<score>`)
         # — bounded by the one balanced rule, so a nested construct can't

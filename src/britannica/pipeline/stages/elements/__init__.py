@@ -24,7 +24,7 @@ from britannica.pipeline.stages.elements._ref import (
     _ref_attrs,
 )
 from britannica.pipeline.stages.elements._image import (
-    _process_chart2,
+    _process_genealogy,
     _process_image_from_raw,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
@@ -707,7 +707,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # for the `{|`-wrapped form, recurses the caption/attribution cells.
     "DJVU_CROP": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
-    "CHART2": lambda raw, inner, ctx, reg: _process_chart2(raw, ctx),
+    "CHART2": lambda raw, inner, ctx, reg:
+        _process_genealogy(raw, ctx, lambda s: process_elements(s, ctx)),
     "MATH": lambda raw, inner, ctx, reg: _process_math(inner),
     "SCORE": lambda raw, inner, ctx, reg: _process_score(inner),
     "REF_SELF": lambda raw, inner, ctx, reg:

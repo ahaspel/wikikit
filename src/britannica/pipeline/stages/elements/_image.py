@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import re
 
-from britannica.image_assets import CHART2_IMAGES
+from britannica.image_assets import GENEALOGY_IMAGES
 from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
@@ -211,19 +211,27 @@ _RAW_DJVU_REF_RE = re.compile(r"EB1911\s*-\s*Volume\s*(\d+)\.djvu/(\d+)", re.IGN
 # caption run.  `caption position` is layout-only (our caption always renders
 # under the image) and ignored.  Without this the walker doesn't recognize the
 # macro and all ~17 figures fall to body-text's catch-all and vanish.
-def _process_chart2(raw: str, context: ElementContext) -> str:
-    """Replace a chart2 genealogical tree with a pre-cropped page scan image.
+_GENEALOGY_INNER_REF = re.compile(r"<ref\b[^>]*>[\s\S]*?</ref>", re.IGNORECASE)
 
-    The 5 chart2 blocks in the encyclopedia have been manually cropped
-    from DjVu page scans and saved as chart2_volNN_pageNNNN.jpg.
-    """
+
+def _process_genealogy(raw: str, context: ElementContext, recurse) -> str:
+    """A ``{{chart2}}`` / ``{{familytree}}`` / ``{{Tree chart}}`` genealogical-tree
+    block → its pre-cropped page-scan image (the grid macro renders to a mess).
+
+    The crops are a fixed, corpus-verified set — exactly seven, each on a distinct
+    volume (``GENEALOGY_IMAGES``) — so the lookup keys on volume.  A tree node can
+    carry an inner ``<ref>`` footnote (vol-28 chart2; vol-7 COWPER familytree); the
+    tree becomes a flat image so the note can't sit on a node — ``recurse`` it to a
+    ``«FN»`` emitted after the image, where it survives as an ordinary article
+    footnote.  (The old preprocess chart2 substitution dropped that vol-28 ref; the
+    familytree one rescued it.  Both now flow through here, handled alike.)"""
     vol = context.volume
-    # Try all known charts for this volume
-    for (v, p), filename in CHART2_IMAGES.items():
-        if v == vol:
-            return f"{{{{IMG:{filename}|Genealogical table}}}}"
-    # Unknown chart — strip rather than crash
-    return ""
+    filename = next(
+        (fn for (v, _p), fn in GENEALOGY_IMAGES.items() if v == vol), None)
+    if not filename:
+        return ""   # unknown volume — strip rather than leak the raw grid macro
+    refs = "".join(recurse(r) for r in _GENEALOGY_INNER_REF.findall(raw))
+    return build_img_marker(filename, "Genealogical table") + refs
 
 
 # An IMAGE element's raw is `[[File:…]]` plus an OPTIONAL trailing caption

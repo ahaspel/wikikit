@@ -102,12 +102,13 @@ def _db_name(raw: str) -> str:
 # need their children's labels — composites finalise after the inner
 # recursion has unwound.
 
-# The chart2 family inside the PAIRED_WRAPPER shape: a `{{chart2/start}}…
-# {{chart2/end}}` region (the walker's `_CHART2_RE` carves it, optionally with a
-# `{{center|…}}` / `{{EB1911 fine print/s}}` prefix, so the opener isn't always
-# the first token — match anywhere in the raw).  Everything else PAIRED_WRAPPER
-# is the `{{NAME/s}}…{{NAME/e}}` centring family → CENTER.
-_CHART2_FAMILY_RE = re.compile(r"\{\{\s*chart2\s*/\s*start", re.IGNORECASE)
+# The genealogy family inside the PAIRED_WRAPPER shape: a chart2 / familytree /
+# tree-chart `…/start`…`…/end` region (the walker's `_GENEALOGY_RE` carves it,
+# optionally with a `{{center|…}}` / `{{EB1911 fine print/s}}` prefix, so the
+# opener isn't always the first token — match anywhere in the raw).  Everything
+# else PAIRED_WRAPPER is the `{{NAME/s}}…{{NAME/e}}` centring family → CENTER.
+_CHART2_FAMILY_RE = re.compile(
+    r"\{\{\s*(?:chart2|familytree|tree\s*chart)\s*/\s*start", re.IGNORECASE)
 
 _HTML_TAG_NAME_RE = re.compile(r"^<\s*([A-Za-z][A-Za-z0-9]*)", re.IGNORECASE)
 _TEMPLATE_NAME_RE = re.compile(r"^\{\{\s*([^|{}<>\n\s]+)")
@@ -687,8 +688,8 @@ def _derive_label(
         return "BODY"
     if shape == SHAPE_PAIRED_WRAPPER:
         # One paired open/close structure, two families distinguished by NAME:
-        # `{{chart2/start}}…{{chart2/end}}` → CHART2; every other
-        # `{{NAME/s}}…{{NAME/e}}` centring wrapper → CENTER.
+        # a chart2 / familytree / tree-chart grid macro → CHART2 (the genealogy
+        # producer); every other `{{NAME/s}}…{{NAME/e}}` centring wrapper → CENTER.
         if _CHART2_FAMILY_RE.search(raw):
             return "CHART2"
         return "CENTER"
