@@ -39,6 +39,8 @@ def process_spacer(raw: str) -> str:
         return "***"
     if low == "shy":
         return "­"  # soft hyphen
+    if low == "ae":
+        return "æ"  # æ ligature glyph
     if name in _ESCAPE:
         return _ESCAPE[name]
     # clear / anchor / unknown leaf → nothing in linear flow.

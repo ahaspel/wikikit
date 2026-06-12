@@ -144,6 +144,25 @@ _HWS_HWE_SEAM = re.compile(
     _HWS + r"(" + _BRIDGE_WS_SEC + r")(\x01PAGE:\d+\x01)(" + _BRIDGE_WS_SEC + r")"
     + _HWE, re.IGNORECASE)
 
+# ``{{EB1911 Page Heading|page-no|running-title|…}}`` — pure page chrome (the
+# scan's running header, emitted at the top of every page inside ``<noinclude>``).
+# It carries NO article content; strip the whole template before the walker.  It
+# is page furniture exactly like ``{{nop}}`` — a step-1 source-clean, no content
+# decision.  Most are inside ``<noinclude>`` (already dropped) but the standalone
+# survivors must not reach the walker.
+_PAGE_HEADING = re.compile(
+    r"\{\{\s*EB1911 Page Heading\b[^{}]*\}\}", re.IGNORECASE)
+
+# Survivor half-word templates — an ``{{hws}}``/``{{hwe}}`` pair that the seam
+# rule above could NOT weld (the two halves don't straddle a single ``\x01PAGE``
+# marker because the OCR split them differently, or one half stands alone).  The
+# full word is param 2 of EACH, so the faithful render is: emit the whole word
+# ONCE at the START (``{{hws|appear|appearances}}`` → ``appearances``) and drop
+# the END (``{{hwe|ances|appearances}}`` → ``""``, the whole word already shown
+# by its start).  Same "emit the full word once" semantics as the seam weld.
+_HWS_STANDALONE = re.compile(_HWS, re.IGNORECASE)
+_HWE_STANDALONE = re.compile(_HWE, re.IGNORECASE)
+
 
 def make_stream(pages) -> str:
     """Join prepared (corrected, quote-run-converted) article pages into one
@@ -236,10 +255,16 @@ def preprocess(stream: str) -> str:
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = _NOP.sub("", stream)                          # {{nop}} no-op chrome + its line
+    stream = _PAGE_HEADING.sub("", stream)                 # {{EB1911 Page Heading|…}} page chrome
     stream = _REF_FOLLOW_LINE.sub(r"\1", stream)           # <ref follow> chrome line
     stream = strip_html_comments(stream)
     stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
+    # Half-word templates the seam weld couldn't pair (split differently than the
+    # page marker, or standing alone): emit the full word once at the start, drop
+    # the end — the same "whole word once" semantics as the seam weld above.
+    stream = _HWS_STANDALONE.sub(r"\1", stream)            # {{hws|frag|WORD}} → WORD
+    stream = _HWE_STANDALONE.sub("", stream)               # {{hwe|frag|WORD}} → ""
     stream = _decode_entities(stream)             # presentational HTML entities → chars
     return stream

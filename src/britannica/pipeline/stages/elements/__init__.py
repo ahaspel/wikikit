@@ -35,6 +35,8 @@ from britannica.pipeline.stages.elements._link import (
 from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
+from britannica.pipeline.stages.elements._frame import (
+    process_frame, process_refs, process_missing)
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
@@ -72,13 +74,9 @@ from britannica.pipeline.stages.elements._tables import (
     _CHEM_BRACKET_IMG_RE,
     _has_chem_equation_content,
     _has_chem_reaction_content,
-    _is_single_column_table,
-    _is_verse_table,
     _process_chemistry_layout,
     _process_inline_glyph_wrapper,
     _process_table_unified,
-    _table_grid,
-    split_wiki_row,
 )
 
 
@@ -318,7 +316,7 @@ def _process_lb(inner, context):
     to literal "lb").  Peel the `lb-` name + optional pipe, then RETURN the quantity
     through the loop (a nested `{{tfrac}}`/`{{sub}}` in N is produced by its own
     producer) — DOUBLE_BRACE is a leaf, so the producer recurses its own content."""
-    rest = re.sub(r"^\s*lb-\s*\|?\s*", "", inner, flags=re.IGNORECASE).strip()
+    rest = re.sub(r"^\s*lb-?\s*\|?\s*", "", inner, flags=re.IGNORECASE).strip()
     rest = process_elements(rest, context, _allow_figure=False).strip()
     return f"{rest} lb" if rest else "lb"
 
@@ -628,10 +626,17 @@ def _process_fraction(inner, context):
     each slot to ``process_elements``), so a `{{Greek}}`/`{{sub}}`/`<math>` inside is
     produced by its own producer.  Replaces body-text's ``_expand_fractions`` flatten."""
     from britannica.pipeline.stages.elements._fraction import (
-        _render_fraction)
+        _render_fraction, render_over_fraction)
     recurse = (lambda s: process_elements(s, context, _allow_figure=False))
     bar = inner.find("|")                       # strip the `name` token
     if bar < 0:
+        # Bar-less LaTeX-ish `num \over den` form (`{{1\over 2}}` /
+        # `{{\it a \over b}}` / `{{\kappa\over\kappa'}}`) — no `name|` token, the
+        # whole inner is the fraction.  (Reaches the producer only via the bare
+        # standalone form; in real bodies every `\over` rides inside an opaque
+        # `<math>`, so this is the harness-exercised / defensive path.)
+        if r"\over" in inner:
+            return render_over_fraction(inner, recurse)
         return inner
     rendered = _render_fraction(inner[bar:], recurse)
     if inner[:bar].strip().lower() == "binom":
@@ -814,6 +819,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(raw, ctx),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
+    # FRAME — a layout frame (multicol / div-col / outdent / hanging indent /
+    # familytree / …).  Drop the presentation scaffolding, recurse + keep content.
+    "FRAME": lambda raw, inner, ctx, reg: process_frame(raw, ctx),
+    # REFS — a footnote-list emitter (smallrefs / reflist / ref / blockref) → empty
+    # (footnotes render inline in this edition).
+    "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),
+    # MISSING — a missing-asset placeholder → a visible `[missing …]` stub.
+    "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
     # lang/sic/dropinitial/fqm unwrap to the display arg.
     "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
@@ -915,20 +928,6 @@ def _is_chemistry_layout_pred(raw: str, inner: str,
             or _has_chem_reaction_content(raw_inner))
 
 
-_DATA_TABLE_HEADER_RE = re.compile(
-    r'border\s*=\s*"?[1-9]'
-    r'|rules\s*='
-    r'|class\s*=\s*"[^"]*(?:wikitable|tablecolhd|border)',
-    re.IGNORECASE,
-)
-
-# Image namespace link.  The `File:`/`Image:` namespace disambiguates an
-# image from an ordinary `[[wikilink]]`, so a match is reliably an image.
-# (Same pattern recurs in ~6 places across the package — `_layout`'s
-# `_PROSE_FIG_IMG_RE` etc.; consolidating those is its own cleanup.)
-_IMAGE_NS_LINK_RE = re.compile(r"\[\[(?:File|Image):[^\]]*\]\]", re.IGNORECASE)
-
-
 def _raw_inner(raw: str) -> str:
     """Peel a wikitable / HTML-table's OWN outer delimiters, returning the
     raw inner bytes (un-placeholderized).  Mirrors ``strip_outer`` for the
@@ -942,45 +941,6 @@ def _raw_inner(raw: str) -> str:
     if m:
         return re.sub(r"</table>\s*$", "", s[m.end():], flags=re.IGNORECASE)
     return s
-
-
-def _mask_nested_tables_all(text: str) -> str:
-    """Mask BOTH nested-table flavors — wiki ``{|…|}`` AND HTML
-    ``<table>…</table>`` — so a predicate's "at my own level" scan can't
-    pick up content that belongs to a nested table.  Masking only the wiki
-    form let a nested ``<table><poem>…</poem></table>`` leak its ``<poem>``
-    into the poem-wrapper gate (INTERPOLATION, vol 14 — the bug this
-    prevents).  Every this-level predicate scan must use this, not the
-    wiki-only ``_mask_nested_tables``."""
-    from britannica.pipeline.stages.elements._table_decompose import (
-        _mask_nested_tables,
-    )
-    masked, _ = _mask_nested_tables(text)                        # nested {|…|}
-    return re.sub(r"<table\b[\s\S]*?</table>", "", masked,
-                  flags=re.IGNORECASE)                            # nested <table>
-
-
-def _top_level_image_present(raw: str) -> bool:
-    """True iff an image namespace link (``[[File:…]]`` / ``[[Image:…]]``)
-    sits at the table's OWN level — not inside a nested table.
-
-    Reproduces the inner_registry's ``has_image`` (a direct IMAGE /
-    INLINE_IMAGE child) from raw alone: peel the outer, mask nested tables
-    (so a nested figure's image doesn't count as ours), then look for the
-    image namespace.  ``[[File:`` / ``[[Image:`` is unambiguous — no
-    wikilink collision — so a surviving top-level match is a direct image
-    child.  This is what lets the ICL gate's single-figure signal stop
-    reading the registry (the locality invariant for the predicate)."""
-    return bool(_IMAGE_NS_LINK_RE.search(
-        _mask_nested_tables_all(_raw_inner(raw))))
-
-
-def _is_brace_table(raw: str, inner: str,
-                     registry: ElementRegistry | None) -> bool:
-    """Table contains a `{{brace}}` / `{{brace|…}}` template — the
-    poem-with-translation layout pattern.  Always rendered as
-    DATA_TABLE even when carrying rowspan."""
-    return bool(re.search(r"\{\{brace(?:\s*\||\s*\})", raw, re.IGNORECASE))
 
 
 _INLINE_GLYPH_ROW_RE = re.compile(r"(?:^|\n)\s*\|-")  # shared row separator
@@ -1005,144 +965,20 @@ def _is_inline_glyph_wrapper(raw: str, inner: str,
     return not _INLINE_GLYPH_ROW_RE.search(inner)
 
 
-def _has_data_signal_and_ts(raw: str, inner: str,
-                             registry: ElementRegistry | None) -> bool:
-    """Header carries a data-table signal AND any cell uses `{{Ts}}`
-    styling templates.  The combination breaks `_process_table`'s
-    cell parsing (Ts adds phantom pipes); needs HTML rendering.
-
-    NOTE (#29): #28 made `_process_table` handle Ts cells, so re-routing the
-    PLAIN no-span tables here to DATA_TABLE is the intended knock-out — but the
-    attempt surfaced a pre-existing `_process_table` bug (it DROPS a sub-header
-    row, e.g. AGRICULTURE's "Average Acreage … Whole Farm | Proportion" table).
-    Re-route is parked until that DATA_TABLE row-drop is fixed."""
-    header = raw.split("\n", 1)[0]
-    has_data_signal = (
-        re.search(r'border\s*=\s*"?[1-9]', header, re.IGNORECASE) or
-        re.search(r'rules\s*=', header, re.IGNORECASE) or
-        re.search(r'class\s*=\s*"?[^"\s]*(?:wikitable|tablecolhd|border)',
-                  header, re.IGNORECASE))
-    return bool(has_data_signal) and bool(
-        re.search(r'\{\{[Tt]s\|', raw))
-
-
-def _has_rowspan_or_colspan(raw: str, inner: str,
-                             registry: ElementRegistry | None) -> bool:
-    """Cell-spanning attributes — needs HTML passthrough to render
-    properly.  Last-resort COMPLEX_HTML route for tables that aren't
-    caught by more-specific predicates above (chemistry, layout
-    wrapper, math-dominant, brace)."""
-    return bool(
-        re.search(r"rowspan\s*=", raw, re.IGNORECASE)
-        or re.search(r"colspan\s*=", raw, re.IGNORECASE))
-
-
-def _is_poem_wrapper_pred(raw: str, inner: str,
-                           registry: ElementRegistry | None) -> bool:
-    """A table whose content is just `<poem>` child(ren) — a centred quotation
-    (BELL/BOAT), verse not a table.  STRUCTURAL: ≥1 POEM child, no IMAGE, no
-    data-table header (`!` / `<th>` / `<caption>`).  Placed BEFORE
-    `_is_layout_wrapper_pred` so poem-wrappers route to VERSE_TABLE rather than
-    being swept into the LAYOUT_WRAPPER catch-all.
-
-    Reads RAW, not the registry/placeholders: peel the outer, mask nested
-    tables (so only THIS table's own cells are inspected), then look for a
-    `<poem>` at this level and require no image and no data-table header.
-    Registry-free per the locality invariant, and flip-ready (works the
-    same whether `inner` arrives placeholderized or raw)."""
-    masked_inner = _mask_nested_tables_all(_raw_inner(raw))
-    if "<poem" not in masked_inner.lower():
-        return False
-    if _top_level_image_present(raw):
-        return False
-    if (re.search(r"^\s*!", masked_inner, re.MULTILINE)
-            or re.search(r"<(?:th|caption)\b", masked_inner, re.IGNORECASE)):
-        return False
-    # Every cell must be JUST a `<poem>` (+ layout noise) — NO substantive
-    # non-poem text.  A caption/legend cell ("Figs. 1-11.—…", BRACHIOPODA)
-    # means this is a figure-legend table, not a verse wrapper; routing it
-    # here would drop that caption.
-    for cells in _table_grid(masked_inner):
-        for content in cells:
-            content = re.sub(r"<poem\b[^>]*>[\s\S]*?</poem>", "", content,
-                             flags=re.IGNORECASE)               # poem body
-            content = re.sub(r"\{\{[^{}]*\}\}", "", content)    # Ts / sc / etc.
-            content = re.sub(r"«/?[A-Z]+»|&[a-zA-Z]+;|&#\d+;", "", content)
-            if re.search(r"[A-Za-z0-9]", content):
-                return False
-    return True
-
-
-def _is_verse_table_pred(raw: str, inner: str,
-                          registry: ElementRegistry | None) -> bool:
-    """A 2-column quotation layout (hanging-quote col1 + verse lines).
-    Content-recognition last resort — no structural signal separates verse
-    from a 2-column data table.  Placed near the end (before single-col and
-    the DATA_TABLE catch-all): only re-labels tables that would otherwise be
-    DATA_TABLE."""
-    return _is_verse_table(inner)
-
-
-def _is_single_column_table_pred(raw: str, inner: str,
-                                  registry: ElementRegistry | None) -> bool:
-    """A `{|…|}` whose every non-empty row holds exactly one content
-    cell — a boxed/centred run of text, not a data grid.  Its producer
-    renders it as a `«PRE:` block.
-
-    Placed last (just before the DATA_TABLE catch-all) so it only ever
-    re-labels tables that would otherwise fall through to DATA_TABLE; it
-    never steals a table a more-specific predicate (layout/math/complex)
-    already claimed.  This is the first shape lifted out of
-    `_process_table`'s hidden dispatch into the classifier."""
-    return _is_single_column_table(inner)
-
-
-def _always_true(raw: str, inner: str,
-                  registry: ElementRegistry | None) -> bool:
-    """Catch-all — anything reaching here is a regular DATA_TABLE."""
-    return True
-
-
-# Two priority lists, tried in order.  (The old ICL family dispatch
-# that sat between them — `_is_icl_family` gate + `_classify_icl_shape`
-# sub-labels — is deleted along with the whole shadow recognizer.  A
-# figure `{|`-table is no longer a recognized family: it falls through
-# to TABLE and the one producer recurses its cells to image + prose,
-# exactly like any other table.)
-#
-#   1. PRE_ICL — more-specific shapes that take precedence because their
-#      producer parses raw bytes or needs its own label (DJVU crops,
-#      compound tables, chemistry layouts).
-#   2. POST_ICL — every remaining table shape, all labelled TABLE.
-_PRE_ICL_PREDS: list[tuple[Callable[
+# The only `{|`/`<table>` shapes needing a label OTHER than the plain TABLE
+# the one producer gives every table: inline-glyph wrappers and chemistry
+# layouts (their producers parse raw bytes / need their own label), with the
+# compound-table guard claiming TABLE ahead of chem.  Everything else is the
+# TABLE default in `_classify_table`.  (There is no second list any more: the
+# post-ICL apparatus that "sub-classified" verse / single-column / poem-wrapper
+# / brace / data-signal / rowspan ALL emitted TABLE — pure vestige of the
+# pre-collapse per-shape producers — deleted, helpers and all, along with the
+# ICL/legend shadow recognizer before it.)
+_TABLE_LABEL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
     (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
     (_is_compound_table_pred,    "TABLE"),
     (_is_chemistry_layout_pred,  "CHEMISTRY_LAYOUT"),
-]
-
-
-_POST_ICL_PREDS: list[tuple[Callable[
-    [str, str, "ElementRegistry | None"], bool], str]] = [
-    # The table-family predicates (poem-wrapper / brace-table / data-
-    # signal+ts / rowspan / verse / single-column / catch-all) ALL emit
-    # the one "TABLE" label — the producer (`_process_table_unified`)
-    # decomposes every table shape identically, so the sub-distinction is
-    # meaningless downstream.  Math equation layouts are NOT a special
-    # case any more: `<math>` is the raw's own self-labeling leaf, so a
-    # table of math cells is just a TABLE whose cells recurse to `<math>`
-    # — rendered with its original table structure (the fraction bars the
-    # old flattening `_process_equation_layout` silently dropped) intact.
-    # Every shape emits TABLE — the one producer decomposes them identically
-    # (LAYOUT_WRAPPER collapsed too; the legend/figure shadow recognizer that
-    # distinguished these shapes is deleted).
-    (_is_poem_wrapper_pred,          "TABLE"),
-    (_is_brace_table,                "TABLE"),
-    (_has_data_signal_and_ts,        "TABLE"),
-    (_has_rowspan_or_colspan,        "TABLE"),
-    (_is_verse_table_pred,           "TABLE"),
-    (_is_single_column_table_pred,   "TABLE"),
-    (_always_true,                   "TABLE"),
 ]
 
 
@@ -1163,15 +999,14 @@ def _classify_table(raw: str, inner: str,
     Adding a new wikitable kind: add a predicate + entry to the
     appropriate list.
     """
-    for predicate, label in _PRE_ICL_PREDS:
+    for predicate, label in _TABLE_LABEL_PREDS:
         if predicate(raw, inner, inner_registry):
             return label
-    # (ICL sort removed — figure `{|`-tables are de-recognized; they fall through
-    # to the post-ICL predicates / TABLE, which the caller treats identically.)
-    for predicate, label in _POST_ICL_PREDS:
-        if predicate(raw, inner, inner_registry):
-            return label
-    # Unreachable — `_always_true` catches everything not matched above.
+    # Every remaining `{|`/`<table>` is one TABLE: the producer decomposes all
+    # shapes identically, so there is no sub-distinction to draw.  (The post-ICL
+    # predicate apparatus — verse / single-column / poem-wrapper / brace /
+    # data-signal / rowspan — ALL emitted this same TABLE label; pure vestige of
+    # the pre-collapse per-shape producers, deleted along with its helpers.)
     return "TABLE"
 
 

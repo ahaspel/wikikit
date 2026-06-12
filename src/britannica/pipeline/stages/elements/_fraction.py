@@ -46,3 +46,30 @@ def _render_fraction(args: str, recurse) -> str:
     if len(pos) == 1:
         return _frac("1", pos[0])
     return ""
+
+
+def render_over_fraction(inner: str, recurse) -> str:
+    """Produce one fraction from the bar-less ``num \\over den`` form (the LaTeX-ish
+    ``{{1\\over 2}}`` / ``{{\\it a \\over b}}`` / ``{{\\kappa\\over\\kappa'}}`` family —
+    no ``name|`` token, the whole inner is ``num \\over den``).
+
+    Splits on the literal ``\\over`` token, recurses each slot through ``recurse``
+    (so a nested element / glyph in a numerator is produced, not left raw), and
+    renders via the same vulgar-Unicode-or-``n/d`` rule the piped form uses.  A
+    leading ``\\it``/``\\rm`` LaTeX font directive on a slot is a presentation hint
+    with no Unicode equivalent here — dropped, the bare variable kept."""
+    num, _sep, den = inner.partition(r"\over")
+    if not _sep:                          # no \over token → nothing to do
+        return inner
+    num = _strip_latex_font(recurse(num).strip())
+    den = _strip_latex_font(recurse(den).strip())
+    return _frac(num, den)
+
+
+_LATEX_FONT_RE = re.compile(r"^\\(?:it|rm|bf|mathit|mathrm|textstyle)\s+")
+
+
+def _strip_latex_font(slot: str) -> str:
+    """Drop a leading ``\\it``/``\\rm``/… LaTeX font directive (no Unicode form here);
+    keep the bare slot content."""
+    return _LATEX_FONT_RE.sub("", slot)

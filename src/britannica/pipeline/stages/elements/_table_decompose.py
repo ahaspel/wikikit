@@ -1,34 +1,20 @@
-"""Canonical recursive table decomposition: table → rows → cells → body-text.
+"""Table decomposition leaf: produce rows → cells, reassemble the marker.
 
-The architectural principle (per
-[[feedback_table_decomposes_recursively]]):
+The chop — one nesting-aware recognizer for both `{|` and `<table>`
+syntaxes — lives in `_table_fold.recognize_table`; the attribute slot is
+recursed (not whitelisted) by `_table_fold.fold_cell_styles`.  This module
+holds what wraps that chop:
 
-  * **Table** extracts ROWS.  Peels `{|…|}` (wiki) or `<table>…</table>`
-    (HTML) plus the opener-attribute slot.  Returns the canonical row
-    list.
-  * **Row** extracts CELLS.  Peels `|-…` / `<tr …>` plus its attribute
-    slot.  Returns the canonical cell list.
-  * **Cell** produces its own CONTENT by recursing through the ONE
-    dispatch (`process_elements`, via the `cell_recurse` hook) — the same
-    engine that processes article prose.  Its attribute slot feeds
-    `_cell_styles` and is consumed entirely.
+  * `produce_table_rows` — `recognize_table` + per-cell span/header
+    detection and the content recurse (`produce_cell`).
+  * `produce_cell` — `fold_cell_styles` for the attr slot, `cell_recurse`
+    (`process_elements`) for the body.  A cell is prose in a box: its
+    content recurses through the ONE dispatch, each nested element handled
+    by its own producer exactly as article prose — no "cell context" mode.
+  * `assemble_html_rows` — reassemble `«HTMLTABLE:<table>…</table>«/HTMLTABLE»`.
 
-Cell content reaches the dispatch in a context indistinguishable from a
-paragraph in prose — same producers, same totality argument.  There is no
-"table context" or "cell context" mode; a `{{sc|…}}` / fraction / styled
-wrapper / nested table in a cell is handled by its OWN producer, exactly
-as in prose.
-
-This module provides shape-agnostic infrastructure.  Producers (single
-data-table producer, HTML-table producer, special-shape producers in
-the layout / chemistry / math families) pick the appropriate ROW
-EXTRACTOR for their source flavor, then dispatch through the uniform
-cell-produce + assemble pipeline below.
-
-Status: Step 1 — additive infrastructure, no existing producers
-migrated yet (they continue using their inline logic).  Step 2 migrates
-`_process_html_table` to the canonical path; subsequent steps the wiki
-and special-shape producers.
+It also carries `split_wiki_rows_raw`, a `|-` row-splitter used by `_tables`'
+chem `_table_grid` (the table producer proper chops via `recognize_table`).
 """
 from __future__ import annotations
 
@@ -37,143 +23,25 @@ from typing import Callable
 
 TextTransform = Callable[[str], str]
 
-# A nested-table producer: raw ``{|…|}`` bytes -> produced marker string.
-# Passed into :func:`produce_cell` by a caller that owns recursion; the
-# cell extractor hands it each raw nested table it finds in cell content.
-# See the module note on producer-owned recursion below.
-NestedTableProducer = Callable[[str], str]
 
-
-# ── Canonical data shapes ───────────────────────────────────────────────
-#
-# A `Cell` is `(sep, attr_part, content)`:
-#   * `sep` — `'|'` for data cells (wiki `|`/`||`, HTML `<td>`) or `'!'`
-#     for header cells (wiki `!`/`!!`, HTML `<th>`).
-#   * `attr_part` — raw attribute prefix (wiki `colspan=2 {{Ts|ac}}` or
-#     HTML `colspan="2" style="text-align:center"`).  Consumed entirely
-#     by `_cell_styles`; nothing here reaches the content recursion.
-#   * `content` — raw cell body.  Recursed through `process_elements`
-#     (the `cell_recurse` hook) by `produce_cell` below.
-#
-# A `Row` is `(row_attr_part, list[Cell])`:
-#   * `row_attr_part` — wiki `|-<attrs>` tail or HTML `<tr <attrs>>`
-#     attribute string.  Today the canonical marker format carries no
-#     row-level style slot; we extract it so the data is available for
-#     future marker-format extension without re-touching the extractors.
-
-Cell = tuple[str, str, str]
-Row = tuple[str, list[Cell]]
-
-
-# ── Nested-table recognition (producer-owned recursion) ─────────────────
-#
-# The flat-walker contract: the walker bounds only the OUTERMOST shapes
-# and never descends into element bodies; each producer owns its own
-# recursion privately.  For tables that means the cell extractor must
-# recognize a raw nested ``{|…|}`` sitting in cell content and recurse on
-# it, rather than relying on the walker to have lifted it into a
-# placeholder + ``inner_registry`` first.
-#
-# THIS PATH IS DORMANT TODAY.  The walker still placeholderizes nested
-# tables during classification, so in production a cell's content carries
-# a ``\x03ELEM:N\x03`` placeholder, never raw ``{|`` bytes — the masking
-# below matches nothing and :func:`produce_cell`'s recursion (opt-in via
-# ``recurse``) is never wired by a caller.  It wakes up only when the
-# walker stops descending into ``SHAPE_BRACE_PIPE`` (the eventual flip),
-# at which point a nested table reaches the cell raw and the producer
-# recurses.  Until then it is exercised only by direct-feed unit tests.
-
-# Nested-table mask token: ``\x03``-delimited so ``split_wiki_row``'s
-# existing placeholder protection treats it as opaque content (it carries
-# no ``|`` / newline, so the row/cell splitters can't fragment it).  The
-# ``NT`` infix keeps it distinct from the walker's ``ELEM:`` placeholders.
-_NESTED_SENTINEL = "\x03"
-
-
-def _nested_token(i: int) -> str:
-    return f"{_NESTED_SENTINEL}NT{i}{_NESTED_SENTINEL}"
-
-
-def find_nested_table_spans(text: str) -> list[tuple[int, int]]:
-    """Return ``(start, end)`` for each top-level balanced ``{|…|}`` span.
-
-    Depth-counted over ``{|`` / ``|}`` token pairs, so a table nested
-    inside a nested table is wholly contained within the OUTER span (the
-    outer span alone is returned; whatever produces that span finds the
-    inner one on its own next descent — recursion at the right layer).
-    A degenerate unclosed ``{|`` runs the span to end-of-string.
-    """
-    spans: list[tuple[int, int]] = []
-    i, n = 0, len(text)
-    while i < n:
-        if text.startswith("{|", i):
-            depth, j = 1, i + 2
-            while j < n and depth:
-                if text.startswith("{|", j):
-                    depth += 1
-                    j += 2
-                elif text.startswith("|}", j):
-                    depth -= 1
-                    j += 2
-                else:
-                    j += 1
-            spans.append((i, j))
-            i = j
-        else:
-            i += 1
-    return spans
-
-
-def _mask_nested_tables(text: str) -> tuple[str, list[str]]:
-    """Replace each top-level balanced ``{|…|}`` with an opaque one-line
-    token.  Returns ``(masked_text, raw_spans)`` where ``raw_spans[i]`` is
-    the original bytes for ``_nested_token(i)``.  No-op (returns the input
-    and an empty list) when there is no nested table — the production case.
-    """
-    spans = find_nested_table_spans(text)
-    if not spans:
-        return text, []
-    raw_spans: list[str] = []
-    out: list[str] = []
-    last = 0
-    for start, end in spans:
-        out.append(text[last:start])
-        out.append(_nested_token(len(raw_spans)))
-        raw_spans.append(text[start:end])
-        last = end
-    out.append(text[last:])
-    return "".join(out), raw_spans
-
-
-def _restore_nested(text: str, raw_spans: list[str]) -> str:
-    for i, raw in enumerate(raw_spans):
-        text = text.replace(_nested_token(i), raw)
-    return text
-
-
-# ── Wiki-side row extractor ─────────────────────────────────────────────
+# ── Wiki row split (utility for `_tables`' chem `_table_grid`) ───────────
 
 _WIKI_ROW_SEP_RE = re.compile(r"(?:^|\n)\s*\|-([^\n]*)")
-_WIKI_CAPTION_RE = re.compile(r"(?:^|\n)\s*\|\+\s*([^\n]+)")
 
 
 def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
     r"""Split a wikitable's inner text into ``[(row_attr, raw_row_body)]`` on
-    the canonical ``|-`` row separator — the SINGLE row-splitter the wiki
-    producers share.
+    the canonical ``|-`` row separator.
 
-    The separator is line-anchored AND indent-tolerant (``(?:^|\n)\s*\|-``):
-    it splits a ``|-`` (or ``  |-``) that begins a line and captures that
-    line's tail as the row attribute, but does NOT split on a ``|-`` that
-    appears mid-content.  This replaces the divergent per-producer regexes
-    (``parse_wiki_table``'s line-anchored-no-indent form, ``_process_table``'s
-    unanchored over-splitting one) with one correct shared form.
+    Line-anchored AND indent-tolerant (``(?:^|\n)\s*\|-``): it splits a
+    ``|-`` (or ``  |-``) that begins a line and captures that line's tail as
+    the row attribute, but does NOT split on a ``|-`` mid-content.  The
+    pre-first-``|-`` segment is the first entry, with empty ``row_attr``.
+    Caption (``|+``) lines are NOT dropped — the caller applies its own
+    ``|+`` policy.
 
-    The pre-first-``|-`` segment is the first entry, with empty ``row_attr``.
-    Caption (``|+``) lines are NOT dropped here — each caller applies its own
-    ``|+`` policy.  Nested ``{|…|}`` are NOT masked here (in production cells
-    carry placeholders, never raw ``{|`` — see the module note); callers that
-    need masking (``extract_wiki_rows``) mask before calling.
+    A row-shaped view used by `_tables`' chem `_table_grid`; the table
+    producer proper chops via `_table_fold.recognize_table`.
     """
     parts = _WIKI_ROW_SEP_RE.split(inner)  # [pre, attr1, body1, attr2, body2…]
     rows: list[tuple[str, str]] = [("", parts[0])]
@@ -183,306 +51,79 @@ def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
     return rows
 
 
-# Rows and cells have two/three interchangeable spellings: a ROW is `|-` or
-# `<tr>`; a CELL is `|` (data), `!` (header), or `<td>`/`<th>`.  Source mixes
-# them inside one `{|` table (CEMENT: an HTML `<td>` header above wiki `|`
-# rows).  Rather than flavor-route (single-syntax) and lose one spelling, we
-# canonicalise the HTML spellings to their wiki equivalents up front, so the
-# ONE wiki decomposer sees a uniform table.  No-op when no HTML tokens are
-# present (pure-wiki path stays byte-identical).
-_HTML_CELL_OPEN_RE = re.compile(r"<(t[dh])\b([^>]*)>", re.IGNORECASE)
-
-
-def _canonicalize_html_cells_to_wiki(inner: str) -> str:
-    """`<tr>`→`|-`, `<td attr>`→`|attr|`, `<th attr>`→`!attr|`, closers dropped.
-    Wiki cells self-close at the next cell/row token, so `</td>`/`</tr>` carry
-    no information once the openers are wiki."""
-    if "<t" not in inner.lower():
-        return inner
-    inner = re.sub(r"</t[dh]>|</tr>|</table>|<table\b[^>]*>", "",
-                   inner, flags=re.IGNORECASE)
-    inner = re.sub(r"<tr\b[^>]*>", "\n|-\n", inner, flags=re.IGNORECASE)
-
-    def _cell(m: "re.Match") -> str:
-        mark = "!" if m.group(1).lower() == "th" else "|"
-        attr = m.group(2).strip()
-        return f"\n{mark}{attr}|" if attr else f"\n{mark}"
-    return _HTML_CELL_OPEN_RE.sub(_cell, inner)
-
-
-def extract_wiki_rows(inner: str) -> tuple[str, list[Row]]:
-    """Decompose a wikitable's inner text into `(caption, rows)`.
-
-    `inner` is the source between the outer `{|<attrs>` and `|}`
-    delimiters (the walker has already bounded these).  Caption is the
-    `|+<text>` line if present (returned raw; the caller emits it, its
-    nested elements riding through as placeholders).  Rows are produced by splitting on
-    `|-<attrs>` separators; each row's cells come from
-    :func:`split_wiki_row`.
-
-    HTML cell/row spellings (`<td>`/`<th>`/`<tr>`) inside the wikitable are
-    canonicalised to their wiki equivalents first (see
-    :func:`_canonicalize_html_cells_to_wiki`) so a mixed table decomposes
-    through this one path.
-
-    The pre-`|-` segment is included as a row only when it contains
-    cell content (`|`/`!`-anchored lines).  A bare preamble (caption +
-    blank space) becomes the empty rows list with the caption surfaced.
-    """
-    from britannica.pipeline.stages.elements._tables import split_wiki_row
-
-    inner = _canonicalize_html_cells_to_wiki(inner)
-
-    # Protect balanced nested ``{|…|}`` spans before row-splitting: the
-    # outer ``|-`` row key and ``|+`` caption key would otherwise match a
-    # nested table's own rows and fragment it.  Each span becomes one
-    # opaque token, restored into the owning cell after splitting.  In
-    # production ``masked == inner`` (no raw ``{|`` — see module note), so
-    # this is byte-identical to the un-masked path.
-    masked, raw_spans = _mask_nested_tables(inner)
-
-    cap_m = _WIKI_CAPTION_RE.search(masked)
-    caption = cap_m.group(1).strip() if cap_m else ""
-
-    pieces = _WIKI_ROW_SEP_RE.split(masked)
-    rows: list[Row] = []
-
-    if len(pieces) == 1:
-        cells = split_wiki_row(_drop_caption_lines(pieces[0]))
-        if cells:
-            rows.append(("", cells))
-    else:
-        preamble = _drop_caption_lines(pieces[0])
-        if _has_cell_lines(preamble):
-            cells = split_wiki_row(preamble)
-            if cells:
-                rows.append(("", cells))
-        for i in range(1, len(pieces), 2):
-            row_attrs = pieces[i].strip()
-            body = pieces[i + 1] if i + 1 < len(pieces) else ""
-            cells = split_wiki_row(_drop_caption_lines(body))
-            if cells:
-                rows.append((row_attrs, cells))
-
-    if raw_spans:
-        caption = _restore_nested(caption, raw_spans)
-        rows = [
-            (attrs, [
-                (sep, attr, _restore_nested(content, raw_spans))
-                for sep, attr, content in cells
-            ])
-            for attrs, cells in rows
-        ]
-    return caption, rows
-
-
-def _drop_caption_lines(text: str) -> str:
-    return re.sub(r"(?:^|\n)\s*\|\+[^\n]*", "", text)
-
-
-def _has_cell_lines(text: str) -> bool:
-    lines = text.split("\n")
-    # Any non-bare `|`/`!` line is a definite cell.
-    for ln in lines:
-        s = ln.strip()
-        if s.startswith(("|", "!")) and s not in ("|", "!", "{|"):
-            return True
-    # FALLBACK (only when there's no non-bare cell above): a bare `|`/`!`
-    # opener whose content sits on the following continuation line(s) —
-    # wikitext's `|`⏎`content` spelling.  St Mary's Abbey Fig. 4 writes its
-    # `[[File:…]]` image cell this way; treating the bare `|` as no-cell
-    # silently DROPPED the whole image row.  Must NOT short-circuit the loop
-    # above (a bare `|` followed by `|rowspan=…|…` is an EMPTY cell then a
-    # real one — AGRICULTURE's stats header, which the early return dropped).
-    for idx, ln in enumerate(lines):
-        if ln.strip() not in ("|", "!"):
-            continue
-        for nxt in lines[idx + 1:]:
-            t = nxt.strip()
-            if not t:
-                continue
-            if not t.startswith(("|", "!", "{|")):
-                return True
-            break  # next is a cell/row marker, not this cell's content
-    return False
-
-
-# ── HTML-side row extractor ────────────────────────────────────────────
-
-_HTML_TR_RE = re.compile(r"<tr([^>]*)>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
-_HTML_CELL_RE = re.compile(
-    r"<(t[dh])([^>]*)>(.*?)</\1>", re.DOTALL | re.IGNORECASE)
-_HTML_CAPTION_RE = re.compile(
-    r"<caption[^>]*>(.*?)</caption>", re.DOTALL | re.IGNORECASE)
-
-
-def extract_html_rows(inner: str) -> tuple[str, list[Row]]:
-    """Decompose an HTML table's inner content into `(caption, rows)`.
-
-    `inner` is the source between `<table>` and `</table>` (walker-
-    bounded).  Caption is the `<caption>…</caption>` element if present.
-    Rows come from `<tr>` matches; cells from `<td>`/`<th>` inside each
-    row.  Tables without explicit `<tr>` wrappers (HYDRAULICS-style
-    `<table><td>…</td></table>`) become a single synthetic row.
-    """
-    cap_m = _HTML_CAPTION_RE.search(inner)
-    caption = cap_m.group(1).strip() if cap_m else ""
-
-    rows: list[Row] = []
-    if _HTML_TR_RE.search(inner):
-        for m in _HTML_TR_RE.finditer(inner):
-            row_attrs = m.group(1).strip()
-            cells = _html_cells(m.group(2))
-            if cells:
-                rows.append((row_attrs, cells))
-    else:
-        cells = _html_cells(inner)
-        if cells:
-            rows.append(("", cells))
-    return caption, rows
-
-
-def _html_cells(body: str) -> list[Cell]:
-    cells: list[Cell] = []
-    for m in _HTML_CELL_RE.finditer(body):
-        tag = m.group(1).lower()
-        attrs = m.group(2).strip()
-        content = m.group(3)
-        sep = "!" if tag == "th" else "|"
-        cells.append((sep, attrs, content))
-    return cells
-
-
-# ── Cell producer ──────────────────────────────────────────────────────
-
-def produce_cell(
-    attr_part: str, content: str,
-    recurse: NestedTableProducer | None = None,
-    cell_recurse: "Callable[[str], str] | None" = None,
-) -> tuple[list[str], str]:
-    """Produce one cell: extract its styles, recurse its content through
-    the dispatch.  Returns `(styles, body)`.
-
-    The cell's `attr_part` is consumed entirely by `_cell_styles` —
-    `{{Ts|…}}` codes, inline `style="…"`, `align="…"`/`valign="…"` all
-    become CSS declarations.  Nothing from `attr_part` reaches the
-    content.
-
-    `content` is the cell body, possibly containing inline templates
-    (`{{sc|…}}`, `{{sup|…}}`, foreign-script wrappers, …) and inline
-    HTML (`<span>`, `<i>`, etc.).  With `cell_recurse` set (production) it
-    recurses through `process_elements` — each is handled by its OWN
-    producer, exactly as article prose.  Without it, content passes
-    through unchanged (pre-extracted child placeholders ride to the outer
-    assembler).
-
-    ``recurse`` enables an alternate producer-owned nested-table path:
-    when supplied AND the content carries a raw nested ``{|…|}`` table,
-    each nested table is masked out, the surrounding content passes
-    through, then each nested table's marker — produced by ``recurse(raw)``
-    — is substituted back in.  ``recurse=None`` (the default, every
-    production caller) leaves content untouched; combined with the fact
-    that production cell content never carries raw ``{|`` (it's a
-    placeholder — see module note), this path is dormant.
-    """
-    from britannica.pipeline.stages.elements._tables import _cell_styles
-    styles = _cell_styles(attr_part, content)
-    if not content:
-        return styles, ""
-    if cell_recurse is not None:
-        # THE collapse: the cell body recurses through the ONE dispatch
-        # (`process_elements`) — styled wrappers, fractions, nested tables, math
-        # all handled as the elements they are, instead of re-flattened by a
-        # second body-text pass.  Pre-extracted child placeholders ride through
-        # untouched (they aren't openers, and they aren't THIS recursion's own
-        # placeholders, so its `substitute_top_level_markers` leaves them for
-        # the outer assembler).
-        return styles, cell_recurse(content).strip(" \t")
-    raw_spans: list[str] = []
-    if recurse is not None and "{|" in content:
-        content, raw_spans = _mask_nested_tables(content)
-    body = content.strip(" \t")
-    for i, raw in enumerate(raw_spans):
-        body = body.replace(_nested_token(i), recurse(raw))
-    return styles, body
-
-
-# ── Shared leaf: decompose → produce → assemble ─────────────────────────
-#
-# These three functions are the single recursive-decomposition leaf that
-# every table producer collapses onto (the ICL-family model: many labels,
-# one engine).  They are lifted verbatim from the canonical
-# ``_process_html_table`` spine so a producer that delegates here is
-# byte-identical to that spine for the same logical input.
+# ── Decompose → produce → assemble (the table leaf) ─────────────────────
 #
 # A `ParsedCell` is `(tag, rowspan, colspan, body, styles)`:
-#   * `tag` — `'td'`/`'th'` (header-ness already resolved from `sep`).
+#   * `tag` — `'td'`/`'th'` (header-ness resolved from the cell's `sep`).
 #   * `rowspan`/`colspan` — integer span counts (1 when absent).
 #   * `body` — the produced cell content (recursed through the dispatch).
-#   * `styles` — CSS declarations from `_cell_styles` (full per-cell list).
-# A `ParsedRow` is `list[ParsedCell]`.
-#
-# Status: ADDITIVE / INERT.  No producer dispatches here yet; exercised
-# only by the byte-identity unit test against ``_process_html_table``.
-# Producers migrate one per phase (see the table-collapse plan).
+#   * `styles` — CSS declarations from `fold_cell_styles` (full per-cell list).
 
 ParsedCell = tuple[str, int, int, str, list[str]]
 ParsedRow = list[ParsedCell]
 
 _ROWSPAN_RE = re.compile(r'rowspan\s*=\s*"?(\d+)"?', re.IGNORECASE)
 _COLSPAN_RE = re.compile(r'colspan\s*=\s*"?(\d+)"?', re.IGNORECASE)
-_HTML_FLAVOR_RE = re.compile(r"<table\b|<tr\b|<t[dh]\b", re.IGNORECASE)
 
 
 # A producer-supplied cell-body strategy: `(attr_part, content) ->
 # (styles, body)`.  Lets a producer keep a genuinely irreducible per-cell
-# branch (e.g. `_process_complex_table`'s image cell, which becomes
-# `{{IMG:…}}` and must skip both the content recursion AND the
-# leftover-`{{}}` strip) while still sharing this one decomposition loop.
-# Default `None` uses the canonical `produce_cell` (= `_cell_styles` +
+# branch (e.g. an image cell that becomes `{{IMG:…}}` and must skip the
+# content recursion) while still sharing this one decomposition loop.
+# Default `None` uses the canonical `produce_cell` (= `fold_cell_styles` +
 # content recursion), the uniform leaf.
 CellBody = Callable[[str, str], "tuple[list[str], str]"]
 
 ProducedRow = tuple[str, ParsedRow]  # (row_attr_part, cells)
 
 
+def produce_cell(
+    attr_part: str, content: str,
+    cell_recurse: "Callable[[str], str] | None" = None,
+) -> tuple[list[str], str]:
+    """Produce one cell: extract its styles, recurse its content through the
+    dispatch.  Returns `(styles, body)`.
+
+    The cell's `attr_part` is consumed entirely by `fold_cell_styles` —
+    `{{Ts|…}}` codes, inline `style="…"`, `align=`/`valign=`/`width=`/… all
+    recursed to CSS declarations, nothing dropped.  Nothing from `attr_part`
+    reaches the content.
+
+    `content` is the cell body.  With `cell_recurse` set (production) it
+    recurses through `process_elements` — each inline template / styled
+    wrapper / nested table handled by its OWN producer, exactly as article
+    prose.  Without it, content passes through stripped of edge whitespace.
+    """
+    from britannica.pipeline.stages.elements._table_fold import fold_cell_styles
+    styles = fold_cell_styles(attr_part)
+    if not content:
+        return styles, ""
+    if cell_recurse is not None:
+        return styles, cell_recurse(content).strip(" \t")
+    return styles, content.strip(" \t")
+
+
 def produce_table_rows(
     inner: str,
     *,
-    flavor: str | None = None,
     cell_preclean: TextTransform | None = None,
-    recurse: NestedTableProducer | None = None,
     cell_body: CellBody | None = None,
     cell_recurse: "Callable[[str], str] | None" = None,
 ) -> tuple[str, list[ProducedRow], bool, bool]:
     """Decompose a table's inner source into produced rows — the single
-    row/cell split + span/header detection loop every table producer
-    shares (lifted from `_process_html_table:1963-1990`).
+    row/cell split + span/header detection loop every table producer shares.
 
-    Returns `(caption, rows, has_header, has_span)` where `rows` is a
-    list of `(row_attr_part, ParsedRow)` — the row attribute slot is
-    carried so the assembler emits `<tr style=…>` from it (`assemble_html_rows`
-    parses the row blob via `_cell_styles`, same as a cell attr).
+    Returns `(caption, rows, has_header, has_span)` where `rows` is a list
+    of `(row_attr_part, ParsedRow)`.  The chop is `recognize_table` (one
+    nesting-aware recognizer, both syntaxes); this loop adds span/header
+    detection and the per-cell produce.
 
-    `flavor` selects the row extractor: `"wiki"` (`{|…|}`) or `"html"`
-    (`<table>…</table>`).  `None` auto-detects from HTML table tags.
-
-    `cell_preclean`, when given, runs on each cell's raw content BEFORE
-    the content recursion (the HTML spine uses `_html_cell_clean` — the
-    lossless-`<br>` + tag-strip step).  Ignored when `cell_body` is
-    supplied (that strategy owns its own cleaning).
-
-    `recurse` is forwarded to `produce_cell` for producer-owned
-    nested-table recursion (dormant in production — see module note).
-
-    `cell_body`, when given, computes `(styles, body)` for each cell
-    instead of the default `produce_cell` path — see `CellBody`.
+    `cell_preclean`, when given, runs on each cell's raw content BEFORE the
+    content recursion.  `cell_body`, when given, computes `(styles, body)`
+    per cell instead of the default `produce_cell` path (see `CellBody`).
     """
-    if flavor is None:
-        flavor = "html" if _HTML_FLAVOR_RE.search(inner) else "wiki"
-    caption, rows = (
-        extract_html_rows(inner) if flavor == "html"
-        else extract_wiki_rows(inner))
+    from britannica.pipeline.stages.elements._table_fold import recognize_table
+    caption, rows = recognize_table(inner)
 
     has_header = False
     has_span = False
@@ -505,43 +146,27 @@ def produce_table_rows(
                 cleaned = (cell_preclean(cell_content) if cell_preclean
                            else cell_content)
                 styles, body = produce_cell(
-                    cell_attrs, cleaned, recurse=recurse,
-                    cell_recurse=cell_recurse)
+                    cell_attrs, cleaned, cell_recurse=cell_recurse)
             parsed.append((tag, rowspan, colspan, body, styles))
         if parsed:
             produced.append((row_attr, parsed))
     return caption, produced, has_header, has_span
 
 
-def assemble_html_rows(
-    parsed_rows: list[ProducedRow],
-    inner_registry=None,
-) -> str:
+def assemble_html_rows(parsed_rows: list[ProducedRow]) -> str:
     """Compose `«HTMLTABLE:<table>…</table>«/HTMLTABLE»` from parsed rows.
 
     Used when any cell carries a `rowspan`/`colspan` — the wiki
     `{{TABLE:}TABLE}` marker can carry only align + colspan, so spanned
     tables emit literal HTML with full per-cell `style="…"` preserved.
 
-    `inner_registry`, when given, pre-substitutes nested TABLE child
-    markers as inline `<table>` HTML so a nested wiki table inside an
-    HTML cell renders rather than leaking its `{{TABLE:…}TABLE}` text.
-    (`_inline_table_marker_as_html` only transforms `{{TABLE}}` markers
-    and passes any other marker through unchanged, so widening the key
-    from DATA_TABLE to TABLE is a no-op for non-`{{TABLE}}` children and
-    a leak-fix for the `{{TABLE}}`-emitting ones — a complex/single-col
-    child that used to leak its marker now inlines.)
-
-    The per-row attribute slot (`{|`'s `|-<attrs>` / `<tr ...>`) is CARRIED
+    The per-row attribute slot (`{|`'s `|-<attrs>` / `<tr ...>`) is carried
     onto `<tr style="…">` the same way each cell carries its own styling —
-    `produce_table_rows` already captured it, and dropping it (a) lost row
-    styling the source asked for and (b) leaked its `{{Ts}}` to the catch-all.
-    Carry-by-default, matching the per-cell path (`_cell_styles` parses the row
-    blob — `{{Ts|…}}`, `style="…"`, align/valign — identically to a cell attr).
+    `fold_cell_styles` parses the row blob (`{{Ts|…}}`, `style="…"`,
+    align/valign) identically to a cell attr.
     """
-    from britannica.pipeline.stages.elements._tables import (
-        _cell_styles, _inline_table_marker_as_html, emit_html_cell,
-    )
+    from britannica.pipeline.stages.elements._tables import emit_html_cell
+    from britannica.pipeline.stages.elements._table_fold import fold_cell_styles
     html_rows: list[str] = []
     for row_attr, parsed in parsed_rows:
         cells_html = [
@@ -549,20 +174,9 @@ def assemble_html_rows(
                            rowspan=rowspan, colspan=colspan, styles=styles)
             for tag, rowspan, colspan, content, styles in parsed
         ]
-        row_styles = _cell_styles(row_attr, "") if row_attr else []
+        row_styles = fold_cell_styles(row_attr) if row_attr else []
         open_tr = (f'<tr style="{";".join(row_styles)}">'
                    if row_styles else "<tr>")
         html_rows.append(open_tr + "".join(cells_html) + "</tr>")
-    output = ("«HTMLTABLE:<table>" +
-              "".join(html_rows) +
-              "</table>«/HTMLTABLE»")
-    if inner_registry is not None:
-        for ph, label in list(inner_registry.labels.items()):
-            if label != "TABLE":
-                continue
-            if ph not in output:
-                continue
-            child_marker = inner_registry.markers.get(ph, "")
-            output = output.replace(
-                ph, _inline_table_marker_as_html(child_marker))
-    return output
+    return ("«HTMLTABLE:<table>" + "".join(html_rows) +
+            "</table>«/HTMLTABLE»")

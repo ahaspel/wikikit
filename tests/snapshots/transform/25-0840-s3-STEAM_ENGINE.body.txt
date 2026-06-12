@@ -1146,7 +1146,8 @@ which attend the use of high-pressure steam. In engines of ordinary
 construction the pressure is rarely so much as 250 ℔ per sq. in.PAGE:849It must not be supposed that the efficiency (τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub> is actually 
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
-the causes of imperfection cannot be removed.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|align=inline|width=225}}«BR» «SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
+the causes of imperfection cannot be removed.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|align=inline|width=225}}«BR»
+«SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
 40. «I»Engine with Separate Organs«/I».—In the ideal engine represented
 in fig. 10 the functions of boiler, cylinder and condenser are combined
 in a single vessel; but, provided the working substance passes
@@ -3374,7 +3375,7 @@ one of impulse. No drop of pressure occurs while the steam is
 passing the moving blades, and its velocity relative to the blade 
 surface undergoes no change except such as is brought about by 
 friction.
-«HTMLTABLE:<table class="figtable" style="width:240px;float:right"><tr><td>{{Css image crop</td></tr><tr><td>«CTR»«DIV[style:font-size:83%]»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/DIV»«/CTR»</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table class="figtable" style="width:240px;float:right"><tr><td>{{IMG:djvu_vol25_page0867_aaec15e4.jpg}}</td></tr><tr><td>«CTR»«DIV[style:font-size:83%]»«SC»Fig.«/SC» 59.—Fixed and Moving Blades«BR»of Parsons Turbine.«/DIV»«/CTR»</td></tr></table>«/HTMLTABLE»
 In the Parsons turbine, on the other hand, there is a 
 «I»reaction«/I» effect. The steam
 acquires relative velocity 
@@ -3745,23 +3746,7 @@ got from a piston engine using only 11·4 ℔ of steam per indicated
 horse-power-hour. An important characteristic of the steam turbine 
 is that it retains a high efficiency under comparatively light loads. 
 The figures below illustrate this by giving the results of a series of 
-trials of the same machine under various loads. «P»«HTMLTABLE:<table class="figtable"><tr><td> Load in kilowatts.
-</td><td>
-</td><td style="border-left:1px solid;text-align:center"> 1450 
-</td><td style="border-left:1px solid;text-align:center"> 1250 
-</td><td style="border-left:1px solid;text-align:center"> 1000 
-</td><td style="border-left:1px solid;text-align:center">750
-</td><td style="border-left:1px solid;text-align:center">500
-</td><td style="border-left:1px solid;text-align:center">250
-</td></tr><tr><td> Steam used per kilo-<br> watt-hour in pounds 
-</td><td>2|r
-</td><td style="border-left:1px solid;text-align:center">18·1
-</td><td style="border-left:1px solid;text-align:center">18·5
-</td><td style="border-left:1px solid;text-align:center">19·2
-</td><td style="border-left:1px solid;text-align:center"> 20·3 
-</td><td style="border-left:1px solid;text-align:center"> 22·6 
-</td><td style="border-left:1px solid;text-align:center"> 34·0 
-</td></tr></table>«/HTMLTABLE»«P»Still better results have been obtained in more recent examples, 
+trials of the same machine under various loads. «P»«HTMLTABLE:<table class="figtable" style="border:1px solid;border-collapse:collapse;margin-right:auto;margin-left:auto"><tr><td>Load in kilowatts.</td><td></td><td style="border-left:1px solid;text-align:center">1450</td><td style="border-left:1px solid;text-align:center">1250</td><td style="border-left:1px solid;text-align:center">1000</td><td style="border-left:1px solid;text-align:center">750</td><td style="border-left:1px solid;text-align:center">500</td><td style="border-left:1px solid;text-align:center">250</td></tr><tr><td>Steam used per kilo-<br> watt-hour in pounds</td><td>2|r</td><td style="border-left:1px solid;text-align:center">18·1</td><td style="border-left:1px solid;text-align:center">18·5</td><td style="border-left:1px solid;text-align:center">19·2</td><td style="border-left:1px solid;text-align:center">20·3</td><td style="border-left:1px solid;text-align:center">22·6</td><td style="border-left:1px solid;text-align:center">34·0</td></tr></table>«/HTMLTABLE»«P»Still better results have been obtained in more recent examples, 
 in turbines of greater power. A Parsons turbine, rated as of 3500 
 but working up to over 5000 kilowatts tested in 1907 at the Carville power station of the Newcastle-on-Tyne Electric Supply Company, showed a consumption of only 13·19 ℔ of steam per kilowatt-hour, with steam of 200 ℔ pressure by gauge and 67° C. superheat (temperature 264·7° C.), the vacuum being 29·04 in. (barometer 30 in.). It is interesting to compare this performance with the ideal amount of work obtainable per pound of steam, or in other words with the ideal “heat drop.” At the temperature and pressure of supply the total heat I<sub>1</sub> is 709. After expansion to the pressure corresponding to the stated vacuum (0·96 in.) the total heat of the wet mixture would be 486, the dryness being then 0·792, if the expansion took place under ideal adiabatic conditions. Hence the heat drop I<sub>1</sub>−I<sub>2</sub> is 223 units, and this represents the work ideally obtainable under the actual conditions as to temperature and pressure of supply and exhaust. Since 1 kilowatt-hour is 1896 thermal units (℔–degree C.), each pound of steam was generating an amount of electrical energy equivalent to 1896/13·19 or 143·7 thermal units, and the electric
 output consequently corresponds to «SPAN[style:white-space:nowrap]»64½%«/SPAN» of the ideal work. If 

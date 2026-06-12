@@ -118,6 +118,64 @@ class TestAtomicLabels:
         assert ce.label == "OUTLINE"
 
 
+class TestBacklogFamilyRoutes:
+    """The families routed by the generic-`{{…}}` flip (Step 2): every corpus
+    template must route — the classifier `raise`s on a genuine unknown, which is
+    the permanent guard.  One representative per family."""
+
+    def _label(self, raw):
+        return classify(SHAPE_DOUBLE_BRACE, raw).label
+
+    def test_spacer_word_named(self):
+        assert self._label("{{spaces|10}}") == "SPACER"
+        assert self._label("{{nop}}") == "SPACER"
+        assert self._label("{{ae}}") == "SPACER"
+
+    def test_frame_keeps_content(self):
+        assert self._label("{{outdent|some text}}") == "FRAME"
+        assert self._label("{{hanging indent|caption}}") == "FRAME"
+        assert self._label("{{familytree|border=0| | |ALD|ALD=John}}") == "FRAME"
+
+    def test_frame_control_marker_is_spacer(self):
+        assert self._label("{{multicol-break}}") == "SPACER"
+        assert self._label("{{col-begin}}") == "SPACER"
+
+    def test_refs_and_chrome_empty(self):
+        assert self._label("{{smallrefs|90%}}") == "REFS"
+        assert self._label("{{reflist}}") == "REFS"
+        assert self._label("{{EB1911 title page|vol=II}}") == "REFS"
+
+    def test_missing_stub(self):
+        assert self._label("{{missing table}}") == "MISSING"
+        assert self._label("{{formula missing}}") == "MISSING"
+
+    def test_over_fraction_bare_form(self):
+        assert self._label("{{1\\over 2}}") == "FRACTION"
+        assert self._label("{{\\kappa\\over\\kappa'}}") == "FRACTION"
+
+    def test_over_in_named_template_content_routes_by_name(self):
+        # A real `{{name|…}}` whose CONTENT carries `\over`/`\overline` routes by
+        # its NAME, NOT to FRACTION (the bare-`\over` route must not steal it).
+        assert self._label(
+            "{{ne||<math>\\tfrac12\\overline{mu^2}</math>|(7)}}") == "MATH_NE"
+
+    def test_size_keyword_wrapper_keeps_content(self):
+        assert self._label("{{size|xl|CAPE COLONY}}") == "FRAME"
+
+    def test_bare_styler_form_routes_strip(self):
+        # `{{sc}}` (no pipe) — a registered styler still routes via name membership.
+        assert self._label("{{sc}}") == "STRIP"
+
+    def test_lb_pound_both_spellings(self):
+        assert self._label("{{lb|10}}") == "LB"
+        assert self._label("{{lb-|10}}") == "LB"
+
+    def test_unknown_template_raises(self):
+        import pytest
+        with pytest.raises(ValueError):
+            self._label("{{utterly unknown template name|x}}")
+
+
 class TestNestedClassification:
     def test_poem_with_ref(self):
         ce = classify(SHAPE_HTML_TAG,

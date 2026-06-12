@@ -192,3 +192,48 @@ class TestOneLevelOnly:
         # text (the whole poem region was replaced by one
         # placeholder).
         assert "<ref>" not in text_out
+
+
+class TestGenericDoubleBraceRecognizer:
+    """The ONE generic `{{…}}` recognizer bounds EVERY double-brace template as a
+    single DOUBLE_BRACE unit — including a previously-unrecognized one whose body
+    holds a `[[File:…]]` / `{{sc|…}}`.  Before the flip such a `{{…}}` matched no
+    type-specific opener, so the scanner walked INSIDE it and shredded the inner
+    image/template out from under the wrapper (orphaning the wrapper's halves)."""
+
+    def test_familytree_with_image_and_sc_is_one_unit_not_shredded(self):
+        src = "{{familytree|[[File:X.png|18px]] {{sc|Y}}}}"
+        _t, extracts = walk(src)
+        real = _non_body(extracts)
+        # ONE extract — the whole `{{familytree|…}}` — and it is DOUBLE_BRACE.
+        assert len(real) == 1, (
+            f"expected the whole {{{{familytree|…}}}} as ONE extract, got "
+            f"{[(s, r[:30]) for _p, s, r in real]!r}"
+        )
+        _ph, shape, raw = real[0]
+        assert shape == SHAPE_DOUBLE_BRACE
+        assert raw == src, "the generic recognizer must capture the WHOLE template"
+        # The inner image is NOT separately lifted (it rides as raw bytes inside
+        # the familytree extract for the producer's own recursion).
+        assert not any(s == SHAPE_INLINE_IMAGE for _p, s, _r in extracts)
+        assert "[[File:X.png|18px]]" in raw and "{{sc|Y}}" in raw
+
+    def test_unknown_named_template_still_bounded_as_double_brace(self):
+        # A template with NO type-specific opener (here a made-up `{{zzz|…}}`)
+        # is still bounded as ONE DOUBLE_BRACE unit by the generic recognizer —
+        # the walker recognizes its SHAPE; routing/raising is the classifier's job.
+        _t, extracts = walk("a {{zzz|body [[File:F.jpg]]}} b")
+        real = _non_body(extracts)
+        assert len(real) == 1
+        _ph, shape, raw = real[0]
+        assert shape == SHAPE_DOUBLE_BRACE
+        assert raw == "{{zzz|body [[File:F.jpg]]}}"
+
+    def test_triple_brace_degenerate_keeps_inner_template(self):
+        # A degenerate `{{{name|…}}` (stray leading `{`, double close) must not
+        # crash: the leading `{` is a literal (body), the inner `{{Polytonic|ρ}}`
+        # is recognized as a normal DOUBLE_BRACE.
+        _t, extracts = walk("x {{{Polytonic|ρ}} y")
+        db = [e for e in extracts if e[1] == SHAPE_DOUBLE_BRACE]
+        assert len(db) == 1
+        assert db[0][2] == "{{Polytonic|ρ}}"

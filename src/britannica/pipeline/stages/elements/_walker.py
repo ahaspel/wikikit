@@ -40,25 +40,11 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_PAGE,
     SHAPE_TITLE,
 )
-from britannica.pipeline.stages.elements._figure import (
-    figure_tail_end,
-    figure_wrapper_end,
-    html_float_figure_end,
-    html_ts_figure_end,
-)
-# The styler/heading openers (`_TEMPLATE_STYLE_RE` / `_TEMPLATE_PARAM_STYLE_RE` /
-# `_SHOULDER_HEADING_RE` / `_RUNNING_HEADER_RE`) are still used to BUILD the
-# opener-hint regex below so the scanner jumps to those positions; the
-# classifier carves their type off the generic DOUBLE_BRACE / HTML_TAG shape.
-from britannica.pipeline.stages.elements._tables import (
-    _TEMPLATE_STYLE_RE, _TEMPLATE_PARAM_STYLE_RE, _SHOULDER_HEADING_RE,
-    _RUNNING_HEADER_RE)
-
-# An image whose trailing caption run the figure rule may absorb: a bracket
-# `[[File:]]`/`[[Image:]]` or a `{{img float}}`/`{{figure}}`/`{{FI}}` template
-# (hieroglyph excluded).
-_FIG_IMAGE_RAW = re.compile(
-    r"\[\[(?:File|Image):|\{\{\s*(?:img\s*float|figure|FI)\b", re.IGNORECASE)
+# (The `_figure` helpers and the `_tables` styler/heading openers are no longer
+#  imported here: the figure recognizer was removed earlier, and with the ONE
+#  generic `{{…}}` recognizer the opener-hint regex no longer enumerates per-name
+#  styler openers — a bare `\{\{` hint covers every double-brace template, the
+#  classifier carves the STRIP / PARAM / SHOULDER / RUNNING_HEADER label off the raw.)
 
 
 # ── Recognizer patterns ───────────────────────────────────────────────
@@ -129,236 +115,29 @@ _MIRROR_GLYPH_RE = re.compile(
 )
 
 
-# DOUBLE_BRACE template recognizers.  Each has a fixed template-name OPENER
-# (`{{img float|`, more specific than bare `{{`); the span is closed by the one
-# balanced matcher (`_construct_end`), so the body nests to ANY depth and an
-# OPAQUE `<math>` arg (single LaTeX braces) is skipped whole — no hand-rolled
-# brace-balancer, no per-corpus depth cap.
-_IMAGE_FLOAT_OPENER_RE = re.compile(
-    r"\{\{(?:img float|figure|FI)\s*\|", re.IGNORECASE)
-_HIEROGLYPH_TMPL_RE = re.compile(
-    r"\{\{hieroglyph\|([^{}]*)\}\}", re.IGNORECASE)
-# `{{EB1911 footer initials|…}}` / `{{EB1911 footer double initials|…}}` — the
-# contributor signature footer.  RECOGNIZED as a bounded CONTRIBUTOR_FOOTER node so the
-# contributor decorator has ONE clean handle (its byline + removal logic is the
-# decorator's job, not the walker's).  Opener-only; span closes via `_construct_end`.
-# (The bare `{{EB1911 XYZ}}` sign-off shortcut is NOT recognized here — decorator's too.)
-_CONTRIBUTOR_FOOTER_OPENER_RE = re.compile(
-    r"\{\{\s*EB1911\s+footer\b", re.IGNORECASE)
-# `{{EB1911 TAs}}` — the bare-initials sign-off SHORTCUT (Thomas Ashby etc.), the
-# squashed twin of the footer.  The CLOSED full-form regex (capital-led, immediately
-# closed) so it claims ONLY the shortcuts, never the lowercase-word EB1911 templates;
-# classified CONTRIBUTOR_FOOTER, produced as the initials signoff.
-_CONTRIBUTOR_SHORTCUT_RE = re.compile(
-    r"\{\{\s*[Ee][Bb]1911\s+[A-Z][A-Za-z*.\-]{0,5}\s*\}\}")
-# `{{section|Name}}` — Wikisource subsection ANCHOR (link target, no visual output;
-# distinct from the `<section>` boundary tag).  Opener-only; span closes via
-# `_construct_end`.  Carried so same-article `[[#Name]]` / cross-article `…#Name`
-# xrefs resolve against it.
-_SECTION_ANCHOR_OPENER_RE = re.compile(
-    r"\{\{\s*section\s*\|", re.IGNORECASE)
-# `{{EB1911 intra-article link|Section}}` — same-article subsection link (the
-# `[[#Section]]` bracket form's template twin).  Opener-only; span closes via
-# `_construct_end`.
-_INTRA_ARTICLE_LINK_OPENER_RE = re.compile(
-    r"\{\{\s*EB1911\s+intra-article\s+link\s*\|", re.IGNORECASE)
-# `{{EB1911 article link|Display|Target}}` — a cross-reference LINK.  OPENER-only regex;
-# the span is closed by the one balanced matcher (`_construct_end`, exactly like the
-# fraction family below), so the display's nested `{{sc|…}}` is bounded at ANY depth —
-# no hand-rolled brace-balancer.  The producer recurses the display.
-_EB1911_ARTICLE_LINK_OPENER_RE = re.compile(
-    r"\{\{\s*(?:EB1911|EB9)\s+article\s+link\s*\|", re.IGNORECASE)
-# Target-first link siblings — `{{EB1911/DNB lkpl|…}}`, `{{1911link|…}}`,
-# `{{11link|…}}`, `{{EB1911 link|…}}` (NOT `EB1911 article link`, which is display-first
-# above).  Opener-only; the one matcher bounds the span at any nesting depth.
-_TARGET_FIRST_LINK_OPENER_RE = re.compile(
-    r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE)\s+lkpl|1911link|11link|EB1911\s+link"
-    r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link)\s*\|",
-    re.IGNORECASE)
-# `{{EB1911 Coordinates|D|M[|S]|H}}` — a single geographic coordinate (one lat or
-# lon).  Opener-only; the one matcher bounds the span.  Real place data; the
-# producer formats it `D°M′[S″]H` instead of leaking the raw template.
-_COORDINATES_OPENER_RE = re.compile(
-    r"\{\{\s*EB1911\s+Coordinates\s*\|", re.IGNORECASE)
-# `{{cite|Work Title}}` — a cited-work-title wrapper (single positional; the title
-# may carry a `[[link]]`).  Opener-only so the balanced matcher bounds a nested
-# `[[…]]`; the producer recurses the title and italicizes it (work-title
-# convention — the title is not pre-italicized in source).  `cite\s*\|` so a
-# hypothetical `{{cite book|…}}` (space, not pipe) does NOT match.
-_CITE_OPENER_RE = re.compile(r"\{\{\s*cite\s*\|", re.IGNORECASE)
-# Spacer / layout-primitive LEAVES — `{{em}}`/`{{gap}}` (space), `{{ditto}}` (″),
-# `{{dhr}}`/`{{rule}}` (rule markers), `{{clear}}`/`{{anchor}}` (no glyph).  Atomic;
-# the producer emits a char/marker, nothing recurses.
-_SPACER_OPENER_RE = re.compile(
-    r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
-    r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", re.IGNORECASE)
-# Content extractors — the display arg IS the content, the rest is metadata
-# (tooltip string / language code / title); the producer unwraps + recurses it.
-_CONTENT_EXTRACT_OPENER_RE = re.compile(
-    r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b", re.IGNORECASE)
+# DOUBLE_BRACE templates no longer have per-name opener regexes — the ONE generic
+# `{{…}}` recognizer in `_walk_balanced_shapes` bounds EVERY double-brace as a unit
+# (via `_construct_end`, the one balanced matcher), and the classifier routes by
+# name.  The former dozen openers (img float / footer / section anchor / link
+# families / coordinates / cite / spacer / content-extract / dual line / fraction /
+# lb- / sub-sup / ppoem / labeled-equation / ordered-list / Css crop / raw image /
+# plain image) plus `_find_balanced_template_end` are gone — `_construct_end`
+# already skips an opaque `<math>` interior whole, so it subsumes the LaTeX-brace
+# scanner the labeled-equation / ordered-list blocks used.
+
 # `<span title="T">X</span>` — a transliteration TOOLTIP when X is Greek/Hebrew (T is the
 # romanization, carried as «SPAN[title:T]» — the HTML twin of the {{tooltip}} template);
 # any other title= is editorial provenance, dropped (content kept).  Re-promotes the
 # gutted body-text `_handle_title_spans`; `process_span_title` applies the carry/drop split.
+# Still a per-shape opener: a styled `<span title=>` is HTML_TAG, NOT DOUBLE_BRACE, so it
+# can't ride the generic `{{…}}` recognizer — it keeps its own opener block.
 _SPAN_TITLE_OPEN_RE = re.compile(
     r'<span\b[^>]*?\btitle\s*=\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
     re.IGNORECASE)
+# Greek/Hebrew transliteration-content signal — used by the SPAN_TITLE producer to
+# decide carry-vs-drop (imported by the producer in `__init__.py`).
 _TRANSLIT_CONTENT_RE = re.compile(
     r"\{\{\s*(?:Greek|Hebrew|polytonic)|[Ͱ-Ͽἀ-῿֐-׿]", re.IGNORECASE)
-# `{{dual line|A|B}}` — pure layout primitive that stacks two lines
-# (`A<br>B`).  Args A and B can carry any inline content including
-# nested templates (chem `C{{sub|6}}H{{sub|5}}`, layout `{{gap}}`,
-# refs `<ref>…</ref>`) and opaque `<math>` with single LaTeX braces.
-# Opener-only; the one balanced matcher closes the span at ANY depth.
-# Lifting this template at the walker level gives the classifier a
-# bounded unit to inspect; if its content is chem/math-shaped, the
-# classifier will route accordingly (future predicate), instead of
-# body-text smuggling the rendering in via a regex pass.
-_DUAL_LINE_OPENER_RE = re.compile(
-    r"\{\{\s*dual\s+line\s*\|", re.IGNORECASE)
-# The fraction family — `{{sfrac|n|d}}` / `{{mfrac|i|n|d}}` / `{{frac}}` /
-# `{{over}}` / `{{EB1911 tfrac}}` / … — is a STYLER, not body-text typography:
-# it imposes a numerator-over-denominator presentation on content that may
-# itself be structure (`<math>` numerators, nested fractions).  Lifted as a
-# bounded DOUBLE_BRACE unit (like `dual line`) so its slots RECURSE through the
-# one dispatch instead of being flattened by a body-text regex that breaks the
-# moment a slot holds an extracted element or spans a `\n\n`.  Only the OPENER is
-# a regex; the span is closed by `_construct_end` (the one balanced matcher) so a
-# `<math>\frac{a}{b}</math>` numerator — single LaTeX braces inside an OPAQUE
-# `<math>` — is skipped whole, not mis-counted by a naive brace scan.  Names
-# longest-first so `sfrac nobar` wins over `sfrac`.
-_FRACTION_OPENER_RE = re.compile(
-    r"\{\{\s*(?:sfrac\s+nobar|EB1911\s+sfrac|EB1911\s+tfrac"
-    r"|EB¹⁹¹¹\s+sfrac|EB¹⁹¹¹\s+tfrac|EB₁₉₁₁\s+ₜfᵣₐc"
-    r"|sfracN|sfrac|mfrac|frac|over|binom)\s*\|", re.IGNORECASE)
-# `{{lb-|N}}` → `N lb` / bare `{{lb-}}` → `lb`: the pound-weight glyph (℔
-# unwrapped to literal "lb" for search/copy-paste).  Recognized at the walker so
-# it carries in EVERY context — not just the body-text pass it used to live in,
-# which leaked it inside math/italic/centred blocks (the lb-/sup context-leak).
-# OPENER-ONLY (like sub/sup): the arg can carry a nested template (`{{lb-|9{{tfrac
-# |2|3}}}}`), so the one balanced matcher bounds the whole span at any depth and
-# the arg RECURSES — a flat `\|[^{}]*\}\}` match failed on the nested fraction,
-# orphaning the outer `{{lb-…}}` once the inner tfrac was extracted.
-_LB_RE = re.compile(r"\{\{\s*lb-", re.IGNORECASE)
-# `{{sub|x}}` / `{{sup|x}}` — subscript/superscript TYPOGRAPHY (chem subscripts,
-# math exponents, ordinals, footnote markers).  Content can nest (`{{sup|{{sfrac
-# |1|n}}}}`); opener-only, the one balanced matcher bounds it at any depth.  The
-# producer recurses the slot and translates flat runs to Unicode around element
-# markers.  Promoted out of body-text's `_convert_sub_sup` (which only fired in
-# the flat body-text pass, leaking sup inside math/italic/centred blocks — the lb-/sup
-# context-leak).
-_SUBSUP_OPENER_RE = re.compile(
-    r"\{\{\s*(?:sub|sup)\s*\|", re.IGNORECASE)
-# `{{ppoem|…}}` — Wikisource preformatted-poem template (verse analog of
-# `<poem>`).  Multiline verse with shallow inline templates (`{{fqm|"}}` quote
-# marks, `{{em|N}}`/`{{gap|Nem}}` indents, `{{sc|…}}`); opener-only, bounded by
-# the one balanced matcher at any depth.  → PPOEM, extracted + emitted as VERSE.
-_PPOEM_OPENER_RE = re.compile(
-    r"\{\{\s*ppoem\s*\|", re.IGNORECASE)
-# Labeled display-equation templates — `{{equation|content}}`,
-# `{{MathForm1|label|content}}`, `{{ne|content}}`.  These are
-# structurally declared as math by their template name — the source's
-# own assertion "this is a math expression with its own paragraph
-# context."  Walker bounds the template (purely structural); classifier
-# applies a math label; producer emits `«EQN:LABEL»content«/EQN»` with
-# `\n\n` paragraph margins.
-#
-# Inline-typography templates (`{{sfrac|...}}`, `{{sub|...}}`,
-# `{{sup|...}}`, the fraction variants) are NOT walker chunks even
-# though their content is mathematical — they're typography whose
-# rendered output flows back into prose, and body-text owns rendering.
-# See the chunk-vs-typography principle: the source must declare math
-# via the template name itself for the walker to recognize it.
-#
-# Closer is found via `_find_balanced_template_end` — a depth-counting
-# scanner that masks `<math>`/`<nowiki>`/HTML-comment spans so the
-# literal `{`/`}` inside LaTeX (e.g. `\text{A}` in `{{ne|<math>…}}`)
-# don't trip brace depth.  Regex with `[^{}]` would lose those.
-_LABELED_EQUATION_TEMPLATE_NAMES_PATTERN = (
-    r"equation"
-    r"|MathForm1"
-    r"|ne"
-)
-_LABELED_EQUATION_TEMPLATE_OPENER_RE = re.compile(
-    r"\{\{\s*(" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|",
-    re.IGNORECASE,
-)
-
-# `{{ordered list|…}}` opener — matched with the balanced-brace scanner (not a
-# fixed-depth regex) because the classification nests several levels deep
-# (GEOGRAPHY: 4).  → SHAPE_DOUBLE_BRACE (a leaf; the classifier routes the name →
-# ORDERED_LIST, whose producer owns the recursion).
-_ORDERED_LIST_OPENER_RE = re.compile(r"\{\{\s*ordered\s+list\b", re.IGNORECASE)
-
-
-def _find_balanced_template_end(text: str, start: int) -> int | None:
-    """Find the position one past the balanced ``}}`` closing the
-    `{{...}}` template that begins at ``start``.
-
-    Returns None if no balanced close exists.
-
-    Treats ``<math>…</math>``, ``<nowiki>…</nowiki>`` and ``<!--…-->``
-    as opaque atoms — `{`/`}` inside them don't count toward brace
-    depth.  Needed for `{{ne|<math>\\text{A}</math>}}` and similar
-    where LaTeX content carries literal braces a regex `[^{}]` would
-    refuse to cross.
-    """
-    if text[start:start + 2] != "{{":
-        return None
-    n = len(text)
-    depth = 1
-    i = start + 2
-    while i < n:
-        ch = text[i]
-        if ch == "<":
-            tail = text[i:i + 6].lower()
-            if tail.startswith("<math"):
-                end = text.lower().find("</math>", i + 5)
-                if end >= 0:
-                    i = end + 7
-                    continue
-            elif tail.startswith("<nowik"):
-                end = text.lower().find("</nowiki>", i + 6)
-                if end >= 0:
-                    i = end + 9
-                    continue
-            elif text[i:i + 4] == "<!--":
-                end = text.find("-->", i + 4)
-                if end >= 0:
-                    i = end + 3
-                    continue
-            i += 1
-        elif ch == "{" and i + 1 < n and text[i + 1] == "{":
-            depth += 1
-            i += 2
-        elif ch == "}" and i + 1 < n and text[i + 1] == "}":
-            depth -= 1
-            i += 2
-            if depth == 0:
-                return i
-        else:
-            i += 1
-    return None
-# `{{Css image crop|…}}` — a STANDALONE DjVu crop (multi-line params).  Opener-
-# only; the one balanced matcher bounds the template at any depth.  A following
-# caption (`{{center|…}}` / `{{csc|…}}`) is NOT absorbed — it's the styled
-# sibling it already is.  In-table crops route via the table classifier instead.
-_DJVU_CROP_OPENER_RE = re.compile(
-    r"\{\{\s*Css image crop\b", re.IGNORECASE)
-# `{{raw image|X}}` — EB1911's bare full-image syntax (a DjVu page-ref → full-
-# page render, or a plain filename).  Opener-only; the one balanced matcher
-# bounds the template.  A following `{{c|…}}` caption is NOT absorbed — it's a
-# styled sibling.  Recognized as one DOUBLE_BRACE image element (→ RAW_IMAGE).
-_RAW_IMAGE_OPENER_RE = re.compile(
-    r"\{\{\s*raw\s+image\s*\|", re.IGNORECASE)
-
-# `{{Plain image with caption|image=File:…|align=…|width=…|caption=…|caption
-# position=…}}` — Wikisource named-parameter figure macro (MAP's cartography
-# plates).  Caption nests arbitrarily (`{{center|{{nowrap|{{smallcaps|…}}}}}}`);
-# opener-only, bounded by the one balanced matcher at any depth.  Recognized as
-# one DOUBLE_BRACE image element (→ PLAIN_IMAGE).
-_PLAIN_IMAGE_OPENER_RE = re.compile(
-    r"\{\{\s*plain image with caption\s*\|", re.IGNORECASE)
 
 # DOUBLE_BRACKET image — `[[File:…]]` / `[[Image:…]]`, a pure LEAF.  No caption
 # absorption: a following caption block is its own sibling, recursed in place
@@ -477,7 +256,8 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     # embedded a false no-nesting assumption (table-in-table orphaned the
     # outer tail into body-text).
     (SHAPE_HTML_TAG,          _HIEROGLYPH_TAG_RE),
-    (SHAPE_DOUBLE_BRACE,      _HIEROGLYPH_TMPL_RE),
+    # (`{{hieroglyph|…}}` no longer has a recognizer entry here — the generic
+    #  `{{…}}` recognizer bounds it as DOUBLE_BRACE; classifier routes → HIEROGLYPH.)
     (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
     (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
     (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
@@ -497,7 +277,10 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
 _OPENER_HINT_RE = re.compile(
     r"\x01PAGE:"                    # PAGE break bookkeeping marker
     r"|«TITLE"                      # TITLE stamp (preprocess_article)
-    r"|\{\{chart2/start"             # CHART2
+    r"|\{\{"                        # ANY `{{…}}` — the ONE generic DOUBLE_BRACE
+                                    #   recognizer (and the PAIRED_WRAPPER / chart2
+                                    #   recognizers ahead of it) own every double-brace
+                                    #   template; no per-name hint is needed any more.
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
@@ -509,23 +292,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
     r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
-    r"|\[\["                        # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
-    r"|\{\{\s*(?:center|block\s*center|c|c?sc|small-caps)\s*\|"  # FIGURE wrapper (image inside)
-    r"|\{\{\s*(?:c|block\s*center|center\s*block|fine\s*block|EB1911\s+fine\s+print|smaller\s*block)\s*/s\s*\}\}"  # CENTER / small-type-block paired-wrapper
-    r"|\{\{\s*(?:img float|figure|FI|hieroglyph|Css image crop|raw\s+image|dual\s+line|ppoem|plain\s+image\s+with\s+caption|ordered\s+list|EB1911|DNB|1911link|11link)\b"  # DOUBLE_BRACE templates
-    r"|\{\{\s*(?:EB9|9link|CE\s+lkpl|1911\s+article\s+link)"  # EB9/CE/9link cross-edition links → «LN» (resolve to EB11)
-    r"|\{\{\s*cite\s*\|"  # {{cite|Work Title}} → «I»title«/I» (work-title italic)
-    r"|\{\{\s*section\s*\|"  # DOUBLE_BRACE {{section|Name}} subsection anchor
-    r"|\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)"  # SPACER / char-escape leaves
-    r"|\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b"  # content extractors
-    r"|\{\{\s*(?:sfrac\s+nobar|sfracN|sfrac|mfrac|frac|over|binom)\b"  # FRACTION family (EB1911 sfrac/tfrac covered by EB1911 above)
-    r"|\{\{\s*lb-"  # lb- pound-weight glyph (ends in '-', no \b)
-    r"|\{\{\s*(?:sub|sup)\s*\|"  # sub/sup typography
-    r"|\{\{\s*(?:" + _LABELED_EQUATION_TEMPLATE_NAMES_PATTERN + r")\s*\|"  # labeled-equation templates
-    r"|" + _TEMPLATE_STYLE_RE.pattern  # template-form style wrappers (registry-driven, auto-syncs)
-    + r"|" + _TEMPLATE_PARAM_STYLE_RE.pattern  # param font-size stylers ({{Fs|N%|X}})
-    + r"|" + _SHOULDER_HEADING_RE.pattern  # shoulder headings (EB9 margin note isn't covered by EB1911 above)
-    + r"|" + _RUNNING_HEADER_RE.pattern,  # running header — 3-column {{rh|l|c|r}} / {{Running header}}
+    r"|\[\[",                       # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     re.IGNORECASE,
 )
 
@@ -693,7 +460,7 @@ def _new_placeholder() -> str:
 # block inner (figures/tables) flow into the normal walk — making them CENTER
 # elements re-processed the block inner badly and dropped those children.
 _CENTER_PAIRED_NAMES: tuple[str, ...] = (
-    "center block", "block center", "c",
+    "center block", "block center", "c", "bc",
     # Print-economy small-type block wrappers — STYLERS (font-size), not centring.
     # `_process_center` dispatches by name via `_TEMPLATE_STYLE_WRAPPERS`; the inner
     # is classified to placeholders first, so a nested figure/table is a preserved
@@ -817,38 +584,21 @@ def _walk_balanced_shapes(
                     if end is not None:
                         matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
 
-        # The six STYLED-derived structures no longer have their OWN walker
-        # shapes — recognizing them by NAME / ATTRIBUTE is the CLASSIFIER's job.
-        # The walker still BOUNDS each at its opener (same opener regexes, same
-        # `_construct_end` span — identical capture), but emits the GENERIC shape
-        # it actually is; the classifier's `_derive_double_brace_label` /
-        # `_derive_html_tag_label` carve the STRIP / PARAM / SHOULDER /
-        # RUNNING_HEADER / HTML_STYLE / SPAN_TITLE label off the raw.  The order
-        # below is the FORMER per-shape order (STRIP → PARAM → HTML_STYLE →
-        # SPAN_TITLE → SHOULDER → RUNNING_HEADER) so no byte changes which regex
-        # claims it.  Producers + dispatch labels are unchanged.
+        # The two STYLED-`<tag>` structures (HTML_STYLE / SPAN_TITLE) are NOT
+        # covered by the block-HTML recognizer above — that only lifts
+        # `_ELEMENT_TAGS` (table/ref/poem/math/score/nowiki/includeonly), never a
+        # styled `<div>`/`<p>`/`<span>`/`<ins>`.  So they keep their own opener
+        # blocks here (same opener regexes, same `_construct_end` span); the
+        # classifier's `_derive_html_tag_label` carves HTML_STYLE / SPAN_TITLE.
+        # They MUST precede the generic `{{…}}` recognizer because both produce a
+        # different shape (HTML_TAG, not DOUBLE_BRACE).
         #
-        #   Template-form styler `{{center|…}}`/`{{csc|…}}`/`{{left|…}}`/…
-        #   (`_TEMPLATE_STYLE_RE`) → DOUBLE_BRACE → classifier STRIP.
-        if matched is None and _TEMPLATE_STYLE_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        #   Param-valued styler `{{Fs|108%|X}}`/`{{font size|N%|X}}`/…
-        #   (`_TEMPLATE_PARAM_STYLE_RE`) → DOUBLE_BRACE → classifier PARAM.
-        if matched is None and _TEMPLATE_PARAM_STYLE_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
         #   Styled HTML `<div>`/`<p>`/`<span>` (carries `{{Ts}}`/`style=`/`align=`)
         #   or `<ins>` → HTML_TAG → classifier HTML_STYLE.  A BARE `<div>` /
         #   inline `<span>` / paragraph `<p>` is layout noise that doesn't match
         #   `_STYLED_WRAPPER_RE` and stays transparent (body-text unwrap).  Bounded
         #   by the one matcher (depth-aware over nested same-tags); unbalanced →
-        #   None → falls through, no swallow.  Image-bearing styled wrappers are
-        #   already claimed above by the figure recognizers.
+        #   None → falls through, no swallow.
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
                 or _INS_OPEN_RE.match(text, opener_pos)):
@@ -864,72 +614,42 @@ def _walk_balanced_shapes(
             if end is not None:
                 matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
 
-        #   `{{EB1911 Shoulder Heading|…}}` marginal section label
-        #   (`_SHOULDER_HEADING_RE`) → DOUBLE_BRACE → classifier SHOULDER.
-        if matched is None and _SHOULDER_HEADING_RE.match(text, opener_pos):
+        # ── The ONE generic `{{…}}` recognizer ────────────────────────────────
+        # Every `{{…}}` is bounded as a single DOUBLE_BRACE unit by the one
+        # balanced matcher (`_construct_end`), which skips every nested construct
+        # whole — an opaque `<math>` numerator (single LaTeX braces), a `[[File:…]]`
+        # inside `{{familytree|…}}`, a nested `{{sc|…}}` display — so NOTHING inside
+        # a `{{…}}` is ever torn out from under it.  Replaces the former dozen
+        # type-specific opener blocks (STRIP / PARAM / SHOULDER / RUNNING_HEADER /
+        # FRACTION / link families / spacer / content-extract / image / etc.) plus
+        # the ordered-list and labeled-equation balanced-scanner blocks: the
+        # classifier (`_derive_double_brace_label`) routes EVERY name and `raise`s
+        # on an unknown — that raise is the permanent guard, so every corpus
+        # template must route.
+        #
+        # Runs AFTER the PAIRED_WRAPPER (`{{x/s}}…{{x/e}}` / chart2) recognizer and
+        # the block-HTML / styled-`<tag>` recognizers above (so a `{{c/s}}` paired
+        # opener and a styled `<div>` aren't mis-claimed), and BEFORE the regex
+        # recognizers / BRACE_PIPE below (which own `[[…]]` / `{|` / page / title).
+        #
+        # A degenerate `{{{name|…}}` (triple-open, double-close — a source/OCR stray
+        # leading `{`, e.g. `{{{Polytonic|ρ}}`) would bound from the first `{{` and
+        # leave a stray `{` inside the inner, crashing the name extractor.  When the
+        # clean `{{…}}` one char later balances, treat the leading `{` as a literal
+        # (it joins the body buffer) and recognize the inner template — faithful: the
+        # stray brace stays as text, the real `{{Polytonic|…}}` styler is recognized.
+        if matched is None and text[opener_pos:opener_pos + 3] == "{{{":
+            inner_end = _construct_end(text, opener_pos + 1)
+            # Only the degenerate triple-open/DOUBLE-close form (the close is NOT
+            # itself part of a `}}}` triple — i.e. NOT valid `{{{param}}}` syntax).
+            if inner_end is not None and not text.startswith("}", inner_end):
+                body_buf.append("{")
+                pos = opener_pos + 1
+                continue
+        if matched is None and text[opener_pos:opener_pos + 2] == "{{":
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        #   `{{rh|left|center|right}}` 3-column flex frame (`_RUNNING_HEADER_RE`)
-        #   → DOUBLE_BRACE → classifier RUNNING_HEADER.
-        if matched is None and _RUNNING_HEADER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        # Fraction family (`{{sfrac|…}}` …) — opener matched by regex, span
-        # closed by the one balanced matcher so an OPAQUE `<math>` numerator
-        # (single LaTeX braces) is skipped whole.  → DOUBLE_BRACE, classified
-        # FRACTION, slots recurse in the producer.
-        if matched is None and _FRACTION_OPENER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        # `{{EB1911 article link|…}}` — cross-reference link; opener matched, span
-        # closed by the ONE balanced matcher so a nested `{{sc|…}}` display is bounded
-        # at any depth (no hand-rolled brace-balancer).  → DOUBLE_BRACE, classified
-        # EB1911_ARTICLE_LINK; the display recurses in the producer.
-        if matched is None and _EB1911_ARTICLE_LINK_OPENER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        if matched is None and _TARGET_FIRST_LINK_OPENER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        if matched is None and _SPACER_OPENER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        if matched is None and _CONTENT_EXTRACT_OPENER_RE.match(text, opener_pos):
-            end = _construct_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        # Named DOUBLE_BRACE templates whose args nest arbitrarily and may carry
-        # an opaque `<math>` (single LaTeX braces) — opener-matched, span closed
-        # by the one balanced matcher, exactly like the fraction family above.
-        # Migrated off hand-rolled 2-4 level brace regexes that capped depth and
-        # broke on a lone `{` inside `<math>`.
-        if matched is None:
-            for _opener in (_IMAGE_FLOAT_OPENER_RE, _PLAIN_IMAGE_OPENER_RE,
-                            _DUAL_LINE_OPENER_RE, _SUBSUP_OPENER_RE, _LB_RE,
-                            _PPOEM_OPENER_RE, _RAW_IMAGE_OPENER_RE,
-                            _DJVU_CROP_OPENER_RE, _CONTRIBUTOR_FOOTER_OPENER_RE,
-                            _CONTRIBUTOR_SHORTCUT_RE,
-                            _SECTION_ANCHOR_OPENER_RE,
-                            _INTRA_ARTICLE_LINK_OPENER_RE, _COORDINATES_OPENER_RE,
-                            _CITE_OPENER_RE):
-                if _opener.match(text, opener_pos):
-                    end = _construct_end(text, opener_pos)
-                    if end is not None:
-                        matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-                    break
 
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
@@ -953,28 +673,12 @@ def _walk_balanced_shapes(
                     and _is_inline_image_position(text, matched[0])):
                 matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
-        # Ordered-list classification — a `{{ordered list|…}}` template, carved
-        # by the generic DOUBLE_BRACE shape (a leaf, like the other named
-        # double-brace templates).  The balanced-brace scanner handles the
-        # arbitrary nesting depth a fixed-depth regex would miss; the classifier
-        # routes the `ordered list` name → ORDERED_LIST label, whose producer
-        # parses the whole nested template from raw.
-        if matched is None and _ORDERED_LIST_OPENER_RE.match(text, opener_pos):
-            end = _find_balanced_template_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
-
-        # Labeled-display-equation templates use a balanced-brace
-        # scanner (not a regex) because `{{ne|<math>...</math>}}`
-        # carries LaTeX with literal `{`/`}` (`\text{A}` etc.) that a
-        # `[^{}]`-based regex can't span.  The scanner masks
-        # `<math>`/`<nowiki>`/comment spans before counting braces.
-        if matched is None and _LABELED_EQUATION_TEMPLATE_OPENER_RE.match(
-                text, opener_pos):
-            end = _find_balanced_template_end(text, opener_pos)
-            if end is not None:
-                matched = (end, SHAPE_DOUBLE_BRACE,
-                           text[opener_pos:end])
+        # (The former per-name `{{ordered list|…}}` and labeled-equation
+        # `{{ne|…}}`/`{{equation|…}}`/`{{MathForm1|…}}` opener blocks are gone —
+        # the ONE generic `{{…}}` recognizer above bounds them as DOUBLE_BRACE via
+        # `_construct_end`, which skips an opaque `<math>` interior whole exactly as
+        # the old `_find_balanced_template_end` did.  The classifier routes the name
+        # → ORDERED_LIST / MATH_EQUATION / MATH_FORMULA_LABELED / MATH_NE.)
 
         # BRACE_PIPE doesn't have a regex pattern — its closer
         # requires balanced depth tracking.  Try it last (lowest

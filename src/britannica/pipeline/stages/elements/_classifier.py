@@ -72,7 +72,26 @@ from britannica.pipeline.stages.elements._tables import (
     _TEMPLATE_PARAM_STYLE_RE,
     _SHOULDER_HEADING_RE,
     _RUNNING_HEADER_RE,
+    # Styler registries — name-membership routing for the BARE `{{name}}` form
+    # (the pipe-requiring regexes above only match `{{name|…}}`; a known styler
+    # must route whether or not it carries content).
+    _TEMPLATE_STYLE_WRAPPERS,
+    _TEMPLATE_PARAM_STYLE_WRAPPERS,
 )
+
+
+# Full DOUBLE_BRACE template name — everything between `{{` and the first `|`
+# or `}` (the whitespace-stopping `_TEMPLATE_NAME_RE` mangles multi-word names
+# like `block center` → `block`).  Lower-cased, inner whitespace collapsed, so a
+# registry lookup matches regardless of arg presence or spacing.
+_DB_NAME_RE = re.compile(r"^\{\{\s*([^|{}]+?)\s*(?:[|}]|$)")
+
+
+def _db_name(raw: str) -> str:
+    m = _DB_NAME_RE.match(raw)
+    if not m:
+        return ""
+    return re.sub(r"\s+", " ", m.group(1).strip().lower())
 
 
 # ── Per-shape label derivers ──────────────────────────────────────────
@@ -221,7 +240,9 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "ORDERED_LIST"
     # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
-    if re.match(r"\{\{\s*(?:EB1911|EB9)\s+article\s+link\b", raw, re.IGNORECASE):
+    # `CE article link` (Catholic Encyclopedia cross-edition) joins the family — a
+    # link is a link; the «LN» ladder hunts EB11, then external WS, then strips.
+    if re.match(r"\{\{\s*(?:EB1911|EB9|CE)\s+article\s+link\b", raw, re.IGNORECASE):
         return "EB1911_ARTICLE_LINK"
     # `{{EB1911 intra-article link|Section}}` — a same-article subsection link (the
     # `[[#Section]]` bracket form's template twin).  Matched on the raw opener.
@@ -234,7 +255,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # so a 9th-edition ref to a topic EB11 also covers resolves to OUR article.
     # (NOT the display-first "EB9/EB1911 article link" above, NOT the EB1911
     # self-fragment "intra-article link" below.)
-    if re.match(r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE)\s+lkpl|1911link|11link|EB1911\s+link"
+    if re.match(r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE|Oxon)\s+lkpl|1911link|11link|EB1911\s+link"
                 r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
@@ -259,6 +280,20 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # Content extractors — display arg is the content; producer unwraps + recurses it.
     if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b", raw, re.IGNORECASE):
         return "CONTENT_EXTRACT"
+    # Bar-less `num \over den` fraction (`{{1\over 2}}` / `{{\it a \over b}}` /
+    # `{{\kappa\over\kappa'}}`) — NO `name|` token, the whole inner is the fraction.
+    # Matched on the raw containing the literal `\over` token (as a whole LaTeX
+    # command — NOT `\overline`/`\overrightarrow`, hence the no-letter lookahead),
+    # BEFORE the name extractor (which would capture `1\over` and raise).  →
+    # FRACTION; the producer's `render_over_fraction` splits on `\over` and recurses
+    # each slot.  Guarded by `"|" not in name region`: a real `{{name|…}}` template
+    # whose CONTENT happens to carry `\over` (e.g. `{{ne||<math>…\over…</math>}}`)
+    # routes by its NAME below, not here.  (In real bodies every bare `\over` rides
+    # inside an opaque `<math>` and never reaches here; this routes the bare
+    # standalone form the crash-check harness exercises.)
+    if re.search(r"\\over(?![A-Za-z])", raw) and not re.match(
+            r"\{\{\s*[^|{}]+\|", raw):
+        return "FRACTION"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(
@@ -275,9 +310,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # CONTRIBUTOR_FOOTER case below).
     if _FRAC_LABEL_RE.match(raw):
         return "FRACTION"
-    # `{{lb-|N}}` / `{{lb-}}` — pound-weight glyph leaf (promoted out of the
-    # body-text `_convert_lb_dash` re.sub, which only fired in the flat body-text pass).
-    if name == "lb-":
+    # `{{lb-|N}}` / `{{lb-}}` / `{{lb|N}}` — pound-weight glyph leaf (`N lb`),
+    # promoted out of the body-text `_convert_lb_dash` re.sub.  Both spellings
+    # (`lb` and `lb-`) are the same pound template.
+    if name in ("lb-", "lb"):
         return "LB"
     # `{{cite|Work Title}}` — a cited-work-title wrapper (the title may carry a
     # `[[link]]`, extracted as a child).  The producer italicizes it; the walker
@@ -332,11 +368,182 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (The `{{EB1911 footer initials}}` footer is no longer a walker element — it's a
     # FIELD, cut upstream by `strip_attributions` before the walker ever runs, so it
     # never reaches this dispatch.)
+
+    # ── Name-driven routing for the backlog families ──────────────────────────
+    # With the ONE generic `{{…}}` recognizer, EVERY double-brace reaches here, so
+    # the remaining backlog families route by their FULL name (multi-word safe).
+    full = _db_name(raw)
+
+    # Fraction family in the BARE `{{name}}` form (the `_FRAC_LABEL_RE` above is
+    # pipe-form; a bare `{{sfrac}}` / `{{over}}` still routes here).
+    if full in _FRAC_NAMES:
+        return "FRACTION"
+    # Contributor sign-off SHORTCUT in the synthetic pipe form (`{{EB1911 TAs|x}}`):
+    # the bare-`}}` regex above claims `{{EB1911 TAs}}`, but the harness also probes
+    # the pipe form.  `EB1911 <INITIALS>` (capital-led short token) is the squashed
+    # footer twin → CONTRIBUTOR_FOOTER.
+    if re.match(r"eb1911 [a-z][a-z*.\-]{0,5}$", full):
+        return "CONTRIBUTOR_FOOTER"
+    # Known stylers in the BARE `{{name}}` form (the pipe-form regexes above only
+    # match `{{name|…}}`; a registered styler routes whether or not it has content).
+    if full in _TEMPLATE_STYLE_WRAPPERS:
+        return "STRIP"
+    if full in _TEMPLATE_PARAM_STYLE_WRAPPERS:
+        return "PARAM"
+    # Shoulder-heading / running-header in the bare form (regexes above are pipe-form).
+    # Prefix match (not anchored) tolerates an OCR `&nbsp;`/nbsp tail on the name
+    # (`{{EB1911 Shoulder Heading&nbsp;|…}}`).
+    if re.match(r"(?:eb1911 shoulder heading|eb9 margin note)", full):
+        return "SHOULDER"
+    if full in ("rh", "running header", "runningheader"):
+        return "RUNNING_HEADER"
+
+    # Spacer / glyph / char-escape leaves (the bracket-escape names handled by the
+    # regex above; here the WORD-named spacers the backlog surfaced).  Content-less
+    # frame CONTROL markers (`{{multicol-break}}`, `{{col-begin}}`, …) join them —
+    # they carry no content, so SPACER (which renders unknown leaves to nothing) is
+    # the right empty-leaf home.
+    if full in _SPACER_NAMES:
+        return "SPACER"
+
+    # Layout FRAMES that CARRY content — drop the frame, recurse the content.
+    if full in _FRAME_NAMES:
+        return "FRAME"
+
+    # Footnote-list emitters + front-matter / index / page-chrome / maintenance
+    # templates → empty.  The footnote lists render inline; the chrome templates
+    # (volume title / copyright / half-title pages, the vol-29 contributor index,
+    # TOC rows, page-number/line-position markers) and the Wikisource maintenance
+    # boxes carry NO article-body prose — their data is page furniture or is
+    # harvested by a separate pipeline (`extract_contributor_bios`), so in the
+    # article body they render nothing.
+    if full in _REFS_NAMES or full in _CHROME_EMPTY_NAMES:
+        return "REFS"
+
+    # Missing-asset placeholders → a visible `[missing …]` stub.
+    if full in _MISSING_NAMES:
+        return "MISSING"
+
     # Inline typography (sfrac/frac/mfrac/over/sfracN/EB1911 variants/
     # sub/sup) stays in body-text — the source doesn't declare those
     # as math via the template name; they're rendered as typography
     # whose output flows back into prose.  Walker doesn't lift them.
-    raise ValueError(f"Unknown DOUBLE_BRACE template: {name!r}")
+    raise ValueError(f"Unknown DOUBLE_BRACE template: {full or name!r}")
+
+
+# Word-named spacer / glyph / escape LEAVES + content-less frame CONTROL markers.
+# Each renders to a glyph or to nothing; nothing recurses.  (The bracket-char
+# escapes `{{=}}`/`{{(}}`/`{{...}}` are matched by the SPACER regex above; these
+# are the WORD-named ones the generic-flip backlog surfaced.)
+_SPACER_NAMES: frozenset[str] = frozenset({
+    # Spacers / glyph escapes
+    "nop", "nopt", "nopf", "spaces", "fsp", "pad thin", "brace", "unicode",
+    "nbsp", "parabr", "br", "-", ". . .", "’ ”", "\" '", "ae",
+    # Pure cell/table style-code carriers — NO content (the codes are presentation
+    # shorthand consumed by the table producer when inside a `{|`; as a standalone
+    # DOUBLE_BRACE they carry nothing to render).  → empty.
+    "ts", "table style", "tslh10",
+    # `{{mirrorH}}` — the horizontal-mirror TOKEN; meaningful only inside a
+    # `<span style="…{{mirrorH}}…">` (its own MIRROR_GLYPH shape).  A standalone
+    # `{{mirrorH}}` carries no glyph of its own → empty.
+    "mirrorh",
+    # Content-less cell/layout style hints — `{{align|left}}`, `{{_valignt|top}}`,
+    # `{{width|100%}}`: presentation params with no content of their own → empty.
+    "align", "_valignt", "width",
+    # Rare bare glyph / control leaves (1 occurrence each, uncertain glyph — routed
+    # to empty rather than guessing the wrong character).  REPORTED for review.
+    "mc", "ad", "s",
+    # Content-less layout-frame CONTROL markers (the matching halves of the
+    # content-bearing frames below — column breaks, region open/close markers).
+    "multicol", "multicol-break", "multicol-end",
+    "div col", "div col end", "div end",
+    "col-begin", "col-end", "col-break",
+    "stack begin", "stack end",
+    "plainlist/s", "plainlist/e",
+    # Paired-wrapper HALVES that fall through `_paired_wrapper_end` (their name
+    # isn't a registered CENTER pair, or the half stands alone): a bare `/s`/`/e`
+    # control marker with no content → nothing.  The registered CENTER pairs
+    # (`c/s`, `block center/s`, …) are bounded as PAIRED_WRAPPER and never reach
+    # here; only the UNREGISTERED / orphaned halves do.
+    "c/s", "c/e", "center/s", "center/e",
+    "block center/s", "block center/e", "center block/s", "center block/e",
+    "fine block/s", "fine block/e", "smaller block/s", "smaller block/e",
+    "eb1911 fine print/s", "eb1911 fine print/e",
+    "fs85/s", "fs85/e", "fs90/s", "fs90/e",
+    "ti/s", "ti/e", "outdent/s", "outdent/e", "left margin/s", "left margin/e",
+    "bold block/s", "bold block/e", "dent/s", "dent/e",
+    "flex wrap centre/s", "flex wrap centre/e",
+    "familytree/start", "familytree/end", "tree chart/start", "tree chart/end",
+    "chart2/start", "chart2/end",
+})
+
+# Layout FRAMES that carry content — `{{outdent|text}}`, `{{hanging indent|text}}`,
+# `{{nodent|text}}`, the multi-cell `{{familytree|…}}` / `{{Tree chart|…}}` /
+# `{{flex wrap centre|…}}` / `{{columns|…}}`.  The frame is presentation scaffolding
+# with no faithful render here; the FRAME producer drops it and recurses the content.
+_FRAME_NAMES: frozenset[str] = frozenset({
+    "outdent", "nodent", "hanging indent",
+    "familytree", "tree chart", "chart2",
+    "flex wrap centre", "columns",
+    # `{{size|xl|CONTENT}}` — keyword-sized wrapper (xl/l/s/…).  The keyword has no
+    # clean CSS value here (it isn't a percent), so we drop the size frame and keep
+    # the content (the longest positional slot) faithfully.
+    "size",
+    # Indent / content wrappers — `{{ti|1em|TEXT}}`, `{{margin-left|3.2em|TEXT}}`
+    # (text-indent / left-margin frames around prose); the indent has no faithful
+    # render here, so drop the frame and keep the longest-positional content.
+    "ti", "margin-left",
+    # Content-bearing wrappers with no faithful styling here — keep the prose,
+    # drop the wrapper.  `{{vrl|Label}}` (vertical-rule label), `{{phn|x}}`
+    # (phonetic), `{{definition|term|gloss}}`, `{{nsl|disp|…}}` (navigation),
+    # `{{wdl|Qid|Display}}` (Wikidata link → its display text).
+    "vrl", "phn", "definition", "nsl", "wdl",
+})
+
+# Front-matter / index / page-chrome / Wikisource-maintenance templates → empty.
+# Page furniture (volume title / copyright / half-title pages), the vol-29
+# contributor index (harvested by `extract_contributor_bios`), table-of-contents
+# rows, page-number / line-position markers, and proofreading boxes.  None carry
+# article-body prose.  Enumerated (NOT a catch-all): each name is a known chrome
+# template surfaced by the generic-`{{…}}` flip.
+_CHROME_EMPTY_NAMES: frozenset[str] = frozenset({
+    # Volume front-matter pages
+    "eb1911 title page", "eb1911 half title page",
+    "eb1911 us copyright page", "eb1911 bc copyright page",
+    "vol", "from", "to", "year",
+    # vol-29 contributor index (data harvested separately)
+    "eb1911 contributor table", "eb1911 contributor table/entry",
+    "eb1911 contributor table/end", "eb1911 contributor table end",
+    # Table-of-contents rows / page-position markers
+    "dotted toc line", "dotted toc page listing", "toc line",
+    "pagenum", "lps", "lpe",
+    # Wikisource maintenance / proofreading boxes (no rendered article content)
+    "ambox", "suspect", "main other", "hidden text",
+    # Preprocess-stripped page chrome — routed DEFENSIVELY (preprocess removes
+    # these before the article walker, so they never reach this dispatch in
+    # production; the route is the permanent guard for the crash-check, which scans
+    # RAW pre-preprocess wikitext).  Same posture as `{{nop}}` in `_SPACER_NAMES`.
+    "eb1911 page heading",
+    "hws", "hwe", "hyphenated word start", "hyphenated word end",
+})
+
+# Footnote-list emitters → empty (footnotes render inline in this edition).
+_REFS_NAMES: frozenset[str] = frozenset({
+    "smallrefs", "reflist", "ref", "smallref", "blockref",
+})
+
+# Missing-asset placeholders → a visible `[missing …]` stub.
+_MISSING_NAMES: frozenset[str] = frozenset({
+    "missing table", "missing image", "missing math", "formula missing",
+})
+
+# Fraction family (BARE `{{name}}` form — `_FRAC_LABEL_RE` above is pipe-form).
+# Mirrors `_FRAC_LABEL_RE`'s name list (lower-cased, whitespace-collapsed).
+_FRAC_NAMES: frozenset[str] = frozenset({
+    "sfrac nobar", "eb1911 sfrac", "eb1911 tfrac",
+    "eb¹⁹¹¹ sfrac", "eb¹⁹¹¹ tfrac", "eb₁₉₁₁ ₜfᵣₐc",
+    "sfracn", "sfrac", "mfrac", "frac", "over", "binom",
+})
 
 
 # ── BRACE_PIPE composite classifier ───────────────────────────────────
@@ -503,7 +710,14 @@ def classify(
     derives the label for this element from the assembled
     inner_registry.
     """
-    if shape in LEAF_SHAPES:
+    # An HTML `<table>` owns its whole grid like a wiki `{|` (a LEAF): the
+    # table producer recurses its own cells, so we do NOT placeholderize its
+    # children.  The old non-leaf path lifted them, then the producer re-derived
+    # the grid from `raw` and ignored the lift — pure waste; leaf-ing it is
+    # output-neutral and drops the wasted placeholdering.
+    if shape in LEAF_SHAPES or (
+            shape == SHAPE_HTML_TAG
+            and raw.lstrip()[:6].lower() == "<table"):
         # Leaf shapes own their entire payload — the producer reads
         # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
         # and does whatever internal parsing it needs.  We still call
