@@ -520,10 +520,12 @@ _CHROME_EMPTY_NAMES: frozenset[str] = frozenset({
     "pagenum", "lps", "lpe",
     # Wikisource maintenance / proofreading boxes (no rendered article content)
     "ambox", "suspect", "main other", "hidden text",
-    # Preprocess-stripped page chrome — routed DEFENSIVELY (preprocess removes
-    # these before the article walker, so they never reach this dispatch in
-    # production; the route is the permanent guard for the crash-check, which scans
-    # RAW pre-preprocess wikitext).  Same posture as `{{nop}}` in `_SPACER_NAMES`.
+    # `{{EB1911 Page Heading}}` page chrome → empty.  It reaches the walk directly
+    # now — preprocess no longer strips it, so the classifier is its sole owner
+    # (same posture as `{{nop}}` → SPACER).  `{{hws}}`/`{{hwe}}` differ: preprocess
+    # RECONSTRUCTS their split word before the walk, so they only reach this dispatch
+    # via the crash-check's RAW scan — the empty route here is that diagnostic's
+    # guard, never the production path (where the reconstructed word must survive).
     "eb1911 page heading",
     "hws", "hwe", "hyphenated word start", "hyphenated word end",
 })

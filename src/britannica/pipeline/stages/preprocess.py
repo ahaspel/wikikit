@@ -51,25 +51,6 @@ from britannica.pipeline.stages.source_cleanup import (
 # registry — same as their pipe-form siblings.  Likewise `{{word-spacing|N|X}}` is a
 # `word-spacing` styler (the param-styler registry), not a strip.
 
-# ``{{nop}}`` is a MediaWiki no-op — invisible output, used in the source only to
-# force block separation that our renderer doesn't need.  It is chrome; drop it
-# WITH its own line (tag + trailing newline), so an alone-on-its-line nop can't
-# strand its bracketing newlines as a ``\n\n`` once it renders to nothing.  (The
-# tag-only strip in body_text.py — ``re.sub(r"\{\{nop\}\}", "")`` — is the bug
-# that left the line behind; this supersedes it.)
-_NOP = re.compile(r"[ \t]*\{\{\s*nop\s*\}\}[ \t]*\n?", re.IGNORECASE)
-
-# ``<ref follow=X>body</ref>`` is a footnote CONTINUATION: its body folds into
-# the named ref X (article-scoped, in ``resolve_ref_bodies``) and its ANCHOR
-# renders to nothing.  When it sits ALONE ON ITS OWN LINE it is bracketed by two
-# newlines; the empty anchor would then strand them as a ``\n\n``.  Collapse the
-# pair to one by dropping the trailing newline — but ONLY when a leading newline
-# is present (own-line), so an INLINE follow-ref (``word<ref follow>…</ref>`` ⏎
-# ``PAGE``) keeps the single newline that is its only word separator.  Body left
-# intact (non-greedy match stops at its own ``</ref>``).
-_REF_FOLLOW_LINE = re.compile(
-    r"(\n[ \t]*<ref\s+follow\b[^>]*>[\s\S]*?</ref>)[ \t]*\n", re.IGNORECASE)
-
 # A page seam is welded here, in the continuous stream.  The ONLY job is
 # rejoining a WORD split across the break (``con-`` ⏎ ``tinuation`` or the
 # ``{{hws}}``/``{{hwe}}`` pair).  A sentence that merely WRAPS needs nothing (the
@@ -110,15 +91,6 @@ _HWE = r"\{\{\s*(?:hwe|hyphenated\s+word\s+end)\s*\|[^{}|]*\|[^{}]*\}\}"
 _HWS_HWE_SEAM = re.compile(
     _HWS + r"(" + _BRIDGE_WS_SEC + r")(\x01PAGE:\d+\x01)(" + _BRIDGE_WS_SEC + r")"
     + _HWE, re.IGNORECASE)
-
-# ``{{EB1911 Page Heading|page-no|running-title|…}}`` — pure page chrome (the
-# scan's running header, emitted at the top of every page inside ``<noinclude>``).
-# It carries NO article content; strip the whole template before the walker.  It
-# is page furniture exactly like ``{{nop}}`` — a step-1 source-clean, no content
-# decision.  Most are inside ``<noinclude>`` (already dropped) but the standalone
-# survivors must not reach the walker.
-_PAGE_HEADING = re.compile(
-    r"\{\{\s*EB1911 Page Heading\b[^{}]*\}\}", re.IGNORECASE)
 
 # Survivor half-word templates — an ``{{hws}}``/``{{hwe}}`` pair that the seam
 # rule above could NOT weld (the two halves don't straddle a single ``\x01PAGE``
@@ -233,9 +205,6 @@ def _clean_and_heal(stream: str) -> str:
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
-    stream = _NOP.sub("", stream)                          # {{nop}} no-op chrome + its line
-    stream = _PAGE_HEADING.sub("", stream)                 # {{EB1911 Page Heading|…}} page chrome
-    stream = _REF_FOLLOW_LINE.sub(r"\1", stream)           # <ref follow> chrome line
     stream = strip_html_comments(stream)
     stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
     # ── page-transition healing (only correct on the continuous stream) ──
