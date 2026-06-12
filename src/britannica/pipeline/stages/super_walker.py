@@ -162,6 +162,23 @@ def _heading_at(body: str, pos: int):
     return _HEADING.match(body, pos)
 
 
+def has_article_heading(body: str) -> bool:
+    """True if BODY opens any block with a real article-title heading — the
+    SAME recognition super_walk uses to slice articles, surfaced as a yes/no.
+
+    Plate detection calls this to tell an article page (carries a heading)
+    from a plate leaf (none), so both detectors share ONE heading recognizer
+    instead of the legacy per-page parser.  `_heading_at` skips `«section»`
+    tags as lead layout, so a page's own section markers don't hide its
+    heading."""
+    starts = [0] + [m.end() for m in _BLOCK_BOUNDARY.finditer(body)]
+    for pos in starts:
+        m = _heading_at(body, pos)
+        if m is not None and _is_title(m.group(1)):
+            return True
+    return False
+
+
 def _page_before(stream: str, pos: int) -> int:
     mk = stream.rfind("\x01PAGE:", 0, pos)
     if mk < 0:

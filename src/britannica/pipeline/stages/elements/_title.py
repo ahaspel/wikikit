@@ -192,26 +192,53 @@ _LEAD_CHROME = re.compile(
     re.DOTALL | re.IGNORECASE)
 
 
-def produce_title(opening: str) -> tuple[str, str, str]:
+def produce_title(opening: str, section_name: str = "") -> tuple[str, str, str]:
     """Produce ``(plain_title, body, title_raw_span)`` from a raw article
     OPENING (the text beginning at the heading, as the walker hands it over).
     The producer owns the title↔body cut — the walker only set the boundary.
+
+    ``section_name`` is the article's ``«section begin="…"»`` id (already on
+    ``Article.section_name``); used ONLY to recover the fuller title when the
+    bold heading is a partial capture.  WHICH bold headers are titles is
+    classification — the boundary detector's job — so we only extract.
 
     ``title_raw_span`` is the raw heading span (markers/footnote intact) the
     downstream ``title_display`` transform needs to preserve italic/small-caps/
     footnote titles; "" when there is no bold heading (letter / fallback),
     where the plain title needs no formatted override."""
-    opening = _LEAD_CHROME.sub("", opening)
+    # The opening carries the leading «PAGE» leaf marker (super_detect stamps it
+    # on segment 0, AHEAD of the heading), which blocks the bold-heading match.
+    # Step over it for the title search, but KEEP it — it carries the page number
+    # the body needs — by re-prepending it to whatever body we return.
+    pm = re.match("\x01PAGE:[0-9]+\x01", opening)
+    page = pm.group(0) if pm else ""
+    opening = _LEAD_CHROME.sub("", opening[len(page):])
     span, rest = _title_span(opening)
     if span:
         title = re.sub(r"\s+,", ",", clean_title(span)).strip()
+        # Partial capture: when the bold run is a genuine PREFIX of the section
+        # name, the section carries more of the title — «B»TISIO vs section
+        # "Tisio Benvenuto", or CHATHAM vs "Chatham (New Brunswick)".  Require a
+        # FULL-prefix match (not just a shared first word) so a mere spelling
+        # variant ("NICOLAS" heading vs "Nicholas" section) keeps the source
+        # heading, which is authoritative.
+        sec = re.sub(r"\s+", " ", (section_name or "").replace("_", " ")).strip()
+        if (sec and title and sec.upper() != title.upper()
+                and sec.upper().startswith(title.upper())):
+            title = sec.upper()
         # title_raw (for title_display) keeps markers but unwraps the
         # [[Author:…|…]] link so the transform preserves the bold run.
-        return title, rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
+        return title, page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
     # Letter articles open with a drop-cap, not a bold heading.  Parse all six
     # documented drop-cap shapes structurally (incl. the nested
     # `{{di|{{serif|J}}|4em}}` form the old `[^{}|]+` regex couldn't reach).
     letter = _letter_from_dropcap(opening)
     if letter is not None:
-        return letter, opening, ""
-    return clean_title(opening.split("\n", 1)[0]), opening, ""
+        return letter, page + opening, ""
+    # No bold heading and no drop-cap.  The headword was already lifted out as
+    # the title (super_detect took the leading word; the body opens at the
+    # content — CHESS "once known as …", and every article likewise), so there
+    # is NOTHING here to extract: the body's first line is prose, not a title.
+    # Return "" and let the caller keep the authoritative detected title —
+    # produce_title must never fabricate a title from body text.
+    return "", page + opening, ""

@@ -24,11 +24,6 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _normalize_djvu_page_refs,
 )
 
-# The leading leaf marker super_detect slaps on segment 0 (`\x01PAGE:N\x01`).
-# `produce_title` looks for the heading at the very start of the opening, so we
-# peel this marker off, run the producer, then re-prepend it — never dropping it,
-# it carries the page number.
-_LEAD_PAGE_RE = re.compile(r"^(\x01PAGE:\d+\x01)")
 
 
 # ── Body text processing stages ──────────────────────────────────────
@@ -93,10 +88,11 @@ def preprocess_article(session, article) -> tuple[str, str, str]:
 
     The «PAGE» marker is NOT stamped here: ``super_detect`` slaps the leaf onto
     each segment at the cut, where the leaf is known; this function only
-    concatenates the already-marked segments.  Because segment 0 now leads with
-    that ``\\x01PAGE:N\\x01`` marker, we peel it off before ``produce_title``
-    (which seeks the heading at the very start of the opening) and re-prepend it
-    onto the body afterwards — never dropping it, it carries the page number.
+    concatenates the already-marked segments and hands the whole thing to
+    ``produce_title``, which OWNS the title↔body cut: it steps over the leading
+    ``\\x01PAGE:N\\x01`` leaf to reach the heading and keeps it on the body
+    (never dropping it — it carries the page number), and uses ``section_name``
+    to recover a fuller title when the bold run was a partial capture.
     """
     segments = (
         session.query(ArticleSegment)
@@ -113,14 +109,7 @@ def preprocess_article(session, article) -> tuple[str, str, str]:
     if not joined:
         return "", "", ""
 
-    # Peel the leading «PAGE» leaf so the title producer sees the heading at the
-    # start of the opening; re-prepend it onto the produced body afterwards.
-    m = _LEAD_PAGE_RE.match(joined)
-    lead_page = m.group(1) if m else ""
-    opening = joined[m.end():] if m else joined
-
-    title, body, title_raw = produce_title(opening)
-    body = lead_page + body
+    title, body, title_raw = produce_title(joined, article.section_name)
     if title_raw:
         return f"«TITLE»{title_raw}«/TITLE»{body}", title, title_raw
     return body, title, title_raw
@@ -178,7 +167,11 @@ def walk_article(session, article) -> tuple[str, str | None]:
     # shape — the title-producer doesn't apply to a plate's image-only body.  Leave
     # the detection-set plate title alone (running `produce_title` on plate cells
     # yields garbage like `800px|center`).
-    if article.article_type != "plate":
+    # `title` is "" when produce_title found no heading in the body (e.g. CHESS,
+    # whose bold headword is absent — the body legitimately opens "once known
+    # as …").  Keep the authoritative detected title rather than clobbering it
+    # with an empty one; the BODY is untouched either way.
+    if article.article_type != "plate" and title:
         article.title = title
         article.title_raw = title_raw or None
     if not raw:
@@ -197,8 +190,10 @@ def walk_article(session, article) -> tuple[str, str | None]:
         re.search(r"«(?:I|SC|FN)", title_disp)
         or title_disp.count("«B»") > 1) else None
     article.title_display = title_display
-    body = _TITLE_NODE_RE.sub("", walked, count=1)
-    return body, title_display
+    # Keep the «TITLE:…«/TITLE» node in the body: the viewer renders it
+    # in-stream as the H1, so the title's footnote joins the body's footnote
+    # stream (numbered + collected in Notes) instead of a severed parallel one.
+    return walked, title_display
 
 
 # `_transform_text_v2` (the raw-string shim = strip_attributions + process_elements)
