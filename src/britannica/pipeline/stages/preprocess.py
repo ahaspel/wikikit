@@ -148,13 +148,17 @@ def heal_page_seams(text: str) -> str:
     return text
 
 
-# Wikisource proofreading DELETE: `<del>` marks text the transcriber removed to repair
-# an OCR/print error (`Feb<ins>r</ins>u<del>r</del>ary` → February).  Verified corpus-
-# wide as ALWAYS editorial — every <del> is a correction, none carries genuine content
-# or styling — so it is cut here, unconditionally, with no content decision (a correction
-# is the sanctioned step-1 source-clean).  Its `<ins>` partner is the kept correction
-# (a styler, lifted by the walker).
+# Wikisource proofreading corrections — `<del>`/`<ins>` are a MIRROR PAIR marking
+# a repair of an OCR/print error (`Feb<ins>r</ins>u<del>r</del>ary` → February):
+# `<del>` is the discarded original text, `<ins>` the inserted correction.  Verified
+# corpus-wide as ALWAYS editorial — every one is a correction, none carries genuine
+# content or styling — so both are cut here, unconditionally, with no content decision
+# (the sanctioned step-1 source-clean).  They are mirrors at the CONTENT level:
+#   * `<del>` drops the tags AND the inner content (the discarded error).
+#   * `<ins>` drops ONLY the tags, KEEPING the inner content — it IS the corrected
+#     text ("February"), not a styler to underline.
 _EDITORIAL_DEL = re.compile(r"<del\b[^>]*>.*?</del>", re.IGNORECASE | re.DOTALL)
+_EDITORIAL_INS = re.compile(r"</?ins\b[^>]*>", re.IGNORECASE)
 
 
 # Presentational HTML entities (`&nbsp;`, `&mdash;`, `&alpha;`, `&ldquo;`, `&emsp;`,
@@ -206,7 +210,8 @@ def _clean_and_heal(stream: str) -> str:
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = strip_html_comments(stream)
-    stream = _EDITORIAL_DEL.sub("", stream)                # Wikisource <del> corrections
+    stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags
+    stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
     # Half-word templates the seam weld couldn't pair (split differently than the
