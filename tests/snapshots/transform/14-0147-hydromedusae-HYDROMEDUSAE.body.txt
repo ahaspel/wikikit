@@ -87,7 +87,7 @@ in italics. For definitions of the groups see below.«P»«CTR»Sub-class Hydrom
 2|Sub-order 2. Calycophorida.
 2|Sub-order 3. Physophorida.
 2|Sub-order 4. Cystophorida.
-«/OUTLINE»«/CTR»«P»«CTR»«I»Organization and Morphology of the Hydromedusae.«/I»«/CTR»«P»«HTMLTABLE:<table class="figtable" style="float:left;width:150px;padding-right:1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of a typical Hydropolyp.jpg|width=150}}</td></tr><tr><td style="text-align:center">«SC»Fig.«/SC» 1.—Diagram of a typical
+«/OUTLINE»«/CTR»«P»«CTR»«I»Organization and Morphology of the Hydromedusae.«/I»«/CTR»«P»«HTMLTABLE:<table style="float:left;width:150px;padding-right:1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of a typical Hydropolyp.jpg|width=150}}</td></tr><tr><td style="text-align:center">«SC»Fig.«/SC» 1.—Diagram of a typical
 Hydropolyp.</td></tr><tr><td style="padding-left: 2.5em;text-indent: -2.5em">«I»a«/I», Hydranth;«P»«I»b«/I», Hydrocaulus;«P»«I»c«/I», Hydrorhiza;«P»«I»t«/I», Tentacle;«P»«I»ps«/I», Perisarc, forming in the
 region of the hydranth
 «I»a«/I» cup or hydrotheca («I»h.t«/I»),—which,
@@ -149,9 +149,9 @@ word Hydrozoa, it refers to the bibliography at the end of the article
 In the Calyptoblastea the perisarc is always continued above the
 hydrocaulus, and forms a cup, the hydrangium or hydrotheca («I»h«/I», «I»t«/I»),
 standing off from the body, into which the hydranth can be retracted
-for shelter and protection.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - Stauridium productum.jpg|align=center|width=325}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of the Council of the Ray
+for shelter and protection.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - Stauridium productum.jpg|align=center|width=325}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of the Council of the Ray
 Society.</td></tr><tr><td style="text-align:center">«SC»Fig.«/SC» 2.—«I»Stauridium productum«/I», portion of the colony magnified;<br />
-«I»p«/I», polyp; «I»rh«/I», hydrorhiza.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:right;width:150px;padding-left:1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of Corymorpha.jpg|width=150}}</td></tr><tr><td>«SC»Fig.«/SC» 3.—Diagram of
+«I»p«/I», polyp; «I»rh«/I», hydrorhiza.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:right;width:150px;padding-left:1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of Corymorpha.jpg|width=150}}</td></tr><tr><td>«SC»Fig.«/SC» 3.—Diagram of
 «I»Corymorpha«/I». A, A hydriform
 person giving rise
 to medusiform persons
@@ -222,7 +222,7 @@ structure, the tentacles may
 retain their primitive hollow
 nature, or become solid by
 obliteration of the axial
-cavity.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:225px;margin-right: 1em"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Diagram of Tubularia indivisa.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 4.«/SC»—Diagram of «I»Tubularia«/I»
+cavity.«P»«HTMLTABLE:<table style="float:left;width:225px;margin-right: 1em"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Diagram of Tubularia indivisa.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 4.«/SC»—Diagram of «I»Tubularia«/I»
 «I»indivisa«/I». A single hydriform person
 «I»a«/I» bearing a stalk carrying numerous
 degenerate medusiform persons or
@@ -251,7 +251,7 @@ or myo-epithelial cells, with the cell prolonged at the base into a
 contractile muscle-fibre (fig. 6, B). In the hydropolyp the ectodermal
 muscle-fibres are always directed longitudinally. Belonging primarily
 to the epithelial layer, the muscular cells may become secondarily
-sub-epithelial.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Colonies of Clava.jpg|width=350}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of the Council of the Ray
+sub-epithelial.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Colonies of Clava.jpg|width=350}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of the Council of the Ray
 Society.</td></tr><tr><td>«SC»Fig. 5.«/SC»—Colonies of «I»Clava«/I». A, «I»Clava squamata«/I», magnified. B,
 «I»C. multicornis«/I», natural size; «I»p«/I», «I»polyp«/I»; «I»gon«/I», gonophores; «I»rh«/I»,
 hydrorhiza.</td></tr></table>«/HTMLTABLE»«P»The sub-epithelial layer consists primarily of the so-called
@@ -264,7 +264,7 @@ constituted may be recruited by immigration from without of other
 elements, more especially by nervous (ganglion) cells and muscle-cells
 derived from the epithelial layer. In its fullest development,
 therefore, the sub-epithelial layer consists of four classes of
-cell-elements.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Portion of the body-wall of Hydra.jpg|width=350}}</td></tr><tr><td>«SC»Fig. 6 A.«/SC»—Portion of the body-wall of «I»Hydra«/I», showing ectoderm
+cell-elements.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Portion of the body-wall of Hydra.jpg|width=350}}</td></tr><tr><td>«SC»Fig. 6 A.«/SC»—Portion of the body-wall of «I»Hydra«/I», showing ectoderm
 cells above, separated by “structureless lamella” from three
 flagellate endoderm cells below. The latter are vacuolated, and
 contain each a nucleus and several dark granules. In the middle
@@ -279,7 +279,7 @@ the fixation of the planula, appearing amongst the interstitial cells
 of the ectoderm. The germ-cells are capable of extensive migrations,
 not only in the body of the same polyp, but also from parent to bud
 through many non-sexual generations of polyps in a colony (A.
-Weismann [«B»58«/B»]).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:200px;margin-left: 1em"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Epidermo-muscular cells of Hydra.jpg|width=200}}</td></tr><tr><td>«SC»Fig. 6 B.«/SC»—Epidermo-muscular
+Weismann [«B»58«/B»]).«P»«HTMLTABLE:<table style="float:right;width:200px;margin-left: 1em"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Epidermo-muscular cells of Hydra.jpg|width=200}}</td></tr><tr><td>«SC»Fig. 6 B.«/SC»—Epidermo-muscular
 cells of «I»Hydra«/I». «I»m«/I», muscular-fibre
 processes. (After Kleinenberg,
 from Gegenbaur.)</td></tr></table>«/HTMLTABLE»
@@ -357,7 +357,7 @@ migrate on to the
 tentacles from the body,
 and that like the genital
 cells the cnidoblasts are
-wandering cells.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - structure of Nematocysts and their mode of working.jpg|width=250}}</td></tr><tr><td colspan="2">«SC»Fig. 7.«/SC»—Diagrams to show the structure
+wandering cells.«P»«HTMLTABLE:<table style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - structure of Nematocysts and their mode of working.jpg|width=250}}</td></tr><tr><td colspan="2">«SC»Fig. 7.«/SC»—Diagrams to show the structure
 of Nematocysts and their mode of
 working. (After Iwanzov.)</td></tr><tr style="vertical-align:top"><td>«I»a«/I»,</td><td>Undischarged nematocyst.</td></tr><tr style="vertical-align:top"><td>«I»b«/I»,</td><td>Commencing discharge.</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Discharge complete.</td></tr><tr><td>«I»cn«/I»,</td><td>Cnidocil.</td></tr><tr style="vertical-align:top"><td>N,</td><td>Nucleus of cnidoblast.</td></tr><tr style="vertical-align:top"><td>«I»o.c«/I»,</td><td>Outer capsule.</td></tr><tr style="vertical-align:top"><td>«I»x«/I»,</td><td>Plug closing the opening of the outer capsule.</td></tr><tr style="vertical-align:top"><td>«I»i.c«/I».,</td><td>Inner capsule, continuous with the wall of the filament, «I»f«/I».</td></tr><tr><td>«I»b«/I»,</td><td>Barbs.</td></tr></table>«/HTMLTABLE»
 The muscular tissue
@@ -392,7 +392,7 @@ In the polyp the nervous tissue
 is always in the form of a
 scattered plexus, never concentrated
 to form a definite
-nervous system as in the medusa.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:200px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Cells from the axis of the tentacle of a Medusa.jpg|width=200}}</td></tr><tr><td style="font-size: smaller">From Gegenbaur’s «I»Elements of Comparative«/I»
+nervous system as in the medusa.«P»«HTMLTABLE:<table style="float:right;width:200px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Cells from the axis of the tentacle of a Medusa.jpg|width=200}}</td></tr><tr><td style="font-size: smaller">From Gegenbaur’s «I»Elements of Comparative«/I»
 «I»Anatomy«/I».</td></tr><tr><td>«SC»Fig. 8.«/SC»—Vacuolated Endoderm
 Cells of cartilaginous
 consistence from the axis of the
@@ -418,13 +418,13 @@ of the tentacle, greatly resembling notochordal tissue, particularly
 that of «I»Amphioxus«/I» at a certain stage of development; as a fourth
 variety of endodermal cells excretory cells should perhaps be reckoned,
 as seen in the pores in the foot of «I»Hydra«/I» and elsewhere (cf. C. Chun,
-«SC»Hydrozoa«/SC» [«B»1«/B»], pp. 314, 315).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Colony of Hydractinia echinata on a Whelk.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
+«SC»Hydrozoa«/SC» [«B»1«/B»], pp. 314, 315).«P»«HTMLTABLE:<table style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Colony of Hydractinia echinata on a Whelk.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
 the Council of the Ray Society.</td></tr><tr><td>«SC»Fig. 9.«/SC»—Colony of «I»Hydractinia echinata«/I», growing
 on the Shell of a Whelk. Natural size.</td></tr></table>«/HTMLTABLE»
 The mesogloea in the hydropolyp is a thin elastic layer, in which
 may be lodged the muscular fibres and ganglion cells mentioned above,
 but which never contains any connective tissue or skeletogenous
-cells or any other kind of special mesogloeal corpuscles.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Polyps from a Colony of Hydractinia.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
+cells or any other kind of special mesogloeal corpuscles.«P»«HTMLTABLE:<table style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Polyps from a Colony of Hydractinia.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
 the Council of the Ray Society.</td></tr><tr><td>«SC»Fig. 10.«/SC»—Polyps from a Colony
 of «I»Hydractinia«/I», magnified. «I»dz«/I»,
 dactylozoid; «I»gz«/I», gastrozoid; «I»b«/I»,
@@ -518,7 +518,7 @@ In this manner the food absorbed by one individual contributes
 to the welfare of the whole colony, and the coenosarc has thePAGE:151function of circulating and distributing nutriment through the
 colony.«P»The hydroid colony shows many variations in form and architecture
 which depend simply upon differences in the methods in which
-polyps are budded.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:275px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Lar sabellarum and two stages of its Medusa, Willia stellata.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After Hincks, Forbes, and Browne. A and B modified
+polyps are budded.«P»«HTMLTABLE:<table style="float:left;width:275px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Lar sabellarum and two stages of its Medusa, Willia stellata.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After Hincks, Forbes, and Browne. A and B modified
 from Hincks; C modified from Forbes’s «I»Brit. Naked-eyed«/I»
 «I»Medusae«/I».</td></tr><tr><td>«SC»Fig. 11.«/SC»—«I»Lar sabellarum«/I» and two stages
 of its Medusa, «I»Willia stellata«/I». A, colony of
@@ -585,7 +585,7 @@ complex is covered externally
 by a common layer
 of ectoderm; it is not clear
 how this covering layer is
-developed.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Colony of Bougainvillea fruticosa.jpg|width=250}}</td></tr><tr><td>«SC»Fig. 12.«/SC»—Colony of «I»Bougainvillea«/I»
+developed.«P»«HTMLTABLE:<table style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Colony of Bougainvillea fruticosa.jpg|width=250}}</td></tr><tr><td>«SC»Fig. 12.«/SC»—Colony of «I»Bougainvillea«/I»
 «I»fruticosa«/I», natural size, attached to the
 underside of a piece of floating timber.
 (After Allman.)</td></tr></table>«/HTMLTABLE»
@@ -608,7 +608,7 @@ in botanical terminology
 as the monopodial or
 racemose, and the sympodial
 or cymose types respectively; each is characteristic of one of the
-two sub-orders of the Hydroidea, the Gymnoblastea and Calyptoblastea.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Portion of colony of Bougainvillea fruticosa.jpg|width=375}}</td></tr><tr><td>«SC»Fig. 13.«/SC»—Portion of colony of «I»Bougainvillea fruticosa«/I»
+two sub-orders of the Hydroidea, the Gymnoblastea and Calyptoblastea.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Portion of colony of Bougainvillea fruticosa.jpg|width=375}}</td></tr><tr><td>«SC»Fig. 13.«/SC»—Portion of colony of «I»Bougainvillea fruticosa«/I»
 («I»Anthomedusae-Gymnoblastea«/I») more magnified. (From Lubbock, after
 Allman.)</td></tr></table>«/HTMLTABLE»«P»In the monopodial method (figs. 12, 14) the founder-polyp is,
 theoretically, of unlimited growth in a vertical direction, and as it
@@ -620,7 +620,7 @@ founder did, producing a side branch of the main stem. Hence, in a
 colony of gymnoblastic hydroids, the oldest polyp of each system,
 that is to say, of the main stem or of a branch, is the topmost polyp;
 the youngest polyp of the system is the one nearest to the topmost
-polyp; and the axis of the system is a true axis.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Diagrams of the monopodial method of budding.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 14.«/SC»—Diagrams of the monopodial method of budding, shown
+polyp; and the axis of the system is a true axis.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Diagrams of the monopodial method of budding.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 14.«/SC»—Diagrams of the monopodial method of budding, shown
 in five stages (1-5). F, the founder-polyp; 1, 2, 3, 4, the succession
 of polyps budded from the founder-polyp; «I»a«/I»′, «I»b«/I»′, «I»c«/I»′, the succession
 of polyps budded from 1; «I»a«/I»², «I»b«/I»², polyps budded from 2; «I»a«/I»³, polyp
@@ -656,7 +656,7 @@ Driesch, in which,
 however, the
 primitively uniserial
 arrangement
-becomes masked later by secondary torsions of the hydranths.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, biserial type.jpg|width=325}}</td></tr><tr><td>«SC»Fig. 15.«/SC»—Diagram of sympodial budding,
+becomes masked later by secondary torsions of the hydranths.«P»«HTMLTABLE:<table style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, biserial type.jpg|width=325}}</td></tr><tr><td>«SC»Fig. 15.«/SC»—Diagram of sympodial budding,
 biserial type, shown in five stages (1-5). F,
 founder-polyp; 1, 2, 3, 4, 5, 6, succession of
 polyps budded from the founder; «I»a«/I», «I»b«/I», «I»c«/I»,
@@ -719,7 +719,7 @@ budding in hydroids
 have been worked out
 in an interesting
 manner by H. Driesch [«B»13«/B»], to whose memoirs the reader must be
-referred for further details.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, uniserial type.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 16.«/SC»—Diagram of sympodial
+referred for further details.«P»«HTMLTABLE:<table style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, uniserial type.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 16.«/SC»—Diagram of sympodial
 budding, uniserial type, shown
 in four stages (1-4). F, founder-polyp;
 1, 2, 3, succession of polyps
@@ -752,7 +752,7 @@ perisarc, the «I»gonothecae«/I» enclosing
 the blastostyles
 differ from the hydrothecae
 protecting the hydranths
-(fig. 54).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, simple unbranched Plumularia-type.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 17.«/SC»—Diagram of sympodial budding,
+(fig. 54).«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram of sympodial budding, simple unbranched Plumularia-type.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 17.«/SC»—Diagram of sympodial budding,
 simple unbranched «I»Plumularia«/I»-type. F,
 founder; 1-8, main axis formed by biserial
 budding from founder; «I»a-e«/I», pinnule formed
@@ -773,7 +773,7 @@ showing great activity of
 movement. Another class,
 the «I»gastrozoids«/I» («I»gz«/I»), have the tentacles reduced or absent, but have
 the mouth and stomach enlarged. The dactylozoids capture food,
-and pass it on to the gastrozoids, which swallow and digest it.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:275px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram showing method of branching in the Plumularia-type.jpg|width=275}}</td></tr><tr><td>«SC»Fig. 18.«/SC»—Diagram showing method
+and pass it on to the gastrozoids, which swallow and digest it.«P»«HTMLTABLE:<table style="float:right;width:275px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram showing method of branching in the Plumularia-type.jpg|width=275}}</td></tr><tr><td>«SC»Fig. 18.«/SC»—Diagram showing method
 of branching in the «I»Plumularia«/I»-type;
 compare with fig. 17. Polyps 3 and 6,
 instead of producing uniserial pinnules,
@@ -793,7 +793,7 @@ basal crust of
 «I»Podocoryne«/I» have
 been interpreted
 by some authors
-as reduced polyps.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:325px"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram showing method of branching in the Aglaophenia-type.jpg|width=325}}</td></tr><tr><td>«SC»Fig. 19.«/SC»—Diagram showing method of branching
+as reduced polyps.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:325px"><tr><td>{{IMG:EB1911 Hydromedusae - Diagram showing method of branching in the Aglaophenia-type.jpg|width=325}}</td></tr><tr><td>«SC»Fig. 19.«/SC»—Diagram showing method of branching
 in the «I»Aglaophenia«/I»-type. Polyp 7 has produced
 as its first bud, 8; as its second bud, «I»a«/I»⁷,
 which starts a uniserial pinnule; and as a third
@@ -886,17 +886,17 @@ life the parasitic
 habit is abandoned.
 No other instances
 are known of sessile
-habit in Hydromedusae.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:300px"><tr><td>{{IMG:EB1911 Hydromedusae - Cladonema radiatum - the medusa walking.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
+habit in Hydromedusae.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:300px"><tr><td>{{IMG:EB1911 Hydromedusae - Cladonema radiatum - the medusa walking.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
 the Council of the Ray Society.</td></tr><tr><td>«SC»Fig. 20.«/SC»—«I»Cladonema radiatum«/I», the medusa
 walking on the basal branches of its tentacles
-(«I»t«/I»), which are turned up over the body.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:300px"><tr><td>{{IMG:EB1911 Hydromedusae - Clavatella prolifera - ambulatory medusa.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
+(«I»t«/I»), which are turned up over the body.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:300px"><tr><td>{{IMG:EB1911 Hydromedusae - Clavatella prolifera - ambulatory medusa.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">From Allman’s «I»Gymnoblastic Hydroids«/I», by permission of
 the Council of the Ray Society.</td></tr><tr><td style="text-align:center">«SC»Fig. 21.«/SC»—«I»Clavatella prolifera«/I», ambulatory
-medusa. «I»t«/I», tentacles; «I»oc«/I», ocelli.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:left;width:125px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Corymorpha nutans - adult female medusa.jpg|width=125}}</td></tr><tr><td style="font-size: smaller">After E. T. Browne, from «I»Proc.«/I»
+medusa. «I»t«/I», tentacles; «I»oc«/I», ocelli.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:left;width:125px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Corymorpha nutans - adult female medusa.jpg|width=125}}</td></tr><tr><td style="font-size: smaller">After E. T. Browne, from «I»Proc.«/I»
 «I»Zool. Soc. of London«/I».</td></tr><tr><td>«SC»Fig. 22.«/SC»—«I»Corymorpha«/I»
 «I»nutans«/I», adult female
 Medusa. Magnified 10
 diameters.</td></tr></table>«/HTMLTABLE»
-«HTMLTABLE:<table class="figtable" style="float:right;width:100px;margin-left: 1em"><tr><td>{{IMG:Hydromedusae23.jpg|width=100}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Die«/I»
+«HTMLTABLE:<table style="float:right;width:100px;margin-left: 1em"><tr><td>{{IMG:Hydromedusae23.jpg|width=100}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Die«/I»
 «I»craspedoten Medusen der«/I»
 «I»Plankton Expedition«/I», by
 permission of Lipsius and
@@ -957,8 +957,8 @@ downwards from the sub-umbrella, or be held
 out horizontally, or be directed upwards over
 the ex-umbrella (fig. 23).  Each species of
 medusa usually has a characteristic method of carrying its
-tentacles.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:250px"><tr><td>{{IMG:EB1911 Hydromedusae - Rathkea octonemalis.jpg|width=250}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der Siboga-Expedition«/I»,
-by permission of E. S. Brill & Co.</td></tr><tr><td style="text-align:center">«SC»Fig. 24.«/SC»—«I»Rathkea octonemalis.«/I»</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Aeginura grimaldii.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Medusae«/I», in Prince of
+tentacles.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:250px"><tr><td>{{IMG:EB1911 Hydromedusae - Rathkea octonemalis.jpg|width=250}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der Siboga-Expedition«/I»,
+by permission of E. S. Brill & Co.</td></tr><tr><td style="text-align:center">«SC»Fig. 24.«/SC»—«I»Rathkea octonemalis.«/I»</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Aeginura grimaldii.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Medusae«/I», in Prince of
 Monaco’s series.</td></tr><tr><td style="text-align:center">«SC»Fig. 25.«/SC»—«I»Aeginura grimaldii.«/I»</td></tr></table>«/HTMLTABLE»
 The sub-umbrella invariably shows a velum as an inwardly
 projecting ridge or rim at its margin, within the circle of tentacles;
@@ -1002,8 +1002,8 @@ and run in a radial direction towards the centre of the umbrella
 (fig. 26).«P»«I»Histology of the Hydromedusa.«/I»—The histology described above
 for the polyp may be taken as the primitive type, from which thatPAGE:154of the medusa differs only in greater elaboration and differentiation
 of the cell-elements, which are also more concentrated to form
-distinct tissues.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - Carmarina hastata.jpg|width=325}}</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 26.«/SC»—«I»Carmarina (Geryonia) hastata«/I», one of the «I»Trachomedusae«/I».<br />
-(After Haeckel.)</td></tr><tr><td>«I»a«/I»,</td><td>Nerve ring.</td></tr><tr style="vertical-align:top"><td>«I»a«/I»′,</td><td>Radial nerve.</td></tr><tr><td>«I»b«/I»,</td><td>Tentaculocyst.</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»e«/I»,</td><td>Radiating canal.</td></tr><tr><td>«I»g«/I»″,</td><td>Ovary.</td></tr><tr style="vertical-align:top"><td>«I»h«/I»,</td><td>Peronia or cartilaginous process ascending from the cartilaginous margin of the disk centripetally in the outer surface of the jelly-like disk; six of these are perradial, six interradial, corresponding to the twelve solid larval tentacles, resembling those of «I»Cunina«/I».</td></tr><tr style="vertical-align:top"><td>«I»k«/I»,</td><td>Dilatation (stomach) of the manubrium.</td></tr><tr style="vertical-align:top"><td>«I»l«/I»,</td><td>Jelly of the disk.</td></tr><tr><td>«I»p«/I»,</td><td>Manubrium.</td></tr><tr style="vertical-align:top"><td>«I»t«/I»,</td><td>Tentacle (hollow and tertiary, «I»i.e.«/I» preceded by six perradial and six interradial solid larval tentacles).</td></tr><tr style="vertical-align:top"><td>«I»u«/I»,</td><td>Cartilaginous margin of the disk covered by thread-cells.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:left;width:125px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Stomotoca divisa.jpg|width=125}}</td></tr><tr><td style="font-size: smaller">After O. Maas in «I»Results of«/I»
+distinct tissues.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - Carmarina hastata.jpg|width=325}}</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 26.«/SC»—«I»Carmarina (Geryonia) hastata«/I», one of the «I»Trachomedusae«/I».<br />
+(After Haeckel.)</td></tr><tr><td>«I»a«/I»,</td><td>Nerve ring.</td></tr><tr style="vertical-align:top"><td>«I»a«/I»′,</td><td>Radial nerve.</td></tr><tr><td>«I»b«/I»,</td><td>Tentaculocyst.</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»e«/I»,</td><td>Radiating canal.</td></tr><tr><td>«I»g«/I»″,</td><td>Ovary.</td></tr><tr style="vertical-align:top"><td>«I»h«/I»,</td><td>Peronia or cartilaginous process ascending from the cartilaginous margin of the disk centripetally in the outer surface of the jelly-like disk; six of these are perradial, six interradial, corresponding to the twelve solid larval tentacles, resembling those of «I»Cunina«/I».</td></tr><tr style="vertical-align:top"><td>«I»k«/I»,</td><td>Dilatation (stomach) of the manubrium.</td></tr><tr style="vertical-align:top"><td>«I»l«/I»,</td><td>Jelly of the disk.</td></tr><tr><td>«I»p«/I»,</td><td>Manubrium.</td></tr><tr style="vertical-align:top"><td>«I»t«/I»,</td><td>Tentacle (hollow and tertiary, «I»i.e.«/I» preceded by six perradial and six interradial solid larval tentacles).</td></tr><tr style="vertical-align:top"><td>«I»u«/I»,</td><td>Cartilaginous margin of the disk covered by thread-cells.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:left;width:125px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Stomotoca divisa.jpg|width=125}}</td></tr><tr><td style="font-size: smaller">After O. Maas in «I»Results of«/I»
 «I»the«/I» “«I»Albatross«/I»” «I»Expedition«/I»,
 Museum of Comparative
 Zoology, Cambridge, Mass.,
@@ -1056,7 +1056,7 @@ so-called mesenteries, projecting into the sub-umbral cavity.
 The distal portions form the muscles of the tentacles. In contrast
 with the polyp, the longitudinal muscle-system is entirely
 ectodermal, there being no endodermal muscles in craspedote
-medusae.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:300px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Muscular Cells of Medusae Lizzia.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 28.«/SC»—Muscular Cells of Medusae
+medusae.«P»«HTMLTABLE:<table style="float:right;width:300px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Muscular Cells of Medusae Lizzia.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 28.«/SC»—Muscular Cells of Medusae
 («I»Lizzia«/I»). The uppermost is a purely muscular
 cell from the sub-umbrella; the two lower are
 epidermo-muscular cells from the base of a
@@ -1092,7 +1092,7 @@ nerve-ring, is derived from the ectoderm on the sub-umbral
 side of the velum; it contains fewer but larger ganglion-cells and
 innervates the muscles of the velum (see diagram in article «LN:Medusae|Medusae«/LN»).
 The two nerve-rings are connected by fibres passing from one to the
-other.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:275px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Tiaropsis rosea showing adradial Statocysts.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der Siboga«/I»
+other.«P»«HTMLTABLE:<table style="float:left;width:275px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Tiaropsis rosea showing adradial Statocysts.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der Siboga«/I»
 «I»Expedition«/I», by permission of E. S. Brill & Co.</td></tr><tr><td>«SC»Fig. 29.«/SC»—«I»Tiaropsis rosea«/I» (Ag. and Mayer)
 showing the eight adradial Statocysts, each
 close to an Ocellus. Cf. fig. 30.</td></tr></table>«/HTMLTABLE»
@@ -1179,9 +1179,9 @@ tentaculocyst, and the concrement-cells
 are endodermal,
 derived from the endoderm
 of the modified tentacle, while
-the rest of the organ is ectodermal.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:250px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst and Ocellus of Tiaropsis diademata.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after Linko, «I»Traveaux Soc. Imp. Nat.«/I», St.
+the rest of the organ is ectodermal.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:250px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst and Ocellus of Tiaropsis diademata.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after Linko, «I»Traveaux Soc. Imp. Nat.«/I», St.
 Petersbourg, xxix.</td></tr><tr><td colspan="2">«SC»Fig. 30.«/SC»—Section of a Statocyst and
-Ocellus of «I»Tiaropsis diademata«/I»; cf. fig. 29.</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:left;width:225px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Mitrocoma annae.jpg|width=225}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig, «I»Nervensystem«/I»
+Ocellus of «I»Tiaropsis diademata«/I»; cf. fig. 29.</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:left;width:225px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Mitrocoma annae.jpg|width=225}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig, «I»Nervensystem«/I»
 «I»und Sinnesorgane der Medusen«/I», by
 permission of F. C. W. Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 31.«/SC»—Section of a Statocyst of
 «I»Mitrocoma annae«/I».</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr></table>«/HTMLTABLE»
@@ -1227,14 +1227,14 @@ badly-preserved material,
 and perhaps are present
 in many cases where they
 have been said to have
-been wanting.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>«HTMLTABLE:<table class="figtable" style="width:225px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Phialidium.jpg|width=225}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig, «I»Nervensystem«/I»
+been wanting.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr><td>«HTMLTABLE:<table style="width:225px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Phialidium.jpg|width=225}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig, «I»Nervensystem«/I»
 «I»und Sinnesorgane der Medusen«/I», by
 permission of F. C. W. Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 32.«/SC»—Section of a Statocyst
-of «I»Phialidium«/I».</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr></table>«/HTMLTABLE»</td><td></td><td>«HTMLTABLE:<table class="figtable" style="width:150px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Octorchis.jpg|width=150}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig,
+of «I»Phialidium«/I».</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr></table>«/HTMLTABLE»</td><td></td><td>«HTMLTABLE:<table style="width:150px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Statocyst of Octorchis.jpg|width=150}}</td></tr><tr><td colspan="2" style="font-size: smaller">Modified after O. and R. Hertwig,
 «I»Nervensystem und Sinnesorgane der«/I»
 «I»Medusen«/I», by permission of F. C. W.
 Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 33.«/SC»—Optical Section of
-a Statocyst of «I»Octorchis«/I».</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table class="figtable" style="float:right;width:250px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina solmaris.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
+a Statocyst of «I»Octorchis«/I».</td></tr><tr style="vertical-align:top"><td>«I»con«/I»,</td><td>Concrement-cell with otolith.</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Cavity of statocyst.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»«P»«HTMLTABLE:<table style="float:right;width:250px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina solmaris.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
 «I»der Medusen«/I», by permission of F. C. W.
 Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 34.«/SC»—Tentaculocyst (statorhabd)
 of «I»Cunina solmaris«/I». «I»n.c«/I», Nerve-cushion;
@@ -1280,7 +1280,7 @@ the closed vesicle may
 sink inwards and be
 found far removed from
 the surface, as in «I»Geryonia«/I»
-(fig. 37).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina lativentris.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
+(fig. 37).«P»«HTMLTABLE:<table style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina lativentris.jpg|width=250}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
 «I»der Medusen«/I», by permission of F. C. W.
 Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 35.«/SC»—Tentaculocyst of «I»Cunina lativentris«/I».</td></tr><tr><td>«I»ect«/I»,</td><td>Ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»n.c«/I»,</td><td>Nerve-cushion.</td></tr><tr style="vertical-align:top"><td>«I»end«/I»,</td><td>Endodermal concrement-cells.</td></tr><tr><td>«I»con«/I»,</td><td>Otolith.</td></tr></table>«/HTMLTABLE»
 The «I»ocelli«/I» are seen in
@@ -1314,7 +1314,7 @@ tentacle, two
 nerves run round
 the base of the
 tentacle to it. In
-other cases ocelli may occur between tentacles, as in «I»Tiaropsis«/I» (fig. 29).«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:325px"><tr><td>{{IMG:EB1911 Hydromedusae - Simple tentaculocyst of Rhopalonema velatum.jpg|width=325}}
+other cases ocelli may occur between tentacles, as in «I»Tiaropsis«/I» (fig. 29).«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:325px"><tr><td>{{IMG:EB1911 Hydromedusae - Simple tentaculocyst of Rhopalonema velatum.jpg|width=325}}
 «SC»Fig. 36.«/SC»—Simple tentaculocyst of «I»Rhopalonema«/I»
 «I»velatum«/I». The process carrying the otolith
 or concretion «I»hk«/I», formed by endoderm cells, is
@@ -1326,7 +1326,7 @@ filled with a clear gelatinous secretion forming a sort of vitreousPAGE:156bod
 cavity of the cup, forming a non-cellular lens as in «I»Lizzia«/I» (fig. 28).
 Beyond this simple condition the visual organs of the Hydromedusae
 do not advance, and are far from reaching the wonderful development
-of the eyes of Scyphomedusae («I»Charybdaea«/I»).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - statocyst of Geryonia (Carmarina hastata).jpg|width=300}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
+of the eyes of Scyphomedusae («I»Charybdaea«/I»).«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - statocyst of Geryonia (Carmarina hastata).jpg|width=300}}</td></tr><tr><td colspan="2" style="font-size: smaller">After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
 «I»der Medusen«/I», by permission of F. C. W. Vogel.</td></tr><tr><td colspan="2">«SC»Fig. 37.«/SC»—Section of statocyst of «I»Geryonia«/I»
 («I»Carmarina hastata«/I»).</td></tr><tr style="vertical-align:top"><td>«I»st.c«/I»,</td><td>Statocyst containing the minute tentaculocyst.</td></tr><tr style="vertical-align:top"><td>«I»nr«/I»₁,</td><td>Ex-umbral nerve-ring.</td></tr><tr style="vertical-align:top"><td>«I»nr«/I»₂,</td><td>Sub-umbral nerve-ring.</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»sub«/I»,</td><td>Sub-umbral ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr></table>«/HTMLTABLE»
 Besides the ordinary type of ocellus just described, there is found
@@ -1369,7 +1369,7 @@ a primitive stage of the tentaculocysts of Trachylinae; Linko, on
 the other hand, finding no nerve-elements connected with them,
 regards them as digestive (?) in function.«P»The sense-organs of the two fresh-water medusae «I»Limnocodium«/I»
 and «I»Limnocnida«/I» are peculiar and of rather doubtful nature (see E. T.
-Browne [«B»10«/B»]).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:125px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Ocellus of Lizzia koellikeri.jpg|width=125}}</td></tr><tr><td>«SC»Fig. 38.«/SC»—Ocellus of
+Browne [«B»10«/B»]).«P»«HTMLTABLE:<table style="float:right;width:125px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Ocellus of Lizzia koellikeri.jpg|width=125}}</td></tr><tr><td>«SC»Fig. 38.«/SC»—Ocellus of
 «I»Lizzia koellikeri«/I». «I»oc«/I»,
 Pigmented ectodermal
 cells; «I»l«/I», lens. (After
@@ -1414,7 +1414,7 @@ generally; on the base of the manubrium, or under the gastral
 pouches, or in both these situations («I»Octorchidae«/I»), or under the radial
 canals, in Trachomedusae; under the gastral pouches or radial
 canals, in Narcomedusae. When ripe, the germ-cells are dehisced
-directly to the exterior.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:275px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - a Cordylus of Laodice.jpg|width=275}}</td></tr><tr><td colspan="2" style="font-size: smaller">After W. K. Brooks, «I»Journal of Morphology«/I», x.,
+directly to the exterior.«P»«HTMLTABLE:<table style="float:left;width:275px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - a Cordylus of Laodice.jpg|width=275}}</td></tr><tr><td colspan="2" style="font-size: smaller">After W. K. Brooks, «I»Journal of Morphology«/I», x.,
 by permission of Ginn & Co.</td></tr><tr><td colspan="2">«SC»Fig. 39.«/SC»—Section of a Cordylus of
 «I»Laodice«/I».</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»t«/I»,</td><td>Tentacle.</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Cordylus, composed of flattened ectoderm «I»ec«/I» covering a large-celled endodermal axis «I»en«/I».</td></tr></table>«/HTMLTABLE»
 Hydromedusae are of separate sexes, the only known exception
@@ -1464,7 +1464,7 @@ of polyp-individuals, partly of medusa-individuals, a possibility also
 realized in many colonies of Hydroidea. The third case gives a colony
 entirely composed of medusa-individuals, a possibility perhaps
 realized in the Siphonophora, which will be discussed in dealing with
-this group.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:275px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Portions of Sections through the Disks of Medusae Lizzia and Aurelia.jpg|width=275}}</td></tr><tr><td colspan="2">«SC»Fig. 40.«/SC»—Portions of Sections through
+this group.«P»«HTMLTABLE:<table style="float:right;width:275px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Portions of Sections through the Disks of Medusae Lizzia and Aurelia.jpg|width=275}}</td></tr><tr><td colspan="2">«SC»Fig. 40.«/SC»—Portions of Sections through
 the Disk of Medusae—the upper one of
 «I»Lizzia«/I», the lower of «I»Aurelia«/I». (After
 Hertwig.)</td></tr><tr style="vertical-align:top"><td>«I»el«/I»,</td><td>Endoderm lamella.</td></tr><tr style="vertical-align:top"><td>«I»m«/I»,</td><td>Muscular processes of the ectoderm-cells in cross section.</td></tr><tr style="vertical-align:top"><td>«I»d«/I»,</td><td>Ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»en«/I»,</td><td>Endoderm lining the enteric cavity.</td></tr><tr style="vertical-align:top"><td>«I»e«/I»,</td><td>Wandering endoderm cells of the gelatinous substance.</td></tr></table>«/HTMLTABLE»
@@ -1507,7 +1507,7 @@ from the same hydroid colony. This is the case in «I»Syncoryne mirabilis«/I»
 (Allman [«B»1«/B»], p. 278) and in «I»Campanularia volubilis«/I»; in the latter,
 free medusae are produced in summer, gonophores in winter
 (Duplessis [«B»14«/B»]). Again in «I»Pennaria«/I», the male medusae are set freePAGE:157in a state of maturity, and have ocelli; the female medusae remain
-attached and have no sense organs.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - Structure of the Gonophore.jpg|width=300}}</td></tr><tr style="font-size: smaller"><td colspan="2">Modified from Weismann, «I»Entstehung der Sexualzellen bei den Hydromedusen«/I».</td></tr><tr><td colspan="2">«SC»Fig. 41.«/SC»—Diagrams of the Structure of the Gonophores of
+attached and have no sense organs.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - Structure of the Gonophore.jpg|width=300}}</td></tr><tr style="font-size: smaller"><td colspan="2">Modified from Weismann, «I»Entstehung der Sexualzellen bei den Hydromedusen«/I».</td></tr><tr><td colspan="2">«SC»Fig. 41.«/SC»—Diagrams of the Structure of the Gonophores of
 various Hydromedusae, based on the figures of G. J. Allman and
 A. Weismann.</td></tr><tr style="vertical-align:top"><td>A,</td><td>“Meconidium” of «I»Gonothyraea«/I».</td></tr><tr style="vertical-align:top"><td>B,</td><td>Type of «I»Tubularia«/I».</td></tr><tr style="vertical-align:top"><td>C,</td><td>Type of «I»Garveia«/I», &c.</td></tr><tr style="vertical-align:top"><td>D,</td><td>Type of «I»Plumularia«/I», «I»Agalma«/I», &c.</td></tr><tr style="vertical-align:top"><td>E,</td><td>Type of «I»Coryne«/I», «I»Forskalia«/I», &c.</td></tr><tr><td>«SPAN[style:white-space:nowrap]»F, G, H,«/SPAN»</td><td>Sporosacs.</td></tr><tr style="vertical-align:top"><td>F,</td><td>With simple spadix.</td></tr><tr style="vertical-align:top"><td>G,</td><td>With  spadix  prolonged («I»Eudendrium«/I»).</td></tr><tr style="vertical-align:top"><td>H,</td><td>With spadix branched («I»Cordylophora«/I»).</td></tr><tr style="vertical-align:top"><td>«I»s.c«/I»,</td><td>Sub-umbral cavity.</td></tr><tr><td>«I»t«/I»,</td><td>Tentacles.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal,</td></tr><tr><td>«I»g«/I»,</td><td>Gonads.</td></tr><tr><td>«I»sp«/I»,</td><td>Spadix.</td></tr><tr style="vertical-align:top"><td>«I»e.l«/I»,</td><td>Endoderm-lamella.</td></tr><tr style="vertical-align:top"><td>«I»ex«/I»,</td><td>Ex-umbral ectoderm.</td></tr><tr><td>«I»ect«/I»,</td><td>Ectotheca.</td></tr></table>«/HTMLTABLE»«P»The gonophores of different hydroids differ greatly in structure
 from one another, and form a series showing degeneration of the
@@ -1579,7 +1579,7 @@ being simple (fig.
 «I»Eudendrium«/I» (fig.
 41, G) it curls
 round the single
-large ovum.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Gonophores of Dicoryne conferta.jpg|width=300}}</td></tr><tr style="font-size: smaller"><td colspan="2">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of the
+large ovum.«P»«HTMLTABLE:<table style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Gonophores of Dicoryne conferta.jpg|width=300}}</td></tr><tr style="font-size: smaller"><td colspan="2">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of the
 Council of the Ray Society.</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 42.«/SC»—Gonophores of «I»Dicoryne conferta«/I».</td></tr><tr style="vertical-align:top"><td>A,</td><td>A male gonophore still enclosed in its ectotheca.</td></tr><tr style="vertical-align:top"><td>«SPAN[style:white-space:nowrap]»B and C,«/SPAN»</td><td>Two views of a female gonophore after liberation.</td></tr><tr style="vertical-align:top"><td>«I»t«/I»,</td><td>Tentacles.</td></tr><tr style="vertical-align:top"><td>«I»ov«/I»,</td><td>Ova, two carried on each female gonophore.</td></tr><tr style="vertical-align:top"><td>«I»sp«/I»,</td><td>Testis.</td></tr></table>«/HTMLTABLE»
 The hydroid
 «I»Dicoryne«/I» is remarkable
@@ -1655,7 +1655,7 @@ the body grows a new hydranth. Similarly in «I»Schizocladium«/I»
 portions of the hydrocaulus are cut off to form so-called “spores,”
 which grow into new
 individuals (see
-Allman [«B»1«/B»]).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Direct Budding of Cunina.jpg|width=300}}</td></tr><tr><td colspan="2" style="font-size: smaller">Much modified from C. Chun, “Coelenterata,” in
+Allman [«B»1«/B»]).«P»«HTMLTABLE:<table style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Direct Budding of Cunina.jpg|width=300}}</td></tr><tr><td colspan="2" style="font-size: smaller">Much modified from C. Chun, “Coelenterata,” in
 Bronn’s «I»Tierreich«/I».</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 43.«/SC»—Direct Budding of «I»Cunina«/I».</td></tr><tr><td colspan="2">A, B, C, E, F, In vertical section.</td></tr><tr style="vertical-align:top"><td>D,</td><td>Sketch of external view.</td></tr><tr><td>«I»st«/I»,</td><td>Stomach.</td></tr><tr><td>«I»m«/I»,</td><td>Manubrium.</td></tr><tr><td>«I»t«/I».</td><td>Tentacle.</td></tr><tr style="vertical-align:top"><td>«I»s.o«/I»,</td><td>Sense organ.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr style="vertical-align:top"><td>«I»s.c«/I»,</td><td>Sub-umbral cavity.</td></tr><tr style="vertical-align:top"><td>«I»n.s«/I»,</td><td>Nervous system.</td></tr></table>«/HTMLTABLE»«P»(3) «I»Vegetative budding«/I»
 is almost universal
 in the Hydromedusae.
@@ -1694,7 +1694,7 @@ is to be separated, it
 becomes nipped off
 from the parent polyp and begins a free existence.«P»(«I»b«/I») «I»The Medusae.«/I»—Two types of budding must be distinguished—the
 direct, so-called, palingenetic type, and the «I»indirect«/I», so-called
-coenogenetic type.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Medusa budding with the formation of an entocodon.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 44.«/SC»—Diagrams of Medusa budding with
+coenogenetic type.«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Medusa budding with the formation of an entocodon.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 44.«/SC»—Diagrams of Medusa budding with
 the formation of an entocodon. The endoderm
 is shaded, the ectoderm left clear.</td></tr><tr><td colspan="2">A, B, C, D, F, Successive stages in vertical section.</td></tr><tr><td>E,</td><td>Transverse section of a stage similar to D.</td></tr><tr><td>«I»Gc«/I»,</td><td>Entocodon.</td></tr><tr style="vertical-align:top"><td>«I»s.c«/I»,</td><td>Cavity of entocodon, forming the future sub-umbral cavity.</td></tr><tr><td>«I»st«/I»,</td><td>Stomach.</td></tr><tr style="vertical-align:top"><td>«I»r.c«/I»,</td><td>Radial canal.</td></tr><tr style="vertical-align:top"><td>«I»c.c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»e.l«/I»,</td><td>Endoderm lamella.</td></tr><tr><td>«I»m«/I»,</td><td>Manubrium.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr><td>«I»t«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»
 The direct type of budding is rare, but is seen in «I»Cunina«/I» and
@@ -1744,7 +1744,7 @@ bud of a characteristic
 structure
 termed the «I»entocodon«/I»
 («I»Knospenkern«/I»,
-«I»Glockenkern«/I»).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:300px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Modifications of the method of medusa budding.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 45.«/SC»—Modifications of the method of
+«I»Glockenkern«/I»).«P»«HTMLTABLE:<table style="float:right;width:300px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Modifications of the method of medusa budding.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 45.«/SC»—Modifications of the method of
 budding shown in fig. 44, with solid Entocodon
 («I»Gc.«/I») and formation of an ectotheca («I»ect.«/I»).</td></tr></table>«/HTMLTABLE»
 The first stage is
@@ -1801,7 +1801,7 @@ medusa becomes
 separated by rupture
 of the stalk
 of the bud and
-swims away.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:294px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - significance of the Entocodon in Medusa-buds.jpg|align=left|width=283}}</td></tr><tr><td colspan="2">Fig. 46.—Diagrams to show the significance
+swims away.«P»«HTMLTABLE:<table style="float:left;width:294px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - significance of the Entocodon in Medusa-buds.jpg|align=left|width=283}}</td></tr><tr><td colspan="2">Fig. 46.—Diagrams to show the significance
 of the Entocodon in Medusa-buds. (Modified
 from a diagram given by A. Weismann.)</td></tr><tr style="vertical-align:top"><td>I,</td><td>Ideally primitive method of budding, in which the mouth is formed first (I«I»a«/I»), next the tentacles (I«I»b«/I»), and lastly the umbrella.</td></tr><tr style="vertical-align:top"><td>II,</td><td>Method. of «I»Cunina«/I»; («I»a«/I») the mouth arises, next the umbrella («I»b«/I»), and lastly the tentacles («I»c«/I»).</td></tr><tr style="vertical-align:top"><td>III,</td><td>Hypothetical transition from II to the indirect method with an entocodon; the formation of the manubrium is retarded, that of the umbrella hastened (III«I»a«/I», «I»b«/I»).</td></tr><tr style="vertical-align:top"><td>IV,</td><td>«I»a«/I», «I»b«/I», «I»c«/I», budding with an entocodon (cf. fig. 44).</td></tr><tr style="vertical-align:top"><td>V,</td><td>Budding with a solid entocodon (cf. fig. 45).</td></tr></table>«/HTMLTABLE»
 If the bud, however,
@@ -1947,7 +1947,7 @@ the four interradii, and they arise from the ectoderm, that is to say,
 the germinal epithelium, which later gives rise to the gonads. The
 buds do not appear simultaneously but successively on each of the
 four sides of the manubrium, thus:
-«HTMLTABLE:<table class="figtable" cellpadding="0" cellspacing="0" style="margin-right:auto;margin-left:auto"><tr><td style="text-align:center">1</td></tr><tr><td>«SPAN[style:white-space:nowrap]»3 4«/SPAN»</td></tr><tr><td style="text-align:center">2</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table cellpadding="0" cellspacing="0" style="margin-right:auto;margin-left:auto"><tr><td style="text-align:center">1</td></tr><tr><td>«SPAN[style:white-space:nowrap]»3 4«/SPAN»</td></tr><tr><td style="text-align:center">2</td></tr></table>«/HTMLTABLE»
 and secondary buds
 may be produced on the medusa-buds before the latter are set free
 as medusae. Each bud arises as a thickening of the epithelium, which
@@ -1981,7 +1981,7 @@ but the oöcyte absorbs nutriment from the remaining oögonia.
 In «I»Hydra«/I» the oöcyte is a large amoeboid cell, which sends out
 pseudopodia amongst the oögonia and absorbs nutriment from
 them. When the oöcyte is full grown, the residual oögonia
-die off and disintegrate.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Budding from the Ectoderm in Margellium.jpg|width=400}}</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 47.«/SC»—Budding from the Ectoderm (germinal epithelium) in
+die off and disintegrate.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Budding from the Ectoderm in Margellium.jpg|width=400}}</td></tr><tr><td colspan="2" style="text-align:center">«SC»Fig. 47.«/SC»—Budding from the Ectoderm (germinal epithelium) in
 «I»Margellium«/I». (After C. Chun.)</td></tr><tr style="vertical-align:top"><td>A,</td><td>The epithelium becomes two-layered.</td></tr><tr style="vertical-align:top"><td>B,</td><td>The lower layer forms a solid mass of cells, which (C) becomes a vesicle, the future endoderm, containing the coelenteric cavity («I»coel«/I»), while the outer layer furnishes the future ectoderm.</td></tr><tr style="vertical-align:top"><td>«SPAN[style:white-space:nowrap]»D, E, F,«/SPAN»</td><td>a thickening of the ectoderm on the distal side of the bud forms an entocodon («I»Gc«/I»).</td></tr><tr style="vertical-align:top"><td>G, H,</td><td>Formation of the medusae.</td></tr><tr style="vertical-align:top"><td>«I»s.c«/I»,</td><td>Sub-umbral cavity.</td></tr><tr style="vertical-align:top"><td>«I»r.c«/I»,</td><td>Radial canal.</td></tr><tr style="vertical-align:top"><td>«I»st«/I»,</td><td>Stomach, which in H acquires a secondary communication with the digestive cavity of the mother.</td></tr><tr style="vertical-align:top"><td>«I»cc«/I»,</td><td>Circular canal.</td></tr><tr><td>«I»v«/I»,</td><td>Velum.</td></tr><tr><td>«I»t«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»«P»The spermatogenesis and maturation and fertilization of the
 germ-cells present nothing out of the common and need not be
 described here. These processes have been studied in detail
@@ -2021,7 +2021,7 @@ at the hinder pole. Formation of archenteron and blastopore may,
 however, be deferred till a later stage (actinula or after).«P»The actinula stage is usually suppressed or not set free, but it is
 seen in «I»Tubularia«/I» (fig. 48), where it is ambulatory, in «I»Gonionemus«/I»
 (Trachomedusae), and in «I»Cunina«/I» (Narcomedusae),
-where it is parasitic.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Free Actinula of Tubularia.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">Modified from a plate by L.
+where it is parasitic.«P»«HTMLTABLE:<table style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Free Actinula of Tubularia.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">Modified from a plate by L.
 Agassiz, «I»Contributions to Nat.«/I»
 «I»Hist. U.S.«/I», iv.</td></tr><tr><td style="text-align:center">«SC»Fig. 48.«/SC»—Free Actinula
 of «I»Tubularia«/I».</td></tr></table>«/HTMLTABLE»
@@ -2247,7 +2247,7 @@ of relationship might be cleared up.
 tentacles, by a great similarity to «I»Hydra«/I» in histological structure, and
 by reproduction by transverse fission. It was found originally in an
 oyster-farm at Ostend. The sexual reproduction is unknown. For
-further information see C. Chun («LN:Hydrozoa|Hydrozoa«/LN» [«B»1«/B»]. Pl. I.).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - possible modifications of persons of a gymnoblastic Hydromedusa.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 49.«/SC»—Diagram showing possible
+further information see C. Chun («LN:Hydrozoa|Hydrozoa«/LN» [«B»1«/B»]. Pl. I.).«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - possible modifications of persons of a gymnoblastic Hydromedusa.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 49.«/SC»—Diagram showing possible
 modifications of persons of a gymnoblastic
 «I»Hydromedusa«/I». (After Allman.)</td></tr><tr style="vertical-align:top"><td>«SPAN[style:white-space:nowrap]»«I»a«/I»,«/SPAN»</td><td>Hydrocaulus (stem).</td></tr><tr style="vertical-align:top"><td>«I»b«/I»,</td><td>Hydrorhiza (root).</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Enteric cavity.</td></tr><tr><td>«I»d«/I»,</td><td>Endoderm.</td></tr><tr><td>«I»e«/I»,</td><td>Ectoderm.</td></tr><tr style="vertical-align:top"><td>«I»f«/I»,</td><td>Perisarc, (horny case).</td></tr><tr style="vertical-align:top"><td>«I»g«/I»,</td><td>Hydranth (hydriform person) expanded.</td></tr><tr style="vertical-align:top"><td>«I»g«/I»′,</td><td>Hydranth (hydriform person) contracted.</td></tr><tr style="vertical-align:top"><td>«I»h«/I»,</td><td>Hypostome, bearing mouth at its extremity.</td></tr><tr style="vertical-align:top"><td>«I»k«/I»,</td><td>Sporosac springing from the hydrocaulus.</td></tr><tr style="vertical-align:top"><td>«I»k«/I»′,</td><td>Sporosac springing from «I»m«/I», a modified hydriform person (blastostyle): the genitalia are seen surrounding the spadix or manubrium.</td></tr><tr style="vertical-align:top"><td>«I»l«/I»,</td><td>Medusiform person or medusa.</td></tr><tr><td>«I»m«/I»,</td><td>Blastostyle.</td></tr></table>«/HTMLTABLE»
 «I»Polypodium hydriforme«/I» Ussow is a fresh-water form parasitic on
@@ -2341,11 +2341,11 @@ When blastostyles are present, however, they are never enclosed
 in special gonothecae as in the next sub-order. In this sub-order
 the characters of the hydranth are very variable, probably owing
 to the fact that it is exposed and not protected by a hydrotheca,
-as in Calyptoblastea.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr style="vertical-align:bottom"><td>«HTMLTABLE:<table class="figtable" style="width:125px"><tr><td>{{IMG:EB1911 Hydromedusae - Sarsia gemnifera.jpg|width=125}}</td></tr><tr><td>«SC»Fig. 50.«/SC»—«I»Sarsia«/I»
+as in Calyptoblastea.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr style="vertical-align:bottom"><td>«HTMLTABLE:<table style="width:125px"><tr><td>{{IMG:EB1911 Hydromedusae - Sarsia gemnifera.jpg|width=125}}</td></tr><tr><td>«SC»Fig. 50.«/SC»—«I»Sarsia«/I»
 «I»(Dipurena) gemnifera.«/I»
 «I»b«/I», The long manubrium,
 bearing medusiform
-buds; «I»a«/I», mouth.</td></tr></table>«/HTMLTABLE»</td><td></td><td>«HTMLTABLE:<table class="figtable" style="width:225px"><tr><td>{{IMG:EB1911 Hydromedusae - Sarsia prolifera.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 51.«/SC»—«I»Sarsia prolifera.«/I»
+buds; «I»a«/I», mouth.</td></tr></table>«/HTMLTABLE»</td><td></td><td>«HTMLTABLE:<table style="width:225px"><tr><td>{{IMG:EB1911 Hydromedusae - Sarsia prolifera.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 51.«/SC»—«I»Sarsia prolifera.«/I»
 Ocelli are seen at the base of the
 tentacles, and also (as an exception)
 groups of medusiform
@@ -2387,7 +2387,7 @@ tufts (lophonematous). Common genera are the hydroid «I»Bougainvillea«/I»
 (figs. 12, 13), and the medusae «I»Hippocrene«/I» (budded from
 «I»Bougainvillea«/I»), «I»Margelis«/I», «I»Rathkea«/I» (fig. 24), and «I»Margellium«/I». Other
 hydroids are «I»Garveia«/I», «I»Bimeria«/I», «I»Eudendrium«/I» and «I»Heterocordyle«/I», with
-gonophores, and «I»Dicoryne«/I» with peculiar sporosacs.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Tiara pileata.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by permission of Gustav
+gonophores, and «I»Dicoryne«/I» with peculiar sporosacs.«P»«HTMLTABLE:<table style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Tiara pileata.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by permission of Gustav
 Fischer.</td></tr><tr><td style="text-align:center">«SC»Fig. 52.«/SC»—«I»Tiara pileata«/I», L. Agassiz.</td></tr></table>«/HTMLTABLE»
 2. «I»Podocorynidae«/I» (= medusa-families «I»Thamnostomidae«/I» and «I»Cytaeidae«/I»
 + hydroid families «I»Podocorynidae«/I» and «I»Hydractiniidae«/I»). Trophosome
@@ -2443,7 +2443,7 @@ British genus, sets free a medusa known as «I»Steenstrupia«/I» (fig.
 22). Here belong the deep-sea genera «I»Monocaulus«/I» and «I»Branchiocerianthus«/I»,
 including the largest
 hydroid polyps known, both
-genera producing sessile gonophores.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Pteronema darwinii.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by
+genera producing sessile gonophores.«P»«HTMLTABLE:<table style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Pteronema darwinii.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by
 permission of Gustav Fischer.</td></tr><tr><td>«SC»Fig. 53.«/SC»—«I»Pteronema darwinii«/I».
 The apex of the stomach is prolonged
 into a brood pouch containing
@@ -2522,7 +2522,7 @@ rooted in the mud. The medusae, on the other hand, have the
 tentacles in four tufts of (in the buds) five each, and thus resemble
 the medusae of the
 family «I»Margelidae«/I».
-See A. Dendy [«B»12«/B»].«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - modifications of a Calyptoblastic Hydromedusa.jpg|width=300}}</td></tr><tr><td>«I»Fig. 54.«/I»—Diagram showing possible modifications
+See A. Dendy [«B»12«/B»].«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - modifications of a Calyptoblastic Hydromedusa.jpg|width=300}}</td></tr><tr><td>«I»Fig. 54.«/I»—Diagram showing possible modifications
 of the persons of a Calyptoblastic
 Hydromedusa. Letters «I»a«/I» to «I»h«/I» same as in
 fig. 49. «I»i«/I», The horny cup or hydrotheca of
@@ -2566,10 +2566,10 @@ the medusae typically
 with otocysts,
 sometimes with cordyli
 or ocelli (figs.
-54, 55).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Oral Surface of one of the Leptomedusae.jpg|width=250}}</td></tr><tr><td>«SC»Fig. 55.«/SC»—View of the Oral Surface of
+54, 55).«P»«HTMLTABLE:<table style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Oral Surface of one of the Leptomedusae.jpg|width=250}}</td></tr><tr><td>«SC»Fig. 55.«/SC»—View of the Oral Surface of
 one of the «I»Leptomedusae«/I» («I»Irene pellucida«/I»,
 Haeckel), to show the numerous
-tentacles and the otocysts.</td></tr><tr><td style="text-align:center">«HTMLTABLE:<table class="figtable"><tr><td>«I»ge«/I», Genital glands.«P»«I»M«/I», Manubrium.«P»«I»ot«/I», Otocysts.«P»«I»rc«/I», The four radiating canals.«P»«I»Ve«/I», The velum.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»«P»The calyptoblastic
+tentacles and the otocysts.</td></tr><tr><td style="text-align:center">«HTMLTABLE:<table><tr><td>«I»ge«/I», Genital glands.«P»«I»M«/I», Manubrium.«P»«I»ot«/I», Otocysts.«P»«I»rc«/I», The four radiating canals.«P»«I»Ve«/I», The velum.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»«P»The calyptoblastic
 polyp of the nutritive
 type is very uniform in character, its tendency to variation
 being limited, as it were, by the enclosing hydrotheca. The
@@ -2612,7 +2612,7 @@ a single coenosarcal tube (“monosiphonic”) or several united
 in a common perisarc (“polysiphonic”). An important variation
 is seen, in the form of the hydrotheca itself, which may come
 off from the main stem by a stalk, as in «I»Obelia«/I», or may be
-sessile, without a stalk, as in «I»Sertularia«/I».«P»«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - formation of the Hydrotheca and Gonotheca in Calyptoblastic Hydroids.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of
+sessile, without a stalk, as in «I»Sertularia«/I».«P»«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - formation of the Hydrotheca and Gonotheca in Calyptoblastic Hydroids.jpg|width=300}}</td></tr><tr><td style="font-size: smaller">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of
 the council of the Ray Society.</td></tr><tr><td>«SC»Fig. 56.«/SC»—Diagrams to show the mode of
 formation of the Hydrotheca and Gonotheca
 in Calyptoblastic Hydroids. A-D are stages
@@ -2685,7 +2685,7 @@ produced in structures termed corbulae, formed by reduction
 and modification of branches of the colony. Each corbula
 contains a central row of blastostyles enclosed and protected
 by lateral rows of branches representing stunted buds (Allman [«B»1«/B»],
-p. 66, fig. 30).«P»«HTMLTABLE:<table class="figtable" style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - formation of an Acrocyst and a Marsupium.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of the
+p. 66, fig. 30).«P»«HTMLTABLE:<table style="float:left;width:325px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - formation of an Acrocyst and a Marsupium.jpg|width=325}}</td></tr><tr><td style="font-size: smaller">After Allman, «I»Gymnoblastic Hydroids«/I», by permission of the
 council of the Ray Society.</td></tr><tr><td>«SC»Fig. 57.«/SC»—Diagrams to show the mode of
 formation of an Acrocyst and a Marsupium.
 In A two medusa-buds are seen within the gonotheca
@@ -2768,7 +2768,7 @@ bearing ocelli and with marginal sense-clubs. «I»Laodice«/I» and «I»Thauma
 are representative genera.«P»4. «I»Berenicidae.«/I»—Trophosome unknown; gonosome, free medusae,
 with four or six radial canals, bearing the gonads, with numerous
 tentacles, between which occur sense-clubs, without otocysts.
-«I»Berenice«/I», «I»Staurodiscus«/I», &c.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Octorchandra canariensis.jpg|width=300}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After Haeckel, «I»System der Medusen«/I», by permission of Gustav Fischer.«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig. 58.«/SC»—«I»Octorchandra canariensis«/I», from life.</td></tr></table>«/HTMLTABLE»«P»5. «I»Polyorchidae.«/I»—Trophosome unknown; gonosome, free medusae
+«I»Berenice«/I», «I»Staurodiscus«/I», &c.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Octorchandra canariensis.jpg|width=300}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After Haeckel, «I»System der Medusen«/I», by permission of Gustav Fischer.«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig. 58.«/SC»—«I»Octorchandra canariensis«/I», from life.</td></tr></table>«/HTMLTABLE»«P»5. «I»Polyorchidae.«/I»—Trophosome unknown; gonosome, free medusae
 of deep form, with radial canals branched in a feathery manner, and
 bearing gonads on the main canal, but not on the branches, with
 numerous hollow tentacles bearing ocelli, and without otocysts.
@@ -2784,7 +2784,7 @@ genera are «I»Mitrocoma«/I», «I»Halopsis«/I», «I»Tiaropsis«/I» (fig.
 seven preceding families are scarcely distinguishable, and they form
 a section apart, contrasting sharply with the families next to be
 mentioned, in none of which are free medusae liberated from the
-colony, so that only the characters of the trophosome need be considered.)«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - development of Phialidium temporarium.jpg|width=400}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After E. T. Browne, «I»Proc. Zool. Soc. of London«/I», 1896.«/SPAN»</td></tr><tr><td>«SC»Fig. 59.«/SC»—Three stages in the development of «I»Phialidium temporarium«/I».
+colony, so that only the characters of the trophosome need be considered.)«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - development of Phialidium temporarium.jpg|width=400}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After E. T. Browne, «I»Proc. Zool. Soc. of London«/I», 1896.«/SPAN»</td></tr><tr><td>«SC»Fig. 59.«/SC»—Three stages in the development of «I»Phialidium temporarium«/I».
 «I»a«/I», The youngest stage, is magnified about 22 diam.; «I»b«/I»,
 older, is magnified about 8 diam.; «I»c«/I», the adult medusa, is magnified 6 diameters.</td></tr></table>«/HTMLTABLE»«P»8. «I»Sertularidae.«/I»—Hydrothecae sessile, biserial, alternating or
 opposite on the stem. «I»Sertularia«/I» and «I»Sertularella«/I» are two very
@@ -2795,7 +2795,7 @@ abundant and prolific family; well-known British genera are
 «I»Plumularia«/I», «I»Antennularia«/I» and «I»Aglaophenia«/I».«P»10. «I»Hydroceratinidae«/I».—This family contains the single Australian
 species «I»Clathrozoon wilsoni«/I» Spencer, in which a massive hydrorhizaPAGE:166bears sessile hydrothecae, containing hydranths each with a single
 tentacle, and numerous nematophores. See W. B. Spencer [«B»53«/B»].«P»11. «I»Dendrograptidae«/I», containing fossil (Silurian) genera, such as
-«I»Dendrograptus«/I» and «I»Thamnograptus«/I», of doubtful affinities.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:150px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - calcareous corallum Millepora nodosa.jpg|width=150}}</td></tr><tr><td>«SC»Fig. 60.«/SC»—Portion of the
+«I»Dendrograptus«/I» and «I»Thamnograptus«/I», of doubtful affinities.«P»«HTMLTABLE:<table style="float:left;width:150px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - calcareous corallum Millepora nodosa.jpg|width=150}}</td></tr><tr><td>«SC»Fig. 60.«/SC»—Portion of the
 calcareous corallum of «I»Millepora«/I»
 «I»nodosa«/I», showing the
 cyclical arrangement of the
@@ -2838,7 +2838,7 @@ increases in age and size. If the coenosteum of «I»Millepora«/I» be
 broken across, each pore-canal (perhaps better termed a polyp-canal)
 is seen to be interrupted by a series of transverse
 partitions, representing successive periods of growth with
-separation from the underlying dead portions.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Millepora showing five dactylozooids surrounding a central gastrozooid.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 61.«/SC»—Enlarged view of the surface of a living «I»Millepora«/I»,
+separation from the underlying dead portions.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td style="text-align:center">{{IMG:EB1911 Hydromedusae - Millepora showing five dactylozooids surrounding a central gastrozooid.jpg|width=300}}</td></tr><tr><td>«SC»Fig. 61.«/SC»—Enlarged view of the surface of a living «I»Millepora«/I»,
 showing five dactylozooids surrounding a central gastrozooid. (From
 Moseley.)</td></tr></table>«/HTMLTABLE»«P»Besides the wider vertical pore-canals and the narrower,
 irregular coenosarcal canals, the coenosteum may contain, in its
@@ -2856,7 +2856,7 @@ resemblance to
 a madreporarian
 coral with its radiating
 septa (figs. 62
-and 63).«P»«HTMLTABLE:<table class="figtable" style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - development of the cyclosystems of the Stylasteridae.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 62.«/SC»—Diagrams illustrating the successive
+and 63).«P»«HTMLTABLE:<table style="float:right;width:300px;margin-left: 1em"><tr><td colspan="2" style="text-align:center">{{IMG:EB1911 Hydromedusae - development of the cyclosystems of the Stylasteridae.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 62.«/SC»—Diagrams illustrating the successive
 stages in the development of the
 cyclosystems of the «I»Stylasteridae«/I». (After
 Moseley.)</td></tr><tr><td>1,</td><td>«I»Sporadopora dichotoma«/I».</td></tr><tr><td colspan="2">2, 3, «I»Allopora nobilis«/I».</td></tr><tr><td>4,</td><td>«I»Allopora profunda«/I».</td></tr><tr><td>5,</td><td>«I»Allopora miniacea«/I».</td></tr><tr><td>6,</td><td>«I»Astylus subviridis«/I».</td></tr><tr><td>7,</td><td>«I»Distichopora coccinea«/I».</td></tr><tr><td>«I»s«/I»,</td><td>Style.</td></tr><tr><td>«I»dp«/I»,</td><td>Dactylopore.</td></tr><tr><td>«I»gp«/I»,</td><td>Gastropore.</td></tr><tr style="vertical-align:top"><td>«I»b«/I»,</td><td>In fig. 6, inner horseshoe-shaped mouth of gastropore.</td></tr></table>«/HTMLTABLE»«P»The gastrozoids
@@ -2892,7 +2892,7 @@ are formed, always by budding
 from the coenosarc. In «I»Distichopora«/I» the
 gonophores have radial canals, but in
 other genera they are sporosacs with no
-trace of medusoid structure.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:100px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - corallum of Astylus subviridis.jpg|width=100}}</td></tr><tr><td>«SC»Fig. 63.«/SC»—Portion of
+trace of medusoid structure.«P»«HTMLTABLE:<table style="float:left;width:100px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - corallum of Astylus subviridis.jpg|width=100}}</td></tr><tr><td>«SC»Fig. 63.«/SC»—Portion of
 the corallum of «I»Astylus«/I»
 «I»subviridis«/I» (one of the
 Stylasteridae), showing
@@ -3007,7 +3007,7 @@ of generations.
 In «I»Gonionemus«/I» the actinula
 becomes attached
 and polyp-like and reproduces
-by budding.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Olindias mülleri.jpg|width=250}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by
+by budding.«P»«HTMLTABLE:<table style="float:right;width:250px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Olindias mülleri.jpg|width=250}}</td></tr><tr><td style="font-size: smaller">After Haeckel, «I»System der Medusen«/I», by
 permission of Gustav Fischer.</td></tr><tr><td style="text-align:center">«SC»Fig. 64.«/SC» «I»Olindias mülleri.«/I»</td></tr></table>«/HTMLTABLE»
 The Trachomedusae are
 divided into the following
@@ -3050,7 +3050,7 @@ together with certain Leptomedusae, an entirely distinct order.
 In «I»Gonionemus«/I», however, the concrement-cells are endodermal.«P»3. «I»Trachynemidae.«/I»—Eight radial canals, eight gonads, stomach
 not prolonged into manubrium; tentaculocysts
 enclosed. «I»Rhopalonema«/I», «I»Trachynema«/I»,
-&c.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:150px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Aglantha rosea, a British medusa.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">After E. T. Browne, «I»Proc. Zool.«/I»
+&c.«P»«HTMLTABLE:<table style="float:left;width:150px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Aglantha rosea, a British medusa.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">After E. T. Browne, «I»Proc. Zool.«/I»
 «I»Soc. of London«/I».</td></tr><tr><td>«SC»Fig. 65.«/SC»—«I»Aglantha rosea«/I» (Forbes), a British medusa.</td></tr></table>«/HTMLTABLE»
 4. «I»Ptychogastridae«/I» («I»Pectyllidae«/I»).—As
 in the preceding, but with suckers on
@@ -3077,7 +3077,7 @@ tentacles arising from the ex-umbrella at some distance
 from the margin; tentaculocysts exposed, not enclosed in
 vesicles; gonads on the sub-umbral floor of the stomach or of
 the gastric pouches.
-PAGE:168«HTMLTABLE:<table class="figtable" style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Cunina rhododactyla.jpg|width=250}}</td></tr><tr><td colspan="2">«SC»Fig. 66.«/SC»—«I»Cunina rhododactyla«/I», one
+PAGE:168«HTMLTABLE:<table style="float:left;width:250px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Cunina rhododactyla.jpg|width=250}}</td></tr><tr><td colspan="2">«SC»Fig. 66.«/SC»—«I»Cunina rhododactyla«/I», one
 of the «I»Narcomedusae«/I». (After Haeckel.)</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Circular canal.</td></tr><tr style="vertical-align:top"><td>«I»h«/I»,</td><td>“Otoporpae” or centripetal process of the marginal cartilaginous ring connected with tentaculocyst.</td></tr><tr><td>«I»k«/I»,</td><td>Stomach.</td></tr><tr style="vertical-align:top"><td>«I»l«/I»,</td><td>Jelly of the disk.</td></tr><tr style="vertical-align:top"><td>«I»r«/I»,</td><td>Radiating canal (pouch of stomach).</td></tr><tr><td>«I»tt«/I»,</td><td>Tentacles.</td></tr><tr style="vertical-align:top"><td>«I»tw«/I»,</td><td>Tentacle root.</td></tr></table>«/HTMLTABLE»«P»The Narcomedusae exhibit peculiarities of form and structure
 which distinguish them at once from all other Hydromedusae.
 The umbrella is shallow and has the margin supported by a
@@ -3165,7 +3165,7 @@ above.«P»In other Narcomedusae, «I»e.g.«/I» «I»Cunoctantha fowleri«/I»
 buds are formed from the sub-umbrella on the under side of the
 stomach pouches, where later the gonads are developed.«P»«I»Classification.«/I»—Three families of Narcomedusae are recognized
 (see O. Maas [«B»40«/B»]):
-«HTMLTABLE:<table class="figtable" style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Solmundella bitentaculata.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der«/I»
+«HTMLTABLE:<table style="float:right;width:225px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Solmundella bitentaculata.jpg|width=225}}</td></tr><tr><td style="font-size: smaller">After O. Maas, «I»Craspedoten Medusen der«/I»
 «I»Siboga Expedition«/I», by permission of E. S.
 Brill & Co.</td></tr><tr><td>«SC»Fig. 67.«/SC»—«I»Solmundella bitentaculata«/I»
 (Quoy and Gaimard).</td></tr></table>«/HTMLTABLE»
@@ -3250,7 +3250,7 @@ Trachylinae. Their sense-organs require renewed investigations.
 great differentiation of parts, each performing a special function;
 generally regarded as colonies showing differentiation of individuals
 in correspondence with a physiological division of
-labour.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:225px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - modifications of a colony of Siphonophora.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 68.«/SC»—Diagram showing possible
+labour.«P»«HTMLTABLE:<table style="float:left;width:225px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - modifications of a colony of Siphonophora.jpg|width=225}}</td></tr><tr><td>«SC»Fig. 68.«/SC»—Diagram showing possible
 modifications of medusiform
 and hydriform persons of a colony
 of «I»Siphonophora«/I». The thick black
@@ -3303,7 +3303,7 @@ the homologies of the different types of appendages borne
 by it.«P»The general theories of Siphonophoran morphology are discussed
 below, but in enumerating the various types of appendages it is
 convenient to discuss their morphological interpretation at the same
-time.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:275px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Porpita seen from above.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After A. Agassiz, from Lankester’s «I»Treatise on«/I»
+time.«P»«HTMLTABLE:<table style="float:right;width:275px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Porpita seen from above.jpg|width=275}}</td></tr><tr><td style="font-size: smaller">After A. Agassiz, from Lankester’s «I»Treatise on«/I»
 «I»Zoology«/I».</td></tr><tr><td>«SC»Fig. 69.«/SC»—«I»Porpita«/I», seen from above,
 showing the pneumatophore and expanded
 palpons.</td></tr></table>«/HTMLTABLE»
@@ -3400,7 +3400,7 @@ nematocysts.«P»5. «I»Bracts«/I» (“«I»hydrophyllia«/I»”), occur in 
 68, «I»l«/I»). The mesogloea is greatly developed in them and they are
 often of very tough consistency. By Haeckel they
 are considered homologous with the umbrella of a
-medusa.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:450px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - structure of Velella.jpg|width=450}}</td></tr><tr><td colspan="2" style="font-size: smaller">From G. H. Fowler, after A. Agassiz, Lankester’s «I»Treatise on Zoology«/I».</td></tr><tr><td colspan="2">«SC»Fig. 70.«/SC»—Diagram of the structure of «I»Velella«/I», showing the central and
+medusa.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:450px"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - structure of Velella.jpg|width=450}}</td></tr><tr><td colspan="2" style="font-size: smaller">From G. H. Fowler, after A. Agassiz, Lankester’s «I»Treatise on Zoology«/I».</td></tr><tr><td colspan="2">«SC»Fig. 70.«/SC»—Diagram of the structure of «I»Velella«/I», showing the central and
 peripheral thirds of a half-section of the colony, the middle third being
 omitted. The ectoderm is indicated by close hatching, the endoderm by
 light hatching, the mesogloea by thick black lines, the horny skeleton of
@@ -3426,7 +3426,7 @@ In other types the medusae may be set
 free in a mature condition as the so-called “genital swimming
 bells,” comparable to the «I»Globiceps of Pennaria«/I». The most usual
 condition, however, is that in which sessile medusoid gonophores or
-sporosacs are produced.«P»«HTMLTABLE:<table class="figtable" style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Upper surface of Velella.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">From G. H. Fowler, after G.
+sporosacs are produced.«P»«HTMLTABLE:<table style="float:right;width:150px;margin-left: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Upper surface of Velella.jpg|width=150}}</td></tr><tr><td style="font-size: smaller">From G. H. Fowler, after G.
 Cuvier, Lankester’s «I»Treatise on«/I»
 «I»Zoology«/I».
 «SC»Fig. 71.«/SC»—Upper surface
@@ -3460,7 +3460,7 @@ and one or more gonophores.«P»4. The «I»athorome«/I» of «I»Physophora«/
 one or more palpons with palpacles, and one or more gonophores.«P»5. The «I»crystallome«/I» of «I»Anthemodes«/I», &c., similar to the athorome but
 with the addition of a
 group of bracts.
-«HTMLTABLE:<table class="figtable" style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Diphyes campanulata.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 72.«/SC»—A, «I»Diphyes campanulata«/I»;
+«HTMLTABLE:<table style="float:left;width:300px;margin-right: 1em"><tr><td colspan="2">{{IMG:EB1911 Hydromedusae - Diphyes campanulata.jpg|width=300}}</td></tr><tr><td colspan="2">«SC»Fig. 72.«/SC»—A, «I»Diphyes campanulata«/I»;
 B, a group of appendages (cormidium) of
 the same «I»Diphyes«/I». (After C. Gegenbaur.)</td></tr><tr style="vertical-align:top"><td>«I»a«/I»,</td><td>Axis of the colony.</td></tr><tr><td>«I»m«/I»,</td><td>Nectocalyx.</td></tr><tr style="vertical-align:top"><td>«I»c«/I»,</td><td>Sub-umbral cavity of nectocalyx.</td></tr><tr style="vertical-align:top"><td>«I»v«/I»,</td><td>Radial canals of nectocalyx.</td></tr><tr style="vertical-align:top"><td>«I»o«/I»,</td><td>Orifice of nectocalyx.</td></tr><tr><td>«I»t«/I»,</td><td>Bract.</td></tr><tr><td>«I»n«/I»,</td><td>Siphon.</td></tr><tr><td>«I»g«/I»,</td><td>Gonophore.</td></tr><tr><td>«I»i«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»
 «I»Embryology of the«/I»
@@ -3534,7 +3534,7 @@ have been put forward as to the interpretation of the cormus
 and the various parts are set forth and discussed in the
 treatise of Y. Delage and E. Hérouard («LN:Hydrozoa|Hydrozoa«/LN» [«B»4«/B»]) and more
 recently by R. Woltereck [«B»59«/B»], and only a brief analysis can be
-given here.«P»«HTMLTABLE:<table class="figtable" style="float:left;width:200px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Physophora hydrostatica.jpg|width=200}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After C. Gegenbaur.«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig. 73.«/SC»—«I»Physophora hydrostatica«/I».</td></tr><tr><td style="text-align:center">«HTMLTABLE:<table class="figtable"><tr><td>«I»a«/I»′,</td><td>Pneumatocyst.</td></tr><tr><td>«I»t«/I»,</td><td>Palpons.</td></tr><tr><td>«I»a«/I»,</td><td>Axis of the colony.</td></tr><tr><td>«I»m«/I»,</td><td>Nectocalyx.</td></tr><tr><td>«I»o«/I»,</td><td>Orifice of nectocalyx.</td></tr><tr><td>«I»n«/I»,</td><td>Siphon.</td></tr><tr><td>«I»g«/I»,</td><td>Gonophore.</td></tr><tr><td>«I»i«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»
+given here.«P»«HTMLTABLE:<table style="float:left;width:200px;margin-right: 1em"><tr><td>{{IMG:EB1911 Hydromedusae - Physophora hydrostatica.jpg|width=200}}</td></tr><tr><td>«SPAN[style:font-size:83%]»After C. Gegenbaur.«/SPAN»</td></tr><tr><td style="text-align:center">«SC»Fig. 73.«/SC»—«I»Physophora hydrostatica«/I».</td></tr><tr><td style="text-align:center">«HTMLTABLE:<table><tr><td>«I»a«/I»′,</td><td>Pneumatocyst.</td></tr><tr><td>«I»t«/I»,</td><td>Palpons.</td></tr><tr><td>«I»a«/I»,</td><td>Axis of the colony.</td></tr><tr><td>«I»m«/I»,</td><td>Nectocalyx.</td></tr><tr><td>«I»o«/I»,</td><td>Orifice of nectocalyx.</td></tr><tr><td>«I»n«/I»,</td><td>Siphon.</td></tr><tr><td>«I»g«/I»,</td><td>Gonophore.</td></tr><tr><td>«I»i«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»</td></tr></table>«/HTMLTABLE»
 In the first place the cormus has been regarded as a single individual
 and its appendages as «I»organs«/I». This is the so-called “polyorgan”
 theory, especially connected
@@ -3625,7 +3625,7 @@ pneumatophore as an ectodermal pit on the ex-umbrella, and in
 which the organs (manubrium, tentacles, &c.) became secondarily
 multiplied, just as they do in «I»Gastroblasta«/I» as the result of incomplete
 fission. The nearest living allies of the ancestral «I»Disconula«/I» are to
-be sought in the «I»Pectyllidae«/I».«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="8">{{IMG:EB1911 Hydromedusae - Stephalia corona - a young colony.jpg|width=400}}</td></tr><tr><td colspan="8">«SPAN[style:font-size:83%]»After Haeckel, from Lankester’s «I»Treatise on Zoology«/I».«/SPAN»</td></tr><tr><td colspan="8" style="text-align:center">«SC»Fig. 74.«/SC»—«I»Stephalia corona«/I», a young colony.</td></tr><tr><td>«I»p«/I»,</td><td>Pneumatophore.</td><td></td><td>«I»l«/I»,</td><td>Aurophore.</td><td></td><td>«I»s«/I»,</td><td>Siphon.</td></tr><tr><td>«I»n«/I»,</td><td>Nectocalyx.</td><td></td><td>«I»lo«/I»,</td><td>Orifice of the aurophore.</td><td></td><td>«I»t«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»«P»2. In the «I»Siphonanthae«/I», «I»i.e.«/I» in all other Siphonophores, the ancestral
+be sought in the «I»Pectyllidae«/I».«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td colspan="8">{{IMG:EB1911 Hydromedusae - Stephalia corona - a young colony.jpg|width=400}}</td></tr><tr><td colspan="8">«SPAN[style:font-size:83%]»After Haeckel, from Lankester’s «I»Treatise on Zoology«/I».«/SPAN»</td></tr><tr><td colspan="8" style="text-align:center">«SC»Fig. 74.«/SC»—«I»Stephalia corona«/I», a young colony.</td></tr><tr><td>«I»p«/I»,</td><td>Pneumatophore.</td><td></td><td>«I»l«/I»,</td><td>Aurophore.</td><td></td><td>«I»s«/I»,</td><td>Siphon.</td></tr><tr><td>«I»n«/I»,</td><td>Nectocalyx.</td><td></td><td>«I»lo«/I»,</td><td>Orifice of the aurophore.</td><td></td><td>«I»t«/I»,</td><td>Tentacle.</td></tr></table>«/HTMLTABLE»«P»2. In the «I»Siphonanthae«/I», «I»i.e.«/I» in all other Siphonophores, the ancestral
 form was a «I»Siphonula«/I», a bilaterally symmetrical Anthomedusa
 with a single long tentacle (cf. «I»Corymorpha«/I»), which became displaced
 from the margin to the sub-umbrella. The «I»Siphonula«/I» produced
@@ -3657,7 +3657,7 @@ with one, two, rarely more nectocalyces.«P»Three families: (1) «I»Monophyida
 examples «I»Muggiaea«/I», sometimes found in British seas, «I»Sphaeronectes«/I»,
 &c.; (2) «I»Diphyidae«/I», with two nectocalyces; examples «I»Diphyes«/I» (fig.
 72), «I»Praya«/I», «I»Abyla«/I», &c.; and (3) «I»Polyphyidae«/I», with numerous nectocalyces;
-example «I»Hippopodius«/I», «I»Stephanophyes«/I» and other genera.«P»«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - Physalia anatomy.jpg|align=center|width=350}}</td></tr><tr><td style="font-size: smaller">From G. H. Fowler, modified after G. Cuvier and E. Haeckel, Lankester’s «I»Treatise«/I»
+example «I»Hippopodius«/I», «I»Stephanophyes«/I» and other genera.«P»«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;width:400px"><tr><td>{{IMG:EB1911 Hydromedusae - Physalia anatomy.jpg|align=center|width=350}}</td></tr><tr><td style="font-size: smaller">From G. H. Fowler, modified after G. Cuvier and E. Haeckel, Lankester’s «I»Treatise«/I»
 «I»on Zoology«/I».</td></tr><tr><td>«SC»Fig. 75.«/SC»—A. «I»Physalia«/I», general view, diagrammatic; B, cormidium
 of Physalia; D, palpon; T, palpacle; G, siphon; GP,
 gonopalpon; M ♂, male gonophore; M ♀, female gonophore, ultimately

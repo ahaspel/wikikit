@@ -730,7 +730,7 @@ substituting experimentally determined pairs of values of «I»p«/I» and ρ
 we can calculate C for different gases, and so obtain a knowledge
 of the magnitudes of the molecular velocities. For instance, it is
 found that
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C＝ 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>0° Cent. C＝ 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C＝ 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>0° Cent. C＝ 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
 and other velocities can readily be calculated.«P»From the value R＝1·35×10<sup>−16</sup> it is readily calculated that a molecule,
 or aggregation of molecules, of mass 10<sup>−12</sup> grammes, ought to
 have a mean velocity of about 2 millimetres a second at
@@ -838,12 +838,12 @@ striking confirmation of the truth of the kinetic theory but at the
 same time discloses the most formidable difficulty which the theory
 has so far had to encounter.«P»On giving different values to «I»n«/I» in formula (21), we obtain the
 values for γ:
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto;text-align:center;width:300px"><tr><td>«I»n«/I» ＝</td><td>0,</td><td>1,</td><td>2,</td><td>3,</td><td>4,</td><td>5,</td><td></td></tr><tr><td>γ ＝</td><td>1·66,</td><td>1·5,</td><td>1·4,</td><td>1·33,</td><td>1·28,</td><td>1·25,</td><td>&c.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;text-align:center;width:300px"><tr><td>«I»n«/I» ＝</td><td>0,</td><td>1,</td><td>2,</td><td>3,</td><td>4,</td><td>5,</td><td></td></tr><tr><td>γ ＝</td><td>1·66,</td><td>1·5,</td><td>1·4,</td><td>1·33,</td><td>1·28,</td><td>1·25,</td><td>&c.</td></tr></table>«/HTMLTABLE»
 Thus, to within the degree of approximation to which our theory
 is accurate, the value of γ for every gas ought to be one of this series.
 The following are the values of γ for gases for which γ can be observed
 with some «SPAN[style:white-space:nowrap]»accuracy:—«/SPAN»
-«HTMLTABLE:<table class="figtable" style="margin-right:auto;margin-left:auto"><tr><td>Mercury</td><td>1·66</td><td>Nitrogen</td><td>1·40</td></tr><tr><td>Krypton</td><td>1·66</td><td>Carbon monoxide</td><td>1·41</td></tr><tr><td>Helium</td><td>1·65</td><td>Hydrogen</td><td>1·40</td></tr><tr><td>Argon</td><td>1·62</td><td>Oxygen</td><td>1·40</td></tr><tr><td>Air</td><td>1·40</td><td>Hydrochloric acid</td><td>1·39</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr><td>Mercury</td><td>1·66</td><td>Nitrogen</td><td>1·40</td></tr><tr><td>Krypton</td><td>1·66</td><td>Carbon monoxide</td><td>1·41</td></tr><tr><td>Helium</td><td>1·65</td><td>Hydrogen</td><td>1·40</td></tr><tr><td>Argon</td><td>1·62</td><td>Oxygen</td><td>1·40</td></tr><tr><td>Air</td><td>1·40</td><td>Hydrochloric acid</td><td>1·39</td></tr></table>«/HTMLTABLE»
 It is clear that for the first four gases «I»n«/I»＝0, while for the remainder
 «I»n«/I»＝2. To examine what is meant by a zero value of «I»n«/I» we refer to
 formula (15). The value of «I»n«/I» is the number of terms in the energy
@@ -922,5 +922,5 @@ may be apparent rather than real. At the same time this difficulty
 is only one aspect of a wider difficulty which cannot be lightly
 passed over; Maxwell himself regarded it as the principal obstacle
 in the way of the full acceptance of the theory of which he was so
-largely the author. 
+largely the author.
 «SPAN[style:font-size:108%]»«DIV[style:float:right]»(J. H. Je.)«/DIV»«/SPAN»
