@@ -161,6 +161,26 @@ _EDITORIAL_DEL = re.compile(r"<del\b[^>]*>.*?</del>", re.IGNORECASE | re.DOTALL)
 _EDITORIAL_INS = re.compile(r"</?ins\b[^>]*>", re.IGNORECASE)
 
 
+# `<bdo dir="ltr">…</bdo>` — an HTML bidirectional-override (ALPHABET's Hebrew
+# acrostic forces LTR over the right-to-left letters).  It IS a styled span by
+# another name: `<bdo dir=X>` ≡ `unicode-bidi:bidi-override; direction:X`.
+# Normalise to the canonical styled-`<span>` here — like quote-run's `<b>`→«B» —
+# so the existing styled-span path carries it (recurses the inner letters, keeps
+# the direction) instead of leaking the unrecognised `<bdo>` tag.
+_BDO_OPEN = re.compile(r"<bdo\b[^>]*\bdir\s*=\s*\"?\s*(ltr|rtl)\s*\"?[^>]*>",
+                       re.IGNORECASE)
+_BDO_CLOSE = re.compile(r"</bdo>", re.IGNORECASE)
+
+
+def _normalize_bdo(text: str) -> str:
+    if "<bdo" not in text.lower():
+        return text
+    text = _BDO_OPEN.sub(
+        lambda m: f'<span style="unicode-bidi:bidi-override;direction:'
+                  f'{m.group(1).lower()}">', text)
+    return _BDO_CLOSE.sub("</span>", text)
+
+
 # Presentational HTML entities (`&nbsp;`, `&mdash;`, `&alpha;`, `&ldquo;`, `&emsp;`,
 # …) are display sugar the SOURCE spells as entities; carried verbatim, the uniform-
 # escaping viewer turns `&name;` into a visible `&name;` leak.  Decode them to their
@@ -212,6 +232,7 @@ def _clean_and_heal(stream: str) -> str:
     stream = strip_html_comments(stream)
     stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
+    stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
     # Half-word templates the seam weld couldn't pair (split differently than the

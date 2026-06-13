@@ -562,6 +562,34 @@ def process_html_style(raw, inner, context, inner_registry):
     return style_block(content, css=css, tag=marker_tag)
 
 
+_NAMED_PARAM_RE = re.compile(r"^\s*([A-Za-z][\w -]*?)\s*=\s*([^|]*)\|")
+
+
+def _carry_named_params(inner_raw):
+    """Pull leading `name=value|` NAMED params off a styler's content and map them
+    to CSS — CARRY them (they're presentation: `{{Hebrew|small=yes|א}}` renders the
+    glyph smaller), don't drop.  `small`→`font-size:83%` (the corpus 'smaller'
+    value), `style`→verbatim, `width`→`width:VALUE`.  A genuinely-unmappable param
+    (rare 1-off) is dropped — there is no CSS to carry it as.  The trailing `|` is
+    required, so a single `=`-bearing content segment (`{{nowrap|a=b}}`) stays
+    content.  Returns (content_after_params, [css, …])."""
+    css: list[str] = []
+    while True:
+        m = _NAMED_PARAM_RE.match(inner_raw)
+        if m is None:
+            break
+        key, val = m.group(1).strip().lower(), m.group(2).strip()
+        if key == "small" and val.lower() in ("yes", "y", "1", "true"):
+            css.append("font-size:83%")
+        elif key == "style" and val:
+            css.append(val.rstrip(";"))
+        elif key == "width" and val:
+            css.append(f"width:{val}")
+        # else: unmappable 1-off param — drop (no CSS map to carry it as).
+        inner_raw = inner_raw[m.end():]
+    return inner_raw, css
+
+
 def process_strip(raw, inner, context, inner_registry):
     """STRIP producer (walker SHAPE_STRIP): the template-form styler
     `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / ….
@@ -574,10 +602,14 @@ def process_strip(raw, inner, context, inner_registry):
     when `_TEMPLATE_STYLE_RE` matched in the walker)."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, style_block)
+    param_css: list[str] = []
     tm = _TEMPLATE_STYLE_RE.match(raw)
     if tm is not None:                       # `{{name|content}}` — the pipe form
         name = tm.group(1).lower()
         inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+        # Leading NAMED params (`{{Hebrew|small=yes|א}}`) are presentation, not
+        # content — CARRY them as CSS (see `_carry_named_params`), don't drop.
+        inner_raw, param_css = _carry_named_params(inner_raw)
     else:                                    # `{{name}}` — bare form: the classifier
         # routes a registered styler with OR without content (see _classifier
         # line ~390), so supply the styler's default content — e.g. `{{0}}` is
@@ -588,8 +620,11 @@ def process_strip(raw, inner, context, inner_registry):
     inner_raw = _styled_br_to_marker(inner_raw)
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()
-    return style_block(content, css=spec.get("css", ""),
-                       tag=spec.get("tag", "DIV"),
+    css = ";".join(c for c in [spec.get("css", ""), *param_css] if c)
+    # A carried param on a tag-less script wrapper ({{Hebrew}} = {}) decorates an
+    # inline glyph → SPAN, not the block DIV default.
+    tag = spec.get("tag") or ("SPAN" if param_css else "DIV")
+    return style_block(content, css=css, tag=tag,
                        ctr=spec.get("ctr", False), sc=spec.get("sc", False))
 
 
