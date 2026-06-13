@@ -76,22 +76,6 @@ def strip_noinclude_blocks(text: str) -> str:
     return _NOINCLUDE_BLOCK_RE.sub(_replace_noinclude, text)
 
 
-# ── unclosed-template strip ────────────────────────────────────────
-# Unclosed `{{name|…` openers (malformed wikitext in sources like
-# EGYPT vol 9 p76) confuse cell parsing because their inner `|`
-# leaks as a cell separator.  Scan for each known-bad opener; if it
-# has no matching `}}`, strip just the opener.  Balanced cases
-# (including nested templates) are left alone for `_unwrap_balanced`
-# downstream.
-#
-# Opener list grew from quality-report sweep 2026-05-08 which found
-# unclosed instances in HOOD, TANCRED, THEODORE OF MOPSUESTIA,
-# SARAVIA, ST LOUIS articles.
-_UNCLOSED_TEMPLATES: tuple[str, ...] = (
-    "nowrap", "ppoem", "right", "float right", "fine block", "anchor",
-)
-
-
 _TAG_RE = re.compile(r"<[a-zA-Z][^>]*>")
 
 
@@ -108,58 +92,6 @@ def close_unclosed_attr_quotes(text: str) -> str:
             return tag[:-1] + '">'
         return tag
     return _TAG_RE.sub(_fix, text)
-
-
-def strip_unclosed_templates(text: str) -> str:
-    out: list[str] = []
-    i = 0
-    low = text.lower()
-    n = len(text)
-    while i < n:
-        matched_opener: str | None = None
-        for name in _UNCLOSED_TEMPLATES:
-            opener_with_pipe = "{{" + name + "|"
-            opener_with_space = "{{" + name + " "
-            if low[i:i + len(opener_with_pipe)] == opener_with_pipe:
-                matched_opener = opener_with_pipe
-                break
-            # Allow whitespace between name and pipe ("{{right |…"),
-            # but only if a pipe follows shortly.
-            if low[i:i + len(opener_with_space)] == opener_with_space:
-                pipe_idx = text.find("|", i + len(opener_with_space))
-                if 0 <= pipe_idx <= i + len(opener_with_space) + 20:
-                    matched_opener = text[i:pipe_idx]
-                    break
-        if matched_opener is None:
-            out.append(text[i])
-            i += 1
-            continue
-        # Find matching }} by depth counting.
-        depth = 1
-        j = i + 2
-        matched_close = False
-        while j < n - 1:
-            if text[j:j + 2] == "{{":
-                depth += 1
-                j += 2
-            elif text[j:j + 2] == "}}":
-                depth -= 1
-                j += 2
-                if depth == 0:
-                    matched_close = True
-                    break
-            else:
-                j += 1
-        if matched_close:
-            out.append(text[i:j])
-            i = j
-        else:
-            pipe_idx = text.find("|", i)
-            if pipe_idx >= 0:
-                i = pipe_idx + 1
-            else:
-                i += 2
-    return "".join(out)
 
 
 # ── line-ending normalization ──────────────────────────────────────

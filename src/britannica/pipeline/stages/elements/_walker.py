@@ -140,38 +140,12 @@ _SPAN_TITLE_OPEN_RE = re.compile(
 _TRANSLIT_CONTENT_RE = re.compile(
     r"\{\{\s*(?:Greek|Hebrew|polytonic)|[Ͱ-Ͽἀ-῿֐-׿]", re.IGNORECASE)
 
-# DOUBLE_BRACKET image — `[[File:…]]` / `[[Image:…]]`, a pure LEAF.  No caption
-# absorption: a following caption block is its own sibling, recursed in place
-# (image = leaf, caption = sibling — there is no figure unit to fold into).
-# Inline-vs-block is decided structurally by `_is_inline_image_position` at
-# dispatch; the walker advances past `]]` and surrounding bytes stay intact.
+# DOUBLE_BRACKET image probe — `[[File:…]]` / `[[Image:…]]`.  No longer a
+# recognizer (the `[[…]]` opener is bounded by `_construct_end` and the classifier
+# names the kind); kept ONLY for the inline-vs-block structural decision in the
+# walk loop (`_is_inline_image_position`), the one image judgment the walker owns.
 _IMAGE_RE = re.compile(
     r"\[\[(?:File|Image):[^\]]+\]\]", re.IGNORECASE)
-
-# DOUBLE_BRACKET generic wiki cross-reference — any `[[Target]]` / `[[Target|Disp]]`
-# NOT claimed by the specific recognizers (File/Image, SELFREF, Author, `#`).  LAST in
-# the bracket recognizer order so it's the catch for plain links; classified WIKILINK,
-# produced as «LN», resolved by the internal → external → strip ladder.
-_GENERIC_WIKILINK_RE = re.compile(r"\[\[[^\]]*\]\]")
-
-# DOUBLE_BRACKET self-reference — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`,
-# an internal EB1911 cross-link in raw bracket form (vs the `{{EB1911 article link}}`
-# template form).  Recognized here, classified EB1911_SELFREF, produced as «LN».  The
-# `1911 Encyclop` prefix is the signal — EB9 "Ninth Edition" refs do NOT match (those
-# are external Wikisource links, handled by the external-link producer).
-_EB1911_SELFREF_RE = re.compile(
-    r"\[\[\s*1911\s+[Ee]ncyclop[^\]]*\]\]", re.IGNORECASE)
-
-# DOUBLE_BRACKET bare anchor link — `[[#Section]]` / `[[#Section|Display]]`, a
-# same-article subsection reference.  Recognized here, classified FRAGMENT_LINK,
-# produced as «LN:#Section».  The leading `#` (no `prefix:`) is the signal.
-_FRAGMENT_LINK_RE = re.compile(r"\[\[\s*#[^\]]*\]\]")
-
-# DOUBLE_BRACKET Author link — `[[Author:Name|Display]]`.  Recognized here,
-# classified AUTHOR_LINK, routed by the producer: a contributor's initials
-# (in the index) → render the initials; else → «LN» xref to the author.
-_AUTHOR_RE = re.compile(
-    r"\[\[\s*Author:[^\]]*\]\]", re.IGNORECASE)
 
 
 # Inline-image structural recognition.  At the moment the walker has just
@@ -256,11 +230,12 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     # outer tail into body-text).
     # (`<hiero>` now rides the `_ELEMENT_TAGS` opaque path (no per-tag regex),
     #  and `{{hieroglyph|…}}` the generic `{{…}}` recognizer; both → HIEROGLYPH.)
-    (SHAPE_DOUBLE_BRACKET,    _IMAGE_RE),
-    (SHAPE_DOUBLE_BRACKET,    _EB1911_SELFREF_RE),
-    (SHAPE_DOUBLE_BRACKET,    _AUTHOR_RE),
-    (SHAPE_DOUBLE_BRACKET,    _FRAGMENT_LINK_RE),
-    (SHAPE_DOUBLE_BRACKET,    _GENERIC_WIKILINK_RE),  # catch-all bracket link — LAST
+    # (`[[…]]` is bounded by the one balanced `_construct_end` rule below — NOT by
+    #  per-kind regexes, which embedded the same false no-nesting assumption: a
+    #  `[^\]]*` interior can't span a nested `[…]` in the display, so a link like
+    #  `[[Author:…|BUDÉ [Budaeus]]]` failed to match and orphaned to body-text.
+    #  The classifier names the kind — IMAGE / AUTHOR_LINK / EB1911_SELFREF /
+    #  FRAGMENT_LINK / WIKILINK — from the raw `[[…]]` by prefix.)
     (SHAPE_PAGE,              _PAGE_RE),
     (SHAPE_TITLE,             _TITLE_RE),
 ]
@@ -661,6 +636,17 @@ def _walk_balanced_shapes(
             if end is not None:
                 matched = (end, SHAPE_DOUBLE_BRACE, text[opener_pos:end])
 
+        # `[[…]]` — bound by the one balanced matcher (like `{{…}}` / `{|`), NOT a
+        # per-kind regex: `_construct_end` skips a nested `[…]` / `{{…}}` in the
+        # display whole, so a link whose display carries brackets (`BUDÉ
+        # [Budaeus]`) is bounded correctly instead of leaking to body-text.  The
+        # classifier names the kind (IMAGE / AUTHOR_LINK / EB1911_SELFREF /
+        # FRAGMENT_LINK / WIKILINK) from the raw.
+        if matched is None and text[opener_pos:opener_pos + 2] == "[[":
+            end = _construct_end(text, opener_pos)
+            if end is not None:
+                matched = (end, SHAPE_DOUBLE_BRACKET, text[opener_pos:end])
+
         if matched is None:
             for shape, pattern in _REGEX_RECOGNIZERS:
                 m = pattern.match(text, opener_pos)
@@ -671,17 +657,6 @@ def _walk_balanced_shapes(
             # (Figure-tail upgrade removed — a bare `[[File:…]]` stays an IMAGE
             # leaf; a following `{{center|…}}` caption is its own STRIP-classified
             # DOUBLE_BRACE sibling, recursed in place, not folded into a FIGURE span.)
-
-            # Inline-image lookahead: a bare `[[File:…]]` (no EXTCAP, no
-            # figure-tail upgrade) sitting in same-line prose is structurally
-            # an inline glyph.  Lookahead-only — no bytes absorbed; the
-            # surrounding text keeps its newlines and separators intact.
-            if (matched is not None
-                    and matched[1] == SHAPE_DOUBLE_BRACKET
-                    and matched[2].endswith("]]")
-                    and _IMAGE_RE.match(matched[2])  # images only — not self-ref links
-                    and _is_inline_image_position(text, matched[0])):
-                matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
         # (The former per-name `{{ordered list|…}}` and labeled-equation
         # `{{ne|…}}`/`{{equation|…}}`/`{{MathForm1|…}}` opener blocks are gone —
@@ -697,6 +672,17 @@ def _walk_balanced_shapes(
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_BRACE_PIPE, text[opener_pos:end])
+
+        # Inline-image lookahead: a bare `[[File:…]]` sitting in same-line prose is
+        # structurally an inline glyph.  Runs on any bounded DOUBLE_BRACKET image
+        # (now bounded by `_construct_end` above).  Lookahead-only — no bytes
+        # absorbed; the surrounding text keeps its newlines and separators intact.
+        if (matched is not None
+                and matched[1] == SHAPE_DOUBLE_BRACKET
+                and matched[2].endswith("]]")
+                and _IMAGE_RE.match(matched[2])  # images only — not self-ref links
+                and _is_inline_image_position(text, matched[0])):
+            matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
         if matched is None:
             # Opener-hint matched (the bytes LOOK like an opener) but
