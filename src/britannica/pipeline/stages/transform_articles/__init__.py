@@ -18,7 +18,8 @@ from britannica.db.models import Article, ArticleSegment, SourcePage
 from britannica.db.session import SessionLocal
 
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
-from britannica.pipeline.stages.elements._title import produce_title
+from britannica.pipeline.stages.elements._title import (
+    produce_title, decode_title, recover_title_from_section)
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,
@@ -157,23 +158,22 @@ def walk_article(session, article) -> tuple[str, str | None]:
     from britannica.pipeline.stages.elements import (
         ElementContext, process_elements)
 
-    raw, title, title_raw = preprocess_article(session, article)
-    # The transform is the title's home: write the plain title + raw span back
-    # onto the Article so the export/xref string-equality matching (which read
-    # `Article.title` from the DB) and the stable-ID stay correct.
+    raw, plain_title, title_raw = preprocess_article(session, article)
+    # The title is produced + persisted here (the transform is its home).  The
+    # plain field is decoded from the WALKED «TITLE» node below — ONE source, the
+    # recursion — so the field can never diverge from the rendered heading, and the
+    # regnal period `clean_title` used to eat is restored.
     #
     # EXCEPT plates: a plate's title is a `_split_out_plates`/`_compose_plate_title`
     # product (AMERICA, PLATE II / PLATE (VOL. 1, P. 499)), NOT a `produce_title`
-    # shape — the title-producer doesn't apply to a plate's image-only body.  Leave
-    # the detection-set plate title alone (running `produce_title` on plate cells
-    # yields garbage like `800px|center`).
-    # `title` is "" when produce_title found no heading in the body (e.g. CHESS,
-    # whose bold headword is absent — the body legitimately opens "once known
-    # as …").  Keep the authoritative detected title rather than clobbering it
-    # with an empty one; the BODY is untouched either way.
-    if article.article_type != "plate" and title:
-        article.title = title
+    # shape — leave the detection-set plate title alone.
+    if article.article_type != "plate":
         article.title_raw = title_raw or None
+        # Letter / no-heading articles carry their plain title here — they have no
+        # «TITLE» marker to decode (a drop-cap letter, or an absent headword like
+        # CHESS, whose body legitimately opens "once known as …").
+        if plain_title:
+            article.title = plain_title
     if not raw:
         article.title_display = None
         return "", None
@@ -185,10 +185,17 @@ def walk_article(session, article) -> tuple[str, str | None]:
     if not m:
         article.title_display = None
         return walked, None
-    title_disp = m.group(1)
-    title_display = title_disp if (
-        re.search(r"«(?:I|SC|FN)", title_disp)
-        or title_disp.count("«B»") > 1) else None
+    marker = m.group(1)
+    # The plain field IS the walked marker decoded (recursion = recognition): the
+    # same plain text `clean_title` produced, sourced from the one recursion.
+    if article.article_type != "plate":
+        field = recover_title_from_section(
+            decode_title(marker), article.section_name or "")
+        if field:
+            article.title = field
+    title_display = marker if (
+        re.search(r"«(?:I|SC|FN)", marker)
+        or marker.count("«B»") > 1) else None
     article.title_display = title_display
     # Keep the «TITLE:…«/TITLE» node in the body: the viewer renders it
     # in-stream as the H1, so the title's footnote joins the body's footnote

@@ -595,6 +595,21 @@ def process_strip(raw, inner, context, inner_registry):
                        ctr=spec.get("ctr", False), sc=spec.get("sc", False))
 
 
+def _process_title(raw, context):
+    """TITLE producer (the «TITLE»…«/TITLE» stamp from preprocess_article).
+
+    Strip the trailing joint comma off the RAW span BEFORE recursing it
+    (transform-then-recurse, like any producer) — so the comma never enters the
+    walk and so reaches neither the rendered marker nor the decoded plain field.
+    One removal on the shared input; PLAIN and DISPLAY both descend from it clean."""
+    from britannica.pipeline.stages.elements._title import strip_title_joint
+    inner_raw = re.sub(r"^«TITLE»", "", raw)
+    inner_raw = re.sub(r"«/TITLE»\s*$", "", inner_raw)
+    inner = process_elements(
+        strip_title_joint(inner_raw), context, _allow_figure=False)
+    return f"«TITLE:{inner}«/TITLE»"
+
+
 def process_param(raw, inner, context, inner_registry):
     """PARAM producer (walker SHAPE_PARAM): the param-valued font-size styler
     `{{Fs|108%|X}}` / `{{font size|N%|X}}`.
@@ -851,7 +866,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (the carved title span) like any wrapper; produce_tree substitutes the children,
     # so the node carries the fully-walked title = today's `title_display`.  The export
     # reads it off the tree and strips the «TITLE:…«/TITLE» wrapper.
-    "TITLE": lambda raw, inner, ctx, reg: f"«TITLE:{inner}«/TITLE»",
+    "TITLE": lambda raw, inner, ctx, reg: _process_title(raw, ctx),
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).

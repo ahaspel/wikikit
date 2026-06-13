@@ -32,5 +32,6 @@ def process_content_extract(inner: str, context) -> str:
         return rec(args[1]) if len(args) > 1 else (rec(args[0]) if args else "")
     if name == "fqm":  # floating quote mark — bare defaults to a curly opening quote
         return rec(args[0]) if args else "“"
-    # sic / dropinitial → just the content.
+    # sic / dropinitial / di → just the content (drop-cap: the letter; the size arg
+    # like `4em` in `{{di|{{serif|J}}|4em}}` is metadata, dropped with the rest).
     return rec(args[0]) if args else ""

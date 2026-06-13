@@ -280,7 +280,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
                 r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", raw, re.IGNORECASE):
         return "SPACER"
     # Content extractors — display arg is the content; producer unwraps + recurses it.
-    if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial)\b", raw, re.IGNORECASE):
+    if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial|di)\b", raw, re.IGNORECASE):
         return "CONTENT_EXTRACT"
     # Bar-less `num \over den` fraction (`{{1\over 2}}` / `{{\it a \over b}}` /
     # `{{\kappa\over\kappa'}}`) — NO `name|` token, the whole inner is the fraction.

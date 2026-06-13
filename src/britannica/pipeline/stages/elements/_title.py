@@ -81,6 +81,99 @@ _LETTER_OPENER_RE = re.compile(
 _AUTHORLINK = re.compile(
     r"\[\[(?:Author|Portal):[^\]|]*\|(.*?)\]\]", re.DOTALL | re.IGNORECASE)
 
+# The trailing JOINT comma EB1911 leaves at the end of the bold headword
+# (``«B»ARTEMIS,«/B»``, ``«B»{{uc|Colenso,}}«/B»``) — the inline separator to the
+# definition.  Stripped on the RAW span in the TITLE producer, BEFORE the walk
+# recurses it, so neither the rendered marker (DISPLAY) nor the decoded field
+# (PLAIN) ever carries it: one removal on the shared input, both views clean.
+# The trailing joint EB1911 leaves at the end of the bold headword, found behind
+# whatever run of close-syntax the recursion is about to collapse (template
+# ``}}``, style markers ``«/B»``/``«/I»``/…, a stray link ``]]``, whitespace), at
+# any nesting.  Quasi-illicit: a producer trimming its own inner — the marked
+# exception titles force, since the joint is content-shaped but isn't content.
+_TITLE_CLOSE = r"(?:\}\}|\]\]|«/[A-Za-z]+»|\s)*"
+# COMMA / SEMICOLON / COLON: always a joint — no title legitimately ends in one.
+# (Internal ones, ``CUSANUS, NICOLAUS``, are followed by content, not close-
+# syntax, so untouched.)
+_TITLE_JOINT_COMMA = re.compile(r"[,;:]\s*(?=" + _TITLE_CLOSE + r"$)")
+# PERIOD: a terminator / regnal dot (``ABBAS II.``, ``FREDERICK I.``,
+# ``AUTOGRAPHS.``, ``…1812.``) — UNLESS the headword's terminal token is a LONE,
+# NON-REGNAL letter, where the dot is an initial or the tail of an initialism
+# (``ALBERT F.``, ``I.O.U.``, ``U.S.A.``).  We capture that token together with
+# whatever close-syntax sits between/around it and the dot (so the dot is caught
+# inside OR outside the bold), and judge group 1.  (Multi-letter abbreviation
+# ``ST.`` is the residual casualty — a frozen list later, or an accepted loss.)
+_TITLE_TERM_PERIOD = re.compile(
+    r"(\w+)(" + _TITLE_CLOSE + r")\.(" + _TITLE_CLOSE + r")$", re.UNICODE)
+# A lone trailing I/V/X is a regnal numeral, not an initial; L/C/D/M never appear
+# as a monarch's numeral, so a lone trailing C./D. is an initial and keeps its dot.
+_REGNAL_LETTER = frozenset("IVX")
+# Abbreviations that legitimately END a title with a real dot.  The corpus has
+# exactly one — ``ST`` (Saint), in the inverted ``FRANCIS OF ASSISI, ST.`` form;
+# ``STE`` (Sainte) rides along for the same reason though it doesn't occur today.
+# (Leading/internal ``ST.`` — ST. PETERSBURG — is never touched: the strip is
+# trailing-only.)  Everything else short before a dot is a real word — ``OF``,
+# ``THE``, ``LAW`` — and a genuine terminator.
+_TITLE_ABBR = frozenset({"ST", "STE"})
+
+
+def strip_title_joint(span: str) -> str:
+    """Strip the trailing joint off a raw title span, BEFORE the walk recurses it,
+    so neither the rendered marker (DISPLAY) nor the decoded field (PLAIN) carries
+    it.  The comma is always a joint; the period is a terminator/regnal dot except
+    after a lone non-regnal letter (initial / initialism) or a known abbreviation
+    (``ST.``), where the dot belongs to the name."""
+    span = _TITLE_JOINT_COMMA.sub("", span)
+    m = _TITLE_TERM_PERIOD.search(span)
+    if m:
+        tok = m.group(1).upper()
+        keep = (len(tok) == 1 and tok not in _REGNAL_LETTER) or tok in _TITLE_ABBR
+        if not keep:
+            span = span[:m.start()] + m.group(1) + m.group(2) + m.group(3)
+    return span
+
+
+# ── Plain-title decode: the field is the WALKED «TITLE» marker stripped to text,
+# not a parallel re-parse of the raw heading.  The heading is already recursed
+# into markers, so the field is just those markers stripped (recursion =
+# recognition) — making field-vs-heading divergence impossible by construction.
+_FN_MARK = re.compile(r"«FN(?:\[[^\]]*\])?:.*?«/FN»", re.DOTALL)
+_LN_MARK = re.compile(r"«(?:LN|XL):(?:[^|»]*\|)?(.*?)«/(?:LN|XL)»", re.DOTALL)
+_UPPER_SPAN = re.compile(
+    r"«SPAN\[[^\]]*text-transform:uppercase[^\]]*\]»(.*?)«/SPAN»", re.DOTALL)
+_SC_MARK = re.compile(r"«SC»(.*?)«/SC»", re.DOTALL)
+_SPAN_MARK = re.compile(r"«/?SPAN(?:\[[^\]]*\])?»")
+_STYLE_MARK = re.compile(r"«/?(?:B|I|SC|U|SUP|SUB)»")
+_HTML_TAG = re.compile(r"<[^>]+>")
+
+
+def decode_title(marker: str) -> str:
+    """Plain title from the walked «TITLE» marker content: drop the footnote, take
+    a link's display text, render small-caps and ``{{uc}}`` (text-transform:
+    uppercase) as CAPS, then drop the remaining span/style wrappers (keeping their
+    inner text).  Replaces ``clean_title``'s raw-heading regex re-parse — the same
+    plain text, but sourced from the one recursion, not a parallel second one."""
+    t = _FN_MARK.sub("", marker)                          # footnote → drop
+    t = _LN_MARK.sub(r"\1", t)                            # link → its display text
+    t = _UPPER_SPAN.sub(lambda m: m.group(1).upper(), t)  # {{uc}} span → CAPS
+    t = _SC_MARK.sub(lambda m: m.group(1).upper(), t)     # small-caps → CAPS
+    t = _SPAN_MARK.sub("", t)                             # other spans → inner
+    t = _STYLE_MARK.sub("", t)                            # B/I/U/SUP/SUB → strip
+    t = _HTML_TAG.sub("", t)                              # stray raw tags (<big>…)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def recover_title_from_section(field: str, section_name: str) -> str:
+    """When the bold heading was a PARTIAL capture — a strict prefix of the
+    article's section id (``«B»TISIO`` vs section "Tisio Benvenuto") — the section
+    carries the fuller title.  Full-prefix match only, so a spelling variant keeps
+    the authoritative source heading."""
+    sec = re.sub(r"\s+", " ", (section_name or "").replace("_", " ")).strip()
+    if (sec and field and sec.upper() != field.upper()
+            and sec.upper().startswith(field.upper())):
+        return sec.upper()
+    return field
+
 
 def _first_template_arg(text: str) -> str | None:
     """Return the first positional argument of an open template.
@@ -215,20 +308,14 @@ def produce_title(opening: str, section_name: str = "") -> tuple[str, str, str]:
     opening = _LEAD_CHROME.sub("", opening[len(page):])
     span, rest = _title_span(opening)
     if span:
-        title = re.sub(r"\s+,", ",", clean_title(span)).strip()
-        # Partial capture: when the bold run is a genuine PREFIX of the section
-        # name, the section carries more of the title — «B»TISIO vs section
-        # "Tisio Benvenuto", or CHATHAM vs "Chatham (New Brunswick)".  Require a
-        # FULL-prefix match (not just a shared first word) so a mere spelling
-        # variant ("NICOLAS" heading vs "Nicholas" section) keeps the source
-        # heading, which is authoritative.
-        sec = re.sub(r"\s+", " ", (section_name or "").replace("_", " ")).strip()
-        if (sec and title and sec.upper() != title.upper()
-                and sec.upper().startswith(title.upper())):
-            title = sec.upper()
-        # title_raw (for title_display) keeps markers but unwraps the
-        # [[Author:…|…]] link so the transform preserves the bold run.
-        return title, page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
+        # The plain field is decoded from the WALKED «TITLE» marker in
+        # walk_article (recursion = recognition — the ONE title source); the
+        # partial-capture section recovery moved there with it.  produce_title
+        # carves the cut and hands back the raw span (author-link unwrapped); the
+        # freight-strip runs in the TITLE element producer, on the recursed marker
+        # — the joint comma can hide inside `{{uc|Colenso,}}` until the walk
+        # collapses it, so it isn't visible to a strip here, pre-walk.
+        return "", page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
     # Letter articles open with a drop-cap, not a bold heading.  Parse all six
     # documented drop-cap shapes structurally (incl. the nested
     # `{{di|{{serif|J}}|4em}}` form the old `[^{}|]+` regex couldn't reach).

@@ -708,7 +708,7 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "greek":        {},
     "polytonic":    {},
     "hebrew":       {},
-    "uc":           {},
+    "uc":           {"css": "text-transform:uppercase", "tag": "SPAN"},  # {{uc|X}} → X uppercased; same transform the {{Ts|uc}} code carries
     # Inline no-wrap / font / decoration stylers → CSS the viewer decodes.
     "nowrap":       {"css": "white-space:nowrap", "tag": "SPAN"},
     "sans-serif":   {"css": "font-family:sans-serif", "tag": "SPAN"},
@@ -752,7 +752,6 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "float center":     {"ctr": True},  # centred block
     "fs70":             {"css": "font-size:70%", "tag": "SPAN"},  # small fractions
     "0":                {"css": "visibility:hidden", "tag": "SPAN", "bare": "0"},  # {{0|x}} reserves x's width; bare {{0}} = one zero
-    "di":               {},  # drop initial → the letter (decorative drop-cap deferred to render)
     "blackletter":      {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},
     "bl":               {"css": "font-family:'UnifrakturCook',serif", "tag": "SPAN"},  # blackletter math variables
     # ── Generic-flip backlog stylers (2026-06-11) — each a font-weight / family /
