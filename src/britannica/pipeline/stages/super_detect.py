@@ -116,6 +116,5 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         out.append(DetectedArticle(
             title="", volume=volume,
             page_start=segs[0].page_number, page_end=segs[-1].page_number,
-            article_type="article", segments=segs, section_name=sec,
-            title_raw=""))
+            article_type="article", segments=segs, section_name=sec))
     return out

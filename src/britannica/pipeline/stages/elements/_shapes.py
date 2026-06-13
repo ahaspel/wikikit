@@ -177,7 +177,7 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_TITLE:
         # Peel the «TITLE»…«/TITLE» stamp; the inner is the carved title span
         # (markers + raw <ref>/{{sc}}), handed back to the walker so the title node
-        # is produced recursively into the same string as today's `title_display`.
+        # is produced recursively — the rendered heading the viewer shows as the H1.
         s = re.sub(r"^«TITLE»", "", raw)
         s = re.sub(r"«/TITLE»\s*$", "", s)
         return s

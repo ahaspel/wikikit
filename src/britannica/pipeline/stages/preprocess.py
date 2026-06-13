@@ -219,6 +219,13 @@ def preprocess(stream: str, volume: int = 0) -> str:
     return _clean_and_heal(stream)
 
 
+# A whitespace-only line IS a blank line; strip trailing spaces/tabs so a
+# space-polluted blank line ("\n \n") reads as the "\n\n" paragraph break the
+# author meant (ABBEY Fig. 1 legend C/D; ~326 occurrences corpus-wide). Lossless:
+# trailing whitespace carries nothing in prose, cells, verse, or tables.
+_TRAILING_WS = re.compile(r"[ \t]+(?=\r?\n)")
+
+
 def _clean_and_heal(stream: str) -> str:
     """The re-appliable half of the pass — source-cleans + page-seam heals, i.e.
     everything EXCEPT the once-only raw→canonical conversions (corrections,
@@ -227,6 +234,7 @@ def _clean_and_heal(stream: str) -> str:
     that test applies THESE, not full ``preprocess`` (which would re-run quote-run
     on already-converted markup)."""
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
+    stream = _TRAILING_WS.sub("", stream)         # whitespace-only line -> clean blank line
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = strip_html_comments(stream)

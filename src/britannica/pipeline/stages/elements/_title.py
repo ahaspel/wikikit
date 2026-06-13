@@ -35,8 +35,8 @@ _LETTER_OPENER_RE = re.compile(
     r"\{\{\s*(?:[Dd]rop\s*[Ii]nitial|[Dd]i)\s*\|"
 )
 # [[Author:…|inner]] / [[Portal:…|inner]] link wrapper — unwrapped to its inner
-# heading in the title_raw span so the downstream title_display transform keeps
-# the bold run instead of mangling the link (HOLLAR, WENZEL or WENCESLAUS).
+# heading in the title span so the walk recurses the bold run into the «TITLE»
+# node instead of mangling the link (HOLLAR, WENZEL or WENCESLAUS).
 _AUTHORLINK = re.compile(
     r"\[\[(?:Author|Portal):[^\]|]*\|(.*?)\]\]", re.DOTALL | re.IGNORECASE)
 
@@ -234,6 +234,53 @@ def _title_span(opening: str) -> tuple[str, str]:
     return opening[:lead + end], opening[lead + end:]
 
 
+def _letter_title_span(opening: str) -> tuple[str, str] | None:
+    """Carve a letter-article's leading drop-cap construct off the body — the
+    drop-cap analogue of ``_title_span``.  Returns ``(title_span, rest)``, or
+    None when OPENING is not a letter article.  The span is «TITLE»-stamped like
+    a bold heading; the drop-cap walks to its bare letter (``_content`` drops the
+    size arg), so ``decode_title`` yields the plain letter for the field."""
+    if _letter_from_dropcap(opening) is None:
+        return None
+    s = opening.lstrip()
+    lead = len(opening) - len(s)
+    i = 0
+    # Optional bold wrapper around the drop-cap (`'''{{di|T}}'''` →
+    # `«B»{{di|T}}«/B»` post quote-run); consume its matching close after.
+    close = ""
+    if s.startswith("'''"):
+        close, i = "'''", 3
+    elif s.startswith("«B»"):
+        close, i = "«/B»", len("«B»")
+    while i < len(s) and s[i].isspace():
+        i += 1
+    if s[i:i + 2] != "{{":
+        return None
+    # Balance the leading {{…}} template(s) — a {{Serif|{{di|…}}}} wrapper or a
+    # bare {{di|…}} — to depth 0; that IS the drop-cap construct.
+    depth = 0
+    while i < len(s):
+        if s[i:i + 2] == "{{":
+            depth += 1
+            i += 2
+        elif s[i:i + 2] == "}}":
+            depth -= 1
+            i += 2
+            if depth == 0:
+                break
+        else:
+            i += 1
+    if depth != 0:
+        return None
+    if close:
+        j = i
+        while j < len(s) and s[j].isspace():
+            j += 1
+        if s[j:j + len(close)] == close:
+            i = j + len(close)
+    return opening[:lead + i], opening[lead + i:]
+
+
 # Leading page-chrome the honest walker now carries into a first-segment opening
 # (B3): the page-header `<noinclude>…</noinclude>`, a `<section …>` tag, running
 # headers.  Skipped before the heading is sought — it is not the title.
@@ -244,20 +291,21 @@ _LEAD_CHROME = re.compile(
     re.DOTALL | re.IGNORECASE)
 
 
-def produce_title(opening: str, section_name: str = "") -> tuple[str, str, str]:
-    """Produce ``(plain_title, body, title_raw_span)`` from a raw article
-    OPENING (the text beginning at the heading, as the walker hands it over).
-    The producer owns the title↔body cut — the walker only set the boundary.
+def produce_title(opening: str, section_name: str = "") -> tuple[str, str]:
+    """Produce ``(body, title_raw_span)`` from a raw article OPENING (the text
+    beginning at the heading, as the walker hands it over).  The producer owns
+    the title↔body cut — the walker only set the boundary.
 
     ``section_name`` is the article's ``«section begin="…"»`` id (already on
     ``Article.section_name``); used ONLY to recover the fuller title when the
     bold heading is a partial capture.  WHICH bold headers are titles is
     classification — the boundary detector's job — so we only extract.
 
-    ``title_raw_span`` is the raw heading span (markers/footnote intact) the
-    downstream ``title_display`` transform needs to preserve italic/small-caps/
-    footnote titles; "" when there is no bold heading (letter / fallback),
-    where the plain title needs no formatted override."""
+    ``title_raw_span`` is the raw heading span (markers/footnote intact) the walk
+    recurses into the «TITLE» node — a bold run, or a letter article's drop-cap
+    construct; "" only in the rare body-opens-at-prose fallback, where there is
+    nothing to carve.  The plain field is decoded from the WALKED node in
+    ``walk_article``, never re-parsed here."""
     # The opening carries the leading «PAGE» leaf marker (super_detect stamps it
     # on segment 0, AHEAD of the heading), which blocks the bold-heading match.
     # Step over it for the title search, but KEEP it — it carries the page number
@@ -274,17 +322,16 @@ def produce_title(opening: str, section_name: str = "") -> tuple[str, str, str]:
         # freight-strip runs in the TITLE element producer, on the recursed marker
         # — the joint comma can hide inside `{{uc|Colenso,}}` until the walk
         # collapses it, so it isn't visible to a strip here, pre-walk.
-        return "", page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
-    # Letter articles open with a drop-cap, not a bold heading.  Parse all six
-    # documented drop-cap shapes structurally (incl. the nested
-    # `{{di|{{serif|J}}|4em}}` form the old `[^{}|]+` regex couldn't reach).
-    letter = _letter_from_dropcap(opening)
-    if letter is not None:
-        return letter, page + opening, ""
-    # No bold heading and no drop-cap.  The headword was already lifted out as
-    # the title (super_detect took the leading word; the body opens at the
-    # content — CHESS "once known as …", and every article likewise), so there
-    # is NOTHING here to extract: the body's first line is prose, not a title.
-    # Return "" and let the caller keep the authoritative detected title —
-    # produce_title must never fabricate a title from body text.
-    return "", page + opening, ""
+        return page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
+    # Letter articles open with a drop-cap, not a bold heading.  Carve the
+    # drop-cap construct as the title span (all six documented shapes) so the
+    # letter rides the «TITLE» node exactly like a bold heading — one decider.
+    lc = _letter_title_span(opening)
+    if lc is not None:
+        lspan, lrest = lc
+        return page + lrest.lstrip(), lspan
+    # No bold heading and no drop-cap.  The body opens at content (CHESS "once
+    # known as …"), so there is NOTHING here to extract: the first line is prose,
+    # not a title.  Return no span and let the caller keep the authoritative
+    # detected title — produce_title must never fabricate a title from body text.
+    return page + opening, ""

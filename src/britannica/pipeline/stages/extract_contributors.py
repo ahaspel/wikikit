@@ -252,7 +252,7 @@ def extract_contributors_for_volume(volume: int) -> int:
         )
         created = 0
         for article in articles:
-            body, _disp = walk_article(session, article)
+            body = walk_article(session, article)
             for seq, cid in enumerate(
                     _harvest_signature_contributors(body, initials_map),
                     start=1):

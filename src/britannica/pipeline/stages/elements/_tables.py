@@ -970,12 +970,13 @@ def _process_table_unified(
     if not body:
         return ""
     # Stamp class + whole-table styling onto the (bare) outer <table>.
-    # Class tracks BORDERS from the source (the scans show wikitable/ruled
-    # tables bordered, class-less ones borderless — AUSTRIA 5/5): a real grid
-    # (`class=wikitable` / `border=N` / `rules=`) → bordered `data-table`;
-    # everything else (layout `{|`, verse / single-column quotes) → borderless
-    # `figtable`.  We carry the source's verdict, not a default — same rule
-    # `_process_table_unified`'s own table branch uses.
+    # Class is the source's OWN verdict, verbatim -- we mint nothing the author
+    # did not write.  A real grid (class=wikitable / border=N / rules=) keeps
+    # data-table + its source class; a class-less layout {| (a figure, verse,
+    # single-column quote) gets NO class at all.  A class-less <table> is
+    # borderless for free (only .data-table adds a border), so a figure renders
+    # as the bare carried {| styled solely by its carried {{ts}}.  Stamping our
+    # own 'figtable' class here was a producer-side blunder; removed 2026-06-13.
     # Opener attrs from whichever syntax opened the table — one regex, no flavor.
     opener_attrs = _opener_attr_slot(raw)
     src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
@@ -983,13 +984,13 @@ def _process_table_unified(
     bordered = re.search(
         r"wikitable|border\s*=\s*[\"']?[1-9]|rules\s*=", opener_attrs, re.I)
     cls = (("data-table " + src_cls).strip() if (bordered or src_cls)
-           else "figtable")
+           else "")
     # Fold the opener's attr-slot at the emit, same as a cell: style bits → CSS,
     # the rest → real attrs.  `class` rides as the computed `cls` (data-table/
     # figtable + the source class), so drop the folded dupe.
     css, opener_html = fold_cell_attrs(opener_attrs, table_level=True)
     opener_html.pop("class", None)
-    attrs = (f' class="{cls}"' + format_html_attrs(opener_html)
+    attrs = ((f' class="{cls}"' if cls else "") + format_html_attrs(opener_html)
              + (f' style="{";".join(css)}"' if css else ""))
     caption_html = ""
     if caption_raw:

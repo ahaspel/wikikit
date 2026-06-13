@@ -469,7 +469,6 @@ def export_articles_to_json(
     body_override: dict[int, str] | None = None,
     only_article_id: int | None = None,
     link_index=None,
-    title_display_override=None,
 ) -> int:
     """Export one volume's articles to JSON.
 
@@ -701,10 +700,6 @@ def export_articles_to_json(
                 "id": article.id,
                 "stable_id": stable_id(article),
                 "title": article.title,
-                # Marked-up display title («B»/«I»/«SC» + «FN») when the
-                # title carries formatting/footnotes the plain title lost;
-                # null for plain titles (viewer falls back to `title`).
-                "title_display": title_display_override.get(article.id),
                 "article_type": article.article_type,
                 "volume": article.volume,
                 "page_start": _printed_page(article.volume, article.page_start),

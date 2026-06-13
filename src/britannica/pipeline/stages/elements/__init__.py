@@ -887,8 +887,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
     # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  Recurses its inner
     # (the carved title span) like any wrapper; produce_tree substitutes the children,
-    # so the node carries the fully-walked title = today's `title_display`.  The export
-    # reads it off the tree and strips the «TITLE:…«/TITLE» wrapper.
+    # so the node carries the fully-walked title.  The viewer renders the node
+    # in-stream as the H1; `walk_article` decodes it to the plain `title` field.
     "TITLE": lambda raw, inner, ctx, reg: _process_title(raw, ctx),
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all

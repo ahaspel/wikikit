@@ -182,10 +182,6 @@ class DetectedArticle:
     # Used as a tiebreaker in stable IDs when multiple articles share a
     # (volume, page_start).
     section_name: str = ""
-    # Raw title span (markers/footnote intact) carried for the title
-    # producer to transform into the display title; "" for paths that
-    # don't carve one.
-    title_raw: str = ""
 
     @property
     def body(self) -> str:
@@ -821,11 +817,11 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
     session = SessionLocal()
     try:
         for det in detected:
-            # MOVE 2: detection no longer carries a title — `det.title`/`det.title_raw`
-            # are "" (title rides unstripped in segment 0).  The title is produced in
+            # MOVE 2: detection no longer carries a title — `det.title` is ""
+            # (title rides unstripped in segment 0).  The title is produced in
             # exactly one place, `transform_articles.preprocess_article`/`walk_article`,
-            # which writes `Article.title`/`title_raw`/`title_display`.  `title` is
-            # NOT NULL, so the empty string is the placeholder until the transform runs.
+            # which writes `Article.title`.  `title` is NOT NULL, so the empty
+            # string is the placeholder until the transform runs.
             article = Article(
                 title=det.title,
                 volume=det.volume,
@@ -834,7 +830,6 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
                 body=det.body,
                 article_type=det.article_type if det.article_type == "plate" else None,
                 section_name=det.section_name or None,
-                title_raw=det.title_raw or None,
             )
             session.add(article)
             session.flush()

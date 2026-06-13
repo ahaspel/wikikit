@@ -1,11 +1,10 @@
 """Assemble the corpus in memory and serialize it — walk > assemble >
 decorate > serialize, with no per-article DB body/xref/title writes.
 
-Walks every article into an in-memory ``{id: body}`` corpus (plus a
-parallel ``{id: title_display}`` map) via ``walk_article``, builds the
-resolution index off that corpus, then serializes each volume through the
-export's decorator path (``body_override`` + ``title_display_override`` +
-``link_index``).  This is the single pass that replaces the
+Walks every article into an in-memory ``{id: body}`` corpus via
+``walk_article``, builds the resolution index off that corpus, then
+serializes each volume through the export's decorator path
+(``body_override`` + ``link_index``).  This is the single pass that replaces the
 ``transform_articles`` → ``extract_xrefs`` → ``resolve_xrefs`` → export
 chain: the body, the title, and every cross-link are produced once, held
 in memory, and read straight into the JSON — the DB is never written.
@@ -20,10 +19,10 @@ from britannica.pipeline.stages.transform_articles import walk_article
 
 
 def assemble_corpus(session):
-    """Walk every article into in-memory ``(corpus, title_display)`` maps.
+    """Walk every article into the in-memory ``corpus`` map.
 
-    Returns ``(all_articles, corpus, title_display)`` — the article rows
-    (for the index), ``{id: body}``, and ``{id: title_display|None}``.
+    Returns ``(all_articles, corpus)`` — the article rows (for the index)
+    and ``{id: body}``.
     """
     # NOTE: no order_by — must match resolve_xrefs_all's query order exactly,
     # because the collider tie-break (title_map first-wins) depends on the
@@ -33,11 +32,9 @@ def assemble_corpus(session):
     total = len(all_articles)
     print(f"  [assemble] walking {total} articles…", flush=True)
     corpus: dict[int, str] = {}
-    title_display: dict[int, str | None] = {}
     for i, article in enumerate(all_articles, 1):
-        body, disp = walk_article(session, article)
+        body = walk_article(session, article)
         corpus[article.id] = body
-        title_display[article.id] = disp
         # article_type falls out of the body we just walked — no separate
         # classify pass: a plate stays a plate (boundary detection set it),
         # a non-empty body is an article, an empty one is front matter.
@@ -51,14 +48,14 @@ def assemble_corpus(session):
         if i % 2500 == 0 or i == total:
             print(f"  [assemble] walked {i}/{total}", flush=True)
     # MOVE 2: the title is produced in the transform (`walk_article` sets
-    # `article.title`/`title_raw`/`title_display`), not at detection.  The body
-    # and xrefs stay in-memory only, but `title` and `article_type` are real DB
-    # fields the export + xref resolution read straight from the DB — so commit
-    # them before they're read (covers the fast pipeline, which skips classify).
-    # This folds in the old `classify_articles` stage, which re-walked the whole
-    # corpus solely to recompute that one `article_type` bit.
+    # `article.title`), not at detection.  The body and xrefs stay in-memory
+    # only, but `title` and `article_type` are real DB fields the export + xref
+    # resolution read straight from the DB — so commit them before they're read
+    # (covers the fast pipeline, which skips classify).  This folds in the old
+    # `classify_articles` stage, which re-walked the whole corpus solely to
+    # recompute that one `article_type` bit.
     session.commit()
-    return all_articles, corpus, title_display
+    return all_articles, corpus
 
 
 def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
@@ -71,7 +68,7 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
     """
     session = SessionLocal()
     try:
-        all_articles, corpus, title_display = assemble_corpus(session)
+        all_articles, corpus = assemble_corpus(session)
         print("  [assemble] building cross-reference resolution index…", flush=True)
         idx = build_resolution_index(all_articles, corpus=corpus)
         volumes = ([only_volume] if only_volume is not None
@@ -83,7 +80,6 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
                 volume, out_dir,
                 body_override=corpus,
                 link_index=idx,
-                title_display_override=title_display,
             )
             total += n
             print(f"  [export] vol {volume}: {n} articles ({total} total)", flush=True)

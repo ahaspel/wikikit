@@ -71,15 +71,15 @@ from britannica.pipeline.stages.transform_articles.djvu_refs import (
 # and not just a short word in a data table cell.
 
 
-def preprocess_article(session, article) -> tuple[str, str, str]:
+def preprocess_article(session, article) -> str:
     """Per-article preprocessing — the SOLE title site (MOVE 2).
 
     Assemble the article's segments into one raw text, run ``produce_title`` on
     it to carve the title↔body cut, and stamp ``«TITLE»…«/TITLE»`` around the
     carved title span so the title rides the SINGLE walk as a recognized node
-    instead of a pre-computed side field.  Returns
-    ``(raw_with_title_node, plain_title, title_raw_span)``: the walk-ready text
-    plus the plain title + raw span ``walk_article`` writes back to the Article.
+    instead of a pre-computed side field.  Returns the walk-ready text (the body
+    with the «TITLE» node stamped in); ``walk_article`` decodes the walked node
+    to the plain ``title`` field.
 
     Both the title bracket and the title extraction are transforms legitimately
     placed here: ``preprocess_article`` runs per article, so ``beginning`` and
@@ -108,12 +108,12 @@ def preprocess_article(session, article) -> tuple[str, str, str]:
     # concatenate — never re-stamp a leaf-fact at the article level.
     joined = "".join(seg.segment_text or "" for seg, page_number in segments)
     if not joined:
-        return "", "", ""
+        return ""
 
-    title, body, title_raw = produce_title(joined, article.section_name)
+    body, title_raw = produce_title(joined, article.section_name)
     if title_raw:
-        return f"«TITLE»{title_raw}«/TITLE»{body}", title, title_raw
-    return body, title, title_raw
+        return f"«TITLE»{title_raw}«/TITLE»{body}"
+    return body
 
 
 _TITLE_NODE_RE = re.compile(r"«TITLE:(.*?)«/TITLE»", re.DOTALL)
@@ -137,19 +137,20 @@ def _contributor_initials(session) -> frozenset[str]:
     return _CONTRIBUTOR_INITIALS_CACHE
 
 
-def walk_article(session, article) -> tuple[str, str | None]:
+def walk_article(session, article) -> str:
     """Walk one article in a SINGLE pass and split off its title node.
 
     ``preprocess_article`` (the SOLE title site, MOVE 2) runs ``produce_title``,
-    stamps «TITLE» around the carved title, and hands back the plain title + raw
-    span; the walk recurses the «TITLE» bracket into a ``«TITLE:…«/TITLE»`` node
+    stamps «TITLE» around the carved title, and hands back the walk-ready text;
+    the walk recurses the «TITLE» bracket into a ``«TITLE:…«/TITLE»`` node
     alongside the body; we split that node off here.  This function writes the
-    title back onto the Article (``title``/``title_raw``/``title_display``) — the
-    title is produced and persisted from the transform stage, never at detection.
+    plain ``title`` back onto the Article — produced and persisted from the
+    transform stage, never at detection.  The marked-up heading is not a field:
+    it rides the «TITLE» node in the returned body, which the viewer renders
+    in-stream as the H1.
 
     Replaces ``produce_article``'s two-walk shape (body walk + a separate
-    ``title_raw`` walk) — the title now rides the ONE walk, verified
-    byte-identical title_display + body.
+    ``title_raw`` walk) — the title now rides the ONE walk.
 
     (The footer is no longer pre-stripped — it rides through and is carried as
     recognized CONTRIBUTOR_FOOTER nodes / Author-link signatures; the contributor
@@ -158,49 +159,32 @@ def walk_article(session, article) -> tuple[str, str | None]:
     from britannica.pipeline.stages.elements import (
         ElementContext, process_elements)
 
-    raw, plain_title, title_raw = preprocess_article(session, article)
-    # The title is produced + persisted here (the transform is its home).  The
-    # plain field is decoded from the WALKED «TITLE» node below — ONE source, the
-    # recursion — so the field can never diverge from the rendered heading, and the
-    # regnal period `clean_title` used to eat is restored.
-    #
-    # EXCEPT plates: a plate's title is a `_split_out_plates`/`_compose_plate_title`
-    # product (AMERICA, PLATE II / PLATE (VOL. 1, P. 499)), NOT a `produce_title`
-    # shape — leave the detection-set plate title alone.
-    if article.article_type != "plate":
-        article.title_raw = title_raw or None
-        # Letter / no-heading articles carry their plain title here — they have no
-        # «TITLE» marker to decode (a drop-cap letter, or an absent headword like
-        # CHESS, whose body legitimately opens "once known as …").
-        if plain_title:
-            article.title = plain_title
+    raw = preprocess_article(session, article)
     if not raw:
-        article.title_display = None
-        return "", None
+        return ""
     walked = process_elements(
         raw, ElementContext(volume=article.volume,
                             page_number=article.page_start,
                             contributor_initials=_contributor_initials(session)))
     m = _TITLE_NODE_RE.search(walked)
     if not m:
-        article.title_display = None
-        return walked, None
+        return walked
     marker = m.group(1)
-    # The plain field IS the walked marker decoded (recursion = recognition): the
-    # same plain text `clean_title` produced, sourced from the one recursion.
+    # The plain field IS the walked «TITLE» marker decoded (recursion =
+    # recognition — ONE title source, so the field can't diverge from the rendered
+    # heading, and the regnal period `clean_title` used to eat is kept).  EXCEPT
+    # plates: a plate's title is a `_split_out_plates`/`_compose_plate_title`
+    # product (AMERICA, PLATE II), NOT a `produce_title` shape — leave the
+    # detection-set plate title alone.
     if article.article_type != "plate":
         field = recover_title_from_section(
             decode_title(marker), article.section_name or "")
         if field:
             article.title = field
-    title_display = marker if (
-        re.search(r"«(?:I|SC|FN)", marker)
-        or marker.count("«B»") > 1) else None
-    article.title_display = title_display
     # Keep the «TITLE:…«/TITLE» node in the body: the viewer renders it
     # in-stream as the H1, so the title's footnote joins the body's footnote
     # stream (numbered + collected in Notes) instead of a severed parallel one.
-    return walked, title_display
+    return walked
 
 
 # `_transform_text_v2` (the raw-string shim = strip_attributions + process_elements)
