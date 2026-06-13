@@ -5,7 +5,6 @@ from britannica.db.session import SessionLocal
 from britannica.pipeline.stages.elements._title import (
     _letter_from_dropcap,
     _title_span,
-    clean_title,
 )
 import re
 
@@ -213,37 +212,9 @@ class DetectedArticle:
 
 
 
-def _normalize_title(title: str) -> str:
-    """Strip parentheticals, trailing periods, and spacing artifacts."""
-    # Strip all parenthetical content (etymologies, dates, alternate names)
-    title = re.sub(r"\s*\([^)]*\)", "", title)
-    # Collapse whitespace
-    title = re.sub(r"\s+", " ", title).strip()
-    # Clean comma artifacts from parenthetical removal (e.g. "SMITH, , JOHN")
-    title = re.sub(r",\s*,", ",", title).strip(", ")
-    # Strip trailing phrase after comma if it's:
-    # - mixed-case (descriptor like "Greek", "Grand Master")
-    # - a 2-letter fragment not in the valid title list (formula like "CH")
-    if "," in title:
-        before, _, after = title.rpartition(",")
-        after = after.strip()
-        if after and not after.isupper():
-            title = before.strip()
-        elif after and len(after) == 2 and after not in _VALID_TWO_LETTER:
-            title = before.strip()
-    # Strip trailing period (encyclopedia formatting convention)
-    title = re.sub(r"\.$", "", title)
-    return title
-
-
-# Matches pure Roman numerals (II, IV) and numbered section headings (IV. TOPIC)
-
-# Two-letter article titles that actually exist in the encyclopedia.
-# Other 2-letter combinations (CH, RO, OF, etc.) are fragments.
-_VALID_TWO_LETTER = frozenset({
-    "AA", "AB", "AD", "AE", "AI", "AL", "AM", "AN", "AR", "AS", "AT",
-    "AX", "AY",
-})
+# `_normalize_title` + `_VALID_TWO_LETTER` retired with `clean_title`: detection no
+# longer flattens a heading to classify it — `super_walker._heading_text` reads the
+# headword for the is-title test, and `produce_title` produces the title itself.
 
 
 

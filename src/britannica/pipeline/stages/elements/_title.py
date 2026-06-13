@@ -1,63 +1,22 @@
-"""TITLE element producer (new super-walker architecture).
+"""TITLE producer.
 
-A detected article's leading heading IS its title.  This produces the title's
-plain text from that heading's wikitext, handling the markup shapes correctly —
-including the two the legacy ``title.clean_title`` gets wrong:
-
-  * ``{{abbr|DISPLAY|tooltip}}`` — the shown text is the FIRST arg, not the
-    tooltip.  Legacy's generic unwrap takes the last arg, turning PIETAS into
-    "Latin: 'Piety'".
-  * raw HTML tags (``<span>``, ``<big>``, ``<ins>``, ``<nowiki>``) — stripped
-    to their inner text.  Legacy leaves them, e.g. ``<big>S</big>UCCINIC ACID``
-    and ``<span …>SEMMELWEISS</span>``.
-
-The legacy ``title.clean_title`` stays frozen — the old pipeline depends on it.
-This is the producer the super-walker and the element walk use.
+A detected article's leading heading IS its title.  ``produce_title`` carves the
+title↔body cut and returns the raw heading span; the TITLE element producer strips
+the headword↔body joint and recurses the span into the «TITLE» marker;
+``decode_title`` reduces that one marker to the plain field.  One produced title,
+two views — the rendered heading and the plain field — both descending from the
+single recursion, so they cannot diverge.  (Replaced the flat legacy
+``clean_title``, now deleted; the detection classifier's own headword read lives
+in ``super_walker._heading_text``.)
 """
 from __future__ import annotations
 
 import re
 
-_FN = re.compile(r"«FN(?:\[[^\]]+\])?:.*?«/FN»", re.DOTALL)
-_REF = re.compile(r"<ref[^>]*>.*?</ref>", re.DOTALL)
-_REF_SELF = re.compile(r"<ref[^/]*/\s*>")
-# {{abbr|DISPLAY|tooltip}} — keep the DISPLAY (first) arg.
-_ABBR = re.compile(r"\{\{abbr\|([^{}|]*)\|[^{}]*\}\}", re.I)
-_LINK_PIPE = re.compile(r"\[\[(?:Author:)?[^\]|]*\|([^\]]+)\]\]")
-_LINK = re.compile(r"\[\[([^\]|]+)\]\]")
+# Shared with `_is_connective_gap` (the title-run extender, below): small-caps →
+# caps and the inline-marker strip, to read a heading gap's plain text.
 _SC = re.compile(r"\{\{(?:sc|asc|small[\s\-]?caps?)\|([^{}|]*)\}\}", re.I)
-_UC = re.compile(r"\{\{uc\|([^{}|]*)\}\}", re.I)
-_TMPL3 = re.compile(r"\{\{[^{}|]+\|[^{}]*\|([^{}|]*)\}\}")
-_TMPL2 = re.compile(r"\{\{[^{}|]+\|([^{}|]*)\}\}")
-_TMPL0 = re.compile(r"\{\{[^{}|]+\}\}")
-_HTML = re.compile(r"<[^>]+>")
 _MARK = re.compile(r"«/?(?:B|I|SC)»")
-
-
-def clean_title(raw: str) -> str:
-    """Flatten a heading's wikitext to the plain title string."""
-    t = _FN.sub("", raw)
-    t = _REF.sub("", t)
-    t = _REF_SELF.sub("", t)
-    t = _ABBR.sub(r"\1", t)
-    t = _LINK_PIPE.sub(r"\1", t)
-    t = _LINK.sub(r"\1", t)
-    # {{sc|…}} small-caps renders as CAPITALS; uppercase the content so a
-    # fully small-capped headword (`{{sc|[[Author:…|Holland, Josiah Gilbert]]}}`)
-    # reads as the all-caps title it is — not a Title-case taxonomy subsection.
-    t = _SC.sub(lambda m: m.group(1).upper(), t)
-    for _ in range(8):
-        before = t
-        t = _UC.sub(lambda m: m.group(1).upper(), t)
-        t = _TMPL3.sub(r"\1", t)
-        t = _TMPL2.sub(r"\1", t)
-        t = _TMPL0.sub("", t)
-        if t == before:
-            break
-    t = _HTML.sub("", t)
-    t = _MARK.sub("", t)
-    t = re.sub(r"\s+", " ", t).strip().rstrip(",.;:")
-    return t
 
 
 # A bold heading span, optionally wrapped in an [[Author:…|…]] link — consume the

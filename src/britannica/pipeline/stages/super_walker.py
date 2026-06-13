@@ -29,14 +29,8 @@ from dataclasses import dataclass
 
 from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal
-from britannica.pipeline.stages.detect_boundaries import (
-    _normalize_title,
-    _split_out_plates,
-)
-from britannica.pipeline.stages.elements._title import (
-    _letter_from_dropcap,
-    clean_title,
-)
+from britannica.pipeline.stages.detect_boundaries import _split_out_plates
+from britannica.pipeline.stages.elements._title import _letter_from_dropcap
 from britannica.pipeline.stages.preprocess import make_stream, preprocess
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
@@ -121,28 +115,58 @@ def _has_titlecase_word(t: str) -> bool:
     return False
 
 
+# Read a block-opening heading down to its plain headword text — the classifier's
+# eyes, recognition only.  «I» italics, a footnote, a link, a styler template, a
+# disambiguator paren all come off; `uc`/`sc` content is folded to the CAPITALS it
+# renders as, so the caps test reads true case.  NOT title production — produce_title
+# owns that, downstream; here we only look enough to classify.
+_HI = re.compile(r"«/?I»")
+_HREF = re.compile(r"<ref[^>]*>.*?</ref>|<ref[^/]*/\s*>", re.DOTALL)
+_HLINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]+)\]\]")
+_HABBR = re.compile(r"\{\{\s*abbr\s*\|([^{}|]*)\|[^{}]*\}\}", re.I)
+_HCAPS = re.compile(r"\{\{\s*(?:uc|sc|asc|small[\s-]?caps?)\s*\|([^{}|]*)\}\}", re.I)
+_HTMPL3 = re.compile(r"\{\{[^{}|]+\|[^{}]*\|([^{}|]*)\}\}")
+_HTMPL2 = re.compile(r"\{\{[^{}|]+\|([^{}|]*)\}\}")
+_HTMPL0 = re.compile(r"\{\{[^{}]*\}\}")
+_HTAG = re.compile(r"<[^>]+>")
+_HPAREN = re.compile(r"\s*\([^)]*\)")
+
+
+def _heading_text(raw_heading: str) -> str:
+    """The plain headword text of a raw «B» heading, for classification only."""
+    t = _HI.sub("", raw_heading)
+    t = _HREF.sub("", t)
+    t = _HLINK.sub(r"\1", t)
+    t = _HABBR.sub(r"\1", t)
+    t = _HCAPS.sub(lambda m: m.group(1).upper(), t)
+    for _ in range(8):
+        before = t
+        t = _HTMPL3.sub(r"\1", t)
+        t = _HTMPL2.sub(r"\1", t)
+        t = _HTMPL0.sub("", t)
+        if t == before:
+            break
+    t = _HTAG.sub("", t)
+    t = _HPAREN.sub("", t)
+    return re.sub(r"\s+", " ", t).strip(" ,.;:")
+
+
 def _is_title(raw_heading: str) -> bool:
-    """The one classification: is this block-opening heading an article title?"""
-    t = _normalize_title(clean_title(raw_heading))
-    if not t:
+    """The one classification: is this block-opening heading an article title?
+    One question in two parts — is the headword caps-set PROSE (the EB1911 title
+    convention), and NOT a numeral or formula (which wear the same bold at the
+    same block starts)?  Everything else fell out of those two."""
+    t = _heading_text(raw_heading)
+    if len(t) < 2:                                   # empty / lone char (dropcap)
         return False
-    if len(t) == 1:                                  # lone chars aren't bold
-        return False                                 #   titles (letters: dropcap)
-    if "·" in t or "→" in t:                         # chemical mid-dots/arrows
+    if (t[0].isdigit() or "·" in t or "→" in t       # not prose: a numeral /
+            or re.search(r"[A-Za-z]\d|\d[A-Za-z]", t)  #   formula (CH3, C6H5) /
+            or _STRICT_ROMAN.match(t)                #   roman (II, IV) /
+            or _NUMBERED.match(t)):                  #   section marker (ORDER I)
         return False
-    if re.search(r"[A-Za-z]\d|\d[A-Za-z]", t):       # formulae (CH3, C6H5)
-        return False
-    if t[0].isdigit():
-        return False
-    if _STRICT_ROMAN.match(t):                        # II, IV … (not CIVIL/DILL)
-        return False
-    if _NUMBERED.match(t):                            # ORDER I, PART II …
-        return False
-    if _has_titlecase_word(t):                        # A. Rhachitomi, Sub-class.
-        return False
-    if len(t) == 2:                                 # short titles that open a
-        return True                                  #   block are real articles
-    return _first_word_caps(t)
+    if _has_titlecase_word(t):                       # Title-case = subsection
+        return False                                 #   (A. Rhachitomi, Sub-class.)
+    return len(t) == 2 or _first_word_caps(t)        # caps-prose headword
 
 
 def _heading_at(body: str, pos: int):
