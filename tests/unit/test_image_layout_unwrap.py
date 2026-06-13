@@ -167,13 +167,13 @@ def test_sewing_machines_fig1_image_and_caption():
 
 # ── Tests: ABBEY_02_FLOAT — `{{img float}}` floater ─────────────
 
-def test_abbey_02_float_is_faithful_figtable():
-    """`{{img float|cap=…}}` is a FLOATED faithful figtable, not a captioned
+def test_abbey_02_float_is_faithful_figure():
+    """`{{img float|cap=…}}` is a FLOATED faithful figure, not a captioned
     IMG.  The image is a pure leaf (caption None); the cap text rides in a
     cell with its «SC» markup intact and its <br>s carried as HTML — there is no
     images and no clean_caption flattening."""
     body = _transform(ABBEY_02_FLOAT, volume=1, page_number=44)
-    assert 'class="figtable"' in body and "float:" in body
+    assert "float:" in body and 'class="figtable"' not in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
@@ -187,11 +187,11 @@ def test_abbey_02_float_is_faithful_figtable():
 
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────
 
-def test_air_engine_fig1_faithful_figtable():
-    """AIR_ENGINE Fig 1 `{{Img float}}` → floated figtable: a pure image leaf
+def test_air_engine_fig1_faithful_figure():
+    """AIR_ENGINE Fig 1 `{{Img float}}` → floated figure: a pure image leaf
     plus the caption carried in a cell (markup intact, not an IMG caption)."""
     body = _transform(AIR_ENGINE_1, volume=1, page_number=482)
-    assert 'class="figtable"' in body and "float:" in body
+    assert "float:" in body and 'class="figtable"' not in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
