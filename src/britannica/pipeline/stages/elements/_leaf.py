@@ -1,8 +1,14 @@
-"""Leaf-level element handlers — no children, minimal logic.
+"""Leaf-level element handlers — minimal logic.
 
-``<score>`` (musical notation), ``<math>``, ``<poem>``, and structural
-chemical-formula table rendering.  None of these handlers recurse into
-nested elements.
+TRUE leaves, whose content is a foreign language we do NOT descend into:
+``<score>`` (musical notation → image) and ``<math>`` (LaTeX).  These read
+their content flat, by design.
+
+``<poem>`` / ``{{ppoem}}`` are NOT leaves: verse lines are article prose that
+carry inline stylers / links / footnotes ({{sc}}, {{em}}, «I», `[[…]]`).  They
+RECURSE their content via ``process_elements`` like any wrapper — every producer
+transforms its outer and recurses its inner.  A wrapper that reads its content
+flat is a failure-to-recurse bug; the leaking inner markup is the tell.
 """
 
 from __future__ import annotations
@@ -54,19 +60,23 @@ def _process_math(inner: str) -> str:
     return f"«MATH:{inner}«/MATH»"
 
 
-def _process_poem(inner: str) -> str:
+def _process_poem(inner: str, context) -> str:
     """Convert poem content to {{VERSE:...}VERSE}.
 
-    Wrap with paragraph breaks: <poem> blocks are virtually always
-    block-level in EB1911 (block-quoted verse, classical citation,
-    inscription). Without the ``\\n\\n`` boundaries the surrounding
-    prose paragraph absorbs the marker and the viewer's paragraph-
-    level VERSE handler (``^{{VERSE:…}VERSE}$``) misses, falling
-    back to the inline-VERSE handler which renders the whole verse
-    as a continuation of the prose line (MOLECULE p684's Lucretius
-    quote was the canonical case).
+    A poem is a WRAPPER, not a leaf: its lines are article prose that can
+    carry inline stylers / links / footnotes ({{sc}}, {{em}}, «I», `[[…]]`).
+    Recurse the content so those render instead of leaking as raw markup; the
+    verse line structure (newlines) rides through ``process_elements``
+    untouched, so the marker's block shape is unchanged.
+
+    The marker is block-level: <poem> blocks are virtually always block-level
+    in EB1911 (block-quoted verse, classical citation, inscription).  The
+    viewer's paragraph-level VERSE handler (``^{{VERSE:…}VERSE}$``) keys on
+    that; the inline-VERSE fallback renders the whole verse as a continuation
+    of the prose line (MOLECULE p684's Lucretius quote was the canonical case).
     """
-    content = inner
+    from britannica.pipeline.stages.elements import process_elements
+    content = process_elements(inner, context)
     return "{{VERSE:" + content + "}VERSE}"
 
 
@@ -81,7 +91,7 @@ _PPOEM_CTRL_RE = re.compile(r"^\s*(?:start|end|class|style)\s*=", re.IGNORECASE)
 _PPOEM_NUMBERED_RE = re.compile(r"^\s*1\s*=")
 
 
-def _process_ppoem(inner: str) -> str:
+def _process_ppoem(inner: str, context) -> str:
     segs = _split_top_level_pipe(inner)[1:]   # drop the "ppoem" template name
     verse: list[str] = []
     for seg in segs:
@@ -96,7 +106,7 @@ def _process_ppoem(inner: str) -> str:
     content = "|".join(verse).strip("\n")
     if not content.strip():
         return ""
-    return _process_poem(content)
+    return _process_poem(content, context)
 
 
 def _is_structural_formula(text: str) -> bool:

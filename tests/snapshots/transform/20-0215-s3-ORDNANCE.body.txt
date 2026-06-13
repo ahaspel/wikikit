@@ -2033,7 +2033,7 @@ jacket; then for the Firing Stress in the wire«P»
 
 «P»By combining these the gunmakers’ formula for the wire is obtained«P»
 
-«EQN:10«I»a«/I»»P<sub>1</sub>＝𝑟<sub>2</sub> − 𝑟<sub>1</sub>/𝑟<sub>1</sub> (T + P<sub>2</sub>) + P<sub>2</sub>«/EQN»
+«EQN:10a»P<sub>1</sub>＝𝑟<sub>2</sub> − 𝑟<sub>1</sub>/𝑟<sub>1</sub> (T + P<sub>2</sub>) + P<sub>2</sub>«/EQN»
 
  «P»As T is to be uniform, when the gun is fired, the Initial Tensions
 of the wire are arranged accordingly, and the tensions at which the

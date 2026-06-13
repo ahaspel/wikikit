@@ -10,7 +10,11 @@ from __future__ import annotations
 
 import re
 
-_LEAF_RE = re.compile(r"\{\{\s*(.*?)\s*(?:\|([^{}]*))?\}\}", re.DOTALL)
+# Name is the token up to the first `|` (never a pipe/brace); the arg is
+# everything after, nested braces ALLOWED — `{{ditto|(20)|{{nbsp}}}}` carries a
+# nested `{{nbsp}}` the old `[^{}]*` arg couldn't span, which made the backtrack
+# swallow the name and drop the whole ditto to "".
+_LEAF_RE = re.compile(r"\{\{\s*([^|{}]*?)\s*(?:\|(.*))?\}\}", re.DOTALL)
 # Literal-character escapes: template name IS the char (Wikisource convention).
 _ESCAPE = {"=": "=", "(": "(", ")": ")", "'": "'", "!": "|", "*": "*", "–": "–"}
 

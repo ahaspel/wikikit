@@ -338,23 +338,15 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # `_process_ppoem` strips the stanza-frame control params and emits VERSE.
     if name == "ppoem":
         return "PPOEM"
-    # `{{dual line|A|B}}` — pure layout primitive (two-line stack).
-    # CONTENT-AWARE sub-classification: chem-shaped (element-formula
-    # clusters) → CHEM_DUAL, owned by chem; math-shaped (italic
-    # variables, sub/sup on non-element content) → MATH_DUAL, owned by
-    # math; else plain DUAL_LINE (table headers, hyphenations, figure-
-    # caption splits).  Chem first because chem signature can overlap
-    # math markers (sub/sup) — chem catches the chem case before the
-    # looser math predicate sees it.
+    # `{{dual line|A|B}}` — pure layout primitive (two-line stack: table
+    # headers, hyphenations, figure-caption splits, stacked math/chem
+    # notation).  ONE label, ONE producer that recurses each line.  The old
+    # chem-shaped → CHEM_DUAL / math-shaped → MATH_DUAL sub-classification was
+    # speculative specificity — a content-shape predicate routing to
+    # byte-identical producers, reserving a home for family-specific rendering
+    # that never arrived.  Collapsed: recursion already hands each line's
+    # chem/math content to its own producer, so the split bought nothing.
     if name == "dual":
-        from britannica.pipeline.stages.elements._chem import (
-            is_chem_dual_line)
-        from britannica.pipeline.stages.elements._math import (
-            is_math_dual_line)
-        if is_chem_dual_line(inner_text):
-            return "CHEM_DUAL"
-        if is_math_dual_line(inner_text):
-            return "MATH_DUAL"
         return "DUAL_LINE"
     # Labeled-display-equation templates — declared as math by their
     # template name.  All three labels dispatch to one producer

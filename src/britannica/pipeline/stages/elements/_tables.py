@@ -483,7 +483,7 @@ _CHEM_RESOLVE = {
 }
 
 
-def _process_chemistry_layout(raw: str, inner: str,
+def _process_chemistry_layout(raw: str, inner: str, context,
                               inner_registry=None) -> str:
     """Render a 2-D chemical-reaction / structural-formula layout.
 
@@ -562,6 +562,7 @@ def _process_chemistry_layout(raw: str, inner: str,
         _row_cells = _split_chem_row
 
     from britannica.pipeline.stages.elements._table_decompose import _tag
+    from britannica.pipeline.stages.elements import process_elements
     html_rows: list[str] = []
     for raw_row in raw_rows:
         if not raw_row.strip():
@@ -575,6 +576,13 @@ def _process_chemistry_layout(raw: str, inner: str,
             content = content.strip()
             content = (content.replace("&vert;", "|")
                               .replace("&nbsp;", " "))
+            # KEYSTONE: a chem cell wraps article markup, not a leaf — recurse it
+            # so inline stylers / sub-sup / polytonic render instead of leaking.
+            # Recurse BEFORE resolving the bracket/<br> sentinels: as opaque PUA
+            # chars they ride through process_elements untouched, whereas the
+            # resolved <span>/<br> HTML would be eaten by body-text's tag strip
+            # (the reason they are held as sentinels in the first place).
+            content = process_elements(content, context)
             for sentinel, glyph in _CHEM_RESOLVE.items():
                 if sentinel in content:
                     content = content.replace(sentinel, glyph)

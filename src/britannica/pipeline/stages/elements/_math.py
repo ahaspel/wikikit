@@ -17,11 +17,6 @@ super/subscripts are NOT walker chunks — they're typography whose
 rendered output flows back into prose.  Body-text owns them via
 `_convert_sfrac` and `_convert_sub_sup`.
 
-The dual-line family (CHEM_DUAL / MATH_DUAL / DUAL_LINE) is the
-content-aware split established in the dual-line element-promotion
-work; the classifier inspects content to dispatch.  Predicates and
-the math-dual producer live in this module.
-
 Block-level `<math>` is a self-labeling leaf produced in `_leaf.py`; a
 table of math cells is just a TABLE that recurses to those leaves (the
 old `MATH_LAYOUT_*` table classification was collapsed away).  This
@@ -32,7 +27,7 @@ from __future__ import annotations
 import re
 
 from britannica.pipeline.stages.elements._dual_line import (
-    _process_dual_line, _split_top_level_pipe)
+    _split_top_level_pipe)
 
 
 # ── Labeled-equation family (equation / MathForm1 / ne) ──────────────
@@ -41,14 +36,29 @@ from britannica.pipeline.stages.elements._dual_line import (
 _PAREN_LABEL_RE = re.compile(r"\(([^()]+)\)")
 
 
-def _clean_eqn_label(raw_label: str) -> str:
-    """Source labels are `(N)` with optional `''italic''` decoration.
-    Strip parens and italic markers — the `«EQN:LABEL»` slot is plain
-    text, and a stray `''…''` would later collide with the marker's
-    own `»` boundary."""
+def _eqn_label(raw_label: str, context) -> str:
+    """The equation number for the `«EQN:LABEL»` slot.
+
+    The label is article markup ({{sc}}, «I», {{ditto}}, a paren-wrapped
+    number), so RECURSE it like any content, then decode the resulting markers
+    to plain text: the viewer renders the label `escapeHtml`-ed (it can't show
+    markup in the margin) and the slot is `»`-delimited, so a stray `«…»` marker
+    would both display literally and collide with the marker boundary.
+    `decode_title` is the shared marker→plain-text flattener — the same PLAIN
+    view the dropdown/xref title uses. The outer `(N)` parens are presentational
+    (the viewer supplies its own), so strip them first.
+
+    Replaces `_clean_eqn_label`, a partial mauler that stripped parens + `''`
+    (already dead — quote-runs convert `''`→«I» upstream) and leaked every other
+    markup form ({{sc}}, {{ditto}}, …) raw into the label slot.
+    """
+    from britannica.pipeline.stages.elements import process_elements
+    from britannica.pipeline.stages.elements._title import decode_title
     paren = _PAREN_LABEL_RE.match(raw_label.strip())
-    label = (paren.group(1) if paren else raw_label).strip()
-    return label.replace("''", "")
+    inner = (paren.group(1) if paren else raw_label).strip()
+    if not inner:
+        return ""
+    return decode_title(process_elements(inner, context, _allow_figure=False))
 
 
 _INTERNAL_WHITESPACE_RE = re.compile(r"[ \t]+")
@@ -93,7 +103,7 @@ def _process_math_equation(inner: str, context) -> str:
         for p in parts[1:]:
             s = p.strip()
             if s.lower().startswith("tag="):
-                label = _clean_eqn_label(s[4:])
+                label = _eqn_label(s[4:], context)
             elif s.lower().startswith("pretext="):
                 # Inter-equation connector ("to", "and", …); no marker
                 # support yet — drop and revisit if the renderer ever
@@ -106,7 +116,7 @@ def _process_math_equation(inner: str, context) -> str:
         # label-first, content-second (joined back for multi-pipe
         # content).
         if len(parts) >= 2:
-            label = _clean_eqn_label(parts[1])
+            label = _eqn_label(parts[1], context)
         content = "|".join(parts[2:]).strip()
     elif name == "ne":
         args = parts[1:]
@@ -116,7 +126,7 @@ def _process_math_equation(inner: str, context) -> str:
         if args:
             content = args[0].strip()
             if len(args) > 1:
-                label = _clean_eqn_label(args[1])
+                label = _eqn_label(args[1], context)
     if not content:
         return ""
     # Return the inner (the equation body) through the loop: a `<math>` /
@@ -134,52 +144,3 @@ def _process_math_equation(inner: str, context) -> str:
     # rule, and that's what the snapshot baseline assumes).
     rendered = _SPACE_BEFORE_PUNCT_RE.sub(r"\1", rendered)
     return f"\n\n«EQN:{label}»{rendered}«/EQN»\n\n"
-
-
-# ── MATH_DUAL (dual-line content-shape sub-classification) ────────────
-
-
-_DUAL_LINE_NAME_PREFIX_RE = re.compile(
-    r"^\s*dual\s+line\s*\|", re.IGNORECASE)
-
-# Italic-variable span: `«I»…«/I»` produced by `prepare_wikitext`'s
-# quote-run conversion from `''x''`.  An italic single-word or short run
-# inside a dual_line is a strong math signal because plain prose in a
-# dual_line is exceedingly rare; if there's italic markup, it's almost
-# always a math variable (ALGEBRAIC FORMS / COMBINATORIAL ANALYSIS /
-# MECHANICS / MENSURATION / CIRCLE / HYDRAULICS).
-_ITALIC_SPAN_RE = re.compile(r"«I»[^«]+«/I»")
-# HTML sub/sup wrappers — math exponents/subscripts on variables
-# (already ruled out as chem because chem case caught its formula
-# operands first).
-_SUB_SUP_RE = re.compile(r"<su[pb]\b", re.IGNORECASE)
-
-
-def is_math_dual_line(inner_text: str) -> bool:
-    """True iff the dual_line's content has math signature.
-
-    Caller MUST have ruled out chem first (`is_chem_dual_line`) — the
-    discriminator between chem and math is whether sub/sup ride on
-    element symbols (chem) or on italic variables (math), and chem
-    formulae will themselves contain `<sub>`/`{{sub|N}}` and italic-
-    free `=` operators, which would otherwise trip this predicate.
-    """
-    m = _DUAL_LINE_NAME_PREFIX_RE.match(inner_text)
-    body = inner_text[m.end():] if m else inner_text
-    if _ITALIC_SPAN_RE.search(body):
-        return True
-    if _SUB_SUP_RE.search(body):
-        return True
-    return False
-
-
-def _process_math_dual_line(inner: str) -> str:
-    """Render a MATH_DUAL element.
-
-    Initially byte-identical with `_process_dual_line` (the shared
-    layout producer).  Lives here so future math-specific rendering
-    (variable typography, equation alignment, KaTeX) has its natural
-    home — the math family owns its math-shaped dual_lines even when
-    the rendering hasn't specialized yet.
-    """
-    return _process_dual_line(inner)

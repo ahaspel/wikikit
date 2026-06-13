@@ -39,9 +39,7 @@ from britannica.pipeline.stages.elements._frame import (
     process_frame, process_refs, process_missing)
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
-from britannica.pipeline.stages.elements._chem import _process_chem_dual_line
 from britannica.pipeline.stages.elements._math import (
-    _process_math_dual_line,
     _process_math_equation,
 )
 from britannica.pipeline.stages.elements._leaf import (
@@ -723,7 +721,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "TABLE": lambda raw, inner, ctx, reg:
         _process_table_unified(raw, inner, reg, ctx),
     "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
-        _process_chemistry_layout(raw, inner, reg),
+        _process_chemistry_layout(raw, inner, ctx, reg),
     # Single-label kinds — element_type == label.
     # DJVU_CROP — a `{{Css image crop}}` is just another image; the unified
     # figure producer recognizes it as an image leaf (stateless filename) and,
@@ -758,23 +756,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "IMAGE_FLOAT": lambda raw, inner, ctx, reg:
         _img_float_disentangle(raw, ctx),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
-    # stack) with PLAIN content (table headers, hyphenations, figure-
-    # caption splits).  Chem-shaped / math-shaped variants reclassify
-    # as CHEM_DUAL / MATH_DUAL and route to their family producers.
+    # stack: table headers, hyphenations, figure-caption splits, stacked
+    # math/chem notation).  ONE producer that recurses each line, so its
+    # chem/math content is produced by its own producer — no chem/math-
+    # specific dual_line label or producer (see the classifier note: the
+    # old CHEM_DUAL / MATH_DUAL split was speculative specificity).
     "DUAL_LINE": lambda raw, inner, ctx, reg:
-        _process_dual_line(inner),
-    # CHEM_DUAL — a dual_line whose content is element-formula shaped.
-    # Routed to chem's inline producer; renders byte-identical with the
-    # layout DUAL_LINE today, but the home is right for future chem-
-    # specific work (formula validation, structural-formula layout).
-    "CHEM_DUAL": lambda raw, inner, ctx, reg:
-        _process_chem_dual_line(inner),
-    # MATH_DUAL — a dual_line whose content has math signature (italic
-    # variables, sub/sup on non-element content).  Routed to math's
-    # inline producer; same byte-output as DUAL_LINE today, but lives
-    # in math's home for future math-specific rendering.
-    "MATH_DUAL": lambda raw, inner, ctx, reg:
-        _process_math_dual_line(inner),
+        _process_dual_line(inner, ctx),
     # FRACTION — the `{{sfrac|n|d}}` family, a STYLER lifted as an element so
     # its slots recurse (the dual-line model for a two-slot wrapper).
     "FRACTION": lambda raw, inner, ctx, reg:
@@ -855,8 +843,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # lang/sic/dropinitial/fqm unwrap to the display arg.
     "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
         process_content_extract(inner, ctx),
-    "POEM": lambda raw, inner, ctx, reg: _process_poem(inner),
-    "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner),
+    "POEM": lambda raw, inner, ctx, reg: _process_poem(inner, ctx),
+    "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner, ctx),
     "ORDERED_LIST": lambda raw, inner, ctx, reg: _process_ordered_list(raw),
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
