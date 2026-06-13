@@ -52,8 +52,11 @@ def strip_section_tags(text: str) -> str:
 # Climate / Fauna / Population sections of UNITED STATES, THE).
 # `detect_boundaries` applies the same logic at its own preprocess
 # step; this is defence in depth.
+# Tolerate a malformed opener (`<noinclude">` — a stray quote is a verified
+# source/OCR typo in ~6 articles); it is still the editorial noinclude layer, so
+# strip it like the clean form rather than leak the broken tag.
 _NOINCLUDE_BLOCK_RE = re.compile(
-    r"<noinclude>.*?</noinclude>", re.DOTALL | re.IGNORECASE
+    r"<noinclude\b[^>]*>.*?</noinclude>", re.DOTALL | re.IGNORECASE
 )
 _NOINCLUDE_KEEP_OPENER_RE = re.compile(r"(?:^|\n)\s*\{\|[^\n<]*")
 _NOINCLUDE_KEEP_CLOSER_RE = re.compile(r"(?:^|\n)\s*\|\}(?!\})")

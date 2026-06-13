@@ -28,7 +28,8 @@ _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
 _SEC_END = re.compile(r'<section\s+end=(?:"[^"]*"|[^/>\s]*)\s*/?>', re.IGNORECASE)
 
 # <noinclude> blocks — stripped during preprocessing (page headers, quality tags).
-_NOINCLUDE = re.compile(r"<noinclude>.*?</noinclude>", re.DOTALL | re.IGNORECASE)
+# Tolerate a malformed opener (`<noinclude">`, a source/OCR typo) like source_cleanup.
+_NOINCLUDE = re.compile(r"<noinclude\b[^>]*>.*?</noinclude>", re.DOTALL | re.IGNORECASE)
 
 # Generic Wikisource section IDs that are never real article titles.
 
