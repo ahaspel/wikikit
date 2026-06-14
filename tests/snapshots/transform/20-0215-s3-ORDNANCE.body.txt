@@ -74,7 +74,7 @@ iron and brass, provided with one or more movable chambers
 to facilitate loading («I»Proc. R. A. I.«/I», vol. iv. p. 291). These firearms
 were evidently very small, as only 2 ℔ of gunpowder
 were provided for firing 48 arrows, or about seven-tenths of an ounce for each charge.
-«CTR»{{IMG:EB1911 - Ordnance Fig. 1.png|align=inline|width=360}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig. 1.png|width=360}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 1. — Dulle Griete, Ghent.«/SPAN»«/CTR»«P»The great Bombarde of Ghent, called “Dulle Griete” (fig. 1) is believed to belong to the end of the century, probably about
 1382, and, according to the «I»Guide des voyageurs dans la ville de Gand«/I» (Voisin) the people of Ghent used it in 1411. This gun,PAGE:216which weighs about 13 tons, is formed of an inner lining of
 wrought iron longitudinal bars arranged like the staves of a
@@ -96,7 +96,7 @@ of a little later
 period; it is built up in the same manner of iron bars and
 external rings. It has a calibre of 20 in. and fired a granite
 shot weighing 330 lb.
-«CTR»{{IMG:EB1911 - Ordnance - Fig. 2.png|align=inline|width=320}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance - Fig. 2.png|width=320}}«BR»
 «SC»Fig«/SC». 2.— Mons Meg.«/CTR»«P»Bronze guns of almost identical dimensions to the “Dulle
 Griete” were cast a little later (1468) at Constantinople (see
 Lefroy, «I»Proc. R. A. I.«/I», vol. vi.). One of these is now in the
@@ -760,7 +760,7 @@ made. The copying bar—which is straight if the rifling is to be uniform«SH»R
 {{IMG:EB1911 - Ordnance - Fig. 21.png|align=center|width=800}}
 «CTR»«SC»Fig«/SC». 21.—Rifling Machine.«/CTR»«P»Rifling is the term given to the numerous shallow grooves cut spirally along the bore of a gun; the rib between two grooves is called the “land.” Rifling has been known for many years; it was supposed to increase the range, and no doubt did so, owing to the fact that the bullet having
 to be forced into the gun during the loading operation became«SH»Rifling.«/SH» a mechanical fit and prevented to a great extent the loss of gas by windage which occurred with ordinary weapons. Kotter (1520) and Danner (1552), both of Nuremberg, are respectively credited as being the first to rifle gun barrels; and there is at the Rotunda, Woolwich, a muzzle-loading barrel dated 1547 rifled with six fine grooves. At this early period, rifling was applied only to small arms, usually for sporting purposes. The disadvantage of having, during loading, to force a soft lead (or lead-covered) ball down a bore of smaller diameter prevented its general employment for military use. In 1661 Prussia experimented with a gun rifled in thirteen shallow grooves, and in 1696 the elliptical bore—similar to the Lancaster—had been tried in Germany. In 1745 Robins was experimenting with rifled guns and elongated shot in England. During the Peninsular War about 1809, the only regiment (the “Rifle Brigade,” formerly called the 95th) equipped with rifled arms, found considerable difficulty in loading them with the old spherical lead
-bullet, from the muzzle. In 1836 Russia made a large number of experiments with a rifled gun invented by Montigny, a Belgian; this was not a success, but in England the guns invented by Major Cavalli, in 1845, and by Baron Wahrendorff in 1846, obtained some measure of favour. Both these guns were breech-loaders. The Cavalli gun had a bore of 6·5 in. diameter; it was rifled in two grooves having a uniform twist of 1 in 25 calibres, and the elongated projectile had two ribs cast with it to fit the grooves, but no means were taken to prevent windage. The Wahrendorff gun had an enlarged chamber and the bore of 6·37 in. diameter was rifled in 2 grooves; the projectile had ribs similar to that for the Cavalli gun; but Wahrendorff had also tried lead-coated projectiles, the coating being attached by grooves undercut in the outside of the shell. In 1854 Lancaster submitted his plan of rifling; in this (fig. 22) the bore was made of an oval section which twisted round the axis of the gun from the breech to the muzzle; a projectile having an oval section was fired. Several old cast-iron guns bored on this system burst in the Crimean War from the projectile wedging in the gun. In 1855 Armstrong experimented with a breech-loading rifled gun, firing a lead-coated projectile. The rifling consisted of a large number of shallow grooves having a uniform twist of 1 in 38 calibres. When the gun was fired the lead-coated projectile, which was slightly larger in diameter than the bore of the gun, was forced into the rifling and so gave rotation to the elongated projectile.«P»«CTR»{{IMG:EB1911 - Ordnance - Fig. 22.png|align=inline|width=400|Sections of Rifling.}}«BR»
+bullet, from the muzzle. In 1836 Russia made a large number of experiments with a rifled gun invented by Montigny, a Belgian; this was not a success, but in England the guns invented by Major Cavalli, in 1845, and by Baron Wahrendorff in 1846, obtained some measure of favour. Both these guns were breech-loaders. The Cavalli gun had a bore of 6·5 in. diameter; it was rifled in two grooves having a uniform twist of 1 in 25 calibres, and the elongated projectile had two ribs cast with it to fit the grooves, but no means were taken to prevent windage. The Wahrendorff gun had an enlarged chamber and the bore of 6·37 in. diameter was rifled in 2 grooves; the projectile had ribs similar to that for the Cavalli gun; but Wahrendorff had also tried lead-coated projectiles, the coating being attached by grooves undercut in the outside of the shell. In 1854 Lancaster submitted his plan of rifling; in this (fig. 22) the bore was made of an oval section which twisted round the axis of the gun from the breech to the muzzle; a projectile having an oval section was fired. Several old cast-iron guns bored on this system burst in the Crimean War from the projectile wedging in the gun. In 1855 Armstrong experimented with a breech-loading rifled gun, firing a lead-coated projectile. The rifling consisted of a large number of shallow grooves having a uniform twist of 1 in 38 calibres. When the gun was fired the lead-coated projectile, which was slightly larger in diameter than the bore of the gun, was forced into the rifling and so gave rotation to the elongated projectile.«P»«CTR»{{IMG:EB1911 - Ordnance - Fig. 22.png|width=400}}«BR»
 «DIV[style:font-size:83%]»«SC»Fig«/SC». 22.—Sections of Rifling.«/DIV»«/CTR»«P»Whitworth in 1857 brought out his hexagonal bore method of rifling and a projectile which was a good mechanical fit to the bore. Good results were obtained,PAGE:226but although this system had certain advantages it did not fulfil all requirements.«P»In 1863, England re-opened the whole question, and after
 exhaustive trials of various inventions decided on the adoption
 of the muzzle-loading type for all guns, with the French system
@@ -839,7 +839,7 @@ into the rifling groove. In fig. 30 a copper driving band is
 associated with an asbestos packing A, contained in a canvas
 bag or copper casing made in the form of a ring on the principle
 of the de Bange obturator; but the results of this have not been
-entirely satisfactory.«P»«CTR»{{IMG:EB1911 - Ordnance - Fig. 23 - 30.png|align=inline|width=390|Projectiles for Rifled Ordnance.}}«BR»
+entirely satisfactory.«P»«CTR»{{IMG:EB1911 - Ordnance - Fig. 23 - 30.png|width=390}}«BR»
 «SC»Figs«/SC». 23-30.—Projectiles for Rifled Ordnance.«/CTR»«P»It will be seen that with breech-loading guns the projectile
 is better centred, and the copper driving band forms a definite
 stop for the projectile; and, in consequence, the capacity of
@@ -940,7 +940,7 @@ G＝gaseous pressure, in tons, on the base of the projectile.
 M＝weight of the projectile in pounds.
  𝑧＝the length, in feet, travelled by the projectile.}VERSE}«P»Then for parabolic rifling«P»«CTR»«MATH:\text{R} = 2\rho^2(\text{G}z+\text{M}v^2)«/MATH»/«MATH:{\frac{(r^2 k^2+4\rho^2 z^2) \sin \delta}{(4z^2 \sin^2 \delta+k^2)^{\tfrac{1}{2}}} + \frac{2\mu_1kz(\rho^2 - r^2)}{(4z^2 + k^2)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For uniform rifling«P»«CTR»«MATH:\text{R} = 2\pi\rho^2\text{G}«/MATH»/«MATH:{\frac{\mu_1(2\pi^2k-rh}{(1+k^2)^{\tfrac{1}{2}}} + \frac{2\pi\rho^2+rhk) \sin \delta}{(k^2 + \sin^2\delta)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For modern rifling δ＝90°; therefore sin δ＝1; by which the above
 expressions may be considerably simplified.«P»For parabolic rifling«P»«CTR»R＝2ρ<sup>2</sup>(4«I»z«/I»𝑧<sup>2</sup>+𝑘<sup>2</sup>)<sup>½</sup>(G𝑧 + M«I»v«/I»<sup>2</sup>)/𝑘𝑟<sup>2</sup>(𝑘−2μ<sub>1</sub>𝑧)+2ρ<sup>2</sup>𝑧(2𝑧+μ<sub>1</sub>𝑘).«/CTR»«P»For uniform rifling we can write ℎ𝑘＝2π𝑟 and the expression reduces
-to«P»«CTR»R＝ρ<sup>2</sup>(1+𝑘<sup>2</sup>)<sup>½</sup>/μ<sub>1</sub>«SPAN[style:font-size:120%]»(«/SPAN»ρ<sup>2</sup>𝑘−𝑟<sup>2</sup>/𝑘«SPAN[style:font-size:120%]»)«/SPAN»+ρ<sup>2</sup>«I»z«/I»)+𝑟<sup>2</sup>.G.«/CTR»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 31.png|align=inline|width=360}}«BR»
+to«P»«CTR»R＝ρ<sup>2</sup>(1+𝑘<sup>2</sup>)<sup>½</sup>/μ<sub>1</sub>«SPAN[style:font-size:120%]»(«/SPAN»ρ<sup>2</sup>𝑘−𝑟<sup>2</sup>/𝑘«SPAN[style:font-size:120%]»)«/SPAN»+ρ<sup>2</sup>«I»z«/I»)+𝑟<sup>2</sup>.G.«/CTR»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 31.png|width=360}}«BR»
 «SC»Fig«/SC». 31 —Pressure Curves (uniform and increasing twist).«/CTR»«P»Fig. 31 shows graphically the calculated results obtained for a
 4·7-in. 50-calibre gun which has a shot travel of 17·3 ft.; the pressure
 curve A is for a rifling twist increasing from 1 in 60 calibres at the
@@ -1091,7 +1091,7 @@ firing pin is pulled back and cocked for the next round. The
 mechanism is closed by reversing the hand lever; this rotates the
 breech block upwards and pushes home the cartridge case, and the
 wedge is then forced up and secures the breech block.
-«CTR»{{IMG:EB1911 - Ordnance Fig 32.png|align=inline|width=620}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 32.png|width=620}}«BR»
 «SC»Fig«/SC». 32.—Krupp Breech Action.«/CTR»«P»These small type Q.F. guns, which were introduced to cope with
 torpedo boats, are now, however, of little account, since experiment
 has proved that nothing smaller than a 12-pounder is sufficient so
@@ -1194,7 +1194,7 @@ both of the breech screw and in the gun, instead of in portions
 alternately, as with other forms.«P»The Bofors breech screw is a modification. The surface is formed
 of a truncated ogive instead of a cylinder and cone, and the threaded
 portions are not alternate.
-«CTR»{{IMG:EB1911 - Ordnance Fig 33.png|align=inline|width=620}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 33.png|width=620}}«BR»
 «SC»Fig«/SC». 33.—Krupp Breech Action.«/CTR»«P»In the older types of mechanism for heavy B.L. guns the breech
 was opened in from three to four different operations which involved
 considerable loss of time. Fig. 40 shows the general type for 9·2-in.,
@@ -1224,11 +1224,11 @@ either electric or percussion, to safety by withdrawing the firing
 needle, extracts the fired tube and leaves the primer chamber open
 for a fresh primer. All these operations are performed in the reverse
 order on closing.
-«CTR»{{IMG:EB1911 - Ordnance Fig 34.png|align=inline|width=400}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 34.png|width=400}}«BR»
 «SC»Fig«/SC». 34.—Hotchkiss Q.F. Breech Mechanism.«/CTR»
 With both these types of mechanism the de Bange system of
 obturation, with the pad only slightly coned, is used.
-«CTR»{{IMG:EB1911 - Ordnance Fig 35.png|align=inline|width=400}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 35.png|width=400}}«BR»
 «SC»Fig«/SC». 35.—Nordenfeldt Q.F. Breech Mechanism.«/CTR»«P»With smaller guns the mechanism is simpler, as less power is
 required for opening the breech. Thus, with the 6-in. B.L. gun Mark IV.,
 introduced about 1885 (fig. 42) the breech is opened in three
@@ -1238,7 +1238,7 @@ disengages the screw threads; («I»b«/I») the cam lever is folded down so
 that the cam acting on the rear face of the gun releases the de Bange
 obturator, and the screw is then pulled by hand through the carrier
 ring out of the breech; («I»c«/I») the carrier ring and breech screw are
-revolved together to the right, clear of the breech opening.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 36.png|align=inline|width=400}}«BR»
+revolved together to the right, clear of the breech opening.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 36.png|width=400}}«BR»
 «SC»Fig«/SC». 36.—Eccentric Screw, Breech Mechanism.«/CTR»«P»In a modern 6-in. gun fitted with de Bange obturator all these
 operations are combined and the mechanism (fig. 43) worked by a
 horizontal hand lever which is moved from left to right through an
@@ -1256,7 +1256,7 @@ cases is worked on similar principles, but is somewhat simpler than
 that for the de Bange obturation, due principally to the fact of the
 firing primer being already contained in the cartridge case when this
 is introduced into the gun.
-«CTR»{{IMG:EB1911 - Ordnance Fig 37.png|align=inline|width=380}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 37.png|width=380}}«BR»
 «SC»Fig«/SC». 37.—Interrupted Breech Screw—Cylindrical.«/CTR»«P»In the English service the later patterns of breech mechanism for
 medium and heavy B.L. guns have a Welin screw, with a “steep
 cone” de Bange obturator, supported on a carrier arm. This
@@ -1310,7 +1310,7 @@ guns the ordinary cone (not “steep cone”) de Bange obturator is
 employed. The screw is mounted either in a carrier ring or on a
 carrier tray. In France the ordinary type of interrupted screw is
 adopted and this rests in a carrier tray. The operations of opening
-and closing are very similar to those already described.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 38.png|align=inline|width=390}}«BR»
+and closing are very similar to those already described.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 38.png|width=390}}«BR»
 «SC»Fig«/SC». 38.—Welin Breech Screw.«/CTR»«P»All the recent patterns of mechanism have an extractor fitted
 to extract the empty cartridge case with Q.F. guns or the fired
 tube with B.L. guns. In Q.F. field guns it generally takes the form
@@ -1332,14 +1332,14 @@ new tube is pushed home the extractor is also pushed back into the
 closed position, or, if the tube is somewhat stiff to insert, the action
 of closing the mechanism moves the lock over the primer and forces
 it home.
-«CTR»{{IMG:EB1911 - Ordnance Fig 39.png|align=inline|width=600}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 39.png|width=600}}«BR»
 «SC»Fig«/SC». 39.—Elswick Coned Screw.«/CTR»«P»The firing lock used in B.L. guns is an important part of the
 mechanism. They are all designed on the same principle, with
 a view to safety and rapidity, and may be regarded as a miniature
 sliding breech mechanism. In the older types the lock or its substitute
 was manipulated by hand, and with electric firing the wires
 from the tubes were joined up to the loose ends of the firing circuit;PAGE:232safety depended therefore on everything being in order and all operations correctly performed.
-«CTR»{{IMG:EB1911 - Ordnance Fig 41.png|align=inline|width=746}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 41.png|width=746}}«BR»
    «SC»Fig«/SC». 41.—12-in. Gun, Breech Mechanism.«/CTR»«P»The gun could, however, be fired before the breech was properly secured and a serious accident caused; to prevent this all the movements of modern locks are arranged to be automatic, and wireless electric tubes are used so that immediately the breech mechanism commences to open, the lock itself is moved in the box slide so as to uncover the vent opening. During the first part of this movement a foot on thePAGE:233striker rides up an incline I (fig. 45) on the box slide and thus
 pushes back the striker from contact with the tube. The extractor
 described above is actuated at the same time. Most locks
@@ -1353,9 +1353,9 @@ which drops into a notch in the striker when this is pulled back by
 the lugs E E (fig. 45) on the outer attachment of the striker. On
 the trigger being pulled by a lanyard the striker is released and
 fires the tube.
-«CTR»{{IMG:EB1911 - Ordnance Fig 40.png|align=inline|width=460}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 40.png|width=460}}«BR»
 «SC»Fig«/SC». 40. — Breech Mechanisms, Heavy Guns.«BR»«BR»
-{{IMG:EB1911 - Ordnance Fig 42.png|align=inline|width=370}}«BR»
+{{IMG:EB1911 - Ordnance Fig 42.png|width=370}}«BR»
 «SC»Fig«/SC». 42.— Breech Mechanism, 6-in. B.L. Mark IV.«/CTR»«P»For Q.F. guns with interrupted or coned breech screws the
 striker is contained in the breech screw, but, in order to provide for
 safety, a small lever cam or other contrivance is fitted
@@ -1429,7 +1429,7 @@ seating formed in the breech end of the gun chamber. When the
 gun was fired, the gas pressure expanded the cup ring and forced
 it into close bearing against the seating in the gun and the thick
 steel plate on the breech screw, thus preventing any escape of gas.
-«CTR»{{IMG:EB1911 - Ordnance Fig 43.png|align=inline|width=460}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 43.png|width=460}}«BR»
 «SC»Fig«/SC». 43.—Breech Mechanism, Modern 6-in. Gun.«/CTR»«P»Very similar to this was the Elswick cup obturator (fig. 48) introduced
 by the Elswick Ordnance Company in 1881; its rear surface
 was flat and it was held by a central bolt against the front of the
@@ -1449,7 +1449,7 @@ it is made of copper (fig. 50), and also of steel in a modified form
 (Piorkowski) in the German service (fig. 51); in the last-named service,
 owing to the defect already named, all the latest guns, both light
 and heavy, use metal cartridge cases. In the French navy, as inPAGE:234most other services, cartridge cases are used for the smaller and medium guns only.
-«CTR»{{IMG:EB1911 - Ordnance Fig 44.png|align=inline|width=600}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 44.png|width=600}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 44.—English modern Breech Mechanism, for heavy and medium guns.«/SPAN»«/CTR»«P»One of the most efficient obturators not liable to damage is the
 plastic device introduced by Colonel de Bange of the French
 service and adopted by the French army and also by the British
@@ -1634,7 +1634,7 @@ turret on H.M.S. “Thunderer”; and it was partly due to this
 accident that B.L. guns were subsequently more favourably
 regarded in England, as it was argued that the double loading of
 a B.L. gun was an impossibility.
-«CTR»{{IMG:EB1911 - Ordnance Fig 45.png|align=inline|width=661}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 45.png|width=661}}«BR»
 «DIV[style:font-size:83%]»«SC»Fig«/SC». 45.—Breech Mechanism for 6-inch B.L. Gun«/DIV»«/CTR»«P»With the B.L. system guns gradually grew to be about 30
 calibres in length of bore, and they were not made longer because
 this was considered a disadvantage, not to be compensated for
@@ -1653,7 +1653,7 @@ ponderous armoured machinery, which restricted the coal supply
 and rendered other advantages impossible; even the 24,000-ton
 battleships are none too large to carry the number of heavy guns
 now required to form the main armament.«P»The weight and size of the old brown prismatic charges had also reached huge dimensions; thus, while with heavy M.L. guns the weight of the full charge was about one-fourth that of the projectile, it had with heavy B.L. guns become one-half of the weight of the shell or even a greater proportion. The introduction of smokeless powder about 1890, having more than three times the amount of energy for the same weight of the older powders, allowed longer guns to be used, which fired a much smaller weight of charge but gave higher velocities; the muzzle or striking energy demanded for piercing hard-faced armour could consequently be obtained from guns of more moderate calibre. The 13·5-in. and 16·25-in. guns were therefore gradually discarded and new ships were armed with 12-in. guns of greater power. As the ballistic requirements are increased the weight of the charge becomes proportionately greater; thus for thePAGE:236present high velocity guns it has reached a ratio of about 0·4
-of the weight of the projectile.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 46.png|align=inline|width=700}}«BR»
+of the weight of the projectile.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 46.png|width=700}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 46.«/SPAN»«/CTR»
 «DHR[75%]»
 «HTMLTABLE:<table style="margin-right:auto;margin-left:auto;font-size:92%;line-height:120%;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 47-48.png|width=390}}</td></tr><tr><td>«SC»Fig«/SC». 47.—French Obturator. «SC»Fig«/SC». 48.—Elswick Cup.</td></tr><tr><td></td></tr><tr><td>{{IMG:EB1911 - Ordnance Fig 49-51.png|width=400}}</td></tr><tr><td>«SC»Fig«/SC». 49. «SC»Fig«/SC». 50. «SC»Fig«/SC». 51.<br>
@@ -2114,7 +2114,7 @@ as they are stronger than other forms, but V threads have the great
 advantage of centring the breech screw when under pressure.«P»In most modern B.L. guns fitted with de Bange obturation thePAGE:245diameter of the seating is made just large enough to freely admit
 the projectile; this is usually considerably smaller than the maximum
 diameter of the chamber, consequently a less area is exposed to the
-gas pressure and less screw thread section is required.«P»The principal features of the various systems of construction of modern heavy guns may be briefly described.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 55-57.png|align=inline|width=400}}«BR»
+gas pressure and less screw thread section is required.«P»The principal features of the various systems of construction of modern heavy guns may be briefly described.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 55-57.png|width=400}}«BR»
 «SC»Figs«/SC». 55-57.—British, French and American Construction.«/CTR»«P»Fig. 55 is that adopted in England. The barrel or “inner A
 tube” is surmounted by a second layer which is either shrunk on
 in two or three pieces, as at Elswick, or is formed of one
@@ -2142,7 +2142,7 @@ of this design, viz. that over the breech end of the barrel is
 shrunk a solid breech piece, made particularly massive in rear
 where the breech wedge is seated. The remainder of the layers
 consist of hoops which are comparatively short but may be covered
-with longer thin tubes.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 58.png|align=inline|width=400}}«BR»
+with longer thin tubes.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 58.png|width=400}}«BR»
 «SC»Fig«/SC». 58.—Krupp Construction.«/CTR»«P»When guns are fired, the interior surface is gradually worn away
 by the action of the powder gases; the breech end of the rifled
 portion of the bore becomes enlarged, and the rifling
@@ -2678,7 +2678,7 @@ Swiss and Dutch guns are light Krupps; the Spanish and Portuguese
 guns, by Schneider of Creusot, are improved and lighter models of
 the French gun.«P»The new Italian gun is a medium Krupp. The Austrian gun is
 similar to the American (Ehrhardt) but the gun itself is of bronze.
-«CTR»{{IMG:EB1911 - Ordnance Fig 65.png|align=inline|width=800}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 65.png|width=800}}«BR»
 «SC»Fig«/SC». 65.—Rumanian (Krupp) Quick-Firing Field Gun.«/CTR»«P»The Rumanian Q.F. field gun (fig. 65) is a recent type of medium
 Krupp gun. The shield is set well back, and has a hood projecting
 forwards and fitting close to the gun. The brake is used for travelling
@@ -2731,7 +2731,7 @@ connected to the left trunnion when the howitzer is elevated.
 The running-up springs require to be strong in order to lift the
 weight of the howitzer at 45° elevation. In most equipments twin
 columns of springs are used.
-«CTR»{{IMG:EB1911 - Ordnance Fig 66.png|align=inline|width=474}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 66.png|width=474}}«BR»
 «SC»Fig«/SC». 66.—Wagon Body, Rumanian (Krupp) Quick-firing Field Gun.«/CTR»«P»«I»The Ehrhardt Q.F. Field Howitzer«/I», fig. 67 (Plate IV.), may be taken
 as a type of the light field howitzer with controlled recoil, as opposed
 to the Krupp pattern with rear trunnions and constant long recoil.
@@ -2936,7 +2936,7 @@ the wheels have been removed, the trail B has been lowered on to
 the pivot plate C and secured to a pivot plug screwed into the
 plate: to the trail is fitted the top carriage D, and when the howitzer
 and cradle are thus mounted 70° elevation can be given.
-«CTR»{{IMG:EB1911 - Ordnance Fig 72.png|align=inline|width=350}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 72.png|width=350}}«BR»
 «SC»Fig«/SC». 72.—Diagram, of British 6-in. B.L. Howitzer.«/CTR»«P»The
 howitzer recoils through the cradle, in which are two hydraulic
 buffers side by side, fig. 74, whose piston rods E are attached to the
@@ -2957,7 +2957,7 @@ which can be placed on the left side of either the trail or the top
 carriage, actuates the arc K, bolted to the left side of the cradle.
 When the gun is fired on wheels (fig. 72) an anchorage buffer M,
 attached to the platform, checks the recoil, whilst the springs with
-which it is provided cause the carriage to return to its position.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 73.png|align=inline|width=350}}«BR»
+which it is provided cause the carriage to return to its position.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 73.png|width=350}}«BR»
 «SC»Fig«/SC». 73.—Diagram of British 6-in. B.L. Howitzer«BR»
 (70° elevation).«/CTR»«P»«I»The United States 6«/I» ″ «I»Howitzer«/I».—This is a more modern equipment,
 its date being 1905. The howitzer is a short piece, 13 calibres long;
@@ -2978,7 +2978,7 @@ part of the trail brackets, and forms a turn-table upon which the top
 carriage and all supported by it have a movement of 3° traverse on
 either side.«P»This movement of traverse is effected by a shaft and worm: the
 former is supported in a fixture attached to the left trail bracket,
-and the latter works in a nut pivoted to the top carriage.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 74.png|align=inline|width=420}}«BR»
+and the latter works in a nut pivoted to the top carriage.«P»«CTR»{{IMG:EB1911 - Ordnance Fig 74.png|width=420}}«BR»
 «SC»Fig«/SC». 74.—Hydraulic buffers of British 6-in. B.L. Howitzer.«BR»
 («I»N.B.«/I»—Spiral, instead of volute springs, are now used.)«/CTR»«P»Elevation is effected by a forging called the rocker. The rear
 part of the latter is U-shaped and passes under the gun, being
@@ -3339,7 +3339,7 @@ the recess shown in section at O. By means of a shell barrow any
 projectile can be placed on the lift W and raised to a trolley which
 can be run round over the lift W, which raises the projectile, as
 shown at S, to a point suitable for loading.
-«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td>«SPAN[style:position:relative;bottom:2em]»«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.«/SPAN»</td></tr></table>«/HTMLTABLE»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 85.png|align=inline|width=540}}«BR»
+«HTMLTABLE:<table style="margin-right:auto;margin-left:auto;text-align:center"><tr><td>{{IMG:EB1911 - Ordnance Fig 84.png|align=center|width=780}}</td></tr><tr><td>«SPAN[style:position:relative;bottom:2em]»«SC»Fig«/SC». 84.—British 9·2″ B.L. Gun, Mark X., on Barbette Mounting.«/SPAN»</td></tr></table>«/HTMLTABLE»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 85.png|width=540}}«BR»
 «SC»Fig«/SC». 85.—Details of Mounting shown in fig. 21.«/CTR»«P»«I»The British 6″ B.L. Gun«/I».—A typical mounting for guns of type
 («I»b«/I») is afforded by the British C.P. (central pivot), Mark II. mounting
 for the 6″ B.L. Mark VII. gun, a combination which admits of six
@@ -3471,8 +3471,8 @@ fired through similar arcs to the turret guns, but on their own
 sides only. Four of these 6-in. guns were mounted on either
 side of the main deck and two on either side of the upper deck,
 all being enclosed in casemates.
-«CTR»{{IMG:EB1911 - Ordnance Fig 89.png|align=inline|width=700}}«BR»
-«SPAN[style:font-size:92%]»«SC»Fig«/SC». 89.—12″ B.L. Mortar, Model 1896, U.S.A.«/SPAN»«/CTR»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 90.png|align=inline|width=400}}«BR»
+«CTR»{{IMG:EB1911 - Ordnance Fig 89.png|width=700}}«BR»
+«SPAN[style:font-size:92%]»«SC»Fig«/SC». 89.—12″ B.L. Mortar, Model 1896, U.S.A.«/SPAN»«/CTR»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 90.png|width=400}}«BR»
 «DIV[style:font-size:83%]»«SC»Fig«/SC». 90.—Diagrams showing Disposition of Armament in«BR»Typical Ships.«/DIV»«/CTR»«P»In the armoured and large protected cruisers built contemporaneously
 with these classes of battleships, the 9·2-in. gun had been
 largely mounted, and it was the improvements brought about by

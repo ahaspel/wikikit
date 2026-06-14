@@ -215,7 +215,7 @@ for the purpose of keeping the steam dry. Among
 the many inventions of Papin was a boiler with an internal
 fire-box—the earliest example of a construction that is now
 almost universal.«FN:For an account of Papin’s inventions see his «I»Life and Correspondence«/I», by Dr E. Gerland (Berlin, 1881).«/FN»
-«CTR»{{IMG:EB1911 Steam Engine - Fig. 3.jpg|align=inline|width=370}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine - Fig. 3.jpg|width=370}}«BR»
 «SC»Fig«/SC». 3.—Papin, 1705.«/CTR»«P»9. While Papin was thus going back from his first notion
 of a piston engine to Savery’s cruder type, a new inventor
 had appeared who made the piston engine a practical
@@ -1146,7 +1146,7 @@ which attend the use of high-pressure steam. In engines of ordinary
 construction the pressure is rarely so much as 250 ℔ per sq. in.PAGE:849It must not be supposed that the efficiency (τ<sub>1</sub>−τ<sub>2</sub>)/τ<sub>1</sub> is actually
 attained, or is even attainable. Many causes conspire to prevent
 steam engines from being thermodynamically perfect, and some of
-the causes of imperfection cannot be removed.«P»«HTMLTABLE:<table style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|align=inline|width=225}}«BR»
+the causes of imperfection cannot be removed.«P»«HTMLTABLE:<table style="float:right;width:245px"><tr><td>«CTR»{{IMG:EB1911 Steam Engine Fig. 10.png|width=225}}«BR»
 «SC»Fig«/SC». 10.—Organs of a Steam Engine.«/CTR»</td></tr></table>«/HTMLTABLE»
 40. «I»Engine with Separate Organs«/I».—In the ideal engine represented
 in fig. 10 the functions of boiler, cylinder and condenser are combined
@@ -1320,7 +1320,7 @@ reduced by adiabatic expansion to the lower limit of temperature.
 The area 𝑎𝑏𝑐𝑑 represents the work done, and its value per ℔ of
 steam is identical with W as reckoned above. The area 𝑚𝑎𝑏𝑐𝑝 is
 the whole heat taken in, and the area 𝑚𝑎𝑑𝑝 is the heat rejected.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 11.png|align=inline|width=275}}«BR»«SC»Fig«/SC». 11«/CTR»«P»Let a curve 𝑐𝑓 be drawn to show the values of the entropy of
+«CTR»{{IMG:EB1911 Steam Engine Fig. 11.png|width=275}}«BR»«SC»Fig«/SC». 11«/CTR»«P»Let a curve 𝑐𝑓 be drawn to show the values of the entropy of
 steam for various temperatures of saturation: then if 𝑎𝑑 be produced
 to meet the curve in 𝑓, the ratio 𝑓𝑑/𝑓𝑎 represents the fraction
 of the steam which was condensed during adiabatic expansion.
@@ -1347,7 +1347,7 @@ which is a curve of constant volume. Its form is determined by
 the consideration that at any point 𝑒 the proportion of steam still
 uncondensed, or 𝑙𝑒/𝑙𝑘, is such that the mixture fills the same volume
 as was filled at 𝑐′.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 12.png|align=inline|width=295}}«BR»«SC»Fig«/SC». 12«/CTR»«P»43. «I»Entropy«/I»-«I»Temperature Diagrams extended to the Case of Superheated Steam«/I».—In
+«CTR»{{IMG:EB1911 Steam Engine Fig. 12.png|width=295}}«BR»«SC»Fig«/SC». 12«/CTR»«P»43. «I»Entropy«/I»-«I»Temperature Diagrams extended to the Case of Superheated Steam«/I».—In
 the diagrams which have been sketched, it has
 been assumed that the
 steam is supplied to the
@@ -1386,7 +1386,7 @@ amount by which the actual performance of an engine falls short
 of the ideal performance by keeping the steam comparatively dry
 in its passage through the engine, and thereby reducing exchanges
 ot heat between the steam and the metal.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 13.png|align=inline|width=215}}«BR»«SC»Fig«/SC». 13«/CTR»«P»44. «I»Entropy of Wet Steam«/I».—The entropy of «I»wet«/I» steam is readily
+«CTR»{{IMG:EB1911 Steam Engine Fig. 13.png|width=215}}«BR»«SC»Fig«/SC». 13«/CTR»«P»44. «I»Entropy of Wet Steam«/I».—The entropy of «I»wet«/I» steam is readily
 calculated by considering that the change of entropy in the conversion
 from water to steam will be 𝑞L/τ if the steam is wet, 𝑞 being
 the dryness Accordingly the entropy of wet steam at any temperature
@@ -1612,7 +1612,7 @@ recent forms of indicator lighter linkages are adopted, and other
 changes have been made with the object of fitting the instrument
 better for high-speed work. One of these modified forms of
 Richards’s indicator (the Crosby) is shown in fig. 15.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 15.png|align=inline|width=326}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 15.png|width=326}}«BR»
 «SC»Fig«/SC». 15.—Crosby Indicator.«/CTR»«P»The pressure
 of steam in the engine cylinder raises the piston P, compressing the
 spring S and causing the pencil Q to rise in a nearly straight line
@@ -1855,7 +1855,7 @@ working at full power, whereas in the navy most of the working
 is at greatly reduced powers, the cruising speed requiring very much
 less than the full output. Consequently, for the same boiler pressure,
 the cylinder ratio is made less in war-ships to adapt the engines for
-economical working under cruising conditions.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 18.png|align=inline|width=380}}«BR»
+economical working under cruising conditions.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 18.png|width=380}}«BR»
 «SC»Fig«/SC». 18.—Horizontal Section through Cylinder and Valve-chest:«BR»
 showing Slide-valve.«/CTR»«P»60. «I»The Distribution of Steam«/I».—In early steam engines the distribution of steam was effected by means of conical valves, worked by
 tappets from a rod which hung from the beam. The slide-valve,
@@ -1948,7 +1948,7 @@ steam throughout the piston’s stroke, we may now draw a circle to
 represent the path of the crank pin (fig. 23, where the dotted lines
 have been added to show the assumed configuration of piston, connecting-rod
 and crank) and transfer to it from the former diagram
-the angular positions 𝑎, 𝑏, 𝑐 and 𝑑 at which the four events occur.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 23.png|align=inline|width=320}}«BR»
+the angular positions 𝑎, 𝑏, 𝑐 and 𝑑 at which the four events occur.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 23.png|width=320}}«BR»
 «SC»Fig«/SC». 23.«/CTR»«P»To facilitate this transfer the diagrams of eccentric path and of
 crank-pin path may by a suitable choice of scales be drawn of the
 same actual size. Then by projecting these points on a diameter
@@ -1984,7 +1984,7 @@ joining QB, when it is obvious that CQ＝CM,
 which is the displacement of the valve. The line AB with the circle
 on it may now be turned back through an angle of 90°+θ (θ being the
 angular advance), so that the valve-circles take the position shown
-to a larger scale in fig. 26.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 26.png|align=inline|width=380}}«BR»
+to a larger scale in fig. 26.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 26.png|width=380}}«BR»
 «SC»Fig«/SC». 26.—Zeuner’s Slide-Valve Diagram.«/CTR»«P»This makes the direction of CQ (the
 eccentric) coincide on the paper with the simultaneous direction ofPAGE:855the crank, and hence to find the displacement of the valve at any
 position of the crank we have only to draw CQ in fig. 26 parallel
@@ -2083,7 +2083,7 @@ a suspension rod. The valve-rod ends in a block which slides within
 the link, and when the link is placed so that this block is nearly in
 line with the forward eccentric rod (R. fig. 29) the valve moves in
 nearly the same way as if it were driven directly by a single eccentric.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 29.png|align=inline|width=360}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 29.png|width=360}}«BR»
 «SC»Fig«/SC». 29.—Stephenson’s Link-Motion.«/CTR»«P»This is the position of “full forward gear.” In “full backward
 gear,” on the other hand, the link is pulled up until the block is in
 nearly a line with the backward eccentric rod R′. The link-motion
@@ -2098,8 +2098,8 @@ any work is done in the cylinder. The movement of the link, is
 effected by a hand-lever, or by a screw, or (in large engines) by
 an auxiliary steam engine. A usual arrangement of hand-lever,
 sketched in fig. 29, has given rise to the phrase “notching up,”
-to describe the setting of the link to give a greater degree of expansion.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 30.png|align=inline|width=310}}«BR»
-«SC»Fig«/SC». 30.—Gooch’s Link-Motion.«/CTR»«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 31.png|align=inline|width=360}}«BR»
+to describe the setting of the link to give a greater degree of expansion.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 30.png|width=310}}«BR»
+«SC»Fig«/SC». 30.—Gooch’s Link-Motion.«/CTR»«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 31.png|width=360}}«BR»
 «SC»Fig«/SC». 31.—Allan’s Link-Motion.«/CTR»«P»In Gooch’s link-motion (fig. 30) the link is not moved up in
 shifting from forward to backward gear, but a radius rod between
 the valve-rod and the link (which is curved to suit this radius rod)
@@ -2122,7 +2122,7 @@ the displacements of the valve, and enables the oval diagram
 to be drawn, which is shown to a larger scale in another part of fig.
 32. The example refers to Stephenson’s link-motion in nearly full
 forward gear; with obvious modification the same method may be
-used in the analysis of Gooch’s or Allan’s motion.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 32.png|align=inline|width=380}}«BR»
+used in the analysis of Gooch’s or Allan’s motion.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 32.png|width=380}}«BR»
 «SC»Fig«/SC». 32.«/CTR»
 The same
 diagram determines the amount of slotting or sliding motion of the
@@ -2185,23 +2185,23 @@ from the piston cross-head through a reducing lever, and in
 part from a single eccentric set at right angles to the crank,
 which actuates a rocking link. Reversing is effected by shifting
 a sliding block along this rocking link from one side to the other
-of the centre on which it rocks.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 34.png|align=inline|width=250}}«BR»
+of the centre on which it rocks.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 34.png|width=250}}«BR»
 «SC»Fig«/SC». 34.—Bremme’s or Marshall’s Valve-Gear.«/CTR»«P»71. «I»Separate Expansion«/I»-«I»Valves«/I».—When the distribution of steam
 is effected by the slide-valve alone the arc of the crank’s motion
 during which compression occurs is equal to the arc during which
 expansion occurs, and for this reason the slide-valve would give an
 excessive amount of compression if it were made to cut off the supply
 of steam earlier than about half-stroke.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 35.png|align=inline|width=255}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 35.png|width=255}}«BR»
 «SC»Fig«/SC». 35.—Diagram of Joy’s Valve-Gear.«/CTR»«P»Hence, where an early
 cut-off is wanted it is necessary either to use an entirely different
 means of regulating the distribution of steam, or to supplement the
 slide-valve by another valve—called an expansion-valve, usually
 driven by a separate eccentric—whose function is to effect the cut-off,
-the other events being determined as usual by the slide-valve.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 36.png|align=inline|width=350}}«BR»
+the other events being determined as usual by the slide-valve.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 36.png|width=350}}«BR»
 «SC»Fig«/SC». 36.—Joy’s Gear as applied to a Locomotive.«/CTR»«P»Such expansion-valves belong generally to one or other of two types.
 In one the expansion-valve cuts off the supply of steam to the chest
-In which the main valve works.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 37.png|align=inline|width=285}}«BR»
+In which the main valve works.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 37.png|width=285}}«BR»
 «SC»Fig«/SC». 37.—Expansion-Valve on back of Main Slide-Valve.«/CTR»«P»In the other the expansion-valve slides on the back of the main «HTMLTABLE:<table style="float:left;width:125px"><tr><td>{{IMG:EB1911 Steam Engine Fig. 38.png|width=125}}</td></tr><tr><td>«SC»Fig«/SC». 38.</td></tr></table>«/HTMLTABLE»
 slide-valve, which is provided with through ports which the expansion-valve
 opens and closes. Fig. 37 shows
@@ -2401,7 +2401,7 @@ on which to draw for steam. If it acts by changing the cut-off, its
 opportunity is passed if the cut-off has already occurred, and the
 control only begins with the next stroke.«P»When the demand for power suddenly falls, the speed rises so
 much as to force the governor into a position of over-control, such that the supply of steam is no longer adequate to meet even the reduced demand for power. Then the speed slackens, and the same kind of excessive regulation is repeated in the opposite direction. A state of forced oscillation is consequently set up. The effect is aggravated by the momentum which the governor balls acquire in being displaced. Hunting is to be avoided by giving the governor a fair degree of stability, by reducing as far as possible the static frictional resistances, and by introducing a «I»viscous«/I» resistance to the displacement of the governor, which prevents the displacement from occurring too suddenly, without affecting the ultimate position of equilibrium. For this purpose many governors are furnished with a «I»dash«/I»-«I»pot«/I», which is a hydraulic or pneumatic brake, consisting of a piston connected to the governor, working loosely in a cylinder which is filled with oil or with air.«P»80. «I»Regulation by the Governor of the Steam-Supply: Throttle«/I»-«I»Valve«/I».—The
-throttle-valve, as introduced by Watt, was originally a disk turning on a transverse axis across the centre of the steam-pipe. It is now usually a double-beat valve or a piston-valve. When regulation is effected by varying the cut-off, and an expansion-valve of the slide-valve type is used, the governor generally acts by changing the travel of the valve. In other forms of automatic expansion-gear the lap of the valve is altered; in others the governor acts by shifting the expansion-valve eccentric round on its shaft, and so changing its angular advance.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 45.png|align=inline|width=650}}«BR»
+throttle-valve, as introduced by Watt, was originally a disk turning on a transverse axis across the centre of the steam-pipe. It is now usually a double-beat valve or a piston-valve. When regulation is effected by varying the cut-off, and an expansion-valve of the slide-valve type is used, the governor generally acts by changing the travel of the valve. In other forms of automatic expansion-gear the lap of the valve is altered; in others the governor acts by shifting the expansion-valve eccentric round on its shaft, and so changing its angular advance.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 45.png|width=650}}«BR»
 «SC»Fig«/SC». 45.—Corliss Engine, with Spencer Inglis Trip-Gear.«/CTR»«P»81. «I»Trip-Gear«/I».—In large stationary engines the most usual plan
 of automatically regulating the expansion is to employ some form of
 trip-gear, the earliest type of which was introduced in 1849 by G. H.
@@ -2442,7 +2442,7 @@ at an earlier point in the stroke. A precisely similar arrangement
 governs the admission of steam to the other end of the cylinder.
 The exhaust-valves are situated at the bottom of the cylinder, and
 receive an oscillating motion from a separate wrist-plate, behind A.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 46.png|align=inline|width=370}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 46.png|width=370}}«BR»
 «SC»Fig«/SC». 46.—Corliss Valve-Gear, Spencer Inglis form.«/CTR»«P»82. «I»Use of Flywheel«/I».—Besides those variations of speed which
 occur from stroke to stroke, which it is the business of the governor
 to check, there are variations within each single stroke due to the
@@ -2692,7 +2692,7 @@ pistons pause at the end of each stroke. The pistons are in
 line with two pump-rods, and are coupled by an inverted beam
 which gives guidance to the cross-heads by means of an approximate
 straight-line motion.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 48.png|align=inline|width=360}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 48.png|width=360}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 48.—Vertical Non-Rotative Pumping Engine.«/SPAN»«/CTR»«P»Engines of this kind, like the old
 Cornish pump, are able to work expansively against a uniform
 resistance without a flywheel in consequence of the great
@@ -3302,7 +3302,7 @@ action which occurs at each pressure stage. This is
 illustrated in the diagram (fig. 57), which shows the nozzle and
 blades of a two-stage Curtis turbine, with three rings of moving
 blades or buckets in each stage, arranged, of course, round the
-periphery of a wheel.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 57.png|align=inline|width=300}}«BR»
+periphery of a wheel.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 57.png|width=300}}«BR»
 «DIV[style:font-size:83%]»«SC»Fig«/SC». 57.—Diagram of Steam Nozzles and Blades, Curtis Steam
 Turbine.«/DIV»«/CTR»«P»The velocity acquired in the nozzles is
 extracted as the steam pursues its sinuous course between moving
@@ -3318,7 +3318,7 @@ OB, BP; the first fixed blades have sides parallel to CP, PD.
 The second moving blades have sides parallel to PE, EQ; the
 second fixed blades to FQ, QG, and the third moving blades to
 QH, HR.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 58.png|align=inline|width=280}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 58.png|width=280}}«BR»
 «DIV[style:font-size:83%]»«SC»Fig«/SC». 58.«/DIV»«/CTR»«P»The steam then passes on to a second set of divergent nozzles
 in which it undergoes a second drop in pressure, acquiring
 velocity afresh, which it loses as before in passing through a set
@@ -3532,7 +3532,7 @@ of the annulus.«P»Fig. 61 A shows a representative pair of fixed and moving
 blades of a Parsons turbine, and fig. 61 B the corresponding
 velocity diagram for the steam, neglecting effects of friction.
 V<sub>1</sub> is the exit velocity from the fixed blades, the delivery
-edges of which are tangent to the direction of V<sub>1</sub>.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 61.png|align=inline|width=390}}«BR»
+edges of which are tangent to the direction of V<sub>1</sub>.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 61.png|width=390}}«BR»
 «SC»Fig«/SC». 61.«/CTR»«P»The blade
 velocity is 𝑢 which is ½V<sub>1</sub>. V<sub>2</sub> is consequently the relative
 velocity with which the steam enters the moving blades. Approximately,
@@ -3602,7 +3602,7 @@ for running in the reversed direction, developing enough power
 for this purpose but making no pretensions to high efficiency.
 The astern turbine, being connected to the condenser, runs
 «I»in vacuo«/I» when the ahead turbine is in use and consequently
-wastes little or no power.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 62.png|align=inline|width=780}}«BR»
+wastes little or no power.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 62.png|width=780}}«BR»
 «SC»Fig«/SC». 62.—Parsons Marine Turbine : High Pressure Part.«BR»
 Upper half : sectional elevation. Lower half : external view.«/CTR»
 Figs. 62 and 63 are sections of the high pressure and low pressure
@@ -3612,12 +3612,12 @@ is duplicated. In each figure A is the fixed casing and B is the
 revolving drum. Steam enters the high pressure turbine (fig. 62)
 through J and passes out through H. There are 4 “expansions”
 or steps, with 9 stages or double rows of blades in the first, 9 in thePAGE:870second, 8 in the third and 8 in the fourth, or 34 stages in all. The low pressure turbine (fig. 63) comprises 28 more stages stepped as shown in the figure. The reversing turbine which is seen on the left-hand side in fig. 63, at the place where the rotor is reduced in diameter, has 26 stages in 4 steps. These turbines have a total normal horse power of 12,500, and run at 450 revolutions per minute.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 63.png|align=inline|width=1000}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 63.png|width=1000}}«BR»
 «SC»Fig«/SC». 63.—Parsons Marine Turbine: Low Pressure and Astern Part.«BR»
 Upper half: sectional elevation. Lower half: external view.«/CTR»
 128. «I»Longitudinal Forces in Marine Turbines«/I».—In a marine steam
 turbine the size of the dummy is reduced so that instead of balancing the whole steam thrust it leaves a resultant force which nearly balances the propeller thrust. Consequently only a small thrust block has to be provided to take any difference there may be between these forces. This thrust block is shown on the extreme right in each figure, beyond the gland and bearing. The dummy (at D in the figures) is made up of some 22 rings of brass fixed in the case in close proximity to the faces of projecting rings on the rotor (fig. 64) with a longitudinal clearance of 0·015 in.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 64, 65.png|align=inline|width=362}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 64, 65.png|width=362}}«BR»
 «SC»Fig«/SC». 64. «SC»Fig«/SC». 65.«/CTR»«P»This form of dummy is suitable for the end near the thrust block, where exact longitudinal adjustment is possible, but the astern turbine in fig. 63
 requires a different form because some longitudinal play is necessarily
 brought about there by differences in expansion of the rotor
@@ -3647,7 +3647,7 @@ This arrangement is followed in the “Lusitania” and
 “Mauretania”  where the low pressure turbines have drums 188 in.
 in diameter, are about «SPAN[style:white-space:nowrap]»17½ ft.«/SPAN» in diameter over all and 50 ft. long, and weigh 300 tons. Each turbine has 8 steps with about 16 stages in each step in the high pressure turbine and 8 in the low. They run at 180 revolutions per minute.«P»130. «I»Cruising Turbines in War«/I»-«I»Ships«/I».—In turbines for the propulsion
 of war-ships it is necessary to secure a fairly high economy at speeds greatly short of those for which the turbines are designed when working at full power, for the normal cruising speed of such vessels is usually from half to two-thirds of the speed at full power.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 67.png|align=inline|width=280}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 67.png|width=280}}«BR»
 «SC»Fig«/SC». 67.«/CTR»
 To counterbalance the reduced blade velocity, when running under
 these conditions, the number of rows of blades has in some cases
@@ -3685,7 +3685,7 @@ economy. In the region of usual condenser pressures a difference
 of 1 in. changes the steam consumption by about 5%.
 With this in mind Mr Parsons has invented a device called a
 vacuum augmenter, shown in fig. 68.
-«CTR»{{IMG:EB1911 Steam Engine Fig. 68.png|align=inline|width=400}}«BR»
+«CTR»{{IMG:EB1911 Steam Engine Fig. 68.png|width=400}}«BR»
 «SPAN[style:font-size:92%]»«SC»Fig«/SC». 68.—Parsons Vacuum Augmenter.«/SPAN»«/CTR»«P»The condensed water
 passes to the air-pump through a pipe bent to form a water-seal.
 The air from the condenser is extracted by means of a

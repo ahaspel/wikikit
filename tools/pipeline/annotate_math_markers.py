@@ -29,15 +29,21 @@ _mw._LOOKUP = None
 from britannica.math_widths import scale_hint  # noqa: E402
 
 ARTICLES_DIR = Path("data/derived/articles")
-MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:([^«]*)«/MATH»")
+# Capture the existing hint slot so the producer-carried `display` token (block-
+# vs-inline) survives this refresh — we only re-derive the width hint (fs/popout).
+MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:([^«]*)«/MATH»")
 
 
 def _annotate(body: str) -> str:
     def _replace(m: re.Match) -> str:
-        latex = m.group(1)
+        existing = (m.group(1) or "").split(",")
+        latex = m.group(2)
+        tokens = ["display"] if "display" in existing else []
         hint = scale_hint(latex)
         if hint:
-            return f"«MATH[{hint}]:{latex}«/MATH»"
+            tokens.append(hint)
+        if tokens:
+            return f"«MATH[{','.join(tokens)}]:{latex}«/MATH»"
         return f"«MATH:{latex}«/MATH»"
     return MATH_RE.sub(_replace, body)
 

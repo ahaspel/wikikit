@@ -184,6 +184,15 @@ def _is_inline_image_position(text: str, pos: int) -> bool:
         end += 1
     if end >= n:
         return False
+    # «BR» — the line-break marker `_styled_br_to_marker` injects for a
+    # styled/centred wrapper's top-level `<br>` BEFORE this inner walk runs.
+    # It is a line break exactly like `\n` / `<br>` (the literal form is caught
+    # below), so an image followed by it is a block figure (image / caption),
+    # not an inline glyph.  Without this the centred-figure idiom
+    # `{{c|[[File:…]]<br>caption}}` mis-reads the image as inline because the
+    # boundary now sits in `<br>`→«BR» mangled text (HYDRAULICS Figs 209/210).
+    if text.startswith("«BR»", end):
+        return False
     nxt = text[end]
     if nxt == "\n" or nxt == "|" or nxt == "}" or nxt == "{":
         return False

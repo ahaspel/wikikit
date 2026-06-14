@@ -765,7 +765,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _image_leaf(raw),
     "CHART2": lambda raw, inner, ctx, reg:
         _process_genealogy(raw, ctx, lambda s: process_elements(s, ctx)),
-    "MATH": lambda raw, inner, ctx, reg: _process_math(inner),
+    "MATH": lambda raw, inner, ctx, reg: _process_math(raw, inner),
     "SCORE": lambda raw, inner, ctx, reg: _process_score(inner),
     "REF_SELF": lambda raw, inner, ctx, reg:
         _process_ref_self(raw, ctx.ref_bodies),

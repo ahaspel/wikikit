@@ -34,16 +34,27 @@ def _process_score(inner: str) -> str:
     return "[Musical notation]"
 
 
-def _process_math(inner: str) -> str:
-    """Convert math content to «MATH:...«/MATH» marker, preserving LaTeX.
+# Display-vs-inline is the AUTHOR's choice, carried in the source — a
+# `<math display="block">` tag, or a LaTeX environment (`\begin{…}`) which is
+# inherently block-level.  We carry it in the marker so the viewer renders
+# `displayMode` MECHANICALLY (exactly like an image's carried `align`), instead
+# of guessing from paragraph context.
+_MATH_DISPLAY_RE = re.compile(r"""display\s*=\s*["']?\s*block""", re.IGNORECASE)
+_LATEX_ENV_RE = re.compile(r"\\begin\s*\{")
 
-    Looks up an offline-measured rendering hint
-    (``fs=N`` or ``popout``) and bakes it into the marker so the
-    viewer can render scaled or popped-out without runtime
-    measurement.  See ``britannica.math_widths`` for the table; see
-    ``tools/diagnostics/measure_math_widths.py`` for how it's built.
+
+def _process_math(raw: str, inner: str) -> str:
+    """Convert math content to «MATH[hints]:...«/MATH» marker, preserving LaTeX.
+
+    The optional ``[hints]`` slot carries comma-separated tokens: ``display``
+    (the author-carried block-vs-inline distinction, read off the ``<math
+    display="block">`` tag or a ``\\begin{…}`` environment) and an offline-
+    measured width hint (``fs=N`` / ``popout``).  The viewer renders display
+    mode and scaling from these — no runtime guessing.  See
+    ``britannica.math_widths`` and ``tools/diagnostics/measure_math_widths.py``.
     """
     from britannica.math_widths import scale_hint
+    display = bool(_MATH_DISPLAY_RE.search(raw)) or bool(_LATEX_ENV_RE.search(inner))
     inner = html_mod.unescape(inner.strip())
     # Canonicalise whitespace: collapse all runs of whitespace
     # (including newlines) to a single space.  LaTeX is whitespace-
@@ -54,9 +65,12 @@ def _process_math(inner: str) -> str:
     # content) misses cache hits because the emission and the
     # measured form differ.
     inner = re.sub(r"\s+", " ", inner).strip()
+    tokens = ["display"] if display else []
     hint = scale_hint(inner)
     if hint:
-        return f"«MATH[{hint}]:{inner}«/MATH»"
+        tokens.append(hint)
+    if tokens:
+        return f"«MATH[{','.join(tokens)}]:{inner}«/MATH»"
     return f"«MATH:{inner}«/MATH»"
 
 

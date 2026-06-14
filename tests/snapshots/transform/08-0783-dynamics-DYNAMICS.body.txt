@@ -33,7 +33,7 @@ and therefore
 «EQN:6»«MATH[popout]:\Sigma m(\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z) = \mathrm{A}_{11}\dot{q}_{1} + \mathrm{A}_{12}\dot{q}_{2} + \ldots)\delta q_{1} + (\mathrm{A}_{21}\dot{q}_{1} + \mathrm{A}_{22}\dot{q}_{2} + \ldots)\delta q_{2} + \ldots,«/MATH»«/EQN»
 
 
-where«P»«HTMLTABLE:<table style="width:100%"><tr><td style="width:5%"></td><td style="width:90%;text-align:center">«MATH[fs=85]:\left.\begin{align} \mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»«P»If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
+where«P»«HTMLTABLE:<table style="width:100%"><tr><td style="width:5%"></td><td style="width:90%;text-align:center">«MATH[display,fs=85]:\left.\begin{align} \mathrm{A}_{rr} = \Sigma m \left\{\left(\frac{\partial x}{\partial q_{r}}\right)^2 + \left(\frac{\partial y}{\partial q_{r}}\right)^2 + \left(\frac{\partial z}{\partial q_{r}}\right)^2 \right\},\\ \mathrm{A}_{rs} = \Sigma m \left\{\frac{\partial x}{\partial q_{r}}\frac{\partial x}{\partial q_{s}} + \frac{\partial y}{\partial q_{r}}\frac{\partial y}{\partial q_{s}} + \frac{\partial z}{\partial q_{r}}\frac{\partial z}{\partial q_{s}}\right\} = \mathrm{A}_{sr}.\end{align}\qquad\qquad\right\}«/MATH»</td><td style="width:5%;text-align:center">(7)</td></tr></table>«/HTMLTABLE»«P»If we form the expression for the kinetic energy «MATH:\mathrm{T}\!«/MATH» of the system, we find
 
 
 «EQN:8»«MATH[fs=95]:2\mathrm{T} = \Sigma m(\dot{x}^2 + \dot{y}^2 + \dot{z}^2) = \mathrm{A}_{11}\dot{q}_{1}^2 + \mathrm{A}_{22}\dot{q}_{2}^2 \ldots 2\mathrm{A}_{12}\dot{q}_{1}\dot{q}_{2} + \ldots«/MATH»«/EQN»
@@ -296,7 +296,7 @@ so that the expression § 1 (8) for the kinetic energy is to be replaced by
 where
 
 
-«EQN:5»«MATH:\left.\begin{align}\alpha_{0} &= \Sigma m \left\{\left(\frac{\partial x}{\partial t}\right)^2 + \left(\frac{\partial y}{\partial t}\right)^2 + \left(\frac{\partial z}{\partial t}\right)^2 \right\},\\ \alpha_{r} &= \Sigma m \left\{\frac{\partial x}{\partial t}\,\frac{\partial x}{\partial q_{r}} + \frac{\partial y}{\partial t}\,\frac{\partial y}{\partial q_{r}} + \frac{\partial z}{\partial t}\,\frac{\partial z}{\partial q_{r}}\right\},\end{align}\right\}«/MATH»«/EQN»
+«EQN:5»«MATH[display]:\left.\begin{align}\alpha_{0} &= \Sigma m \left\{\left(\frac{\partial x}{\partial t}\right)^2 + \left(\frac{\partial y}{\partial t}\right)^2 + \left(\frac{\partial z}{\partial t}\right)^2 \right\},\\ \alpha_{r} &= \Sigma m \left\{\frac{\partial x}{\partial t}\,\frac{\partial x}{\partial q_{r}} + \frac{\partial y}{\partial t}\,\frac{\partial y}{\partial q_{r}} + \frac{\partial z}{\partial t}\,\frac{\partial z}{\partial q_{r}}\right\},\end{align}\right\}«/MATH»«/EQN»
 
 
 and the forms of «MATH:\mathrm{A}_{rr}, \mathrm{A}_{rs}\!«/MATH» are as given by § 1 (7). It is to be remembered that the coefficients «MATH:\alpha_{0}, \alpha_{1}, \alpha_{2}, \ldots \mathrm{A}_{11}, \mathrm{A}_{22}, \ldots \mathrm{A}_{12} \ldots\!«/MATH» will in general involve «MATH:t\!«/MATH» explicitly as well as implicitly through the co-ordinates «MATH:q_{1}, q_{2},\ldots\!«/MATH». Again, we find
@@ -638,7 +638,7 @@ where
 «P»This form is due to Lord Kelvin. When «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH» have been determined, as functions of the time, the velocities corresponding to the cyclic co-ordinates can be found, if required, from the relations (7), which may be written
 
 
-«EQN:18»«MATH:\left.\begin{align}\dot{\chi} &= \frac{\partial \mathrm{K}}{\partial\kappa} - \alpha_{1}\dot{q}_{1} - \alpha_{2}\dot{q}_{2} - \ldots,\\ \dot{\chi}' &= \frac{\partial \mathrm{K}}{\partial\kappa'} - \alpha'_{1}\dot{q}_{1} - \alpha'_{2}\dot{q}_{2} - \ldots,\\ &\qquad\And\!\!\!\text{c.}, \And\!\!\!\text{c.}\end{align}\right\}«/MATH»«/EQN»
+«EQN:18»«MATH[display]:\left.\begin{align}\dot{\chi} &= \frac{\partial \mathrm{K}}{\partial\kappa} - \alpha_{1}\dot{q}_{1} - \alpha_{2}\dot{q}_{2} - \ldots,\\ \dot{\chi}' &= \frac{\partial \mathrm{K}}{\partial\kappa'} - \alpha'_{1}\dot{q}_{1} - \alpha'_{2}\dot{q}_{2} - \ldots,\\ &\qquad\And\!\!\!\text{c.}, \And\!\!\!\text{c.}\end{align}\right\}«/MATH»«/EQN»
 
 «P»It is to be particularly noticed that
 
@@ -727,7 +727,7 @@ To examine whether the steady motion with the centre of gravity vertically above
 this is a minimum for «MATH:\theta = 0\!«/MATH» only so long as «MATH:\omega^2 < g/a\!«/MATH». For greater values of «MATH:\omega\!«/MATH» the only position of “permanent” stability is that in which the particle rotates with the bowl at an angular distance «MATH:\cos^{- 1} (g/\omega^2a)\!«/MATH» from the lowest point. To examine the motion in the neighbourhood of the lowest point, when frictional forces are taken into account, we may take fixed ones, in a horizontal plane, through the lowest point. Assuming that the friction varies as the relative velocity, we have
 
 
-«EQN:3»«MATH:\left.\begin{align}\ddot{x} &= - p^2x - k (\dot{x} + \omega y),\\ \ddot{y} &= - p^2y - k (\dot{y} - \omega x),\end{align}\right\}«/MATH»«/EQN»
+«EQN:3»«MATH[display]:\left.\begin{align}\ddot{x} &= - p^2x - k (\dot{x} + \omega y),\\ \ddot{y} &= - p^2y - k (\dot{y} - \omega x),\end{align}\right\}«/MATH»«/EQN»
 
 
 where «MATH:p^2 = g/a\!«/MATH». These combine into
@@ -769,7 +769,7 @@ The theorem referred to asserts that the free motion of a conservative system be
 provided the total energy have the same constant value in the varied motion as in the actual motion.«P»If «MATH:t, t'\!«/MATH» be the times of passing through the initial and final configurations respectively, we have
 
 
-«EQN:3»«MATH:\begin{align}\delta\mathrm{A} &= \delta\int^{t'}_{t} \Sigma m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) dt\\ &= \int^{t'}_{t} \delta Tdt + 2\mathrm{T}'\delta t' + 2\mathrm{T}\delta t,\end{align}«/MATH»«/EQN»
+«EQN:3»«MATH[display]:\begin{align}\delta\mathrm{A} &= \delta\int^{t'}_{t} \Sigma m (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) dt\\ &= \int^{t'}_{t} \delta Tdt + 2\mathrm{T}'\delta t' + 2\mathrm{T}\delta t,\end{align}«/MATH»«/EQN»
 
 
 since the upper and lower limits of the integral must both be regarded as variable. This may be written
@@ -855,7 +855,7 @@ we shall have
 provided that the variation does not affect the cyclic momenta «MATH:\kappa, \kappa', \kappa'', \ldots\!«/MATH», and that the configurations at times «MATH:t\!«/MATH» and «MATH:t'\!«/MATH» are unaltered, so far as they depend on the palpable co-ordinates «MATH:q_{1}, q_{2}, \ldots q_{m}\!«/MATH». The initial and final values of the ignored co-ordinates will in general be affected.«P»To prove (16) we have, on the above understandings,
 
 
-«EQN:17»«MATH[fs=90]:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
+«EQN:17»«MATH[display,fs=90]:\begin{align}\delta\int^{t'}_{t} (\mathrm{R} - \mathrm{V}) dt &= \int^{t'}_{t} (\delta \mathrm{T} - \kappa\delta\dot{\chi} - \ldots- \delta \mathrm{V}) dt\\ &= \int^{t'}_{t} \left(\frac{\partial \mathrm{T}}{\partial\dot{q}_{1}}\delta\dot{q}_{1} + \ldots + \frac{\partial \mathrm{T}}{\partial q_{1}}\delta q_{1} + \ldots- \delta \mathrm{V}\right) dt,\end{align}«/MATH»«/EQN»
 
 
 where terms have been cancelled in virtue of § 5 (2). The last member of (17) represents a variation of the integral
@@ -881,24 +881,24 @@ provided the varied motion takes place with the same constant value of the energ
 we have, then,
 
 
-«EQN:2»«MATH[fs=95]:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
+«EQN:2»«MATH[display,fs=95]:\begin{align}\delta \mathrm{S} &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \int^{t'}_{t} (\delta \mathrm{T} - \delta \mathrm{V}) dt\\ &= (\mathrm{T}' - \mathrm{V}') \delta t' - (\mathrm{T} - \mathrm{V}) \delta t + \left[\Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z)\right]^{t'}_{t}.\end{align}«/MATH»«/EQN»
 
 «P»Let us now denote by «MATH:x' + \delta x', y' + \delta y', z' + \delta z'\!«/MATH», the final co-ordinates («I»i.e.«/I» at time «MATH:t' + \delta t'\!«/MATH») of a particle «MATH:m\!«/MATH». In the terms in (2) which relate to the upper limit we must therefore write «MATH:\delta x' - \dot{x}'\delta t', \delta y' - \dot{y}'\delta t', \delta z' - \dot{z}'\delta t'\!«/MATH» for «MATH:\delta x, \delta y, \delta z\!«/MATH». With a similar modification at the lower limit, we obtain
 
 
-«EQN:3»«MATH:\begin{align}\delta \mathrm{S} = - \mathrm{H}\delta\tau &+ \Sigma m (\dot{x}'\delta x' + \dot{y}'\delta y' + \dot{z}'\delta z')\\ &- \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z),\end{align}«/MATH»«/EQN»
+«EQN:3»«MATH[display]:\begin{align}\delta \mathrm{S} = - \mathrm{H}\delta\tau &+ \Sigma m (\dot{x}'\delta x' + \dot{y}'\delta y' + \dot{z}'\delta z')\\ &- \Sigma m (\dot{x}\delta x + \dot{y}\delta y + \dot{z}\delta z),\end{align}«/MATH»«/EQN»
 
 
 where «MATH:\mathrm{H} (= \mathrm{T} + \mathrm{V})\!«/MATH» is the constant value of the energy in the free motion of the system, and «MATH:\tau(= t' - t)\!«/MATH» is the time of transit. In generalized co-ordinates this takes the form
 
 
-«EQN:4»«MATH:\begin{align}\delta \mathrm{S} = - \mathrm{H}\delta\tau &+ p'_{1}\delta q'_{1} + p'_{2}\delta q'_{2} + \ldots\\ &- p_{1}\delta q_{1} - p_{2}\delta q_{2} - \ldots.\end{align}«/MATH»«/EQN»
+«EQN:4»«MATH[display]:\begin{align}\delta \mathrm{S} = - \mathrm{H}\delta\tau &+ p'_{1}\delta q'_{1} + p'_{2}\delta q'_{2} + \ldots\\ &- p_{1}\delta q_{1} - p_{2}\delta q_{2} - \ldots.\end{align}«/MATH»«/EQN»
 
 
 Now if we select any two arbitrary configurations as initial and final, it is evident that we can in general (by suitable initial velocities or impulses) start the system so that it will of itself pass from the first to the second in any prescribed time «MATH:\tau\!«/MATH». On this view of the matter, «MATH:\mathrm{S}\!«/MATH» will be a function of the initial and final co-ordinates («MATH:q_{1}, q_{2}, \ldots\!«/MATH» and «MATH:q'_{1}, q'_{2}, \ldots\!«/MATH») and the time «MATH:\tau\!«/MATH», as independent variables. And we obtain at once from (4)
 
 
-«EQN:5»«MATH:\left.\begin{align}p'_{1} &= \frac{\partial \mathrm{S}}{\partial q'_{1}}, \qquad p'_{2} = \frac{\partial \mathrm{S}}{\partial q'_{2}}, \ldots,\\ p_{1} &= - \frac{\partial \mathrm{S}}{\partial q_{1}}, \qquad p_{2} = - \frac{\partial \mathrm{S}}{\partial q_{2}}, \ldots,\end{align}\right\}«/MATH»«/EQN»
+«EQN:5»«MATH[display]:\left.\begin{align}p'_{1} &= \frac{\partial \mathrm{S}}{\partial q'_{1}}, \qquad p'_{2} = \frac{\partial \mathrm{S}}{\partial q'_{2}}, \ldots,\\ p_{1} &= - \frac{\partial \mathrm{S}}{\partial q_{1}}, \qquad p_{2} = - \frac{\partial \mathrm{S}}{\partial q_{2}}, \ldots,\end{align}\right\}«/MATH»«/EQN»
 
 
 and
@@ -922,13 +922,13 @@ becomes a partial differential equation to be satisfied by «MATH:\mathrm{S}\!«
 It follows from (4) that
 
 
-«EQN:9»«MATH:\begin{align}\delta \mathrm{A} = \tau\delta \mathrm{H} &+ p'_{1}\delta q'_{1} + p'_{2}\delta q'_{2} + \ldots\\ &- p_{1}\delta q_{1} - p_{2}\delta q_{2} - \ldots.\end{align}«/MATH»«/EQN»
+«EQN:9»«MATH[display]:\begin{align}\delta \mathrm{A} = \tau\delta \mathrm{H} &+ p'_{1}\delta q'_{1} + p'_{2}\delta q'_{2} + \ldots\\ &- p_{1}\delta q_{1} - p_{2}\delta q_{2} - \ldots.\end{align}«/MATH»«/EQN»
 
 
 This formula (it may be remarked) contains the principle of “leastPAGE:790action” as a particular case. Selecting, as before, any two arbitrary configurations, it is in general possible to start the system from one of these, with a prescribed value of the total energy «MATH:\mathrm{H}«/MATH», so that it shall pass through the other. Hence, regarding «MATH:\mathrm{A}«/MATH» as a function of the initial and final co-ordinates and the energy, we find
 
 
-«EQN:10»«MATH:\left.\begin{align}&p'_{1} = \frac{\partial \mathrm{A}}{\partial q'_{1}}, \qquad p'_{2} = \frac{\partial \mathrm{A}}{\partial q'_{2}}, \ldots,\\ &p_{1} = - \frac{\partial \mathrm{A}}{\partial q_{1}}, \qquad p_{2} = - \frac{\partial \mathrm{A}}{\partial q_{2}}, \ldots,\end{align}\right\}«/MATH»«/EQN»
+«EQN:10»«MATH[display]:\left.\begin{align}&p'_{1} = \frac{\partial \mathrm{A}}{\partial q'_{1}}, \qquad p'_{2} = \frac{\partial \mathrm{A}}{\partial q'_{2}}, \ldots,\\ &p_{1} = - \frac{\partial \mathrm{A}}{\partial q_{1}}, \qquad p_{2} = - \frac{\partial \mathrm{A}}{\partial q_{2}}, \ldots,\end{align}\right\}«/MATH»«/EQN»
 
 
 and
