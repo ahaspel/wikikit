@@ -1,11 +1,7 @@
 from dataclasses import dataclass, field
 
-from britannica.db.models import Article, ArticleSegment, SourcePage
+from britannica.db.models import Article, ArticleSegment
 from britannica.db.session import SessionLocal
-from britannica.pipeline.stages.elements._title import (
-    _letter_from_dropcap,
-    _title_span,
-)
 import re
 
 # Raw wikitext section-begin tag.
@@ -23,13 +19,6 @@ def _match_section_begin(text):
 
 # Keep the old pattern for simple finditer compatibility
 _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
-
-# Section-end tags — stripped during preprocessing.
-_SEC_END = re.compile(r'<section\s+end=(?:"[^"]*"|[^/>\s]*)\s*/?>', re.IGNORECASE)
-
-# <noinclude> blocks — stripped during preprocessing (page headers, quality tags).
-# Tolerate a malformed opener (`<noinclude">`, a source/OCR typo) like source_cleanup.
-_NOINCLUDE = re.compile(r"<noinclude\b[^>]*>.*?</noinclude>", re.DOTALL | re.IGNORECASE)
 
 # Generic Wikisource section IDs that are never real article titles.
 
@@ -102,61 +91,6 @@ def _title_plaintext(text: str) -> str:
 # directly.
 
 
-
-
-
-
-# Match a `{|` opener up to the end of line OR the next `</noinclude>`,
-# whichever comes first — EB1911 pages often place `{|...` immediately
-# before `</noinclude>` on the same line.
-_NOINCLUDE_TABLE_OPEN = re.compile(
-    r"(?:^|\n)\s*\{\|[^\n<]*"
-)
-# Require the `|}` to be on its own (preceded by whitespace/newline
-# and not followed by another `}`) so we don't match the `|}}` pattern
-# that closes an empty-arg template like `{{rh|…|}}`.
-_NOINCLUDE_TABLE_CLOSE = re.compile(
-    r"(?:^|\n)\s*\|\}(?!\})"
-)
-
-
-def _strip_noinclude_preserve_tables(text: str) -> str:
-    """Strip <noinclude> blocks but preserve any `{|...` and `|}` markers.
-
-    Many EB1911 wikisource pages place the table opener `{|...` in the
-    page header <noinclude> and the closer `|}` in the footer <noinclude>
-    so the page displays as a valid table on its own. Stripping the whole
-    block leaves the middle rows orphaned — the balanced-table extractor
-    in process_elements then pairs a `{|` on one page with a `|}` many
-    pages later, swallowing all intermediate prose (this was silently
-    eating the Climate / Fauna and Flora / Population sections of
-    UNITED STATES, THE, and likely other long geography-heavy articles).
-    """
-    def _keep_tables(m: re.Match) -> str:
-        block = m.group(0)
-        kept: list[str] = []
-        for open_m in _NOINCLUDE_TABLE_OPEN.finditer(block):
-            kept.append(open_m.group(0).strip())
-        if _NOINCLUDE_TABLE_CLOSE.search(block):
-            kept.append("|}")
-        return ("\n" + "\n".join(kept) + "\n") if kept else ""
-
-    return _NOINCLUDE.sub(_keep_tables, text)
-
-
-def _preprocess_wikitext(text: str) -> str:
-    """Minimal preprocessing of raw wikitext for boundary detection.
-
-    Strips <noinclude> blocks (preserving any table `{|`/`|}` wrappers),
-    <section end> tags, and normalizes line endings. Preserves
-    <section begin> tags and all other raw wikitext.
-    """
-    text = _strip_noinclude_preserve_tables(text)
-    text = _SEC_END.sub("", text)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    return text
-
-
 # ── Detection output types ─────────────────────────────────────────────
 
 
@@ -201,19 +135,9 @@ class DetectedArticle:
 # ── Per-page parsing helpers ───────────────────────────────────────────
 
 
-
-
-
-
-
-
-
-
 # `_normalize_title` + `_VALID_TWO_LETTER` retired with `clean_title`: detection no
 # longer flattens a heading to classify it — `super_walker._heading_text` reads the
 # headword for the is-title test, and `produce_title` produces the title itself.
-
-
 
 
 _PLATE_FIELD_RE = re.compile(
@@ -330,28 +254,6 @@ def _extract_plate_number(raw: str) -> str | None:
     return None
 
 
-def _heading_names_plate(raw: str) -> bool:
-    """True iff the page's heading template carries an explicit
-    `Plate N.` token in one of its named-header positions.
-
-    EB1911 wikisource convention: every plate insert page has a page-
-    heading template (`{{rh|…}}` or `{{EB1911 Page Heading|…}}`) where
-    one of the side-header fields holds `{{sc|Plate I.}}` (or II/III/…).
-    The article-name field holds the parent article (DOG, AMPHITHEATRE,
-    &c.).  Examples:
-
-        {{EB1911 Page Heading||DOG||{{sc|Plate I.}}}}      (right side)
-        {{EB1911 Page Heading|{{sc|Plate II.}}|DOG|...|...}} (left side)
-        {{rh||GRAPHIC ART|{{smaller|{{sc|Plate I.}}}}}}    (outside noinclude)
-
-    Transcribers vary on whether the heading template sits inside the
-    page's ``<noinclude>…</noinclude>`` block or outside it (AEGEAN
-    plates put it outside, DOG/SHAKESPEARE put it inside), so the walk
-    looks at the whole raw page.
-    """
-    return _extract_plate_number(raw) is not None
-
-
 def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
     """Build the title for a plate-insert page: the parent article's
     name (from the page heading or, failing that, the ``<section
@@ -439,319 +341,158 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
     return plate_title
 
 
-def _strip_wiki_table_spans(text: str) -> str:
-    """Drop every balanced ``{|…|}`` wiki-table span — together with the
-    ``{{ts|…}}`` styling templates and ``[[Image:…]]`` cells inside it,
-    however deeply nested.  ``{{…}}`` template blocks are skipped over
-    so a ``{{Ts|vmi|}}``'s ``|}}`` isn't misread as a table closer.
-
-    ``_is_plate_page`` measures the *narrative prose* left after the
-    figure layout is removed.  The old non-greedy ``\\{\\|.*?\\|\\}`` strip
-    stopped at the first ``|}`` — the innermost image-cell table — on
-    the deeply-nested plate inserts (ROUND TOWERS, TAPESTRY, EGYPT,
-    INDIA, …), leaving the rest of the layout's ``{{ts|…}}`` noise
-    behind and pushing the prose-word count over threshold."""
-    n = len(text)
-
-    def _skip_template(start: int) -> int:
-        depth, j = 1, start + 2
-        while j < n - 1 and depth > 0:
-            t = text[j:j + 2]
-            if t == "{{":
-                depth += 1
-                j += 2
-            elif t == "}}":
-                depth -= 1
-                j += 2
-            else:
-                j += 1
-        if depth > 0:
-            # Unbalanced ``{{`` (malformed source — e.g. CAPITAL's
-            # ``{{EB1911 Fine Print|{{sc|Fig.}} 1.—…`` with no matching
-            # ``}}`` before the cell ends).  Treat the ``{{`` as literal
-            # and resume scanning, rather than gobbling to end-of-text.
-            return start + 2
-        return j
-
-    out: list[str] = []
-    i = 0
-    while i < n:
-        two = text[i:i + 2]
-        if two == "{|":
-            depth, j = 1, i + 2
-            while j < n - 1 and depth > 0:
-                t = text[j:j + 2]
-                if t == "{{":
-                    j = _skip_template(j)
-                elif t == "{|":
-                    depth += 1
-                    j += 2
-                elif t == "|}":
-                    depth -= 1
-                    j += 2
-                else:
-                    j += 1
-            i = j                      # drop the whole table span
-        elif two == "{{":
-            j = _skip_template(i)
-            out.append(text[i:j])       # keep top-level templates intact
-            i = j
-        else:
-            out.append(text[i])
-            i += 1
-    return "".join(out)
+# ── Detection (pure) ──────────────────────────────────────────────────
 
 
-_PROSE_CELL_RE = re.compile(
-    r"(?:^|\n)\s*\|(?!\}|-)"
-    r"(?:[A-Za-z][\w-]*\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s|]+)\s*)*"   # |attrs| prefix
-    r"\|?\s*"
-    r"([^|\n][^\n]*)",                                               # cell content
-)
-
-# Caption / legend / credit lead-ins — a cell whose text begins with
-# one of these is figure material, never running article prose.
-_CAPTION_LEADIN_RE = re.compile(
-    r"^(?:"
-    r"(?:Fig|Plate)s?\.?\s*[\dIVXLCivxlc]"        # Fig. 7.—…  /  Plate II.
-    r"|[\dIVXLCivxlc]+\s*[.,]?\s*[—–-]"           # 1.—THE SCEPTRES…  /  i.—…
-    r"|\(?\s*[a-z]\s*\)"                           # (a) …  /  a) …
-    r"|\(?\s*(?:Photo|From|After|By\s+permission|Copyright|Drawn|Redrawn|"
-    r"Reproduced|Modified|Lent|Engraved)\b"
-    r")",
-    re.IGNORECASE,
-)
-
-
-def _has_prose_cell(text: str) -> bool:
-    """True if some ``{|…|}`` cell holds a long run of running prose — a
-    real article paragraph laid out in a table, not a caption / credit /
-    title fragment.
-
-    Vetoes the ``_is_plate_page`` heuristic on pages like vol 22
-    POLLINATION p18, whose bird-/slug-pollination paragraphs sit inside
-    a ``{|cellpadding=…|}`` figure grid: ``_strip_wiki_table_spans``
-    (correctly, for a real plate) drops the whole table, so the prose-
-    word count collapses to ~0 and the page looks like a plate.  Genuine
-    plate cells are short or, at most, a verbose caption; the 40-word
-    floor on text that *isn't* a caption / legend / credit lead-in only
-    trips on a real article paragraph."""
-    for m in _PROSE_CELL_RE.finditer(text):
-        cell = m.group(1)
-        # Pull out the image link, line-breaks, and (iteratively) any
-        # styling-template wrappers so the leftover is the bare cell
-        # text — then it can be tested for a caption lead-in.
-        cell = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", " ", cell, flags=re.IGNORECASE)
-        cell = re.sub(r"<br\s*/?>|<[^>]+>", " ", cell, flags=re.IGNORECASE)
-        for _ in range(6):
-            new = re.sub(r"\{\{[^{}]*\}\}", " ", cell)
-            if new == cell:
-                break
-            cell = new
-        cell = re.sub(r"«/?[BI]»|&[a-z]+;|&#\d+;", " ", cell, flags=re.IGNORECASE)
-        cell = re.sub(r"^\s*[|!]+\s*", "", cell)            # leftover cell pipes
-        # Strip leading punctuation residue (a stranded ``. 7.—`` after
-        # the ``{{sc|Fig}}`` wrapper was removed) so the caption lead-in
-        # test sees ``7.—Flemish Mitre…`` rather than ``. 7.—…``.
-        cell = re.sub(r"^[\s.,;:—–\-]+", "", cell)
-        cell = cell.strip()
-        if not cell or _CAPTION_LEADIN_RE.match(cell):
-            continue
-        words = cell.split()
-        if len(words) >= 40 and any(c.islower() for c in cell):
-            return True
-    return False
+# Running-head templates that carry the printed folio (case/whitespace tolerant).
+_PAGEHEAD = re.compile(
+    r"\{\{\s*(?:rh|running\s*header|eb1911\s+page\s+heading)\s*\|", re.I)
+# Inside a side slot: {{em}}/{{gap}} are SPACING (strip); the rest are display
+# wrappers (reduce to their text); what's left is the folio.
+_PH_SPACING = re.compile(r"\{\{\s*(?:em|gap|nbsp)\b[^{}]*\}\}", re.I)
+_PH_SPEC = re.compile(r"\{\{\s*(?:size|fs)\s*\|([^{}]*)\}\}", re.I)   # leads w/ a spec arg
+_PH_PLAIN = re.compile(
+    r"\{\{\s*(?:x-larger|larger|smaller|x-smaller|xx-larger|uc|sc|asc|sm)"
+    r"(?:\s+block)?\s*\|([^{}]*)\}\}", re.I)
+_PH_DIGITS = re.compile(r"(?<![\w.])\d+(?!\s*%)")
+# A side slot that is PURELY a strict Roman numeral is a front-matter folio
+# (preface/index pp. viii, x, xii) — paginated, just not in Arabic.
+_PH_ROMAN = re.compile(
+    r"^\s*(?=[ivxlcdm])m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})"
+    r"\s*\.?\s*$", re.I)
+# A plate's content IS an image — bracket form OR the layout-template forms.
+_PLATE_IMAGE = re.compile(
+    r"\[\[(?:File|Image):|\{\{\s*(?:Css image|raw image|FIS?|framed image)\b",
+    re.I)
+_FRONT_TITLE_TMPL = re.compile(
+    r"\{\{\s*eb1911\s+(?:half\s+)?title\s+page|\{\{\s*eb1911\s+\w+\s+copyright"
+    r"|\{\{\s*eb1911\s+contributor\s+table", re.I)
+_FRONT_BANNER = re.compile(r"ELEVENTH\s+EDITION", re.I)
 
 
-_RH_SIDE_PAGENUM_RE = re.compile(
-    r"\{\{(?:rh|RunningHeader|EB1911\s+Page\s+Heading)\|", re.IGNORECASE)
-
-
-def _rh_has_page_number_in_side_slot(text: str) -> bool:
-    """True if the rh-shape page-heading template's left or right
-    side-slot carries a printed page number.
-
-    EB1911 plate inserts are unpaginated — the rh either is absent or
-    carries no page number in its side slots (the centre slot holds
-    the article title; side slots are empty, or hold ``{{sc|Plate I.}}``
-    / a section keyword).  An article body page that happens to consist
-    of just rh + a single big figure (genealogical tables, large maps,
-    big diagrams) DOES carry its printed page number in the rh — that's
-    how a reader looks it up.
-
-    This is the raw-source distinguisher between "plate insert with one
-    composite image" (UNIFORMS, NEUROPATHOLOGY, COLORADO map) and
-    "body page with one big figure" (BOURBON / GUISE genealogies,
-    EGYPT tools page, etc.).
-    """
-    m = _RH_SIDE_PAGENUM_RE.search(text)
-    if not m:
-        return False
-    start = m.end()
-    depth, i = 2, start
-    while i < len(text) and depth > 0:
-        if text[i:i+2] == "{{":
-            depth += 2; i += 2
-        elif text[i:i+2] == "}}":
-            depth -= 2
-            if depth == 0:
-                break
-            i += 2
-        else:
-            i += 1
-    # Split args on top-level pipes.
-    args, d, cur = [], 0, []
-    for ch in text[start:i]:
-        if ch == "{":
-            d += 1; cur.append(ch)
-        elif ch == "}":
-            d -= 1; cur.append(ch)
-        elif ch == "|" and d == 0:
-            args.append("".join(cur)); cur = []
+def _ph_slots(inner: str) -> list[str]:
+    """Split a template's inner on top-level pipes (brace/bracket-depth aware)."""
+    parts, depth, cur = [], 0, []
+    for ch in inner:
+        if ch in "{[":
+            depth += 1; cur.append(ch)
+        elif ch in "}]":
+            depth -= 1; cur.append(ch)
+        elif ch == "|" and depth == 0:
+            parts.append("".join(cur)); cur = []
         else:
             cur.append(ch)
-    args.append("".join(cur))
-    # Side slots: index 0 (left) and any slot at index >= 2 (right /
-    # tail — covers 3-slot ``{{rh|L|M|R}}`` AND 4-slot
-    # ``{{EB1911 Page Heading|L|M|R|tail}}``).  Centre slot (index 1)
-    # holds the article title, never a page number.
-    side_slots = ([args[0]] if args else []) + args[2:]
-    page_num_re = re.compile(r"(?<![\w.])\d{2,}(?!\s*%)")
-    for slot in side_slots:
-        slot = re.sub(r"\{\{em\|[^}]*\}\}", "", slot)  # ``{{em|2.4}}`` is spacing
-        if page_num_re.search(slot):
-            return True
-    return False
+    parts.append("".join(cur))
+    return parts
 
 
-def _is_plate_page(text: str) -> bool:
-    """Detect plate pages — mostly images with little prose.
-
-    In raw wikitext, images are [[File:...]] or [[Image:...]].
-    A true plate has minimal running prose (just captions and maybe a
-    title). Pages that happen to have several images mid-article
-    (e.g. vol 17 MAP p.641 with 4 figure images) are NOT plates —
-    they're text pages with figures embedded.
-
-    Single-image plate inserts (UNIFORMS, NEUROPATHOLOGY, COLORADO map
-    etc.) need the structural rh-page-number check to distinguish them
-    from body pages devoted to a single big figure (genealogy tables,
-    large diagrams that span a full page).
-    """
-    stripped = text.strip()
-    img_count = len(re.findall(r"\[\[(?:File|Image):", stripped, re.IGNORECASE))
-    if img_count < 1:
-        return False
-    # An article paragraph laid out in a table cell → not a plate
-    # (POLLINATION p18 et al.) — UNLESS the page also carries a
-    # ``{{sc|Plate N.}}`` label, which an article continuation page
-    # never does but a plate insert with a descriptive matter-paragraph
-    # (PALAEONTOLOGY p633's "Materials for the Restoration of
-    # Ichthyosaurs.—This plate illustrates…") does.  See _has_prose_cell.
-    if _has_prose_cell(stripped) and _plate_label_from_content(stripped) is None:
-        return False
-
-    # Count non-image, non-table, non-template, non-caption words
-    # (actual running prose).  Plate captions/matter live in
-    # ``{|…|}`` cells (stripped) or ``{{center|…}}`` / ``{{sc|…}}`` /
-    # ``{{EB1911 Fine Print|…}}`` wrappers (stripped here); whatever
-    # plain text remains is the page's narrative prose, and a real plate
-    # has almost none.
-    prose = re.sub(r"\[\[(?:File|Image):[^\]]*\]\]", "", stripped, flags=re.IGNORECASE)
-    prose = _strip_wiki_table_spans(prose)
-    prose = re.sub(r"<table\b.*?</table>", "", prose, flags=re.DOTALL | re.IGNORECASE)
-    for _ in range(8):
-        _next = re.sub(r"\{\{[^{}]*\}\}", " ", prose)
-        if _next == prose:
+def _ph_reduce(slot: str) -> str:
+    """Collapse a side slot to its displayed text: strip spacing templates,
+    reduce size/style wrappers to their content (``{{size|xl|125}}``→``125``,
+    ``{{x-larger|544| }}``→``544``), so the bare folio is left."""
+    for _ in range(6):
+        before = slot
+        slot = _PH_SPACING.sub(" ", slot)
+        slot = _PH_SPEC.sub(lambda m: m.group(1).split("|")[-1], slot)
+        slot = _PH_PLAIN.sub(lambda m: m.group(1).replace("|", " "), slot)
+        if slot == before:
             break
-        prose = _next
-    # Stray ``Fig. N.—…`` captions not wrapped in a template.
-    prose = re.sub(r"Figs?\.\s*[\dIVXLCivxlc]+[^.\n]*\.",
-                   "", prose, flags=re.IGNORECASE)
-    prose_words = len(prose.split())
+    return slot
 
-    # Tight thresholds — genuine plates have very little narrative prose.
-    if img_count >= 3:
-        return prose_words <= 80
-    if img_count >= 2:
-        return prose_words <= 30
-    # Single-image plate insert: ~7 such pages corpus-wide (UNIFORMS,
-    # NEUROPATHOLOGY, COLORADO map, JERUSALEM map, POLAR REGIONS map).
-    # Distinguish from a body page with one big figure (BOURBON/GUISE
-    # genealogies, EGYPT tools page) by the rh — body pages carry the
-    # printed page number in the rh's side slots; plate inserts don't.
-    if prose_words > 5:
+
+def folio_of(raw: str) -> str | None:
+    """The printed page (folio) number from the leaf's running-head template,
+    or ``None`` if the leaf is unpaginated.
+
+    EB1911 is wholly paginated: every article body page prints its folio in the
+    running head — Arabic in the main matter, Roman in the front matter — even a
+    page that is one big figure or table.  The head is one of ``{{rh}}`` /
+    ``{{RunningHeader}}`` / ``{{running header}}`` / ``{{EB1911 Page Heading}}``;
+    its left/right side slots hold the folio (the centre holds the article
+    title), possibly inside size/style wrappers.  An unpaginated leaf — no such
+    number — is a plate insert (or a blank)."""
+    m = _PAGEHEAD.search(raw)
+    if not m:
+        return None
+    i, depth = m.start() + 2, 1
+    while i < len(raw) and depth:
+        if raw[i:i + 2] == "{{":
+            depth += 1; i += 2
+        elif raw[i:i + 2] == "}}":
+            depth -= 1; i += 2
+        else:
+            i += 1
+    args = _ph_slots(raw[m.start() + 2:i - 2])[1:]      # drop the template name
+    side = ([args[0]] if args else []) + args[2:]       # left + right; skip centre
+    for slot in side:
+        red = _ph_reduce(slot).strip()
+        d = _PH_DIGITS.search(red)
+        if d:
+            return d.group(0)
+        if _PH_ROMAN.match(red):
+            return red
+    return None
+
+
+def _is_front_matter_title(raw: str) -> bool:
+    """A volume front page: a title-page template, or the ENCYCLOPÆDIA
+    BRITANNICA / ELEVENTH EDITION banner standing BEFORE any image.  (A title
+    page leads with the banner; a plate carries the same words only in an
+    engraved credit AFTER its image — so position, not the substring, decides.)"""
+    if _FRONT_TITLE_TMPL.search(raw):
+        return True
+    m = _FRONT_BANNER.search(raw)
+    if not m:
         return False
-    return not _rh_has_page_number_in_side_slot(stripped)
+    img = _PLATE_IMAGE.search(raw)
+    return img is None or m.start() < img.start()
 
 
-
-# ── Detection (pure) ──────────────────────────────────────────────────
+def _is_plate(raw: str) -> bool:
+    """A plate is an UNPAGINATED leaf that carries an image — its content IS the
+    image.  A paginated leaf is article body; a text-only unpaginated leaf is
+    front matter; a banner title page is front matter.  No prose heuristics."""
+    return (folio_of(raw) is None
+            and bool(_PLATE_IMAGE.search(raw))
+            and not _is_front_matter_title(raw))
 
 
 def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
     """PASS 1 of boundary detection.
 
-    Every EB1911 plate insert is a single, self-contained Wikisource
-    page, so plate detection is a pure per-page predicate — no
-    article-boundary state machine needed.  Pull each plate page into
-    its own ``type='plate'`` article and hand the remaining (plate-free)
-    pages to the article state machine, which then never has to reason
-    about plates at all.
+    Every EB1911 plate insert is a single, self-contained Wikisource page, so
+    plate detection is a pure per-page STRUCTURAL test (`_is_plate`): an
+    unpaginated leaf that carries an image.  No prose word-counts, no preprocess
+    — it reads the raw leaf.  Pull each plate into its own ``type='plate'``
+    article and hand the rest to the article state machine, which then never has
+    to reason about plates at all.
 
-    A page is a plate when:
-      • it carries a ``{{sc|Plate N.}}`` / ``{{uc|Plate N.}}`` /
-        ``{{sc|Plate.}}`` label anywhere — in a page-heading side-header
-        (``_heading_names_plate``) or in a layout-table cell
-        (``_plate_label_from_content``).  An EB1911 plate insert always
-        has one; an article page never does.  This is the authoritative
-        signal — accepted regardless of anything else on the page; or
-      • it has no such label but is image-heavy with negligible running
-        prose (``_is_plate_page``) AND doesn't itself open a real
-        (bold-titled) article — the ~20 label-less plate inserts (ALTAR,
-        COSTUME, FORAMINIFERA, …).  A tiny stub with a couple of figures
-        is still an article, not a plate."""
+    The plate's RENDERED body, by contrast, IS preprocessed (as a one-leaf
+    stream: corrections + quote-runs + entity-decode), so a plate follows the
+    exact same content path as an article — only its recognition is separate."""
+    from britannica.pipeline.stages.preprocess import make_stream, preprocess
     plates: list[DetectedArticle] = []
     rest: list = []
     for page in pages:
         raw = (page.wikitext or "").strip()
         if not raw:
             continue
-        text = _preprocess_wikitext(raw)
-        if _heading_names_plate(raw) or _plate_label_from_content(raw) is not None:
-            is_plate = True
-        elif _is_plate_page(text):
-            # ONE heading recognizer: ask the walk's OWN detector whether this
-            # leaf carries a real article heading (→ article page, not a plate),
-            # instead of the legacy per-page parser.  Lazy import breaks the
-            # super_walker↔detect_boundaries cycle (super_walker imports
-            # _split_out_plates for volume_stream).
-            from britannica.pipeline.stages.super_walker import (
-                has_article_heading)
-            has_real_heading = has_article_heading(text)
-            _markers = _match_section_begin(text)
-            prefix_text = (text[:_markers[0][0]] if _markers else text).strip()
-            prefix_bold = bool(re.match(
-                r"«B»[A-ZÀ-Þ][A-ZÀ-Þ«»/IB’\s,.\-]+«/B»", prefix_text))
-            is_plate = not has_real_heading and not prefix_bold
-        else:
-            is_plate = False
-        if is_plate:
-            plates.append(DetectedArticle(
-                title=_compose_plate_title(raw, page.volume, page.page_number),
-                volume=page.volume,
-                page_start=page.page_number,
-                page_end=page.page_number,
-                article_type="plate",
-                segments=[SegmentInfo(
-                    source_page_id=page.id,
-                    page_number=page.page_number,
-                    sequence=1,
-                    text=text,
-                )],
-            ))
-        else:
+        if not _is_plate(raw):
             rest.append(page)
+            continue
+        plates.append(DetectedArticle(
+            title=_compose_plate_title(raw, page.volume, page.page_number),
+            volume=page.volume,
+            page_start=page.page_number,
+            page_end=page.page_number,
+            article_type="plate",
+            segments=[SegmentInfo(
+                source_page_id=page.id,
+                page_number=page.page_number,
+                sequence=1,
+                text=preprocess(make_stream([page]), page.volume),
+            )],
+        ))
     return plates, rest
 
 
