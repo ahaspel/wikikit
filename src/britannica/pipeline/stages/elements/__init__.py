@@ -894,8 +894,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
     "SECTION": lambda raw, inner, ctx, reg: _process_section(raw),
-    # SECTION_ANCHOR — `{{section|Name}}` subsection link target; carried as a
-    # point anchor `«ANCHOR:slug»` so `[[#Name]]` / `…#Name` xrefs resolve.
+    # SECTION_ANCHOR — `{{section|Name}}` marked a MINOR subsection; consumed to
+    # nothing (only major sections are anchored, via stamp_sections' «SEC»).
     "SECTION_ANCHOR": lambda raw, inner, ctx, reg: _process_section_anchor(raw),
     # PAGEQUALITY — `<pagequality level=N user=X />` Wikisource metadata.
     # Previously inside a `<noinclude>` block claimed by NOINCLUDE.  With

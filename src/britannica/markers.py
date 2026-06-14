@@ -200,9 +200,10 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     "B", "I", "SC", "SS", "SR", "U", "STK", "MIRROR", "CTR", "FR", "FL",
     "DIV", "SPAN", "BR", "BAR", "DHR", "BRACE2",
     "XXL", "XL", "LG", "XXS", "XS", "SM", "FS", "LH",
-    # links / anchors
-    "LN", "ANCHOR",
-    # cell- and block-level content
+    # links
+    "LN",
+    # cell- and block-level content; SEC is the major-section anchor point
+    # marker «SEC:slug|name» (stamp_sections); SH the shoulder heading
     "FN", "MATH", "HTMLTABLE", "CHEM", "EQNGROUP", "EQN", "SEC", "SH",
 )
 
@@ -236,7 +237,6 @@ _DROP_MARKER_RE = _re.compile(
     r"|«EQNGROUP»[\s\S]*?«/EQNGROUP»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
     r"|«(?:OUTLINE|PLATE_OUTLINE):[\s\S]*?«/(?:OUTLINE|PLATE_OUTLINE)»"
-    r"|«SEC:[\s\S]*?«/SEC»"
     r"|\{\{IMG:[^}]*\}\}"
     r"|\{\{TABLEH?:[\s\S]*?\}TABLE\}"
     r"|\{\{VERSE:[\s\S]*?\}VERSE\}"

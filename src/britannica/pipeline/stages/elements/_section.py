@@ -16,8 +16,6 @@ from __future__ import annotations
 
 import re
 
-from britannica.util.strings import section_slug
-
 _SECTION_NAME_RE = re.compile(
     r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
 
@@ -35,20 +33,14 @@ def _process_section(raw: str) -> str:
 
 
 # ── {{section|Name}} — the subsection ANCHOR (a different "section" construct) ──
-# Not the `<section>` boundary tag above: this is a Wikisource link TARGET.  The
-# same-article `[[#Name]]` links, the cross-article `…/Article#Name` xrefs, and the
-# reader's-guide references all point at it.  No visual output — the run-in
-# ``''Name''.—`` heading beside it is the visible text; we carry it as a point
-# anchor so those links resolve instead of dangling.
-
-_SECTION_ANCHOR_RE = re.compile(r"\{\{\s*section\s*\|([^}]*)\}\}", re.IGNORECASE)
+# Not the `<section>` boundary tag above.  It marked a MINOR (run-in italic)
+# subsection as a Wikisource link target, but those anchors were orphaned: a
+# resolved `…#Name` link builds `#section-<slug>` — the MAJOR-section «SEC» anchors
+# stamp_sections places — never the bare slug this used to emit, so they did no one
+# any good.  Consume the template and emit nothing (the run-in ``''Name''.—``
+# heading beside it stays as italic prose); only major sections are anchored now.
 
 
 def _process_section_anchor(raw: str) -> str:
-    """`{{section|Name}}` → an invisible point anchor ``«ANCHOR:slug»``."""
-    m = _SECTION_ANCHOR_RE.match(raw.strip())
-    if not m:
-        return ""
-    # first non-empty pipe-arg (one source has a stray `{{section||Name}}`)
-    name = next((a.strip() for a in m.group(1).split("|") if a.strip()), "")
-    return f"«ANCHOR:{section_slug(name)}»" if name else ""
+    """`{{section|Name}}` → nothing (minor subsections are not anchored)."""
+    return ""

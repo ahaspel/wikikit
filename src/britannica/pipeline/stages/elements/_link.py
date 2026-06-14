@@ -88,7 +88,7 @@ def process_eb1911_selfref_link(raw: str, context) -> str:
     cross-reference in raw bracket form (the `{{EB1911 article link}}` template's twin).
     Emit «LN:Article#Section|Display»: strip the `1911 Encyclopædia Britannica/` prefix
     and KEEP the `#Section` fragment (resolve_one splits it → article + section, so the
-    link lands on that subsection's «ANCHOR»).  A bare `[[1911 Encyclopædia Britannica|
+    link lands on that section's «SEC» anchor).  A bare `[[1911 Encyclopædia Britannica|
     Disp]]` (the work as a whole, no article) has no target → emit the display as prose."""
     from britannica.pipeline.stages.elements import process_elements
     body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
