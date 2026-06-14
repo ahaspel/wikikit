@@ -207,6 +207,71 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
 )
 
 
+# ── Marker stream → plain text ───────────────────────────────────────────────
+# The article ``body`` is a marker stream (the viewer's input).  Plain-text
+# consumers — the Meilisearch full-text index and the ``index.json`` body_start
+# preview — need the prose, not the markers.  This is the ONE converter they all
+# call, so the strip policy lives in exactly one place.  (Three drifting copies
+# of this logic, each missing a different marker, are what let «TITLE:…«/TITLE»
+# and «SPAN[title:…]» leak into the search dropdown.)
+#
+# Policy, grounded in RENDERED_GUILLEMET_MARKER_NAMES / RENDERED_MARKER_OPENS:
+#   • DROP whole (marker + payload) the non-prose block / structural markers:
+#     the title (it is the separate ``title`` field), footnotes, math / chem /
+#     equation displays, tables, images, verse, legends, outlines, section
+#     anchors.  These are the SPLIT markers (``«X:…«/X»``) — they nest a ``«``,
+#     so the generic inline sweep below cannot touch them; they must go first.
+#   • Links (``«LN:…«/LN»`` / ``«XL:…«/XL»``) → their display text (last field).
+#   • Everything else is inline prose typography — paragraph «P», «I»/«B»/«SC»,
+#     «SPAN[…]»/«DIV[…]», the size family, «SH», «CTR», «BR», … — which wraps
+#     real text: drop the delimiters, KEEP the content between them.  One
+#     generic ``«[^«»]*»`` sweep does this for every such marker (present and
+#     future), so a newly-added inline marker needs no change here.
+_DROP_MARKER_RE = _re.compile(
+    r"«TITLE:[\s\S]*?«/TITLE»"
+    r"|«FN(?:\[[^\]]*\])?:[\s\S]*?«/FN»"
+    r"|«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»"
+    r"|«CHEM:[\s\S]*?«/CHEM»"
+    r"|«HTMLTABLE:[\s\S]*?«/HTMLTABLE»"
+    r"|«EQNGROUP»[\s\S]*?«/EQNGROUP»"
+    r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
+    r"|«(?:OUTLINE|PLATE_OUTLINE):[\s\S]*?«/(?:OUTLINE|PLATE_OUTLINE)»"
+    r"|«SEC:[\s\S]*?«/SEC»"
+    r"|\{\{IMG:[^}]*\}\}"
+    r"|\{\{TABLEH?:[\s\S]*?\}TABLE\}"
+    r"|\{\{VERSE:[\s\S]*?\}VERSE\}"
+    r"|\{\{LEGEND:[\s\S]*?\}LEGEND\}"
+)
+_INLINE_MARKER_RE = _re.compile(r"«[^«»]*»")
+_LINK_RE = _re.compile(r"«(?:LN|XL):([\s\S]*?)«/(?:LN|XL)»")
+
+
+def _link_display(m: "_re.Match") -> str:
+    """A link → its display text (the field after the last top-level ``|``),
+    with any nested inline markers (`«I»q.v.«/I»`) stripped to plain text."""
+    inner = m.group(1)
+    disp = inner.rsplit("|", 1)[-1] if "|" in inner else inner
+    return _INLINE_MARKER_RE.sub("", disp)
+
+
+def markers_to_text(text: str, *, sep: str = " ") -> str:
+    """Convert a marker-stream ``body`` into plain text (search / previews).
+
+    The sole marker→text converter (see the policy comment above).  Block
+    markers are replaced with ``sep`` so adjacent words stay separated; inline
+    markers lose their delimiters but keep their text; links collapse to their
+    display.  Whitespace is NOT collapsed and newlines are preserved, so a
+    caller can still do line-based work (e.g. the preview skips a leading
+    caption line); use ``" ".join(markers_to_text(b).split())`` for a flat
+    string.
+    """
+    text = strip_page_markers(text, replacement=sep)
+    text = _DROP_MARKER_RE.sub(sep, text)
+    text = _LINK_RE.sub(_link_display, text)
+    text = _INLINE_MARKER_RE.sub("", text)
+    return text
+
+
 # ── TABLE cell grammar ────────────────────────────────────────────────
 # Inside ``{{TABLE:…}TABLE}`` / ``{{TABLEH:…}TABLE}`` the body is rows joined
 # by ``\n`` and cells joined by `` | ``.  A cell may carry an OPTIONAL prefix

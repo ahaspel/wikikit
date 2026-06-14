@@ -27,8 +27,7 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
-from britannica.markers import (
-    IMG_RE, strip_page_markers, strip_title_markers)
+from britannica.markers import markers_to_text, strip_title_markers
 from britannica.export.plate_parent import find_parent_by_signal
 
 
@@ -763,66 +762,32 @@ def export_articles_to_json(
         for article in articles:
             xref_count, resolved_count = xref_counts[article.id]
             body = _body_for(article)
-            # (Chop-up at source — no title strip here.)
-            # First ~10 words of body for disambiguation in the index.
-            # Skip any leading paragraphs that are just image / table /
-            # verse markers — the preview should be TEXT, not raw markup
-            # (e.g. BEE's body starts with `{{IMG:…}}` followed by a
-            # caption; we want the caption/body, not the raw marker).
-            preview_source = body
-            preview_source = strip_page_markers(preview_source)
-            preview_source = IMG_RE.sub("", preview_source)
-            preview_source = re.sub(
-                r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", preview_source)
-            preview_source = re.sub(
-                r"\{\{VERSE:[\s\S]*?\}VERSE\}", "", preview_source)
-            preview_source = re.sub(
-                r"\{\{LEGEND:[\s\S]*?\}LEGEND\}", "", preview_source)
-            preview_source = re.sub(
-                r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
-                "", preview_source)
-            # Absorbed-subsection headings aren't part of the preview
-            preview_source = re.sub(
-                r"\u00abSEC:[^\u00ab]*\u00ab/SEC\u00bb",
-                "", preview_source)
-            # First non-empty, non-caption line of the preview source.
-            # When an article opens with an image whose caption sits in
-            # its own paragraph (not bundled into the IMG marker), that
-            # caption shouldn't be the preview — e.g. BEE opens with
-            # "Fig. 1.—Honey-bee (Apis mellifica)…" which should be
-            # skipped so the real body text follows.
+            # First ~10 words of the body for disambiguation in the index.
+            # The body is a marker stream; markers_to_text is the ONE converter
+            # to plain text — it strips every marker, including the
+            # «TITLE:…«/TITLE» head (the title is the separate `title` field), so
+            # the preview is body prose and never shows the title through the body.
+            preview_text = markers_to_text(body)
+            # First non-empty, non-caption line.  When an article opens with an
+            # image whose caption sits in its own paragraph, that caption
+            # shouldn't be the preview — e.g. BEE opens with "Fig. 1.—Honey-bee
+            # (Apis mellifica)…", skipped so the real body text follows.
             _caption_re = re.compile(
-                r"^\s*(?:\u00abSC\u00bb)?\s*(?:Fig|Plate)s?"
-                r"(?:\u00ab/SC\u00bb)?\s*\.?\s*"
-                r"(?:\d+|[IVX]+)?\b",
-                re.IGNORECASE,
-            )
+                r"^\s*(?:Fig|Plate)s?\s*\.?\s*(?:\d+|[IVX]+)?\b", re.IGNORECASE)
             first_line = ""
-            for ln in preview_source.split("\n"):
+            for ln in preview_text.split("\n"):
                 if not ln.strip():
                     continue
                 if _caption_re.match(ln):
                     continue
                 first_line = ln
                 break
-            # Strip footnotes for the preview
-            first_line = re.sub(r"\u00abFN(?:\[[^\]]+\])?:.*?\u00ab/FN\u00bb", "", first_line)
-            # Strip formatting markers but KEEP the text between them
-            first_line = re.sub(r"\u00abB\u00bb(.*?)\u00ab/B\u00bb", r"\1", first_line)
-            first_line = re.sub(r"\u00abI\u00bb(.*?)\u00ab/I\u00bb", r"\1", first_line)
-            first_line = re.sub(r"\u00abSC\u00bb(.*?)\u00ab/SC\u00bb", r"\1", first_line)
-            first_line = re.sub(r"\u00abSH\u00bb(.*?)\u00ab/SH\u00bb", r"\1", first_line)
-            # Strip link markers, keep display text
-            first_line = re.sub(r"\u00abLN:[^|]*\|([^«]*)\u00ab/LN\u00bb", r"\1", first_line)
-            # Strip any remaining markers
-            first_line = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", first_line)
             first_line = re.sub(r"  +", " ", first_line).strip()
             words = first_line.split()
             if len(words) > 10:
-                body_start = " ".join(words[:10]) + "\u2026"
+                body_start = " ".join(words[:10]) + "…"
             else:
                 body_start = " ".join(words)
-
             index.append({
                 "id": article.id,
                 "stable_id": stable_id(article),
