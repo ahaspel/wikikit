@@ -696,8 +696,8 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     # Fine-print family — a BLOCK of reduced-size type (EB1911's register for
     # notes / derivations / citations; the scans render it smaller).  We CARRY
     # the size (`«DIV[style:font-size:83%]»`) — the value the TS `smaller`/`sm`/
-    # `Fine` codes already resolve to — instead of body-text's old
-    # `_unwrap_layout_templates`, which dropped the styling to bare content.
+    # `Fine` codes already resolve to — rather than dropping the styling to
+    # bare content.
     "fine block":        {"css": "font-size:83%"},
     "eb1911 fine print": {"css": "font-size:83%"},
     "smaller block":     {"css": "font-size:83%"},
