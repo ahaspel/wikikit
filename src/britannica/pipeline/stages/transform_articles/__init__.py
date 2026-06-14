@@ -20,6 +20,7 @@ from britannica.db.session import SessionLocal
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
 from britannica.pipeline.stages.elements._title import (
     produce_title, decode_title, recover_title_from_section)
+from britannica.pipeline.stages.transform_articles.sections import stamp_sections
 from britannica.pipeline.stages.transform_articles.djvu_refs import (
     _DJVU_PAGE_REF_RE,
     _normalize_djvu_page_refs,
@@ -111,6 +112,11 @@ def preprocess_article(session, article) -> str:
         return ""
 
     body, title_raw = produce_title(joined, article.section_name)
+    # Tramp-stamp the major-section anchors the same way we stamp «TITLE»: this
+    # per-article site has the full raw, so the series-recognition that the
+    # context-free walk cannot do is legal here.  All the dirty logic is sealed
+    # in stamp_sections.
+    body = stamp_sections(body)
     if title_raw:
         return f"«TITLE»{title_raw}«/TITLE»{body}"
     return body
