@@ -249,13 +249,17 @@ def _plain_image_disentangle(raw, context):
 
 
 def _img_float_disentangle(raw, context):
-    """`{{img float|file=…|cap=…}}` / `{{figure|…}}` / `{{FI|…}}` — the floated-
-    figure template.  A pure image LEAF when captionless; with a caption it's the
-    same floated `{|`-figtable the source's own `{|`-figures use (image cell on
-    top, caption cell beneath), now routed through `_process_table_unified` so the
-    caption cell recurses through the WALKER.  Replaces render_markers'
-    `_rows_to_htmltable`, whose caption cell went through body-text
-    — the path that blocked the inline sweep.  Same float/width as before."""
+    """`{{img float|file=…|cap=…}}` / `{{figure|…}}` / `{{FI|…}}` — the floated
+    CAPTIONED FIGURE.  The template IS the binding: whatever it holds is the figure,
+    so we float exactly that — no guess about which surrounding prose "belongs."
+    Captionless → a bare image LEAF (the renderer floats it by carried align).  With
+    a caption → image + caption as ONE inline-float unit,
+    `«SPAN[style:float:…;width:Npx]»{{IMG}}«BR»<caption>«/SPAN»` (a centred block
+    span for align=center).  The span is inline-LEVEL, so it floats INSIDE the
+    paragraph and the prose wraps it — there is no `<p>`-breaking block.  NOT a
+    synthesized `{|`-table: that table costume was an imposed taxonomy (a figure is
+    not tabular), and a `<table>` can't live in a `<p>` — which is exactly what
+    guillotined the line above it."""
     from britannica.parsers import img_float as _imgf
     from britannica.pipeline.stages.elements._image import build_img_marker
     s = raw.strip()
@@ -266,16 +270,19 @@ def _img_float_disentangle(raw, context):
     if not parsed.caption:
         return build_img_marker(parsed.filename, None,
                                 align=parsed.align, width=parsed.width)
+    img = build_img_marker(parsed.filename, None, width=parsed.width)
+    # Recurse the WHOLE caption — its own `<br>`s and soft line-wraps ride verbatim
+    # (renderable), exactly as the figtable cell carried them.  Splitting on `<br>`
+    # and `.strip()`-ing each line eats the inter-line space and any thin-space
+    # indent, running words together (CITHARA "(Mus. Pio-Clementino)" → "(Mus.Pio-
+    # Clementino)", BRACHIOPODA's numbered key).  The leading «BR» is the only break
+    # WE add — the image-to-caption seam; everything below it is the source's.
+    cap = process_elements(parsed.caption, context, _allow_figure=False).strip()
     align = parsed.align or "left"
-    box = ("margin-right:auto;margin-left:auto" if align == "center"
-           else f"float:{align}")
-    style = ";".join(x for x in (box, f"width:{parsed.width}px"
-                                 if parsed.width else "") if x)
-    img_src = (f"[[File:{parsed.filename}|{parsed.width}px]]"
-               if parsed.width else f"[[File:{parsed.filename}]]")
-    return process_elements(
-        f'{{|style="{style}"\n|{img_src}\n|-\n|{parsed.caption}\n|}}',
-        context, _allow_figure=False)
+    w = f";width:{parsed.width}px" if parsed.width else ""
+    box = (f"display:block;margin-left:auto;margin-right:auto{w}"
+           if align == "center" else f"float:{align}{w}")
+    return f"«SPAN[style:{box}]»{img}«BR»{cap}«/SPAN»"
 
 
 def _image_leaf(raw):
@@ -310,13 +317,17 @@ def _image_leaf(raw):
 
 def _captioned_image(raw, context):
     """A captioned image — MediaWiki `thumb`/`frame`.  The image is a LEAF, the
-    CAPTION is the INNER: emit `{{IMG:…}}«BR»<caption>`, recursing the caption.
-    A caption is one or more `<br>`-separated lines (a legend) — emit a «BR» at
-    each break and recurse each line on its own; never flatten the caption."""
+    CAPTION is the INNER.  On the table model: split the raw bracket into its two
+    parts BEFORE recursing — image via `_img_marker`, caption via
+    `_thumb_caption_raw` — recurse the WHOLE caption (its own `<br>`s and whitespace
+    ride through verbatim), and reassemble `{{IMG:…}}«BR»<caption>`.  The single
+    «BR» is the image-to-caption seam; every break below it is the source's own.
+    Splitting the caption per-`<br>` and `.strip()`-ing each shard ate inter-line
+    whitespace (soft-wrap space, thin-space indents) — a lossy re-flatten of the
+    very caption this producer exists to keep intact."""
     from britannica.pipeline.stages.elements._image import _img_marker, _thumb_caption_raw
-    parts = [process_elements(ln, context, _allow_figure=False).strip()
-             for ln in re.split(r"<br\s*/?>", _thumb_caption_raw(raw), flags=re.IGNORECASE)]
-    return _img_marker(raw) + "«BR»" + "«BR»".join(p for p in parts if p)
+    cap = process_elements(_thumb_caption_raw(raw), context, _allow_figure=False).strip()
+    return _img_marker(raw) + "«BR»" + cap
 
 
 def _process_lb(inner, context):

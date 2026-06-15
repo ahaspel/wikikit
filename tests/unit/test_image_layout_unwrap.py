@@ -168,21 +168,23 @@ def test_sewing_machines_fig1_image_and_caption():
 # ── Tests: ABBEY_02_FLOAT — `{{img float}}` floater ─────────────
 
 def test_abbey_02_float_is_faithful_figure():
-    """`{{img float|cap=…}}` is a FLOATED faithful figure, not a captioned
-    IMG.  The image is a pure leaf (caption None); the cap text rides in a
-    cell with its «SC» markup intact and its <br>s carried as HTML — there is no
-    images and no clean_caption flattening."""
+    """`{{img float|cap=…}}` is a CAPTIONED_FIGURE — the image LEAF and its
+    recursed caption float together as ONE inline `«SPAN[style:float:…]»` unit
+    (not a table, not a captioned IMG).  The image is a pure leaf (caption None);
+    the caption recurses WHOLE — «SC» markup and its own `<br>`s carried verbatim —
+    and the prose wraps the float for free — no figtable, no per-line shred."""
     body = _transform(ABBEY_02_FLOAT, volume=1, page_number=44)
-    assert "float:" in body and 'class="figtable"' not in body
+    assert "«SPAN[style:float:left" in body and 'class="figtable"' not in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
     assert filename == "Abbey_02.png"
     assert caption is None, f"image must be a pure leaf, got caption {caption!r}"
-    # Caption is a cell with markup preserved (NOT flattened to prose).
+    # «SC» intact; the image-to-caption seam is «BR», the caption's own line-breaks
+    # ride through as <br> — carried verbatim, never shredded.
     assert "«SC»Fig. 2.«/SC»" in body
     assert "Plan of Coptic Monastery" in body
-    assert "<br" in body  # source <br>s carried verbatim (renderable), not «BR»
+    assert "«BR»" in body and "<br" in body
 
 
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────

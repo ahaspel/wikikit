@@ -3,7 +3,7 @@ Heb. «I»kinura, kinnor«/I»), one of the most ancient stringed
 instruments, traced back to 1700 «SC»B.C.«/SC» among the Semitic races,
 in Egypt, Assyria, Asia Minor, Greece and the Roman empire,
 whence the use of it spread over Europe. The main feature of
-the Greek «I»kithara«/I», its shallow sound-chest, being the most«HTMLTABLE:<table style="float:left;width:240px"><tr><td>{{IMG:EB1911 Cithara Fig. 1.jpg|width=240}}</td></tr><tr><td>«SC»Fig.«/SC» 1.—Nero Citharoedus («I»Mus.<br /> Pio-Clementino«/I»), showing back of a <br /> Roman Cithara.</td></tr></table>«/HTMLTABLE»
+the Greek «I»kithara«/I», its shallow sound-chest, being the most«SPAN[style:float:left;width:240px]»{{IMG:EB1911 Cithara Fig. 1.jpg|width=240}}«BR»«SC»Fig.«/SC» 1.—Nero Citharoedus («I»Mus.<br /> Pio-Clementino«/I»), showing back of a <br /> Roman Cithara.«/SPAN»
 important part of it, is also that in which developments are most
 noticeable; its contour varied considerably during the many
 musical ages, but the characteristic in respect of which it fore-shadowed
@@ -28,7 +28,7 @@ preservation. The sound-chest,
 in the form of an
 irregular square (17 cm. × 17
 cm.), is hollowed out of a
-solid block of wood from«HTMLTABLE:<table style="float:left;width:180px"><tr><td>{{IMG:EB1911 Cithara Fig. 2.jpg|width=180}}</td></tr><tr><td>«SC»Fig«/SC». 2.—Ancient Egyptian Cithara from Thebes. Museum of Antiquities, Leiden.</td></tr></table>«/HTMLTABLE»
+solid block of wood from«SPAN[style:float:left;width:180px]»{{IMG:EB1911 Cithara Fig. 2.jpg|width=180}}«BR»«SC»Fig«/SC». 2.—Ancient Egyptian Cithara from Thebes. Museum of Antiquities, Leiden.«/SPAN»
 the base, which is open;
 the little bar, seen through
 the open base and measuring
