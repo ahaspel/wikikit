@@ -282,10 +282,10 @@ def _image_leaf(raw):
     """Leaf-image TEMPLATE spellings → the `{{IMG:…}}` marker: `{{Css image crop|…}}`
     (a DjVu crop), `{{raw image|…}}` (a DjVu page-ref / filename), and the bare
     `[[File:…]]` / `[[Image:…]]` bracket.  The walker already bounds the template;
-    this just maps the three spellings to a filename and emits the leaf.  Any
-    caption that follows is its OWN sibling block, recursed in place by the
-    dispatch — not folded in here (there is no figure unit to fold into).  The
-    bracket's in-`[[…]]` trailing text is ALT and is dropped ([[feedback_no_caption_concept]])."""
+    this just maps the three spellings to a filename and emits a TRUE leaf.  A
+    captioned image (`thumb`/`frame` + caption) is NOT a leaf — it's a wrapper the
+    classifier routes to CAPTIONED_IMAGE (`_captioned_image`).  The bracket's
+    in-`[[…]]` trailing text is ALT and dropped ([[feedback_no_caption_concept]])."""
     from britannica.pipeline.stages.elements._image import (
         build_img_marker, djvu_crop_filename, _parse_crop_param,
         _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE, _img_marker)
@@ -306,6 +306,17 @@ def _image_leaf(raw):
     filename = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
                 if dref else arg)
     return build_img_marker(filename)
+
+
+def _captioned_image(raw, context):
+    """A captioned image — MediaWiki `thumb`/`frame`.  The image is a LEAF, the
+    CAPTION is the INNER: emit `{{IMG:…}}«BR»<caption>`, recursing the caption.
+    A caption is one or more `<br>`-separated lines (a legend) — emit a «BR» at
+    each break and recurse each line on its own; never flatten the caption."""
+    from britannica.pipeline.stages.elements._image import _img_marker, _thumb_caption_raw
+    parts = [process_elements(ln, context, _allow_figure=False).strip()
+             for ln in re.split(r"<br\s*/?>", _thumb_caption_raw(raw), flags=re.IGNORECASE)]
+    return _img_marker(raw) + "«BR»" + "«BR»".join(p for p in parts if p)
 
 
 def _process_lb(inner, context):
@@ -776,6 +787,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # dispatch, never folded into the image (SUNDEW Figs 2/4).
     "IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
+    # CAPTIONED_IMAGE is the WRAPPER form (MediaWiki `thumb`/`frame`): the image is
+    # the leaf, the in-bracket caption is the INNER — recursed by `_captioned_image`.
+    "CAPTIONED_IMAGE": lambda raw, inner, ctx, reg:
+        _captioned_image(raw, ctx),
     "RAW_IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
     "PLAIN_IMAGE": lambda raw, inner, ctx, reg:

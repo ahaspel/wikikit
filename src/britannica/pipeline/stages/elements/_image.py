@@ -33,6 +33,34 @@ def _img_marker(raw: str) -> str:
     return f"{{{{IMG:{fn}{meta}}}}}"
 
 
+# A `thumb`/`frame` image renders its trailing positional as a CAPTION below the
+# image (MediaWiki semantics), unlike a plain image whose trailing text is alt.
+# These recognize the layout params so the single image producer can peel the
+# caption off the tail.
+_THUMB_KW = ("thumb", "thumbnail", "frame")
+_IMG_LAYOUT_PARAM = re.compile(
+    r"^\s*(?:\d+\s*px|x\d+\s*px|\d+x\d+\s*px|upright(?:=[\d.]+)?|"
+    r"center|centre|right|left|none|thumb|thumbnail|frame|frameless|border|"
+    r"\w+\s*=[^|]*)\s*$", re.IGNORECASE)
+
+
+def _thumb_caption_raw(raw: str) -> str:
+    """The trailing CAPTION of a `thumb`/`frame` image, RAW, or "".
+
+    MediaWiki renders a thumb/frame image's trailing positional below the image
+    — a real caption — whereas a plain image's trailing text is alt.  The single
+    image producer peels this off and emits `{{IMG:…}}«BR»<caption>` (the
+    `[[File:]]<br>caption` shape every other figure has).  "" for a plain image."""
+    inner = re.sub(r"\]\]\s*$", "", re.sub(r"^\s*\[\[(?:File|Image):", "", raw, flags=re.I))
+    parts = inner.split("|")
+    if not any(p.strip().lower() in _THUMB_KW for p in parts[1:]):
+        return ""
+    for i in range(1, len(parts)):
+        if not _IMG_LAYOUT_PARAM.match(parts[i]):
+            return "|".join(parts[i:]).strip()
+    return ""
+
+
 def build_img_marker(
     filename: str,
     caption: str | None = None,

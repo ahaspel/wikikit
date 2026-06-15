@@ -73,9 +73,16 @@ class TestAtomicLabels:
         assert ce.label == "HIEROGLYPH"
 
     def test_image(self):
+        # A bare image is a LEAF — IMAGE.
+        ce = classify(SHAPE_DOUBLE_BRACKET, "[[File:Foo.jpg|200px]]")
+        assert ce.label == "IMAGE"
+
+    def test_captioned_image(self):
+        # A `thumb`/`frame` bracket carrying a caption is a WRAPPER (image leaf +
+        # caption inner), routed to its own producer — not a bare image leaf.
         ce = classify(SHAPE_DOUBLE_BRACKET,
                        "[[File:Foo.jpg|thumb|caption]]")
-        assert ce.label == "IMAGE"
+        assert ce.label == "CAPTIONED_IMAGE"
 
     def test_image_float(self):
         ce = classify(SHAPE_DOUBLE_BRACE,

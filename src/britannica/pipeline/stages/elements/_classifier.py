@@ -180,9 +180,12 @@ def _derive_html_self_closing_label(raw: str) -> str:
 
 
 def _derive_double_bracket_label(raw: str) -> str:
+    from britannica.pipeline.stages.elements._image import _thumb_caption_raw
     m = _BRACKET_PREFIX_RE.match(raw)
     if m and m.group(1).lower() in {"file", "image"}:
-        return "IMAGE"
+        # A `thumb`/`frame` bracket carrying a caption is a WRAPPER (image leaf +
+        # caption inner) the dedicated producer recurses — not a bare image leaf.
+        return "CAPTIONED_IMAGE" if _thumb_caption_raw(raw) else "IMAGE"
     if m and m.group(1).lower() == "author":
         return "AUTHOR_LINK"
     if re.match(r"\[\[\s*1911\s+[Ee]ncyclop", raw, re.IGNORECASE):
