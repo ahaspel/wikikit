@@ -35,7 +35,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_INLINE_IMAGE,
     SHAPE_OUTLINE,
     SHAPE_PAGE,
     SHAPE_TITLE,
@@ -139,69 +138,6 @@ _SPAN_TITLE_OPEN_RE = re.compile(
 # decide carry-vs-drop (imported by the producer in `__init__.py`).
 _TRANSLIT_CONTENT_RE = re.compile(
     r"\{\{\s*(?:Greek|Hebrew|polytonic)|[Ͱ-Ͽἀ-῿֐-׿]", re.IGNORECASE)
-
-# DOUBLE_BRACKET image probe — `[[File:…]]` / `[[Image:…]]`.  No longer a
-# recognizer (the `[[…]]` opener is bounded by `_construct_end` and the classifier
-# names the kind); kept ONLY for the inline-vs-block structural decision in the
-# walk loop (`_is_inline_image_position`), the one image judgment the walker owns.
-_IMAGE_RE = re.compile(
-    r"\[\[(?:File|Image):[^\]]+\]\]", re.IGNORECASE)
-
-
-# Inline-image structural recognition.  At the moment the walker has just
-# matched an `[[File:…]]` (no EXTCAP), it checks the text immediately AFTER
-# `]]` for an inline-glyph signal: same-line content that ISN'T a line-ender
-# (`\n` / `<br>`) and ISN'T a wikitable cell separator (`|`).  No bytes
-# consumed; the placeholderized text keeps its surrounding context.  When the
-# signal is present the walker emits SHAPE_INLINE_IMAGE instead of
-# SHAPE_DOUBLE_BRACKET; the classifier maps that shape to its own label and
-# the dedicated producer stamps `align=inline`.
-_BR_TAG_RE = re.compile(r"<br\s*/?\s*>", re.IGNORECASE)
-
-
-def _is_inline_image_position(text: str, pos: int) -> bool:
-    """True iff position ``pos`` (right after a matched `]]`) sits in an
-    inline-prose context — same-line non-structural content follows.
-
-    Structural separators / closers are NOT inline; they indicate the
-    image sits at a container boundary where the container owns layout:
-      * line-ender ``\\n`` or ``<br>`` — paragraph / line break
-      * wikitable cell pipe ``|`` (``|`` or ``||`` or ``|-``)
-      * template close ``}`` (``}}`` of a wrapper template)
-      * template open ``{`` (``{{brace2|…}}`` decoration, ``{{Ts|…}}``
-        cell styling — non-prose; an inline content template would be
-        inside a body sentence and the image would have at least one
-        separating character, e.g. punctuation or space-then-alpha)
-      * HTML close tag ``</…>`` (``</td>``, ``</tr>``, ``</span>``, …)
-        — the image is the LAST thing in its enclosing HTML element.
-    Inline-element OPEN tags (``<ref>``, ``<sub>``, etc.) are NOT
-    structural separators here — same-line elements after an image
-    are part of the inline flow.
-    """
-    end = pos
-    n = len(text)
-    while end < n and text[end] in " \t":
-        end += 1
-    if end >= n:
-        return False
-    # «BR» — the line-break marker `_styled_br_to_marker` injects for a
-    # styled/centred wrapper's top-level `<br>` BEFORE this inner walk runs.
-    # It is a line break exactly like `\n` / `<br>` (the literal form is caught
-    # below), so an image followed by it is a block figure (image / caption),
-    # not an inline glyph.  Without this the centred-figure idiom
-    # `{{c|[[File:…]]<br>caption}}` mis-reads the image as inline because the
-    # boundary now sits in `<br>`→«BR» mangled text (HYDRAULICS Figs 209/210).
-    if text.startswith("«BR»", end):
-        return False
-    nxt = text[end]
-    if nxt == "\n" or nxt == "|" or nxt == "}" or nxt == "{":
-        return False
-    if nxt == "<":
-        if _BR_TAG_RE.match(text, end):
-            return False
-        if end + 1 < n and text[end + 1] == "/":
-            return False
-    return True
 
 
 # PAGE — the injected page-break marker (\x01PAGE:N\x01), recognized as a leaf
@@ -681,17 +617,6 @@ def _walk_balanced_shapes(
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_BRACE_PIPE, text[opener_pos:end])
-
-        # Inline-image lookahead: a bare `[[File:…]]` sitting in same-line prose is
-        # structurally an inline glyph.  Runs on any bounded DOUBLE_BRACKET image
-        # (now bounded by `_construct_end` above).  Lookahead-only — no bytes
-        # absorbed; the surrounding text keeps its newlines and separators intact.
-        if (matched is not None
-                and matched[1] == SHAPE_DOUBLE_BRACKET
-                and matched[2].endswith("]]")
-                and _IMAGE_RE.match(matched[2])  # images only — not self-ref links
-                and _is_inline_image_position(text, matched[0])):
-            matched = (matched[0], SHAPE_INLINE_IMAGE, matched[2])
 
         if matched is None:
             # Opener-hint matched (the bytes LOOK like an opener) but

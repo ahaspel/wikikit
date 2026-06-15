@@ -26,7 +26,6 @@ SHAPE_BRACE_PIPE        = "BRACE_PIPE"        # {|...|}
 SHAPE_HTML_TAG          = "HTML_TAG"          # <NAME ...>...</NAME>
 SHAPE_HTML_SELF_CLOSING = "HTML_SELF_CLOSING" # <NAME ... />
 SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
-SHAPE_INLINE_IMAGE      = "INLINE_IMAGE"      # [[File:...]] in inline-prose context
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
@@ -42,7 +41,6 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_TAG,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_DOUBLE_BRACKET,
-    SHAPE_INLINE_IMAGE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_OUTLINE,
     SHAPE_BODY,
@@ -140,7 +138,7 @@ def strip_outer(shape: str, raw: str) -> str:
         # Leaf — the whole `\x01PAGE:N\x01` token is the marker; the
         # producer re-emits `raw`.
         return ""
-    if shape == SHAPE_DOUBLE_BRACKET or shape == SHAPE_INLINE_IMAGE:
+    if shape == SHAPE_DOUBLE_BRACKET:
         s = re.sub(r"^\[\[", "", raw)
         s = re.sub(r"\]\]\s*$", "", s)
         return s

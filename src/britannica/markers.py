@@ -123,11 +123,11 @@ def strip_title_markers(title: str) -> str:
 # ``filename`` is the first ``|``-separated segment; then zero or more
 # layout-metadata fields (``align``/``width``/``height``, in that order),
 # emitted only when non-default; then the caption is the rest (so it may
-# freely contain ``|`` and ``=``).  ``align=inline`` is the unified
-# inline-glyph form (folded in from the old ``{{IMG-INLINE:}}`` marker);
-# the inline-vs-block decision is made by the walker (SHAPE_INLINE_IMAGE
-# lookahead — see ``elements/_walker.py``), the classifier maps shape to
-# the INLINE_IMAGE label, and the producer stamps ``align=inline``.
+# freely contain ``|`` and ``=``).  Alignment is whatever the image's own
+# params carry (``center``/``left``/``right``); a bare image carries none and
+# renders inline by HTML default — there is no separate "inline" alignment,
+# because the raw never marks one (an image's layout is its surrounding
+# ``{{center}}`` / line-breaks / table cell, never a property of the image).
 #
 # The metadata alternation is value-typed (``align`` is a side word,
 # ``width``/``height`` are digits) so a prose caption can never be
@@ -142,7 +142,7 @@ def strip_title_markers(title: str) -> str:
 # regex source is mirrored verbatim in viewer.html.
 IMG_RE = _re.compile(r"\{\{IMG:[^}]*\}\}")
 
-_IMG_META_FIELD = r"align=(?:center|left|right|inline)|width=\d+|height=\d+"
+_IMG_META_FIELD = r"align=(?:center|left|right)|width=\d+|height=\d+"
 IMG_PARTS_RE = _re.compile(
     r"\{\{IMG:([^|}]+)"
     r"((?:\|(?:" + _IMG_META_FIELD + r"))*)"

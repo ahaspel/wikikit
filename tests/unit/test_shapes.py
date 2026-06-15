@@ -27,9 +27,6 @@ from britannica.pipeline.stages.elements._shapes import (
 class TestShapeVocabulary:
     def test_shape_count(self):
         # 7 delimiter-balanced/text shapes + structural extras:
-        #   INLINE_IMAGE (``[[File:…]]`` in inline-prose context —
-        #     more specific than DOUBLE_BRACKET so producers don't
-        #     re-recognise),
         #   BODY (residual prose between other elements — task #14:
         #     SHAPE_BODY, owner-of-output principle says every span
         #     maps to one producer),
@@ -56,12 +53,14 @@ class TestShapeVocabulary:
         # Bump this count alongside ``_shapes.SHAPES``.  Includes PAGE
         # (``\x01PAGE:N\x01``) and TITLE (the ``«TITLE»…«/TITLE»`` stamp from
         # ``preprocess_article``) — both injected markers recognized as elements.
-        # Net −6 vs the 17-shape post-figure-delete state: the six STYLED-derived
+        # Net −7 vs the 17-shape post-figure-delete state: the six STYLED-derived
         # shapes (STRIP / PARAM / SHOULDER / RUNNING_HEADER / SPAN_TITLE /
-        # HTML_STYLE) dissolved into the generic DOUBLE_BRACE / HTML_TAG shapes —
+        # HTML_STYLE) dissolved into the generic DOUBLE_BRACE / HTML_TAG shapes,
+        # and INLINE_IMAGE dissolved into DOUBLE_BRACKET (the walker draws no
+        # inline-vs-block image distinction — the raw never marks one) —
         # recognition by name/attribute is the classifier's job, not the walker's
-        # — leaving 11.
-        assert len(SHAPES) == 11
+        # — leaving 10.
+        assert len(SHAPES) == 10
         assert SHAPE_HTML_TAG in SHAPES
         assert SHAPE_DOUBLE_BRACE in SHAPES
         assert SHAPE_PAIRED_WRAPPER in SHAPES

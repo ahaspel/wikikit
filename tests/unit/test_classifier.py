@@ -239,9 +239,9 @@ class TestClassifyArticle:
                 "[[File:F.jpg]] end")
         placeholderized, registry = classify_article(text)
         labels = sorted(ce.label for ce in registry.values())
-        # MATH + INLINE_IMAGE + the BODY spans between/around them
+        # MATH + IMAGE + the BODY spans between/around them
         assert "MATH" in labels
-        assert "IMAGE" in labels or "INLINE_IMAGE" in labels
+        assert "IMAGE" in labels
         assert labels.count("BODY") >= 1
         for ph in registry:
             assert ph in placeholderized

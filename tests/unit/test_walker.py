@@ -21,7 +21,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_INLINE_IMAGE,
 )
 from britannica.pipeline.stages.elements._walker import walk
 
@@ -54,15 +53,15 @@ class TestWalkOutput:
         assert ph in text_out
 
     def test_image_link(self):
-        # `[[File:…]]` in inline-prose context now classifies as
-        # SHAPE_INLINE_IMAGE rather than SHAPE_DOUBLE_BRACKET — the
-        # walker emits a more specific label so producers (figure /
-        # inline-glyph) can dispatch without re-recognising.
+        # `[[File:…]]` is ONE shape regardless of context — SHAPE_DOUBLE_BRACKET.
+        # The walker draws no inline-vs-block distinction (the raw never marks
+        # one); the image is a leaf, and its surrounding prose / line-breaks /
+        # table cell do the layout.
         text_out, extracts = walk("body [[File:Foo.jpg]] end")
         real = _non_body(extracts)
         assert len(real) == 1
         _ph, shape, raw = real[0]
-        assert shape == SHAPE_INLINE_IMAGE
+        assert shape == SHAPE_DOUBLE_BRACKET
         assert raw.startswith("[[File:")
 
     def test_self_closing_ref(self):
@@ -143,9 +142,9 @@ class TestWalkOutput:
         real = _non_body(extracts)
         assert len(real) == 2
         shapes = sorted(s for _ph, s, _raw in real)
-        # `<math>` → HTML_TAG; `[[File:F.jpg]]` in inline-prose
-        # context → INLINE_IMAGE (more specific than DOUBLE_BRACKET).
-        assert shapes == [SHAPE_HTML_TAG, SHAPE_INLINE_IMAGE]
+        # `<math>` → HTML_TAG; `[[File:F.jpg]]` → DOUBLE_BRACKET (one image
+        # shape, no inline distinction).  sorted() orders them alphabetically.
+        assert shapes == [SHAPE_DOUBLE_BRACKET, SHAPE_HTML_TAG]
         for ph, _shape, _raw in extracts:
             assert ph in text_out
 
@@ -215,7 +214,7 @@ class TestGenericDoubleBraceRecognizer:
         assert raw == src, "the generic recognizer must capture the WHOLE template"
         # The inner image is NOT separately lifted (it rides as raw bytes inside
         # the familytree extract for the producer's own recursion).
-        assert not any(s == SHAPE_INLINE_IMAGE for _p, s, _r in extracts)
+        assert not any(s == SHAPE_DOUBLE_BRACKET for _p, s, _r in extracts)
         assert "[[File:X.png|18px]]" in raw and "{{sc|Y}}" in raw
 
     def test_unknown_named_template_still_bounded_as_double_brace(self):

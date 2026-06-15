@@ -51,7 +51,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_INLINE_IMAGE,
     SHAPE_OUTLINE,
     SHAPE_PAGE,
     SHAPE_TITLE,
@@ -671,8 +670,6 @@ def _derive_label(
         return _derive_html_self_closing_label(raw)
     if shape == SHAPE_DOUBLE_BRACKET:
         return _derive_double_bracket_label(raw)
-    if shape == SHAPE_INLINE_IMAGE:
-        return "INLINE_IMAGE"
     if shape == SHAPE_DOUBLE_BRACE:
         return _derive_double_brace_label(raw, inner_text)
     if shape == SHAPE_OUTLINE:
@@ -754,10 +751,9 @@ def classify(
     label = _derive_label(shape, raw, inner_text, inner_registry)
 
     # NOTE: the walker is conservative — what comes in goes out unchewed.
-    # An IMAGE element therefore carries its raw `[[File:…]]` + trailing
-    # caption span VERBATIM; the file-ref/caption split is the producer's
-    # job (`_process_image_from_raw`), not a classify-time fold.  No
-    # per-label inner_text rewriting happens here.
+    # An IMAGE element therefore carries its raw `[[File:…]]` VERBATIM; the
+    # file-ref/params parse is the producer's job (`_image_leaf` → `_img_marker`),
+    # not a classify-time fold.  No per-label inner_text rewriting happens here.
 
     return ClassifiedElement(
         label=label,

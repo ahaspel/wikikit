@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._image import _process_image_from_raw
 from britannica.pipeline.stages.elements._leaf import (
     _format_structural_formula,
     _is_structural_formula,

@@ -25,7 +25,6 @@ from britannica.pipeline.stages.elements._ref import (
 )
 from britannica.pipeline.stages.elements._image import (
     _process_genealogy,
-    _process_image_from_raw,
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
@@ -771,19 +770,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, ctx, reg:
         _process_ref(raw, inner, ctx.ref_bodies),
-    # IMAGE is just a figure whose raw the old `_process_image` folded (caption
-    # into the marker) and refused to recurse (dropping sibling blocks like a
-    # following {{center|…}} — SUNDEW Figs 2/4).  Route it through the ONE
-    # unified recursive producer (`_process_table_unified`): image → leaf, caption → its own «CTR» block.
+    # IMAGE is a pure leaf (`_image_leaf` → an `{{IMG:…}}` marker): the image
+    # carries only the raw's own params, and any caption that follows is its OWN
+    # sibling block — a `{{center|…}}`, a table cell — recursed in place by the
+    # dispatch, never folded into the image (SUNDEW Figs 2/4).
     "IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
-    # INLINE_IMAGE is the one image label the unified producer can't own: an inline glyph
-    # needs `align=inline` (so the viewer renders it at source size in the
-    # prose flow), and the unified producer's leaf is label-blind — it works from raw and
-    # can't know the walker classified this one inline.  Keep the inline-aware
-    # producer (a retained leaf utility) for it.
-    "INLINE_IMAGE": lambda raw, inner, ctx, reg:
-        _process_image_from_raw(raw, inline=True),
     "RAW_IMAGE": lambda raw, inner, ctx, reg:
         _image_leaf(raw),
     "PLAIN_IMAGE": lambda raw, inner, ctx, reg:
