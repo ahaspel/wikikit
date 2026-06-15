@@ -304,7 +304,13 @@ _CHEM_BRACKET_IMG_RE = re.compile(
 # (`PbO<sub>2</sub><big>+</big>2H<sub>2</sub>SO<sub>4</sub> ＝ …`) reactions, and
 # the acetone synthesis (vol 15).  Tight by audit: 5 such tables corpus-wide,
 # zero math-layout / taxonomy false-positives.
-_CHEM_BIG_OP_RE = re.compile(r"<big>\s*[-+−±=＋＝]")
+# `<big>` operators normalise to `<span style="font-size:larger">` in preprocess
+# (`_normalize_size_tags`); the classifier reads RAW (pre-walk — still the HTML
+# span, not yet the «SPAN» marker), so accept the legacy `<big>` OR the styled
+# span.  The operator signal stays invariant under that styler conversion (the
+# invariance this predicate's docstring already claims).
+_CHEM_BIG_OP_RE = re.compile(
+    r"(?:<big>|<span\b[^>]*font-size:larger[^>]*>)\s*[-+−±=＋＝]")
 _CHEM_FORMULA_RE = re.compile(r"[A-Z][a-z]?<sub>\s*\d")
 
 
@@ -341,10 +347,11 @@ def _chem_normalize(s: str) -> str:
     strip layout templates / markers so formula tokens can be parsed."""
     s = re.sub(r"<sub>\s*(\d+)\s*</sub>", r"\1", s, flags=re.IGNORECASE)
     s = re.sub(r"\{\{\s*sub\s*\|\s*(\d+)\s*\}\}", r"\1", s, flags=re.IGNORECASE)
-    s = re.sub("«/?[A-Z]+»", "", s)       # marker runs (italic etc.)
+    s = re.sub("«/?[A-Z]+(?:\\[[^\\]]*\\])?»", "", s)  # marker runs (italic, «SPAN[style:…]»)
     s = re.sub(r"\{\{[^{}]*\}\}", "", s)             # residual templates
+    s = re.sub(r"</?(?:big|span)\b[^>]*>", "", s, flags=re.IGNORECASE)  # <big>/<span …> stylers
     s = (s.replace("&nbsp;", " ").replace("&emsp;", " ").replace("&ensp;", " ")
-          .replace("·", "").replace("<big>", "").replace("</big>", ""))
+          .replace("·", ""))
     return s.translate(_CHEM_SUB_DIGITS)
 
 

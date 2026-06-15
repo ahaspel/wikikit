@@ -181,6 +181,26 @@ def _normalize_bdo(text: str) -> str:
     return _BDO_CLOSE.sub("</span>", text)
 
 
+# `<small>…</small>` / `<big>…</big>` — HTML semantic size tags whose entire
+# UA-stylesheet definition is `small{font-size:smaller}` / `big{font-size:larger}`.
+# They ARE styled spans by another name (like `<bdo>` above), so normalise them to
+# the canonical styled-`<span>` here and the existing styler path carries them
+# (recurses the inner, emits «SPAN[style:font-size:smaller]»).  The `smaller`/`larger`
+# keyword steps the size exactly as the tag does — not a pinned percentage.
+_SMALL_OPEN = re.compile(r"<small\b[^>]*>", re.IGNORECASE)
+_BIG_OPEN = re.compile(r"<big\b[^>]*>", re.IGNORECASE)
+_SIZE_TAG_CLOSE = re.compile(r"</(?:small|big)>", re.IGNORECASE)
+
+
+def _normalize_size_tags(text: str) -> str:
+    low = text.lower()
+    if "<small" not in low and "<big" not in low:
+        return text
+    text = _SMALL_OPEN.sub('<span style="font-size:smaller">', text)
+    text = _BIG_OPEN.sub('<span style="font-size:larger">', text)
+    return _SIZE_TAG_CLOSE.sub("</span>", text)
+
+
 # Presentational HTML entities (`&nbsp;`, `&mdash;`, `&alpha;`, `&ldquo;`, `&emsp;`,
 # …) are display sugar the SOURCE spells as entities; carried verbatim, the uniform-
 # escaping viewer turns `&name;` into a visible `&name;` leak.  Decode them to their
@@ -241,6 +261,7 @@ def _clean_and_heal(stream: str) -> str:
     stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
     stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
+    stream = _normalize_size_tags(stream)                  # <small>/<big> → font-size:smaller/larger <span>
     # ── page-transition healing (only correct on the continuous stream) ──
     stream = heal_page_seams(stream)
     # Half-word templates the seam weld couldn't pair (split differently than the
