@@ -471,6 +471,9 @@ _SPACER_NAMES: frozenset[str] = frozenset({
     "flex wrap centre/s", "flex wrap centre/e",
     "familytree/start", "familytree/end", "tree chart/start", "tree chart/end",
     "chart2/start", "chart2/end",
+    # Hyphenated-word END: `{{hwe|frag|WORD}}` renders nothing — the full word
+    # already appeared once at its matching `{{hws}}` (→ FRAME).
+    "hwe", "hyphenated word end",
 })
 
 # Layout FRAMES that carry content — `{{outdent|text}}`, `{{hanging indent|text}}`,
@@ -494,6 +497,10 @@ _FRAME_NAMES: frozenset[str] = frozenset({
     # (phonetic), `{{definition|term|gloss}}`, `{{nsl|disp|…}}` (navigation),
     # `{{wdl|Qid|Display}}` (Wikidata link → its display text).
     "vrl", "phn", "definition", "nsl", "wdl",
+    # Hyphenated-word START: `{{hws|frag|WORD}}` carries the full word as its
+    # longest positional slot, so FRAME drops the wrapper and recurses the word —
+    # the page-split word reconstructed once, at its start.  (`hwe` → SPACER.)
+    "hws", "hyphenated word start",
 })
 
 # Front-matter / index / page-chrome / Wikisource-maintenance templates → empty.
@@ -517,12 +524,8 @@ _CHROME_EMPTY_NAMES: frozenset[str] = frozenset({
     "ambox", "suspect", "main other", "hidden text",
     # `{{EB1911 Page Heading}}` page chrome → empty.  It reaches the walk directly
     # now — preprocess no longer strips it, so the classifier is its sole owner
-    # (same posture as `{{nop}}` → SPACER).  `{{hws}}`/`{{hwe}}` differ: preprocess
-    # RECONSTRUCTS their split word before the walk, so they only reach this dispatch
-    # via the crash-check's RAW scan — the empty route here is that diagnostic's
-    # guard, never the production path (where the reconstructed word must survive).
+    # (same posture as `{{nop}}` → SPACER).
     "eb1911 page heading",
-    "hws", "hwe", "hyphenated word start", "hyphenated word end",
 })
 
 # Footnote-list emitters → empty (footnotes render inline in this edition).

@@ -50,20 +50,6 @@ from britannica.pipeline.stages.source_cleanup import (
 # registry — same as their pipe-form siblings.  Likewise `{{word-spacing|N|X}}` is a
 # `word-spacing` styler (the param-styler registry), not a strip.
 
-_HWS = r"\{\{\s*(?:hws|hyphenated\s+word\s+start)\s*\|[^{}|]*\|([^{}]*)\}\}"
-_HWE = r"\{\{\s*(?:hwe|hyphenated\s+word\s+end)\s*\|[^{}|]*\|[^{}]*\}\}"
-
-# Survivor half-word templates — an ``{{hws}}``/``{{hwe}}`` pair that the seam
-# rule above could NOT weld (the two halves don't straddle a single ``\x01PAGE``
-# marker because the OCR split them differently, or one half stands alone).  The
-# full word is param 2 of EACH, so the faithful render is: emit the whole word
-# ONCE at the START (``{{hws|appear|appearances}}`` → ``appearances``) and drop
-# the END (``{{hwe|ances|appearances}}`` → ``""``, the whole word already shown
-# by its start).  Same "emit the full word once" semantics as the seam weld.
-_HWS_STANDALONE = re.compile(_HWS, re.IGNORECASE)
-_HWE_STANDALONE = re.compile(_HWE, re.IGNORECASE)
-
-
 def make_stream(pages) -> str:
     """Join prepared (corrected, quote-run-converted) article pages into one
     continuous volume stream, page breaks riding as ``\\x01PAGE:N\\x01``.
@@ -196,10 +182,8 @@ def _clean_and_heal(stream: str) -> str:
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
     stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
     stream = _normalize_size_tags(stream)                  # <small>/<big> → font-size:smaller/larger <span>
-    # Half-word templates the seam weld couldn't pair (split differently than the
-    # page marker, or standing alone): emit the full word once at the start, drop
-    # the end — the same "whole word once" semantics as the seam weld above.
-    stream = _HWS_STANDALONE.sub(r"\1", stream)            # {{hws|frag|WORD}} → WORD
-    stream = _HWE_STANDALONE.sub("", stream)               # {{hwe|frag|WORD}} → ""
+    # `{{hws}}`/`{{hwe}}` are NOT reconstructed here — they reach the walk as raw
+    # templates and are handled by recognition: `hws` → FRAME (recurse the full
+    # word, its longest positional slot), `hwe` → SPACER (renders nothing).
     stream = _decode_entities(stream)             # presentational HTML entities → chars
     return stream
