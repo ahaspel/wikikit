@@ -1,10 +1,5 @@
 import re
 
-from britannica.db.models import (
-    Article, ArticleContributor, Contributor, ContributorInitials,
-)
-from britannica.db.session import SessionLocal
-
 # Matches: {{EB1911 footer initials|Full Name|Initials|name2=Name2|initials2=Init2}}
 #   or:    {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
 # The "double" variant uses four positional args instead of named
@@ -223,46 +218,5 @@ def _harvest_signature_contributors(
                 seen.add(cid)
                 found.append(cid)
     return found
-
-
-def extract_contributors_for_volume(volume: int) -> int:
-    """Bind each article to its contributors by scanning its WALKED body for
-    rendered initials signoffs — no raw re-parse, no position matching.
-
-    The body↔contributor link can't drift: the signoff renders inside the
-    article's own body, so one ``(…)`` scan gated on the vol-29 / front-matter
-    index picks up footers, Author signoffs, and bare parentheticals uniformly
-    and attributes each to the article it sits in.  Assumes a clean slate
-    (``rebuild_contributors`` truncates ``article_contributors`` first)."""
-    from britannica.db.models import ContributorInitials
-    from britannica.pipeline.stages.transform_articles import walk_article
-
-    session = SessionLocal()
-    try:
-        initials_map = {
-            ci.initials: ci.contributor_id
-            for ci in session.query(ContributorInitials).all()
-        }
-        articles = (
-            session.query(Article)
-            .filter(Article.volume == volume,
-                    Article.article_type != "plate")
-            .order_by(Article.page_start, Article.id)
-            .all()
-        )
-        created = 0
-        for article in articles:
-            body = walk_article(session, article)
-            for seq, cid in enumerate(
-                    _harvest_signature_contributors(body, initials_map),
-                    start=1):
-                session.add(ArticleContributor(
-                    article_id=article.id, contributor_id=cid, sequence=seq))
-                created += 1
-        session.commit()
-        return created
-
-    finally:
-        session.close()
 
 

@@ -11,9 +11,14 @@ in memory, and read straight into the JSON — the DB is never written.
 """
 from __future__ import annotations
 
-from britannica.db.models import Article
+from britannica.contributors.link_frontmatter import link_from_frontmatter
+from britannica.contributors.link_vol29_articles import link_vol29_articles
+from britannica.db.models import Article, ArticleContributor, ContributorInitials
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import export_articles_to_json
+from britannica.pipeline.stages.extract_contributors import (
+    _harvest_signature_contributors,
+)
 from britannica.pipeline.stages.resolve_xrefs import build_resolution_index
 from britannica.pipeline.stages.transform_articles import walk_article
 
@@ -31,6 +36,15 @@ def assemble_corpus(session):
     all_articles = session.query(Article).all()
     total = len(all_articles)
     print(f"  [assemble] walking {total} articles…", flush=True)
+    # Contributor harvest rides THIS walk (folds in the old Phase-2
+    # extract-contributors re-walk): each walked body is scanned for its rendered
+    # `(initials)` sign-offs and bound to the article.  Clean slate first — the old
+    # stage assumed `rebuild_contributors` had truncated the table.
+    session.query(ArticleContributor).delete()
+    initials_map = {
+        ci.initials: ci.contributor_id
+        for ci in session.query(ContributorInitials).all()
+    }
     corpus: dict[int, str] = {}
     for i, article in enumerate(all_articles, 1):
         body = walk_article(session, article)
@@ -42,6 +56,12 @@ def assemble_corpus(session):
             new_type = "article" if body.strip() else "front_matter"
             if article.article_type != new_type:
                 article.article_type = new_type
+            # 5e on the 5b walk: bind the footer sign-offs scanned from this body.
+            for seq, cid in enumerate(
+                    _harvest_signature_contributors(body, initials_map),
+                    start=1):
+                session.add(ArticleContributor(
+                    article_id=article.id, contributor_id=cid, sequence=seq))
         # Progress tick (flushed — corpus-export's stdout redirects to
         # rebuild.log, which block-buffers; without flush the whole walk is a
         # silent ~25-min black hole).
@@ -69,6 +89,15 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
     session = SessionLocal()
     try:
         all_articles, corpus = assemble_corpus(session)
+        # Contributor LINKING folded in (was Phase 3b / 3b2): the harvest above
+        # bound footer sign-offs; these bind the front-matter-table fallback and
+        # the vol-29 master-Index attributions.  In-process, because the corpus is
+        # in-memory and can't survive a hop out to separate CLI passes — they must
+        # land before the export reads `ArticleContributor`.
+        print("  [assemble] linking contributors (front-matter + vol-29)…",
+              flush=True)
+        link_from_frontmatter()
+        link_vol29_articles(apply_mode=True)
         print("  [assemble] building cross-reference resolution index…", flush=True)
         idx = build_resolution_index(all_articles, corpus=corpus)
         volumes = ([only_volume] if only_volume is not None
