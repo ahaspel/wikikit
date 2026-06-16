@@ -25,21 +25,6 @@ import re
 # carried, not dropped.  Removed so preprocess stops hiding the styler work.
 
 
-# ── section tag strip ──────────────────────────────────────────────
-# `<section begin="…"/>` and `<section end="…"/>` mark
-# Wikisource-side article boundaries.  Boundary detection has already
-# consumed them by the time `_transform_text_v2` runs; what remains
-# in the joined article text is noise that should not survive into
-# rendered output.
-_SECTION_TAG_RE = re.compile(
-    r'<section\s+(?:begin|end)="[^"]*"\s*/?>', re.IGNORECASE
-)
-
-
-def strip_section_tags(text: str) -> str:
-    return _SECTION_TAG_RE.sub("", text)
-
-
 # ── noinclude strip (table-marker preserving) ──────────────────────
 # Strip `<noinclude>…</noinclude>` blocks (page headers, quality
 # tags) BUT preserve any `{|` opener or `|}` closer inside them.
@@ -92,11 +77,6 @@ def close_unclosed_attr_quotes(text: str) -> str:
             return tag[:-1] + '">'
         return tag
     return _TAG_RE.sub(_fix, text)
-
-
-# ── line-ending normalization ──────────────────────────────────────
-def normalize_line_endings(text: str) -> str:
-    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 # ── HTML comment strip ─────────────────────────────────────────────

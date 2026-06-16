@@ -12,15 +12,8 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._leaf import (
-    _format_structural_formula,
-    _is_structural_formula,
-)
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry, IMAGE_LABELS, _PH)
-from britannica.pipeline.stages.elements._text import (
-    _strip_br,
-)
 from britannica.pipeline.stages.elements._table_fold import (
     fold_cell_attrs, fold_cell_styles, format_html_attrs)
 

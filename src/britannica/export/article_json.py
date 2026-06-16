@@ -473,7 +473,7 @@ def export_articles_to_json(
 
     ``body_override`` (article.id → body) is a test seam: when given,
     each article's body is taken from the map instead of ``article.body``.
-    Used by ``tools/diagnostics/verify_refactor.py --full`` to run the
+    Used to run the
     full pipeline (transform → export) against an in-memory shadow
     body without writing to the DB.  Production callers pass nothing
     and behavior is unchanged.

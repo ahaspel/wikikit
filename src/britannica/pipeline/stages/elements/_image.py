@@ -9,7 +9,6 @@ import hashlib
 import re
 
 from britannica.image_assets import GENEALOGY_IMAGES
-from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 

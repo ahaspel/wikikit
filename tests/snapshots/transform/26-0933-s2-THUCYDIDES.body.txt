@@ -84,7 +84,7 @@ the vast barbaric kingdom; and yet, as has been well said of him,
 the statesman will not find, if not solved, at any rate handled, in
 the pages of this universal master.” «FN:Freeman, «I»Historical Essays«/I», 2nd series, vol. iii. ; on the general questions of the structure of the work and the view of the war which it represents see «LN:Peloponnesian War|Peloponnesian War«/LN»; and «LN:Greece|Greece«/LN»; «I»Ancient History«/I», § Authorities.«/FN»«P»Such being the spirit in which he approached his task, it is
 interesting to inquire what were the points which he himself considered to be distinctive in his method of executing it.
-«SH»His Predecessors.«/SH»
+«SH:his-predecessors»His Predecessors.«/SH»
 His Greek predecessors in the recording of events had
 been, he conceived, of two classes. First, there were
 the epic poets, with Homer at their head, whose characteristic
@@ -104,14 +104,14 @@ to make their narratives trustworthy. Herodotus was presumably
 regarded by him as in the same general category.«P»In contrast with these predecessors Thucydides has subjected
 his materials to the most searching scrutiny. The ruling principle
 of his work has been strict adherence to carefully
-«SH»Distinctive Aim of Thucydides.«/SH»
+«SH:distinctive-aim-of-thucydides»Distinctive Aim of Thucydides.«/SH»
 verified facts. “ As to the deeds done in the war,
 I have not thought myself at liberty to record them on
 hearsay from the first informant or on arbitrary conjecture. My account rests either on personal knowledge or on
 the closest possible scrutiny of each statement made by others.
 The process of research was laborious, because conflicting accounts
 were given by those who had witnessed the several events, as
-partiality swayed or memory served them.”«P»It might be supposed that the speeches which Thucydides has introduced into his «I»History«/I» conflict with this standard of scientific accuracy; it is, therefore, well to consider their nature«SH»The Speeches.«/SH» and purpose rather closely. The speeches constitute between a fourth and a fifth part of the «I»History«/I». If they were eliminated, an admirable narrative would indeed remain, with a few comments, usually brief, on the more striking characters and events. But we should lose all the most vivid light on the inner workings of the Greek political mind, on the motives of the actors and the arguments which they used — in a word, on the whole play of contemporary feeling and opinion. To the speeches is due in no small measure the imperishable intellectual interest of the «I»History«/I», since it is chiefly by the speeches that the facts of the Peloponnesian War are so lit up with keen thought as to become illustrations of general laws, and to acquire a permanent suggestiveness for the student of politics. When Herodotus made his persons hold conversations or deliver speeches, he was following the precedent of epic poetry; his tone is usually colloquial rather than rhetorical; he is merely making thought and motive vivid in the way natural to a simple age. Thucydides is the real founder of the tradition by which historians were so long held to be warranted in introducing set speeches of their own composition. His own account of his practice is given in the following words: “As to the speeches made on the eve of the war, or in its course, I have found it difficult to retain a memory of the precise words which I had heard spoken; and so it was with those who brought me reportsPAGE:935But I have made the persons say what it seemed to me most opportune for them to say in view of each situation; at the same time I have adhered as closely as possible to the general sense of what
+partiality swayed or memory served them.”«P»It might be supposed that the speeches which Thucydides has introduced into his «I»History«/I» conflict with this standard of scientific accuracy; it is, therefore, well to consider their nature«SH:the-speeches»The Speeches.«/SH» and purpose rather closely. The speeches constitute between a fourth and a fifth part of the «I»History«/I». If they were eliminated, an admirable narrative would indeed remain, with a few comments, usually brief, on the more striking characters and events. But we should lose all the most vivid light on the inner workings of the Greek political mind, on the motives of the actors and the arguments which they used — in a word, on the whole play of contemporary feeling and opinion. To the speeches is due in no small measure the imperishable intellectual interest of the «I»History«/I», since it is chiefly by the speeches that the facts of the Peloponnesian War are so lit up with keen thought as to become illustrations of general laws, and to acquire a permanent suggestiveness for the student of politics. When Herodotus made his persons hold conversations or deliver speeches, he was following the precedent of epic poetry; his tone is usually colloquial rather than rhetorical; he is merely making thought and motive vivid in the way natural to a simple age. Thucydides is the real founder of the tradition by which historians were so long held to be warranted in introducing set speeches of their own composition. His own account of his practice is given in the following words: “As to the speeches made on the eve of the war, or in its course, I have found it difficult to retain a memory of the precise words which I had heard spoken; and so it was with those who brought me reportsPAGE:935But I have made the persons say what it seemed to me most opportune for them to say in view of each situation; at the same time I have adhered as closely as possible to the general sense of what
 was actually said.” So far as the language of the speeches is
 concerned, then, Thucydides plainly avows that it is mainly or
 wholly his own. As a general rule, there is little attempt to mark
@@ -136,7 +136,7 @@ may be sure, however, that, wherever Thucydides had any authentic
 clue to the actual tenor of a speech, he preferred to follow that
 clue rather than to draw on his own invention.«P»Why, however, did he not content himself with simply stating, in his own person, the arguments and opinions which he conceived
 to have been prevalent? The question must be viewed from the standpoint of a Greek in the 5th century «SC»B.C.«/SC» Epic poetry had then for many generations exercised
-«SH»The Greek View.«/SH»
+«SH:the-greek-view»The Greek View.«/SH»
 a powerful influence over the Greek mind. Homer had
 accustomed Greeks to look for two elements in any complete
 expression of human energy—first, an account of a man’s deeds,
@@ -167,7 +167,7 @@ which was peculiarly suited to the Italian genius.«P»The present division of t
 might well have proceeded from the author himself, as being a
 natural and convenient disposition of the contents. The first book, after a general introduction, sets forth
 the causes of the Peloponnesian War. The first nine
-«SH»The Eight Books.«/SH»
+«SH:the-eight-books»The Eight Books.«/SH»
 years of the war are contained in the second, third and
 fourth books—three years in each. The fifth book contains the
 tenth year, followed by the interval of the “insecure peace.” The
@@ -179,7 +179,7 @@ eight books was made by Thucydides himself is the fact that a
 different division, into thirteen books, was also current
 in antiquity, as appears from Marcellinus (§ 58). It is
 very improbable—indeed hardly conceivable—that this
-«SH»Origin of that Division.«/SH»
+«SH:origin-of-that-division»Origin of that Division.«/SH»
 should have been the case if the eight-book division
 had come down from the hand of the author. We may infer, then,
 that the division of the work into eight books was introduced at
@@ -193,7 +193,7 @@ which he used, the first 87 chapters of book i. contained about
 8vo text). (On the order of composition, see «LN:Peloponnesian War|Peloponnesian War«/LN», «I»ad init«/I».; and «LN:Greece|Greece«/LN»: «I»Ancient History«/I», § Authorities).«P»The division of the war by summers and winters (κατά Θέρος καί χειμώυα)—the end of the winter being considered as the end of the
 year—is perhaps the only one which Thucydides himself
 used, for there is no indication that he made any
-division of the «I»History«/I» into books. His “summer” «SH»Mode of Reckoning Time.«/SH»
+division of the «I»History«/I» into books. His “summer” «SH:mode-of-reckoning-time»Mode of Reckoning Time.«/SH»
 includes spring and autumn and extends, generally speaking, from March or the beginning of April to the end of October. His “winter”—November to February inclusive—means practically the period during which military operations, by land and sea, are wholly or partly suspended. When he speaks of “summer” and “winter” as answering respectively to “half” the year (v. 20, 3), the phrase is not to be pressed: it means merely that he divides his year into these two parts. The mode of reckoning is essentially a rough one, and is not to be viewed as if the commencement of summer or of winter could be precisely fixed to constant dates.
 For chronology, besides the festivals, he uses the Athenian list of
 archons, the Spartan list of ephors and the Argive list of priestesses of Hera.«P»There is no reference to the «I»History«/I» of Thucydides in the extant
@@ -208,7 +208,7 @@ recorded. The most elaborate ancient criticism on the
 diction and composition of Thucydides is contained in three essays
 by Dionysius of Halicarnassus.«P»Among the best MSS. of Thucydides, the Codex vaticanus 126 (11th century) represents a recension made in the Alexandrian or Roman age. In the first six books the number of
 passages in which the Vaticanus alone has preserved a true reading is comparatively small; in book vii. it is somewhat
-«SH»MSS., &c.«/SH»
+«SH:mss-c»MSS., &c.«/SH»
 larger; in book viii. it is so large that here the Vaticanus, as compared with the other MSS., acquires the character of a revised text. Other important MSS. are the Palatinus 252 (11th century); the Casselanus («SC»A.D.«/SC» 1252); the Augustanus monacensis 430 («SC»A.D.«/SC» 1301). A collation, in books i., ii., of two Cambridge MSS. of the 15th century (Nn. 3, 18; Kk. 5, 19) has been published by Shilleto. Several
 Parisian MSS. «SPAN[style:white-space:nowrap]»(H. C. A. F.),«/SPAN» and a Venetian MSS. (V.) collated by
 Arnold, also deserve mention. The Aldine edition was published

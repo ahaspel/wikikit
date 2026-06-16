@@ -21,10 +21,6 @@ from britannica.cleaners.unicode import normalize_unicode, replace_print_artifac
 from britannica.pipeline.stages.elements._title import (
     produce_title, decode_title, recover_title_from_section)
 from britannica.pipeline.stages.transform_articles.sections import stamp_sections
-from britannica.pipeline.stages.transform_articles.djvu_refs import (
-    _DJVU_PAGE_REF_RE,
-    _normalize_djvu_page_refs,
-)
 
 
 

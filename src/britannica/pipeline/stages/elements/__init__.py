@@ -16,7 +16,6 @@ import re
 from dataclasses import replace as _dc_replace
 from typing import Callable
 
-from britannica.parsers import img_float as _img_float_parser
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._ref import (
     _process_ref,
@@ -42,8 +41,6 @@ from britannica.pipeline.stages.elements._math import (
     _process_math_equation,
 )
 from britannica.pipeline.stages.elements._leaf import (
-    _format_structural_formula,
-    _is_structural_formula,
     _process_math,
     _process_poem,
     _process_ppoem,
@@ -485,7 +482,7 @@ def process_shoulder(raw, inner, context, inner_registry):
     `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the `…HeadingSmall` /
     `{{EB9 Margin Note}}` synonyms.
 
-    A marginal SECTION label: emit «SH»…«/SH» (what `detect_sections` keys on for
+    A marginal SECTION label: emit «SH:slug»…«/SH» (what `detect_sections` keys on for
     the TOC), recursing the LABEL (after the last top-level pipe, dropping
     `width=N`) so its inner `{{Fs}}` carries as the styler it is.  Replaces the
     flat `_convert_shoulder_headings`.  Body is the verbatim former `sh = …`
@@ -493,25 +490,22 @@ def process_shoulder(raw, inner, context, inner_registry):
     when `_SHOULDER_HEADING_RE` matched in the walker)."""
     from britannica.pipeline.stages.elements._tables import _SHOULDER_HEADING_RE
     from britannica.pipeline.stages.elements._link import _split_top_pipes
+    from britannica.util.strings import section_slug, strip_markers
     sh = _SHOULDER_HEADING_RE.match(raw)
     rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
     label = _split_top_pipes(rest)[-1]
-    # A shoulder heading is ONE marginal label that wrapped in the narrow
-    # margin column, so its `<br>`s are typography, not content.  Heal them
-    # BEFORE `<br>`→«BR» — left raw the break leaks into the heading AND
-    # poisons the `detect_sections` slug (`premonst-br-ratensians`):
-    #   lowercase continuation = end-of-line hyphenation → rejoin the split
-    #     word (`Premonst-<br>ratensians` → `Premonstratensians`);
-    #   capitalized continuation = a real hyphen that merely wrapped → keep
-    #     the hyphen (`Anglo-<br>Saxon` → `Anglo-Saxon`);
-    #   a bare wrap → a space (`quarrel<br>with` → `quarrel with`).
-    label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*(?=[a-z])", "", label)
-    label = re.sub(r"-\s*<[Bb][Rr]\b[^>]*>\s*", "-", label)
+    # A shoulder heading's `<br>`s are margin-column wrap typography, not
+    # content — drop them to a space.  Hyphenation across the wrap is NOT
+    # healed here: that is one leaf concern, not scattered into this producer.
     label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
     label = _styled_br_to_marker(label)
     content = process_elements(
         label, context, _allow_figure=False).strip()
-    return f"«SH»{content}«/SH»"
+    # Carry the section slug in the marker — minted here once by the one slug
+    # function, exactly as «SEC» carries its slug — so the viewer and export
+    # read it and nothing downstream recomputes it.
+    slug = section_slug(strip_markers(content))
+    return f"«SH:{slug}»{content}«/SH»"
 
 
 def process_running_header(raw, inner, context, inner_registry):

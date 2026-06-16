@@ -5,25 +5,9 @@ They carry *boundary identity* (the name `X`, used as the stable-ID tiebreaker
 `article.section_name`) but have **no visual output**.  Per the honesty model
 ([[consumed-markers-to-producers]]), the walker recognizes the tag and carries it
 raw; this producer is its sole consumer — it renders NOTHING.
-
-The name is metadata, not body content.  Today the boundary detector still
-captures `section_name` by its own means; once the super-walker is the honest
-segment-writer (B3) it will record the name as the article's boundary identity.
-``section_name`` exposes the extractor for that step.
 """
 
 from __future__ import annotations
-
-import re
-
-_SECTION_NAME_RE = re.compile(
-    r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
-
-
-def section_name(raw: str) -> str:
-    """The `begin="X"` name of a section tag, or "" for an end tag / no name."""
-    m = _SECTION_NAME_RE.match(raw.strip())
-    return m.group(1).strip() if m else ""
 
 
 def _process_section(raw: str) -> str:

@@ -3,7 +3,7 @@ assembled body — mechanical, no recognition.
 
 The major-section anchors `«SEC:slug|name»` are stamped pre-walk by
 `transform_articles.sections.stamp_sections` (that's where ALL the recognition
-lives); shoulder headings ride `«SH»…«/SH»` from their producer.  Here we just
+lives); shoulder headings ride `«SH:slug»…«/SH»` from their producer.  Here we just
 walk the body in document order and gather both into the `sections` list the
 article JSON carries — the TOC and the deep-link URLs read it.
 
@@ -15,18 +15,16 @@ from __future__ import annotations
 
 import re
 
-from britannica.util.strings import section_slug
+from britannica.util.strings import strip_markers
 
-# «SEC:slug|name» (major, L1) and «SH»…«/SH» (shoulder, L2), in document order.
-_ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH»(.*?)«/SH»", re.DOTALL)
-_MARKER = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
-_DEHYPH = re.compile(r"([a-z])-\s*([a-z])")
+# «SEC:slug|name» (major, L1) and «SH:slug»…«/SH» (shoulder, L2), in doc order.
+_ANCHOR_RE = re.compile(
+    r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»(.*?)«/SH»", re.DOTALL)
 
 
 def _sh_text(s: str) -> str:
-    """Shoulder label as plain text (markers off, line-wrap hyphen healed)."""
-    s = _MARKER.sub("", s)
-    s = _DEHYPH.sub(r"\1\2", s)
+    """Shoulder label as plain display text (markers off)."""
+    s = strip_markers(s)
     return s.replace(" ", " ").strip()
 
 
@@ -38,22 +36,15 @@ def detect_sections(body: str) -> list[dict]:
     ``…#section-<slug>`` URL resolves at render time.
     """
     sections: list[dict] = []
-    active = ""  # slug of the most recent L1 section (for margin-pointer dedup)
     for m in _ANCHOR_RE.finditer(body):
-        if m.group(3) is None:  # «SEC» — major section
+        if m.group(1) is not None:        # «SEC» — major section (L1)
             slug, name = m.group(1), m.group(2)
-            sections.append({
-                "title": name, "slug": slug, "id": f"section-{slug}",
-                "level": 1, "kind": "sec",
-            })
-            active = slug
-        else:                   # «SH» — shoulder
-            name = _sh_text(m.group(3))
-            slug = section_slug(name)
-            if slug and slug == active:
-                continue  # margin pointer (repeats the active section) — omit
-            sections.append({
-                "title": name, "slug": slug, "id": f"section-{slug}",
-                "level": 2, "kind": "sh",
-            })
+            level, kind = 1, "sec"
+        else:                             # «SH:slug» — shoulder (L2)
+            slug, name = m.group(3), _sh_text(m.group(4))
+            level, kind = 2, "sh"
+        sections.append({
+            "title": name, "slug": slug, "id": f"section-{slug}",
+            "level": level, "kind": kind,
+        })
     return sections

@@ -496,13 +496,6 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
     return plates, rest
 
 
-# Legacy per-page detect_boundaries(volume) — superseded by
-# super_detect_boundaries (super_walker → article slices).
-# Deleted 2026-05-27 per "one detect_boundaries function in the
-# codebase".  Remaining helpers in this file are utilities still
-# used by super_detect / super_walker / cli; the wholesale dead-
-# helper cleanup is a separate pass.
-
 def wipe_articles(volume: int) -> int:
     """Delete every Article in ``volume`` and all FK-dependent rows
     (ArticleSegment, ArticleContributor, CrossReference).

@@ -500,7 +500,7 @@ all series of configurations, independently of the particular
 initial conditions from which the gas may have started.«P»We begin with a general dynamical theorem, whose special application,
 when the dynamical system is identified with a gas, will
 appear later. Let «I»q«/I»<sub>1</sub>, «I»q«/I»<sub>2</sub>, ... «I»q<sub>n</sub>«/I», . be the generalized co-ordinates
-of any dynamical system, and let «I»p«/I»<sub>1</sub>, «I»p«/I»<sub>2</sub>, ... «I»p<sub>n</sub>«/I»«SH»Dynamical Basis.«/SH»
+of any dynamical system, and let «I»p«/I»<sub>1</sub>, «I»p«/I»<sub>2</sub>, ... «I»p<sub>n</sub>«/I»«SH:dynamical-basis»Dynamical Basis.«/SH»
 be the corresponding momenta. If the system is
 supposed to obey the conservation of energy and to move solely
 under its own internal forces, the changes in the co-ordinates and
@@ -576,7 +576,7 @@ and similarly of course for the molecules of other kinds:«P»«DIV[style:displa
 will be called a “normal state”; other states will be spoken of as
 “abnormal.” Let all possible states of the system be
 divided into small ranges of equal extension, and of
-these let a number P correspond to normal, and a number«SH»The Normal State.«/SH»
+these let a number P correspond to normal, and a number«SH:the-normal-state»The Normal State.«/SH»
 «I»p«/I» to abnormal, states. What is proved is that, as «I»s«/I», «I»s«/I»′, ... become
 very great, the ratio P/«I»p«/I» becomes infinite. Considering only
 systems starting in the «I»p«/I» abnormal ranges, it is clear, from the fact
@@ -595,7 +595,7 @@ in the limit, we may state as general laws «SPAN[style:white-space:nowrap]»tha
 «I»state«/I».«P»It will now be found that the various properties of gases follow
 from the supposition that the gas is in the normal state.«P»If each of the fractions (3) is put equal to 1/4«I»h«/I», it is readily found,
 from the first property of the normal state, that, of the
-«I»s«/I» molecules of the first kind, a number«SH»Law of Distribution of Velocities.«/SH»«P»
+«I»s«/I» molecules of the first kind, a number«SH:law-of-distribution-of-velocities»Law of Distribution of Velocities.«/SH»«P»
 
 «EQN:4»«MATH:s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
 
@@ -620,7 +620,7 @@ in the normal state: the law is often called «I»Maxwell’s Law of Distributio
 «EQN:7»«MATH:\tfrac{1}{2}\overline{mu^2}=\tfrac{1}{2}\overline{mv^2} =\tfrac{1}{2}\overline{mw^2}=\tfrac{1}{2}\overline{\alpha_1\theta^2_1} \cdots =1/4h«/MATH»«/EQN»
 
 
-«SH»Equipartition of Energy.«/SH»
+«SH:equipartition-of-energy»Equipartition of Energy.«/SH»
 showing that the mean energy represented by each
 term in E<sub>2</sub> (formula 2) is the same. These equations
 express the “law equipartition of energy,” commonly spoken
@@ -630,7 +630,7 @@ The law of equipartition shows that the various mean energies
 of different kinds are all equal, each being measured by the quantity
 1/4«I»h«/I». We have already seen that the mean energy increases
 with the temperature: it will now be supposed
-that the mean energy is exactly proportional to the«SH»Temperature.«/SH»
+that the mean energy is exactly proportional to the«SH:temperature»Temperature.«/SH»
 temperature. The complete justification for this supposition will
 appear later: a partial justification is obtained as soon as it is seen
 how many physical laws can be explained by it. We accordingly
@@ -660,7 +660,7 @@ and properties which are peculiar to the gaseous state.«P»A simple approximate
 gas on its containing vessel can be made by supposing that the molecules
 are so small in comparison with their distances
 apart that they may be treated as of infinitesimal size.
-Let a mixture of gases contain per unit volume «I»v«/I» molecules«SH»Pressure of a Gas.«/SH»
+Let a mixture of gases contain per unit volume «I»v«/I» molecules«SH:pressure-of-a-gas»Pressure of a Gas.«/SH»
 of the first kind, «I»v«/I»′ of the second kind, and so on. Let
 us fix our attention on a small area «I»d«/I»S of the boundary of thePAGE:689vessel, and let co-ordinate axes be taken such that the origin is in
 «I»d«/I»S, and the axis of «I»x«/I» is the normal at the origin into the gas. The
@@ -721,7 +721,7 @@ the forms«P»
 and pressure is known to be about 2·75 X 10<sup>19</sup>. If in formula
 (13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I» ′+ ...)2·75×10<sup>19</sup>
 T＝273, we obtain R＝1·35×10<sup>−16</sup> and this enables us
-to determine the mean velocities produced by heat«SH»Molecular Velocities.«/SH»
+to determine the mean velocities produced by heat«SH:molecular-velocities»Molecular Velocities.«/SH»
 motion in molecules of any given «I»mass«/I». For molecules of known
 gases the calculation is still easier. If ρ is the density corresponding
 to pressure «I»p«/I», we find that formula (11) assumes the form«P»«CTR»«I»p«/I»＝⅓ρC<sup>2</sup>,«/CTR»«P»where C is a velocity such that the gas would have its actual translational
@@ -735,7 +735,7 @@ and other velocities can readily be calculated.«P»From the value R＝1·35×10
 or aggregation of molecules, of mass 10<sup>−12</sup> grammes, ought to
 have a mean velocity of about 2 millimetres a second at
 0° C. Such a velocity ought accordingly to be set up in a
-particle of 10<sup>−12</sup> grammes mass immersed in air or liquid«SH»“Brownian Movements.”«/SH»
+particle of 10<sup>−12</sup> grammes mass immersed in air or liquid«SH:brownian-movements»“Brownian Movements.”«/SH»
 at 0° C., by the continual jostling of the surrounding molecules or
 particles. A particle of this mass is easily visible microscopically,
 and a velocity of 2 mm. per second would of course be visible if
@@ -754,7 +754,7 @@ of the reality of the heat-motion postulated by the kinetic theory.«P»«I»Dal
 as the sum of a number of separate terms, one for each
 gas in the mixture. Hence we have Dalton’s law:
 «I»The pressure of a mixture of gases is the sum of the pressures«/I»
-«I»which would be exerted separately by the several«/I»«SH»Pressure, Volume and Temperature Relations.«/SH»
+«I»which would be exerted separately by the several«/I»«SH:pressure-volume-and-temperature-relations»Pressure, Volume and Temperature Relations.«/SH»
 «I»constituents if each alone were present«/I».
 
 «I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I» ′+  . . .,
@@ -793,7 +793,7 @@ is given by the equation«P»«CTR»(«I»p«/I»+«I»a«/I»/«I»v«/I»<sup>
 found experimentally to be capable of representing the relation
 between «I»p«/I», «I»v«/I», and T over large ranges of values. (See «LN:Condensation of Gases|Condensation of Gases«/LN».)«P»Let us consider a single gas, consisting of N similar molecules in a
 volume «I»v«/I», and let the energy of each molecule, as in
-formula (2) be given by«SH»Calorimetry.«/SH»«P»
+formula (2) be given by«SH:calorimetry»Calorimetry.«/SH»«P»
 
 «EQN:15»E＝½«MATH:\sum_{\mbox{N}}«/MATH» («I»mu«/I»<sup>2</sup>«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)«/EQN»
 
@@ -820,7 +820,7 @@ we obtain«P»«CTR»«I»d«/I»Q/T ＝½(«I»n«/I»+3)RN«I»d«/I»T/T+RN«
 that the second law of thermodynamics is obeyed, but enables us
 to identify T with the absolute thermodynamical temperature.«P»If the volume of the gas is kept constant, we put «I»dv«/I»＝0 in
 equation (18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
-heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH»Specific Heats.«/SH»«P»
+heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH:specific-heats»Specific Heats.«/SH»«P»
 
 «EQN:19»C<sub>«I»v«/I»</sub>＝½(«I»n«/I»+3)R/J«I»m«/I»«/EQN»
 

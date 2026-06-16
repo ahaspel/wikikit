@@ -29,13 +29,13 @@ def build_page(payload: dict) -> SourcePage:
         source_name="wikisource",
         volume=payload["volume"],
         page_number=payload["page_number"],
-        raw_text=payload["cleaned_preview"],
-        wikitext=payload["raw_text"],          # actual raw wikitext for boundary detection
+        raw_text=payload["raw_text"],          # raw wikitext; the walk's preprocess
+        wikitext=payload["raw_text"],          # does the cleaning the old cleaned_preview used to
     )
 
 
 def update_page(existing: SourcePage, payload: dict) -> None:
-    existing.raw_text = payload["cleaned_preview"]
+    existing.raw_text = payload["raw_text"]
     existing.source_name = "wikisource"
     existing.wikitext = payload["raw_text"]
 

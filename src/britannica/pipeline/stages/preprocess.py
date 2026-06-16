@@ -26,7 +26,6 @@ import html
 import re
 
 from britannica.corrections import apply_corrections
-from britannica.cleaners.hyphenation import fix_hyphenation
 from britannica.pipeline.stages.quote_runs import _convert_quote_runs
 from britannica.pipeline.stages.source_cleanup import (
     close_unclosed_attr_quotes,
@@ -51,46 +50,8 @@ from britannica.pipeline.stages.source_cleanup import (
 # registry — same as their pipe-form siblings.  Likewise `{{word-spacing|N|X}}` is a
 # `word-spacing` styler (the param-styler registry), not a strip.
 
-# A page seam is welded here, in the continuous stream.  The ONLY job is
-# rejoining a WORD split across the break (``con-`` ⏎ ``tinuation`` or the
-# ``{{hws}}``/``{{hwe}}`` pair).  A sentence that merely WRAPS needs nothing (the
-# viewer renders a lone ``\n`` as a space).  Section tags are TRANSPARENT to the
-# word-join (bridged so the join closes up) and otherwise left in place for
-# ``detect``; their own-line whitespace is the SECTION construct's concern, not
-# something to sweep out of the seam.
-_SEC_TAG = r"<section\s+(?:begin|end)\b[^>]*?/?>"
-# Bridge for a WORD-join across the seam — whitespace + section tags, with ≥1
-# newline before the marker.
-_BRIDGE_PRE = r"(?:[ \t]|" + _SEC_TAG + r")*\n(?:[ \t\n]|" + _SEC_TAG + r")*"
-_BRIDGE_POST = r"(?:[ \t\n]|" + _SEC_TAG + r")*"
-_SEC_FIND = re.compile(_SEC_TAG)
-
-
-def _bridge_tags(bridge: str) -> str:
-    """Keep the section tags from a seam bridge (in order), drop the whitespace
-    — so the tags stay inline for detect while the word-join closes up."""
-    return "".join(_SEC_FIND.findall(bridge))
-
-
-# Cross-page hyphenation: ``tran-`` ⏎ [tags] ``␞PAGE␞`` [tags] ``slation`` →
-# rejoin (drop the hyphen, no space), keeping page marker + section tags inline.
-_XPAGE_HYPHEN = re.compile(
-    r"(\w)-(" + _BRIDGE_PRE + r")(\x01PAGE:\d+\x01)(" + _BRIDGE_POST + r")(\w)")
-
-# Cross-page WORD split via Wikisource half-word templates:
-# ``{{hws|top|topmost}}`` ⏎ [tags] ``␞PAGE␞`` [tags] ``{{hwe|most|topmost}}`` —
-# the same word "topmost" broken across the page.  The full word is param 2 of
-# each.  Weld it: emit the full word once, keep page marker + section tags, drop
-# both templates and the break.  (Long-form ``hyphenated word start/end`` are
-# aliases.)  The word is hidden inside the template until producer expansion, so
-# the literal-text hyphen/reflow rules above can't see it — this rule must run
-# FIRST so the welded word becomes a plain ``\w`` before the marker.
-_BRIDGE_WS_SEC = r"(?:[ \t\n]|" + _SEC_TAG + r")*"
 _HWS = r"\{\{\s*(?:hws|hyphenated\s+word\s+start)\s*\|[^{}|]*\|([^{}]*)\}\}"
 _HWE = r"\{\{\s*(?:hwe|hyphenated\s+word\s+end)\s*\|[^{}|]*\|[^{}]*\}\}"
-_HWS_HWE_SEAM = re.compile(
-    _HWS + r"(" + _BRIDGE_WS_SEC + r")(\x01PAGE:\d+\x01)(" + _BRIDGE_WS_SEC + r")"
-    + _HWE, re.IGNORECASE)
 
 # Survivor half-word templates — an ``{{hws}}``/``{{hwe}}`` pair that the seam
 # rule above could NOT weld (the two halves don't straddle a single ``\x01PAGE``
@@ -119,33 +80,6 @@ def make_stream(pages) -> str:
     return "\n".join(parts)
 
 
-def heal_page_seams(text: str) -> str:
-    """Heal page-transition artifacts at ``\\x01PAGE:N\\x01`` seams.
-
-    The ONE definition of seam healing, called at every point where page
-    fragments are assembled: by ``preprocess`` on the continuous volume stream,
-    and by the per-article re-join in ``transform_articles`` (a transitional
-    duplicate that disappears once the article body is taken as a slice of the
-    clean stream rather than a re-join of stored segments).
-
-    One job only — rejoin a WORD split across the break (hws/hwe templates;
-    cross-page hyphen; within-page hyphen).  Everything else at a seam is
-    render-neutral (a lone ``\\n`` is a space to the viewer) and untouched; the
-    spurious ``\\n\\n`` that an empty-rendering construct (``<section/>`` /
-    ``<ref follow>`` / ``{{nop}}``) would leave is NOT cured here — that is the
-    construct's own line, dealt with where the construct is handled, not swept
-    out of the seam.
-    """
-    text = _HWS_HWE_SEAM.sub(                           # cross-page split word
-        lambda m: (f"{m.group(1)}{_bridge_tags(m.group(2))}{m.group(3)}"
-                   f"{_bridge_tags(m.group(4))}"),
-        text)
-    text = _XPAGE_HYPHEN.sub(                           # cross-page hyphen
-        lambda m: (f"{m.group(1)}{_bridge_tags(m.group(2))}{m.group(3)}"
-                   f"{_bridge_tags(m.group(4))}{m.group(5)}"),
-        text)
-    text, _ = fix_hyphenation(text)                    # within-page hyphen
-    return text
 
 
 # Wikisource proofreading corrections — `<del>`/`<ins>` are a MIRROR PAIR marking
@@ -262,8 +196,6 @@ def _clean_and_heal(stream: str) -> str:
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
     stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
     stream = _normalize_size_tags(stream)                  # <small>/<big> → font-size:smaller/larger <span>
-    # ── page-transition healing (only correct on the continuous stream) ──
-    stream = heal_page_seams(stream)
     # Half-word templates the seam weld couldn't pair (split differently than the
     # page marker, or standing alone): emit the full word once at the start, drop
     # the end — the same "whole word once" semantics as the seam weld above.
