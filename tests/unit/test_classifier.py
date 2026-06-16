@@ -138,8 +138,14 @@ class TestBacklogFamilyRoutes:
 
     def test_frame_keeps_content(self):
         assert self._label("{{outdent|some text}}") == "FRAME"
-        assert self._label("{{hanging indent|caption}}") == "FRAME"
         assert self._label("{{familytree|border=0| | |ALD|ALD=John}}") == "FRAME"
+
+    def test_hanging_indent_routes(self):
+        # `{{hi}}` and `{{hanging indent}}` are synonyms → ONE owner, RENDERED at
+        # the source's stated width (not dropped to FRAME, not a hardcoded styler).
+        assert self._label("{{hi|3.5em|1867. Paris. 1 Kolisch.}}") == "HANGING_INDENT"
+        assert self._label("{{hi|content, no width given}}") == "HANGING_INDENT"
+        assert self._label("{{hanging indent|caption}}") == "HANGING_INDENT"
 
     def test_frame_control_marker_is_spacer(self):
         assert self._label("{{multicol-break}}") == "SPACER"

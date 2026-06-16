@@ -407,6 +407,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if full in _SPLIT_WORD_NAMES:
         return "SPLIT_WORD"
 
+    # Hanging indent — `{{hi|W|text}}` / `{{hanging indent|W|text}}`.  The source
+    # states the indent width; we RENDER it (a block with that width), never drop
+    # it (dropping flattens the list it formats).  One owner for both names — was
+    # split: `hi` → hardcoded styler, `hanging indent` → FRAME-drop.
+    if full in _HANGING_INDENT_NAMES:
+        return "HANGING_INDENT"
     # Layout FRAMES that CARRY content — drop the frame, recurse the content.
     if full in _FRAME_NAMES:
         return "FRAME"
@@ -483,12 +489,17 @@ _SPACER_NAMES: frozenset[str] = frozenset({
     "chart2/start", "chart2/end",
 })
 
-# Layout FRAMES that carry content — `{{outdent|text}}`, `{{hanging indent|text}}`,
-# `{{nodent|text}}`, the multi-cell `{{familytree|…}}` / `{{Tree chart|…}}` /
-# `{{flex wrap centre|…}}` / `{{columns|…}}`.  The frame is presentation scaffolding
-# with no faithful render here; the FRAME producer drops it and recurses the content.
+# Hanging indent — `{{hi}}` / `{{hanging indent}}` (synonyms).  RENDERED, not
+# dropped: the source states the indent width (default 2em) and it formats a list,
+# so its own producer (`_hanging.py`) reads the width and emits the block.
+_HANGING_INDENT_NAMES: frozenset[str] = frozenset({"hi", "hanging indent"})
+
+# Layout FRAMES that carry content — `{{outdent|text}}`, `{{nodent|text}}`, the
+# multi-cell `{{familytree|…}}` / `{{Tree chart|…}}` / `{{flex wrap centre|…}}` /
+# `{{columns|…}}`.  The frame is presentation scaffolding with no faithful render
+# here; the FRAME producer drops it and recurses the content.
 _FRAME_NAMES: frozenset[str] = frozenset({
-    "outdent", "nodent", "hanging indent",
+    "outdent", "nodent",
     "familytree", "tree chart", "chart2",
     "flex wrap centre", "columns",
     # `{{size|xl|CONTENT}}` — keyword-sized wrapper (xl/l/s/…).  The keyword has no

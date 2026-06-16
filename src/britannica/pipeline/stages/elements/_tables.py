@@ -741,7 +741,6 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     # ── BROKEN-leak backlog stylers (2026-06-09).  Each was a styler the walk
     # leaked raw; same rows, same mechanism.  CSS grounded in the
     # Module:Table_style mirror (_ts_codes.py) where the name maps.
-    "hi":               {"css": "padding-left:2em; text-indent:-2em"},  # hanging indent (block); hi→it
     "fine":             {"css": "font-size:92%", "tag": "SPAN"},  # fine→fs092 (inline)
     "strikethrough":    {"css": "text-decoration:line-through", "tag": "SPAN"},  # strike→tds
     "sp":               {"css": "letter-spacing:0.25em", "tag": "SPAN"},  # spaced-out lettering

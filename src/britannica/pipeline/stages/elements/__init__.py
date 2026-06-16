@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._contributor import (
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._frame import (
     process_frame, process_refs, process_missing, process_main_other)
+from britannica.pipeline.stages.elements._hanging import process_hanging_indent
 from britannica.pipeline.stages.elements._splitword import process_split_word
 from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import process_content_extract
@@ -934,6 +935,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # FRAME — a layout frame (multicol / div-col / outdent / hanging indent /
     # familytree / …).  Drop the presentation scaffolding, recurse + keep content.
     "FRAME": lambda raw, inner, ctx, reg: process_frame(raw, ctx),
+    # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}`: render the
+    # block at the source's own indent width (default 2em), recurse the text.
+    "HANGING_INDENT": lambda raw, inner, ctx, reg: process_hanging_indent(raw, ctx),
     # REFS — a footnote-list emitter (smallrefs / reflist / ref / blockref) → empty
     # (footnotes render inline in this edition).
     "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),
