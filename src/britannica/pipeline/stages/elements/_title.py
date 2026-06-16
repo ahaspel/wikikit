@@ -281,13 +281,15 @@ def _letter_title_span(opening: str) -> tuple[str, str] | None:
     return opening[:lead + i], opening[lead + i:]
 
 
-# Leading page-chrome the honest walker now carries into a first-segment opening
-# (B3): the page-header `<noinclude>…</noinclude>`, a `<section …>` tag, running
-# headers.  Skipped before the heading is sought — it is not the title.
+# Leading transclusion chrome the walker carries into a first-segment opening
+# (B3): a `<section …>` tag or a running header (`{{rh}}`) — skipped before the
+# heading is sought (it is not the title).  A scan of vols 1-3 (4825 articles)
+# shows only these two reach here; the former `<noinclude>` / `{{EB1911 Page
+# Heading}}` clauses matched 0 (both are stripped upstream in preprocess) and were
+# dropped.
 _LEAD_CHROME = re.compile(
-    r"^\s*(?:<noinclude>.*?</noinclude>"
-    r"|<section\b[^>]*>"
-    r"|\{\{\s*(?:EB1911 Page Heading|rh)\b[^{}]*\}\})+",
+    r"^\s*(?:<section\b[^>]*>"
+    r"|\{\{\s*rh\b[^{}]*\}\})+",
     re.DOTALL | re.IGNORECASE)
 
 
