@@ -143,6 +143,45 @@ def _decode_entities(text: str) -> str:
     return "".join(out)
 
 
+# Page furniture the article body carries but that renders nothing: the running
+# page heading, the `{{pagenum}}` folio (redundant with our «PAGE» markers), the
+# Wikisource maintenance `{{Ambox}}` notices ("proofreading cheats"), and
+# `{{Hidden text}}` (deliberately `display:none` sort keys).  Pure layout/editorial
+# noise no path needs — stripped here, balanced, like the noinclude chrome.  Their
+# CONTENT-bearing siblings (`{{suspect}}` / `{{main other}}` / `{{lps}}`) are NOT
+# stripped: they reach the walk and lift their text.
+_CHROME_FURNITURE = re.compile(
+    r"\{\{\s*(?:eb1911 page heading|ambox|hidden text|pagenum)\s*[|}/]", re.I)
+
+
+def _strip_chrome_furniture(stream: str) -> str:
+    """Remove each furniture template whole (balanced `{{…}}`, so a multi-line
+    `{{Ambox|…}}` or a nested arg can't truncate the span)."""
+    out: list[str] = []
+    i, n = 0, len(stream)
+    for m in _CHROME_FURNITURE.finditer(stream):
+        if m.start() < i:                 # opener inside an already-removed template
+            continue
+        out.append(stream[i:m.start()])
+        depth, j = 0, m.start()
+        while j < n - 1:
+            two = stream[j:j + 2]
+            if two == "{{":
+                depth += 1
+                j += 2
+                continue
+            if two == "}}":
+                depth -= 1
+                j += 2
+            else:
+                j += 1
+            if depth == 0:
+                break
+        i = j
+    out.append(stream[i:])
+    return "".join(out)
+
+
 def preprocess(stream: str, volume: int = 0) -> str:
     """The single preprocessing step: corrections + quote-run + source-clean +
     page-transition heal on the continuous RAW stream; return the frozen clean
@@ -178,12 +217,14 @@ def _clean_and_heal(stream: str) -> str:
     stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = strip_html_comments(stream)
+    stream = _strip_chrome_furniture(stream)               # running head / pagenum / ambox / hidden-text
     stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
     stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
     stream = _normalize_size_tags(stream)                  # <small>/<big> → font-size:smaller/larger <span>
-    # `{{hws}}`/`{{hwe}}` are NOT reconstructed here — they reach the walk as raw
-    # templates and are handled by recognition: `hws` → FRAME (recurse the full
-    # word, its longest positional slot), `hwe` → SPACER (renders nothing).
+    # Page-split words (`{{hws}}`/`{{hwe}}`/`{{lps}}`/`{{lpe}}`) are NOT
+    # reconstructed here — they reach the walk as raw templates and are rejoined by
+    # recognition (the SPLIT_WORD producer): start marker → the whole word, end
+    # marker → nothing.
     stream = _decode_entities(stream)             # presentational HTML entities → chars
     return stream

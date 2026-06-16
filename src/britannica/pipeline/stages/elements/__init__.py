@@ -34,7 +34,9 @@ from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._frame import (
-    process_frame, process_refs, process_missing)
+    process_frame, process_refs, process_missing, process_main_other)
+from britannica.pipeline.stages.elements._splitword import process_split_word
+from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._math import (
@@ -884,6 +886,15 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # REFS — a footnote-list emitter (smallrefs / reflist / ref / blockref) → empty
     # (footnotes render inline in this edition).
     "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),
+    # TOC_ROW — one `{{Dotted TOC line}}` / `{{Dotted TOC page listing}}` /
+    # `{{TOC line}}` dotted-leader row → its content (cells from template params),
+    # rendered in place inside whatever fences it ({|, <div>, block-center).
+    "TOC_ROW": lambda raw, inner, ctx, reg: process_toc_row(raw, ctx),
+    # SPLIT_WORD — `{{hws}}`/`{{hwe}}`/`{{lps}}`/`{{lpe}}`: a page-split word; the
+    # start marker rejoins it, the end marker renders empty.
+    "SPLIT_WORD": lambda raw, inner, ctx, reg: process_split_word(raw, ctx),
+    # MAIN_OTHER — `{{main other|main|other}}`: keep param 1 (main-namespace copy).
+    "MAIN_OTHER": lambda raw, inner, ctx, reg: process_main_other(raw, ctx),
     # MISSING — a missing-asset placeholder → a visible `[missing …]` stub.
     "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;

@@ -402,18 +402,28 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if full in _SPACER_NAMES:
         return "SPACER"
 
+    # Page-split words (hws/hwe/lps/lpe) → one producer: the START marker rejoins
+    # the word, the END marker renders empty.
+    if full in _SPLIT_WORD_NAMES:
+        return "SPLIT_WORD"
+
     # Layout FRAMES that CARRY content — drop the frame, recurse the content.
     if full in _FRAME_NAMES:
         return "FRAME"
 
-    # Footnote-list emitters + front-matter / index / page-chrome / maintenance
-    # templates → empty.  The footnote lists render inline; the chrome templates
-    # (volume title / copyright / half-title pages, the vol-29 contributor index,
-    # TOC rows, page-number/line-position markers) and the Wikisource maintenance
-    # boxes carry NO article-body prose — their data is page furniture or is
-    # harvested by a separate pipeline (`extract_contributor_bios`), so in the
-    # article body they render nothing.
-    if full in _REFS_NAMES or full in _CHROME_EMPTY_NAMES:
+    # Table-of-contents rows — one dotted-leader row each; the producer reads the
+    # template params as cells and renders the row content in place.
+    if full in _TOC_ROW_NAMES:
+        return "TOC_ROW"
+
+    # `{{main other|main-NS|other-NS}}` — namespace switch around split prose.  We
+    # assemble the MAIN-namespace article, so keep PARAM 1 (recursed); the p60/p63
+    # "Needlepoint lace…" split is the only occupant.
+    if full == "main other":
+        return "MAIN_OTHER"
+
+    # Footnote-list emitters render to empty (footnotes are inline in this edition).
+    if full in _REFS_NAMES:
         return "REFS"
 
     # Missing-asset placeholders → a visible `[missing …]` stub.
@@ -471,9 +481,6 @@ _SPACER_NAMES: frozenset[str] = frozenset({
     "flex wrap centre/s", "flex wrap centre/e",
     "familytree/start", "familytree/end", "tree chart/start", "tree chart/end",
     "chart2/start", "chart2/end",
-    # Hyphenated-word END: `{{hwe|frag|WORD}}` renders nothing — the full word
-    # already appeared once at its matching `{{hws}}` (→ FRAME).
-    "hwe", "hyphenated word end",
 })
 
 # Layout FRAMES that carry content — `{{outdent|text}}`, `{{hanging indent|text}}`,
@@ -497,35 +504,28 @@ _FRAME_NAMES: frozenset[str] = frozenset({
     # (phonetic), `{{definition|term|gloss}}`, `{{nsl|disp|…}}` (navigation),
     # `{{wdl|Qid|Display}}` (Wikidata link → its display text).
     "vrl", "phn", "definition", "nsl", "wdl",
-    # Hyphenated-word START: `{{hws|frag|WORD}}` carries the full word as its
-    # longest positional slot, so FRAME drops the wrapper and recurses the word —
-    # the page-split word reconstructed once, at its start.  (`hwe` → SPACER.)
-    "hws", "hyphenated word start",
+    # `{{suspect|X}}` — Wikisource flags X as a possible misprint but DISPLAYS it;
+    # the flag is editorial, the text is content.  Drop the wrapper, keep the
+    # (longest-positional) word — `on` / `.` / `''dróttkvaett''`.
+    "suspect",
 })
 
-# Front-matter / index / page-chrome / Wikisource-maintenance templates → empty.
-# Page furniture (volume title / copyright / half-title pages), the vol-29
-# contributor index (harvested by `extract_contributor_bios`), table-of-contents
-# rows, page-number / line-position markers, and proofreading boxes.  None carry
-# article-body prose.  Enumerated (NOT a catch-all): each name is a known chrome
-# template surfaced by the generic-`{{…}}` flip.
-_CHROME_EMPTY_NAMES: frozenset[str] = frozenset({
-    # Volume front-matter pages
-    "eb1911 title page", "eb1911 half title page",
-    "eb1911 us copyright page", "eb1911 bc copyright page",
-    "vol", "from", "to", "year",
-    # vol-29 contributor index (data harvested separately)
-    "eb1911 contributor table", "eb1911 contributor table/entry",
-    "eb1911 contributor table/end", "eb1911 contributor table end",
-    # Table-of-contents rows / page-position markers
+# Page-split words — a word broken across a page break: the START marker owns the
+# whole rejoined word, the END marker renders nothing.  Two encodings, one producer
+# (`_splitword.process_split_word`): `{{hws|…|WORD}}` / `{{hwe}}` carry the word in
+# a POSITIONAL slot; `{{lps|hws=A|hwe=B}}` / `{{lpe}}` carry it as two NAMED halves.
+_SPLIT_WORD_NAMES: frozenset[str] = frozenset({
+    "hws", "hyphenated word start", "hwe", "hyphenated word end",
+    "lps", "lpe",
+})
+
+# Table-of-contents rows — `{{Dotted TOC line|num|entry|value}}` /
+# `{{Dotted TOC page listing|…|entrytext=…|pagetext=…}}` / `{{TOC line|…}}`.  Each
+# is ONE dotted-leader row; its cells are TEMPLATE PARAMS (not divider fields), so
+# the producer reads them and renders the row's content (recursed) in place.  The
+# `{|` / `<div>` / block-center it sits in supplies the surrounding structure.
+_TOC_ROW_NAMES: frozenset[str] = frozenset({
     "dotted toc line", "dotted toc page listing", "toc line",
-    "pagenum", "lps", "lpe",
-    # Wikisource maintenance / proofreading boxes (no rendered article content)
-    "ambox", "suspect", "main other", "hidden text",
-    # `{{EB1911 Page Heading}}` page chrome → empty.  It reaches the walk directly
-    # now — preprocess no longer strips it, so the classifier is its sole owner
-    # (same posture as `{{nop}}` → SPACER).
-    "eb1911 page heading",
 })
 
 # Footnote-list emitters → empty (footnotes render inline in this edition).

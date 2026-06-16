@@ -53,6 +53,20 @@ def process_frame(raw: str, context) -> str:
     return process_elements(content, context, _allow_figure=False).strip()
 
 
+def process_main_other(raw: str, context) -> str:
+    """`{{main other|main-NS|other-NS}}` — a namespace switch.  We assemble the
+    MAIN-namespace article, so keep param 1 (recursed) and drop the rest.  It
+    places a page-straddling clause on exactly one side of the break without
+    duplicating it — the "Needlepoint lace…" split (vol 16) is the lone case."""
+    from britannica.pipeline.stages.elements import process_elements
+    inner = re.sub(r"^\{\{", "", raw)
+    inner = re.sub(r"\}\}\s*$", "", inner)
+    parts = _split_top_pipes(inner)
+    p1 = parts[1] if len(parts) > 1 else ""
+    return (process_elements(p1, context, _allow_figure=False).strip()
+            if p1.strip() else "")
+
+
 def process_refs(raw: str, context) -> str:
     """REFS producer: a footnote-list emitter renders to EMPTY (footnotes render
     inline in this edition)."""

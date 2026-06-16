@@ -145,10 +145,21 @@ class TestBacklogFamilyRoutes:
         assert self._label("{{multicol-break}}") == "SPACER"
         assert self._label("{{col-begin}}") == "SPACER"
 
-    def test_refs_and_chrome_empty(self):
+    def test_refs_routes_to_empty(self):
+        # Footnote-list emitters → REFS (footnotes render inline, so the emitter is
+        # empty).  The former chrome-empty names are gone — front-matter is excluded
+        # at the gather, furniture stripped in preprocess, content-bearers lifted.
         assert self._label("{{smallrefs|90%}}") == "REFS"
         assert self._label("{{reflist}}") == "REFS"
-        assert self._label("{{EB1911 title page|vol=II}}") == "REFS"
+
+    def test_dissolved_chrome_routes_to_real_homes(self):
+        # The page-split words and content templates that used to be dumped into
+        # `_CHROME_EMPTY_NAMES → empty` now reach their own producers.
+        assert self._label("{{hws|frag|WORD}}") == "SPLIT_WORD"
+        assert self._label("{{lps|hws=A|hwe=B}}") == "SPLIT_WORD"
+        assert self._label("{{lpe|hws=A|hwe=B}}") == "SPLIT_WORD"
+        assert self._label("{{suspect|on}}") == "FRAME"
+        assert self._label("{{main other|x|}}") == "MAIN_OTHER"
 
     def test_missing_stub(self):
         assert self._label("{{missing table}}") == "MISSING"
