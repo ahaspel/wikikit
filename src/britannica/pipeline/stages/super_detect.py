@@ -44,9 +44,7 @@ _SECTAG_DROP = re.compile(
 def detect_boundaries(volume: int) -> list[DetectedArticle]:
     session = SessionLocal()
     try:
-        pages = (session.query(SourcePage)
-                 .filter(SourcePage.volume == volume)
-                 .order_by(SourcePage.page_number).all())
+        pages = SW._volume_pages(session, volume)
     finally:
         session.close()
     plates, art_pages = _split_out_plates(pages)

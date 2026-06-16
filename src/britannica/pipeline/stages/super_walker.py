@@ -32,6 +32,7 @@ from britannica.db.session import SessionLocal
 from britannica.pipeline.stages.detect_boundaries import _split_out_plates
 from britannica.pipeline.stages.elements._title import _letter_from_dropcap
 from britannica.pipeline.stages.preprocess import make_stream, preprocess
+from britannica.volumes import article_ws_range
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
@@ -194,6 +195,20 @@ def _page_before(stream: str, pos: int) -> int:
     return int(pm.group(1)) if pm else 0
 
 
+def _volume_pages(session, volume: int) -> list:
+    """The volume's SourcePages constrained to its article-leaf range
+    (``volumes.ARTICLE_WS_RANGE``): front matter and back matter never enter the
+    gather, so step 1 is article/plate ONLY — not "gather every page and let the
+    front matter fall off as the unclaimed lead before the first heading".  A
+    volume with no recorded range (e.g. vol 29) admits every page."""
+    q = session.query(SourcePage).filter(SourcePage.volume == volume)
+    rng = article_ws_range(volume)
+    if rng is not None:
+        q = q.filter(SourcePage.page_number >= rng[0],
+                     SourcePage.page_number <= rng[1])
+    return q.order_by(SourcePage.page_number).all()
+
+
 def volume_stream(volume: int) -> str:
     """The clean, frozen continuous stream for ``volume`` — the single input
     to boundary detection AND the element walker.
@@ -207,11 +222,10 @@ def volume_stream(volume: int) -> str:
     """
     session = SessionLocal()
     try:
-        all_pages = (session.query(SourcePage)
-                     .filter(SourcePage.volume == volume)
-                     .order_by(SourcePage.page_number).all())
-        # Mirror the current pipeline: plates are lifted first; article
-        # detection runs over the plate-free pages.
+        all_pages = _volume_pages(session, volume)
+        # Plates are lifted first; article detection runs over the plate-free
+        # pages.  Front matter never reaches here — `_volume_pages` constrained
+        # the gather to the article-leaf range.
         _plates, pages = _split_out_plates(all_pages)
         return preprocess(make_stream(pages), volume)
     finally:
