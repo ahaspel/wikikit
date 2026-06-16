@@ -173,7 +173,7 @@ is ascribed the first use of the term “horse power” as a measure
 of the performance of an engine.«P»7. So early as 1678 the use of a piston and cylinder (long
 before known as applied to pumps) in a heat-engine had been
 suggested by Jean de Hautefeuille, who proposed
-and to use the explosion of gun-powder either to raise a
+and to use the explosion of gunpowder either to raise a
 piston or to force up water, or to produce, by the subsequent
 cooling of the gases, a partial vacuum into
 «SH:cylinder-and-piston-engine»Cylinder and Piston Engine.«/SH»
@@ -724,7 +724,7 @@ compactness and freedom from vibration are merits which
 have already gone far to secure for it a preference, notwithstanding
 the short time that has passed since it became
 known as a practicable engine. The largest demands for power
-occur in fast passenger vessels, in war-ships and in stations
+occur in fast passenger vessels, in warships and in stations
 from which electric energy is distributed for traction or other
 uses; in all these cases the steam turbine is now taking the
 leading place. It is to the inventive genius of the Hon. C. A.
@@ -810,15 +810,15 @@ to marine propulsion was in the “Turbinia,” in 1897.
 The success of this little experimental vessel of 100 tons, which
 with its horse-power of 2100 made a record in speed for a ship
 of any size, was soon followed by the application of the turbine
-to various war-ships and other steamers. In war-ships the use
+to various warships and other steamers. In warships the use
 of steam turbines has a special advantage in enabling the
 machinery to be kept at a low level, beneath the protective
 deck, in addition to the general advantages of reduced bulk,
-reduced vibration, reduced liability to break-down, and reduced
+reduced vibration, reduced liability to breakdown, and reduced
 consumption of coal and of oil which are common to vessels of
 all classes. The successful trials of the cruiser “Amethyst”
 in 1904 demonstrated these advantages so conclusively that all
-new war-ships for the British navy, from battleships to torpedo-boats
+new warships for the British navy, from battleships to torpedo-boats
 are being fitted with steam turbines. It is also used in
 many cross-channel packets, as well as in the largest ocean-going
 passenger vessels. The turbine-driven steamers “Lusitania”
@@ -1006,7 +1006,7 @@ We shall call this the total heat of saturated steam. Values of I
 are stated in the table. Since the volume of 1 ℔ of water is only
 0·016 cub. ft. the term 𝑝𝑤/J is numerically insignificant except
 at the highest pressures. Similarly, in reckoning the total heat
-of water I<sub>𝑤</sub> we add 𝑝𝑤/J to ℎ, and this quantity is also given in the table. The latent heat L is to be found from the table by subtracting I<sub>𝑤</sub>, the total heat of water, from the total heat of steam. We shall use the centigrade scale of temperature throughout this article, and accordingly the total heats are expressed in terms of a unit involving the centigrade degree, namely, the quantity of heat required to raise the temperature of unit mass of water through 1° C. at 15° C. With this unit of heat the mechanical equivalent J is 1400 foot-pounds when the unit of mass is the ℔, and is 427 kilogram-metres when the unit of mass is the kilogramme.
+of water I<sub>𝑤</sub> we add 𝑝𝑤/J to ℎ, and this quantity is also given in the table. The latent heat L is to be found from the table by subtracting I<sub>𝑤</sub>, the total heat of water, from the total heat of steam. We shall use the centigrade scale of temperature throughout this article, and accordingly the total heats are expressed in terms of a unit involving the centigrade degree, namely, the quantity of heat required to raise the temperature of unit mass of water through 1° C. at 15° C. With this unit of heat the mechanical equivalent J is 1400 foot-pounds when the unit of mass is the ℔, and is 427 kilogrammetres when the unit of mass is the kilogramme.
 «HTMLTABLE:<table class="data-table _tablecolhdborder" style="text-align:center"><caption>«I»Properties of Saturated Steam.«/I»</caption><tr><td rowspan="2" style="border:1px solid">Tempera-<br>ture.<br>Centigrade.</td><td rowspan="2" style="border:1px solid">Pressure<br>℔ per<br>sq. in.</td><td rowspan="2" style="border:1px solid">Volume<br>cub. ft.<br>per ℔.</td><td colspan="2" style="border:1px solid">Total Heat.</td><td colspan="2" style="border:1px solid">Entropy.</td></tr><tr><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td><td style="border:1px solid">Of Water.</td><td style="border:1px solid">Of Steam.</td></tr><tr><td>0</td><td>0·089</td><td>3283.</td><td>0</td><td>594·7</td><td>0</td><td>2·178</td></tr><tr><td>5</td><td>0·127</td><td>2354.</td><td>5·0</td><td>597·1</td><td>0·018</td><td>2·148</td></tr><tr><td>10</td><td>0·178</td><td>1708.</td><td>10·0</td><td>599·4</td><td>0·036</td><td>2·119</td></tr><tr><td>15</td><td>0·246</td><td>1253.</td><td>15·0</td><td>601·8</td><td>0·054</td><td>2·091</td></tr><tr><td>20</td><td>0·336</td><td>931.</td><td>20·0</td><td>604·1</td><td>0·071</td><td>2·064</td></tr><tr><td>25</td><td>0·455</td><td>699·5</td><td>25·0</td><td>606·5</td><td>0·088</td><td>2·039</td></tr><tr><td>30</td><td>0·610</td><td>530·7</td><td>30·0</td><td>608·8</td><td>0·104</td><td>2·015</td></tr><tr><td>35</td><td>0·809</td><td>406·8</td><td>35·0</td><td>611·1</td><td>0·121</td><td>1·991</td></tr><tr><td>40</td><td>1·062</td><td>314·8</td><td>40·1</td><td>613·5</td><td>0·137</td><td>1·969</td></tr><tr><td>45</td><td>1·381</td><td>245·8</td><td>45·1</td><td>615·8</td><td>0·153</td><td>1·947</td></tr><tr><td>50</td><td>1·78</td><td>193·7</td><td>50·1</td><td>618·0</td><td>0·169</td><td>1·927</td></tr><tr><td>55</td><td>2·27</td><td>153·9</td><td>55·1</td><td>620·3</td><td>0·184</td><td>1·907</td></tr><tr><td>60</td><td>2·88</td><td>123·3</td><td>60 1</td><td>622·6</td><td>0·199</td><td>1·888</td></tr><tr><td>65</td><td>3·61</td><td>99·5</td><td>65·2</td><td>624·8</td><td>0·214</td><td>1·870</td></tr><tr><td>70</td><td>4·51</td><td>80·9</td><td>70·2</td><td>627·0</td><td>0·229</td><td>1·852</td></tr><tr><td>75</td><td>5·58</td><td>66·24</td><td>75·3</td><td>629·2</td><td>0·244</td><td>1·835</td></tr><tr><td>80</td><td>6·86</td><td>54·60</td><td>80·3</td><td>631·3</td><td>0·258</td><td>1·819</td></tr><tr><td>85</td><td>8·38</td><td>45·29</td><td>85·3</td><td>633·5</td><td>0·272</td><td>1·803</td></tr><tr><td>90</td><td>10·16</td><td>37·79</td><td>90·4</td><td>635·6</td><td>0·286</td><td>1·788</td></tr><tr><td>95</td><td>12·26</td><td>31·71</td><td>95·5</td><td>637·6</td><td>0·300</td><td>1·773</td></tr><tr><td>100</td><td>14·70</td><td>26·75</td><td>100·5</td><td>639·7</td><td>0·314</td><td>1·759</td></tr><tr><td>105</td><td>17·52</td><td>22·69</td><td>105·6</td><td>641·7</td><td>0·327</td><td>1·745</td></tr><tr><td>110</td><td>20·79</td><td>19·34</td><td>110·7</td><td>643·6</td><td>0·340</td><td>1·732</td></tr><tr><td>115</td><td>24·55</td><td>16·56</td><td>115·8</td><td>645·5</td><td>0·354</td><td>1·719</td></tr><tr><td>120</td><td>28·83</td><td>14·25</td><td>120·9</td><td>647·4</td><td>0·367</td><td>1·706</td></tr><tr><td>125</td><td>33·72</td><td>12·30</td><td>126·0</td><td>649·2</td><td>0·379</td><td>1·694</td></tr><tr><td>130</td><td>39·26</td><td>10·67</td><td>131·1</td><td>651·0</td><td>0·392</td><td>1·682</td></tr><tr><td>135</td><td>45·51</td><td>9·29</td><td>136·2</td><td>652·8</td><td>0·405</td><td>1·671</td></tr><tr><td>140</td><td>52·56</td><td>8·12</td><td>141·3</td><td>654·5</td><td>0·417</td><td>1·660</td></tr><tr><td>145</td><td>60·42</td><td>7·13</td><td>146·4</td><td>656·1</td><td>0·430</td><td>1·649</td></tr><tr><td>150</td><td>69·24</td><td>6·274</td><td>151·6</td><td>657·8</td><td>0·442</td><td>1·638</td></tr><tr><td>155</td><td>79·04</td><td>5·542</td><td>156·7</td><td>659·3</td><td>0·454</td><td>1·628</td></tr><tr><td>160</td><td>89·93</td><td>4·910</td><td>161·9</td><td>660·8</td><td>0·466</td><td>1·618</td></tr><tr><td>165</td><td>101·98</td><td>4·363</td><td>167·1</td><td>662·3</td><td>0·478</td><td>1·608</td></tr><tr><td>170</td><td>115·27</td><td>3·891</td><td>172·2</td><td>663·7</td><td>0·489</td><td>1·599</td></tr><tr><td>175</td><td>129·9</td><td>3·478</td><td>177·4</td><td>665·0</td><td>0·501</td><td>1·589</td></tr><tr><td>180</td><td>145·9</td><td>3·116</td><td>182·6</td><td>666·3</td><td>0·512</td><td>1·580</td></tr><tr><td>185</td><td>163·4</td><td>2·800</td><td>187·9</td><td>667·6</td><td>0·524</td><td>1·571</td></tr><tr><td>190</td><td>182·6</td><td>2·523</td><td>193·1</td><td>668·8</td><td>0·535</td><td>1·563</td></tr><tr><td>195</td><td>203·4</td><td>2·279</td><td>198·3</td><td>670·0</td><td>0·546</td><td>1·554</td></tr><tr><td>200</td><td>226·0</td><td>2·063</td><td>203·6</td><td>671·1</td><td>0·557</td><td>1·546</td></tr><tr><td>205</td><td>250·5</td><td>1·874</td><td>208·9</td><td>672·2</td><td>0·568</td><td>1·538</td></tr><tr><td>210</td><td>277·2</td><td>1·703</td><td>214·1</td><td>673·2</td><td>0·579</td><td>1·530</td></tr><tr><td>215</td><td>306·8</td><td>1·546</td><td>219·4</td><td>674·1</td><td>0·590</td><td>1·522</td></tr></table>«/HTMLTABLE»«P»32. «I»Internal Energy«/I».—Of the heat of steam the part 𝑝𝑣/J is spent in doing external work. The remainder has gone to increase the stock of internal energy which the substance possesses.«P»In dealing with the heat required to produce steam we adopted
 the state of water at 0°C. as an arbitrary starting-point from which to reckon the reception of heat. In the same way it is convenientPAGE:848to use this arbitrary starting-point in reckoning what may be called
 the «I»internal energy«/I» of the substance, which is the excess of the heat
@@ -1444,7 +1444,7 @@ reduction in the area of the diagram.«P»46. «I»Exchanges of Heat between the
 exchanges of heat between steam and metal in the engine cylinder
 have been made the subject of an elaborate experimental examinationPAGE:851by Professors Callendar and Nicolson («I»Proc. Inst. C.E.«/I»
 cxxxi. 147), who studied the cyclic variations of temperature
-throughout the metal by means of thermo-electric junctions set
+throughout the metal by means of thermoelectric junctions set
 at various depths. They found that the range of temperature
 through which the surface of the metal fluctuates is much less than
 the range of temperature passed through by the steam; the
@@ -1854,7 +1854,7 @@ pressure of 250 ℔. In the mercantile marine the engines are normally
 working at full power, whereas in the navy most of the working
 is at greatly reduced powers, the cruising speed requiring very much
 less than the full output. Consequently, for the same boiler pressure,
-the cylinder ratio is made less in war-ships to adapt the engines for
+the cylinder ratio is made less in warships to adapt the engines for
 economical working under cruising conditions.«P»«CTR»{{IMG:EB1911 Steam Engine Fig. 18.png|width=380}}«BR»
 «SC»Fig«/SC». 18.—Horizontal Section through Cylinder and Valve-chest:«BR»
 showing Slide-valve.«/CTR»«P»60. «I»The Distribution of Steam«/I».—In early steam engines the distribution of steam was effected by means of conical valves, worked by
@@ -2034,7 +2034,7 @@ be produced by making the inside lap greater and the outside lap
 less on the side which leads to the front end of the cylinder On
 the other hand, an unsymmetrical distribution may be desirable
 as in a vertical engine, where the weight of the piston assists the
-steam during the down-stroke and resists it during the up-stroke
+steam during the down-stroke and resists it during the upstroke
 and this may be secured by a suitable inequality in the laps«P»65. By varying the ratio of the laps 𝑜 and 𝑖 to the travel of the
 valve, we produce effects on the steam distribution which are
 readily traced by means of the diagram. Reduction of travel
@@ -2299,19 +2299,19 @@ of the engine. The weighted plunger is raised by a rod from the
 beam, but is free in its descent, so that it comes down at a rate
 depending on the extent to which the stop-cock is opened. When
 it comes down a certain way it opens the steam and exhaust valves,
-by liberating catches which hold them closed; the “out-door”
+by liberating catches which hold them closed; the “outdoor”
 stroke then begins and admission continues until the steam-valve
 is closed: this is done directly by the motion of the beam, which
 also, at a later point in the stroke, closes the exhaust. Then the
-equilibrium-valve is opened, and the “in-door” stroke takes place,
+equilibrium-valve is opened, and the “indoor” stroke takes place,
 during which the plunger of the cataract
 is raised. When it is completed,
 the piston pauses until the cataract
 causes the steam-valve to open and
-the next “out-door” stroke begins.
+the next “outdoor” stroke begins.
 By applying a cataract to the equilibrium-valve
 also, a pause is introduced
-at the end of the “out-door”
+at the end of the “outdoor”
 stroke. Pauses have the advantage
 of giving the pump time to fill and
 of allowing the pump-valves to settle
@@ -3646,7 +3646,7 @@ also a turbine for reversing.
 This arrangement is followed in the “Lusitania” and
 “Mauretania”  where the low pressure turbines have drums 188 in.
 in diameter, are about «SPAN[style:white-space:nowrap]»17½ ft.«/SPAN» in diameter over all and 50 ft. long, and weigh 300 tons. Each turbine has 8 steps with about 16 stages in each step in the high pressure turbine and 8 in the low. They run at 180 revolutions per minute.«P»130. «I»Cruising Turbines in War«/I»-«I»Ships«/I».—In turbines for the propulsion
-of war-ships it is necessary to secure a fairly high economy at speeds greatly short of those for which the turbines are designed when working at full power, for the normal cruising speed of such vessels is usually from half to two-thirds of the speed at full power.
+of warships it is necessary to secure a fairly high economy at speeds greatly short of those for which the turbines are designed when working at full power, for the normal cruising speed of such vessels is usually from half to two-thirds of the speed at full power.
 «CTR»{{IMG:EB1911 Steam Engine Fig. 67.png|width=280}}«BR»
 «SC»Fig«/SC». 67.«/CTR»
 To counterbalance the reduced blade velocity, when running under

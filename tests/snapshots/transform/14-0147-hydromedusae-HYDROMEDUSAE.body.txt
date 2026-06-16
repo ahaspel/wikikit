@@ -247,7 +247,7 @@ in places; for example, the adhesive cells in the foot. (2) Sensory
 cells, which may be fairly numerous in places, especially on the
 tentacles, but which occur always scattered and isolated, never
 aggregated to form sense-organs as in the medusa. (3) Contractile
-or myo-epithelial cells, with the cell prolonged at the base into a
+or myoepithelial cells, with the cell prolonged at the base into a
 contractile muscle-fibre (fig. 6, B). In the hydropolyp the ectodermal
 muscle-fibres are always directed longitudinally. Belonging primarily
 to the epithelial layer, the muscular cells may become secondarily
@@ -309,7 +309,7 @@ Many points in the development and mechanism of the nematocyst
 are disputed, but it is tolerably certain (1) that the cnidocil is of
 sensory nature, and that stimulation, by contact with prey or in other
 ways, causes a reflex discharge of the nematocyst; (2) that the discharge
-is an explosive change whereby the in-turned thread is
+is an explosive change whereby the inturned thread is
 suddenly everted and turned inside out, being thus shot through the
 opening in the outer wall of the capsule, and forced violently into
 the tissues of the prey, or, it may be, of an enemy; (3) that the thread
@@ -858,7 +858,7 @@ that swimming
 is no longer possible.
 The remarkable
 medusa «I»Mnestra«/I»
-«I»parasites«/I» is ecto-parasitic
+«I»parasites«/I» is ectoparasitic
 throughout life
 on the pelagic mollusc
 «I»Phyllirrhoe«/I», attached
@@ -1791,7 +1791,7 @@ by concrescence to
 form the radial
 canals («I»r.c.«/I»), ring-canal («I»c.c.«/I»), and endoderm-lamella («I»e.l.«/I», fig. 44, E),
 and at the same time the base of the cup is thrust upwards to form
-the manubrium («I»m«/I»), converting the cavity of the entocodon into aPAGE:159space which is crescentic or horse-shoe-like in section. Next tentacles
+the manubrium («I»m«/I»), converting the cavity of the entocodon into aPAGE:159space which is crescentic or horseshoe-like in section. Next tentacles
 («I»t«/I», fig. 44, F) grow out from the ring-canal, and the double
 plate of ectoderm on the distal side of the entocodon becomes
 perforated, leaving a circular rim composed of two layers of ectoderm,
@@ -3341,7 +3341,7 @@ arises from the ectoderm as a pit or invagination, part of
 which forms a gas-secreting gland, while the rest gives rise to an
 air-sack lined by a chitinous cuticle. The orifice of invagination
 forms a pore which may be closed up or may form a protruding
-duct or funnel. As in the analogous swim-bladder of fishes, the
+duct or funnel. As in the analogous swimbladder of fishes, the
 gas in the pneumatophore can be secreted or absorbed, whereby
 the specific gravity of the body can be diminished or increased, so
 as to cause it to float nearer the surface or at a deeper level.
@@ -3442,7 +3442,7 @@ the appendages are arranged as regularly recurrent cormidia along it,
 and the cormidia are then said to be “ordinate.” In such cases the
 oldest cormidia, that is to say, those furthest from the nectosome,
 may become detached (like the segments
-or proglottides of a tape-worm) and
+or proglottides of a tapeworm) and
 swim off, each such detached cormidium
 then becoming a small free cormus
 which, in many cases, has been given an

@@ -151,12 +151,13 @@ def _hyphen_map():
     return _HYPHEN_MAP
 
 
-# A word broken across a wrap reaches the body producer as `X-<whitespace>Y`
-# whatever its origin (a `<br>` collapsed to a space, a raw newline, a dual-line
-# split — they all recurse here).  The corpus map votes: drop the hyphen (wrap
-# artifact), keep it (real compound), or — absent — leave the split alone
-# (suspended hyphen / non-word).
-_WRAP_HYPHEN_RE = re.compile(r"([A-Za-z]{2,})-\s+([A-Za-z]{2,})")
+# A hyphenated word reaches the body producer as `X-<sep>Y`, where <sep> is
+# anything OR nothing — a space, a collapsed `<br>`, a raw newline, or the split
+# written solid in the source (`Differenti-ation`).  The separator is irrelevant:
+# the WORD is the only question.  The corpus map votes: drop the hyphen (the
+# corpus prefers `XY` solid — a wrap artifact), keep it (real compound), or —
+# absent — leave the split alone (suspended hyphen / non-word).
+_HYPHEN_RE = re.compile(r"([A-Za-z]{2,})-\s*([A-Za-z]{2,})")
 
 
 def _dehyphenate(text):
@@ -166,12 +167,17 @@ def _dehyphenate(text):
         x, y = m.group(1), m.group(2)
         v = mp.get(f"{x.lower()}-{y.lower()}")
         if v == "drop":
+            # A wrap never breaks between two capitals; a hyphen that does is a
+            # proper name or acronym (Ba-Hima, Ba-Rotse, CO-NH) — the hyphen IS
+            # part of the name, not an artifact — so keep it.
+            if x[:1].isupper() and y[:1].isupper():
+                return m.group(0)
             return x + y
         if v == "keep":
             return x + "-" + y
         return m.group(0)                              # absent → leave
 
-    return _WRAP_HYPHEN_RE.sub(_repl, text)
+    return _HYPHEN_RE.sub(_repl, text)
 
 
 def _produce_body(raw, inner, context, inner_registry):

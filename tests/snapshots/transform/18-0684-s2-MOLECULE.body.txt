@@ -146,7 +146,7 @@ ever being in the same place, asserts that the ultimate force is a
 repulsion which increases without limit as the distance diminishes
 without limit, so that two atoms can never coincide. But this
 seems an unwarrantable concession to the vulgar opinion that two
-bodies cannot co-exist in the same place. This opinion is deduced
+bodies cannot coexist in the same place. This opinion is deduced
 from our experience of the behaviour of bodies of sensible size,
 but we have no experimental evidence that two atoms may not sometimes
 coincide. For instance, if oxygen and hydrogen combine
@@ -780,7 +780,7 @@ low. Van der Waals, in a famous monograph, «I»On the Continuity«/I»
 «I»of the Liquid and Gaseous States«/I» (Leiden, 1873), has shown that the
 imperfections of equation (14) may be traced to «SPAN[style:white-space:nowrap]»two causes:—«/SPAN»«P»(i.) The calculation has not allowed for the finite size of the
 molecules, and their consequent interference with one another’s
-motion, and«P»(ii.) The calculation has not allowed for the field of inter-molecular
+motion, and«P»(ii.) The calculation has not allowed for the field of intermolecular
 force between the molecules, which, although small, is known to
 have a real existence. The presence of this field of force results in
 the molecules, when they reach the boundary, being acted on by

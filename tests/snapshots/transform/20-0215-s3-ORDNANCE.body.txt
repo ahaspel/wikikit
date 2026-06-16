@@ -605,7 +605,7 @@ forging work can be performed before the metal has cooled down
 too much. Generally one end of the ingot is forged down to the
 proper size; it is then reheated and the other end similarly treated.«P»The forging of the steel and the subsequent operations have a very
 marked influence on the structure of the metal, as will be seen from
-the micro-photographs shown in the article «LN:Alloys|Alloys«/LN», where («I»a«/I») and
+the microphotographs shown in the article «LN:Alloys|Alloys«/LN», where («I»a«/I») and
 («I»b«/I») show the structure of the cast steel of the actual ingot; from
 this it will be noticed that the crystals are very large and prominent,
 but, as the metal passes through the various operations, these
@@ -761,7 +761,7 @@ made. The copying bar—which is straight if the rifling is to be uniform«SH:ri
 «CTR»«SC»Fig«/SC». 21.—Rifling Machine.«/CTR»«P»Rifling is the term given to the numerous shallow grooves cut spirally along the bore of a gun; the rib between two grooves is called the “land.” Rifling has been known for many years; it was supposed to increase the range, and no doubt did so, owing to the fact that the bullet having
 to be forced into the gun during the loading operation became«SH:rifling»Rifling.«/SH» a mechanical fit and prevented to a great extent the loss of gas by windage which occurred with ordinary weapons. Kotter (1520) and Danner (1552), both of Nuremberg, are respectively credited as being the first to rifle gun barrels; and there is at the Rotunda, Woolwich, a muzzle-loading barrel dated 1547 rifled with six fine grooves. At this early period, rifling was applied only to small arms, usually for sporting purposes. The disadvantage of having, during loading, to force a soft lead (or lead-covered) ball down a bore of smaller diameter prevented its general employment for military use. In 1661 Prussia experimented with a gun rifled in thirteen shallow grooves, and in 1696 the elliptical bore—similar to the Lancaster—had been tried in Germany. In 1745 Robins was experimenting with rifled guns and elongated shot in England. During the Peninsular War about 1809, the only regiment (the “Rifle Brigade,” formerly called the 95th) equipped with rifled arms, found considerable difficulty in loading them with the old spherical lead
 bullet, from the muzzle. In 1836 Russia made a large number of experiments with a rifled gun invented by Montigny, a Belgian; this was not a success, but in England the guns invented by Major Cavalli, in 1845, and by Baron Wahrendorff in 1846, obtained some measure of favour. Both these guns were breech-loaders. The Cavalli gun had a bore of 6·5 in. diameter; it was rifled in two grooves having a uniform twist of 1 in 25 calibres, and the elongated projectile had two ribs cast with it to fit the grooves, but no means were taken to prevent windage. The Wahrendorff gun had an enlarged chamber and the bore of 6·37 in. diameter was rifled in 2 grooves; the projectile had ribs similar to that for the Cavalli gun; but Wahrendorff had also tried lead-coated projectiles, the coating being attached by grooves undercut in the outside of the shell. In 1854 Lancaster submitted his plan of rifling; in this (fig. 22) the bore was made of an oval section which twisted round the axis of the gun from the breech to the muzzle; a projectile having an oval section was fired. Several old cast-iron guns bored on this system burst in the Crimean War from the projectile wedging in the gun. In 1855 Armstrong experimented with a breech-loading rifled gun, firing a lead-coated projectile. The rifling consisted of a large number of shallow grooves having a uniform twist of 1 in 38 calibres. When the gun was fired the lead-coated projectile, which was slightly larger in diameter than the bore of the gun, was forced into the rifling and so gave rotation to the elongated projectile.«P»«CTR»{{IMG:EB1911 - Ordnance - Fig. 22.png|width=400}}«BR»
-«DIV[style:font-size:83%]»«SC»Fig«/SC». 22.—Sections of Rifling.«/DIV»«/CTR»«P»Whitworth in 1857 brought out his hexagonal bore method of rifling and a projectile which was a good mechanical fit to the bore. Good results were obtained,PAGE:226but although this system had certain advantages it did not fulfil all requirements.«P»In 1863, England re-opened the whole question, and after
+«DIV[style:font-size:83%]»«SC»Fig«/SC». 22.—Sections of Rifling.«/DIV»«/CTR»«P»Whitworth in 1857 brought out his hexagonal bore method of rifling and a projectile which was a good mechanical fit to the bore. Good results were obtained,PAGE:226but although this system had certain advantages it did not fulfil all requirements.«P»In 1863, England reopened the whole question, and after
 exhaustive trials of various inventions decided on the adoption
 of the muzzle-loading type for all guns, with the French system
 of rifling. This system was invented in 1842 by Colonel Treüille
@@ -1198,7 +1198,7 @@ portions are not alternate.
 «SC»Fig«/SC». 33.—Krupp Breech Action.«/CTR»«P»In the older types of mechanism for heavy B.L. guns the breech
 was opened in from three to four different operations which involved
 considerable loss of time. Fig. 40 shows the general type for 9·2-in.,
-lo-in. and 12-in. B.L. guns. To open the breech the cam lever C
+loin. and 12-in. B.L. guns. To open the breech the cam lever C
 was folded up so that it engaged the pin B in connexion with the
 ratchet lever E. This was worked and so disengaged the breech
 screw from the threads cut in the gun; the cam lever was then
@@ -2504,7 +2504,7 @@ providing a sufficient length of recoil without undue compression of
 the column of springs. Thus if the spring column be 6 ft. long
 and the gun recoils «SPAN[style:white-space:nowrap]»4½ ft.«/SPAN» the springs are compressed into a space
 of «SPAN[style:white-space:nowrap]»1½ ft.,«/SPAN» or a quarter of their working length. This treatment is
-liable to crush the springs. German gun-makers get over this
+liable to crush the springs. German gunmakers get over this
 difficulty by the use of very high-class springs made of steel having
 a tenacity of about 140 tons to the square inch with an elastic limit
 of 90 tons. They also use a valve in the buffer piston which relieves
@@ -3701,7 +3701,7 @@ modern ships. A very high rate of fire was attained in the
 “semi-automatic” mounting of the 3-pounder, which was last
 fitted in the “Duke of Edinburgh” class, but for reasons already
 given guns of this type are no longer required, and the 3-pounder
-is retained only as a boat gun for sub-calibre practice.«P»All double-banked pulling boats and all steam-boats are
+is retained only as a boat gun for sub-calibre practice.«P»All double-banked pulling boats and all steamboats are
 fitted with arrangements for mounting one or two guns, according
 to the size of the boat; the object of the boat armaments being
 for use in river operations, for covering a landing, or in guard-boats.
