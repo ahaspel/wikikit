@@ -1,5 +1,5 @@
-"""Whole-volume preprocess — the single source-cleaning + page-transition-
-healing stage (see ``docs/canonical_path.md`` §1 step 2).
+"""Whole-volume preprocess — the single source-cleaning stage, run on the
+continuous volume stream (see ``docs/canonical_path.md`` §1 step 2).
 
 Linear pipe::
 
@@ -8,10 +8,12 @@ Linear pipe::
 
 After ``preprocess`` the source is frozen: nothing mutates it until producer
 time, and ``\\x01PAGE:N\\x01`` markers survive as pure page-number bookkeeping
-([[feedback_segments_two_purposes]]).  Cross-page tables / hyphen splits /
-wrapped sentences heal AT THE SEAM here because the continuous stream is the
-only context where both sides of a page transition are visible at once — doing
-it per-page or per-article structurally leaks.
+([[feedback_segments_two_purposes]]).  It runs whole-volume because the continuous
+stream is the only context where both sides of a page transition are visible at
+once — a cross-page table keeps its ``{|``…``|}`` together (per-page it would
+shatter), and corrections / quote-run run once over the joined text.  Page-split
+words are NOT rejoined here: they reach the walk as raw markers and reconstruct in
+the split-word producer.
 
 Corrections + quote-run → ``«B»``/``«I»`` are applied HERE, first
 (``apply_corrections`` + ``_convert_quote_runs``), on the joined RAW stream —

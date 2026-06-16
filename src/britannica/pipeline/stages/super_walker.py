@@ -214,9 +214,10 @@ def volume_stream(volume: int) -> str:
     to boundary detection AND the element walker.
 
     Plate-free pages are assembled (``make_stream``) and run through the
-    whole-volume ``preprocess`` (source cleaning + page-transition healing),
-    so every boundary and every article body is sliced from clean source with
-    cross-page tables/hyphens/sentences already healed at the seam.  Section
+    whole-volume ``preprocess`` (source cleaning on the continuous stream), so
+    every boundary and every article body is sliced from clean source with a
+    cross-page table kept intact across the seam.  (Page-split words are NOT
+    rejoined here — they reconstruct downstream in the split-word producer.)  Section
     tags survive (detect consumes ``<section begin>``); the ``\\x01PAGE:N\\x01``
     markers survive as page-number bookkeeping.
     """

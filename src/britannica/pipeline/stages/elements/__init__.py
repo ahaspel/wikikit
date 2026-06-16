@@ -133,10 +133,52 @@ def _passthrough_inner(raw, inner, context,
     return inner
 
 
+_HYPHEN_MAP = None
+
+
+def _hyphen_map():
+    """Lazy-load the corpus dehyphenation map (built by tools/build_hyphen_map.py).
+    Absent / unreadable → empty, so every wrap simply 'leaves'."""
+    global _HYPHEN_MAP
+    if _HYPHEN_MAP is None:
+        import json
+        from pathlib import Path
+        try:
+            _HYPHEN_MAP = json.loads(
+                Path("data/hyphen_map.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _HYPHEN_MAP = {}
+    return _HYPHEN_MAP
+
+
+# A word broken across a wrap reaches the body producer as `X-<whitespace>Y`
+# whatever its origin (a `<br>` collapsed to a space, a raw newline, a dual-line
+# split — they all recurse here).  The corpus map votes: drop the hyphen (wrap
+# artifact), keep it (real compound), or — absent — leave the split alone
+# (suspended hyphen / non-word).
+_WRAP_HYPHEN_RE = re.compile(r"([A-Za-z]{2,})-\s+([A-Za-z]{2,})")
+
+
+def _dehyphenate(text):
+    mp = _hyphen_map()
+
+    def _repl(m):
+        x, y = m.group(1), m.group(2)
+        v = mp.get(f"{x.lower()}-{y.lower()}")
+        if v == "drop":
+            return x + y
+        if v == "keep":
+            return x + "-" + y
+        return m.group(0)                              # absent → leave
+
+    return _WRAP_HYPHEN_RE.sub(_repl, text)
+
+
 def _produce_body(raw, inner, context, inner_registry):
     """BODY producer — also the «\\n\\n producer».  The body run is the inert text
-    between element markers; the one thing this producer does to it is turn a
-    blank line into a paragraph-OPEN marker «P».
+    between element markers; this producer turns a blank line into a paragraph-
+    OPEN marker «P», then rejoins a word broken across a line/column wrap (the
+    corpus dehyphenation map decides drop/keep/leave).
 
     «P» is open-only on purpose: the viewer maps «P»→`<p>` and the BROWSER
     auto-closes each `<p>` at the next `<p>` or at any block element — so
@@ -149,7 +191,10 @@ def _produce_body(raw, inner, context, inner_registry):
     and the walker, both of which read raw `\\n\\n`; swapping it there blinds them.
     By the time the body producer runs, every `\\n\\n`-dependent stage is done.
     """
-    return re.sub(r"\n{2,}", "«P»", raw)
+    # Dehyphenate AFTER the «P» split: a paragraph break is now «P» (not
+    # whitespace), so a wrap can't rejoin across it — only single line breaks and
+    # spaces remain for the wrap regex to see.
+    return _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
