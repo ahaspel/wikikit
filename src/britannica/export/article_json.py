@@ -379,7 +379,13 @@ def _wrap_resolved_xrefs_in_body(
 def _xrefs_from_body(body, article_id, link_index):
     """The candidate-source half of the xref decorator: extract every
     reference from the body and resolve it off the in-memory index,
-    returning transient (un-persisted) CrossReference rows.  No DB read."""
+    returning transient (un-persisted) CrossReference rows.  No DB read.
+
+    No index (``link_index is None`` — a single-article look-render that skips
+    the corpus-wide resolution) means nothing to resolve against, so return no
+    xrefs; the body's «LN» markers then strip to their display text downstream."""
+    if link_index is None:
+        return []
     from britannica.xrefs.extractor import extract_xrefs
     from britannica.pipeline.stages.resolve_xrefs import resolve_one
     xrefs = []
