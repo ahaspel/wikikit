@@ -135,7 +135,9 @@ def _process_math_equation(inner: str, context) -> str:
     # with DOUBLE_BRACE a leaf, the producer recurses its own content.)
     from britannica.pipeline.stages.elements import process_elements
     rendered = process_elements(content, context, _allow_figure=False)
-    rendered = rendered.replace("\xa0", " ")
+    # `[ \t]+` is ASCII-only and leaves \xa0 alone: a non-breaking space is
+    # carried content, not equation layout, so it rides through intact rather
+    # than being flattened to a plain (collapsible) space.
     rendered = _INTERNAL_WHITESPACE_RE.sub(" ", rendered)
     # Strip space-before-punctuation — same as body-text's old
     # body-only finishing.  Collapses MOLECULE's literal `+ . . . ` to

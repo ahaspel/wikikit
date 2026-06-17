@@ -17,9 +17,12 @@ import re
 
 from britannica.util.strings import strip_markers
 
-# «SEC:slug|name» (major, L1) and «SH:slug»…«/SH» (shoulder, L2), in doc order.
+# «SEC:slug|name» (major, L1), «SH:slug»…«/SH» (shoulder, L2), and «ANCHOR:slug|name»
+# (link target, L3 — kept OUT of the TOC by kind=="anchor"), in doc order.
 _ANCHOR_RE = re.compile(
-    r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»(.*?)«/SH»", re.DOTALL)
+    r"«SEC:([^|»]*)\|([^»]*)»"
+    r"|«SH:([^»]*)»(.*?)«/SH»"
+    r"|«ANCHOR:([^|»]*)\|([^»]*)»", re.DOTALL)
 
 
 def _sh_text(s: str) -> str:
@@ -33,16 +36,21 @@ def detect_sections(body: str) -> list[dict]:
 
     Each entry: ``{"title", "slug", "id", "level", "kind"}``.  ``id`` is
     ``section-<slug>`` — the same id the viewer stamps on the anchor, so a
-    ``…#section-<slug>`` URL resolves at render time.
+    ``…#section-<slug>`` URL resolves at render time.  ``kind`` is ``"sec"`` /
+    ``"sh"`` (headings, shown in the TOC) or ``"anchor"`` (a link target only —
+    the Reader's Guide matcher and the resolver use it, but the TOC must skip it).
     """
     sections: list[dict] = []
     for m in _ANCHOR_RE.finditer(body):
         if m.group(1) is not None:        # «SEC» — major section (L1)
             slug, name = m.group(1), m.group(2)
             level, kind = 1, "sec"
-        else:                             # «SH:slug» — shoulder (L2)
+        elif m.group(3) is not None:      # «SH:slug» — shoulder (L2)
             slug, name = m.group(3), _sh_text(m.group(4))
             level, kind = 2, "sh"
+        else:                             # «ANCHOR:slug|name» — link target, NOT a heading
+            slug, name = m.group(5), m.group(6)
+            level, kind = 3, "anchor"
         sections.append({
             "title": name, "slug": slug, "id": f"section-{slug}",
             "level": level, "kind": kind,

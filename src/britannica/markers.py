@@ -131,9 +131,10 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     "XXL", "XL", "LG", "XXS", "XS", "SM", "FS", "LH",
     # links
     "LN",
-    # cell- and block-level content; SEC is the major-section anchor point
-    # marker «SEC:slug|name» (stamp_sections); SH the shoulder heading
-    "FN", "MATH", "HTMLTABLE", "CHEM", "EQNGROUP", "EQN", "SEC", "SH",
+    # cell- and block-level content; SEC is the major-section anchor point marker
+    # «SEC:slug|name» (stamp_sections); SH the shoulder heading; ANCHOR the
+    # «ANCHOR:slug|name» link target (kind="anchor" downstream, kept out of the TOC)
+    "FN", "MATH", "HTMLTABLE", "CHEM", "EQNGROUP", "EQN", "SEC", "SH", "ANCHOR",
 )
 
 

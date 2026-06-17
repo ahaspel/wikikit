@@ -22,7 +22,7 @@ _ESCAPE = {"=": "=", "(": "(", ")": ")", "'": "'", "!": "|", "*": "*", "–": "�
 def process_spacer(raw: str) -> str:
     m = _LEAF_RE.match(raw)
     if not m:
-        return ""
+        return raw  # malformed leaf — leak it raw, never sweep to ""
     name = m.group(1).strip()
     arg = (m.group(2) or "").strip()
     low = name.lower()
@@ -47,5 +47,19 @@ def process_spacer(raw: str) -> str:
         return "æ"  # æ ligature glyph
     if name in _ESCAPE:
         return _ESCAPE[name]
-    # clear / anchor / unknown leaf → nothing in linear flow.
-    return ""
+    if low == "nbsp":
+        return " "  # non-breaking space (U+00A0), not a plain space
+    if low in ("spaces", "pad thin", "fsp"):
+        return " "                       # whitespace spacers → a space
+    if low == "br":
+        return "«BR»"                    # line break
+    # Explicitly empty in linear flow — a DECISION listed by name, not a catch-all:
+    # clear carries no visible content; nop/nopt/nopf are no-ops.  (`anchor` is NOT
+    # here — it's a link target, carried by the ANCHOR producer.)
+    if low in ("clear", "nop", "nopt", "nopf"):
+        return ""
+    # Any other leaf is one this producer does NOT handle.  LEAK it (render raw)
+    # so it surfaces in the audit — never sweep to "".  Sweeping inside a producer
+    # is no more legitimate than sweeping the whole corpus: smaller blast radius,
+    # same crime.
+    return raw

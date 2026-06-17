@@ -276,9 +276,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # lon).  Real place data; the COORDINATES producer formats it `D°M′[S″]H`.
     if re.match(r"\{\{\s*EB1911\s+Coordinates\b", raw, re.IGNORECASE):
         return "COORDINATES"
-    # Spacer / rule / char-escape leaves — em/gap/clear/anchor/ditto/dhr/rule/bar/shy
-    # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).
-    if re.match(r"\{\{\s*(?:(?:em|gap|clear|anchor|ditto|dhr|rule|bar|shy)\b"
+    # Spacer / rule / char-escape leaves — em/gap/clear/ditto/dhr/rule/bar/shy
+    # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).  (`anchor` is NOT
+    # here — it's a link target, routed to ANCHOR below.)
+    if re.match(r"\{\{\s*(?:(?:em|gap|clear|ditto|dhr|rule|bar|shy)\b"
                 r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", raw, re.IGNORECASE):
         return "SPACER"
     # Content extractors — display arg is the content; producer unwraps + recurses it.
@@ -303,11 +304,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         raise ValueError(
             f"DOUBLE_BRACE raw doesn't open with a template: {raw[:40]!r}")
     name = m.group(1).lower()
-    # `{{section|Name}}` — Wikisource subsection ANCHOR (link target, no visual
-    # output).  Distinct from the `<section>` boundary tag; carried so same-article
-    # `[[#Name]]` and cross-article `…#Name` xrefs resolve against it.
-    if name == "section":
-        return "SECTION_ANCHOR"
+    # `{{section|Name}}` / `{{anchor|…}}` / `{{anchor+|…}}` — Wikisource link-target
+    # anchors (no visual output, save anchor+'s display text).  Distinct from the
+    # `<section>` boundary tag; CARRIED as «ANCHOR» so same-article `[[#Name]]`,
+    # cross-article `…#Name`, and Reader's-Guide deep-links resolve against them.
+    if name == "section" or name.startswith("anchor"):
+        return "ANCHOR"
     # Fraction family (sfrac/mfrac/frac/over/EB1911 tfrac/…) — a styler lifted
     # as an element; the FRACTION producer recurses its slots.  Matched on the
     # raw opener (so `{{EB1911 sfrac|…}}` routes here, not to the `eb1911`

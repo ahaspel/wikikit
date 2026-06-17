@@ -343,8 +343,9 @@ def _chem_normalize(s: str) -> str:
     s = re.sub("«/?[A-Z]+(?:\\[[^\\]]*\\])?»", "", s)  # marker runs (italic, «SPAN[style:…]»)
     s = re.sub(r"\{\{[^{}]*\}\}", "", s)             # residual templates
     s = re.sub(r"</?(?:big|span)\b[^>]*>", "", s, flags=re.IGNORECASE)  # <big>/<span …> stylers
-    s = (s.replace("&nbsp;", " ").replace("&emsp;", " ").replace("&ensp;", " ")
-          .replace("·", ""))
+    # Entities (`&nbsp;`/`&emsp;`/`&ensp;`) are decoded upstream by preprocess;
+    # only the literal middot hydrate-separator survives to strip here.
+    s = s.replace("·", "")
     return s.translate(_CHEM_SUB_DIGITS)
 
 
@@ -573,8 +574,8 @@ def _process_chemistry_layout(raw: str, inner: str, context,
             # attr-slot rides raw to `_tag`, which folds it like any cell.
             content = re.sub(r"\{\{[Tt]s\|[^{}]*\}\}\s*", "", content)
             content = content.strip()
-            content = (content.replace("&vert;", "|")
-                              .replace("&nbsp;", " "))
+            # (`&vert;`/`&nbsp;` are decoded upstream by preprocess, so a decode
+            # here matched nothing — the cell goes straight to the recurse.)
             # KEYSTONE: a chem cell wraps article markup, not a leaf — recurse it
             # so inline stylers / sub-sup / polytonic render instead of leaking.
             # Recurse BEFORE resolving the bracket/<br> sentinels: as opaque PUA
