@@ -34,8 +34,8 @@ def _process_contributor_footer(raw: str) -> str:
     """Render a contributor sign-off to its faithful right-aligned initials.
 
     Full footer: `{{EB1911 footer initials|Frank Richardson Cana|F. R. C.}}`
-        → `«DIV[style:float:right]»(F. R. C.)«/DIV»` (double variant joins with `;`).
-    Shortcut:    `{{EB1911 TAs}}` → `«DIV[style:float:right]»(T. As.)«/DIV»`.
+        → `«SPAN[style:float:right]»(F. R. C.)«/SPAN»` (double variant joins with `;`).
+    Shortcut:    `{{EB1911 TAs}}` → `«SPAN[style:float:right]»(T. As.)«/SPAN»`.
 
     Either way the harvest binds the contributor off the rendered initials via the
     index, so this emits the initials and nothing else.
@@ -45,9 +45,9 @@ def _process_contributor_footer(raw: str) -> str:
     m = _FOOTER_PATTERN.search(raw)
     if m:
         inits = [c["initials"] for c in _parse_contributors(m.group(1))]
-        return f"«DIV[style:float:right]»({'; '.join(inits)})«/DIV»" if inits else ""
+        return f"«SPAN[style:float:right]»({'; '.join(inits)})«/SPAN»" if inits else ""
     sm = _SHORTCUT_RE.match(raw.strip())
     if sm:
         inits = _expand_initials_shortcut(sm.group(1))
-        return f"«DIV[style:float:right]»({inits})«/DIV»" if inits else ""
+        return f"«SPAN[style:float:right]»({inits})«/SPAN»" if inits else ""
     return ""
