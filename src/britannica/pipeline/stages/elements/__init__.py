@@ -948,6 +948,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "LANG": lambda raw, inner, ctx, reg: process_lang(raw, ctx),
     # COORD — `{{11co|DEG|[MIN|]DIR}}`: render the lat/long value.
     "COORD": lambda raw, inner, ctx, reg: process_coord(raw),
+    # DOUBLE_BRACE_LEAK — a template we don't handle yet: emit it RAW so it leaks
+    # visibly (surfaces in the audit), never crashing the walk.
+    "DOUBLE_BRACE_LEAK": lambda raw, inner, ctx, reg: raw,
     # REFS — a footnote-list emitter (smallrefs / reflist / ref / blockref) → empty
     # (footnotes render inline in this edition).
     "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),

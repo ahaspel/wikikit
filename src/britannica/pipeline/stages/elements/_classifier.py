@@ -451,7 +451,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # sub/sup) stays in body-text — the source doesn't declare those
     # as math via the template name; they're rendered as typography
     # whose output flows back into prose.  Walker doesn't lift them.
-    raise ValueError(f"Unknown DOUBLE_BRACE template: {full or name!r}")
+    #
+    # Anything else reaching here is a template we don't yet handle.  It LEAKS —
+    # renders raw and visibly — so the build keeps going and the leak audit
+    # surfaces it as the signal to write its producer.  Never sweep, never halt:
+    # a miss must be loud AND recoverable, which a raise (crash) is not.
+    return "DOUBLE_BRACE_LEAK"
 
 
 # Word-named spacer / glyph / escape LEAVES + content-less frame CONTROL markers.
