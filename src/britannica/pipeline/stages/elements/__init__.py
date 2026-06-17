@@ -36,6 +36,9 @@ from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._frame import (
     process_frame, process_refs, process_missing, process_main_other)
 from britannica.pipeline.stages.elements._hanging import process_hanging_indent
+from britannica.pipeline.stages.elements._brace import process_brace
+from britannica.pipeline.stages.elements._lang import process_lang
+from britannica.pipeline.stages.elements._coord import process_coord
 from britannica.pipeline.stages.elements._splitword import process_split_word
 from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import process_content_extract
@@ -938,6 +941,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}`: render the
     # block at the source's own indent width (default 2em), recurse the text.
     "HANGING_INDENT": lambda raw, inner, ctx, reg: process_hanging_indent(raw, ctx),
+    # BRACE — `{{brace2|N|dir}}`: render a row-spanning curly brace glyph, not the
+    # leaked `N|dir` arguments (and not nothing).
+    "BRACE": lambda raw, inner, ctx, reg: process_brace(raw),
+    # LANG — `{{greek|…}}` / `{{polytonic|…}}` / …: unwrap to content (glyphs are text).
+    "LANG": lambda raw, inner, ctx, reg: process_lang(raw, ctx),
+    # COORD — `{{11co|DEG|[MIN|]DIR}}`: render the lat/long value.
+    "COORD": lambda raw, inner, ctx, reg: process_coord(raw),
     # REFS — a footnote-list emitter (smallrefs / reflist / ref / blockref) → empty
     # (footnotes render inline in this edition).
     "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),

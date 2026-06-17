@@ -709,12 +709,6 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "smallcaps":    {"sc": True},
     "small caps":   {"sc": True},
     "small-caps":   {"sc": True},
-    # Script wrappers → content bare (the script IS the glyphs; no style of ours to
-    # carry).  Recognized so they route here and never leak — the producer's
-    # "unmatched" case: a styler we own but render as plain content.
-    "greek":        {},
-    "polytonic":    {},
-    "hebrew":       {},
     "uc":           {"css": "text-transform:uppercase", "tag": "SPAN"},  # {{uc|X}} → X uppercased; same transform the {{Ts|uc}} code carries
     # Inline no-wrap / font / decoration stylers → CSS the viewer decodes.
     "nowrap":       {"css": "white-space:nowrap", "tag": "SPAN"},
@@ -734,9 +728,7 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "underline":        {"css": "text-decoration:underline", "tag": "SPAN"},
     "double underline": {"css": "text-decoration:underline", "tag": "SPAN"},
     "float left":       {"css": "float:left"},
-    "normal":           {},  # font-variant:normal override → just the content
-    "brace2":           {},  # grouping brace → content (decoration not rendered)
-    "11co":             {},  # column wrapper → content
+    "normal":           {"css": "font-variant:normal", "tag": "SPAN"},  # reset small-caps to normal
     "u":                {"css": "text-decoration:underline", "tag": "SPAN"},
     # ── BROKEN-leak backlog stylers (2026-06-09).  Each was a styler the walk
     # leaked raw; same rows, same mechanism.  CSS grounded in the
@@ -745,13 +737,6 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "strikethrough":    {"css": "text-decoration:line-through", "tag": "SPAN"},  # strike→tds
     "sp":               {"css": "letter-spacing:0.25em", "tag": "SPAN"},  # spaced-out lettering
     "zfloat right":     {"css": "float:right"},  # z-prefixed float variant of float right
-    # Language/script wrappers → content bare (the script IS the glyphs), like greek/hebrew.
-    "arabic":           {},
-    "he":               {},
-    "latin":            {},
-    "coptic":           {},  # Coptic script run → glyphs bare
-    "grc":              {},  # Ancient-Greek (ISO grc) script run → glyphs bare
-    "linktext":         {},  # {{linktext|X}} — display text of a dictionary link → X bare
     # ── Batch-2 simple wrappers (forms confirmed in walked context).
     "smb":              {"sc": True},  # small-caps era markers (B.C./A.D.)
     "bc":               {"ctr": True},  # block-centre (centred display equations)
@@ -767,7 +752,7 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "mono":               {"css": "font-family:monospace", "tag": "SPAN"},
     "sans":               {"css": "font-family:sans-serif", "tag": "SPAN"},
     "bbsc":               {"sc": True},  # bold-blackletter-smallcaps display → smallcaps
-    "font-variant normal": {},  # font-variant:normal override → just the content
+    "font-variant normal": {"css": "font-variant:normal", "tag": "SPAN"},  # reset small-caps to normal
     # Graduated-size BLOCK variants (`{{xxx-larger}}`, `{{xx-larger block}}`, …) →
     # CSS, same scale as the inline `larger`/`x-larger`/`xx-larger` family above.
     "xxx-larger":         {"css": "font-size:207%", "tag": "SPAN"},
@@ -779,6 +764,13 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "fs90":               {"css": "font-size:90%", "tag": "SPAN"},  # plate-caption fixed size
     "fs85":               {"css": "font-size:85%", "tag": "SPAN"},  # plate-caption fixed size (Fs85)
 }
+# The styler registry carries STYLE, never strips by name: an empty spec IS the
+# strip-by-name facility that hid brace2 / 11co, so it is forbidden here.  A
+# wrapper we don't style gets its own producer (LANG / COORD / BRACE …) or leaks
+# at the classifier's "Unknown DOUBLE_BRACE" refusal — never a silent `{}` drop.
+assert all(_TEMPLATE_STYLE_WRAPPERS.values()), (
+    "empty-spec styler entries (strip-by-name) are forbidden: "
+    + ", ".join(k for k, v in _TEMPLATE_STYLE_WRAPPERS.items() if not v))
 # Longest names first so `block center` wins over `center`/`c`.
 _TEMPLATE_STYLE_RE = re.compile(
     r"\{\{\s*(" + "|".join(re.escape(n) for n in sorted(

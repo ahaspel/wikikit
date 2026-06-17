@@ -413,6 +413,17 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # split: `hi` → hardcoded styler, `hanging indent` → FRAME-drop.
     if full in _HANGING_INDENT_NAMES:
         return "HANGING_INDENT"
+    # Row-spanning curly brace — `{{brace2|N|dir}}`.  Render the glyph (stretched
+    # to its N-row span), never leak its `N|dir` arguments as text.
+    if full in _BRACE_NAMES:
+        return "BRACE"
+    # Script wrappers — `{{greek|…}}`, `{{polytonic|…}}`, …: unwrap to the content
+    # (the glyphs ARE the text).  An explicit producer, NOT a strip-by-name.
+    if full in _LANG_NAMES:
+        return "LANG"
+    # `{{11co|DEG|[MIN|]DIR}}` — a single lat/long coordinate; render the value.
+    if full in _COORD_NAMES:
+        return "COORD"
     # Layout FRAMES that CARRY content — drop the frame, recurse the content.
     if full in _FRAME_NAMES:
         return "FRAME"
@@ -493,6 +504,22 @@ _SPACER_NAMES: frozenset[str] = frozenset({
 # dropped: the source states the indent width (default 2em) and it formats a list,
 # so its own producer (`_hanging.py`) reads the width and emits the block.
 _HANGING_INDENT_NAMES: frozenset[str] = frozenset({"hi", "hanging indent"})
+
+# Row-spanning curly brace grouping table rows — `{{brace2|N|dir}}` (4000+ uses).
+# Its own producer (`_brace.py`) renders the glyph; we CARRY it, never strip it.
+# (It WAS a `{}` "decoration not rendered" entry in the styler registry — the very
+# leak this fixes.)  The bare `{{brace}}` stays the spacer-glyph it already is.
+_BRACE_NAMES: frozenset[str] = frozenset({"brace2"})
+
+# Script / language wrappers — the glyphs ARE the content; `_lang.py` unwraps to
+# it.  Drained from the styler registry's empty-spec `{}` branch (now deleted): a
+# script is a DECISION (content bare), not a blind strip-by-name.
+_LANG_NAMES: frozenset[str] = frozenset(
+    {"greek", "polytonic", "hebrew", "arabic", "he", "latin", "coptic", "grc"})
+
+# `{{11co|DEG|[MIN|]DIR}}` — a single EB1911 geographic coordinate; `_coord.py`
+# renders `DEG° [MIN′ ]DIR` (was a mislabeled `{}` "column wrapper" strip entry).
+_COORD_NAMES: frozenset[str] = frozenset({"11co"})
 
 # Layout FRAMES that carry content — `{{outdent|text}}`, `{{nodent|text}}`, the
 # multi-cell `{{familytree|…}}` / `{{Tree chart|…}}` / `{{flex wrap centre|…}}` /
