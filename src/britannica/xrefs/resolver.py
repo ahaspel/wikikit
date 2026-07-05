@@ -20,78 +20,24 @@ module's `disambiguate_among` applies three rules in order:
   3. Fallback.  Return the first remaining candidate.  Preserves
      current silent-pick behavior for truly ambiguous cases so no
      existing (lucky) link regresses.
+
+The kind vocabulary and the body-opening matcher live in
+`britannica.xrefs.disambiguation` — one owner, shared with the vol29
+classified-TOC resolver, which feeds the same matcher a wanted-kind
+read off the index structure (bucket / category) instead of a display
+parenthetical.
 """
 from __future__ import annotations
 
 import re
 
 from britannica.db.models import Article, CrossReference
+from britannica.xrefs.disambiguation import body_opening, matches_disambiguator
 from britannica.xrefs.scoring import find_fuzzy_match
 
 
-# Disambiguator word (lowercase) → set of literal words that, if found
-# in a candidate's body opening, indicate a match.  Keep transparent
-# and narrow; expand as concrete collision cases reveal blind spots.
-_DISAMBIGUATOR_SYNONYMS: dict[str, set[str]] = {
-    # Geographic — the ZÜRICH (city) case + friends
-    "city":       {"city", "town", "capital", "burgh", "seaport", "municipality"},
-    "town":       {"town", "city", "village", "burgh"},
-    "village":    {"village", "hamlet", "town"},
-    "canton":     {"canton", "cantonal"},
-    "county":     {"county", "shire"},
-    "state":      {"state", "commonwealth"},
-    "province":   {"province", "territory"},
-    "region":     {"region", "district", "territory"},
-    "river":      {"river", "stream", "tributary", "affluent"},
-    "lake":       {"lake", "loch", "lough"},
-    "mountain":   {"mountain", "peak", "ridge", "summit"},
-    "island":     {"island", "isle"},
-
-    # Office / title — ABBAS I (shah) etc.
-    "saint":      {"saint"},
-    "pope":       {"pope", "pontiff"},
-    "king":       {"king", "monarch"},
-    "queen":      {"queen"},
-    "emperor":    {"emperor"},
-    "empress":    {"empress"},
-    "prince":     {"prince"},
-    "duke":       {"duke"},
-    "earl":       {"earl", "count"},
-    "baron":      {"baron"},
-    "bishop":     {"bishop", "archbishop"},
-    "priest":     {"priest", "divine", "cleric"},
-    "shah":       {"shah"},
-    "pasha":      {"pasha"},
-    "sultan":     {"sultan"},
-    "caliph":     {"caliph"},
-    "patriarch":  {"patriarch"},
-
-    # Occupation — ABERNETHY (surgeon), ABBOT (divine)
-    "writer":     {"writer", "author", "novelist", "dramatist"},
-    "poet":       {"poet"},
-    "painter":    {"painter", "artist"},
-    "sculptor":   {"sculptor"},
-    "composer":   {"composer"},
-    "philosopher":{"philosopher"},
-    "historian":  {"historian"},
-    "general":    {"general", "commander"},
-    "admiral":    {"admiral"},
-    "physician":  {"physician", "surgeon", "doctor"},
-    "mathematician": {"mathematician"},
-    "astronomer": {"astronomer"},
-    "statesman":  {"statesman", "politician"},
-    "jurist":     {"jurist"},
-    "dramatist":  {"dramatist", "playwright"},
-    "surgeon":    {"surgeon", "physician"},
-    "divine":     {"divine", "priest", "cleric", "theologian"},
-}
-
-
-from britannica.markers import PAGE_MARKER_RE as _PAGE_MARKER_RE
-
 _LN_DISPLAY_RE = re.compile(r"«LN:[^|]*\|([^«]*)«/LN»")
 _PAREN_DISAMBIG_RE = re.compile(r"\(([^)]+)\)")
-_INNER_MARKER_RE = re.compile(r"«/?[A-Z]+(?::[^«»]*)?»")
 
 
 def _display_disambiguator(xref: CrossReference) -> str | None:
@@ -110,25 +56,6 @@ def _display_disambiguator(xref: CrossReference) -> str | None:
     if not word or not re.search(r"[a-z]", word):
         return None
     return word
-
-
-def _body_opening(body: str, chars: int = 300) -> str:
-    """First chunk of body with PAGE / marker scaffolding stripped."""
-    if not body:
-        return ""
-    b = _PAGE_MARKER_RE.sub("", body)
-    b = _INNER_MARKER_RE.sub("", b)
-    return b[:chars]
-
-
-def _matches_disambiguator(disambiguator: str, body_opening: str) -> bool:
-    """True if disambiguator (or a synonym) appears as a word in body."""
-    words = _DISAMBIGUATOR_SYNONYMS.get(disambiguator, {disambiguator})
-    text = body_opening.lower()
-    for w in words:
-        if re.search(r"\b" + re.escape(w) + r"\b", text):
-            return True
-    return False
 
 
 def disambiguate_among(
@@ -156,9 +83,9 @@ def disambiguate_among(
     if disambiguator:
         matched = [
             c for c in remaining
-            if _matches_disambiguator(
+            if matches_disambiguator(
                 disambiguator,
-                _body_opening(body_of(c) if body_of else (c.body or ""))
+                body_opening(body_of(c) if body_of else (c.body or ""))
             )
         ]
         if len(matched) == 1:

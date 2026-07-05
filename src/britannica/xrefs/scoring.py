@@ -1,14 +1,25 @@
 """Fuzzy matching strategies for cross-reference resolution."""
 
 import re
+import unicodedata
+from collections import defaultdict
 
 
-def find_fuzzy_match(target: str, title_map: dict[str, int]) -> int | None:
+def find_fuzzy_match(
+    target: str, title_map: dict[str, int], aggressive: bool = False
+) -> int | None:
     """Try fuzzy matching strategies to resolve a target against known titles.
 
     Args:
         target: Normalized (uppercased) target string
         title_map: Dict mapping uppercased title -> article id
+        aggressive: How exact the match must be.  When False (the default,
+            used for inline article xrefs) only the safe canonicalizations
+            run -- every hit is a title the target genuinely denotes.  When
+            True (used for the classified TOC, where recall beats precision
+            and an occasional miss is acceptable) an OCR edit-distance pass
+            also runs, repairing garbled spellings (BORBERS->BERBERS) at the
+            cost of the odd wrong link.
 
     Returns:
         article id if a match is found, None otherwise
@@ -60,7 +71,124 @@ def find_fuzzy_match(target: str, title_map: dict[str, int]) -> int | None:
     if result is not None:
         return result
 
+    # Strategy 9: Alternate-spelling split (BEJA OR BIJA -> BEJA).  EB1911
+    # ethnographic / natural-history titles routinely offer variants with
+    # "or"; take the first alternative that resolves (exact or via the
+    # strategies above).
+    result = _try_or_split(target, title_map)
+    if result is not None:
+        return result
+
+    # Strategy 10: Diacritic fold (BAGGARA <- BAGGÁRA, CORDOBA <- CÓRDOBA).
+    # Last resort: the OCR/transcript and the article title disagree only on
+    # accents.  Folds both sides to ASCII and matches on that.
+    result = _try_diacritic_fold(target, title_map)
+    if result is not None:
+        return result
+
+    # Strategy 11 (aggressive only): OCR edit-distance.  A single garbled
+    # character (BORBERS<->BERBERS, BROCN<->BROCA).  Off by default because a
+    # loose edit-1 can mis-resolve; on for recall-first callers (the TOC).
+    if aggressive:
+        result = _try_ocr_levenshtein(target, title_map)
+        if result is not None:
+            return result
+
     return None
+
+
+def _lev_le(a: str, b: str, k: int) -> bool:
+    """True iff the Levenshtein distance between a and b is <= k (bounded)."""
+    if abs(len(a) - len(b)) > k:
+        return False
+    prev = list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        cur = [i]
+        for j in range(1, len(b) + 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1,
+                           prev[j - 1] + (a[i - 1] != b[j - 1])))
+        if min(cur) > k:
+            return False
+        prev = cur
+    return prev[-1] <= k
+
+
+_firstchar_cache: dict[int, tuple[int, dict[str, list[str]]]] = {}
+
+
+def _first_char_view(title_map: dict[str, int]) -> dict[str, list[str]]:
+    """Titles bucketed by first character, memoized by identity + size."""
+    cached = _firstchar_cache.get(id(title_map))
+    if cached is None or cached[0] != len(title_map):
+        buckets: dict[str, list[str]] = defaultdict(list)
+        for title in title_map:
+            if title:
+                buckets[title[0]].append(title)
+        _firstchar_cache[id(title_map)] = (len(title_map), buckets)
+        return buckets
+    return cached[1]
+
+
+def _try_ocr_levenshtein(target: str, title_map: dict[str, int]) -> int | None:
+    """A title within edit distance 1, same first char, length +-1.  Gated:
+    first char must agree (OCR rarely drops the initial) and the target must
+    be long enough that one edit isn't half the word.  On multiple hits the
+    shortest wins -- recall-first, an acceptable miss rate for the TOC."""
+    if len(target) < 4:
+        return None
+    hits = [t for t in _first_char_view(title_map).get(target[0], ())
+            if t != target and abs(len(t) - len(target)) <= 1
+            and _lev_le(target, t, 1)]
+    if not hits:
+        return None
+    if len(hits) > 1:
+        hits.sort(key=len)
+    return title_map[hits[0]]
+
+
+def _fold(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", s)
+                   if not unicodedata.combining(c))
+
+
+def _try_or_split(target: str, title_map: dict[str, int]) -> int | None:
+    """`X OR Y` — try each alternative through exact + the earlier strategies."""
+    if " OR " not in target:
+        return None
+    for part in target.split(" OR "):
+        p = part.strip()
+        if not p:
+            continue
+        if p in title_map:
+            return title_map[p]
+        # A split part never contains " OR ", so this recursion terminates.
+        r = find_fuzzy_match(p, title_map)
+        if r is not None:
+            return r
+    return None
+
+
+_folded_cache: dict[int, tuple[int, dict[str, int]]] = {}
+
+
+def _folded_view(title_map: dict[str, int]) -> dict[str, int]:
+    """ASCII-folded view of title_map, memoized by identity + size so the
+    36k-entry fold isn't rebuilt on every call."""
+    cached = _folded_cache.get(id(title_map))
+    if cached is None or cached[0] != len(title_map):
+        fm: dict[str, int] = {}
+        for title, aid in title_map.items():
+            fm.setdefault(_fold(title), aid)
+        _folded_cache[id(title_map)] = (len(title_map), fm)
+        return fm
+    return cached[1]
+
+
+def _try_diacritic_fold(target: str, title_map: dict[str, int]) -> int | None:
+    # The accent may be on EITHER side (query "ABABDA" vs title "ABÁBDA"), so
+    # always fold the query and look it up in the folded title view -- don't
+    # skip when the query itself is already plain.
+    return _folded_view(title_map).get(_fold(target))
 
 
 def _try_plural_singular(target: str, title_map: dict[str, int]) -> int | None:
