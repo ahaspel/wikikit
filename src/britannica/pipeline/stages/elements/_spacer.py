@@ -60,10 +60,18 @@ def process_spacer(raw: str) -> str:
         return " "                       # whitespace spacers → a space
     if low == "br":
         return "«BR»"                    # line break
+    if low == "clear":
+        # {{clear}} is a float-CLEARING element (clear:both), NOT a no-op: it
+        # has no visible content but a real LAYOUT effect.  Dropping it let a
+        # `{{float right}}` signature float beside the NEXT section's heading
+        # instead of ending the previous one (AFRICA's `(E. He.; F. R. C.)`
+        # rendered beside "Geology").  Emit the clearer.
+        side = arg.lower() if arg.lower() in ("left", "right") else "both"
+        return f"«DIV[style:clear:{side}]»«/DIV»"
     # Explicitly empty in linear flow — a DECISION listed by name, not a catch-all:
-    # clear carries no visible content; nop/nopt/nopf are no-ops.  (`anchor` is NOT
-    # here — it's a link target, carried by the ANCHOR producer.)
-    if low in ("clear", "nop", "nopt", "nopf"):
+    # nop/nopt/nopf are no-ops.  (`anchor` is NOT here — it's a link target,
+    # carried by the ANCHOR producer.)
+    if low in ("nop", "nopt", "nopf"):
         return ""
     # Any other leaf is one this producer does NOT handle.  LEAK it (render raw)
     # so it surfaces in the audit — never sweep to "".  Sweeping inside a producer
