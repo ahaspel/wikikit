@@ -27,7 +27,14 @@ def process_spacer(raw: str) -> str:
     arg = (m.group(2) or "").strip()
     low = name.lower()
     if low in ("em", "gap"):
-        return " "
+        # A fixed-width horizontal space -- {{gap}} is MediaWiki's 2em inline
+        # gap, {{em}} an em-space.  Emit em-spaces (U+2003, NON-collapsing), not
+        # a plain " " (HTML collapses that, dropping the width -- AUSTRIA's
+        # `{{gap}}{{gap}}{{gap}}Total` lost its ~6em indent).  `|N` / `|Nem`
+        # overrides the width.
+        mn = re.match(r"([\d.]+)", arg)
+        width = float(mn.group(1)) if mn else (2.0 if low == "gap" else 1.0)
+        return " " * max(1, round(width))
     if low == "ditto":
         return "″"
     if low == "dhr":
