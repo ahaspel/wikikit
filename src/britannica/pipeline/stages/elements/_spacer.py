@@ -10,6 +10,12 @@ from __future__ import annotations
 
 import re
 
+# The classifier's SPACER vocabulary — the names it labels SPACER expecting this
+# producer to render them.  We consult it as the single source of truth for the
+# content-less CONTROL markers (below).  (Moral owner is this producer; the clean
+# version relocates the set here and has the classifier import it — queued.)
+from britannica.pipeline.stages.elements._classifier import _SPACER_NAMES
+
 # Name is the token up to the first `|` (never a pipe/brace); the arg is
 # everything after, nested braces ALLOWED — `{{ditto|(20)|{{nbsp}}}}` carries a
 # nested `{{nbsp}}` the old `[^{}]*` arg couldn't span, which made the backtrack
@@ -72,6 +78,18 @@ def process_spacer(raw: str) -> str:
     # nop/nopt/nopf are no-ops.  (`anchor` is NOT here — it's a link target,
     # carried by the ANCHOR producer.)
     if low in ("nop", "nopt", "nopf"):
+        return ""
+    # Content-less CONTROL markers the classifier already routed here as SPACER
+    # (its `_SPACER_NAMES` vocabulary): layout-frame halves and unpaired wrapper
+    # `/s`·`/e` — `div end`, `multicol-end`, `plainlist/e`, `stack end`, and an
+    # ORPHANED `EB1911 fine print/s` whose partner the SOURCE dropped (balanced
+    # pairs never reach here — the walker folds them into a PAIRED_WRAPPER node).
+    # They carry no glyph and no content → nothing.  The classifier raises on any
+    # name it cannot route, so a name arriving here IN `_SPACER_NAMES` is vetted
+    # empty, not a guess — and the glyph/DIV branches above claim `clear`/`em`/…
+    # first, so this never empties a content-bearing leaf.  (This restores the
+    # graceful drop the pre-walker strip did before the paired-wrapper migration.)
+    if low in _SPACER_NAMES:
         return ""
     # Any other leaf is one this producer does NOT handle.  LEAK it (render raw)
     # so it surfaces in the audit — never sweep to "".  Sweeping inside a producer
