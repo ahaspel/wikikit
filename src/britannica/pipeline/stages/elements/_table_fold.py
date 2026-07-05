@@ -168,9 +168,14 @@ def _split_cells(row_body: str) -> list[Cell]:
             line_start = False
             continue
         if line_start and row_body[i:i + 1] in ("|", "!"):
+            # A line-start `||`/`!!` is ONE cell start -- an author's redundant
+            # double delimiter (ARENIG GROUP's `|| ''Dicranograptus''…` beside
+            # a sibling `| Derfel…`).  Consume BOTH pipes so the second doesn't
+            # leak into the cell content.
+            width = 2 if two in ("||", "!!") else 1
             sep = row_body[i]
-            events.append(("cell", i, i + 1, sep, None))
-            i += 1
+            events.append(("cell", i, i + width, sep, None))
+            i += width
             line_start = False
             continue
         ch = row_body[i]
