@@ -550,7 +550,13 @@ def process_shoulder(raw, inner, context, inner_registry):
     from britannica.util.strings import section_slug, strip_markers
     sh = _SHOULDER_HEADING_RE.match(raw)
     rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
-    label = _split_top_pipes(rest)[-1]
+    # The LABEL is the last POSITIONAL slot.  Named params (align=right/left,
+    # width=N) may TRAIL it in the source
+    # ({{EB1911 Shoulder Heading|'''Label'''.|align=right}}), so skip key=value
+    # slots -- else the heading stamps as "align=right" instead of its title.
+    slots = _split_top_pipes(rest)
+    positional = [g for g in slots if not re.match(r"\s*[A-Za-z][\w-]*\s*=", g)]
+    label = (positional or slots)[-1]
     # A shoulder heading's `<br>`s are margin-column wrap typography, not
     # content — drop them to a space.  Hyphenation across the wrap is NOT
     # healed here: that is one leaf concern, not scattered into this producer.
