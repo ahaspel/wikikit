@@ -461,51 +461,13 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     return "DOUBLE_BRACE_LEAK"
 
 
-# Word-named spacer / glyph / escape LEAVES + content-less frame CONTROL markers.
-# Each renders to a glyph or to nothing; nothing recurses.  (The bracket-char
-# escapes `{{=}}`/`{{(}}`/`{{...}}` are matched by the SPACER regex above; these
-# are the WORD-named ones the generic-flip backlog surfaced.)
-_SPACER_NAMES: frozenset[str] = frozenset({
-    # Spacers / glyph escapes
-    "nop", "nopt", "nopf", "spaces", "fsp", "pad thin", "brace", "unicode",
-    "nbsp", "parabr", "br", "-", ". . .", "’ ”", "\" '", "ae",
-    # Pure cell/table style-code carriers — NO content (the codes are presentation
-    # shorthand consumed by the table producer when inside a `{|`; as a standalone
-    # DOUBLE_BRACE they carry nothing to render).  → empty.
-    "ts", "table style", "tslh10",
-    # `{{mirrorH}}` — the horizontal-mirror TOKEN; meaningful only inside a
-    # `<span style="…{{mirrorH}}…">` (its own MIRROR_GLYPH shape).  A standalone
-    # `{{mirrorH}}` carries no glyph of its own → empty.
-    "mirrorh",
-    # Content-less cell/layout style hints — `{{align|left}}`, `{{_valignt|top}}`,
-    # `{{width|100%}}`: presentation params with no content of their own → empty.
-    "align", "_valignt", "width",
-    # Rare bare glyph / control leaves (1 occurrence each, uncertain glyph — routed
-    # to empty rather than guessing the wrong character).  REPORTED for review.
-    "mc", "ad", "s",
-    # Content-less layout-frame CONTROL markers (the matching halves of the
-    # content-bearing frames below — column breaks, region open/close markers).
-    "multicol", "multicol-break", "multicol-end",
-    "div col", "div col end", "div end",
-    "col-begin", "col-end", "col-break",
-    "stack begin", "stack end",
-    "plainlist/s", "plainlist/e",
-    # Paired-wrapper HALVES that fall through `_paired_wrapper_end` (their name
-    # isn't a registered CENTER pair, or the half stands alone): a bare `/s`/`/e`
-    # control marker with no content → nothing.  The registered CENTER pairs
-    # (`c/s`, `block center/s`, …) are bounded as PAIRED_WRAPPER and never reach
-    # here; only the UNREGISTERED / orphaned halves do.
-    "c/s", "c/e", "center/s", "center/e",
-    "block center/s", "block center/e", "center block/s", "center block/e",
-    "fine block/s", "fine block/e", "smaller block/s", "smaller block/e",
-    "eb1911 fine print/s", "eb1911 fine print/e",
-    "fs85/s", "fs85/e", "fs90/s", "fs90/e",
-    "ti/s", "ti/e", "outdent/s", "outdent/e", "left margin/s", "left margin/e",
-    "bold block/s", "bold block/e", "dent/s", "dent/e",
-    "flex wrap centre/s", "flex wrap centre/e",
-    "familytree/start", "familytree/end", "tree chart/start", "tree chart/end",
-    "chart2/start", "chart2/end",
-})
+# The SPACER vocabulary — word-named spacer/glyph/escape LEAVES + content-less frame
+# CONTROL markers — lives with its producer (`_spacer.py`), which is what actually
+# renders each name to a glyph or to nothing.  We import it as the single source of
+# truth for what this classifier labels SPACER; the dependency points
+# classifier → producer, the natural direction.  (`_spacer` imports nothing from the
+# element package, so this back-import is cycle-free.)
+from britannica.pipeline.stages.elements._spacer import _SPACER_NAMES
 
 # Hanging indent — `{{hi}}` / `{{hanging indent}}` (synonyms).  RENDERED, not
 # dropped: the source states the indent width (default 2em) and it formats a list,
