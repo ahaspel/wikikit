@@ -78,10 +78,15 @@ def _peel_caption(inner: str) -> tuple[str, str]:
         if m:
             return m.group(1).strip(), inner[:m.start()] + inner[m.end():]
         i += 1
-    # Wiki caption — a `|+` at line start.
+    # Wiki caption — a `|+` at line start.  Like a cell, it may carry an attr
+    # slot before a top-level `|` (`|+ style="…" | content`); split it off the
+    # same way `_split_cells` does, else the attributes leak into the <caption>
+    # text.  The attrs drop, consistent with an HTML `<caption …>` (whose attrs
+    # live in the tag, stripped above) and with the attr-less <caption> emit.
     m = re.search(r"(?:^|\n)[ \t]*\|\+([^\n]*)", inner)
     if m:
-        return m.group(1).strip(), inner[:m.start()] + inner[m.end():]
+        _attr, content = _wiki_attr_split(m.group(1))
+        return content.strip(), inner[:m.start()] + inner[m.end():]
     return "", inner
 
 
