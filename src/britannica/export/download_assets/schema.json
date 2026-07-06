@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EB1911 article record",
+  "description": "One line of articles.jsonl — a single Encyclopædia Britannica (1911) article.",
+  "type": "object",
+  "required": ["id", "title", "url", "markdown"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier (volume-page-slug-TITLE), used as the node id in every graph.",
+      "examples": ["21-0935-poland-POLAND"]
+    },
+    "title": { "type": "string", "description": "Article headword as printed." },
+    "type": {
+      "type": "string",
+      "description": "Article kind (e.g. 'article', 'plate', 'cross-reference')."
+    },
+    "volume": { "type": "integer", "description": "Source volume number (1–29)." },
+    "page_start": { "type": "integer", "description": "First printed page of the article." },
+    "page_end": { "type": ["integer", "null"], "description": "Last printed page (may equal page_start)." },
+    "word_count": { "type": ["integer", "null"] },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical article URL on britannica11.org."
+    },
+    "categories": {
+      "type": "array",
+      "description": "Topic-node ids from topics.json that this article is filed under (may be empty).",
+      "items": { "type": "string" }
+    },
+    "sections": {
+      "type": "array",
+      "description": "In-article headings, in document order — natural sub-article chunk boundaries.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": ["string", "null"] },
+          "slug": { "type": ["string", "null"] },
+          "level": { "type": ["integer", "null"] }
+        }
+      }
+    },
+    "contributors": {
+      "type": "array",
+      "description": "Scholars credited with the article; full bios are in contributors.json, keyed by initials.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "initials": { "type": ["string", "null"] },
+          "name": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "description": "Image REFERENCES (filenames), not binaries; fetch from britannica11.org as needed.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "file": { "type": "string" } }
+      }
+    },
+    "xrefs": {
+      "type": "array",
+      "description": "Resolved internal cross-references; the same edges are in xref_edges.jsonl.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "to": { "type": "string", "description": "Target article id." },
+          "display": { "type": "string", "description": "Link text as it appears in the prose." }
+        }
+      }
+    },
+    "markdown": {
+      "type": "string",
+      "description": "The article body as GitHub-Flavored Markdown: headings, emphasis, tables, math ($…$), [links](id), and image references. Presentation (type sizes, small-caps, centering) is shed."
+    }
+  }
+}

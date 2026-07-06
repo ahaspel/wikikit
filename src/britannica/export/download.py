@@ -17,18 +17,30 @@ One pass over the article JSONs; the taxonomy comes from ``classified_toc.json``
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
 from britannica.export.markdown import body_to_markdown
 from britannica.markers import IMG_PARTS_RE
 
 _SITE = "https://www.britannica11.org"
+_ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
 
 
 def _id(filename: str) -> str:
     """Stable public id = the filename stem (vol-page-slug-TITLE)."""
     return filename[:-5] if filename.endswith(".json") else filename
+
+
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _topic_index(classified_toc: dict) -> tuple[list[dict], dict[str, list[str]]]:
@@ -83,6 +95,7 @@ def _topic_index(classified_toc: dict) -> tuple[list[dict], dict[str, list[str]]
 def build_download(articles_dir: str = "data/derived/articles",
                    classified_toc: str = "data/derived/classified_toc.json",
                    out_dir: str = "data/derived/download",
+                   version: str = "1.0",
                    limit: int | None = None) -> dict:
     arts = Path(articles_dir)
     out = Path(out_dir)
@@ -160,9 +173,36 @@ def build_download(articles_dir: str = "data/derived/articles",
     (out / "contributors.json").write_text(
         json.dumps(contributors, ensure_ascii=False, indent=1), encoding="utf-8")
 
+    # Validate: every articles.jsonl line must parse and the count must match —
+    # catches truncation / encoding corruption before the bundle ships.
+    seen = 0
+    with (out / "articles.jsonl").open(encoding="utf-8") as f:
+        for line in f:
+            json.loads(line)
+            seen += 1
+    if seen != n_arts:
+        raise RuntimeError(f"articles.jsonl has {seen} lines, expected {n_arts}")
+
+    # Self-describing docs + a manifest with SHA-256 over the FINAL files.
+    for name in ("README.md", "LICENSE", "schema.json"):
+        shutil.copyfile(_ASSETS / name, out / name)
+    manifest = {
+        "name": "encyclopaedia-britannica-11th-edition",
+        "version": version,
+        "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "license": "CC-BY-SA-4.0",
+        "source": _SITE,
+        "counts": {"articles": n_arts, "xref_edges": n_edges,
+                   "topic_nodes": len(topic_nodes), "contributors": len(contributors)},
+        "files": [{"name": fp.name, "bytes": fp.stat().st_size, "sha256": _sha256(fp)}
+                  for fp in sorted(out.glob("*")) if fp.name != "manifest.json"],
+    }
+    (out / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
+
     return {"articles": n_arts, "xref_edges": n_edges,
             "topic_nodes": len(topic_nodes), "contributors": len(contributors),
-            "out_dir": str(out)}
+            "version": version, "out_dir": str(out)}
 
 
 if __name__ == "__main__":
