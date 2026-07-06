@@ -92,7 +92,7 @@ authors  = json.load(open("contributors.json", encoding="utf-8"))
 
 ```python
 from datasets import load_dataset
-ds = load_dataset("<namespace>/eb1911", data_files="articles.jsonl", split="train")
+ds = load_dataset("britannica11/eb1911", data_files="articles.jsonl", split="train")
 ```
 
 ## Content note

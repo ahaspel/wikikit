@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -200,9 +201,18 @@ def build_download(articles_dir: str = "data/derived/articles",
     (out / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
 
+    # A single gzip archive of the whole bundle — what the download link points at —
+    # with its own checksum beside it for verification.
+    archive = out.parent / "eb1911-corpus.tar.gz"   # stable name; version in manifest
+    with tarfile.open(archive, "w:gz") as tar:
+        for fp in sorted(out.glob("*")):
+            tar.add(fp, arcname=f"eb1911/{fp.name}")
+    (out.parent / f"{archive.name}.sha256").write_text(
+        f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
+
     return {"articles": n_arts, "xref_edges": n_edges,
             "topic_nodes": len(topic_nodes), "contributors": len(contributors),
-            "version": version, "out_dir": str(out)}
+            "version": version, "archive": str(archive), "out_dir": str(out)}
 
 
 if __name__ == "__main__":
