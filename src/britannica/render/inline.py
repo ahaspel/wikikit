@@ -133,6 +133,10 @@ def _apply_size_markers(h):
 
 # ── parametrized markers ──
 _FN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:([\s\S]*?)«/FN»")
+# Inline MATH (cell/caption/verse default): katex is stubbed to «MATHPH» and the cell path
+# does NOT do popout / fs-scaling (that's the prose path, which passes skip_math and handles
+# «MATH» itself).  So here MATH is just the placeholder.
+_MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»")
 _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
 _VERSE_RE = re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}VERSE\}")
 _BAR_RE = re.compile(r"«BAR\[(\d+)\]»")
@@ -206,6 +210,9 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     # collected through the shared ctx so a title footnote is #1.
     if ctx is not None:
         h = _FN_RE.sub(lambda m: render_fn_marker(m.group(1), m.group(2), ctx), h)
+
+    if not skip_math:
+        h = _MATH_RE.sub("«MATHPH»", h)
 
     h = _VERSE_RE.sub(_verse, h)
 

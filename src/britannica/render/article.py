@@ -14,6 +14,7 @@ hieroglyph, the renderTitleMarkers fallback.
 """
 import html as _html
 import re
+import unicodedata
 
 from britannica.render.inline import (
     decode_inline,
@@ -23,6 +24,7 @@ from britannica.render.inline import (
     render_img,
     _encode_uri_component as _enc,
 )
+from britannica.render.tables import render_table
 
 # ── marker constants ──
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
@@ -82,6 +84,20 @@ _BLOCK_MARKER_RES = [
 _NON_TEXT_PREFIX = re.compile(
     r"^(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«HTMLTABLE|«SEC:|«SH:|«ANCHOR:|«OUTLINE:|«PLATE_OUTLINE:|«TITLE:)"
 )
+
+
+def _xref_sort_key(s):
+    """Approximate the viewer's ``localeCompare`` xref ordering (UCA primary level):
+    symbols < digits < letters, case- and accent-insensitive.  Matches localeCompare on
+    the whole seed set; full UCA (pyuca) would be exact for rarer accented/ligature targets.
+    """
+    key = []
+    for c in unicodedata.normalize("NFKD", s or ""):
+        if unicodedata.combining(c):        # drop accents → base letter (primary fold)
+            continue
+        cls = 0 if not c.isalnum() else (1 if c.isdigit() else 2)
+        key.append((cls, c.lower()))
+    return key
 
 
 def _section_slug(name):
@@ -366,7 +382,27 @@ def render_paragraph(p, next_para, ctx):
                              f'{decode_inline(s, escape=True, dhr_inline=True, ctx=ctx)}</div>')
         return f'<aside class="figure-legend">{"".join(parts)}</aside>'
 
-    # DEFERRED: EQNGROUP math systems, HTMLTABLE/CHEM tables — fall through to prose.
+    # Complex HTML table (rowspan/colspan/nested preserved) — «HTMLTABLE:» or «CHEM:».
+    # Balanced-match the close so a table whose cell holds another table isn't truncated.
+    if p.startswith(HTMLTABLE_OPEN) or p.startswith(CHEM_OPEN):
+        is_chem = p.startswith(CHEM_OPEN)
+        open_m, close_m = (CHEM_OPEN, CHEM_CLOSE) if is_chem else (HTMLTABLE_OPEN, HTMLTABLE_CLOSE)
+        end = find_marker_end(p, 0, open_m, close_m)
+        if end != -1:
+            inner = p[len(open_m):end - len(close_m)]
+            t, max_cols = render_table(inner, is_chem, ctx)
+            trailing = p[end:].strip()
+            trailing_html = render_paragraph(trailing, None, ctx) if trailing else ""
+            if max_cols >= 10:
+                # Wide table: renders inline but gains an "Expand" button to a full-width modal.
+                ctx.wide_table_counter += 1
+                rendered = (f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
+                            f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
+                            f'⤢ Expand ({max_cols} columns)</button>'
+                            f'<div class="wide-table-inline">{t}</div></figure>')
+            else:
+                rendered = t
+            return rendered + trailing_html
 
     # Prose → <p> with left-margin page markers + inline decode + MATH stub.
     html = escape_html(p)
@@ -549,7 +585,8 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
         scan_url=_scan_url(article, is_local, back_href),
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
     )
-    xrefs = sorted(article.get("xrefs") or [], key=lambda x: x.get("normalized_target") or "")
+    xrefs = sorted(article.get("xrefs") or [],
+                   key=lambda x: _xref_sort_key(x.get("normalized_target") or ""))
     contributors = article.get("contributors") or []
 
     xref_html = ""
