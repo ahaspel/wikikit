@@ -1,0 +1,146 @@
+[
+ {
+  "input": "plain text with no markers",
+  "output": "plain text with no markers"
+ },
+ {
+  "input": "ampersand & less < greater > quote \" apostrophe ' end",
+  "output": "ampersand &amp; less &lt; greater &gt; quote &quot; apostrophe &#39; end"
+ },
+ {
+  "input": "«I»italic«/I» and «B»bold«/B» and «SC»small caps«/SC»",
+  "output": "<i>italic</i> and <b>bold</b> and <span class=\"small-caps\">small caps</span>"
+ },
+ {
+  "input": "«B»bold with «I»nested italic«/I» then bold again«/B»",
+  "output": "<b>bold with <i>nested italic</i> then bold again</b>"
+ },
+ {
+  "input": "«SS»sans«/SS» «SR»serif«/SR» «U»underline«/U» «STK»strike«/STK»",
+  "output": "<span class=\"sans-serif\">sans</span> <span class=\"explicit-serif\">serif</span> <span class=\"underline\">underline</span> <s>strike</s>"
+ },
+ {
+  "input": "a line«BR»then a break",
+  "output": "a line<br>then a break"
+ },
+ {
+  "input": "«P»a paragraph opener",
+  "output": "<p>a paragraph opener"
+ },
+ {
+  "input": "«CTR»centered content«/CTR»",
+  "output": "<div class=\"centered\">centered content</div>"
+ },
+ {
+  "input": "«DIV[style:margin:0;color:red]»a styled block«/DIV»",
+  "output": "<div style=\"margin:0;color:red\">a styled block</div>"
+ },
+ {
+  "input": "«SPAN[style:font-weight:bold]»styled span«/SPAN»",
+  "output": "<span style=\"font-weight:bold\">styled span</span>"
+ },
+ {
+  "input": "«SPAN[title:a \"quoted\" gloss & more]»tooltip«/SPAN»",
+  "output": "<span class=\"xlit\" title=\"a &quot;quoted&quot; gloss &amp; more\">tooltip</span>"
+ },
+ {
+  "input": "«XXL»huge«/XXL» «LG»large«/LG» «SM»small«/SM» «XS»xs«/XS» «XXS»xxs«/XXS»",
+  "output": "<span class=\"size-xxl\">huge</span> <span class=\"size-lg\">large</span> <span class=\"size-sm\">small</span> <span class=\"size-xs\">xs</span> <span class=\"size-xxs\">xxs</span>"
+ },
+ {
+  "input": "«FS[83]»percent«/FS» «FS[1.2em]»em«/FS» «FS[large]»named«/FS» «FS[bad!]»invalid«/FS»",
+  "output": "<span style=\"font-size:83%\">percent</span> <span style=\"font-size:1.2em\">em</span> <span style=\"font-size:large\">named</span> <span>invalid</span>"
+ },
+ {
+  "input": "«LH[1.5]»line height«/LH» «LH[nope!]»invalid lh«/LH»",
+  "output": "<span style=\"display:inline-block;line-height:1.5\">line height</span> <span>invalid lh</span>"
+ },
+ {
+  "input": "«FR»floated right«/FR» and «FL»floated left«/FL»",
+  "output": "<span class=\"float-right\">floated right</span> and <span class=\"float-left\">floated left</span>"
+ },
+ {
+  "input": "spacer«BAR[3]»here",
+  "output": "spacer<span class=\"inline-bar\" style=\"width:3em\">&nbsp;</span>here"
+ },
+ {
+  "input": "divider«DHR»here",
+  "output": "divider<span class=\"dhr-block\"></span>here"
+ },
+ {
+  "input": "«MIRROR:flipped glyph«/MIRROR»",
+  "output": "<span class=\"mirror-h\">flipped glyph</span>"
+ },
+ {
+  "input": "brace «BRACE2[2|l]» and «BRACE2[3|r]» and «BRACE2[1|u]» and «BRACE2[4|d]»",
+  "output": "brace <span class=\"brace2 brace2-l\">⎧</span> and <span class=\"brace2 brace2-r\">⎫</span> and <span class=\"brace2 brace2-u\">⏞</span> and <span class=\"brace2 brace2-d\">⏟</span>"
+ },
+ {
+  "input": "«LN:11-0042-s5-abbey.json|ABBEY|the abbey«/LN» reference",
+  "output": "<a href=\"/article/11-0042-s5-abbey.json\" class=\"article-link\" title=\"ABBEY\">the abbey</a> reference"
+ },
+ {
+  "input": "«LN:MONASTICISM|Monasticism«/LN» bare target",
+  "output": "<a href=\"/search.html?q=MONASTICISM\" class=\"article-link\" title=\"MONASTICISM\">Monasticism</a> bare target"
+ },
+ {
+  "input": "«XL:https://example.com/x|external link«/XL» and «XL:https://example.com/y«/XL»",
+  "output": "<a href=\"https://example.com/x\" class=\"external-link\" target=\"_blank\" rel=\"noopener\">external link</a> and <a href=\"https://example.com/y\" class=\"external-link\" target=\"_blank\" rel=\"noopener\">https://example.com/y</a>"
+ },
+ {
+  "input": "section «SEC:the-slug|The Section Name» here",
+  "output": "section <span id=\"section-the-slug\" class=\"section-anchor\"></span> here"
+ },
+ {
+  "input": "anchor «ANCHOR:anchor-slug|Anchor Name» here",
+  "output": "anchor <span id=\"section-anchor-slug\" class=\"section-anchor\"></span> here"
+ },
+ {
+  "input": "safe html <sub>2</sub> <sup>3</sup> <small>fine</small> <big>large</big> <br> break",
+  "output": "safe html <sub>2</sub> <sup>3</sup> <small>fine</small> <big>large</big> <br> break"
+ },
+ {
+  "input": "{{VERSE:line one\nline two\n\nline three}VERSE}",
+  "output": "<span class=\"cell-verse\">line one<br>line two<br>line three</span>"
+ },
+ {
+  "input": "mixed «I»italic«/I», «SC»caps«/SC», «LN:X|link«/LN», and «SPAN[style:color:blue]»blue«/SPAN» together",
+  "output": "mixed <i>italic</i>, <span class=\"small-caps\">caps</span>, <a href=\"/search.html?q=X\" class=\"article-link\" title=\"X\">link</a>, and <span style=\"color:blue\">blue</span> together"
+ },
+ {
+  "input": "«I»«/I» empty pair and «B»«/B» another",
+  "output": "<i></i> empty pair and <b></b> another"
+ },
+ {
+  "input": "«B»a«/B»«I»b«/I» adjacent with no space",
+  "output": "<b>a</b><i>b</i> adjacent with no space"
+ },
+ {
+  "input": "«LN:11-0042-s5-abbey.json|ABBEY|«I»styled«/I» display«/LN» — markup inside the link",
+  "output": "<a href=\"/article/11-0042-s5-abbey.json\" class=\"article-link\" title=\"ABBEY\"><i>styled</i> display</a> — markup inside the link"
+ },
+ {
+  "input": "«XL:https://example.com/z|«B»bold«/B» external«/XL» display markup",
+  "output": "<a href=\"https://example.com/z\" class=\"external-link\" target=\"_blank\" rel=\"noopener\"><b>bold</b> external</a> display markup"
+ },
+ {
+  "input": "«SPAN[style:font-family:'Times New Roman';color:#333]»fancy«/SPAN»",
+  "output": "<span style=\"font-family:&#39;Times New Roman&#39;;color:#333\">fancy</span>"
+ },
+ {
+  "input": "outer «B»bold «SPAN[style:color:red]»red span«/SPAN» still bold«/B» done",
+  "output": "outer <b>bold <span style=\"color:red\">red span</span> still bold</b> done"
+ },
+ {
+  "input": "«CTR»«SC»A SECTION HEADING«/SC»«/CTR»",
+  "output": "<div class=\"centered\"><span class=\"small-caps\">A SECTION HEADING</span></div>"
+ },
+ {
+  "input": "«FS[200%]»explicit percent«/FS» and «FS[0.5]»bare decimal«/FS»",
+  "output": "<span style=\"font-size:200%\">explicit percent</span> and <span style=\"font-size:0.5%\">bare decimal</span>"
+ },
+ {
+  "input": "text with a lone « guillemet and a stray » one",
+  "output": "text with a lone « guillemet and a stray » one"
+ }
+]
