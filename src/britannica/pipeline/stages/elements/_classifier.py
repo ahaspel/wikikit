@@ -363,9 +363,6 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "MATH_FORMULA_LABELED"
     if name == "ne":
         return "MATH_NE"
-    # (The `{{EB1911 footer initials}}` footer is no longer a walker element — it's a
-    # FIELD, cut upstream by `strip_attributions` before the walker ever runs, so it
-    # never reaches this dispatch.)
 
     # ── Name-driven routing for the backlog families ──────────────────────────
     # With the ONE generic `{{…}}` recognizer, EVERY double-brace reaches here, so

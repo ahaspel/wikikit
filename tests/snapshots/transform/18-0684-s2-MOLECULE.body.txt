@@ -93,14 +93,14 @@ Res possent; namque, officium quod corporis exstat,
 Officere atque obstare, id in omni tempore adesset
 Omnibus: haud igitur quicquam procedere posset,
 Principium quoniam cedendi nulla daret res.’
- «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»«P»“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
+               «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»«P»“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
 «CTR»{{VERSE:‘Cedere squamigeris latices nitentibus aiunt
 Et liquidas aperire vias, quia post loca pisces
 Linquant, quo possint cedentes confluere undae.’
- Ibid. i. 373.}VERSE}«/CTR»«P»“In modern times Descartes held that, as it is of the essence of
+                  Ibid. i. 373.}VERSE}«/CTR»«P»“In modern times Descartes held that, as it is of the essence of
 matter to be extended in length, breadth and thickness, so it is of
 the essence of extension to be occupied by matter, for extension
 cannot be an extension of nothing.«P»“ ‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
@@ -515,7 +515,7 @@ equations.«P»Let us suppose that an infinite number of exactly similar systems
 start simultaneously from all possible values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I»,
 each moving solely under its own internal forces, and therefore in
 accordance with equations (1). Let us confine our attention to thosePAGE:688systems for which the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I» lie within
-a range such that«P»«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> and «I»p«/I»<sub>1</sub> +«I»dp«/I»<sub>1</sub> «P»«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> and «I»q«/I»<sub>1</sub> +«I»dq«/I»<sub>1</sub> and so on.«/CTR»«P»Let the product «I»dp«/I»<sub>1</sub> «I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>«/I», «I»dq<sub>n</sub>«/I» be spoken of as the “extension”
+a range such that«P»«CTR»«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> and «I»p«/I»<sub>1</sub> +«I»dp«/I»<sub>1</sub>     «P»«I»q«/I»<sub>1</sub> is between «I»q«/I»<sub>1</sub> and «I»q«/I»<sub>1</sub> +«I»dq«/I»<sub>1</sub> and so on.«/CTR»«P»Let the product «I»dp«/I»<sub>1</sub> «I»dq«/I»<sub>1</sub> . . . «I»dp<sub>n</sub>«/I», «I»dq<sub>n</sub>«/I» be spoken of as the “extension”
 of this range of values.«P»After a time «I»dt«/I» the value of «I»p«/I»<sub>1</sub> will have increased to «I»p«/I»<sub>1</sub>+«I»p«/I»<sub>1</sub>«I»dt«/I»,
 where «I»p«/I»<sub>1</sub> is given by equations (1), and there will be similar changes
 in «I»q«/I»<sub>1</sub>, «I»p«/I»<sub>2</sub>, «I»q«/I»<sub>2</sub>, ... «I»q<sub>n</sub>«/I». Thus after a time «I»dt«/I» the values of the co-ordinates
@@ -570,7 +570,7 @@ the «I»s«/I» molecules of the first kind according to the law of trial and e
 and similarly of course for the molecules of other kinds:«P»«DIV[style:display:flex;align-items:baseline]»«SPAN[style:text-align:left]»(ii)«/SPAN»«SPAN[style:flex:1;text-align:center]»«MATH:\sum_s«/MATH»½ «I»mu«/I»<sup>2</sup>/«I»s«/I»＝ «MATH:\sum_s«/MATH»½ «I»mv«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ «I»mw«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ α<sub>1</sub>θ<sub>1</sub><sup>2</sup>/«I»s«/I»＝ . . .«/SPAN»«SPAN[style:text-align:right]»«/SPAN»«/DIV»
 
 
-«EQN:3»＝«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′<sup>2</sup>/«I»s«/I»′＝«MATH:\sum_s«/MATH»½ β<sub>1</sub>φ<sub>1</sub><sup>2</sup>/«I»s«/I»′＝... «/EQN»
+«EQN:3»＝«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′<sup>2</sup>/«I»s«/I»′＝«MATH:\sum_s«/MATH»½ β<sub>1</sub>φ<sub>1</sub><sup>2</sup>/«I»s«/I»′＝...      «/EQN»
 
 «P»A state of the system in which these two properties are true
 will be called a “normal state”; other states will be spoken of as
@@ -625,7 +625,7 @@ showing that the mean energy represented by each
 term in E<sub>2</sub> (formula 2) is the same. These equations
 express the “law equipartition of energy,” commonly spoken
 of as the «I»Maxwell-Boltzmann Law«/I».
-
+«DIV[style:clear:both]»«/DIV»
 The law of equipartition shows that the various mean energies
 of different kinds are all equal, each being measured by the quantity
 1/4«I»h«/I». We have already seen that the mean energy increases
@@ -730,7 +730,7 @@ substituting experimentally determined pairs of values of «I»p«/I» and ρ
 we can calculate C for different gases, and so obtain a knowledge
 of the magnitudes of the molecular velocities. For instance, it is
 found that
-«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air  ,,</td><td>15° Cent. C＝ 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>0° Cent. C＝ 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
+«HTMLTABLE:<table style="margin-right:auto;margin-left:auto"><tr><td>for hydrogen at</td><td>0° Cent. C＝183,900 cms. per sec.</td></tr><tr><td>for air    ,,</td><td>15° Cent. C＝ 49,800 cms. per sec.</td></tr><tr><td>for mercury vapour at</td><td>0° Cent. C＝ 18,500 cms. per sec.</td></tr></table>«/HTMLTABLE»
 and other velocities can readily be calculated.«P»From the value R＝1·35×10<sup>−16</sup> it is readily calculated that a molecule,
 or aggregation of molecules, of mass 10<sup>−12</sup> grammes, ought to
 have a mean velocity of about 2 millimetres a second at
@@ -756,7 +756,7 @@ gas in the mixture. Hence we have Dalton’s law:
 «I»The pressure of a mixture of gases is the sum of the pressures«/I»
 «I»which would be exerted separately by the several«/I»«SH:pressure-volume-and-temperature-relations»Pressure, Volume and Temperature Relations.«/SH»
 «I»constituents if each alone were present«/I».
-
+«DIV[style:clear:both]»«/DIV»
 «I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I» ′+  . . .,
 the total number of molecules per unit volume, is determined when
 «I»p«/I», T and the constant R are given. Hence we have Avogadro’s law:
@@ -799,7 +799,7 @@ formula (2) be given by«SH:calorimetry»Calorimetry.«/SH»«P»
 
 «P»«CTR»＝N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»«P»
 
-«EQN:16»＝½(«I»n«/I»+3)RNT «/EQN»
+«EQN:16»＝½(«I»n«/I»+3)RNT         «/EQN»
 
 «P»Let a quantity «I»d«/I»Q of energy, measured in work units, be absorbed
 by the gas from some external source, so that its pressure, volume
@@ -923,4 +923,4 @@ is only one aspect of a wider difficulty which cannot be lightly
 passed over; Maxwell himself regarded it as the principal obstacle
 in the way of the full acceptance of the theory of which he was so
 largely the author.
-«SPAN[style:font-size:108%]»«DIV[style:float:right]»(J. H. Je.)«/DIV»«/SPAN»
+«SPAN[style:font-size:108%]»«SPAN[style:float:right]»(J. H. Je.)«/SPAN»«/SPAN»

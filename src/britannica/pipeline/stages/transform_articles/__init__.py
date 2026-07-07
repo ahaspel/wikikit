@@ -187,9 +187,3 @@ def walk_article(session, article) -> str:
     # in-stream as the H1, so the title's footnote joins the body's footnote
     # stream (numbered + collected in Notes) instead of a severed parallel one.
     return walked
-
-
-# `_transform_text_v2` (the raw-string shim = strip_attributions + process_elements)
-# was deleted: callers now compose `process_elements(raw, ElementContext(...))`
-# directly.  strip_attributions is dropped from that path — the footer rides
-# through to be claimed by the contributor work.

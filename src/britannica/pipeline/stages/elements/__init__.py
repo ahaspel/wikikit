@@ -511,17 +511,28 @@ def _styled_br_to_marker(text: str) -> str:
     return "".join(out)
 
 
+_FURNITURE_TITLE_RE = re.compile(
+    r"\b(?:amended|corrected|changed|altered|emended|spel[lt]|transcribed)\s+from\b"
+    r"|\bin\s+(?:the\s+)?original\b|\boriginally\b|\bsic\b|\bmisprint|\bmisspel"
+    r"|\bshould\s+(?:be|read)\b"
+    r"|\b(?:added|removed|inserted|deleted)\s+(?:the\s+|a\s+|missing\s+)?"
+    r"(?:slash|quote|comma|space|hyphen|bracket|stop|point|colon|semicolon|apostrophe)"
+    r"|\b(?:quote|comma|space|hyphen|bracket|slash|stop|point|colon)s?\s+"
+    r"(?:added|removed|inserted|deleted)\b",
+    re.IGNORECASE)
+
+
 def process_span_title(raw, inner, context, inner_registry):
     """SPAN_TITLE producer (walker SHAPE_SPAN_TITLE): a `<span title="T">X</span>`.
 
-    Transliteration TOOLTIP when X is Greek/Hebrew (carry T as «SPAN[title:T]»,
-    the HTML twin of {{tooltip}}) vs editorial provenance (drop the wrapper, keep
-    X).  Re-promotes the gutted body-text `_handle_title_spans`.  Body is the
-    verbatim former `sp = …` branch of `_process_styled`, now unconditional
-    (SPAN_TITLE only reaches here when `_SPAN_TITLE_OPEN_RE` matched in the
-    walker)."""
-    from britannica.pipeline.stages.elements._walker import (
-        _SPAN_TITLE_OPEN_RE, _TRANSLIT_CONTENT_RE)
+    A `title=` tooltip is a reader-facing gloss (a romanization, a translation, a
+    retroactive death year) UNLESS it's transcription furniture — a Wikisource note
+    ABOUT the transcription ("amended from 'X'").  Carry T as «SPAN[title:T]» (the
+    HTML twin of {{tooltip}}) unless `_FURNITURE_TITLE_RE` matches the title, in
+    which case drop the wrapper and keep X.  Re-promotes the gutted body-text
+    `_handle_title_spans`; SPAN_TITLE only reaches here when `_SPAN_TITLE_OPEN_RE`
+    matched in the walker."""
+    from britannica.pipeline.stages.elements._walker import _SPAN_TITLE_OPEN_RE
     sp = _SPAN_TITLE_OPEN_RE.match(raw)
     title = (sp.group("q") or sp.group("uq") or "").strip().replace(
         "]", "").replace("»", "")
@@ -529,9 +540,13 @@ def process_span_title(raw, inner, context, inner_registry):
         re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()
-    if title and _TRANSLIT_CONTENT_RE.search(content):
+    # Carry the tooltip UNLESS the title is transcription FURNITURE (see
+    # `_FURNITURE_TITLE_RE`) — every other title is a gloss the reader wants
+    # (romanization, translation, retroactive death year), and the printed text is
+    # unchanged either way since it only shows on hover.  [[feedback_when_in_doubt_carry]]
+    if title and not _FURNITURE_TITLE_RE.search(title):
         return f"«SPAN[title:{title}]»{content}«/SPAN»"
-    return content  # editorial title → drop the wrapper, keep the content
+    return content  # transcription furniture → drop the wrapper, keep the content
 
 
 def process_shoulder(raw, inner, context, inner_registry):
@@ -625,7 +640,11 @@ def process_html_style(raw, inner, context, inner_registry):
     if not m:
         return raw
     tag = m.group(1).lower()
-    attrs = m.group(2)
+    # Decode the `{{=}}` attribute-separator escape in this opener's OWN attrs
+    # (context-safe — an HTML opener has no named-args) so `fold_cell_styles` sees
+    # `style="…"`, not `style{{=}}"…"`.  The producer owns its outer wrapper; the
+    # content `{{=}}` stays SPACER's post-walk job.  [[feedback_context_sensitive_is_producer]]
+    attrs = re.sub(r"\{\{\s*=\s*\}\}", "=", m.group(2))
     # Peel the matching close tag off the tail (the walker already balanced the
     # span, so the last `</tag>` is ours).
     inner_raw = raw[m.end():]

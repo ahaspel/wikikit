@@ -131,13 +131,18 @@ _MIRROR_GLYPH_RE = re.compile(
 # gutted body-text `_handle_title_spans`; `process_span_title` applies the carry/drop split.
 # Still a per-shape opener: a styled `<span title=>` is HTML_TAG, NOT DOUBLE_BRACE, so it
 # can't ride the generic `{{…}}` recognizer — it keeps its own opener block.
+# An HTML attribute separator: a literal `=` OR the MediaWiki equals-escape
+# `{{=}}` — written when the tag rides inside a template/cell arg so the `=`
+# isn't read as a named-param separator.  RECOGNITION only: the three opener
+# regexes below are reused by their producers to read the value, so ONE
+# definition lets the walker bound the span AND the producer parse it.  The
+# content `{{=}}` (math, `{{center|R {{=}} …}}`) is NOT touched here — it stays
+# SPACER's post-walk decode, where the `=` genuinely IS a named-arg hazard.
+_ATTR_EQ = r"(?:=|\{\{\s*=\s*\}\})"
+
 _SPAN_TITLE_OPEN_RE = re.compile(
-    r'<span\b[^>]*?\btitle\s*=\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
+    r'<span\b[^>]*?\btitle\s*' + _ATTR_EQ + r'\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
     re.IGNORECASE)
-# Greek/Hebrew transliteration-content signal — used by the SPAN_TITLE producer to
-# decide carry-vs-drop (imported by the producer in `__init__.py`).
-_TRANSLIT_CONTENT_RE = re.compile(
-    r"\{\{\s*(?:Greek|Hebrew|polytonic)|[Ͱ-Ͽἀ-῿֐-׿]", re.IGNORECASE)
 
 
 # PAGE — the injected page-break marker (\x01PAGE:N\x01), recognized as a leaf
@@ -209,7 +214,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
-    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=|title\s*=)"  # STYLED / transliteration-title <span>
+    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align|title)\s*" + _ATTR_EQ + r")"  # STYLED / transliteration-title <span>
     r"|\[\[",                       # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     re.IGNORECASE,
 )
@@ -270,8 +275,9 @@ _BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span", "ins"}
 #     transliteration tooltips `_handle_title_spans` carries as «SPAN[title:…]».
 #     Both are that function's job, so the styled gate must not claim them.
 _STYLED_WRAPPER_RE = re.compile(
-    r"<(?:div|p|span)\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*=)"
-    r"[^>]*(?:\{\{\s*[Tt]s\b|style\s*=|align\s*=)", re.IGNORECASE)
+    r"<(?:div|p|span)\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*" + _ATTR_EQ + r")"
+    r"[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align)\s*" + _ATTR_EQ + r")",
+    re.IGNORECASE)
 # `<ins>` — Wikisource insertion.  UNLIKE the gated div/p/span above, EVERY <ins>
 # lifts to STYLED (ungated): its tag is editorial (the UA-default underline is dropped),
 # but its content is kept and any explicit style carried — a plain `<ins>s</ins>` → `s`,
