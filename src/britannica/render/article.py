@@ -33,6 +33,14 @@ EQNGROUP_OPEN, EQNGROUP_CLOSE = "«EQNGROUP»", "«/EQNGROUP»"
 
 _PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
+# Math-only paragraph: leading page markers, one «MATH», optional trailing punct + (N) label.
+_MATH_PARA_RE = re.compile(
+    r"^\s*((?:\x01PAGE:\d+\x01\s*)*)(«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»)"
+    r"\s*[.,;:]?\s*(?:\(([^)]+)\)\s*)?\s*[.,;:]?\s*$", re.S)
+_EQN_PARA_RE = re.compile(
+    r"^\s*((?:\x01PAGE:\d+\x01\s*)*)«EQN:([^»]*)»([\s\S]*?)«/EQN»\s*$", re.S)
+_MATH_ONLY_RE = re.compile(r"^«MATH(?:\[([^\]]*)\])?:([\s\S]*?)«/MATH»\s*[.,;:]?\s*$", re.S)
+_MATH_MARKER_RE = re.compile(r"^«MATH(?:\[([^\]]*)\])?:([\s\S]*?)«/MATH»$", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
@@ -186,6 +194,18 @@ def _render_math_markers(html, ctx):
     return _MATH_RE.sub(repl, html)
 
 
+def _render_display_math(latex, hint, ctx):
+    """A display-mode equation (EQNGROUP row) → the «MATHPH» stub (or popout / fs-scaled)."""
+    ph = parse_math_hint(hint)
+    if ph["popout"]:
+        return render_math_popout(_process_latex(latex), True, ctx)
+    result = "«MATHPH»"
+    fs = ph["fsPct"]
+    if fs and 0 < fs < 100:
+        return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
+    return result
+
+
 def render_page_markers(s, ctx):
     def repl(m):
         page = m.group(1)
@@ -253,6 +273,40 @@ def render_paragraph(p, next_para, ctx):
             h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
                  f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
         return f"<h1>{h}</h1>"
+
+    # Numbered display-math block (single equation OR a bundled equation system): rows
+    # «EQN:label»content«/EQN» / bare «MATH:eq«/MATH» (optionally «MATH…» (label)); exactly
+    # one row carries the label, centred beside the math stack by CSS grid.
+    if p.startswith(EQNGROUP_OPEN) and p.endswith(EQNGROUP_CLOSE):
+        inner = p[len(EQNGROUP_OPEN):len(p) - len(EQNGROUP_CLOSE)]
+        label_text = None
+        row_htmls = []
+        for row in inner.split("\n"):
+            em = _EQN_PARA_RE.match(row)
+            if em:
+                label_text = em.group(2)
+                content = em.group(3).strip()
+                mo = _MATH_ONLY_RE.match(content)
+                content_html = (_render_display_math(mo.group(2), mo.group(1), ctx) if mo
+                                else decode_inline(content, escape=True, dhr_inline=True, ctx=ctx))
+                row_htmls.append(f'<div class="math-system-row">'
+                                 f'{render_page_markers(em.group(1) or "", ctx)}{content_html}</div>')
+                continue
+            rm = _MATH_PARA_RE.match(row)
+            if not rm:
+                continue
+            if rm.group(3) is not None:
+                label_text = rm.group(3)
+            hm = _MATH_MARKER_RE.match(rm.group(2))
+            hint = hm.group(1) if hm else None
+            latex = hm.group(2) if hm else rm.group(2)[len("«MATH:"):len(rm.group(2)) - len("«/MATH»")]
+            row_htmls.append(f'<div class="math-system-row">'
+                             f'{render_page_markers(rm.group(1) or "", ctx)}'
+                             f'{_render_display_math(latex, hint, ctx)}</div>')
+        label_html = (f'<div class="math-system-label">({escape_html(label_text)})</div>'
+                      if label_text else "")
+        return (f'<div class="math-system"><div class="math-system-rows">'
+                f'{"".join(row_htmls)}</div>{label_html}</div>')
 
     # Standalone block image (a paragraph that IS one image) → the <img>, no <p> wrap.
     im = _IMG_ANCHORED_RE.match(p)
@@ -338,6 +392,24 @@ def _merge_paras(raw_paras):
     n = len(raw_paras)
     while i < n:
         cur = raw_paras[i]
+        # A labeled math paragraph («EQN…» or «MATH…» (N)) bundles with the bare-math
+        # paragraphs that immediately follow into one «EQNGROUP» visual block.
+        math_hit = _MATH_PARA_RE.match(cur)
+        if _EQN_PARA_RE.match(cur) or (math_hit is not None and math_hit.group(3) is not None):
+            run_rows = [cur]
+            scan = i + 1
+            while scan < n:
+                nxt = raw_paras[scan]
+                if _EQN_PARA_RE.match(nxt):
+                    break
+                nm = _MATH_PARA_RE.match(nxt)
+                if not nm or nm.group(3) is not None:
+                    break
+                run_rows.append(nxt)
+                scan += 1
+            merged.append(EQNGROUP_OPEN + "\n".join(run_rows) + EQNGROUP_CLOSE)
+            i = scan
+            continue
         if merged and not _NON_TEXT_PREFIX.match(cur):
             prev = merged[-1]
             if not _NON_TEXT_PREFIX.match(prev):
