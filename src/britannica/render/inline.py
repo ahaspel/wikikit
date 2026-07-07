@@ -43,6 +43,61 @@ def _encode_uri_component(s):
     return quote(s, safe="!*'()")
 
 
+# ── unescapeHtml — exact inverse of escape_html (amp LAST) ──
+def unescape_html(value):
+    if value is None:
+        return ""
+    s = str(value)
+    for a, b in (("&#39;", "'"), ("&quot;", '"'), ("&lt;", "<"), ("&gt;", ">"), ("&amp;", "&")):
+        s = s.replace(a, b)
+    return s
+
+
+# ── IMG — {{IMG:filename[|align=…|width=N|height=N][|caption]}} → <img> ──
+_IMG_PARTS_RE = re.compile(
+    r"\{\{IMG:([^|}]+)"
+    r"((?:\|(?:align=(?:center|left|right)|width=\d+|height=\d+))*)"
+    r"(?:\|([^{}]*))?\}\}"
+)
+
+
+def commons_url(filename, is_local=True):
+    if filename.startswith("http://") or filename.startswith("https://"):
+        return filename
+    name = filename.replace(" ", "_")             # Commons: spaces ↔ underscores
+    name = re.sub(r'["<>|?*]', "_", name)          # match download_images.py disk sanitization
+    if name.lower().endswith(".svg"):              # SVGs rasterized to .svg.png
+        name += ".png"
+    base = "/data/derived/images/" if is_local else "/data/images/"
+    return base + _encode_uri_component(name)
+
+
+def parse_img_meta(meta_block):
+    out = {}
+    if meta_block:
+        for m in re.finditer(r"(align|width|height)=([^|]+)", meta_block):
+            out[m.group(1)] = m.group(2) if m.group(1) == "align" else int(m.group(2))
+    return out
+
+
+def render_img(filename, meta, caption, is_local=True):
+    fn = unescape_html(filename)
+    url = fn if fn.startswith("http") else commons_url(fn, is_local)
+    alt = re.sub(r"«[^»]*»", "", caption or fn)
+    s = "max-width:100%;height:auto;vertical-align:middle;"
+    if meta.get("width"):
+        s += f"width:{meta['width']}px;"
+    if meta.get("height"):
+        s += f"height:{meta['height']}px;"
+    if meta.get("align") == "right":
+        s += "float:right;margin:.3em 0 .4em 1.2em;"
+    elif meta.get("align") == "left":
+        s += "float:left;margin:.3em 1.2em .4em 0;"
+    elif meta.get("align") == "center":
+        s += "display:block;margin:0 auto;"
+    return f'<img src="{url}" alt="{escape_html(alt)}" loading="lazy" style="{s}" />'
+
+
 # ── size markers (applySizeMarkers) — longest openers first; no «XL» size line ──
 _SIZE_NAMED = r"xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger"
 _FS_RE = re.compile(r"«FS\[([^\]]*)\]»")
@@ -122,12 +177,20 @@ def _xl(m):
     return f'<a href="{url}" class="external-link" target="_blank" rel="noopener">{disp or url}</a>'
 
 
-def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None):
+def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None, is_local=True):
     """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``."""
     article_url = article_url or _default_article_url
 
-    # IMG / FN / MATH — deferred (block+shell layers own them); the prose path passes
-    # skip_math and leaves «MATH» here regardless.
+    # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
+    # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell
+    # layers own them); the prose path passes skip_math and leaves «MATH» here.
+    img_html = []
+
+    def _shield_img(m):
+        img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or "", is_local))
+        return f"\x00IMG{len(img_html) - 1}\x00"
+
+    h = _IMG_PARTS_RE.sub(_shield_img, h)
 
     if escape:
         h = escape_html(h)
@@ -170,5 +233,9 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _LN_RE.sub(_ln_factory(article_url), h)
     h = _XL_RE.sub(_xl, h)
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
+
+    # Restore the shielded inline images (last, like the viewer).
+    if img_html:
+        h = re.sub(r"\x00IMG(\d+)\x00", lambda m: img_html[int(m.group(1))], h)
 
     return h
