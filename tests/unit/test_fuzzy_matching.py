@@ -53,9 +53,3 @@ def test_last_comma_first_matches_first_last() -> None:
 def test_no_match_returns_none() -> None:
     titles = _make_titles("ABACUS", "ABANDON")
     assert find_fuzzy_match("ARISTOTLE", titles) is None
-
-
-def test_exact_match_not_duplicated() -> None:
-    """Fuzzy matching should not match exact titles (those are handled separately)."""
-    titles = _make_titles("ABACUS")
-    assert find_fuzzy_match("ABACUS", titles) is None

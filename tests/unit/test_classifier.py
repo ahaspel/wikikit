@@ -192,10 +192,11 @@ class TestBacklogFamilyRoutes:
         assert self._label("{{lb|10}}") == "LB"
         assert self._label("{{lb-|10}}") == "LB"
 
-    def test_unknown_template_raises(self):
-        import pytest
-        with pytest.raises(ValueError):
-            self._label("{{utterly unknown template name|x}}")
+    def test_unknown_template_leaks(self):
+        # An unrouted template LEAKS (renders raw, surfaced by the leak audit); it
+        # does NOT crash the build — "a miss must be loud AND recoverable, which a
+        # raise is not" (_classifier's DOUBLE_BRACE_LEAK, commit 033858e).
+        assert self._label("{{utterly unknown template name|x}}") == "DOUBLE_BRACE_LEAK"
 
 
 class TestNestedClassification:
