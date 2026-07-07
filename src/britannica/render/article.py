@@ -19,6 +19,8 @@ from britannica.render.inline import (
     decode_inline,
     escape_html,
     format_footnote_text,
+    parse_img_meta,
+    render_img,
     _encode_uri_component as _enc,
 )
 
@@ -35,6 +37,16 @@ _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
 _SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
+_OUTLINE_RE = re.compile(r"^«(PLATE_)?OUTLINE:([\s\S]*)«/(?:PLATE_)?OUTLINE»$")
+_VERSE_BLOCK_RE = re.compile(r"^\{\{VERSE(?:\[style:([^\]]*)\])?:([\s\S]*)\}VERSE\}$")
+_LEGEND_RE = re.compile(r"^\{\{LEGEND:([\s\S]*)\}LEGEND\}$")
+_IMG_ANCHORED_RE = re.compile(
+    r"^\{\{IMG:([^|}]+)"
+    r"((?:\|(?:align=(?:center|left|right)|width=\d+|height=\d+))*)"
+    r"(?:\|([^{}]*))?\}\}$"
+)
+_OUTLINE_ITEM_RE = re.compile(r"^(\d+)\|(.*)$")
+_ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
 
 BLOCK_MARKER_SCAN_RE = re.compile(
     r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"
@@ -242,8 +254,65 @@ def render_paragraph(p, next_para, ctx):
                  f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
         return f"<h1>{h}</h1>"
 
-    # DEFERRED block paths (EQNGROUP, IMG, OUTLINE, VERSE, LEGEND, HTMLTABLE/CHEM):
-    # fall through to prose so the marker leaks visibly and the diff flags the gap.
+    # Standalone block image (a paragraph that IS one image) → the <img>, no <p> wrap.
+    im = _IMG_ANCHORED_RE.match(p)
+    if im:
+        return render_img(im.group(1), parse_img_meta(im.group(2)), im.group(3) or "")
+
+    # Hierarchical outline → nested <ul>; sparse source depths densified to dense levels.
+    om = _OUTLINE_RE.match(p)
+    if om:
+        items = []
+        for ln in om.group(2).split("\n"):
+            if not ln:
+                continue
+            mm = _OUTLINE_ITEM_RE.match(ln)
+            if mm:
+                items.append((int(mm.group(1)), mm.group(2)))
+        if items:
+            rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
+            root = "outline plate-outline" if om.group(1) else "outline"
+            out = [f'<ul class="{root}">']
+            cur = 0
+            for depth, content in items:
+                lvl = rank[depth]
+                while cur < lvl:
+                    out.append("<ul>")
+                    cur += 1
+                while cur > lvl:
+                    out.append("</ul>")
+                    cur -= 1
+                out.append(f"<li>{render_paragraph(content, None, ctx)}</li>")
+            while cur > 0:
+                out.append("</ul>")
+                cur -= 1
+            out.append("</ul>")
+            return "".join(out)
+
+    # Verse → blockquote (lines joined by <br>).
+    vm = _VERSE_BLOCK_RE.match(p)
+    if vm:
+        style_attr = f' style="{vm.group(1).replace(chr(34), "&quot;")}"' if vm.group(1) else ""
+        lines = [decode_inline(escape_html(s), ctx=ctx) for s in vm.group(2).split("\n") if s.strip()]
+        return f'<blockquote class="verse"{style_attr}>{"<br>".join(lines)}</blockquote>'
+
+    # Figure legend → aside ("### " subhead / entry).
+    lm = _LEGEND_RE.match(p)
+    if lm:
+        parts = []
+        for line in lm.group(1).split("\n"):
+            s = line.strip()
+            if not s:
+                continue
+            if s.startswith("### "):
+                parts.append(f'<h5 class="legend-subhead">'
+                             f'{decode_inline(s[4:], escape=True, dhr_inline=True, ctx=ctx)}</h5>')
+            else:
+                parts.append(f'<div class="legend-entry">'
+                             f'{decode_inline(s, escape=True, dhr_inline=True, ctx=ctx)}</div>')
+        return f'<aside class="figure-legend">{"".join(parts)}</aside>'
+
+    # DEFERRED: EQNGROUP math systems, HTMLTABLE/CHEM tables — fall through to prose.
 
     # Prose → <p> with left-margin page markers + inline decode + MATH stub.
     html = escape_html(p)
@@ -453,7 +522,13 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
 
     parent_html = ""   # DEFERRED (plate parent line)
     topics_html = ""   # always empty in the golden (topicMap unloaded)
-    plates_html = ""   # DEFERRED
+    plates = article.get("plates") or []
+    plates_html = ""
+    if plates and article.get("article_type") != "plate":
+        links = ", ".join(
+            f'<a href="{_article_url(p["filename"])}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
+            for i, p in enumerate(plates))
+        plates_html = f'<div class="contributors">Plates: {links}</div>'
 
     sq = article.get("source_quality") or {}
     source_notice = ""
