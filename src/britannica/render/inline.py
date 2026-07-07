@@ -132,6 +132,7 @@ def _apply_size_markers(h):
 
 
 # ── parametrized markers ──
+_FN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:([\s\S]*?)«/FN»")
 _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
 _VERSE_RE = re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}VERSE\}")
 _BAR_RE = re.compile(r"«BAR\[(\d+)\]»")
@@ -177,8 +178,14 @@ def _xl(m):
     return f'<a href="{url}" class="external-link" target="_blank" rel="noopener">{disp or url}</a>'
 
 
-def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None, is_local=True):
-    """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``."""
+def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None,
+                  is_local=True, ctx=None):
+    """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``.
+
+    ``ctx`` carries the per-article footnote state (counter / named numbers / collected
+    list); it must be provided wherever «FN» can appear (title, prose, cells).  Without
+    it FN markers are left untouched (the inline unit battery passes none).
+    """
     article_url = article_url or _default_article_url
 
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
@@ -194,6 +201,11 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
 
     if escape:
         h = escape_html(h)
+
+    # Footnotes decode the same in every context (title, prose, cell) — numbered and
+    # collected through the shared ctx so a title footnote is #1.
+    if ctx is not None:
+        h = _FN_RE.sub(lambda m: render_fn_marker(m.group(1), m.group(2), ctx), h)
 
     h = _VERSE_RE.sub(_verse, h)
 
@@ -239,3 +251,36 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
         h = re.sub(r"\x00IMG(\d+)\x00", lambda m: img_html[int(m.group(1))], h)
 
     return h
+
+
+def render_fn_marker(name, content, ctx):
+    """«FN[name]?:content«/FN» → an inline superscript + popup; number + collect via ctx.
+
+    Named refs share a number across anchors (one Notes entry, N superscripts); the first
+    anchor uses unsuffixed ids, reuses get a -instance suffix.
+    """
+    if name and name in ctx.named_fn_numbers:
+        num = ctx.named_fn_numbers[name]
+        ctx.fn_anchor_instance += 1
+        ref_id = f"fnref-{num}-{ctx.fn_anchor_instance}"
+        popup_id = f"fnpop-{num}-{ctx.fn_anchor_instance}"
+    else:
+        ctx.footnote_counter += 1
+        num = ctx.footnote_counter
+        if name:
+            ctx.named_fn_numbers[name] = num
+        ctx.collected_footnotes.append({"num": num, "text": content})
+        ref_id = f"fnref-{num}"
+        popup_id = f"fnpop-{num}"
+    return (
+        f'<sup class="footnote-ref" id="{ref_id}">'
+        f'<a onclick="toggleFnPopup(event,\'{popup_id}\');return false;" href="#">{num}</a>'
+        f'<span class="fn-popup" id="{popup_id}"><span class="fn-popup-num">{num}.</span>'
+        f'{format_footnote_text(content, ctx)}</span></sup>'
+    )
+
+
+def format_footnote_text(text, ctx):
+    """Footnote body → HTML.  Input is already escaped (title/prose/cell), so no re-escape —
+    just the shared inline decode (matching formatFootnoteText)."""
+    return decode_inline(text, ctx=ctx)

@@ -18,6 +18,7 @@ import re
 from britannica.render.inline import (
     decode_inline,
     escape_html,
+    format_footnote_text,
     _encode_uri_component as _enc,
 )
 
@@ -32,6 +33,8 @@ _PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
+_ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
+_SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
 
 BLOCK_MARKER_SCAN_RE = re.compile(
     r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"
@@ -122,6 +125,7 @@ class RenderContext:
         self.math_popout_latex = {}
         self.footnote_counter = 0
         self.named_fn_numbers = {}
+        self.fn_anchor_instance = 0
         self.collected_footnotes = []
         self.collected_sections = []
         self.wide_table_counter = 0
@@ -231,7 +235,7 @@ def render_paragraph(p, next_para, ctx):
     # Article title — «TITLE» heading element: escape, decode, drop-cap the first char.
     if p.startswith(TITLE_OPEN) and p.endswith(TITLE_CLOSE):
         inner = p[len(TITLE_OPEN):len(p) - len(TITLE_CLOSE)]
-        h = decode_inline(escape_html(inner))
+        h = decode_inline(escape_html(inner), ctx=ctx)
         dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
         if dc:
             h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
@@ -245,7 +249,7 @@ def render_paragraph(p, next_para, ctx):
     html = escape_html(p)
     html = render_page_markers(html, ctx)
     html = _render_sh(html)
-    html = decode_inline(html, skip_math=True)
+    html = decode_inline(html, skip_math=True, ctx=ctx)
     html = _render_math_markers(html, ctx)
     return f"<p>{html}</p>"
 
@@ -287,6 +291,71 @@ def _merge_paras(raw_paras):
     return merged
 
 
+def dedupe_anchor_id(seen, id_):
+    seen[id_] = seen.get(id_, 0) + 1
+    return id_ if seen[id_] == 1 else f"{id_}-{seen[id_]}"
+
+
+def detect_sections(paragraphs, ctx):
+    """Walk «SEC» (L1) and «SH» (L2) anchors in document order into ctx.collected_sections."""
+    ctx.collected_sections = []
+    seen = {}
+    for p in paragraphs:
+        for m in _ANCHOR_RE.finditer(p):
+            if m.group(1) is not None:  # «SEC:slug|name» — major section
+                ctx.collected_sections.append(
+                    {"id": dedupe_anchor_id(seen, f"section-{m.group(1)}"),
+                     "title": m.group(2), "level": 1})
+            else:                       # «SH:slug»…«/SH» — shoulder heading
+                display = _SH_STRIP_RE.sub("", m.group(4)).strip()
+                ctx.collected_sections.append(
+                    {"id": dedupe_anchor_id(seen, f"section-{m.group(3)}"),
+                     "title": display, "level": 2})
+
+
+def _toc_link(s):
+    return f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a></li>'
+
+
+def _build_toc(sections):
+    level1 = [s for s in sections if s["level"] == 1]
+    level2 = [s for s in sections if s["level"] == 2]
+    if len(level1) >= 2 and len(level2) >= 1:
+        # Interleaved: major sections with shoulder headings nested below; level-2
+        # orphans (before any level-1) render standalone so the HTML stays valid.
+        inner = ""
+        in_sub = False
+        seen_level1 = False
+        for s in sections:
+            if s["level"] == 1:
+                if in_sub:
+                    inner += "</ul></li>"
+                    in_sub = False
+                elif seen_level1:
+                    inner += "</li>"
+                inner += f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a>'
+                seen_level1 = True
+            elif not seen_level1:
+                inner += _toc_link(s)
+            else:
+                if not in_sub:
+                    inner += "<ul>"
+                    in_sub = True
+                inner += _toc_link(s)
+        if in_sub:
+            inner += "</ul></li>"
+        elif seen_level1:
+            inner += "</li>"
+        return f'<div class="toc"><h3>Contents</h3><ul class="toc-contents">{inner}</ul></div>'
+    if len(level1) >= 2:
+        return (f'<div class="toc"><h3>Contents</h3><ul class="toc-contents">'
+                f'{"".join(_toc_link(s) for s in level1)}</ul></div>')
+    if len(level2) >= 3:
+        return (f'<div class="toc"><h3>Sections</h3><ol>'
+                f'{"".join(_toc_link(s) for s in level2)}</ol></div>')
+    return ""
+
+
 def _render_body(article, ctx):
     body = article.get("body") or ""
     marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
@@ -297,12 +366,17 @@ def _render_body(article, ctx):
     for rx in _BLOCK_MARKER_RES:
         marked = rx.sub(lambda m: re.sub(r"\n\n+", "\n", m.group(0)), marked)
     merged = _merge_paras(marked.split("\n\n"))
-    # detect_sections(merged, ctx) — DEFERRED (section/TOC brick)
+    detect_sections(merged, ctx)
     body_html = "".join(
         render_paragraph(pp, merged[idx + 1] if idx + 1 < len(merged) else None, ctx)
         for idx, pp in enumerate(merged)
     )
-    toc_html = ""  # DEFERRED
+    # De-dup colliding section ids in the SAME document order detect_sections used, so
+    # each TOC link resolves to its own anchor (first keeps section-<slug>, reuses get -N).
+    id_seen = {}
+    body_html = _SECTION_ID_RE.sub(
+        lambda m: f'id="{dedupe_anchor_id(id_seen, m.group(1))}"', body_html)
+    toc_html = _build_toc(ctx.collected_sections)
     return toc_html + f'<div class="body-text">{body_html}</div>'
 
 
@@ -394,7 +468,16 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
             "               </div>")
 
     body_section = _render_body(article, ctx)
-    footnotes_html = ""  # DEFERRED (footnotes card)
+    footnotes_html = ""
+    if ctx.collected_footnotes:
+        lis = "".join(
+            f'<li id="fn-{fn["num"]}" value="{fn["num"]}">'
+            f'<a onclick="var el=document.getElementById(\'fnref-{fn["num"]}\');'
+            f"if(el)el.scrollIntoView({{behavior:'instant',block:'start'}});return false;\" "
+            f'href="#">{fn["num"]}.</a> {format_footnote_text(fn["text"], ctx)}</li>'
+            for fn in ctx.collected_footnotes
+        )
+        footnotes_html = f'<div class="footnotes"><h3>Notes</h3><ol>{lis}</ol></div>'
 
     xref_card = (f'<div class="card">\n          <h2>Cross-references</h2>\n'
                  f"          {xref_html}\n        </div>") if xref_html else ""
