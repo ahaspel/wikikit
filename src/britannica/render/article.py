@@ -86,18 +86,34 @@ _NON_TEXT_PREFIX = re.compile(
 )
 
 
+# Latin ligatures / letters NFKD leaves whole — expand to their base sequence for the
+# primary collation level (Æ≈AE, Œ≈OE, …), matching localeCompare.
+_LIGATURES = {"æ": "ae", "œ": "oe", "ø": "o", "ß": "ss", "þ": "th", "ð": "d", "đ": "d", "ł": "l"}
+
+
 def _xref_sort_key(s):
-    """Approximate the viewer's ``localeCompare`` xref ordering (UCA primary level):
-    symbols < digits < letters, case- and accent-insensitive.  Matches localeCompare on
-    the whole seed set; full UCA (pyuca) would be exact for rarer accented/ligature targets.
+    """Approximate the viewer's ``localeCompare`` xref ordering (UCA): symbols < digits <
+    letters, case- and accent-insensitive at the primary level, with the original string as a
+    secondary tiebreak (accented forms after their base).  Matches localeCompare across the
+    corpus; full UCA (pyuca) would be exact for the rarest tailorings.
     """
-    key = []
-    for c in unicodedata.normalize("NFKD", s or ""):
+    s = s or ""
+    primary = []
+    for c in unicodedata.normalize("NFKD", s):
         if unicodedata.combining(c):        # drop accents → base letter (primary fold)
             continue
-        cls = 0 if not c.isalnum() else (1 if c.isdigit() else 2)
-        key.append((cls, c.lower()))
-    return key
+        lc = c.lower()
+        if lc in _LIGATURES:
+            primary.extend((2, b) for b in _LIGATURES[lc])
+            continue
+        cls = 0 if not c.isalnum() else (1 if c.isdigit() else 2)  # symbols < digits < letters
+        primary.append((cls, lc))
+    return (primary, s)
+
+
+def _render_title_markers(value, ctx):
+    """Inline title markers → HTML (no drop-cap): the H1 fallback and the parent-plate link."""
+    return decode_inline(escape_html(value or ""), ctx=ctx)
 
 
 def _section_slug(name):
@@ -611,7 +627,7 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
     if tm:
         h1 = render_paragraph(tm.group(0), None, ctx)
     else:
-        h1 = f'<h1>{escape_html(article.get("title") or "Untitled")}</h1>'  # renderTitleMarkers DEFERRED
+        h1 = f'<h1>{_render_title_markers(article.get("title") or "Untitled", ctx)}</h1>'
 
     vol = escape_html(article.get("volume", "?"))
     ps, pe = article.get("page_start"), article.get("page_end")
@@ -629,7 +645,12 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
         ]
         contrib_html = f'<div class="contributors">By {", ".join(parts)}</div>'
 
-    parent_html = ""   # DEFERRED (plate parent line)
+    parent = article.get("parent_article")
+    parent_html = ""
+    if parent:
+        parent_html = ('<div style="margin-bottom: 8px; font-size: 0.95rem;">Plate for '
+                       f'<a href="{_article_url(parent["filename"])}">'
+                       f'{_render_title_markers(parent.get("title") or "", ctx)}</a></div>')
     topics_html = ""   # always empty in the golden (topicMap unloaded)
     plates = article.get("plates") or []
     plates_html = ""

@@ -142,5 +142,9 @@
  {
   "input": "text with a lone « guillemet and a stray » one",
   "output": "text with a lone « guillemet and a stray » one"
+ },
+ {
+  "input": "hieroglyphs [hieroglyph: F32:X1*Z1] ligature, [hieroglyph: G53] direct, [hieroglyph: A] MdC, [hieroglyph: ZZZ99] fallback",
+  "output": "hieroglyphs <span class=\"hieroglyph\">&#x130e5;</span><span class=\"hieroglyph\">&#x132c2;</span> ligature, <span class=\"hieroglyph\">&#x1312d;</span> direct, <span class=\"hieroglyph\">&#x1312d;</span> MdC, <span class=\"hieroglyph-fallback\" title=\"Gardiner ZZZ99\">ZZZ99</span> fallback"
  }
 ]

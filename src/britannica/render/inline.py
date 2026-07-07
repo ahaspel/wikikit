@@ -98,6 +98,52 @@ def render_img(filename, meta, caption, is_local=True):
     return f'<img src="{url}" alt="{escape_html(alt)}" loading="lazy" style="{s}" />'
 
 
+# ── hieroglyphs — [hieroglyph: <Gardiner/MdC codes>] → Egyptian Hieroglyph block chars ──
+_GARDINER_BASES = {
+    "A": 0x13000, "B": 0x13032, "C": 0x13037, "D": 0x13044, "E": 0x130A4, "F": 0x130C6,
+    "G": 0x130F9, "H": 0x13131, "I": 0x1313B, "K": 0x1314D, "L": 0x13153, "M": 0x1315C,
+    "N": 0x13189, "O": 0x131B3, "P": 0x131E7, "Q": 0x131F0, "R": 0x131F7, "S": 0x13210,
+    "T": 0x1323D, "U": 0x13260, "V": 0x13286, "W": 0x132A9, "X": 0x132C2, "Y": 0x132CA,
+    "Z": 0x132CF, "Aa": 0x132DB,
+}
+_MDC_TO_GARDINER = {
+    "A": "G53", "H": "O4", "S": "S29", "s": "S29", "t": "X1", "q": "Q3", "sw": "M23",
+    "pr": "O1", "anx": "S34", "nH": "S3", "zA": "V17", "aA": "G25", "xpr": "L1",
+    "nDs": "N33", "Hm": "U36", "Xrd": "A17", "DA": "I10",
+    "N35A": "N35", "N35B": "N35", "V10A": "V10",
+}
+_GARDINER_CODE_RE = re.compile(r"^([A-Z]a?)(\d+)$")
+_HIEROGLYPH_RE = re.compile(r"\[hieroglyph:\s*([^\]]+)\]")
+
+
+def _gardiner_to_unicode(code):
+    if "*" in code:                          # MdC ligature — take the leading glyph
+        code = code.split("*")[0]
+    code = _MDC_TO_GARDINER.get(code, code)
+    m = _GARDINER_CODE_RE.match(code)
+    if not m:
+        return None
+    base = _GARDINER_BASES.get(m.group(1))
+    if base is None:
+        return None
+    cp = base + int(m.group(2)) - 1
+    return cp if 0x13000 <= cp <= 0x1342F else None
+
+
+def _render_hieroglyph(m):
+    parts = []
+    for code in re.split(r"[:\s\-]+", m.group(1).strip()):
+        code = code.replace("\\", "")
+        if not code or code in ("<", ">", "!", "-"):
+            continue
+        cp = _gardiner_to_unicode(code)
+        if cp:
+            parts.append(f'<span class="hieroglyph">&#x{cp:x};</span>')
+        else:
+            parts.append(f'<span class="hieroglyph-fallback" title="Gardiner {code}">{code}</span>')
+    return "".join(parts) or m.group(0)
+
+
 # ── size markers (applySizeMarkers) — longest openers first; no «XL» size line ──
 _SIZE_NAMED = r"xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger"
 _FS_RE = re.compile(r"«FS\[([^\]]*)\]»")
@@ -246,8 +292,7 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = h.replace("«FR»", '<span class="float-right">').replace("«/FR»", "</span>")
     h = h.replace("«FL»", '<span class="float-left">').replace("«/FL»", "</span>")
     h = _BRACE2_RE.sub(_brace2, h)
-
-    # hieroglyph — deferred (Gardiner tables).
+    h = _HIEROGLYPH_RE.sub(_render_hieroglyph, h)
 
     h = _LN_RE.sub(_ln_factory(article_url), h)
     h = _XL_RE.sub(_xl, h)
