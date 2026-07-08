@@ -288,7 +288,7 @@ def _wrap_resolved_xrefs_in_body(
         This ensures we link the specific mention the xref refers to,
         not a different occurrence of the same surname elsewhere in
         the article.
-      - never wrap inside existing LN/HTMLTABLE/MATH/PRE spans
+      - never wrap inside existing LN/TABLE/MATH/PRE spans
       - one wrap per target per article
     """
     if not body or not xrefs:

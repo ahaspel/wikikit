@@ -673,8 +673,8 @@ def _classify_html_table(
 # the ordinary `classify_article` (a cell is prose in a box), and the
 # TR/TD/TH/TABLE producers reassemble bottom-up.  `classify_article` runs ONCE
 # per article; recognition + attr-fold are reused verbatim, so the emitted
-# `«HTMLTABLE»` is byte-identical to the former re-walk.
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_COLSPAN_RE = re.compile(r'colspan\s*=\s*"?\s*(\d+)', re.I)
 
 
 def _mint_ph() -> str:
@@ -698,22 +698,32 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cap_body, cap_reg = classify_article(caption_raw, _allow_figure=False)
         children[_mint_ph()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
     row_phs: list[str] = []
+    max_cols = 0
     for row_attr, cells in rows:
         if not cells:
             continue
         cell_phs: list[str] = []
         cell_children: dict[str, ClassifiedElement] = {}
+        row_cols = 0
         for sep, cell_attr, content in cells:
             cell_body, cell_reg = classify_article(content, _allow_figure=False)
             ph = _mint_ph()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
             cell_phs.append(ph)
+            cs = _COLSPAN_RE.search(cell_attr or "")
+            row_cols += int(cs.group(1)) if cs else 1
+        max_cols = max(max_cols, row_cols)
         rph = _mint_ph()
         children[rph] = ClassifiedElement(
             "ROW", row_attr, "".join(cell_phs), cell_children)
         row_phs.append(rph)
-    return ClassifiedElement("TABLE", raw, "".join(row_phs), children)
+    # The column count rides the TABLE node's inner_text as a `«COLS:N»` prefix
+    # (consumed by the producer, never emitted) — computed HERE, off the OUTER
+    # rows/cells, so a nested table's cells can't inflate it.  The producer needs
+    # it for the wide-table decision but only sees (raw, inner_text) at emit.
+    return ClassifiedElement(
+        "TABLE", raw, f"«COLS:{max_cols}»" + "".join(row_phs), children)
 
 
 def _is_table_html_tag(raw: str) -> bool:
@@ -935,7 +945,7 @@ def produce_tree(
         # circuited on empty markers and leaked the placeholder
         # bytes (`\x03ELEM:N\x03`) into output — AFRICA's territorial
         # tables had ~17 such leaks from unresolved-`<ref name=X/>`
-        # citation reuses inside `«HTMLTABLE:` blocks.
+        # citation reuses inside `«TABLE[…]»` blocks.
         if ce.inner_registry:
             for _ in range(5):
                 changed = False

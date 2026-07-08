@@ -171,7 +171,7 @@ def walk_article(session, article) -> str:
     # Section recognition runs post-walk over the finished body — the post-walk
     # extraction family, beside the contributor / xref extractors — where the whole
     # produced structure is in view: every «CTR»«SC» heading (fine-print ones too)
-    # plus balanced «HTMLTABLE» table spans.  A section is a heading NOT inside a
+    # plus balanced «TABLE[…]» table spans.  A section is a heading NOT inside a
     # table; the pre-walk `stamp_sections` regex never had this structure.
     walked = stamp_section_anchors(walked)
     m = _TITLE_NODE_RE.search(walked)

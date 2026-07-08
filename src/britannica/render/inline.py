@@ -233,6 +233,26 @@ def _xl(m):
     return f'<a href="{url}" class="external-link" target="_blank" rel="noopener">{disp or url}</a>'
 
 
+_TABLE_OPEN_RE = re.compile(r"«(TABLE|TR|TD|TH)\[([^\]]*)\]»")
+
+
+def _table_open(m):
+    """`«TD[colspan:2|style:text-align:right]»` → `<td colspan="2" style="text-align:right">`.
+
+    The quote-free `key:value` payload (the SAME wire `«SPAN[style:…]»` rides)
+    re-gains its quotes here — split on `|`, each field on its FIRST `:`.  `cols`
+    is the wide-table metadata the block layer already read off the opener, not an
+    HTML attribute, so it is dropped."""
+    tag = m.group(1).lower()
+    attrs = ""
+    for field in m.group(2).split("|"):
+        k, _, v = field.partition(":")
+        if k == "cols":
+            continue
+        attrs += f' {k}="{v}"'
+    return f"<{tag}{attrs}>"
+
+
 def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None,
                   is_local=True, ctx=None):
     """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``.
@@ -308,6 +328,20 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _LN_RE.sub(_ln_factory(article_url), h)
     h = _XL_RE.sub(_xl, h)
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
+
+    # Recursive table markers — «TABLE[…]»/«TR[…]»/«TD[…]»/«TH[…]»/«CAPTION».  The
+    # producer carried the table AS markers (no HTML on the wire), so this is pure
+    # independent token substitution: the cell text between the markers was escaped
+    # above and its carried <sub>/<br> restored, the inner stylers already decoded,
+    # and a nested table is just more markers in a cell — decoded in this same pass,
+    # no re-parse.  The attr-bearing opens (with the quote-free payload) go first,
+    # then the bare opens/closes.
+    h = _TABLE_OPEN_RE.sub(_table_open, h)
+    h = (h.replace("«TR»", "<tr>").replace("«/TR»", "</tr>")
+          .replace("«TD»", "<td>").replace("«/TD»", "</td>")
+          .replace("«TH»", "<th>").replace("«/TH»", "</th>")
+          .replace("«CAPTION»", "<caption>").replace("«/CAPTION»", "</caption>")
+          .replace("«/TABLE»", "</table>"))
 
     # Restore the shielded inline images (last, like the viewer).
     if img_html:

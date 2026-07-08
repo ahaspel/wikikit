@@ -45,14 +45,23 @@ def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
 
 def _tag(name: str, attr_slot: str, inner: str,
          *, table_level: bool = False) -> str:
-    """Wrap ``inner`` in ``<name …>…</name>``, folding the RAW ``attr_slot``
-    onto the tag at the wrap — the style bits become one ``style="…"``, every
-    other attribute (``colspan``, ``class``, ``cellpadding``…) a real HTML attr
-    (`fold_cell_attrs`).  The one tag-emitter for every table level (`td`/`th`/
-    `tr`/`table`); the renderer owns the attr split, made where the tag is
-    built — never threaded down from the chop."""
-    from britannica.pipeline.stages.elements._table_fold import (
-        fold_cell_attrs, format_html_attrs)
+    """Wrap ``inner`` in the recursive table MARKER for this structural level —
+    ``«TR»`` / ``«TD[…]»`` / ``«TH[…]»`` — folding the RAW ``attr_slot`` into a
+    quote-free ``key:value`` payload (`fold_cell_attrs`): the style bits become
+    one ``style:…`` field, every other attribute (``colspan``, ``class``,
+    ``cellpadding``…) its own ``key:value``, ``|``-separated.  This is the SAME
+    quote-free wire the style markers (``«SPAN[style:…]»``) ride — no HTML
+    crosses the marker stream, so NO renderer re-parses it.  The decoder
+    substitutes the token and re-adds the quotes, exactly as it already does for
+    ``«SPAN[style:…]»→<span style="…">``.  Values may hold ``:`` / ``;`` (style)
+    or spaces (multi-word class); the render splits on the FIRST ``:`` per
+    field, so only a literal ``|`` / ``]`` in a value (never seen in a cell
+    attr) would confuse it."""
+    from britannica.pipeline.stages.elements._table_fold import fold_cell_attrs
     css, html = fold_cell_attrs(attr_slot, table_level)
-    style = f' style="{";".join(css)}"' if css else ""
-    return f"<{name}{format_html_attrs(html)}{style}>{inner}</{name}>"
+    parts = [f"{k}:{v}" for k, v in html.items()]
+    if css:
+        parts.append("style:" + ";".join(css))
+    marker = name.upper()
+    return (f"«{marker}[{'|'.join(parts)}]»{inner}«/{marker}»" if parts
+            else f"«{marker}»{inner}«/{marker}»")

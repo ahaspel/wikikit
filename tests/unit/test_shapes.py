@@ -71,9 +71,10 @@ class TestShapeVocabulary:
     def test_leaf_shapes_subset(self):
         assert LEAF_SHAPES <= SHAPES
         assert SHAPE_HTML_SELF_CLOSING in LEAF_SHAPES
-        # PAIRED_WRAPPER inherits CHART2's leaf-ness (the producer owns the
-        # whole span; the CENTER family recurses its own inner).
-        assert SHAPE_PAIRED_WRAPPER in LEAF_SHAPES
+        # PAIRED_WRAPPER is NOT a leaf: CENTER un-leafed into a composite that
+        # recurses its own inner; only the CHART2 family stays leaf, gated inside
+        # `classify` (by name), not by the shape being in LEAF_SHAPES.
+        assert SHAPE_PAIRED_WRAPPER not in LEAF_SHAPES
 
 
 class TestStripOuter:

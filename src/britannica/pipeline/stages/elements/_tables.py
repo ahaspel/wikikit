@@ -15,7 +15,7 @@ import re
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry, IMAGE_LABELS, _PH)
 from britannica.pipeline.stages.elements._table_fold import (
-    fold_cell_attrs, fold_cell_styles, format_html_attrs)
+    fold_cell_attrs, fold_cell_styles)
 
 
 # Wiki cell-attribute keywords — used in two places (here, _layout) to
@@ -489,9 +489,9 @@ def _process_chemistry_layout(raw: str, inner: str, context,
 
     These are NOT data tables \u2014 they're spatial diagrams (no gridlines,
     no cell padding; the wiki-table syntax is just a positioning
-    crutch).  They get their own marker, ``\u00abCHEM:\u2026\u00ab/CHEM\u00bb``, distinct
-    from ``\u00abHTMLTABLE:\u2026\u00bb``, so the viewer can lay them out without
-    table chrome.
+    crutch).  They emit the SAME `\u00abTABLE[\u2026]\u00bb` markers as any table, tagged
+    with the `chem-grid` class the CSS keys on to drop the table chrome \u2014
+    no separate marker, no `is_chem` fork in the renderer.
 
     Self-contained parser \u2014 does NOT delegate to the general table path
     (``recognize_table`` + the composite TD/TH/ROW producers).  Going through the
@@ -564,10 +564,12 @@ def _process_chemistry_layout(raw: str, inner: str, context,
     from britannica.pipeline.stages.elements._table_decompose import _tag
     from britannica.pipeline.stages.elements import process_elements
     html_rows: list[str] = []
+    max_cols = 0
     for raw_row in raw_rows:
         if not raw_row.strip():
             continue
         cells_html: list[str] = []
+        row_cols = 0
         for sep, attr_part, content in _row_cells(raw_row):
             tag = "th" if sep == "!" else "td"
             # Chem-specific content clean (Ts strip, glyph sentinels); the cell
@@ -587,17 +589,27 @@ def _process_chemistry_layout(raw: str, inner: str, context,
                 if sentinel in content:
                     content = content.replace(sentinel, glyph)
             cells_html.append(_tag(tag, attr_part, content))
+            cs = _COLSPAN_RE.search(attr_part or "")
+            row_cols += int(cs.group(1)) if cs else 1
         if cells_html:
-            html_rows.append("<tr>" + "".join(cells_html) + "</tr>")
+            html_rows.append("\u00abTR\u00bb" + "".join(cells_html) + "\u00ab/TR\u00bb")
+            max_cols = max(max_cols, row_cols)
     if not html_rows:
         return ""
-    # Whole-table styling from the opener, folded at the emit like any tag.
-    css, opener_html = fold_cell_attrs(_opener_attr_slot(raw), table_level=True)
-    table_attrs = (format_html_attrs(opener_html)
-                   + (f' style="{";".join(css)}"' if css else ""))
-    return ("\u00abCHEM:<table" + table_attrs + ">"
-            + "".join(html_rows)
-            + "</table>\u00ab/CHEM\u00bb")
+    # A chem grid is a table whose one distinction is the `chem-grid` class the
+    # renderer used to splice in; the PRODUCER carries it now, so the render has
+    # ONE `\u00abTABLE[\u2026]\u00bb` decode and no `is_chem` fork.  Whole-table styling folds
+    # at the emit like any cell; `cols` leads for the wide-table decision.
+    opener_attrs = _opener_attr_slot(raw)
+    src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
+    chem_cls = ("chem-grid " + src_cls_m.group(1)).strip() if src_cls_m else "chem-grid"
+    css, opener_html = fold_cell_attrs(opener_attrs, table_level=True)
+    opener_html.pop("class", None)
+    parts = [f"cols:{max_cols}", f"class:{chem_cls}"]
+    parts += [f"{k}:{v}" for k, v in opener_html.items()]
+    if css:
+        parts.append("style:" + ";".join(css))
+    return f"\u00abTABLE[{'|'.join(parts)}]\u00bb" + "".join(html_rows) + "\u00ab/TABLE\u00bb"
 
 
 # Per-cell alignment the producer must carry so the viewer renders it instead
@@ -913,13 +925,17 @@ def _process_inline_glyph_wrapper(
     return process_elements(prose, context, _allow_figure=False).strip()
 
 
+_COLS_RE = re.compile(r"«COLS:(\d+)»")
+_COLSPAN_RE = re.compile(r'colspan\s*=\s*"?\s*(\d+)', re.I)
+
+
 def _process_table_unified(
     raw: str,
     inner: str,
     inner_registry: "ElementRegistry | None",
     context,
 ) -> str:
-    """The TABLE producer: assemble the `«HTMLTABLE»` from the ROW children the
+    """The TABLE producer: assemble the `«TABLE[…]»` from the ROW children the
     classifier already built — recognition (`recognize_table`) and per-cell
     recursion now happen at classify time (`_classify_table_composite`), so
     `classify_article` runs ONCE per article and the cell tree is real, not a
@@ -934,21 +950,27 @@ def _process_table_unified(
     border=N / rules=) keeps `data-table` + its source class; a class-less layout
     `{|` (figure / verse / single-column quote) gets none, so it renders
     borderless for free (only `.data-table` adds a border)."""
-    if not inner:
+    # `«COLS:N»` prefix (from `_classify_table_composite`, off the OUTER cells) →
+    # the column count for the wide-table decision; the rest is the row body.
+    m = _COLS_RE.match(inner)
+    cols = m.group(1) if m else "0"
+    body = inner[m.end():] if m else inner
+    if not body:
         return ""  # no rows — matches the former `if not body: return ""`
     # Caption child: produced already (bottom-up), so read its finished marker
     # and wrap only if non-empty.  Read off the classified child registry — the
-    # ONE place the caption now lives.
-    caption_html = ""
+    # ONE place the caption now lives.  It rides as a `«CAPTION»…«/CAPTION»`
+    # marker, decoded like every other cell (escape + inner markers).
+    caption = ""
     if inner_registry is not None:
         for ph, label in inner_registry.labels.items():
             if label == "CAPTION":
                 ct = (inner_registry.markers.get(ph) or "").strip()
                 if ct:
-                    caption_html = f"<caption>{ct}</caption>"
+                    caption = f"«CAPTION»{ct}«/CAPTION»"
                 break
-    # Stamp class + whole-table styling onto the (bare) outer <table>.  Opener
-    # attrs from whichever syntax opened the table — one regex, no flavor.
+    # Stamp class + whole-table styling into the (bare) `«TABLE[…]»` opener.
+    # Opener attrs from whichever syntax opened the table — one regex, no flavor.
     opener_attrs = _opener_attr_slot(raw)
     src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
     src_cls = src_cls_m.group(1) if src_cls_m else ""
@@ -956,11 +978,17 @@ def _process_table_unified(
         r"wikitable|border\s*=\s*[\"']?[1-9]|rules\s*=", opener_attrs, re.I)
     cls = (("data-table " + src_cls).strip() if (bordered or src_cls)
            else "")
-    # Fold the opener's attr-slot at the emit, same as a cell: style bits → CSS,
-    # the rest → real attrs.  `class` rides as the computed `cls`, so drop the dupe.
+    # Fold the opener's attr-slot at the emit, same as a cell: style bits → one
+    # `style:` field, the rest each their own `key:value`, quote-free and
+    # `|`-separated — the SAME wire the cell markers ride.  `class` rides as the
+    # computed `cls`, so drop the dupe.  `cols` leads as render metadata (not an
+    # HTML attr): the decoder reads it for the wide-table wrap and skips it.
     css, opener_html = fold_cell_attrs(opener_attrs, table_level=True)
     opener_html.pop("class", None)
-    attrs = ((f' class="{cls}"' if cls else "") + format_html_attrs(opener_html)
-             + (f' style="{";".join(css)}"' if css else ""))
-    return (f"«HTMLTABLE:<table{attrs}>{caption_html}{inner}"
-            f"</table>«/HTMLTABLE»")
+    parts = [f"cols:{cols}"]
+    if cls:
+        parts.append(f"class:{cls}")
+    parts += [f"{k}:{v}" for k, v in opener_html.items()]
+    if css:
+        parts.append("style:" + ";".join(css))
+    return f"«TABLE[{'|'.join(parts)}]»{caption}{body}«/TABLE»"

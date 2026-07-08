@@ -309,9 +309,3 @@ def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
     markers, the align-only ``_cell_align``).  Non-style attrs drop here exactly
     as the retired ``_cell_styles`` dropped them — no junk, nothing faked."""
     return fold_cell_attrs(attr_part, table_level)[0]
-
-
-def format_html_attrs(attrs: dict[str, str]) -> str:
-    """``{'class': 'x', 'colspan': '2'}`` → ``' class="x" colspan="2"'`` — a
-    leading-space attr string ready to splice into a start tag; ``''`` empty."""
-    return "".join(f' {k}="{v}"' for k, v in attrs.items())

@@ -176,70 +176,70 @@ def run_db_checks() -> dict:
         session.close()
 
 
-_HTMLTABLE_OPEN = "«HTMLTABLE:"
-_HTMLTABLE_CLOSE = "«/HTMLTABLE»"
+_TABLE_OPEN = "«TABLE["
+_TABLE_CLOSE = "«/TABLE»"
 
 
-def _strip_htmltable_blocks(body: str) -> str:
-    """Remove all HTMLTABLE blocks from `body`, respecting nesting.
+def _strip_table_blocks(body: str) -> str:
+    """Remove all TABLE blocks from `body`, respecting nesting.
 
-    The viewer's renderer walks marker depth (`findHtmlTableEnd`) so
-    nested HTMLTABLE markers render correctly; a non-greedy regex
+    The viewer's renderer walks marker depth (`findMarkerEnd`) so
+    nested TABLE markers render correctly; a non-greedy regex
     strip would match the FIRST close marker and leave the outer
     block's leftover content visible — mis-flagging properly-wrapped
     nested-table content as leaked HTML."""
     out: list[str] = []
     i = 0
     while i < len(body):
-        opener = body.find(_HTMLTABLE_OPEN, i)
+        opener = body.find(_TABLE_OPEN, i)
         if opener < 0:
             out.append(body[i:])
             break
         out.append(body[i:opener])
         depth = 1
-        j = opener + len(_HTMLTABLE_OPEN)
+        j = opener + len(_TABLE_OPEN)
         while j < len(body) and depth > 0:
-            n_open = body.find(_HTMLTABLE_OPEN, j)
-            n_close = body.find(_HTMLTABLE_CLOSE, j)
+            n_open = body.find(_TABLE_OPEN, j)
+            n_close = body.find(_TABLE_CLOSE, j)
             if n_close < 0:
                 # Unbalanced — bail (preserve original to avoid hiding the bug)
                 return body
             if 0 <= n_open < n_close:
                 depth += 1
-                j = n_open + len(_HTMLTABLE_OPEN)
+                j = n_open + len(_TABLE_OPEN)
             else:
                 depth -= 1
-                j = n_close + len(_HTMLTABLE_CLOSE)
+                j = n_close + len(_TABLE_CLOSE)
         i = j
     return "".join(out)
 
 
-def _iter_htmltable_inners(body: str):
-    """Yield the inner content of each HTMLTABLE block (nest-aware).
+def _iter_table_inners(body: str):
+    """Yield the inner content of each TABLE block (nest-aware).
 
-    Nested HTMLTABLE markers are preserved inside the yielded inner —
+    Nested TABLE markers are preserved inside the yielded inner —
     callers do their own substitution.  Mirrors the strip helper above."""
     i = 0
     while True:
-        opener = body.find(_HTMLTABLE_OPEN, i)
+        opener = body.find(_TABLE_OPEN, i)
         if opener < 0:
             return
         depth = 1
-        j = opener + len(_HTMLTABLE_OPEN)
+        j = opener + len(_TABLE_OPEN)
         inner_start = j
         while j < len(body) and depth > 0:
-            n_open = body.find(_HTMLTABLE_OPEN, j)
-            n_close = body.find(_HTMLTABLE_CLOSE, j)
+            n_open = body.find(_TABLE_OPEN, j)
+            n_close = body.find(_TABLE_CLOSE, j)
             if n_close < 0:
                 return
             if 0 <= n_open < n_close:
                 depth += 1
-                j = n_open + len(_HTMLTABLE_OPEN)
+                j = n_open + len(_TABLE_OPEN)
             else:
                 if depth == 1:
                     yield body[inner_start:n_close]
                 depth -= 1
-                j = n_close + len(_HTMLTABLE_CLOSE)
+                j = n_close + len(_TABLE_CLOSE)
         i = j
 
 
@@ -263,15 +263,12 @@ def run_file_checks() -> dict:
         if not body:
             continue
 
-        # «CHEM:…«/CHEM» is a structure-preserving chemical-reaction block
-        # (a relabelled HTMLTABLE — atom-label cells, rowspan brackets,
-        # ⟨/⟩ images).  It legitimately contains the same HTML/attr markup
-        # an HTMLTABLE does, so treat it identically for every check below.
-        body = body.replace("«CHEM:", "«HTMLTABLE:").replace(
-            "«/CHEM»", "«/HTMLTABLE»")
+        # A chemical-reaction layout is just a «TABLE[…class:chem-grid…]» now
+        # (no separate «CHEM» marker), so every table check below covers it for
+        # free — no normalization needed.
 
         # Strip blocks that intentionally contain HTML/wiki markup
-        clean = _strip_htmltable_blocks(body)
+        clean = _strip_table_blocks(body)
         clean = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", clean, flags=re.DOTALL)
 
         # Stray wiki markup.  A paragraph contains "legitimate" template
@@ -296,7 +293,7 @@ def run_file_checks() -> dict:
         # viewer un-escapes + renders them uniformly on every path
         # (decodeInlineMarkers, viewer.html ~2165).  Only STRUCTURAL tags
         # that should have become markers leak here — table chrome
-        # (``<table>/<tr>/<td>/<th>`` outside «HTMLTABLE»), un-regularized
+        # (``<table>/<tr>/<td>/<th>`` outside «TABLE»), un-regularized
         # ``<div>/<span>`` (should be «DIV»/«SPAN»), ``<ref>`` (→«FN»),
         # ``<poem>`` (→VERSE), ``<score>``/``<math>``.  Strip ``{{IMG:…}}``
         # first so a tag-shaped filename can't trip the prose check.
@@ -348,7 +345,7 @@ def run_file_checks() -> dict:
                 issues[f"stray_control_x0{i}"] += 1
                 break
 
-        # Leaked table attributes (skip HTMLTABLE blocks which intentionally
+        # Leaked table attributes (skip TABLE blocks which intentionally
         # contain these).  Match the genuine LEAK shape — the attribute's
         # ``name=`` form (``colspan="2"``, raw ``{|cellpadding="5"`` wikitable
         # openers) — NOT a bare substring.  ``nowrap`` in particular is now
@@ -357,14 +354,14 @@ def run_file_checks() -> dict:
         # blanket ``/nowrap/`` matched all ~1.7k of those carried styles as
         # false leaks.  A raw ``<span class="nowrap">`` that does leak is
         # already counted by the ``html_tag`` check above.
-        check = _strip_htmltable_blocks(body)
+        check = _strip_table_blocks(body)
         if re.search(r"(?:colspan|rowspan|cellpadding|nowrap)\s*=", check, re.I):
             issues["leaked_html_attr"] += 1
 
-        # Unhandled inline markers inside HTMLTABLE blocks. formatCell
+        # Unhandled inline markers inside TABLE blocks. formatCell
         # handles B/I/SC, FN, IMG, hieroglyph, MATH, VERSE, LN, LEGEND.
         # Anything else inside a cell is a new leak worth investigating.
-        for ht in _iter_htmltable_inners(body):
+        for ht in _iter_table_inners(body):
             stripped = re.sub(
                 r"</?(?:table|tr|td|th)(?:\s[^>]*)?>", "", ht)
             # Strip known markers; iterate to handle nested FN (the
@@ -376,7 +373,7 @@ def run_file_checks() -> dict:
             # (`\u00abMATH:expr\u00ab/MATH\u00bb`) where the opener's content is the
             # body between the two tokens.  Iterate so inner markers
             # get stripped first, exposing outer.  Also strip nested
-            # HTMLTABLE/CHEM markers \u2014 the viewer's depth-aware
+            # TABLE/CHEM markers \u2014 the viewer's depth-aware
             # rendering handles those; flagging them as leaks is a
             # metric false positive.
             # The complete viewer-decoded `«…»` vocabulary (single source

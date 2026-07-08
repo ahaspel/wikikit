@@ -116,7 +116,7 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
 # RENDERED_MARKER_OPENS for the `«NAME…»` family (RENDERED_MARKER_OPENS
 # covers only the `{{X:…}}` braces).  Single source of truth, mirrored
 # verbatim in viewer.html's `decodeInlineMarkers` + `applySizeMarkers` +
-# `formatCell` (and the block-level EQN/SEC/SH/HTMLTABLE/CHEM handlers).
+# `formatCell` (and the block-level EQN/SEC/SH/TABLE handlers).
 # The quality report references this to tell a legitimate rendered marker
 # from stray residue: a `«NAME…»` whose NAME is here renders; anything
 # else is a leak.  Add a new entry here AND mirror it in the viewer
@@ -134,7 +134,9 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     # cell- and block-level content; SEC is the major-section anchor point marker
     # «SEC:slug|name» (stamp_section_anchors); SH the shoulder heading; ANCHOR the
     # «ANCHOR:slug|name» link target (kind="anchor" downstream, kept out of the TOC)
-    "FN", "MATH", "HTMLTABLE", "CHEM", "EQNGROUP", "EQN", "SEC", "SH", "ANCHOR",
+    "FN", "MATH", "EQNGROUP", "EQN", "SEC", "SH", "ANCHOR",
+    # recursive table structure (decodeInlineMarkers) — chem is a TABLE too now
+    "TABLE", "TR", "TD", "TH", "CAPTION",
 )
 
 
@@ -162,8 +164,7 @@ _DROP_MARKER_RE = _re.compile(
     r"«TITLE:[\s\S]*?«/TITLE»"
     r"|«FN(?:\[[^\]]*\])?:[\s\S]*?«/FN»"
     r"|«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»"
-    r"|«CHEM:[\s\S]*?«/CHEM»"
-    r"|«HTMLTABLE:[\s\S]*?«/HTMLTABLE»"
+    r"|«TABLE\[[\s\S]*?«/TABLE»"
     r"|«EQNGROUP»[\s\S]*?«/EQNGROUP»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
     r"|«(?:OUTLINE|PLATE_OUTLINE):[\s\S]*?«/(?:OUTLINE|PLATE_OUTLINE)»"

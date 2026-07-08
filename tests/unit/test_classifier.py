@@ -27,6 +27,22 @@ from britannica.pipeline.stages.elements._shapes import (
 )
 
 
+def _labels(ce):
+    """Every label in the classified subtree (self + all descendants)."""
+    out = [ce.label]
+    for c in (ce.inner_registry or {}).values():
+        out += _labels(c)
+    return out
+
+
+def _flat_text(ce):
+    """Reconstruct the subtree's text by substituting each child placeholder."""
+    txt = ce.inner_text
+    for ph, c in (ce.inner_registry or {}).items():
+        txt = txt.replace(ph, _flat_text(c))
+    return txt
+
+
 class TestAtomicLabels:
     def test_math(self):
         # `<math>` is an opaque tag — a LEAF.  Its LaTeX interior is verbatim and
@@ -110,12 +126,13 @@ class TestAtomicLabels:
 
     def test_paired_wrapper_center(self):
         # The centring family of the merged PAIRED_WRAPPER shape — the classifier
-        # routes by name to CENTER; strip_outer peels the `{{c/s}}…{{c/e}}`
-        # wrapper, and the (leaf) producer recurses its own inner.
+        # routes by name to CENTER; strip_outer peels the `{{c/s}}…{{c/e}}` wrapper.
+        # CENTER is a COMPOSITE (un-leafed): its inner classifies into the tree, so
+        # `inner_text` is a placeholder and a child holds the content.
         ce = classify(SHAPE_PAIRED_WRAPPER, "{{c/s}}centred{{c/e}}")
         assert ce.label == "CENTER"
-        assert ce.inner_text == "centred"
-        assert ce.inner_registry == {}
+        assert ce.inner_text in ce.inner_registry
+        assert ce.inner_registry[ce.inner_text].inner_text == "centred"
 
     def test_outline(self):
         raw = "; head : desc\n; head2 : desc2"
@@ -212,30 +229,31 @@ class TestNestedClassification:
         assert ref_ce.raw == "<ref>note</ref>"
 
     def test_simple_data_table(self):
+        # A COMPOSITE: TABLE → ROW → TD, recognized at classify time (the cell
+        # tree is real, not a produce-time re-walk).
         ce = classify(SHAPE_BRACE_PIPE, "{|\n|cell\n|}")
         assert ce.label == "TABLE"
-        assert ce.inner_registry == {}
+        assert "ROW" in _labels(ce) and "TD" in _labels(ce)
+        assert "cell" in _flat_text(ce)
 
     def test_table_with_one_math_child_is_data(self):
         # One math child isn't math-dominant (predicate needs ≥2) → plain TABLE.
-        # The table keeps its inner as raw bytes (decomposed later by the unified
-        # table producer); the classifier no longer pre-registers cell children.
+        # The composite recurses the cell to a MATH leaf at classify time; the
+        # `<math>` tag is consumed (its inner "x" survives).
         ce = classify(SHAPE_BRACE_PIPE, "{|\n|<math>x</math>\n|}")
         assert ce.label == "TABLE"
-        assert ce.inner_registry == {}
-        assert "<math>x</math>" in ce.inner_text
+        assert _labels(ce).count("MATH") == 1
+        assert "x" in _flat_text(ce)
 
     def test_math_cell_wikitable_is_plain_table(self):
         # `<math>` is a self-labeling leaf, so a wikitable of math cells is
         # just a TABLE — no special math-layout classification (that machinery
-        # was collapsed away).  The cells stay in the table's raw inner and are
-        # recursed to MATH leaves by the producer, not the classifier registry.
+        # was collapsed away).  Each cell recurses to a MATH leaf in the tree.
         raw = "{|\n|<math>x</math>\n|<math>y</math>\n|}"
         ce = classify(SHAPE_BRACE_PIPE, raw)
         assert ce.label == "TABLE"
-        assert ce.inner_registry == {}
-        assert "<math>x</math>" in ce.inner_text
-        assert "<math>y</math>" in ce.inner_text
+        assert _labels(ce).count("MATH") == 2
+        assert "x" in _flat_text(ce) and "y" in _flat_text(ce)
 
     def test_captioned_figure_image_with_caption_row(self):
         # A single-image wikitable with a caption row is NOT a figure family —

@@ -8,17 +8,17 @@ is NOT inside a table (or figure).  We read that off the WALKED BODY, where the
 whole article's produced structure is in plain sight: every heading is present as
 ``«CTR»«SC»…«/SC»«/CTR»`` (fine-print ones too — ``_process_center``'s re-walk
 flattens them straight in), and every table / figure is a balanced
-``«HTMLTABLE:…«/HTMLTABLE»`` span — OUR own marker, matched even when nested,
+``«TABLE[…]»…«/TABLE»`` span — OUR own marker, matched even when nested,
 unlike the malformed source ``{|`` the old regex fought.
 
-So a section is a ``«CTR»«SC»`` heading at ``«HTMLTABLE»`` depth 0.  This is the
+So a section is a ``«CTR»«SC»`` heading at ``«TABLE»`` depth 0.  This is the
 post-walk extraction family ([[feedback_recursion_cannot_provide_context]]), run
 over ``walk_article``'s body beside the contributor / xref extractors; it stamps
 ``«SEC:slug|name»`` in front of each recognized heading, exactly where the old
 pre-walk stamp put it, so render / TOC / export read ``«SEC»`` unchanged.
 
 Three former false-positive classes fall out structurally, no gate: figure
-captions & table legends (inside ``«HTMLTABLE»``), and a ``{{c|[[Image:…]]}}``
+captions & table legends (inside ``«TABLE»``), and a ``{{c|[[Image:…]]}}``
 whose ``«CTR»`` leads with an image marker, not a bare ``«SC»`` (so it never
 matches the heading shape).  The only gate kept is the caption-word refusal (a
 bare top-level ``Fig.`` small-caps) plus the ≥2 / shoulder-follows series test.
@@ -59,17 +59,17 @@ _FN_SPAN = re.compile(r"«FN(?:\[[^\]]*\])?:.*?«/FN»", re.DOTALL)
 # «SC» (ACCUMULATOR's `{{c|{{sc|{{IMG…}}<br>Fig. N.}}}}`), never a section heading.
 _NOT_HEADING = re.compile(r"«BR»|«IMG|\{\{\s*IMG|\[\[\s*(?:Image|File)", re.IGNORECASE)
 
-_HTMLTABLE_OPEN = re.compile(r"«HTMLTABLE:")
-_HTMLTABLE_CLOSE = re.compile(r"«/HTMLTABLE»")
+_TABLE_MARK_OPEN = re.compile(r"«TABLE\[")
+_TABLE_MARK_CLOSE = re.compile(r"«/TABLE»")
 
 
-def _htmltable_spans(body: str) -> list[tuple[int, int]]:
-    """Half-open spans covered by a balanced ``«HTMLTABLE:…«/HTMLTABLE»`` (nesting
+def _table_spans(body: str) -> list[tuple[int, int]]:
+    """Half-open spans covered by a balanced ``«TABLE[…]»…«/TABLE»`` (nesting
     collapsed to the outermost).  These are our own emitted markers, so they
     always balance — the containment test is reliable."""
     events = sorted(
-        [(m.start(), 1) for m in _HTMLTABLE_OPEN.finditer(body)]
-        + [(m.end(), -1) for m in _HTMLTABLE_CLOSE.finditer(body)])
+        [(m.start(), 1) for m in _TABLE_MARK_OPEN.finditer(body)]
+        + [(m.end(), -1) for m in _TABLE_MARK_CLOSE.finditer(body)])
     spans, depth, start = [], 0, None
     for pos, delta in events:
         if delta == 1:
@@ -126,7 +126,7 @@ def stamp_section_anchors(body: str) -> str:
     """Stamp ``«SEC:slug|name»`` before each recognized section heading in the
     walked body, and return the annotated body.
 
-    A section is a ``«CTR»«SC»`` heading at ``«HTMLTABLE»`` depth 0 whose name is
+    A section is a ``«CTR»«SC»`` heading at ``«TABLE»`` depth 0 whose name is
     not a caption word and which does not title a table below it.  There is NO
     ≥2 / shoulder-follows count gate: that was a proxy for false-positive
     protection under the old raw-text regex, and it is doubly obsolete now — the
@@ -134,7 +134,7 @@ def stamp_section_anchors(body: str) -> str:
     lives in `_build_toc` (which draws no "Contents" box for a lone section).
     Recognize the section; let the renderer decide whether a TOC is worth drawing.
     A lone `«SEC»` is just an invisible deep-link anchor."""
-    spans = _htmltable_spans(body)
+    spans = _table_spans(body)
 
     def in_table(p: int) -> bool:
         return any(a <= p < b for a, b in spans)
@@ -147,11 +147,11 @@ def stamp_section_anchors(body: str) -> str:
         if name is None:
             continue
         # An UNNUMBERED heading that immediately leads a table is that table's
-        # TITLE, not a section — and NOT subsumed by the «HTMLTABLE» exclusion,
+        # TITLE, not a section — and NOT subsumed by the «TABLE» exclusion,
         # because the title sits ABOVE the table, outside its span.
         if not _NUMERAL.match(name):
             after = _LEAD_SKIP.sub("", body[m.end():m.end() + 120])
-            if after.startswith("«HTMLTABLE:"):
+            if after.startswith("«TABLE["):
                 continue
         heads.append((m.start(), name))
 

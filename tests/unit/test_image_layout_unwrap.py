@@ -146,7 +146,7 @@ def assert_faithful(body, *, img=None, content=(), absent=()):
     for a in absent:
         assert a not in body, f"unexpected {a!r} present:\n{body[:600]!r}"
     assert "\x03ELEM" not in body, f"leaked child placeholder:\n{body[:500]!r}"
-    masked = re.sub(r"«HTMLTABLE:.*?«/HTMLTABLE»", "", body, flags=re.S)
+    masked = re.sub(r"«TABLE\[.*?«/TABLE»", "", body, flags=re.S)
     masked = re.sub(r"\{\{IMG:[^{}]*\}\}", "", masked)
     masked = re.sub(r"\{\{VERSE:.*?\}VERSE\}", "", masked, flags=re.S)
     masked = re.sub(r"«[^«»]*»", "", masked)
@@ -253,9 +253,9 @@ def test_abbey_3_legend_preserved():
 def test_abbey_3_no_loose_pipes():
     """Output must not contain stray `|   |` table-row artifacts."""
     body = _transform(ABBEY_3, volume=1, page_number=44)
-    # Outside of TABLE/HTMLTABLE markers, no loose `|   |`
+    # Outside of {{TABLE}} / «TABLE[…]» markers, no loose `|   |`
     masked = re.sub(r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", body)
-    masked = re.sub(r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
+    masked = re.sub(r"\u00abTABLE\[[\s\S]*?\u00ab/TABLE\u00bb",
                     "", masked)
     assert not re.search(r"\|\s{2,}\|", masked), (
         f"Loose pipe artifact in body:\n{masked[:500]!r}")
@@ -360,7 +360,7 @@ def extract_legends(body: str) -> list[str]:
 def assert_no_leaks(body: str):
     """Shared invariants that every layout handler must uphold."""
     masked = re.sub(r"\{\{TABLE[A-Z]?:[\s\S]*?\}TABLE\}", "", body)
-    masked = re.sub(r"\u00abHTMLTABLE:[\s\S]*?\u00ab/HTMLTABLE\u00bb",
+    masked = re.sub(r"\u00abTABLE\[[\s\S]*?\u00ab/TABLE\u00bb",
                     "", masked)
     masked = re.sub(r"\{\{IMG:[^}]+\}\}", "", masked)
     masked = re.sub(r"\{\{LEGEND:[\s\S]*?\}LEGEND\}", "", masked)
@@ -662,7 +662,7 @@ def test_hydromedusae_fig55_nested_plain_paragraph_legend():
 
 def test_hydromedusae_fig73_nested_pipe_pair_legend():
     """HYDROMEDUSAE Fig. 73 — nested table contains ||-separated
-    (label, text) rows; was rendering as an HTMLTABLE before the
+    (label, text) rows; was rendering as a plain table before the
     NESTED_LEGEND handler learned Shape B."""
     src = (
         '{|align="left" width="200" style="margin-right: 1em"\n'

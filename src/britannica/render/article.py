@@ -9,8 +9,8 @@ pipeline (balanced-block collapse, split, continuation + SH merge), and renderPa
 mixed-block split, TITLE, and prose paths (page markers, inline decode, MATH→«MATHPH» stub).
 
 DEFERRED to later bricks (the diff flags any seed that needs them): IMG, OUTLINE, VERSE,
-LEGEND, HTMLTABLE/CHEM tables, EQNGROUP math systems, footnotes, section detection + TOC,
-hieroglyph, the renderTitleMarkers fallback.
+LEGEND, «TABLE[…]» tables (chem folded in), EQNGROUP math systems, footnotes, section
+detection + TOC, hieroglyph, the renderTitleMarkers fallback.
 """
 import html as _html
 import re
@@ -24,16 +24,17 @@ from britannica.render.inline import (
     render_img,
     _encode_uri_component as _enc,
 )
-from britannica.render.tables import render_table
-
 # ── marker constants ──
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
-HTMLTABLE_OPEN, HTMLTABLE_CLOSE = "«HTMLTABLE:", "«/HTMLTABLE»"
-CHEM_OPEN, CHEM_CLOSE = "«CHEM:", "«/CHEM»"
+# The table rides as recursive markers now (`«TABLE[…]»…«TR»…«TD[…]»…«/TABLE»`),
+# decoded mechanically by `decode_inline` — no `render_table`, no html5lib
+# re-parse.  `«TABLE[` is the open (the `cols`/attr payload always follows).
+TABLE_OPEN, TABLE_CLOSE = "«TABLE[", "«/TABLE»"
 DIV_OPEN, DIV_CLOSE = "«DIV[", "«/DIV»"
 EQNGROUP_OPEN, EQNGROUP_CLOSE = "«EQNGROUP»", "«/EQNGROUP»"
 
 _PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
+_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
 # Math-only paragraph: leading page markers, one «MATH», optional trailing punct + (N) label.
 _MATH_PARA_RE = re.compile(
@@ -64,25 +65,23 @@ BLOCK_MARKER_SCAN_RE = re.compile(
     r"|\{\{LEGEND:[\s\S]*?\}LEGEND\}"
     r"|«OUTLINE:[\s\S]*?«/OUTLINE»"
     r"|«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"
-    r"|«HTMLTABLE:[\s\S]*?«/HTMLTABLE»"
-    r"|«CHEM:[\s\S]*?«/CHEM»"
+    r"|«TABLE\[[\s\S]*?«/TABLE»"
     r"|«TITLE:[\s\S]*?«/TITLE»"
 )
 
 # Block markers rendered by a paragraph-anchored regex: collapse internal \n\n so the
-# paragraph split can't fragment them.  (HTMLTABLE/DIV use the balanced walker instead.)
+# paragraph split can't fragment them.  (TABLE/DIV use the balanced walker instead.)
 _BLOCK_MARKER_RES = [
     re.compile(r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"),
     re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"),
     re.compile(r"\{\{LEGEND:[\s\S]*?\}LEGEND\}"),
     re.compile(r"«OUTLINE:[\s\S]*?«/OUTLINE»"),
     re.compile(r"«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"),
-    re.compile(r"«CHEM:[\s\S]*?«/CHEM»"),
 ]
 
 # A structural block keeps a paragraph from the plain-text continuation merge.
 _NON_TEXT_PREFIX = re.compile(
-    r"^(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«HTMLTABLE|«SEC:|«SH:|«ANCHOR:|«OUTLINE:|«PLATE_OUTLINE:|«TITLE:)"
+    r"^(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«TABLE\[|«SEC:|«SH:|«ANCHOR:|«OUTLINE:|«PLATE_OUTLINE:|«TITLE:)"
 )
 
 
@@ -270,11 +269,8 @@ def render_paragraph(p, next_para, ctx):
         if m.start() < guard:
             continue
         text = m.group(0)
-        if text.startswith(HTMLTABLE_OPEN) or text.startswith(CHEM_OPEN):
-            if text.startswith(CHEM_OPEN):
-                end = find_marker_end(p, m.start(), CHEM_OPEN, CHEM_CLOSE)
-            else:
-                end = find_marker_end(p, m.start(), HTMLTABLE_OPEN, HTMLTABLE_CLOSE)
+        if text.startswith(TABLE_OPEN):
+            end = find_marker_end(p, m.start(), TABLE_OPEN, TABLE_CLOSE)
             if end != -1:
                 text = p[m.start():end]
                 guard = end
@@ -399,26 +395,35 @@ def render_paragraph(p, next_para, ctx):
                              f'{decode_inline(s, escape=True, dhr_inline=True, ctx=ctx)}</div>')
         return f'<aside class="figure-legend">{"".join(parts)}</aside>'
 
-    # Complex HTML table (rowspan/colspan/nested preserved) — «HTMLTABLE:» or «CHEM:».
-    # Balanced-match the close so a table whose cell holds another table isn't truncated.
-    if p.startswith(HTMLTABLE_OPEN) or p.startswith(CHEM_OPEN):
-        is_chem = p.startswith(CHEM_OPEN)
-        open_m, close_m = (CHEM_OPEN, CHEM_CLOSE) if is_chem else (HTMLTABLE_OPEN, HTMLTABLE_CLOSE)
-        end = find_marker_end(p, 0, open_m, close_m)
+    # Complex table (rowspan/colspan/nested/chem preserved) — «TABLE[…]».  It rides
+    # as recursive markers, so it decodes through the SAME sequence as prose (escape
+    # → page markers → inline decode → math): `decode_inline` owns the marker→tag
+    # substitution for the table structure AND any nested table, in one pass, with
+    # no html5lib re-parse.  Balanced-match the close so a table whose cell holds
+    # another table isn't truncated; `cols` (off the opener, computed at classify)
+    # drives the wide-table wrap.
+    if p.startswith(TABLE_OPEN):
+        end = find_marker_end(p, 0, TABLE_OPEN, TABLE_CLOSE)
         if end != -1:
-            inner = p[len(open_m):end - len(close_m)]
-            t, max_cols = render_table(inner, is_chem, ctx)
+            cm = _TABLE_COLS_RE.match(p)
+            cols = int(cm.group(1)) if cm else 0
+            html = escape_html(p[:end])
+            html = render_page_markers(html, ctx)
+            # Cell context: `dhr_inline=True`, and `skip_math` default False so a
+            # cell's «MATH» decodes INLINE to the «MATHPH» stub — exactly as the old
+            # per-cell decode did (the golden's katex stub returns «MATHPH» too).
+            html = decode_inline(html, dhr_inline=True, ctx=ctx)
             trailing = p[end:].strip()
             trailing_html = render_paragraph(trailing, None, ctx) if trailing else ""
-            if max_cols >= 10:
+            if cols >= 10:
                 # Wide table: renders inline but gains an "Expand" button to a full-width modal.
                 ctx.wide_table_counter += 1
                 rendered = (f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
                             f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
-                            f'⤢ Expand ({max_cols} columns)</button>'
-                            f'<div class="wide-table-inline">{t}</div></figure>')
+                            f'⤢ Expand ({cols} columns)</button>'
+                            f'<div class="wide-table-inline">{html}</div></figure>')
             else:
-                rendered = t
+                rendered = html
             return rendered + trailing_html
 
     # Prose → <p> with left-margin page markers + inline decode + MATH stub.
@@ -558,7 +563,7 @@ def _render_body(article, ctx):
     marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
     if "\x01PAGE:" not in marked and article.get("page_start"):
         marked = f"\x01PAGE:{article['page_start']}\x01" + marked
-    marked = _collapse_balanced(marked, HTMLTABLE_OPEN, HTMLTABLE_CLOSE)
+    marked = _collapse_balanced(marked, TABLE_OPEN, TABLE_CLOSE)
     marked = _collapse_balanced(marked, DIV_OPEN, DIV_CLOSE)
     for rx in _BLOCK_MARKER_RES:
         marked = rx.sub(lambda m: re.sub(r"\n\n+", "\n", m.group(0)), marked)

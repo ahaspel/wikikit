@@ -22,7 +22,7 @@ Policy per marker family:
   * footnotes  «FN[name]?:body«/FN» → ``[^n]`` inline + a collected notes block
   * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN»/«EQNGROUP» → ``$$``
   * images     {{IMG:file|meta|caption}} → ``![caption](file)`` reference
-  * tables     «HTMLTABLE:<table>…»  →  a de-spanned GFM table (see _table_to_gfm)
+  * tables     «TABLE[…]»…«/TABLE»  →  a de-spanned GFM table (see _table_to_gfm)
   * structural drop (carried in the record's own fields, not the prose):
                  «TITLE» (the title field), «ANCHOR» (a bare nav target),
                  the «PAGE» stream markers.
@@ -94,35 +94,56 @@ def _img_to_md(m: re.Match) -> str:
     return f"![{alt}]({filename})"
 
 
-def _table_to_gfm(inner: str) -> str:
-    """A carried ``<table>…</table>`` → a de-spanned GFM table.
+_TABLE_MARK_RE = re.compile(r"«(TABLE|TR|TD|TH)\[([^\]]*)\]»")
+_TR_MARK_RE = re.compile(r"«TR(?:\[[^\]]*\])?»([\s\S]*?)«/TR»")
+_CELL_MARK_RE = re.compile(r"«(T[DH])(?:\[([^\]]*)\])?»([\s\S]*?)«/\1»")
+
+
+def _table_mark_to_tag(m: re.Match) -> str:
+    """`«TD[colspan:2|style:…]»` → `<td colspan="2" style="…">` — the nested-table
+    HTML fallback's opener decode; `cols` (metadata) drops."""
+    tag = m.group(1).lower()
+    attrs = ""
+    for field in m.group(2).split("|"):
+        k, _, v = field.partition(":")
+        if k == "cols":
+            continue
+        attrs += f' {k}="{v}"'
+    return f"<{tag}{attrs}>"
+
+
+def _table_to_gfm(block: str) -> str:
+    """A carried ``«TABLE[…]»…«/TABLE»`` → a de-spanned GFM table.
 
     Expand colspan/rowspan by REPEATING the value into every cell it covered, so
     each row is self-contained (the shape RAG wants); the merge itself is pure
     presentation, shed.  Cells are recursively rendered to inline Markdown.  A
-    non-rectangular table (ragged after de-span) falls back to the raw HTML,
-    which GFM allows and agents parse — the rare escape hatch.
+    nested table (plate grids) can't be expressed in GFM, so it falls back to
+    HTML (which GFM allows and agents parse) — the table markers → tags, inline
+    markers decoded.
     """
-    if "«HTMLTABLE:" in inner or "«CHEM:" in inner or inner.count("<table") > 1:
-        # a NESTED table (plate grids) — GFM can't express nesting, so emit the
-        # whole thing as HTML (which GFM allows and agents parse), dropping the
-        # «HTMLTABLE»/«CHEM» wrapper tokens and decoding the inline markers.
-        html = (inner.replace("«HTMLTABLE:", "").replace("«/HTMLTABLE»", "")
-                     .replace("«CHEM:", "").replace("«/CHEM»", ""))
-        return "\n\n" + _inline(html).strip() + "\n\n"
+    om = re.match(r"«TABLE\[[^\]]*\]»", block)
+    inner = block[om.end():-len("«/TABLE»")] if om else block
+    if "«TABLE[" in inner:
+        h = _TABLE_MARK_RE.sub(_table_mark_to_tag, block)
+        h = (h.replace("«TR»", "<tr>").replace("«/TR»", "</tr>")
+              .replace("«TD»", "<td>").replace("«/TD»", "</td>")
+              .replace("«TH»", "<th>").replace("«/TH»", "</th>")
+              .replace("«CAPTION»", "<caption>").replace("«/CAPTION»", "</caption>")
+              .replace("«/TABLE»", "</table>"))
+        return "\n\n" + _inline(h).strip() + "\n\n"
     rows: list[list[str]] = []
     spans: dict[tuple[int, int], str] = {}  # (row, col) → carried rowspan value
-    tr_cells = re.findall(r"<tr\b[^>]*>([\s\S]*?)</tr>", inner, re.I)
-    for r, tr in enumerate(tr_cells):
+    for r, tr in enumerate(_TR_MARK_RE.findall(inner)):
         row: list[str] = []
         c = 0
-        for cell in re.finditer(r"<(t[dh])\b([^>]*)>([\s\S]*?)</\1>", tr, re.I):
+        for cell in _CELL_MARK_RE.finditer(tr):
             while (r, c) in spans:              # a rowspan from above lands here
                 row.append(spans.pop((r, c))); c += 1
-            attrs, content = cell.group(2), cell.group(3)
+            payload, content = cell.group(2) or "", cell.group(3)
             text = _inline(content).replace("\n", " ").strip()
-            cspan = int((re.search(r'colspan="?(\d+)', attrs, re.I) or [0, 1])[1])
-            rspan = int((re.search(r'rowspan="?(\d+)', attrs, re.I) or [0, 1])[1])
+            cspan = int((re.search(r"colspan:(\d+)", payload) or [0, 1])[1])
+            rspan = int((re.search(r"rowspan:(\d+)", payload) or [0, 1])[1])
             for _ in range(cspan):
                 row.append(text)
                 for rr in range(1, rspan):      # carry value down for rowspans
@@ -157,30 +178,32 @@ def _inline(text: str) -> str:
     return text
 
 
+_TABLE_MD_OPEN, _TABLE_MD_CLOSE = "«TABLE[", "«/TABLE»"
+
+
 def _render_tables(text: str) -> str:
-    """Replace every balanced «HTMLTABLE:…«/HTMLTABLE» / «CHEM:…«/CHEM» with its
-    GFM rendering — DEPTH-aware, so a nested table (plate grids) is matched whole
-    instead of truncating at the inner close (which a non-greedy regex would)."""
-    for open_tok, close_tok in (("«HTMLTABLE:", "«/HTMLTABLE»"), ("«CHEM:", "«/CHEM»")):
-        out, i = [], 0
-        while True:
-            s = text.find(open_tok, i)
-            if s < 0:
-                out.append(text[i:]); break
-            out.append(text[i:s])
-            depth, j = 1, s + len(open_tok)
-            while depth:
-                no, nc = text.find(open_tok, j), text.find(close_tok, j)
-                if nc < 0:
-                    j = len(text) + len(close_tok); break   # unbalanced: to end
-                if 0 <= no < nc:
-                    depth += 1; j = no + len(open_tok)
-                else:
-                    depth -= 1; j = nc + len(close_tok)
-            out.append(_table_to_gfm(text[s + len(open_tok): j - len(close_tok)]))
-            i = j
-        text = "".join(out)
-    return text
+    """Replace every balanced ``«TABLE[…]»…«/TABLE»`` with its GFM rendering —
+    DEPTH-aware, so a nested table (plate grids) is matched whole instead of
+    truncating at the inner close (which a non-greedy regex would).  The whole
+    block (opener included) rides to `_table_to_gfm`, which peels the opener."""
+    out, i = [], 0
+    while True:
+        s = text.find(_TABLE_MD_OPEN, i)
+        if s < 0:
+            out.append(text[i:]); break
+        out.append(text[i:s])
+        depth, j = 1, s + len(_TABLE_MD_OPEN)
+        while depth:
+            no, nc = text.find(_TABLE_MD_OPEN, j), text.find(_TABLE_MD_CLOSE, j)
+            if nc < 0:
+                j = len(text) + len(_TABLE_MD_CLOSE); break   # unbalanced: to end
+            if 0 <= no < nc:
+                depth += 1; j = no + len(_TABLE_MD_OPEN)
+            else:
+                depth -= 1; j = nc + len(_TABLE_MD_CLOSE)
+        out.append(_table_to_gfm(text[s:j]))
+        i = j
+    return "".join(out)
 
 
 def body_to_markdown(body: str) -> str:
@@ -210,7 +233,7 @@ def body_to_markdown(body: str) -> str:
     # images BEFORE tables — so a cell's {{IMG:…|width=N}} becomes ![…](file)
     # (no pipe) before the table's cell-escaper would mangle its `|`.
     text = _IMG_RE.sub(_img_to_md, text)
-    text = _render_tables(text)                 # depth-aware «HTMLTABLE»/«CHEM»
+    text = _render_tables(text)                 # depth-aware «TABLE[…]»…«/TABLE»
     text = _TABLEBRACE_RE.sub(lambda m: _table_to_gfm(m.group(1)), text)
     text = _VERSE_RE.sub(
         lambda m: "\n\n" + m.group(1).strip().replace("\n", "  \n") + "\n\n", text)

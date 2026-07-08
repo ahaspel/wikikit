@@ -6,7 +6,7 @@ dispatch) is that **style is orthogonal to structure**: the SAME content must
 produce the SAME markers whether it sits at top level or inside a styled wrapper.
 
 A `<math>` / `{|`-table / styled-`<div>` / image inside a styled wrapper must be
-handled by its OWN producer (`«MATH»` / `«HTMLTABLE»` / `«DIV[style]»` /
+handled by its OWN producer (`«MATH»` / `«TABLE[…]»` / `«DIV[style]»` /
 `{{IMG:}}`), not leaked raw and not re-classified by a second partial classifier.
 This pins exactly that — the depth-0 markers appear byte-identically nested.
 
