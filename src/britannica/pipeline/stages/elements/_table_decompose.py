@@ -1,23 +1,20 @@
-"""Table leaf: recurse the grid to the ground and emit, in one descent.
+"""Table tag-emit + the chem row-splitter — the two utilities left now that the
+table is a COMPOSITE.
 
-`recognize_table` (in `_table_fold`) chops table → rows → cells — that's the
-recognition.  Everything past it is recursion: each cell's content recurses to
-the leaf through the ONE `process_elements` dispatch — content-agnostic, the
-cell is prose in a box, and whatever's inside (an image, a nested table, a
-footnote) is its own producer's problem.  `recurse(content)` comes back
-finished, so we wrap it and move on — no parsed-structure intermediate to hold.
+`_tag` wraps one structural level's recursed inner in its `<td>`/`<th>`/`<tr>`/`<table>`
+tag, folding the raw attr-slot AT the wrap (`fold_cell_attrs`).  The composite's
+producers (ROW / TD / TH in `_PRODUCER_DISPATCH`) call it — one tag per level.
 
-Every structural level wraps its recursed inner in a tag whose raw attr-slot
-folds AT the wrap (`_tag` → `fold_cell_attrs`): transform-outer + recurse-inner,
-top to bottom, nothing materialised in between.
+`split_wiki_rows_raw` is a `|-` row-splitter used by `_tables`' chem `_table_grid`.
 
-Also carries `split_wiki_rows_raw`, a `|-` row-splitter used by `_tables`' chem
-`_table_grid` (the table producer proper chops via `recognize_table`).
+Recognition (table → rows → cells) lives in `_table_fold.recognize_table`, called at
+CLASSIFY time by `_classify_table_composite`; the old produce-time `produce_table`
+assembler this module used to carry is GONE — the composite's TD/TH/ROW/TABLE
+producers do that job now, one per structural level.
 """
 from __future__ import annotations
 
 import re
-from typing import Callable
 
 # ── Wiki row split (utility for `_tables`' chem `_table_grid`) ───────────
 
@@ -43,7 +40,7 @@ def split_wiki_rows_raw(inner: str) -> list[tuple[str, str]]:
     return rows
 
 
-# ── Recurse → emit (the table leaf) ─────────────────────────────────────
+# ── Tag emitter (one per table structural level: td / th / tr / table) ──
 
 
 def _tag(name: str, attr_slot: str, inner: str,
@@ -59,30 +56,3 @@ def _tag(name: str, attr_slot: str, inner: str,
     css, html = fold_cell_attrs(attr_slot, table_level)
     style = f' style="{";".join(css)}"' if css else ""
     return f"<{name}{format_html_attrs(html)}{style}>{inner}</{name}>"
-
-
-def produce_table(inner: str, recurse: "Callable[[str], str]") -> tuple[str, str]:
-    """Recurse a table to the ground and emit, in one descent.
-
-    Returns ``(caption, «HTMLTABLE:<table>…</table>«/HTMLTABLE»)``; the caller
-    stamps the opener attrs onto the bare ``<table>`` and recurses the caption.
-
-    Each cell's content recurses through ``recurse`` to the leaf, then wraps in
-    its ``<td>``/``<th>``; each row wraps its cells in ``<tr>``.  `_tag` folds
-    the raw attr-slot at every wrap.  No intermediate: ``recurse`` already
-    returns the finished cell body, so the table is just recognition + glue.
-    """
-    from britannica.pipeline.stages.elements._table_fold import recognize_table
-    caption, rows = recognize_table(inner)
-    out: list[str] = []
-    for row_attr, cells in rows:
-        if not cells:
-            continue
-        cells_html = "".join(
-            _tag("th" if sep == "!" else "td", attr,
-                 recurse(content).strip(" \t"))
-            for sep, attr, content in cells)
-        out.append(_tag("tr", row_attr, cells_html))
-    if not out:
-        return caption, ""
-    return caption, "«HTMLTABLE:<table>" + "".join(out) + "</table>«/HTMLTABLE»"

@@ -1,14 +1,14 @@
-"""New table producer — three concepts (table, row, cell), one recognizer.
+"""Table recognizer — three concepts (table, row, cell), one recognizer.
 
-chop → recurse → reassemble.  A single nesting-aware top-level recognizer
-chops a table's inner into rows and cells, recognizing both `{|` and
-`<table>` spellings at once (no flavor branch), skipping any divider that
-sits inside a nested construct ({{…}}, [[…]], {|…|}, <table>, <math>, a
-walker placeholder, …) by stepping over it with the walker's `_construct_end`.
+`recognize_table` is a single nesting-aware top-level chop of a table's inner
+into rows and cells, recognizing both `{|` and `<table>` spellings at once (no
+flavor branch), skipping any divider that sits inside a nested construct
+({{…}}, [[…]], {|…|}, <table>, <math>, a walker placeholder, …) by stepping
+over it with the walker's `_construct_end`.
 
 The dividers die at the chop: the output is divider-blind structure, the
-canonical `(sep, attr_part, content)` cell shape that `_table_decompose`'s
-`produce_table_rows` recurses and reassembles.
+canonical `(sep, attr_part, content)` cell shape that `_classify_table_composite`
+turns into TD/TH/ROW child nodes; the composite's producers reassemble it.
 """
 from __future__ import annotations
 

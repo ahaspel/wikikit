@@ -493,8 +493,8 @@ def _process_chemistry_layout(raw: str, inner: str, context,
     from ``\u00abHTMLTABLE:\u2026\u00bb``, so the viewer can lay them out without
     table chrome.
 
-    Self-contained parser \u2014 does NOT delegate to ``_process_complex_table``
-    or the shared ``produce_table_rows`` fold.  Going through the
+    Self-contained parser \u2014 does NOT delegate to the general table path
+    (``recognize_table`` + the composite TD/TH/ROW producers).  Going through the
     general data-table path introduced too many side effects for spatial
     diagrams:
 
