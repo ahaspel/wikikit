@@ -29,22 +29,19 @@ import re
 
 from britannica.util.strings import section_slug
 
-# A heading: a «CTR» whose ENTIRE content is an (optional numeral prefix) + EXACTLY
-# ONE «SC»…«/SC» small-caps run + trailing punctuation, nothing else.  The three
-# constraints do the work:
-#   * the numeral prefix (before «SC») is a bare number/letter token, not free text
-#     — so a «CTR» that leads with prose, an image, or a link never matches (that
-#     is what excludes `{{c|[[Image:…]]}}` and centered prose that opens plainly);
-#   * the run forbids «/SC» inside it, so a paragraph with two small-caps runs
-#     can't be spanned as one giant heading (ORNITHOLOGY / NEWSPAPERS);
-#   * after «/SC» only punctuation/space may precede «/CTR» — real text after the
-#     small-caps means it is centered PROSE, not a heading.
-_HEAD_RE = re.compile(
-    r"«CTR»\s*(?:«ANCHOR:[^»]*»\s*)?"               # optional leading {{anchor}} → «ANCHOR»
-    r"((?:[IVXLCDM]+|[A-Z]|\d+)\s*[.—\-]+\s*)?"     # optional numeral prefix (A.— / 3. / II.)
-    r"«SC»((?:(?!«/SC»).)+)«/SC»"                    # exactly one small-caps run
-    r"[\s.·—\-]*«/CTR»",                            # only punctuation/space after
-    re.DOTALL)
+# A heading is a «CTR» whose FIRST LINE is entirely small-caps: peel the styled runs
+# (`«SC»…«/SC»`, `«SPAN…»…«/SPAN»`) and the numeral prefix, and only punctuation is
+# left.  Centered PROSE leaves plain words behind — that's the discriminator, and it
+# is robust to the rich forms a heading takes: nested «SC» (MAGIC's
+# `«SC»I.—«SC»…«/SC»«/SC»`), a font-sized year (HOLLAND's `«SC»…«/SC» «SPAN»1579«/SPAN»
+# «SC»…«/SC»`), or a «BR» sub-line (ARITHMETIC — we read line ONE).  A single clean
+# «SC» run was too strict; a whole prose paragraph with «SC» in it (ORNITHOLOGY) is
+# rejected because plain words survive the peel.
+_CTR_SPAN = re.compile(r"«CTR»((?:(?!«/?CTR»)[\s\S])*?)«/CTR»")
+_SC_SPAN = re.compile(r"«SC»(?:(?!«/SC»)[\s\S])*?«/SC»")
+_SPAN_SPAN = re.compile(r"«SPAN[^»]*»(?:(?!«/SPAN»)[\s\S])*?«/SPAN»")
+_BR = re.compile(r"«/?BR»")
+_WORD = re.compile(r"[^\W\d]{2,}")  # 2+ letters (any script), no digits
 # Caption look-alikes: the heading's OWN text says it isn't a section.
 _CAPWORD = re.compile(
     r"^\s*(?:Fig|Plate|Table|Tabular|Pl|Diagram)\b", re.IGNORECASE)
@@ -96,9 +93,34 @@ def _name(content: str) -> str:
     """The heading's display text: drop every marker, normalize spaces.  The body
     is already produced (no `{{…}}` templates), so marker-strip IS the visible
     text.  INERT by contract — strip stray braces, escape the `|` delimiter."""
-    txt = _ANY_MARKER.sub("", _FN_SPAN.sub("", content)).replace(" ", " ")
+    txt = re.sub(r"\s+", " ", _ANY_MARKER.sub("", _FN_SPAN.sub("", content))).replace(" ", " ")
     txt = re.sub(r"[{}]", "", txt).replace("|", "/")
     return txt.strip()
+
+
+def _heading_name(ctr_content: str) -> str | None:
+    """The section name if `ctr_content` (a «CTR»'s inner) is a heading, else None.
+
+    Read the FIRST line (up to a «BR»); peel its small-caps / span runs and the
+    numeral prefix.  If only punctuation remains, the line is all-small-caps → a
+    heading, and its name is the line's visible text.  Plain words left over → the
+    «CTR» is centered prose, not a heading."""
+    line1 = _BR.split(ctr_content, 1)[0]
+    if "«SC»" not in line1 or _NOT_HEADING.search(line1):
+        return None  # no small-caps, or a figure / image block
+    bare = line1
+    for _ in range(5):  # repeat to peel nested «SC»
+        reduced = _SPAN_SPAN.sub("", _SC_SPAN.sub("", bare))
+        if reduced == bare:
+            break
+        bare = reduced
+    bare = _ROMAN_PREFIX.sub("", _ANY_MARKER.sub("", bare))
+    if _WORD.search(bare):
+        return None  # plain words outside the small-caps → centered prose
+    name = _name(line1)
+    if not name or _CAPWORD.match(name):
+        return None  # empty, or a caption (Fig./Plate./Table.)
+    return name
 
 
 def stamp_section_anchors(body: str) -> str:
@@ -115,14 +137,12 @@ def stamp_section_anchors(body: str) -> str:
         return any(a <= p < b for a, b in spans)
 
     heads: list[tuple[int, str]] = []
-    for m in _HEAD_RE.finditer(body):
+    for m in _CTR_SPAN.finditer(body):
         if in_table(m.start()):
             continue  # legend label / figure caption — not a section
-        if _NOT_HEADING.search(m.group(2)):
-            continue  # «SC» wraps a figure / multi-line block, not a heading name
-        name = _name((m.group(1) or "") + m.group(2))
-        if not name or _CAPWORD.match(name):
-            continue  # caption (Fig./Plate./Table.)
+        name = _heading_name(m.group(1))
+        if name is None:
+            continue
         # An UNNUMBERED heading that immediately leads a table is that table's
         # TITLE, not a section — and NOT subsumed by the «HTMLTABLE» exclusion,
         # because the title sits ABOVE the table, outside its span.
