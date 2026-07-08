@@ -1,0 +1,100 @@
+/* Encyclopædia Britannica, 11th Edition — EPUB stylesheet.
+ *
+ * Single-column, reader-controlled.  Content typography only: the reading system owns the
+ * page box, margins, and base font-size (we set family / rhythm, never width).  This replaces
+ * the viewer's web-layout CSS (which carried a `columns: 2` reading column + fixed max-widths). */
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.5;
+  /* No forced justification: it stretches short lines (e.g. a "Fig. 2." caption) to the full
+   * column width and rivers the prose.  Left is the clean default; the reader can switch to
+   * justify if it wants.  No max-width / margins — the reading system controls the page box. */
+}
+
+.card { margin: 0 0 1.5em; }
+
+/* ── title + headings ── */
+h1 { font-size: 1.8em; font-variant: small-caps; letter-spacing: 0.04em;
+     line-height: 1.2; margin: 0 0 0.3em; text-align: left; }
+h2 { font-size: 1.3em; margin: 1.4em 0 0.4em; text-align: left; }
+h3 { font-size: 1.1em; margin: 1.1em 0 0.3em; text-align: left; }
+h5 { font-size: 1em; font-weight: bold; margin: 0.7em 0 0.2em; text-align: left; }
+
+/* metadata line + bylines + topic/plate lines */
+.contributors { font-size: 0.9em; color: #555; margin: 0.2em 0 0.5em; text-align: left; }
+
+/* ── body prose ── */
+.body-text p { margin: 0 0 0.7em; }
+
+/* ── inline styling ── */
+.small-caps { font-variant: small-caps; }
+.sans-serif { font-family: "Helvetica Neue", Arial, sans-serif; }
+.explicit-serif { font-family: Georgia, "Times New Roman", serif; }
+.underline { text-decoration: underline; }
+.mirror-h { display: inline-block; transform: scaleX(-1); }
+.xlit { border-bottom: 1px dotted #999; }
+.centered { text-align: center; margin: 0.5em 0; }
+.size-xxl { font-size: 1.8em; } .size-lg { font-size: 1.25em; }
+.size-sm { font-size: 0.85em; } .size-xs { font-size: 0.75em; } .size-xxs { font-size: 0.65em; }
+.float-right { float: right; margin: 0.2em 0 0.4em 1em; }
+.float-left  { float: left;  margin: 0.2em 1em 0.4em 0; }
+
+/* ── figures / images ── */
+img { max-width: 100%; height: auto; }
+figure { margin: 1em 0; text-align: center; }
+.figure-legend { font-size: 0.85em; margin: 0.5em 0; text-align: left; }
+.legend-subhead { font-weight: bold; }
+
+/* ── tables ── (wide ones scroll rather than force the page wide) ── */
+table { border-collapse: collapse; margin: 1em auto; font-size: 0.9em; max-width: 100%; }
+td, th { padding: 0.15em 0.5em; vertical-align: top; text-align: left; }
+.data-table td, .data-table th { border: 1px solid #ccc; }
+.chem-grid td { border: 0; text-align: center; }
+caption { font-style: italic; padding: 0.3em; }
+
+/* ── verse / outline ── */
+blockquote.verse { margin: 1em 1.5em; font-style: italic; }
+.outline, .outline ul { list-style: none; padding-left: 1.2em; }
+
+/* ── sections / TOC ── */
+/* Shoulder headings are marginal glosses on the wide site.  A reflowable EPUB has no fixed
+ * margin, so float a carve-out the prose wraps around, with the gloss centred (both axes)
+ * inside it — sans-serif italic, echoing the original marginal note. */
+.shoulder-heading {
+  float: right; clear: right;
+  width: 7.5em; min-height: 3em; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0.2em 0 0.5em 1.4em; padding: 0.3em 0.4em;
+  font-family: "Helvetica Neue", Arial, sans-serif; font-style: italic;
+  font-size: 0.8em; line-height: 1.3; color: #555; text-align: center;
+}
+.toc { font-size: 0.9em; margin: 1em 0; }
+.toc h3 { margin: 0 0 0.3em; }
+
+/* main-section heading (promoted from a pure centered small-caps in the EPUB target) */
+.section-head { font-variant: small-caps; letter-spacing: 0.03em; text-align: center;
+                font-weight: bold; font-size: 1.05em; margin: 1.1em 0 0.4em; }
+
+/* ── page markers — subtle inline for now (→ epub:type=pagebreak next) ── */
+.page-marker { font-size: 0.65em; vertical-align: super; color: #999; text-decoration: none; }
+
+/* ── footnotes (native epub:type notes) ── */
+/* The <sup> already superscripts + shrinks the ref; don't double it (that lifted the
+ * number tiny and out of the line, so it read as missing). */
+.footnote-ref a { text-decoration: none; color: #7b3f00; }
+.fn-popup { display: none; }
+.footnotes { font-size: 0.9em; margin-top: 2em; border-top: 1px solid #ccc; padding-top: 0.5em; text-align: left; }
+.footnotes aside { margin: 0.3em 0; }
+.footnotes aside p { margin: 0.2em 0; }
+
+/* ── math ── */
+.math-fallback { font-family: monospace; }
+.math-system { text-align: center; margin: 1em 0; }
+
+/* ── cross-references ── */
+.xref-list { list-style: none; padding: 0; }
+.xref-item { display: inline; margin-right: 0.8em; }
+
+/* interactive-only chrome that may leak from the site render */
+.expand-table-btn, .math-popout-link { display: none; }

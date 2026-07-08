@@ -919,56 +919,36 @@ def _process_table_unified(
     inner_registry: "ElementRegistry | None",
     context,
 ) -> str:
-    """The ONE table producer: `table → row → cell → body-text`, emitting
-    full-style ``«HTMLTABLE»`` for every grid label (DATA_TABLE / COMPLEX_HTML /
-    HTML_TABLE — and, deliberately, the layout-`{|` shapes SINGLE_COLUMN /
-    VERSE / COMPOUND, which are rendered as the tables they literally are rather
-    than re-interpreted as PRE/verse/zip).
+    """The TABLE producer: assemble the `«HTMLTABLE»` from the ROW children the
+    classifier already built — recognition (`recognize_table`) and per-cell
+    recursion now happen at classify time (`_classify_table_composite`), so
+    `classify_article` runs ONCE per article and the cell tree is real, not a
+    produce-time re-walk that flattened it.
 
-    Decompose via the shared `produce_table_rows` (auto-detects `{|` vs
-    `<table>`); assemble via the shared `assemble_html_rows` (carries the FULL
-    per-cell `_cell_styles`, so every `{{Ts|…}}` code rides through — the EUROPE
-    cell styling that the align-only `«TABLE»` marker used to drop).  The bare
-    `<table>` it emits is then stamped with the source `class=` (or `data-table`)
-    and the opener's whole-table styles, and any `|+` / `<caption>` is recursed
-    back in.  Replaces the six bespoke `_process_*table` producers; cell images /
-    refs / nested tables ride through as placeholdered children (`produce_tree`
-    substitutes their markers), so this path never calls the image producers."""
-    from britannica.pipeline.stages.elements._table_decompose import (
-        produce_table,
-    )
-    # Both `{|` and `<table>` are LEAVES now, so the walker hands us `inner` as
-    # the bare grid (outer delimiters already peeled) for either syntax — no
-    # flavor branch, no re-derive from `raw`.  Strip HTML comments (the one
-    # thing the old `<table>`-shell peel did beyond peeling); `cell_recurse`
-    # recurses each cell's content downstream.
-    grid = re.sub(r"<!--.*?-->", "", inner, flags=re.DOTALL)
-    # THE collapse: each cell's body recurses through `process_elements` (not a
-    # second body-text pass), so a styled wrapper / fraction / nested table /
-    # math in a cell is handled as the element it is.  `_allow_figure=False`: a
-    # bare `[[File:]]` in a cell is an inline image leaf, not a re-recognized
-    # figure.  Unconditional: a cell is prose in a box, so it ALWAYS recurses;
-    # `context` is a required arg (no None default) — recursion is the floor,
-    # never an opt-in, and there is no no-recurse fallback.
-    from britannica.pipeline.stages.elements import process_elements
-    cell_recurse = (lambda c: process_elements(
-        c, context, _allow_figure=False))
-    # No `_html_cell_clean` preclean: an HTML cell recurses RAW through
-    # `process_elements` exactly like a wiki cell — its `<sub>`/`<br>`/styler/
-    # nested-table content is handled as the element it is, not flattened in
-    # place.  The flattener was the source of the cell-context style leaks.
-    caption_raw, body = produce_table(grid, cell_recurse)
-    if not body:
-        return ""
-    # Stamp class + whole-table styling onto the (bare) outer <table>.
-    # Class is the source's OWN verdict, verbatim -- we mint nothing the author
-    # did not write.  A real grid (class=wikitable / border=N / rules=) keeps
-    # data-table + its source class; a class-less layout {| (a figure, verse,
-    # single-column quote) gets NO class at all.  A class-less <table> is
-    # borderless for free (only .data-table adds a border), so a figure renders
-    # as the bare carried {| styled solely by its carried {{ts}}.  Stamping our
-    # own 'figtable' class here was a producer-side blunder; removed 2026-06-13.
-    # Opener attrs from whichever syntax opened the table — one regex, no flavor.
+    `inner` is the ordered ROW placeholders — `produce_tree` substitutes each to
+    its finished `<tr>…</tr>`.  The caption (if any) is a CAPTION child, already
+    produced bottom-up, so we read its finished marker and wrap it in `<caption>`
+    only when non-empty (`.strip()` mirrors the former `recurse(caption_raw)
+    .strip()`).  This producer only stamps the opener attrs / class onto the bare
+    `<table>` — Class is the source's OWN verdict: a real grid (class=wikitable /
+    border=N / rules=) keeps `data-table` + its source class; a class-less layout
+    `{|` (figure / verse / single-column quote) gets none, so it renders
+    borderless for free (only `.data-table` adds a border)."""
+    if not inner:
+        return ""  # no rows — matches the former `if not body: return ""`
+    # Caption child: produced already (bottom-up), so read its finished marker
+    # and wrap only if non-empty.  Read off the classified child registry — the
+    # ONE place the caption now lives.
+    caption_html = ""
+    if inner_registry is not None:
+        for ph, label in inner_registry.labels.items():
+            if label == "CAPTION":
+                ct = (inner_registry.markers.get(ph) or "").strip()
+                if ct:
+                    caption_html = f"<caption>{ct}</caption>"
+                break
+    # Stamp class + whole-table styling onto the (bare) outer <table>.  Opener
+    # attrs from whichever syntax opened the table — one regex, no flavor.
     opener_attrs = _opener_attr_slot(raw)
     src_cls_m = re.search(r'class\s*=\s*"?([^"\s>|{}]+)', opener_attrs)
     src_cls = src_cls_m.group(1) if src_cls_m else ""
@@ -977,21 +957,10 @@ def _process_table_unified(
     cls = (("data-table " + src_cls).strip() if (bordered or src_cls)
            else "")
     # Fold the opener's attr-slot at the emit, same as a cell: style bits → CSS,
-    # the rest → real attrs.  `class` rides as the computed `cls` (data-table/
-    # figtable + the source class), so drop the folded dupe.
+    # the rest → real attrs.  `class` rides as the computed `cls`, so drop the dupe.
     css, opener_html = fold_cell_attrs(opener_attrs, table_level=True)
     opener_html.pop("class", None)
     attrs = ((f' class="{cls}"' if cls else "") + format_html_attrs(opener_html)
              + (f' style="{";".join(css)}"' if css else ""))
-    caption_html = ""
-    if caption_raw:
-        # A caption is prose in a box, same as a cell — recurse the RAW through
-        # the loop so a `{{sc}}`/`{{c}}`/footnote is produced.  NOT strip_cell_attrs
-        # first: its `[|{}]`→space cleanup shreds a raw `{{sc|…}}` into `sc …`
-        # (it only ever saw pre-produced «SC» markers under the old non-leaf classify).
-        ct = cell_recurse(caption_raw).strip()
-        if ct:
-            caption_html = f"<caption>{ct}</caption>"
-    return body.replace(
-        "«HTMLTABLE:<table>",
-        f"«HTMLTABLE:<table{attrs}>{caption_html}", 1)
+    return (f"«HTMLTABLE:<table{attrs}>{caption_html}{inner}"
+            f"</table>«/HTMLTABLE»")

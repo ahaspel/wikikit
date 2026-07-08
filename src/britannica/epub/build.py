@@ -26,11 +26,9 @@ _MODIFIED = "2026-07-07T00:00:00Z"        # fixed for reproducible builds
 _IMG_SRC_RE = re.compile(r'src="/data/derived/images/([^"]+)"')
 
 
-def viewer_css():
-    """The article styling — reuse the viewer's <style> block (content classes match)."""
-    text = open(os.path.join(ROOT, "tools", "viewer", "viewer.html"), encoding="utf-8").read()
-    m = re.search(r"<style>(.*?)</style>", text, re.S)
-    return m.group(1).strip() if m else ""
+def epub_css():
+    """The EPUB stylesheet — content typography only, single-column, reader-controlled width."""
+    return open(os.path.join(os.path.dirname(__file__), "epub.css"), encoding="utf-8").read()
 
 
 def to_xhtml_body(html_str):
@@ -91,7 +89,7 @@ def build_epub(stems, input_dir, out_path):
     seen_imgs = set()
     manifest, spine, nav_by_vol = [], [], {}
     for stem, a in arts:
-        body = bundle_images(to_xhtml_body(render_article(a)), imgdir, seen_imgs)
+        body = bundle_images(to_xhtml_body(render_article(a, target="epub")), imgdir, seen_imgs)
         title = a.get("title") or stem
         open(os.path.join(oebps, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml_doc(title, body))
         manifest.append(f'<item id="{stem}" href="{stem}.xhtml" media-type="application/xhtml+xml"/>')
@@ -102,7 +100,7 @@ def build_epub(stems, input_dir, out_path):
         ext = os.path.splitext(name)[1].lower()
         manifest.append(f'<item id="img-{len(manifest)}" href="images/{name}" media-type="{_MEDIA.get(ext, "image/png")}"/>')
 
-    open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(viewer_css())
+    open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css())
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
 
     # nav.xhtml — volume browse (topic TOC comes next)
@@ -156,7 +154,7 @@ def build_epub(stems, input_dir, out_path):
 
 
 if __name__ == "__main__":
-    STEMS = ["01-0032-a-A", "01-0036-s5-ABACUS", "01-0127-s3-ACACIA",
+    STEMS = ["01-0032-a-A", "01-0036-s5-ABACUS", "01-0042-s5-ABBEY", "01-0127-s3-ACACIA",
              "02-0723-s2-ARTHUR", "26-0933-s2-THUCYDIDES"]
     out = os.path.join(ROOT, "britannica11-thin-slice.epub")
     path, n, imgs = build_epub(STEMS, os.path.join(ROOT, "tests", "snapshots", "render"), out)

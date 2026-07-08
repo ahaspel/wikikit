@@ -78,6 +78,7 @@ from britannica.pipeline.stages.elements._tables import (
     _process_inline_glyph_wrapper,
     _process_table_unified,
 )
+from britannica.pipeline.stages.elements._table_decompose import _tag
 
 
 # Range-style header: `N–M.—TITLE.<br />` (GEM plate captions, similar
@@ -135,6 +136,30 @@ _ElementHandler = Callable[
 def _passthrough_inner(raw, inner, context,
                        inner_registry):
     return inner
+
+
+def _process_cell(tag, raw, inner, reg):
+    """A TD / TH cell: substitute the child markers into the cell body, then
+    `.strip(' \\t')`, and wrap in the tag with the raw attr-slot folded (`_tag`).
+
+    The strip must run AFTER substitution — the whitespace it trims is often a
+    DECODED `{{spaces|N}}` padding (`{{spaces|2}}Year{{spaces|2}}`), literal
+    space only once the SPACER producer has run, not at classify time.  This
+    reproduces the former `_tag(td, attr, recurse(content).strip(' \\t'))` exactly;
+    `produce_tree`'s own child substitution afterwards is then a no-op (every
+    placeholder is already resolved here).  Empty child markers substitute to ''
+    (matching `produce_tree`), so a cell whose only content dropped strips to ''."""
+    body = inner
+    if reg is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(reg.elements):
+                if ph in body:
+                    body = body.replace(ph, reg.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    return _tag(tag, raw, body.strip(" \t"))
 
 
 _HYPHEN_MAP = None
@@ -852,6 +877,16 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # dispatch entry.
     "TABLE": lambda raw, inner, ctx, reg:
         _process_table_unified(raw, inner, reg, ctx),
+    # The table composite's own nodes (built by `_classify_table_composite`): a
+    # ROW wraps its ordered cell placeholders in `<tr>`, a TD/TH wraps its
+    # (classified) cell content in `<td>`/`<th>`, a CAPTION passes its recursed
+    # content through for the TABLE producer to wrap in `<caption>`.  Each folds
+    # its raw attr-slot at the wrap via the shared `_tag` — the ONLY table-
+    # specific production; everything inside a cell rode `classify_article`.
+    "ROW": lambda raw, inner, ctx, reg: _tag("tr", raw, inner),
+    "TD": lambda raw, inner, ctx, reg: _process_cell("td", raw, inner, reg),
+    "TH": lambda raw, inner, ctx, reg: _process_cell("th", raw, inner, reg),
+    "CAPTION": _passthrough_inner,
     "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
         _process_chemistry_layout(raw, inner, ctx, reg),
     # Single-label kinds — element_type == label.

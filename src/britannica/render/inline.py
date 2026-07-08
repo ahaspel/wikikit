@@ -90,9 +90,9 @@ def render_img(filename, meta, caption, is_local=True):
     if meta.get("height"):
         s += f"height:{meta['height']}px;"
     if meta.get("align") == "right":
-        s += "float:right;margin:.3em 0 .4em 1.2em;"
+        s += "float:right;margin:.4em 0 .5em 1.8em;"
     elif meta.get("align") == "left":
-        s += "float:left;margin:.3em 1.2em .4em 0;"
+        s += "float:left;margin:.4em 1.8em .5em 0;"
     elif meta.get("align") == "center":
         s += "display:block;margin:0 auto;"
     return f'<img src="{url}" alt="{escape_html(alt)}" loading="lazy" style="{s}" />'
@@ -183,6 +183,11 @@ _FN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:([\s\S]*?)«/FN»")
 # does NOT do popout / fs-scaling (that's the prose path, which passes skip_math and handles
 # «MATH» itself).  So here MATH is just the placeholder.
 _MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»")
+# EPUB only: a centered small-caps that is preceded by a «SEC» anchor is a main-section
+# heading — promote «SEC:slug|…»«CTR»«SC»X«/SC»«/CTR» to a real <h3> carrying the anchor id.
+# The «SEC» requirement is what distinguishes it from an identically-marked figure label
+# ("Fig. 3." is also a pure centered small-caps, but has no «SEC» before it).
+_EPUB_SEC_HEAD_RE = re.compile(r"«SEC:([^|»]*)\|[^»]*»\s*«CTR»«SC»([\s\S]*?)«/SC»«/CTR»")
 _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
 _VERSE_RE = re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}VERSE\}")
 _BAR_RE = re.compile(r"«BAR\[(\d+)\]»")
@@ -265,6 +270,12 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)
 
+    if getattr(ctx, "target", "site") == "epub":
+        # main-section heading: «SEC:slug|…»«CTR»«SC»name«/SC»«/CTR» → <h3> carrying the anchor
+        # id (\1=slug) with the name (\2) as text, BEFORE «SC»/«CTR» decode (afterwards the
+        # pattern is already <span>/<div>).  Inner markers in the name still decode below.
+        h = _EPUB_SEC_HEAD_RE.sub(r'<h3 class="section-head" id="section-\1">\2</h3>', h)
+
     # Position-invariant styler markers — independent open/close (the «P»/«CTR» rule).
     h = h.replace("«MIRROR:", '<span class="mirror-h">').replace("«/MIRROR»", "</span>")
     h = h.replace("«B»", "<b>").replace("«/B»", "</b>")
@@ -324,6 +335,12 @@ def render_fn_marker(name, content, ctx):
         ctx.collected_footnotes.append({"num": num, "text": content})
         ref_id = f"fnref-{num}"
         popup_id = f"fnpop-{num}"
+    if getattr(ctx, "target", "site") == "epub":
+        # Native EPUB footnote: a noteref to the collected <aside epub:type="footnote">
+        # (render_article emits the notes section) — the reader pops it up, no JS.  Both
+        # epub:type and the ARIA role, since readers vary on which they key.
+        return (f'<sup class="footnote-ref" id="{ref_id}">'
+                f'<a epub:type="noteref" role="doc-noteref" href="#fn-{num}">{num}</a></sup>')
     return (
         f'<sup class="footnote-ref" id="{ref_id}">'
         f'<a onclick="toggleFnPopup(event,\'{popup_id}\');return false;" href="#">{num}</a>'

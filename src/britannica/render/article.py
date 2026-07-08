@@ -169,10 +169,11 @@ def _collapse_balanced(s, open_m, close_m):
 class RenderContext:
     """Per-article render state (mirrors renderArticle's module-level counters)."""
 
-    def __init__(self, volume, scan_url, unproofed_pages):
+    def __init__(self, volume, scan_url, unproofed_pages, target="site"):
         self.volume = volume
         self.scan_url = scan_url
         self.unproofed_pages = unproofed_pages
+        self.target = target            # "site" (byte-identical to the viewer) | "epub"
         self.math_popout_counter = 0
         self.math_popout_latex = {}
         self.footnote_counter = 0
@@ -594,12 +595,14 @@ def _build_xref_href(xref, is_local):
     return base
 
 
-def render_article(article, *, is_local=True, back_href="http://localhost/"):
-    """Render an article JSON to the viewer's (open-only) HTML template."""
+def render_article(article, *, is_local=True, back_href="http://localhost/", target="site"):
+    """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
+    (corpus-proven); target="epub" swaps the per-target policies (footnotes, …)."""
     ctx = RenderContext(
         volume=article.get("volume", "?"),
         scan_url=_scan_url(article, is_local, back_href),
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
+        target=target,
     )
     xrefs = sorted(article.get("xrefs") or [],
                    key=lambda x: _xref_sort_key(x.get("normalized_target") or ""))
@@ -675,14 +678,25 @@ def render_article(article, *, is_local=True, back_href="http://localhost/"):
     body_section = _render_body(article, ctx)
     footnotes_html = ""
     if ctx.collected_footnotes:
-        lis = "".join(
-            f'<li id="fn-{fn["num"]}" value="{fn["num"]}">'
-            f'<a onclick="var el=document.getElementById(\'fnref-{fn["num"]}\');'
-            f"if(el)el.scrollIntoView({{behavior:'instant',block:'start'}});return false;\" "
-            f'href="#">{fn["num"]}.</a> {format_footnote_text(fn["text"], ctx)}</li>'
-            for fn in ctx.collected_footnotes
-        )
-        footnotes_html = f'<div class="footnotes"><h3>Notes</h3><ol>{lis}</ol></div>'
+        if ctx.target == "epub":
+            # Popup footnotes: the reader hides these asides and pops each up from its noteref.
+            # No visible "Notes" section — the reader hides the aside content, so a heading over
+            # them just renders empty.  The asides live at the end of the body as popup targets.
+            footnotes_html = "".join(
+                f'<aside epub:type="footnote" role="doc-footnote" id="fn-{fn["num"]}"><p>'
+                f'<a epub:type="backlink" href="#fnref-{fn["num"]}">{fn["num"]}.</a> '
+                f'{format_footnote_text(fn["text"], ctx)}</p></aside>'
+                for fn in ctx.collected_footnotes
+            )
+        else:
+            lis = "".join(
+                f'<li id="fn-{fn["num"]}" value="{fn["num"]}">'
+                f'<a onclick="var el=document.getElementById(\'fnref-{fn["num"]}\');'
+                f"if(el)el.scrollIntoView({{behavior:'instant',block:'start'}});return false;\" "
+                f'href="#">{fn["num"]}.</a> {format_footnote_text(fn["text"], ctx)}</li>'
+                for fn in ctx.collected_footnotes
+            )
+            footnotes_html = f'<div class="footnotes"><h3>Notes</h3><ol>{lis}</ol></div>'
 
     xref_card = (f'<div class="card">\n          <h2>Cross-references</h2>\n'
                  f"          {xref_html}\n        </div>") if xref_html else ""

@@ -41,6 +41,8 @@ from britannica.pipeline.stages.elements._registry import (
     ClassifiedElement,
     ElementRegistry,
     TABLE_LABELS,
+    _PH,
+    _next_placeholder_id,
 )
 from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
@@ -660,6 +662,79 @@ def _classify_html_table(
     return label if label in _HTML_TABLE_ROUTE_AWAY else "TABLE"
 
 
+# ── Table composite: the grid recurses into ROW / CELL nodes in the one tree ──
+#
+# Was a produce-time re-walk (`_process_table_unified` → `process_elements` per
+# cell), which stopped the classify recursion dead at the `{|`/`<table>` leaf and
+# hid the whole cell tree from every structural consumer (so "is this heading
+# inside a table?" had no home but a raw-text regex).  Now the grid decomposes
+# into REAL children AT CLASSIFY TIME: `recognize_table` chops table→rows→cells
+# (the ONLY table-specific recognition), each cell's content classifies through
+# the ordinary `classify_article` (a cell is prose in a box), and the
+# TR/TD/TH/TABLE producers reassemble bottom-up.  `classify_article` runs ONCE
+# per article; recognition + attr-fold are reused verbatim, so the emitted
+# `«HTMLTABLE»` is byte-identical to the former re-walk.
+_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _mint_ph() -> str:
+    """A fresh placeholder key off the shared module counter, so a synthetic
+    ROW/CELL/CAPTION key never collides with a walker-minted one."""
+    return f"{_PH}ELEM:{_next_placeholder_id()}{_PH}"
+
+
+def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
+    """Decompose a `TABLE`-labelled grid into a TABLE node whose children are ROW
+    nodes (each holding TD/TH cell nodes) plus, if present, a CAPTION node.  Each
+    cell / caption body classifies generically into the tree — figures OFF, so a
+    bare `[[File:]]` in a cell is an inline image leaf (the old `cell_recurse`
+    contract).  The cell body's own `.strip(' \\t')` lives in the TD/TH producer
+    (it must run AFTER a `{{spaces|N}}` padding decodes to real space); the
+    caption's `.strip()` lives in the TABLE producer, both post-recursion."""
+    from britannica.pipeline.stages.elements._table_fold import recognize_table
+    caption_raw, rows = recognize_table(_COMMENT_RE.sub("", grid))
+    children: dict[str, ClassifiedElement] = {}
+    if caption_raw:
+        cap_body, cap_reg = classify_article(caption_raw, _allow_figure=False)
+        children[_mint_ph()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
+    row_phs: list[str] = []
+    for row_attr, cells in rows:
+        if not cells:
+            continue
+        cell_phs: list[str] = []
+        cell_children: dict[str, ClassifiedElement] = {}
+        for sep, cell_attr, content in cells:
+            cell_body, cell_reg = classify_article(content, _allow_figure=False)
+            ph = _mint_ph()
+            cell_children[ph] = ClassifiedElement(
+                "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
+            cell_phs.append(ph)
+        rph = _mint_ph()
+        children[rph] = ClassifiedElement(
+            "ROW", row_attr, "".join(cell_phs), cell_children)
+        row_phs.append(rph)
+    return ClassifiedElement("TABLE", raw, "".join(row_phs), children)
+
+
+def _is_table_html_tag(raw: str) -> bool:
+    """A `<table>` opener — the one HTML tag that decomposes as a table (the
+    OPAQUE `<math>`/`<nowiki>`/`<score>` tags stay leaves via `_is_leaf_html_tag`)."""
+    m = re.match(r"\s*<([A-Za-z][A-Za-z0-9]*)", raw)
+    return bool(m) and m.group(1).lower() == "table"
+
+
+def _classify_table_element(shape: str, raw: str) -> ClassifiedElement:
+    """A `{|` or `<table>`.  Derive its label from the SAME empty registry the old
+    leaf saw (so the label is byte-identical), then: a genuine `TABLE` decomposes
+    into the tree; a DJVU_CROP / COMPOUND_TABLE / CHEMISTRY_LAYOUT keeps its
+    raw-reading producer and stays a leaf, exactly as before."""
+    grid = strip_outer(shape, raw)
+    label = _derive_label(shape, raw, grid, {})
+    if label == "TABLE":
+        return _classify_table_composite(raw, grid)
+    return ClassifiedElement(label, raw, grid, {})
+
+
 # ── Top-level label dispatcher ────────────────────────────────────────
 
 
@@ -726,11 +801,17 @@ def classify(
     derives the label for this element from the assembled
     inner_registry.
     """
-    # A `<table>` owns its whole grid like a wiki `{|` (the table producer
-    # recurses its own cells); an OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its
-    # verbatim interior (LaTeX braces, lilypond chords).  Both are LEAVES: we do
-    # NOT placeholderize their children, so the re-walk never tears a `{{…}}` out
-    # of a `<math>` to mis-read as a template.
+    # A table (`{|` or `<table>`) is a COMPOSITE, not a leaf: its grid decomposes
+    # into ROW / TD / TH child nodes in this ONE tree (was a produce-time re-walk
+    # that stopped the recursion and hid the cell tree).  Intercept before the
+    # generic leaf path; the label ladder still decides genuine-TABLE (decompose)
+    # vs DJVU/COMPOUND/CHEM (raw-reading producer, still a leaf) inside.
+    if shape == SHAPE_BRACE_PIPE or (
+            shape == SHAPE_HTML_TAG and _is_table_html_tag(raw)):
+        return _classify_table_element(shape, raw)
+    # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
+    # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
+    # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.
     if shape in LEAF_SHAPES or (
             shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
         # Leaf shapes own their entire payload — the producer reads
