@@ -715,6 +715,13 @@ def process_strip(raw, inner, context, inner_registry):
     if tm is not None:                       # `{{name|content}}` — the pipe form
         name = tm.group(1).lower()
         inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
+        # A leading `N=` is MediaWiki's explicit-positional escape: `{{center|1=X}}`
+        # forces "positional arg 1 = X" (used to guard a literal `=` in the value),
+        # NOT a named param — a real named param never has a bare-number key.  It's
+        # the LAST arg here so its own `|` is nested, and `_carry_named_params`'
+        # trailing-`|` rule rightly skips it — but then `1=` rode through into the
+        # heading.  Strip it unambiguously, before param-carry: `1=X` → `X`.
+        inner_raw = re.sub(r"^\s*\d+\s*=\s*", "", inner_raw)
         # Leading NAMED params (`{{Hebrew|small=yes|א}}`) are presentation, not
         # content — CARRY them as CSS (see `_carry_named_params`), don't drop.
         inner_raw, param_css = _carry_named_params(inner_raw)

@@ -44,7 +44,7 @@ _BR = re.compile(r"«/?BR»")
 _WORD = re.compile(r"[^\W\d]{2,}")  # 2+ letters (any script), no digits
 # Caption look-alikes: the heading's OWN text says it isn't a section.
 _CAPWORD = re.compile(
-    r"^\s*(?:Fig|Plate|Table|Tabular|Pl|Diagram)\b", re.IGNORECASE)
+    r"^\s*(?:Figs?|Plate|Table|Tabular|Pl|Diagram)\b", re.IGNORECASE)
 _NUMERAL = re.compile(r"^\s*(?:[IVXLCDM]+|[A-Z]|\d+)\s*[.—\-]")
 _ROMAN_PREFIX = re.compile(r"^\s*(?:[IVXLCDM]+|[A-Z]|\d+)\s*[.—\-]+\s*")
 # Whitespace + transparent block markers that may sit between a heading and a
@@ -61,7 +61,6 @@ _NOT_HEADING = re.compile(r"«BR»|«IMG|\{\{\s*IMG|\[\[\s*(?:Image|File)", re.I
 
 _HTMLTABLE_OPEN = re.compile(r"«HTMLTABLE:")
 _HTMLTABLE_CLOSE = re.compile(r"«/HTMLTABLE»")
-_SH_OPEN = "«SH:"
 
 
 def _htmltable_spans(body: str) -> list[tuple[int, int]]:
@@ -127,10 +126,14 @@ def stamp_section_anchors(body: str) -> str:
     """Stamp ``«SEC:slug|name»`` before each recognized section heading in the
     walked body, and return the annotated body.
 
-    A section is a ``«CTR»«SC»`` heading at ``«HTMLTABLE»`` depth 0, whose name is
-    not a caption word.  The series is gated as the old recognizer: keep only if
-    ≥2 survive, OR exactly one survives AND a shoulder heading (``«SH:``) follows
-    it (Poland's sole "Polish Literature")."""
+    A section is a ``«CTR»«SC»`` heading at ``«HTMLTABLE»`` depth 0 whose name is
+    not a caption word and which does not title a table below it.  There is NO
+    ≥2 / shoulder-follows count gate: that was a proxy for false-positive
+    protection under the old raw-text regex, and it is doubly obsolete now — the
+    structural filters above do the protection, and the *display* count threshold
+    lives in `_build_toc` (which draws no "Contents" box for a lone section).
+    Recognize the section; let the renderer decide whether a TOC is worth drawing.
+    A lone `«SEC»` is just an invisible deep-link anchor."""
     spans = _htmltable_spans(body)
 
     def in_table(p: int) -> bool:
@@ -151,10 +154,6 @@ def stamp_section_anchors(body: str) -> str:
             if after.startswith("«HTMLTABLE:"):
                 continue
         heads.append((m.start(), name))
-
-    if len(heads) < 2:
-        if not (len(heads) == 1 and _SH_OPEN in body[heads[0][0]:]):
-            return body
 
     for pos, name in reversed(heads):  # tail-first so positions stay valid
         slug = section_slug(_ROMAN_PREFIX.sub("", name))

@@ -8,7 +8,7 @@ Three spellings, one family:
 These are GENUINE targets, not wiki crutches: the Reader's Guide deep-links and
 intra-article ``[[#X]]`` references resolve onto them (67 broken cross-references proved
 it while we were liquidating them).  So we CARRY them.  Each emits a point anchor
-``«ANCHOR:slug|name»`` — a sibling of ``stamp_sections``' ``«SEC:slug|name»``: same
+``«ANCHOR:slug|name»`` — a sibling of ``stamp_section_anchors``' ``«SEC:slug|name»``: same
 ``section_slug``, same ``id="section-<slug>"`` the viewer stamps, so the href lands.  The
 ONE difference is that ``detect_sections`` files it as ``kind="anchor"``, keeping it OUT of
 the table of contents (it is a target, not a heading).

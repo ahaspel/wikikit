@@ -1,15 +1,16 @@
 """Collect the article's section list (TOC source) from the anchors in its
 assembled body — mechanical, no recognition.
 
-The major-section anchors `«SEC:slug|name»` are stamped pre-walk by
-`transform_articles.sections.stamp_sections` (that's where ALL the recognition
-lives); shoulder headings ride `«SH:slug»…«/SH»` from their producer.  Here we just
-walk the body in document order and gather both into the `sections` list the
-article JSON carries — the TOC and the deep-link URLs read it.
+The major-section anchors `«SEC:slug|name»` are stamped post-walk by
+`elements._section_anchors.stamp_section_anchors` (that's where ALL the recognition
+lives, over the finished body where the structure is in view); shoulder headings
+ride `«SH:slug»…«/SH»` from their producer.  Here we just walk the body in document
+order and gather both into the `sections` list the article JSON carries — the TOC
+and the deep-link URLs read it.
 
 This replaced the old `SC_RE` heuristic that *guessed* sections from the
 centered-small-caps render (and was duplicated verbatim in the viewer).  There is
-no guessing left: a `«SEC»` is a section because `stamp_sections` decided so.
+no guessing left here: a `«SEC»` is a section because `stamp_section_anchors` decided so.
 """
 from __future__ import annotations
 

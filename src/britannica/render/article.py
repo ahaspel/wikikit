@@ -514,9 +514,12 @@ def _toc_link(s):
 def _build_toc(sections):
     level1 = [s for s in sections if s["level"] == 1]
     level2 = [s for s in sections if s["level"] == 2]
-    if len(level1) >= 2 and len(level2) >= 1:
+    if len(level1) >= 1 and len(level2) >= 1:
         # Interleaved: major sections with shoulder headings nested below; level-2
         # orphans (before any level-1) render standalone so the HTML stays valid.
+        # A SINGLE major section counts (>= 1): a lone «SEC» among shoulders (AFGHANISTAN's
+        # `History`, POLAND's `Polish Literature`) must appear in the TOC, not be dropped
+        # to the shoulder-only branch which lists only level-2.
         inner = ""
         in_sub = False
         seen_level1 = False
