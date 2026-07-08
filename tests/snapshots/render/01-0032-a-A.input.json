@@ -1,5 +1,5 @@
 {
-  "id": 6242625,
+  "id": 6279851,
   "stable_id": "01-0032-a",
   "title": "A",
   "article_type": "article",
@@ -28,7 +28,7 @@
       "normalized_target": "ALPHABET",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6243902,
+      "target_article_id": 6281128,
       "target_filename": "01-0766-s5-ALPHABET.json"
     },
     {
@@ -36,7 +36,7 @@
       "normalized_target": "ABBREVIATION",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6242697,
+      "target_article_id": 6279923,
       "target_filename": "01-0058-s3-ABBREVIATION.json"
     },
     {
@@ -44,7 +44,7 @@
       "normalized_target": "SHIPBUILDING",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6274424,
+      "target_article_id": 6311650,
       "target_filename": "24-0984-s2-SHIPBUILDING.json"
     },
     {
@@ -52,7 +52,7 @@
       "normalized_target": "SWEET",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6275985,
+      "target_article_id": 6313211,
       "target_filename": "26-0242-s4-SWEET-SOP.json"
     }
   ],

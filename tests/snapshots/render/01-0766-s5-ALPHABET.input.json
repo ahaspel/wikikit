@@ -1,5 +1,5 @@
 {
-  "id": 6243902,
+  "id": 6281128,
   "stable_id": "01-0766-s5",
   "title": "ALPHABET",
   "article_type": "article",
@@ -156,7 +156,7 @@
       "normalized_target": "WRITING",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6279476,
+      "target_article_id": 6316702,
       "target_filename": "28-0878-writers-to-the-signet-WRITING.json"
     },
     {
@@ -164,7 +164,7 @@
       "normalized_target": "PHONETICS",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6269968,
+      "target_article_id": 6307194,
       "target_filename": "21-0480-phonetics-PHONETICS.json"
     },
     {
@@ -172,7 +172,7 @@
       "normalized_target": "INSCRIPTIONS",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6260858,
+      "target_article_id": 6298084,
       "target_filename": "14-0649-inscriptions-INSCRIPTIONS.json"
     },
     {
@@ -180,7 +180,7 @@
       "normalized_target": "PALAEOGRAPHY",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6268899,
+      "target_article_id": 6306125,
       "target_filename": "20-0608-palaeography-PALAEOGRAPHY.json"
     },
     {
@@ -188,7 +188,7 @@
       "normalized_target": "PLATE",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6270277,
+      "target_article_id": 6307503,
       "target_filename": "21-0820-plate-PLATE.json"
     },
     {
@@ -196,7 +196,7 @@
       "normalized_target": "CONWAY",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6251866,
+      "target_article_id": 6289092,
       "target_filename": "07-0085-conway-CONWAY.json"
     },
     {
@@ -204,7 +204,7 @@
       "normalized_target": "STEIN",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6275443,
+      "target_article_id": 6312669,
       "target_filename": "25-0894-s4-STEIN__CHARLOTTE_VON.json"
     },
     {
@@ -212,7 +212,7 @@
       "normalized_target": "PLAUTUS",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6270298,
+      "target_article_id": 6307524,
       "target_filename": "21-0861-plautus-PLAUTUS__TITUS_MACCIUS.json"
     }
   ],

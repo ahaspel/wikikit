@@ -1,5 +1,5 @@
 {
-  "id": 6276782,
+  "id": 6314008,
   "stable_id": "26-0933-s2",
   "title": "THUCYDIDES",
   "article_type": "article",
@@ -86,7 +86,7 @@
       "normalized_target": "CIMON",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6250951,
+      "target_article_id": 6288177,
       "target_filename": "06-0384-cimon-CIMON.json"
     },
     {
@@ -94,7 +94,7 @@
       "normalized_target": "PERICLES",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6269630,
+      "target_article_id": 6306856,
       "target_filename": "21-0162-s2-PERICLES.json"
     },
     {
@@ -102,7 +102,7 @@
       "normalized_target": "BRASIDAS",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6248225,
+      "target_article_id": 6285451,
       "target_filename": "04-0447-brasidas-BRASIDAS.json"
     },
     {
@@ -110,7 +110,7 @@
       "normalized_target": "PELOPONNESIAN WAR",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6269503,
+      "target_article_id": 6306729,
       "target_filename": "21-0085-peloponnesian-war-PELOPONNESIAN_WAR.json"
     },
     {
@@ -118,7 +118,7 @@
       "normalized_target": "GREECE",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6258169,
+      "target_article_id": 6295395,
       "target_filename": "12-0443-greece-GREECE.json"
     },
     {
@@ -126,7 +126,7 @@
       "normalized_target": "LOGOGRAPHI",
       "xref_type": "link",
       "status": "resolved",
-      "target_article_id": 6264010,
+      "target_article_id": 6301236,
       "target_filename": "16-0941-s2-LOGOGRAPHI.json"
     },
     {
@@ -134,7 +134,7 @@
       "normalized_target": "JEBB",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6261329,
+      "target_article_id": 6298555,
       "target_filename": "15-0324-s2-JEBB__JOHN.json"
     },
     {
@@ -142,7 +142,7 @@
       "normalized_target": "EDUARD MEYER",
       "xref_type": "see",
       "status": "resolved",
-      "target_article_id": 6265990,
+      "target_article_id": 6303216,
       "target_filename": "18-0370-s3-MEYER.json"
     }
   ],
