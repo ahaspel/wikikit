@@ -812,8 +812,14 @@ def classify(
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.
+    # A CHART2-family paired wrapper ({{familytree/start}}…{{familytree/end}}) is
+    # chart-grammar we never walk (its `/start`/`/end` delimiters aren't the CENTER
+    # peel's `/s`/`/e`, so `strip_outer` can't reduce it — walking would re-extract
+    # it forever); a LEAF, its producer reads raw.  Only CENTER paired wrappers are
+    # composites, decomposed by the generic path below.
     if shape in LEAF_SHAPES or (
-            shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
+            shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)) or (
+            shape == SHAPE_PAIRED_WRAPPER and _CHART2_FAMILY_RE.search(raw)):
         # Leaf shapes own their entire payload — the producer reads
         # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
         # and does whatever internal parsing it needs.  We still call

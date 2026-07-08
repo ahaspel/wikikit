@@ -55,20 +55,20 @@ SHAPES: frozenset[str] = frozenset({
 # internal parsing it needs.
 #
 # * HTML_SELF_CLOSING — no inner content.
-# * PAIRED_WRAPPER — the `{{NAME/s}}…{{NAME/e}}` paired open/close span
-#   (former CENTER + CHART2).  A LEAF: the producer owns the whole span.
-#   The CHART2 family is a non-wikitext template-pair region (chart-grammar
-#   `{{…}}` tokens inside aren't extractable wikitext, so its producer reads
-#   raw); the CENTER family's producer recurses its OWN inner through the main
-#   dispatch (figure-recognition off) exactly as the classifier used to.
 # * OUTLINE — line-pattern (indented `;head:desc` ladder); the producer
 #   walks it line-by-line itself.  Balanced shapes inside an outline
 #   body have already been placeholdered by the linear scanner before
 #   the OUTLINE phase runs, so there's nothing for the classifier to
 #   recurse into anyway.
+# NOTE: SHAPE_PAIRED_WRAPPER is NOT a leaf.  Its CENTER family is a composite —
+# the classifier recurses its inner into the tree via the generic non-leaf path
+# (`strip_outer` peels `{{NAME/s}}…{{NAME/e}}`), so a heading inside a centered
+# block is a real node and `classify_article` runs once per article.  Its CHART2
+# family is effectively a leaf anyway: `strip_outer` returns "" for it (chart-grammar
+# tokens aren't extractable wikitext), so it gets no children and its producer reads
+# raw — exactly as before.
 LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
-    SHAPE_PAIRED_WRAPPER,
     SHAPE_OUTLINE,
     # The six STYLED-derived structures (STRIP / PARAM / SHOULDER / RUNNING_HEADER
     # = `{{…}}` template-form stylers/headings; SPAN_TITLE / HTML_STYLE = `<tag>`

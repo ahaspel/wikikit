@@ -261,37 +261,23 @@ def _process_center(raw, inner, context, inner_registry):
       * a non-centring block styler (`fine block`/`EB1911 fine print`/`smaller
         block` → font-size) wraps the inner in ONE `style_block` div.
 
-    PAIRED_WRAPPER is a LEAF (it shares the shape with CHART2, a leaf), so the
-    classifier no longer pre-recurses our inner the way it did when CENTER was a
-    non-leaf shape.  We therefore recurse the inner OURSELF — but the wrap must run
-    on the PLACEHOLDERIZED inner (so `_center_wrap`'s `_CTR_PURE_PH_RE` still sees a
-    block child as a bare placeholder, exactly as it did when classify handed the
-    placeholderized inner to the producer), THEN the child markers are substituted.
-    So we replicate the classify → wrap → produce → substitute order verbatim
-    rather than flatten-then-wrap (which would change the pure-block-paragraph and
-    body-only cases)."""
+    CENTER is a COMPOSITE now (un-leafed): the classifier already recursed our inner
+    into `inner_registry` and produced each child, and `inner` is the placeholderized
+    inner_text (block children still bare `\\x03ELEM\\x03` placeholders, so
+    `_center_wrap`'s `_CTR_PURE_PH_RE` sees them).  We just wrap; the framework
+    substitutes the child markers into our output afterward.  The former produce-time
+    re-walk — `classify_article` + `produce_tree` + a hand-rolled
+    `substitute_top_level_markers` reaching UNDER the recursion boundary — is
+    deleted; `classify_article` no longer re-enters here, so it runs once per article
+    and a heading inside a centered block is a real node in the one tree."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_WRAPPERS, style_block)
-    from britannica.pipeline.stages.elements._classifier import (
-        classify_article, produce_tree, substitute_top_level_markers)
-
-    # Walk + classify the inner to a placeholderized body + child tree (figures
-    # off, exactly like classify's own inner descent did), then produce the tree
-    # so each child's marker is populated.
-    placeholderized, tree = classify_article(inner, _allow_figure=False)
-    produce_tree(tree, context)
-
-    # Wrap on the PLACEHOLDERIZED text (block children are still bare
-    # placeholders here), then substitute the produced child markers in.
     m = re.match(r"^\s*\{\{\s*([^{}/]*?)\s*/s\s*\}\}", raw, re.IGNORECASE)
     name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
     spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
     if spec and spec.get("css") and not spec.get("ctr"):
-        wrapped = style_block(placeholderized.strip(), css=spec["css"],
-                              tag=spec.get("tag", "DIV"))
-    else:
-        wrapped = _center_wrap(placeholderized)   # centring family — unchanged
-    return substitute_top_level_markers(wrapped, tree)
+        return style_block(inner.strip(), css=spec["css"], tag=spec.get("tag", "DIV"))
+    return _center_wrap(inner)   # centring family
 
 
 def _plain_image_disentangle(raw, context):
