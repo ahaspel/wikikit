@@ -128,7 +128,7 @@ def _is_compound_table(raw: str,
 # `raw` is the source bytes of the element (with delimiters); `inner`
 # is the delimiter-stripped content with child placeholders.  Most
 # producers use `inner` + the child registry; the leaf cases
-# (CHART2, DJVU_CROP, COMPOUND_TABLE) use `raw` and ignore the rest.
+# (CHART2, IMAGE, COMPOUND_TABLE) use `raw` and ignore the rest.
 _ElementHandler = Callable[
     [str, str, ElementContext, "ElementRegistry | None"], str]
 
@@ -280,119 +280,83 @@ def _process_center(raw, inner, context, inner_registry):
     return _center_wrap(inner)   # centring family
 
 
-def _plain_image_disentangle(raw, context):
-    """`{{plain image with caption|image=X|align=|width=|caption=Y}}` IS a
-    figtable in template spelling — ONE column, TWO cells: the image on top, the
-    caption beneath, the whole box floated.  Reconstruct the canonical
-    `{|`-figtable and recurse it through the unified table producer, so the image
-    cell becomes an IMAGE leaf and the caption cell rides the cell-collapse — held
-    WITH the image by the table, not floated away as a loose sibling.  (The first
-    figtable routed through `_process_table_unified`.)"""
-    from britannica.pipeline.stages.elements._link import (
-        _split_top_pipes)
-    inner = re.sub(r"\}\}\s*$", "", re.sub(
-        r"^\s*\{\{\s*plain image with caption\s*\|", "", raw, flags=re.IGNORECASE))
-    params: dict[str, str] = {}
-    for part in _split_top_pipes(inner):
-        k, eq, v = part.partition("=")
-        if eq:
-            params[k.strip().lower()] = v.strip()
-    fn = re.sub(r"^\s*(?:File|Image):\s*", "", params.get("image", ""),
-                flags=re.IGNORECASE)
-    wm = re.match(r"(\d+)", params.get("width", ""))
-    w = wm.group(1) if wm else None
-    align = params.get("align", "")
-    box = ("margin-right:auto;margin-left:auto" if align == "center"
-           else f"float:{align}" if align else "")
-    style = ";".join(x for x in (box, f"width:{w}px" if w else "") if x)
-    opener = f'{{|style="{style}"' if style else "{|"
-    img_src = f"[[File:{fn}|{w}px]]" if w else f"[[File:{fn}]]"
-    cap = params.get("caption", "")
-    body = f"|{img_src}\n|-\n|{cap}" if cap else f"|{img_src}"
-    return process_elements(f"{opener}\n{body}\n|}}",
-                            context, _allow_figure=False)
-
-
-def _img_float_disentangle(raw, context):
-    """`{{img float|file=…|cap=…}}` / `{{figure|…}}` / `{{FI|…}}` — the floated
-    CAPTIONED FIGURE.  The template IS the binding: whatever it holds is the figure,
-    so we float exactly that — no guess about which surrounding prose "belongs."
-    Captionless → a bare image LEAF (the renderer floats it by carried align).  With
-    a caption → image + caption as ONE inline-float unit,
-    `«SPAN[style:float:…;width:Npx]»{{IMG}}«BR»<caption>«/SPAN»` (a centred block
-    span for align=center).  The span is inline-LEVEL, so it floats INSIDE the
-    paragraph and the prose wraps it — there is no `<p>`-breaking block.  NOT a
-    synthesized `{|`-table: that table costume was an imposed taxonomy (a figure is
-    not tabular), and a `<table>` can't live in a `<p>` — which is exactly what
-    guillotined the line above it."""
-    from britannica.parsers import img_float as _imgf
-    from britannica.pipeline.stages.elements._image import build_img_marker
-    s = raw.strip()
-    inner = s[2:-2] if s.startswith("{{") and s.endswith("}}") else s
-    parsed = _imgf.parse(inner)
-    if parsed is None:
-        return ""
-    if not parsed.caption:
-        return build_img_marker(parsed.filename, None,
-                                align=parsed.align, width=parsed.width)
-    img = build_img_marker(parsed.filename, None, width=parsed.width)
-    # Recurse the WHOLE caption — its own `<br>`s and soft line-wraps ride verbatim
-    # (renderable), exactly as the figtable cell carried them.  Splitting on `<br>`
-    # and `.strip()`-ing each line eats the inter-line space and any thin-space
-    # indent, running words together (CITHARA "(Mus. Pio-Clementino)" → "(Mus.Pio-
-    # Clementino)", BRACHIOPODA's numbered key).  The leading «BR» is the only break
-    # WE add — the image-to-caption seam; everything below it is the source's.
-    cap = process_elements(parsed.caption, context, _allow_figure=False).strip()
-    align = parsed.align or "left"
-    w = f";width:{parsed.width}px" if parsed.width else ""
-    box = (f"display:block;margin-left:auto;margin-right:auto{w}"
-           if align == "center" else f"float:{align}{w}")
-    return f"«SPAN[style:{box}]»{img}«BR»{cap}«/SPAN»"
-
-
-def _image_leaf(raw):
-    """Leaf-image TEMPLATE spellings → the `{{IMG:…}}` marker: `{{Css image crop|…}}`
-    (a DjVu crop), `{{raw image|…}}` (a DjVu page-ref / filename), and the bare
-    `[[File:…]]` / `[[Image:…]]` bracket.  The walker already bounds the template;
-    this just maps the three spellings to a filename and emits a TRUE leaf.  A
-    captioned image (`thumb`/`frame` + caption) is NOT a leaf — it's a wrapper the
-    classifier routes to CAPTIONED_IMAGE (`_captioned_image`).  The bracket's
-    in-`[[…]]` trailing text is ALT and dropped ([[feedback_no_caption_concept]])."""
+def _parse_image(raw):
+    """Every image spelling → ``(filename, width, align, caption_raw)`` — the ONE parse.
+    ``caption_raw`` is "" unless the wrapper glued a caption INSIDE it: a `thumb`/`frame`
+    trailing positional, a `cap=`, or a `caption=`.  Filename derivation is per-spelling
+    (bracket / crop-hash / raw-djvu-ref / named param); width & align ride the leaf."""
     from britannica.pipeline.stages.elements._image import (
-        build_img_marker, djvu_crop_filename, _parse_crop_param,
-        _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE, _img_marker)
+        djvu_crop_filename, _parse_crop_param, _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE,
+        _img_bracket_meta, _thumb_caption_raw)
     tmpl = raw.strip()
-    if tmpl.startswith("[["):
-        return _img_marker(tmpl)
-    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):
+    if tmpl.startswith("[["):                        # [[File:…]] — caption only if thumb/frame
+        fn, width, align = _img_bracket_meta(tmpl)
+        return fn, width, align, _thumb_caption_raw(raw)
+    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):   # DjVu crop — no caption
         fn = djvu_crop_filename(tmpl)
         if fn is None:
             img = _parse_crop_param(tmpl, "Image")
             fn = img.replace(" ", "_") if img else ""
-        return build_img_marker(fn) if fn else ""
-    m = _RAW_IMAGE_ARG_RE.match(tmpl)
-    if not m:
+        return fn, None, None, ""
+    if re.match(r"\{\{\s*plain image with caption\s*\|", tmpl, re.IGNORECASE):
+        from britannica.pipeline.stages.elements._link import _split_top_pipes
+        inner = re.sub(r"\}\}\s*$", "", re.sub(
+            r"^\s*\{\{\s*plain image with caption\s*\|", "", raw, flags=re.IGNORECASE))
+        params: dict[str, str] = {}
+        for part in _split_top_pipes(inner):
+            k, eq, v = part.partition("=")
+            if eq:
+                params[k.strip().lower()] = v.strip()
+        fn = re.sub(r"^\s*(?:File|Image):\s*", "", params.get("image", ""), flags=re.IGNORECASE)
+        wm = re.match(r"(\d+)", params.get("width", ""))
+        return (fn, int(wm.group(1)) if wm else None,
+                params.get("align") or None, params.get("caption", ""))
+    if re.match(r"\{\{\s*(?:img float|figure|FI)\s*\|", tmpl, re.IGNORECASE):
+        from britannica.parsers import img_float as _imgf
+        inner = tmpl[2:-2] if tmpl.startswith("{{") and tmpl.endswith("}}") else tmpl
+        parsed = _imgf.parse(inner)
+        if parsed is None:
+            return "", None, None, ""
+        return parsed.filename, parsed.width, parsed.align, parsed.caption or ""
+    m = _RAW_IMAGE_ARG_RE.match(tmpl)                # {{raw image|…}} — no caption
+    if m:
+        arg = m.group(1).strip()
+        dref = _RAW_DJVU_REF_RE.match(arg)
+        fn = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
+              if dref else arg)
+        return fn, None, None, ""
+    return "", None, None, ""
+
+
+def _process_image(raw, context):
+    """The ONE image producer.  An image is a pure LEAF; a caption — if the wrapper glued
+    one on — rides with it as ONE inline-float unit.  The figure floats to the side (prose
+    wraps it) at the placement the source chose via `align` — default LEFT, as `img float`
+    always did; `align=center` is a centred block instead.  The caption sits centred directly
+    below the plate (`text-align:center`).  Never folded into the marker's alt slot (that
+    hides it), never a synthesized `<table>` — a figure is not tabular, and the old figtable's
+    only real jobs (float + shrink-to-image-width) a floated span does natively.  Every
+    spelling (bare `[[File:]]`, `{{Css image crop}}`, `{{raw image}}`, `thumb`/`frame`,
+    `{{plain image with caption}}`, `{{img float|figure|FI}}`) funnels through one parse
+    (`_parse_image`) and this one emit."""
+    from britannica.pipeline.stages.elements._image import build_img_marker
+    fn, width, align, caption_raw = _parse_image(raw)
+    if not fn:
         return ""
-    arg = m.group(1).strip()
-    dref = _RAW_DJVU_REF_RE.match(arg)
-    filename = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
-                if dref else arg)
-    return build_img_marker(filename)
-
-
-def _captioned_image(raw, context):
-    """A captioned image — MediaWiki `thumb`/`frame`.  The image is a LEAF, the
-    CAPTION is the INNER.  On the table model: split the raw bracket into its two
-    parts BEFORE recursing — image via `_img_marker`, caption via
-    `_thumb_caption_raw` — recurse the WHOLE caption (its own `<br>`s and whitespace
-    ride through verbatim), and reassemble `{{IMG:…}}«BR»<caption>`.  The single
-    «BR» is the image-to-caption seam; every break below it is the source's own.
-    Splitting the caption per-`<br>` and `.strip()`-ing each shard ate inter-line
-    whitespace (soft-wrap space, thin-space indents) — a lossy re-flatten of the
-    very caption this producer exists to keep intact."""
-    from britannica.pipeline.stages.elements._image import _img_marker, _thumb_caption_raw
-    cap = process_elements(_thumb_caption_raw(raw), context, _allow_figure=False).strip()
-    return _img_marker(raw) + "«BR»" + cap
+    cap = (process_elements(caption_raw, context, _allow_figure=False).strip()
+           if caption_raw else "")
+    if not cap:
+        return build_img_marker(fn, align=align, width=width)      # bare leaf carries its align
+    # Captioned figure: image + caption as ONE inline-float unit.  The span is inline-LEVEL,
+    # so it floats INSIDE the paragraph and the prose wraps it — no `<p>`-breaking block.  A
+    # floated span shrink-wraps to its content (the plate), so the caption stays snug at the
+    # image width even with no explicit width — exactly what the figtable's `<table>` gave.
+    leaf = build_img_marker(fn, width=width)
+    w = f";width:{width}px" if width else ""
+    align = align or "left"                                        # img float's long-standing default
+    box = (f"display:block;margin-left:auto;margin-right:auto{w}"
+           if align == "center" else f"float:{align}{w}")
+    return f"«SPAN[style:{box};text-align:center]»{leaf}«BR»{cap}«/SPAN»"
 
 
 def _process_lb(inner, context):
@@ -883,11 +847,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
         _process_chemistry_layout(raw, inner, ctx, reg),
     # Single-label kinds — element_type == label.
-    # DJVU_CROP — a `{{Css image crop}}` is just another image; the unified
-    # figure producer recognizes it as an image leaf (stateless filename) and,
-    # for the `{|`-wrapped form, recurses the caption/attribution cells.
-    "DJVU_CROP": lambda raw, inner, ctx, reg:
-        _image_leaf(raw),
     "CHART2": lambda raw, inner, ctx, reg:
         _process_genealogy(raw, ctx, lambda s: process_elements(s, ctx)),
     "MATH": lambda raw, inner, ctx, reg: _process_math(raw, inner),
@@ -896,22 +855,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, ctx, reg:
         _process_ref(raw, inner, ctx.ref_bodies),
-    # IMAGE is a pure leaf (`_image_leaf` → an `{{IMG:…}}` marker): the image
-    # carries only the raw's own params, and any caption that follows is its OWN
-    # sibling block — a `{{center|…}}`, a table cell — recursed in place by the
-    # dispatch, never folded into the image (SUNDEW Figs 2/4).
+    # IMAGE — every image spelling (bare `[[File:]]`, `{{Css image crop}}`,
+    # `{{raw image}}`, `thumb`/`frame`, `{{plain image with caption}}`,
+    # `{{img float|figure|FI}}`).  The classifier labels them all IMAGE; the ONE
+    # producer parses the spelling to a filename and, if the wrapper glued a caption
+    # on, renders it CENTERED DIRECTLY BELOW the plate (a centered `«DIV»` block).  An
+    # image is a pure leaf; a free-standing sibling caption still recurses in place.
     "IMAGE": lambda raw, inner, ctx, reg:
-        _image_leaf(raw),
-    # CAPTIONED_IMAGE is the WRAPPER form (MediaWiki `thumb`/`frame`): the image is
-    # the leaf, the in-bracket caption is the INNER — recursed by `_captioned_image`.
-    "CAPTIONED_IMAGE": lambda raw, inner, ctx, reg:
-        _captioned_image(raw, ctx),
-    "RAW_IMAGE": lambda raw, inner, ctx, reg:
-        _image_leaf(raw),
-    "PLAIN_IMAGE": lambda raw, inner, ctx, reg:
-        _plain_image_disentangle(raw, ctx),
-    "IMAGE_FLOAT": lambda raw, inner, ctx, reg:
-        _img_float_disentangle(raw, ctx),
+        _process_image(raw, ctx),
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack: table headers, hyphenations, figure-caption splits, stacked
     # math/chem notation).  ONE producer that recurses each line, so its
@@ -1073,10 +1024,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
 # change the output — every one decomposes to the ground identically — so a
 # mis-classification (e.g. CHESS's diagram blocks falling into LAYOUT_WRAPPER)
 # is harmless: the catch-all can't botch anything when it's wired where
-# everything else is.  The old per-label producers (_unwrap_layout_table,
-# _process_legended_*, _process_unpaired_figure_group,
-# _process_captioned_figure_inline, _process_image*, _process_raw_image,
-# _process_plain_image, _process_image_float, _produce_figure) are now dead.
+# everything else is.  The old per-label figure producers (_unwrap_layout_table,
+# _process_legended_*, _process_unpaired_figure_group, _process_captioned_figure_inline,
+# _process_raw_image, _produce_figure) are dead — and the split IMAGE producers
+# (_image_leaf / _captioned_image / _img_float_disentangle / _plain_image_disentangle)
+# have since collapsed into the ONE `_process_image` (bare `[[File:]]`/crop/raw → leaf;
+# any attached caption → one inline-float `«SPAN»` with the caption centred below the plate).
 
 
 # ── Independent wikitable predicates ──────────────────────────────────

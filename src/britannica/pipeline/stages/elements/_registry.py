@@ -87,7 +87,7 @@ class ElementRegistry:
 # wikitables miss it when checking for nested-table children.
 TABLE_LABELS: frozenset[str] = frozenset({
     "LAYOUT_WRAPPER", "TABLE",
-    "CHEMISTRY_LAYOUT", "DJVU_CROP",
+    "CHEMISTRY_LAYOUT",
     "CAPTIONED_FIGURE", "CAPTIONED_FIGURE_INLINE",
     "FIGURE_GROUP", "UNPAIRED_FIGURE_GROUP",
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE",
@@ -100,10 +100,10 @@ TABLE_LABELS: frozenset[str] = frozenset({
 # and covers both `{|` and `<table>` — the old HTML_TABLE label is gone.)
 BLOCK_LABELS: frozenset[str] = frozenset({"POEM"}) | TABLE_LABELS
 
-# Image-shaped child labels — File-bracket image elements.  Figure-table
+# Image-shaped child labels — every image spelling is one label now.  Figure-table
 # producers and image-counters key off the SHAPE (image element), not the
 # alignment; layout in a cell is the container's job.
-IMAGE_LABELS: frozenset[str] = frozenset({"IMAGE", "DJVU_CROP"})
+IMAGE_LABELS: frozenset[str] = frozenset({"IMAGE"})
 
 
 @dataclass

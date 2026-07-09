@@ -94,16 +94,17 @@ class TestAtomicLabels:
         assert ce.label == "IMAGE"
 
     def test_captioned_image(self):
-        # A `thumb`/`frame` bracket carrying a caption is a WRAPPER (image leaf +
-        # caption inner), routed to its own producer — not a bare image leaf.
+        # Every image spelling is IMAGE — bare or captioned.  The ONE producer
+        # detects a thumb/frame caption and lays it out; classify stays structural.
         ce = classify(SHAPE_DOUBLE_BRACKET,
                        "[[File:Foo.jpg|thumb|caption]]")
-        assert ce.label == "CAPTIONED_IMAGE"
+        assert ce.label == "IMAGE"
 
     def test_image_float(self):
+        # `{{img float}}` is a captioned figure — also just IMAGE now.
         ce = classify(SHAPE_DOUBLE_BRACE,
                        "{{img float|file=X.jpg|width=200}}")
-        assert ce.label == "IMAGE_FLOAT"
+        assert ce.label == "IMAGE"
 
     def test_hieroglyph_template(self):
         ce = classify(SHAPE_DOUBLE_BRACE, "{{hieroglyph|A1-B2}}")

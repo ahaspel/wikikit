@@ -168,13 +168,14 @@ def test_sewing_machines_fig1_image_and_caption():
 # ── Tests: ABBEY_02_FLOAT — `{{img float}}` floater ─────────────
 
 def test_abbey_02_float_is_faithful_figure():
-    """`{{img float|cap=…}}` is a CAPTIONED_FIGURE — the image LEAF and its
-    recursed caption float together as ONE inline `«SPAN[style:float:…]»` unit
-    (not a table, not a captioned IMG).  The image is a pure leaf (caption None);
-    the caption recurses WHOLE — «SC» markup and its own `<br>`s carried verbatim —
-    and the prose wraps the float for free — no figtable, no per-line shred."""
+    """`{{img float|cap=…}}` is an IMAGE with a caption — the image LEAF and its
+    recursed caption as ONE inline-float `«SPAN»`, the figure floated to the side and
+    the caption centred directly below the plate (not a table, not a captioned IMG).
+    The image is a pure leaf (caption None); the caption recurses WHOLE — «SC» markup
+    and its own `<br>`s carried verbatim — no figtable, no per-line shred."""
     body = _transform(ABBEY_02_FLOAT, volume=1, page_number=44)
-    assert "«SPAN[style:float:left" in body and 'class="figtable"' not in body
+    assert "«SPAN[style:" in body and "text-align:center" in body
+    assert "float:" in body and 'class="figtable"' not in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"
     filename, caption = imgs[0]
@@ -190,9 +191,11 @@ def test_abbey_02_float_is_faithful_figure():
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────
 
 def test_air_engine_fig1_faithful_figure():
-    """AIR_ENGINE Fig 1 `{{Img float}}` → floated figure: a pure image leaf
-    plus the caption carried in a cell (markup intact, not an IMG caption)."""
+    """AIR_ENGINE Fig 1 `{{Img float}}` → an IMAGE with a caption: a pure image leaf
+    plus its caption as an inline-float `«SPAN»`, floated to the side with the caption
+    centred directly below (markup intact, not an IMG caption, not a figtable)."""
     body = _transform(AIR_ENGINE_1, volume=1, page_number=482)
+    assert "«SPAN[style:" in body and "text-align:center" in body
     assert "float:" in body and 'class="figtable"' not in body
     imgs = extract_imgs(body)
     assert len(imgs) == 1, f"Expected 1 IMG leaf, got {imgs!r}"

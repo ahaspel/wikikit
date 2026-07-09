@@ -13,11 +13,9 @@ from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 
 
-def _img_marker(raw: str) -> str:
-    """Bare ``[[File:…]]`` / ``[[Image:…]]`` block image → ``{{IMG:…}}`` leaf (filename +
-    px-width / center-left-right align).  The bracket's trailing text is ``alt``, not a
-    caption, and is dropped ([[feedback_no_caption_concept]]).  Relocated verbatim from
-    the deleted ``_figure_faithful`` shadow producer."""
+def _img_bracket_meta(raw: str) -> tuple[str, int | None, str | None]:
+    """``[[File:X|200px|left|…]]`` → ``(filename, width, align)``.  The bracket's
+    trailing text is ``alt``/caption — read by the caller (`_parse_image`), not here."""
     inner = re.sub(r"\]\]\s*$", "", re.sub(r"^\s*\[\[(?:File|Image):", "", raw, flags=re.I))
     parts = [p.strip() for p in inner.split("|")]
     fn = parts[0]
@@ -28,8 +26,16 @@ def _img_marker(raw: str) -> str:
             width = int(mw.group(1))
         elif p.lower() in ("center", "right", "left"):
             align = p.lower()
-    meta = (f"|align={align}" if align else "") + (f"|width={width}" if width else "")
-    return f"{{{{IMG:{fn}{meta}}}}}"
+    return fn, width, align
+
+
+def _img_marker(raw: str) -> str:
+    """Bare ``[[File:…]]`` / ``[[Image:…]]`` block image → ``{{IMG:…}}`` leaf, built
+    through the ONE constructor (`build_img_marker`) — no ad-hoc f-string.  The
+    bracket's trailing text is ``alt``, not a caption, and is dropped
+    ([[feedback_no_caption_concept]])."""
+    fn, width, align = _img_bracket_meta(raw)
+    return build_img_marker(fn, align=align, width=width)
 
 
 # A `thumb`/`frame` image renders its trailing positional as a CAPTION below the

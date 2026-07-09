@@ -256,7 +256,7 @@ having two or four “trucks.” The guns and carriages recoiled
 along the vessel’s deck, and where this endangered the masts
 or other structures the recoil was hindered by soft substances
 being laid down in the path of the recoil.
-«SPAN[style:float:left;width:300px]»{{IMG:EB1911 - Ordnance - Fig. 5.png|width=300}}«BR»«SC»Fig«/SC». 5.—Truck Carriage.«/SPAN»«P»The small guns were mounted in iron Y pieces—the upper
+«SPAN[style:float:left;width:300px;text-align:center]»{{IMG:EB1911 - Ordnance - Fig. 5.png|width=300}}«BR»«SC»Fig«/SC». 5.—Truck Carriage.«/SPAN»«P»The small guns were mounted in iron Y pieces—the upper
 arms being provided with bearings for the gun trunnions—and
 the stalk formed a
 pivot which rested
@@ -285,7 +285,7 @@ connecting a long and
 short arm forming a
 right angle; a line with
 a plummet hung from
-the angle in such a«SPAN[style:float:left;width:250px]»{{IMG:EB1911 - Ordnance - Fig. 6.png|width=250}}«BR»«SC»Fig«/SC». 6.—Gunner’s Quadrant.«/SPAN»
+the angle in such a«SPAN[style:float:left;width:250px;text-align:center]»{{IMG:EB1911 - Ordnance - Fig. 6.png|width=250}}«BR»«SC»Fig«/SC». 6.—Gunner’s Quadrant.«/SPAN»
 manner that on the long
 arm being placed along
 the bore near the muzzle

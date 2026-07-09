@@ -182,12 +182,11 @@ def _derive_html_self_closing_label(raw: str) -> str:
 
 
 def _derive_double_bracket_label(raw: str) -> str:
-    from britannica.pipeline.stages.elements._image import _thumb_caption_raw
     m = _BRACKET_PREFIX_RE.match(raw)
     if m and m.group(1).lower() in {"file", "image"}:
-        # A `thumb`/`frame` bracket carrying a caption is a WRAPPER (image leaf +
-        # caption inner) the dedicated producer recurses — not a bare image leaf.
-        return "CAPTIONED_IMAGE" if _thumb_caption_raw(raw) else "IMAGE"
+        # Every `[[File:]]`/`[[Image:]]` is IMAGE — bare or captioned (thumb/frame).
+        # The ONE producer detects a caption and lays it out; classify stays structural.
+        return "IMAGE"
     if m and m.group(1).lower() == "author":
         return "AUTHOR_LINK"
     if re.match(r"\[\[\s*1911\s+[Ee]ncyclop", raw, re.IGNORECASE):
@@ -224,20 +223,16 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     #   `{{rh|left|center|right}}` / `{{Running header|…}}` 3-column frame → RUNNING_HEADER.
     if _RUNNING_HEADER_RE.match(raw):
         return "RUNNING_HEADER"
-    # Standalone `{{Css image crop|…}}` — routed to the unified figure
-    # producer, which treats the crop as just another image: a stateless
-    # geometry-hash filename (`djvu_crop_filename`) → `{{IMG:…}}`, the crop
-    # already rendered to disk under that name.
+    # Image template spellings — all IMAGE; the one producer parses each to a filename
+    # (and, for `plain image with caption`, its `caption=`).  `{{Css image crop}}` is a
+    # DjVu crop (geometry-hash filename); `{{raw image}}` a full-page DjVu scan / file;
+    # `{{plain image with caption}}` a named-param figure macro.
     if re.match(r"\{\{\s*Css image crop\b", raw, re.IGNORECASE):
-        return "DJVU_CROP"
-    # `{{raw image|…}}` — full-page DjVu scan or plain figure file
-    # (`_process_raw_image` normalizes a DjVu page-ref + folds a `{{c|cap}}`).
+        return "IMAGE"
     if re.match(r"\{\{\s*raw\s+image\b", raw, re.IGNORECASE):
-        return "RAW_IMAGE"
-    # `{{Plain image with caption|image=…|caption=…}}` — named-parameter figure
-    # macro (`_process_plain_image` builds the {{IMG:…}} from the named params).
+        return "IMAGE"
     if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
-        return "PLAIN_IMAGE"
+        return "IMAGE"
     # `{{ordered list|…}}` — a nested ordered-list classification (GEOGRAPHY nests
     # 4 deep).  Matched on the raw opener (the first-token name is the ambiguous
     # bare "ordered").  A leaf — the ORDERED_LIST producer parses the whole nested
@@ -332,12 +327,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # `_convert_sub_sup`); the producer recurses the slot + Unicode-translates.
     if name in {"sub", "sup"}:
         return "SUBSUP"
-    # The IMAGE_FLOAT walker regex matches `{{(?:img float|figure|FI)\|…}}`.
-    # `img float` tokenizes here as "img" (whitespace stop in the
-    # template-name pattern).  Figure-equivalent templates with a
-    # full-name token go through the same producer.
+    # `{{img float|…}}` / `{{figure|…}}` / `{{FI|…}}` — a captioned figure → IMAGE; the one
+    # producer lays the caption out centered below the plate (no float).  (`img float`
+    # tokenizes as "img" — whitespace stop in the template-name pattern.)
     if name in {"img", "figure", "fi"}:
-        return "IMAGE_FLOAT"
+        return "IMAGE"
     if name == "hieroglyph":
         return "HIEROGLYPH"
     # `{{ppoem|…}}` — preformatted-poem template; the verse analog of `<poem>`.
@@ -627,7 +621,7 @@ def _classify_brace_pipe(
 # syntax-neutral — it renders `<table>` and `{|` alike by opener — so the
 # else-branch IS "TABLE", not a separate HTML_TABLE label.  Only labels whose
 # own producer is verified `<table>`-ready (figure/math/chem) route away; any
-# other label (incl. a `<table>` the ladder calls LAYOUT_WRAPPER / DJVU_CROP)
+# other label (incl. a `<table>` the ladder calls LAYOUT_WRAPPER)
 # stays on the table engine — exactly as before the collapse, when the
 # else-branch was HTML_TABLE → the same unified engine.
 # A figure `{|`-table is NOT a separate family: a plate is processed exactly like
@@ -736,7 +730,7 @@ def _is_table_html_tag(raw: str) -> bool:
 def _classify_table_element(shape: str, raw: str) -> ClassifiedElement:
     """A `{|` or `<table>`.  Derive its label from the SAME empty registry the old
     leaf saw (so the label is byte-identical), then: a genuine `TABLE` decomposes
-    into the tree; a DJVU_CROP / COMPOUND_TABLE / CHEMISTRY_LAYOUT keeps its
+    into the tree; a COMPOUND_TABLE / CHEMISTRY_LAYOUT keeps its
     raw-reading producer and stays a leaf, exactly as before."""
     grid = strip_outer(shape, raw)
     label = _derive_label(shape, raw, grid, {})
@@ -859,7 +853,7 @@ def classify(
 
     # NOTE: the walker is conservative — what comes in goes out unchewed.
     # An IMAGE element therefore carries its raw `[[File:…]]` VERBATIM; the
-    # file-ref/params parse is the producer's job (`_image_leaf` → `_img_marker`),
+    # file-ref/params parse is the producer's job (`_process_image` → `_parse_image`),
     # not a classify-time fold.  No per-label inner_text rewriting happens here.
 
     return ClassifiedElement(
