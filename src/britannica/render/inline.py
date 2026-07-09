@@ -36,11 +36,18 @@ def escape_html(value):
 _FILENAME_RE = re.compile(r"^(\d{2}-\d{4}-[a-z0-9][a-z0-9-]*?)-([^a-z0-9-].*)$")
 
 
-def _article_url(filename, is_local=True):
+def _article_url(filename, is_local=True, bundled=None):
     """filename → article link URL, mirroring article-urls.js `filenameToUrl`.  The
     ONE URL builder for every article link (inline «LN», xref panel, plate/parent).
     is_local=True is the jsdom-stub form the byte-identical golden uses; production is
-    the clean `/article/{id}/{slug}`."""
+    the clean `/article/{id}/{slug}`.  ``bundled`` (a set of in-book stems) selects the
+    EPUB policy: a target IN the book → relative `{stem}.xhtml`; one that isn't → the
+    absolute live-site URL (a book can't hold the whole corpus, and an absolute URL is
+    valid inside an EPUB — it carries the link instead of dropping it)."""
+    if bundled is not None:
+        stem = re.sub(r"\.json$", "", str(filename or ""))
+        return (f"{stem}.xhtml" if stem in bundled
+                else "https://britannica11.org" + _article_url(filename, is_local=False))
     if is_local:
         return "/article/" + filename           # matches the jsdom BritannicaUrls stub
     base = re.sub(r"\.json$", "", str(filename or ""))
@@ -278,7 +285,8 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     # Inline «LN» links honor the render target's URL scheme via ctx.is_local, so the
     # body's links match the panel/plate links (production clean URLs off-golden, the
     # jsdom-stub form in the golden where is_local defaults True).
-    article_url = article_url or (lambda fn: _article_url(fn, getattr(ctx, "is_local", True)))
+    article_url = article_url or (
+        lambda fn: _article_url(fn, getattr(ctx, "is_local", True), getattr(ctx, "epub_bundled", None)))
 
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
     # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell

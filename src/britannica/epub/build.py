@@ -18,7 +18,7 @@ from xml.etree import ElementTree as ET
 
 import html5lib
 
-from britannica.render.article import render_article
+from britannica.render.article import render_article, _section_slug
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 IMAGES_SRC = os.path.join(ROOT, "data", "derived", "images")
@@ -86,15 +86,28 @@ def build_epub(stems, input_dir, out_path):
     os.makedirs(imgdir)
     os.makedirs(os.path.join(stage, "META-INF"))
 
+    bundled = {stem for stem, _ in arts}     # the in-book set → presence-aware EPUB links
     seen_imgs = set()
     manifest, spine, nav_by_vol = [], [], {}
+    contribs = {}   # slug -> {name, initials, credentials, description, articles: [(stem, title)]}
     for stem, a in arts:
-        body = bundle_images(to_xhtml_body(render_article(a, target="epub")), imgdir, seen_imgs)
+        body = bundle_images(
+            to_xhtml_body(render_article(a, target="epub", epub_bundled=bundled)), imgdir, seen_imgs)
         title = a.get("title") or stem
         open(os.path.join(oebps, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml_doc(title, body))
-        manifest.append(f'<item id="{stem}" href="{stem}.xhtml" media-type="application/xhtml+xml"/>')
-        spine.append(f'<itemref idref="{stem}"/>')
+        # ids are XML NCNames — can't start with a digit, so the `NN-NNNN-…` stem is prefixed.
+        manifest.append(f'<item id="id-{stem}" href="{stem}.xhtml" media-type="application/xhtml+xml"/>')
+        spine.append(f'<itemref idref="id-{stem}"/>')
         nav_by_vol.setdefault(a.get("volume", "?"), []).append((stem, title))
+        for c in a.get("contributors") or []:
+            name = c.get("full_name") or ""
+            if not name:
+                continue
+            e = contribs.setdefault(_section_slug(name), {
+                "name": name, "initials": c.get("initials") or "",
+                "credentials": c.get("credentials") or "",
+                "description": c.get("description") or "", "articles": []})
+            e["articles"].append((stem, title))
 
     for name in sorted(seen_imgs):
         ext = os.path.splitext(name)[1].lower()
@@ -102,6 +115,36 @@ def build_epub(stems, input_dir, out_path):
 
     open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css())
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
+
+    # Contributors appendix — back matter.  The 1911 print credited authors only by
+    # initials; this edition resolves them to full names + credentials and lists each
+    # contributor's articles (a key the original never printed).  Byline links in every
+    # article point at these `#contrib-<slug>` anchors.
+    contrib_nav = ""
+    if contribs:
+        secs = []
+        for slug in sorted(contribs, key=lambda s: contribs[s]["name"].lower()):
+            e = contribs[slug]
+            meta = " ".join(x for x in [
+                f'({_html.escape(e["initials"])})' if e["initials"] else "",
+                _html.escape(e["credentials"])] if x)
+            desc = f'<p class="contrib-desc">{_html.escape(e["description"])}</p>' if e["description"] else ""
+            arts_li = "".join(f'<li><a href="{st}.xhtml">{_html.escape(t)}</a></li>'
+                              for st, t in e["articles"])
+            secs.append(
+                f'<section id="contrib-{slug}" class="contrib">'
+                f'<h2>{_html.escape(e["name"])}{(" " + meta) if meta else ""}</h2>{desc}'
+                f'<p class="contrib-articles-label">Articles</p><ul>{arts_li}</ul></section>')
+        appendix = (
+            '<h1>Contributors</h1>\n'
+            '<p>The 1911 edition credited its authors only by initials. This edition '
+            'resolves them to full names and credentials, and lists the articles each '
+            'contributor wrote — a key the original never printed.</p>\n' + "".join(secs))
+        open(os.path.join(oebps, "contributors.xhtml"), "w", encoding="utf-8").write(
+            xhtml_doc("Contributors", appendix))
+        manifest.append('<item id="id-contributors" href="contributors.xhtml" media-type="application/xhtml+xml"/>')
+        spine.append('<itemref idref="id-contributors"/>')
+        contrib_nav = '<li><a href="contributors.xhtml">Contributors</a></li>'
 
     # nav.xhtml — volume browse (topic TOC comes next)
     vols = "".join(
@@ -114,7 +157,7 @@ def build_epub(stems, input_dir, out_path):
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
         '<head><meta charset="utf-8"/><title>Contents</title></head>\n<body>\n'
-        f'<nav epub:type="toc" id="toc"><h1>Browse by Volume</h1><ol>{vols}</ol></nav>\n'
+        f'<nav epub:type="toc" id="toc"><h1>Browse by Volume</h1><ol>{vols}{contrib_nav}</ol></nav>\n'
         '</body>\n</html>\n'
     )
     open(os.path.join(oebps, "nav.xhtml"), "w", encoding="utf-8").write(nav)

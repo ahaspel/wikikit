@@ -125,12 +125,13 @@ def find_marker_end(s, start, open_m, close_m):
 class RenderContext:
     """Per-article render state (mirrors renderArticle's module-level counters)."""
 
-    def __init__(self, volume, scan_url, unproofed_pages, target="site", is_local=True):
+    def __init__(self, volume, scan_url, unproofed_pages, target="site", is_local=True, epub_bundled=None):
         self.volume = volume
         self.scan_url = scan_url
         self.unproofed_pages = unproofed_pages
         self.target = target            # "site" (byte-identical to the viewer) | "epub"
         self.is_local = is_local        # article-link URL scheme (stub form vs production clean URL)
+        self.epub_bundled = epub_bundled  # None on site; a set of in-book stems → the EPUB link policy
         self.math_popout_counter = 0
         self.math_popout_latex = {}
         self.footnote_counter = 0
@@ -210,6 +211,11 @@ def render_page_markers(s, ctx):
         page = m.group(1)
         unproofed = page in ctx.unproofed_pages
         cls = "page-marker unproofed" if unproofed else "page-marker"
+        if ctx.epub_bundled is not None:
+            # EPUB drops scans (can't bundle page images; readers don't want the viewer
+            # link).  Keep the printed-page boundary as a non-linked indicator — the
+            # bibliographic reference survives without the scan.
+            return f'<span class="{cls}" data-page="{page}">{ctx.volume}:{page}</span>'
         title = (f"Volume {ctx.volume}, page {page} (unproofed source) — click to view scan"
                  if unproofed else f"Volume {ctx.volume}, page {page} — click to view scan")
         href = f"{ctx.scan_url}&pinit={page}"
@@ -488,11 +494,11 @@ def _scan_url(article, is_local, back_href):
             f"&back={_enc(back_href)}")
 
 
-def _build_xref_href(xref, is_local):
+def _build_xref_href(xref, is_local, bundled=None):
     if xref.get("target_filename"):
-        base = _article_url(xref["target_filename"], is_local)
+        base = _article_url(xref["target_filename"], is_local, bundled)
     elif xref.get("normalized_target"):
-        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", is_local)
+        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", is_local, bundled)
     else:
         return "#"
     if xref.get("target_section"):
@@ -502,15 +508,18 @@ def _build_xref_href(xref, is_local):
     return base
 
 
-def render_article(article, *, is_local=True, back_href="http://localhost/", target="site"):
+def render_article(article, *, is_local=True, back_href="http://localhost/", target="site", epub_bundled=None):
     """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
-    (corpus-proven); target="epub" swaps the per-target policies (footnotes, …)."""
+    (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor
+    links → appendix, scans dropped, …).  ``epub_bundled`` — a set of in-book stems —
+    selects the EPUB link policy (see ``_article_url``); leave None for site."""
     ctx = RenderContext(
         volume=article.get("volume", "?"),
         scan_url=_scan_url(article, is_local, back_href),
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
         target=target,
         is_local=is_local,
+        epub_bundled=epub_bundled,
     )
     xrefs = sorted(article.get("xrefs") or [],
                    key=lambda x: _xref_sort_key(x.get("normalized_target") or ""))
@@ -522,7 +531,7 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
         for xref in xrefs:
             normalized = xref.get("normalized_target") or ""
             resolved = (xref.get("status") or "") == "resolved"
-            inner = (f'<a href="{_build_xref_href(xref, is_local)}">{escape_html(normalized)}</a>'
+            inner = (f'<a href="{_build_xref_href(xref, is_local, epub_bundled)}">{escape_html(normalized)}</a>'
                      if resolved else escape_html(normalized))
             items.append(
                 f'\n                <li class="xref-item {"resolved" if resolved else "unresolved"}">'
@@ -545,29 +554,34 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
     pages = (f'pp. {escape_html(ps if ps is not None else "")}–{escape_html(pe if pe is not None else "")}'
              if ps != pe else f'p. {escape_html(ps if ps is not None else "")}')
     wc = f'&middot; {article["word_count"]:,} words' if article.get("word_count") else ""
+    # Site links the citation to the page scan; EPUB drops scans, so it's plain text.
+    citation = (f"vol. {vol}, {pages}" if epub_bundled is not None
+                else f'<a href="{ctx.scan_url}" style="color: #6b5e4f;">vol. {vol}, {pages}</a>')
 
     contrib_html = ""
     if contributors:
-        parts = [
-            f'<a href="/contributors.html?q={_enc(c.get("full_name", ""))}" style="color: var(--muted);">'
-            f'{escape_html(c.get("full_name", ""))}</a> '
-            f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>'
-            for c in contributors
-        ]
+        def _contrib_link(c):
+            name = c.get("full_name", "")
+            # EPUB: link to the in-book contributors appendix anchor; site: the search page.
+            href = ("contributors.xhtml#contrib-" + _section_slug(name) if epub_bundled is not None
+                    else "/contributors.html?q=" + _enc(name))
+            return (f'<a href="{href}" style="color: var(--muted);">{escape_html(name)}</a> '
+                    f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>')
+        parts = [_contrib_link(c) for c in contributors]
         contrib_html = f'<div class="contributors">By {", ".join(parts)}</div>'
 
     parent = article.get("parent_article")
     parent_html = ""
     if parent:
         parent_html = ('<div style="margin-bottom: 8px; font-size: 0.95rem;">Plate for '
-                       f'<a href="{_article_url(parent["filename"], is_local)}">'
+                       f'<a href="{_article_url(parent["filename"], is_local, epub_bundled)}">'
                        f'{_render_title_markers(parent.get("title") or "", ctx)}</a></div>')
     topics_html = ""   # always empty in the golden (topicMap unloaded)
     plates = article.get("plates") or []
     plates_html = ""
     if plates and article.get("article_type") != "plate":
         links = ", ".join(
-            f'<a href="{_article_url(p["filename"], is_local)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
+            f'<a href="{_article_url(p["filename"], is_local, epub_bundled)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
             for i, p in enumerate(plates))
         plates_html = f'<div class="contributors">Plates: {links}</div>'
 
@@ -613,7 +627,7 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
         f"\n        <div class=\"card\">"
         f"\n          {h1}"
         f"\n          <div style=\"font-size: 0.85rem; color: #6b5e4f; font-style: italic; margin-bottom: 6px;\">"
-        f"\n            <a href=\"{ctx.scan_url}\" style=\"color: #6b5e4f;\">vol. {vol}, {pages}</a>"
+        f"\n            {citation}"
         f"\n            {wc}"
         f"\n          </div>"
         f"\n          {parent_html}"
