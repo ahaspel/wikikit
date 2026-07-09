@@ -65,6 +65,14 @@ def _process_math(raw: str, inner: str) -> str:
     # content) misses cache hits because the emission and the
     # measured form differ.
     inner = re.sub(r"\s+", " ", inner).strip()
+    # LaTeX is whitespace-insensitive EXCEPT `\ ` (backslash-space) — an explicit
+    # control space, a real token.  The strip above clips a trailing one to a bare
+    # `\`, a dangling command KaTeX rejects (renders red).  An ODD run of trailing
+    # backslashes means the last lost its space; restore it.  (An even run is a `\\`
+    # line break, which needs no trailing space.)  Source `104s. \ ` → `104s. \ `.
+    m = re.search(r"\\+$", inner)
+    if m and len(m.group(0)) % 2 == 1:
+        inner += " "
     tokens = ["display"] if display else []
     hint = scale_hint(inner)
     if hint:
