@@ -11,6 +11,9 @@ in memory, and read straight into the JSON — the DB is never written.
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from britannica.contributors.link_frontmatter import link_from_frontmatter
 from britannica.contributors.link_vol29_articles import link_vol29_articles
 from britannica.db.models import Article, ArticleContributor, ContributorInitials
@@ -104,14 +107,27 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
                    else sorted({a.volume for a in all_articles}))
         print(f"  [export] exporting {len(volumes)} volume(s)…", flush=True)
         total = 0
+        xref_rows: list = []
         for volume in volumes:
             n = export_articles_to_json(
                 volume, out_dir,
                 body_override=corpus,
                 link_index=idx,
+                xref_sink=xref_rows,
             )
             total += n
             print(f"  [export] vol {volume}: {n} articles ({total} total)", flush=True)
+
+        # Persist the full resolution (resolved AND unresolved) as one diffable
+        # snapshot — the unresolved half is otherwise discarded.  Lives beside
+        # article_index.tsv (data/derived/, not the deployed articles dir), so it
+        # is git-trackable for cross-rebuild resolution diffs.
+        if only_volume is None:
+            dump = Path(out_dir).parent / "xref_resolution.jsonl"
+            with dump.open("w", encoding="utf-8") as fh:
+                for row in xref_rows:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+            print(f"  [export] persisted {len(xref_rows)} xrefs → {dump}", flush=True)
         return total
     finally:
         session.close()

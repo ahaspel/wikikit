@@ -475,8 +475,16 @@ def export_articles_to_json(
     body_override: dict[int, str] | None = None,
     only_article_id: int | None = None,
     link_index=None,
+    xref_sink: list | None = None,
 ) -> int:
     """Export one volume's articles to JSON.
+
+    ``xref_sink`` (optional): when a list is passed, EVERY xref this volume
+    resolves — resolved AND unresolved — is appended to it as a flat record
+    (``source``/``surface``/``target``/``status``/``resolved_to``).  The
+    corpus-export orchestrator collects these across volumes and dumps a single
+    ``xref_resolution.jsonl`` — a diffable resolution snapshot (unresolved
+    targets are otherwise discarded and only survive as a count).
 
     ``body_override`` (article.id → body) is a test seam: when given,
     each article's body is taken from the map instead of ``article.body``.
@@ -638,6 +646,20 @@ def export_articles_to_json(
                 len(xref_list),
                 sum(1 for e in xref_list if e["status"] == "resolved"),
             )
+
+            if xref_sink is not None:
+                src = stable_id(article)
+                for e in xref_list:
+                    xref_sink.append({
+                        "source": src,
+                        "surface": e["surface_text"],
+                        "target": e["normalized_target"],
+                        "type": e["xref_type"],
+                        "status": e["status"],
+                        "resolved_to": e.get("target_filename"),
+                        **({"section": e["target_section"]}
+                           if e.get("target_section") else {}),
+                    })
 
             quality = _source_quality(session, article)
 
