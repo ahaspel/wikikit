@@ -504,11 +504,7 @@ of any dynamical system, and let «I»p«/I»<sub>1</sub>, «I»p«/I»<sub>2</s
 be the corresponding momenta. If the system is
 supposed to obey the conservation of energy and to move solely
 under its own internal forces, the changes in the co-ordinates and
-momenta can be found from the Hamiltonian equations«P»
-
-«EQN:1»«I»q̇<sub>r</sub>«/I»＝∂E/∂«I»p<sub>r</sub>«/I», «I»ṗ<sub>r</sub>«/I»＝−∂E/∂«I»q<sub>r</sub>«/I»,«/EQN»
-
-«P»where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I» /«I»dt«/I», &c., and E is the total energy expressed as
+momenta can be found from the Hamiltonian equations«P»«EQN:1»«I»q̇<sub>r</sub>«/I»＝∂E/∂«I»p<sub>r</sub>«/I», «I»ṗ<sub>r</sub>«/I»＝−∂E/∂«I»q<sub>r</sub>«/I»,«/EQN»«P»where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I» /«I»dt«/I», &c., and E is the total energy expressed as
 function of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, ... «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», . When the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub> ...
 «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», are given, the motion can be traced completely from these
 equations.«P»Let us suppose that an infinite number of exactly similar systems
@@ -545,11 +541,7 @@ there are properties which are common to all possible states, except
 for a number which form an insignificant fraction of the whole.
 These properties are found to account for the physical properties of
 gases.«P»Let the whole energy E of the system be supposed equal to E<sub>1</sub>+E<sub>2</sub>,
-where E<sub>2</sub> is of the form«P»
-
-«EQN:2»E<sub>2</sub>＝½«MATH:\sum_s«/MATH»(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... +α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)+½«MATH:\sum_s'«/MATH»(«I»m«/I»′«I»u«/I»′+«I»m«/I»′«I»v«/I»′<sup>2</sup>+«I»mw«/I»′<sup>2</sup>+β<sub>1</sub>φ<sub>1</sub><sup>2</sup>+β<sub>2</sub>φ<sub>2</sub><sup>2</sup>+... +β<sub>«I»n«/I»′</sub>φ<sub>«I»n«/I»′</sub><sup>2</sup>)«/EQN»
-
-«P»where θ<sub>1</sub>,θ<sub>2</sub>, ... θ<sub>«I»n«/I»</sub> and similarly φ<sub>1</sub>,φ<sub>2</sub>, ... φ<sub>«I»n«/I»′</sub> are any momenta
+where E<sub>2</sub> is of the form«P»«EQN:2»E<sub>2</sub>＝½«MATH:\sum_s«/MATH»(«I»mu«/I»<sup>2</sup>+«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... +α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)+½«MATH:\sum_s'«/MATH»(«I»m«/I»′«I»u«/I»′+«I»m«/I»′«I»v«/I»′<sup>2</sup>+«I»mw«/I»′<sup>2</sup>+β<sub>1</sub>φ<sub>1</sub><sup>2</sup>+β<sub>2</sub>φ<sub>2</sub><sup>2</sup>+... +β<sub>«I»n«/I»′</sub>φ<sub>«I»n«/I»′</sub><sup>2</sup>)«/EQN»«P»where θ<sub>1</sub>,θ<sub>2</sub>, ... θ<sub>«I»n«/I»</sub> and similarly φ<sub>1</sub>,φ<sub>2</sub>, ... φ<sub>«I»n«/I»′</sub> are any momenta
 or functions of the co-ordinates and momenta or co-ordinates alone
 which are subject only to the condition that they do not enter into
 the coefficients α<sub>1</sub>, α<sub>2</sub>, &c.«P»In this expression the first line may be supposed to represent the
@@ -568,11 +560,7 @@ infinitesimal fraction of the whole number, the values of u, 1/, w lie
 within ranges such that«P»(i) the values of «I»u«/I» (and similarly of «I»v«/I», «I»w«/I») are distributed among
 the «I»s«/I» molecules of the first kind according to the law of trial and error;
 and similarly of course for the molecules of other kinds:«P»«DIV[style:display:flex;align-items:baseline]»«SPAN[style:text-align:left]»(ii)«/SPAN»«SPAN[style:flex:1;text-align:center]»«MATH:\sum_s«/MATH»½ «I»mu«/I»<sup>2</sup>/«I»s«/I»＝ «MATH:\sum_s«/MATH»½ «I»mv«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ «I»mw«/I»<sup>2</sup>/«I»s«/I»＝«MATH:\sum_s«/MATH»½ α<sub>1</sub>θ<sub>1</sub><sup>2</sup>/«I»s«/I»＝ . . .«/SPAN»«SPAN[style:text-align:right]»«/SPAN»«/DIV»
-
-
-«EQN:3»＝«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′<sup>2</sup>/«I»s«/I»′＝«MATH:\sum_s«/MATH»½ β<sub>1</sub>φ<sub>1</sub><sup>2</sup>/«I»s«/I»′＝...      «/EQN»
-
-«P»A state of the system in which these two properties are true
+«EQN:3»＝«MATH:\sum_s«/MATH»½ «I»m«/I»′«I»u«/I»′<sup>2</sup>/«I»s«/I»′＝«MATH:\sum_s«/MATH»½ β<sub>1</sub>φ<sub>1</sub><sup>2</sup>/«I»s«/I»′＝...      «/EQN»«P»A state of the system in which these two properties are true
 will be called a “normal state”; other states will be spoken of as
 “abnormal.” Let all possible states of the system be
 divided into small ranges of equal extension, and of
@@ -595,31 +583,15 @@ in the limit, we may state as general laws «SPAN[style:white-space:nowrap]»tha
 «I»state«/I».«P»It will now be found that the various properties of gases follow
 from the supposition that the gas is in the normal state.«P»If each of the fractions (3) is put equal to 1/4«I»h«/I», it is readily found,
 from the first property of the normal state, that, of the
-«I»s«/I» molecules of the first kind, a number«SH:law-of-distribution-of-velocities»Law of Distribution of Velocities.«/SH»«P»
-
-«EQN:4»«MATH:s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
-
-«P»have velocities of which the components lie between «I»u«/I» and «I»u«/I»+«I»du«/I»,
+«I»s«/I» molecules of the first kind, a number«SH:law-of-distribution-of-velocities»Law of Distribution of Velocities.«/SH»«P»«EQN:4»«MATH:s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»«P»have velocities of which the components lie between «I»u«/I» and «I»u«/I»+«I»du«/I»,
 «I»v«/I» and «I»v«/I»+«I»dv«/I», «I»w«/I» and «I»w«/I»+«I»dw«/I», while the corresponding number of molecules
-of the second kind is, similarly,«P»
-
-«EQN:5»«MATH:s'\sqrt{(h^3m'^3 \mbox{/}\pi^3)}e^{-hm'(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
-
-«P»If «I»c«/I» is the resultant velocity of a molecule, so that «I»c«/I»<sup>2</sup>=«I»u«/I»<sup>2</sup>+«I»v«/I»<sup>2</sup>+«I»w«/I»<sup>2</sup>,
+of the second kind is, similarly,«P»«EQN:5»«MATH:s'\sqrt{(h^3m'^3 \mbox{/}\pi^3)}e^{-hm'(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»«P»If «I»c«/I» is the resultant velocity of a molecule, so that «I»c«/I»<sup>2</sup>=«I»u«/I»<sup>2</sup>+«I»v«/I»<sup>2</sup>+«I»w«/I»<sup>2</sup>,
 it is readily found from formula (4) that the number of molecules
 of the first kind of which the resultant velocity lies between «I»c«/I» and
-«I»c«/I»+«I»dc«/I» is«P»
-
-«EQN:6»«MATH:4\pi s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hmc^2)}c^2dc«/MATH»«/EQN»
-
-«P»These formulae express the “law of distribution of velocities”
+«I»c«/I»+«I»dc«/I» is«P»«EQN:6»«MATH:4\pi s\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hmc^2)}c^2dc«/MATH»«/EQN»«P»These formulae express the “law of distribution of velocities”
 in the normal state: the law is often called «I»Maxwell’s Law of Distribution«/I».«P»If «MATH:\tfrac{1}{2}\overline{mu^2}«/MATH» denote the mean value of «MATH:\tfrac{1}{2}mu^2«/MATH» averaged over the
 «I»s«/I» molecules of the first kind, equations (3) may be written in the form
-
-
 «EQN:7»«MATH:\tfrac{1}{2}\overline{mu^2}=\tfrac{1}{2}\overline{mv^2} =\tfrac{1}{2}\overline{mw^2}=\tfrac{1}{2}\overline{\alpha_1\theta^2_1} \cdots =1/4h«/MATH»«/EQN»
-
-
 «SH:equipartition-of-energy»Equipartition of Energy.«/SH»
 showing that the mean energy represented by each
 term in E<sub>2</sub> (formula 2) is the same. These equations
@@ -636,11 +608,7 @@ appear later: a partial justification is obtained as soon as it is seen
 how many physical laws can be explained by it. We accordingly
 put 1/2«I»h«/I»=RT, where T denotes the temperature on the absolute
 scale, and then have equations (7) in the form
-
-
-«EQN:8»«MATH:\overline{mu^2}=\overline{mv^2} \mbox{RT.}«/MATH»«/EQN»
-
-«P»When a system is composed of a mixture of different kinds of
+«EQN:8»«MATH:\overline{mu^2}=\overline{mv^2} \mbox{RT.}«/MATH»«/EQN»«P»When a system is composed of a mixture of different kinds of
 molecules, the fact that «I»h«/I» is the same for each constituent [cf.
 formulae. (5) and (6)] shows that in the normal state the different
 substances are all at the same temperature. For instance, if the
@@ -666,11 +634,7 @@ us fix our attention on a small area «I»d«/I»S of the boundary of thePAGE:6
 «I»d«/I»S, and the axis of «I»x«/I» is the normal at the origin into the gas. The
 number of molecules of the first kind of gas, whose components
 of velocity lie within the ranges between «I»u«/I» and «I»u«/I»+«I»du«/I», «I»v«/I» and «I»v«/I»+«I»dv«/I»,
-«I»w«/I» and «I»w«/I»+«I»dw«/I», will, by formula (5), be«P»
-
-«EQN:9»«MATH:v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
-
-«P»per unit volume. Construct a small cylinder inside the gas, having
+«I»w«/I» and «I»w«/I»+«I»dw«/I», will, by formula (5), be«P»«EQN:9»«MATH:v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»«P»per unit volume. Construct a small cylinder inside the gas, having
 «I»d«/I»S as base and edges such that the projections of each on the coordinate
 axes are «I»udt«/I», «I»vdt«/I», «I»wdt«/I». Each of the molecules enumerated
 in expression (9) will move parallel to the edge of this cylinder, and
@@ -684,11 +648,7 @@ molecule exerts an impulsive pressure equal to «I»mu«/I» on the boundary
 before the component of velocity of its centre of gravity normal to
 the boundary is reduced to zero. Thus the contribution to the total
 impulsive pressure exerted on the area «I»d«/I»S in time «I»dt«/I» from this cause
-is«P»
-
-«EQN:10»«MATH:mu \times udtd\mbox{S} \times v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»
-
-«P»The total pressure exerted in bringing the centres of gravity of
+is«P»«EQN:10»«MATH:mu \times udtd\mbox{S} \times v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}dudvdw«/MATH»«/EQN»«P»The total pressure exerted in bringing the centres of gravity of
 all the colliding molecules to rest normally to the boundary is obtained
 by first integrating this expression with respect to «I»u«/I», «I»v«/I», «I»w«/I»,
 the limits being all values for which collisions are possible (namely
@@ -704,20 +664,8 @@ kinds of molecules in the gas. On combining the two parts of the
 pressure which have been calculated, the aggregate impulsive
 pressure on «I»d«/I»S in time «I»dt«/I» is found to be«P»«CTR»«MATH[fs=80]:\Sigma dt\ d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw,«/MATH»«/CTR»«P»where Σ denotes summation over all kinds of molecules. This is
 equivalent to a steady pressure «I»p«/I»<sub>1</sub> per unit area where«P»«CTR»«MATH[popout]:p_1 - \Sigma dt d\mbox{S}\iiint_{-\infty}^{+\infty}v\sqrt{(h^3m^3 \mbox{/}\pi^3)}e^{-hm(u^2+v^2+w^2)}mu^2dudvdw«/MATH»«/CTR»«P»Clearly the integral is the sum of the values of «I»mu«/I»<sup>2</sup> for all the
-molecules of the first kind in unit volume, thus«P»
-
-«EQN:11»«MATH:p=v \overline{mu^2} + v' \overline{m'u^2} + \cdots«/MATH»«/EQN»
-
-«P»On substituting from equations (7) and (8), this expression assumes
-the forms«P»
-
-«EQN:12»«I»p«/I»＝(«I»v«/I»+«I»v«/I» ′+...)/2«I»h«/I»«/EQN»
-
-«P»
-
-«EQN:13»＝(«I»v«/I»+«I»v«/I» ′+...)RT«/EQN»
-
-«P»The number of molecules per unit volume in a gas at normal temperature
+molecules of the first kind in unit volume, thus«P»«EQN:11»«MATH:p=v \overline{mu^2} + v' \overline{m'u^2} + \cdots«/MATH»«/EQN»«P»On substituting from equations (7) and (8), this expression assumes
+the forms«P»«EQN:12»«I»p«/I»＝(«I»v«/I»+«I»v«/I» ′+...)/2«I»h«/I»«/EQN»«P»«EQN:13»＝(«I»v«/I»+«I»v«/I» ′+...)RT«/EQN»«P»The number of molecules per unit volume in a gas at normal temperature
 and pressure is known to be about 2·75 X 10<sup>19</sup>. If in formula
 (13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I» ′+ ...)2·75×10<sup>19</sup>
 T＝273, we obtain R＝1·35×10<sup>−16</sup> and this enables us
@@ -763,11 +711,7 @@ the total number of molecules per unit volume, is determined when
 «I»Different gases, at the same temperature and pressure, contain equal«/I»
 «I»numbers of molecules per unit volume«/I».«P»«I»Boyle’s and Charles’ Laws«/I».—If «I»v«/I» is the volume of a homogeneous
 mass of gas, and N the total number of its molecules, N＝«I»v«/I»(«I»v«/I»+«I»v«/I» ′+
-...), so that«P»
-
-«EQN:14»«I»pv«/I»＝RNT.«/EQN»
-
-«P»In this equation we have the combined laws of Boyle and Charles:
+...), so that«P»«EQN:14»«I»pv«/I»＝RNT.«/EQN»«P»In this equation we have the combined laws of Boyle and Charles:
 «I»When the temperature of a gas is kept constant the pressure varies«/I»
 «I»inversely as the volume, and when the volume is kept constant the«/I»
 «I»pressure varies as the temperature«/I».«P»Since the volume at constant pressure is exactly proportional to
@@ -793,47 +737,19 @@ is given by the equation«P»«CTR»(«I»p«/I»+«I»a«/I»/«I»v«/I»<sup>
 found experimentally to be capable of representing the relation
 between «I»p«/I», «I»v«/I», and T over large ranges of values. (See «LN:Condensation of Gases|Condensation of Gases«/LN».)«P»Let us consider a single gas, consisting of N similar molecules in a
 volume «I»v«/I», and let the energy of each molecule, as in
-formula (2) be given by«SH:calorimetry»Calorimetry.«/SH»«P»
-
-«EQN:15»E＝½«MATH:\sum_{\mbox{N}}«/MATH» («I»mu«/I»<sup>2</sup>«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)«/EQN»
-
-«P»«CTR»＝N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»«P»
-
-«EQN:16»＝½(«I»n«/I»+3)RNT         «/EQN»
-
-«P»Let a quantity «I»d«/I»Q of energy, measured in work units, be absorbed
+formula (2) be given by«SH:calorimetry»Calorimetry.«/SH»«P»«EQN:15»E＝½«MATH:\sum_{\mbox{N}}«/MATH» («I»mu«/I»<sup>2</sup>«I»mv«/I»<sup>2</sup>+«I»mw«/I»<sup>2</sup>+α<sub>1</sub>θ<sub>1</sub><sup>2</sup>+... α<sub>«I»n«/I»</sub>θ<sub>«I»n«/I»</sub><sup>2</sup>)«/EQN»«P»«CTR»＝N(«I»n«/I»+3)/4«I»h«/I» by equation (7)«/CTR»«P»«EQN:16»＝½(«I»n«/I»+3)RNT         «/EQN»«P»Let a quantity «I»d«/I»Q of energy, measured in work units, be absorbed
 by the gas from some external source, so that its pressure, volume
-and temperature change. The equation of energy is«P»
-
-«EQN:17»«I»d«/I»Q＝«I»d«/I»E+«I»pdv«/I»,«/EQN»
-
-«P»expressing that the total energy «I»d«/I»Q is used partly in increasing
+and temperature change. The equation of energy is«P»«EQN:17»«I»d«/I»Q＝«I»d«/I»E+«I»pdv«/I»,«/EQN»«P»expressing that the total energy «I»d«/I»Q is used partly in increasing
 the internal energy of the gas, and partly in expanding the gas
 against the pressure «I»p«/I». If we take «I»p«/I»＝RNT/«I»v«/I» from equation (14)
-and substitute for E from equation (16), this last equation becomes«P»
-
-«EQN:18»«I»d«/I»Q＝½ («I»n«/I»+3)RN«I»d«/I»T+RNT«I»dv«/I»/«I»v«/I»,«/EQN»
-
-«P»which may be taken as the general equation of calorimetry, for a
+and substitute for E from equation (16), this last equation becomes«P»«EQN:18»«I»d«/I»Q＝½ («I»n«/I»+3)RN«I»d«/I»T+RNT«I»dv«/I»/«I»v«/I»,«/EQN»«P»which may be taken as the general equation of calorimetry, for a
 gas which accurately obeys equation (14).«P»«I»Second Law of Thermodynamics«/I».—If we divide throughout by T,
 we obtain«P»«CTR»«I»d«/I»Q/T ＝½(«I»n«/I»+3)RN«I»d«/I»T/T+RN«I»dv«/I»/«I»v«/I».«/CTR»«P»showing that «I»d«/I»Q/T is a perfect differential. This not only verifies
 that the second law of thermodynamics is obeyed, but enables us
 to identify T with the absolute thermodynamical temperature.«P»If the volume of the gas is kept constant, we put «I»dv«/I»＝0 in
 equation (18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
-heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH:specific-heats»Specific Heats.«/SH»«P»
-
-«EQN:19»C<sub>«I»v«/I»</sub>＝½(«I»n«/I»+3)R/J«I»m«/I»«/EQN»
-
-«P»On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
-
-
-«EQN:20»C<sub>«I»p«/I»</sub>＝½(«I»n«/I»+5) R/J«I»m«/I».«/EQN»
-
-«P»By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for γ, the ratio of the specific heats.«P»
-
-«EQN:21»γ＝1 +2/«I»n«/I»+3).«/EQN»
-
-«P»The comparison of this formula with experiment provides a
+heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain«SH:specific-heats»Specific Heats.«/SH»«P»«EQN:19»C<sub>«I»v«/I»</sub>＝½(«I»n«/I»+3)R/J«I»m«/I»«/EQN»«P»On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
+«EQN:20»C<sub>«I»p«/I»</sub>＝½(«I»n«/I»+5) R/J«I»m«/I».«/EQN»«P»By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for γ, the ratio of the specific heats.«P»«EQN:21»γ＝1 +2/«I»n«/I»+3).«/EQN»«P»The comparison of this formula with experiment provides a
 striking confirmation of the truth of the kinetic theory but at the
 same time discloses the most formidable difficulty which the theory
 has so far had to encounter.«P»On giving different values to «I»n«/I» in formula (21), we obtain the

@@ -4,13 +4,14 @@ Builds the SAME open-only template the viewer builds (mechanical marker decode);
 (or normalize_html) does the tag fixup.  Verified by diffing normalize_html(this) against the
 jsdom golden (tests/snapshots/render/<stem>.html), per project_render_to_python.
 
-Scope of this brick: the shell (card / metadata / contributors / xref), the body \\n\\n
-pipeline (balanced-block collapse, split, continuation + SH merge), and renderParagraph's
-mixed-block split, TITLE, and prose paths (page markers, inline decode, MATH→«MATHPH» stub).
+Scope: the shell (card / metadata / contributors / xref) and renderParagraph's block-in-place
+render — the mixed-block split peels every block («TABLE»/«EQN»/VERSE/LEGEND/OUTLINE) in place,
+then TITLE, the self-rendering «EQN» (its own `math-system` grid + right-margin label), and the
+prose path (page markers, inline decode, «P»→<p>, MATH→«MATHPH» stub).
 
-DEFERRED to later bricks (the diff flags any seed that needs them): IMG, OUTLINE, VERSE,
-LEGEND, «TABLE[…]» tables (chem folded in), EQNGROUP math systems, footnotes, section
-detection + TOC, hieroglyph, the renderTitleMarkers fallback.
+Paragraph structure is CARRIED — prose breaks ride as «P», each numbered equation is a
+self-delimiting «EQN» block — never re-inferred at render: no `\\n\\n` split, no merge pass,
+no EQNGROUP wrapper.
 """
 import html as _html
 import re
@@ -30,20 +31,13 @@ TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
 # decoded mechanically by `decode_inline` — no `render_table`, no html5lib
 # re-parse.  `«TABLE[` is the open (the `cols`/attr payload always follows).
 TABLE_OPEN, TABLE_CLOSE = "«TABLE[", "«/TABLE»"
-DIV_OPEN, DIV_CLOSE = "«DIV[", "«/DIV»"
-EQNGROUP_OPEN, EQNGROUP_CLOSE = "«EQNGROUP»", "«/EQNGROUP»"
 
 _PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
 _TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
-# Math-only paragraph: leading page markers, one «MATH», optional trailing punct + (N) label.
-_MATH_PARA_RE = re.compile(
-    r"^\s*((?:\x01PAGE:\d+\x01\s*)*)(«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»)"
-    r"\s*[.,;:]?\s*(?:\(([^)]+)\)\s*)?\s*[.,;:]?\s*$", re.S)
 _EQN_PARA_RE = re.compile(
     r"^\s*((?:\x01PAGE:\d+\x01\s*)*)«EQN:([^»]*)»([\s\S]*?)«/EQN»\s*$", re.S)
 _MATH_ONLY_RE = re.compile(r"^«MATH(?:\[([^\]]*)\])?:([\s\S]*?)«/MATH»\s*[.,;:]?\s*$", re.S)
-_MATH_MARKER_RE = re.compile(r"^«MATH(?:\[([^\]]*)\])?:([\s\S]*?)«/MATH»$", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
@@ -66,22 +60,8 @@ BLOCK_MARKER_SCAN_RE = re.compile(
     r"|«OUTLINE:[\s\S]*?«/OUTLINE»"
     r"|«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"
     r"|«TABLE\[[\s\S]*?«/TABLE»"
+    r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
     r"|«TITLE:[\s\S]*?«/TITLE»"
-)
-
-# Block markers rendered by a paragraph-anchored regex: collapse internal \n\n so the
-# paragraph split can't fragment them.  (TABLE/DIV use the balanced walker instead.)
-_BLOCK_MARKER_RES = [
-    re.compile(r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"),
-    re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"),
-    re.compile(r"\{\{LEGEND:[\s\S]*?\}LEGEND\}"),
-    re.compile(r"«OUTLINE:[\s\S]*?«/OUTLINE»"),
-    re.compile(r"«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"),
-]
-
-# A structural block keeps a paragraph from the plain-text continuation merge.
-_NON_TEXT_PREFIX = re.compile(
-    r"^(?:\{\{(?:TABLE|LEGEND|IMG|VERSE)|«TABLE\[|«SEC:|«SH:|«ANCHOR:|«OUTLINE:|«PLATE_OUTLINE:|«TITLE:)"
 )
 
 
@@ -144,25 +124,6 @@ def find_marker_end(s, start, open_m, close_m):
             i += 1
     return -1
 
-
-def _collapse_balanced(s, open_m, close_m):
-    """Collapse internal \\n\\n+ → \\n inside every balanced `open_m…close_m` block."""
-    out = []
-    i = 0
-    n = len(s)
-    while i < n:
-        oi = s.find(open_m, i)
-        if oi == -1:
-            out.append(s[i:])
-            break
-        out.append(s[i:oi])
-        end = find_marker_end(s, oi, open_m, close_m)
-        if end == -1:
-            out.append(s[oi:])
-            break
-        out.append(re.sub(r"\n\n+", "\n", s[oi:end]))
-        i = end
-    return "".join(out)
 
 
 class RenderContext:
@@ -303,39 +264,24 @@ def render_paragraph(p, next_para, ctx):
                  f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
         return f"<h1>{h}</h1>"
 
-    # Numbered display-math block (single equation OR a bundled equation system): rows
-    # «EQN:label»content«/EQN» / bare «MATH:eq«/MATH» (optionally «MATH…» (label)); exactly
-    # one row carries the label, centred beside the math stack by CSS grid.
-    if p.startswith(EQNGROUP_OPEN) and p.endswith(EQNGROUP_CLOSE):
-        inner = p[len(EQNGROUP_OPEN):len(p) - len(EQNGROUP_CLOSE)]
-        label_text = None
-        row_htmls = []
-        for row in inner.split("\n"):
-            em = _EQN_PARA_RE.match(row)
-            if em:
-                label_text = em.group(2)
-                content = em.group(3).strip()
-                mo = _MATH_ONLY_RE.match(content)
-                content_html = (_render_display_math(mo.group(2), mo.group(1), ctx) if mo
-                                else decode_inline(content, escape=True, dhr_inline=True, ctx=ctx))
-                row_htmls.append(f'<div class="math-system-row">'
-                                 f'{render_page_markers(em.group(1) or "", ctx)}{content_html}</div>')
-                continue
-            rm = _MATH_PARA_RE.match(row)
-            if not rm:
-                continue
-            if rm.group(3) is not None:
-                label_text = rm.group(3)
-            hm = _MATH_MARKER_RE.match(rm.group(2))
-            hint = hm.group(1) if hm else None
-            latex = hm.group(2) if hm else rm.group(2)[len("«MATH:"):len(rm.group(2)) - len("«/MATH»")]
-            row_htmls.append(f'<div class="math-system-row">'
-                             f'{render_page_markers(rm.group(1) or "", ctx)}'
-                             f'{_render_display_math(latex, hint, ctx)}</div>')
+    # Numbered display-math block — a self-contained «EQN:label»content«/EQN».  It renders its
+    # own math plus its label in the right margin (the `math-system` CSS grid), the SAME HTML
+    # the render-time «EQNGROUP» wrapper produced for a lone equation — which is every equation:
+    # a group never carried a second numbered row (a 2nd label breaks the old loop), so there is
+    # nothing to bundle.  The label rides inside the marker; no wrapper, no `\n\n` grouping.
+    eqm = _EQN_PARA_RE.match(p)
+    if eqm:
+        label_text = eqm.group(2)
+        content = eqm.group(3).strip()
+        mo = _MATH_ONLY_RE.match(content)
+        content_html = (_render_display_math(mo.group(2), mo.group(1), ctx) if mo
+                        else decode_inline(content, escape=True, dhr_inline=True, ctx=ctx))
+        row_html = (f'<div class="math-system-row">'
+                    f'{render_page_markers(eqm.group(1) or "", ctx)}{content_html}</div>')
         label_html = (f'<div class="math-system-label">({escape_html(label_text)})</div>'
                       if label_text else "")
         return (f'<div class="math-system"><div class="math-system-rows">'
-                f'{"".join(row_htmls)}</div>{label_html}</div>')
+                f'{row_html}</div>{label_html}</div>')
 
     # Standalone block image (a paragraph that IS one image) → the <img>, no <p> wrap.
     im = _IMG_ANCHORED_RE.match(p)
@@ -435,60 +381,6 @@ def render_paragraph(p, next_para, ctx):
     return f"<p>{html}</p>"
 
 
-def _merge_paras(raw_paras):
-    """The \\n\\n merge pass: plain-text continuation + shoulder-heading absorb.
-
-    (EQNGROUP bundling is DEFERRED with the math-system brick.)
-    """
-    def strip_margin(s):
-        s = re.sub(r"\x01PAGE:\d+\x01", "", s)
-        s = re.sub(r"«SH:[^»]*».*?«/SH»", "", s, flags=re.S)
-        return s.strip()
-
-    merged = []
-    i = 0
-    n = len(raw_paras)
-    while i < n:
-        cur = raw_paras[i]
-        # A labeled math paragraph («EQN…» or «MATH…» (N)) bundles with the bare-math
-        # paragraphs that immediately follow into one «EQNGROUP» visual block.
-        math_hit = _MATH_PARA_RE.match(cur)
-        if _EQN_PARA_RE.match(cur) or (math_hit is not None and math_hit.group(3) is not None):
-            run_rows = [cur]
-            scan = i + 1
-            while scan < n:
-                nxt = raw_paras[scan]
-                if _EQN_PARA_RE.match(nxt):
-                    break
-                nm = _MATH_PARA_RE.match(nxt)
-                if not nm or nm.group(3) is not None:
-                    break
-                run_rows.append(nxt)
-                scan += 1
-            merged.append(EQNGROUP_OPEN + "\n".join(run_rows) + EQNGROUP_CLOSE)
-            i = scan
-            continue
-        if merged and not _NON_TEXT_PREFIX.match(cur):
-            prev = merged[-1]
-            if not _NON_TEXT_PREFIX.match(prev):
-                pt, ct = strip_margin(prev), strip_margin(cur)
-                if pt and ct and re.search(r"[,;]$", pt) and re.match(r"^[a-z]", ct):
-                    merged[-1] = prev + " " + cur
-                    i += 1
-                    continue
-        if cur.startswith("«SH:"):
-            if merged:
-                merged[-1] += " " + cur
-            else:
-                merged.append(cur)
-            if i + 1 < n and not raw_paras[i + 1].startswith("«SH:"):
-                merged[-1] += " " + raw_paras[i + 1]
-                i += 1
-        else:
-            merged.append(cur)
-        i += 1
-    return merged
-
 
 def dedupe_anchor_id(seen, id_):
     seen[id_] = seen.get(id_, 0) + 1
@@ -563,16 +455,12 @@ def _render_body(article, ctx):
     marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
     if "\x01PAGE:" not in marked and article.get("page_start"):
         marked = f"\x01PAGE:{article['page_start']}\x01" + marked
-    marked = _collapse_balanced(marked, TABLE_OPEN, TABLE_CLOSE)
-    marked = _collapse_balanced(marked, DIV_OPEN, DIV_CLOSE)
-    for rx in _BLOCK_MARKER_RES:
-        marked = rx.sub(lambda m: re.sub(r"\n\n+", "\n", m.group(0)), marked)
-    merged = _merge_paras(marked.split("\n\n"))
-    detect_sections(merged, ctx)
-    body_html = "".join(
-        render_paragraph(pp, merged[idx + 1] if idx + 1 < len(merged) else None, ctx)
-        for idx, pp in enumerate(merged)
-    )
+    # Paragraph structure is CARRIED, not re-inferred: prose breaks ride as «P» (→<p>, the
+    # browser auto-closes) and each numbered equation is a self-delimiting «EQN» block.  So there
+    # is no `\n\n` split and no merge pass — render the whole body once; render_paragraph's block
+    # scan peels every block («TABLE»/«EQN»/VERSE/…) in place and the prose runs through «P»→<p>.
+    detect_sections([marked], ctx)
+    body_html = render_paragraph(marked, None, ctx)
     # De-dup colliding section ids in the SAME document order detect_sections used, so
     # each TOC link resolves to its own anchor (first keeps section-<slug>, reuses get -N).
     id_seen = {}

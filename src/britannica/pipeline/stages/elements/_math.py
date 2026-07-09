@@ -145,4 +145,7 @@ def _process_math_equation(inner: str, context) -> str:
     # each period; body-text used to drop those spaces by the same
     # rule, and that's what the snapshot baseline assumes).
     rendered = _SPACE_BEFORE_PUNCT_RE.sub(r"\1", rendered)
-    return f"\n\n«EQN:{label}»{rendered}«/EQN»\n\n"
+    # `«EQN»` is a self-delimiting block marker (like `«TABLE»`): the renderer's block scan
+    # peels it in place and it renders as its own `math-system` grid.  No `\n\n` paragraph
+    # margins — paragraph structure is carried by `«P»`, never re-inferred from blank lines.
+    return f"«EQN:{label}»{rendered}«/EQN»"
