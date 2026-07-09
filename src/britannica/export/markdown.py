@@ -20,7 +20,7 @@ Policy per marker family:
                  «MIRROR» and the size family «SM»/«LG»/«XS»/«XXS»/«XXL»/«FS»/«LH»
   * links      «LN:target|display«/LN» / «XL:url|display«/XL» → ``[display](target)``
   * footnotes  «FN[name]?:body«/FN» → ``[^n]`` inline + a collected notes block
-  * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN»/«EQNGROUP» → ``$$``
+  * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN» → ``$$``
   * images     {{IMG:file|meta|caption}} → ``![caption](file)`` reference
   * tables     «TABLE[…]»…«/TABLE»  →  a de-spanned GFM table (see _table_to_gfm)
   * structural drop (carried in the record's own fields, not the prose):
@@ -37,7 +37,6 @@ from britannica.markers import strip_page_markers
 
 _MATH_RE = re.compile(r"«MATH(\[[^\]]*\])?:([\s\S]*?)«/MATH»")
 _EQN_RE = re.compile(r"«EQN:[^»]*»([\s\S]*?)«/EQN»")
-_EQNGROUP_RE = re.compile(r"«EQNGROUP»([\s\S]*?)«/EQNGROUP»")
 _IMG_RE = re.compile(r"\{\{IMG:([^|}]+)((?:\|[^{}]*?)*?)\}\}")
 _VERSE_RE = re.compile(r"\{\{VERSE(?:\[[^\]]*\])?:([\s\S]*?)\}VERSE\}")
 _LEGEND_RE = re.compile(r"\{\{LEGEND:([\s\S]*?)\}LEGEND\}")
@@ -228,7 +227,6 @@ def body_to_markdown(body: str) -> str:
     text = _MATH_RE.sub(
         lambda m: (f"\n\n$$\n{m.group(2).strip()}\n$$\n\n" if m.group(1)
                    else f"${m.group(2).strip()}$"), text)
-    text = _EQNGROUP_RE.sub(lambda m: f"\n\n$$\n{_strip_math(m.group(1))}\n$$\n\n", text)
     text = _EQN_RE.sub(lambda m: f"\n\n$$\n{_strip_math(m.group(1))}\n$$\n\n", text)
     # images BEFORE tables — so a cell's {{IMG:…|width=N}} becomes ![…](file)
     # (no pipe) before the table's cell-escaper would mangle its `|`.
@@ -252,6 +250,6 @@ def body_to_markdown(body: str) -> str:
 
 
 def _strip_math(s: str) -> str:
-    """EQN/EQNGROUP inner → the LaTeX body (drop any nested «MATH» wrappers)."""
+    """EQN inner → the LaTeX body (drop any nested «MATH» wrappers)."""
     s = _MATH_RE.sub(lambda m: m.group(2), s)
     return re.compile(r"«[^«»]*»").sub("", s).strip()

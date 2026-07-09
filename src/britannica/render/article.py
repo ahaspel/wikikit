@@ -188,7 +188,7 @@ def _render_math_markers(html, ctx):
 
 
 def _render_display_math(latex, hint, ctx):
-    """A display-mode equation (EQNGROUP row) → the «MATHPH» stub (or popout / fs-scaled)."""
+    """A display-mode equation («EQN» row) → the «MATHPH» stub (or popout / fs-scaled)."""
     ph = parse_math_hint(hint)
     if ph["popout"]:
         return render_math_popout(_process_latex(latex), True, ctx)

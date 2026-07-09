@@ -134,7 +134,7 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     # cell- and block-level content; SEC is the major-section anchor point marker
     # «SEC:slug|name» (stamp_section_anchors); SH the shoulder heading; ANCHOR the
     # «ANCHOR:slug|name» link target (kind="anchor" downstream, kept out of the TOC)
-    "FN", "MATH", "EQNGROUP", "EQN", "SEC", "SH", "ANCHOR",
+    "FN", "MATH", "EQN", "SEC", "SH", "ANCHOR",
     # recursive table structure (decodeInlineMarkers) — chem is a TABLE too now
     "TABLE", "TR", "TD", "TH", "CAPTION",
 )
@@ -165,7 +165,6 @@ _DROP_MARKER_RE = _re.compile(
     r"|«FN(?:\[[^\]]*\])?:[\s\S]*?«/FN»"
     r"|«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»"
     r"|«TABLE\[[\s\S]*?«/TABLE»"
-    r"|«EQNGROUP»[\s\S]*?«/EQNGROUP»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
     r"|«(?:OUTLINE|PLATE_OUTLINE):[\s\S]*?«/(?:OUTLINE|PLATE_OUTLINE)»"
     r"|\{\{IMG:[^}]*\}\}"
@@ -175,6 +174,11 @@ _DROP_MARKER_RE = _re.compile(
 )
 _INLINE_MARKER_RE = _re.compile(r"«[^«»]*»")
 _LINK_RE = _re.compile(r"«(?:LN|XL):([\s\S]*?)«/(?:LN|XL)»")
+# Carried presentational HTML — the SAFE-HTML set decode_inline un-escapes for the render
+# (`sub|sup|small|big|br`).  In PLAIN text it carries nothing search wants, so strip the tag
+# and KEEP the content (`H<sub>2</sub>O` → `H2O`); a raw `<br>` line break becomes a separator.
+_RAW_HTML_RE = _re.compile(r"<\s*/?\s*(?:sub|sup|small|big)\s*>", _re.I)
+_RAW_BR_RE = _re.compile(r"<\s*br\s*/?\s*>", _re.I)
 
 
 def _link_display(m: "_re.Match") -> str:
@@ -200,4 +204,6 @@ def markers_to_text(text: str, *, sep: str = " ") -> str:
     text = _DROP_MARKER_RE.sub(sep, text)
     text = _LINK_RE.sub(_link_display, text)
     text = _INLINE_MARKER_RE.sub("", text)
+    text = _RAW_BR_RE.sub(sep, text)          # <br> line break → word separator
+    text = _RAW_HTML_RE.sub("", text)         # <sub>/<sup>/<small>/<big> → keep content, drop tag
     return text
