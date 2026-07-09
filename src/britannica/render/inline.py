@@ -5,7 +5,8 @@ same order, same strings, same INDEPENDENT open→tag / close→tag substitution
 styler/wrapper markers (the «P»/«CTR» rule: a marker that nests or spans render chunks
 pairs in the browser, so there is no `«X»(.*?)«/X»` span-match to mis-pair).  The
 parametrized markers (SPAN/DIV/LN/XL/BAR/BRACE2/…) key their close on the `»`-anchored
-opener.  Verified against tools/render/inline_ref.json (the real viewer output).
+opener.  Regression-snapshotted against tests/snapshots/inline/inline_ref.json (once
+the viewer's decodeInlineMarkers output; now this decoder's own golden).
 
 Deferred to later bricks (frame-dependent / need helpers the block+shell layers own):
 IMG (renderImg), FN (footnote numbering), MATH (KaTeX / display-mode), hieroglyph
