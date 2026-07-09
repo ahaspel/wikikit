@@ -101,9 +101,21 @@ def _section_slug(name):
     return re.sub(r"^-|-$", "", s)
 
 
-def _article_url(filename):
-    # Matches the jsdom reference stub (BritannicaUrls.filenameToUrl).
-    return "/article/" + filename
+_FILENAME_RE = re.compile(r"^(\d{2}-\d{4}-[a-z0-9][a-z0-9-]*?)-([^a-z0-9-].*)$")
+
+
+def _article_url(filename, is_local=True):
+    """filename → article link URL, mirroring article-urls.js `filenameToUrl`.  Local is the
+    jsdom-stub form the byte-identical golden uses; production is the clean `/article/{id}/{slug}`."""
+    if is_local:
+        return "/article/" + filename           # matches the jsdom BritannicaUrls stub
+    base = re.sub(r"\.json$", "", str(filename or ""))
+    m = _FILENAME_RE.match(base)
+    if m:
+        return f"/article/{m.group(1)}/{m.group(2).lower()}"
+    page = re.sub(r"^0+", "", base).split("-")[0]        # legacy numeric-id fallback
+    slug = base[base.index("-") + 1:].lower() if "-" in base else base.lower()
+    return f"/article/{page}/{slug}"
 
 
 def find_marker_end(s, start, open_m, close_m):
@@ -173,13 +185,22 @@ def render_math_popout(latex, is_display, ctx):
             "[equation ⤢ click to view]</a>")
 
 
+def _tex_math(latex, display, ctx):
+    """Site target → a KaTeX-hydration placeholder carrying the (HTML-escaped) LaTeX and its
+    display mode; the viewer runs KaTeX over `.tex-math` after inserting the page.  Other targets
+    keep the `«MATHPH»` stub (the byte-identical comparison stub / EPUB path)."""
+    if ctx.target != "site":
+        return "«MATHPH»"
+    return f'<span class="tex-math" data-display="{"1" if display else "0"}">{latex}</span>'
+
+
 def _render_math_markers(html, ctx):
     def repl(m):
         hint, latex = m.group(1), m.group(2)
         ph = parse_math_hint(hint)
         if ph["popout"]:
             return render_math_popout(_process_latex(latex), ph["display"], ctx)
-        result = "«MATHPH»"  # katex stub
+        result = _tex_math(latex, ph["display"], ctx)
         fs = ph["fsPct"]
         if fs and 0 < fs < 100:
             return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
@@ -188,11 +209,11 @@ def _render_math_markers(html, ctx):
 
 
 def _render_display_math(latex, hint, ctx):
-    """A display-mode equation («EQN» row) → the «MATHPH» stub (or popout / fs-scaled)."""
+    """A display-mode equation («EQN» row) → a KaTeX-hydration placeholder (or popout / fs-scaled)."""
     ph = parse_math_hint(hint)
     if ph["popout"]:
         return render_math_popout(_process_latex(latex), True, ctx)
-    result = "«MATHPH»"
+    result = _tex_math(latex, True, ctx)
     fs = ph["fsPct"]
     if fs and 0 < fs < 100:
         return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
@@ -301,6 +322,11 @@ def render_paragraph(p, next_para, ctx):
         if items:
             rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
             root = "outline plate-outline" if om.group(1) else "outline"
+            # Fully-indented outline — every item carries ≥1 `:` of indent, no margin-level
+            # bare-emphasis heading — renders as an indented block, so a plain `:`-list keeps the
+            # indentation the source states.  Taxonomies with a depth-0 heading are unaffected.
+            if min(d for d, _ in items) >= 1:
+                root += " outline-indent"
             out = [f'<ul class="{root}">']
             cur = 0
             for depth, content in items:
@@ -479,9 +505,9 @@ def _scan_url(article, is_local, back_href):
 
 def _build_xref_href(xref, is_local):
     if xref.get("target_filename"):
-        base = _article_url(xref["target_filename"])
+        base = _article_url(xref["target_filename"], is_local)
     elif xref.get("normalized_target"):
-        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json")
+        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", is_local)
     else:
         return "#"
     if xref.get("target_section"):
@@ -548,14 +574,14 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
     parent_html = ""
     if parent:
         parent_html = ('<div style="margin-bottom: 8px; font-size: 0.95rem;">Plate for '
-                       f'<a href="{_article_url(parent["filename"])}">'
+                       f'<a href="{_article_url(parent["filename"], is_local)}">'
                        f'{_render_title_markers(parent.get("title") or "", ctx)}</a></div>')
     topics_html = ""   # always empty in the golden (topicMap unloaded)
     plates = article.get("plates") or []
     plates_html = ""
     if plates and article.get("article_type") != "plate":
         links = ", ".join(
-            f'<a href="{_article_url(p["filename"])}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
+            f'<a href="{_article_url(p["filename"], is_local)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
             for i, p in enumerate(plates))
         plates_html = f'<div class="contributors">Plates: {links}</div>'
 

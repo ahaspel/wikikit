@@ -283,7 +283,15 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
         h = _FN_RE.sub(lambda m: render_fn_marker(m.group(1), m.group(2), ctx), h)
 
     if not skip_math:
-        h = _MATH_RE.sub("«MATHPH»", h)
+        if getattr(ctx, "target", None) == "site":
+            # Site target → the same KaTeX-hydration placeholder the prose path emits.  Inline
+            # (cell/caption/verse) MATH is display=0; the viewer runs KaTeX over `.tex-math`.
+            def _math_ph(m):
+                inner = re.match(r"«MATH(?:\[[^\]]*\])?:([\s\S]*?)«/MATH»", m.group(0))
+                return f'<span class="tex-math" data-display="0">{inner.group(1) if inner else ""}</span>'
+            h = _MATH_RE.sub(_math_ph, h)
+        else:
+            h = _MATH_RE.sub("«MATHPH»", h)
 
     h = _VERSE_RE.sub(_verse, h)
 

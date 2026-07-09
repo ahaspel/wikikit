@@ -2352,13 +2352,19 @@ groups of medusiform
 buds.«/TD»«/TR»«/TABLE»«/TD»«/TR»«/TABLE»«P»Speaking generally, three principal types of hydranth can be
 distinguished, each with subordinate varieties of form.«P»1. Club-shaped hydranths with numerous tentacles, generally
 scattered irregularly, sometimes with a spiral arrangement, or in
-whorls (“verticillate”).«P»:(«I»a«/I») Tentacles filiform; type of «I»Clava«/I» (fig. 5), «I»Cordylophora«/I», &c.
-:(«I»b«/I») Tentacles capitate, simple; type of «I»Coryne«/I» and «I»Syncoryne«/I»; «I»Myriothela«/I» is an aberrant form with some of the tentacles modified as “claspers” to hold the ova.
-:(«I»c«/I») Tentacles capitate, branched, wholly or in part; type of «I»Cladocoryne«/I».
-:(«I»d«/I») Tentacles filiform or capitate, tending to be arranged in definite whorls; type of «I»Stauridium«/I» (fig. 2), «I»Cladonema«/I» and «I»Pennaria«/I».«P»2. Hydranth more shortened, daisy-like in form, with two whorls
-of tentacles, oral and aboral.«P»:(«I»a«/I») Tentacles filiform, simple, radially arranged or scattered irregularly; type of «I»Tubularia«/I» (fig. 4), «I»Corymorpha«/I» (fig. 3), «I»Nemopsis«/I», «I»Pelagohydra«/I», &c.
-:(«I»b«/I») Tentacles with a bilateral arrangement, branched tentacles in addition to simple filiform ones; type of «I»Branchiocerianthus«/I».«P»3. Hydranth with a single circlet of tentacles.«P»:(«I»a«/I») With filiform tentacles; the commonest type, seen in «I»Bougainvillea«/I» (fig. 13), «I»Eudendrium«/I», &c.
-:(«I»b«/I») With capitate tentacles; type of «I»Clavatella«/I».«P»4. Hydranth with tentacles reduced below four; type of «I»Lar«/I»
+whorls (“verticillate”).«P»«OUTLINE:
+1|(«I»a«/I») Tentacles filiform; type of «I»Clava«/I» (fig. 5), «I»Cordylophora«/I», &c.
+1|(«I»b«/I») Tentacles capitate, simple; type of «I»Coryne«/I» and «I»Syncoryne«/I»; «I»Myriothela«/I» is an aberrant form with some of the tentacles modified as “claspers” to hold the ova.
+1|(«I»c«/I») Tentacles capitate, branched, wholly or in part; type of «I»Cladocoryne«/I».
+1|(«I»d«/I») Tentacles filiform or capitate, tending to be arranged in definite whorls; type of «I»Stauridium«/I» (fig. 2), «I»Cladonema«/I» and «I»Pennaria«/I».
+«/OUTLINE»«P»2. Hydranth more shortened, daisy-like in form, with two whorls
+of tentacles, oral and aboral.«P»«OUTLINE:
+1|(«I»a«/I») Tentacles filiform, simple, radially arranged or scattered irregularly; type of «I»Tubularia«/I» (fig. 4), «I»Corymorpha«/I» (fig. 3), «I»Nemopsis«/I», «I»Pelagohydra«/I», &c.
+1|(«I»b«/I») Tentacles with a bilateral arrangement, branched tentacles in addition to simple filiform ones; type of «I»Branchiocerianthus«/I».
+«/OUTLINE»«P»3. Hydranth with a single circlet of tentacles.«P»«OUTLINE:
+1|(«I»a«/I») With filiform tentacles; the commonest type, seen in «I»Bougainvillea«/I» (fig. 13), «I»Eudendrium«/I», &c.
+1|(«I»b«/I») With capitate tentacles; type of «I»Clavatella«/I».
+«/OUTLINE»«P»4. Hydranth with tentacles reduced below four; type of «I»Lar«/I»
 (fig. 11), «I»Monobrachium«/I», &c.«P»PAGE:163The «I»Anthomedusa«/I» in form is generally deep, bell-shaped.
 The sense organs are typically ocelli, never otocysts. The gonads
 are borne on the manubrium, either forming a continuous ring

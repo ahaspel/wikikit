@@ -1952,7 +1952,10 @@ Take, for instance, a section across the chamber of a 4·7-in. Q.F.
 gun, for which the diameter of the chamber is 5 in., that of the
 barrel 8·2 in., and the external diameter of the jacket 15 in.«P»Here   𝑟<sub>0</sub>＝2·5; 𝑟<sub>1</sub>＝4·1; 𝑟<sub>2</sub>＝7·5<br>
      T<sub>0</sub>＝15; T<sub>1</sub>＝18; P<sub>2</sub>＝0. «P»From (4) for the «I»Firing Stress«/I»«P»:P<sub>1</sub>＝(7·5)<sup>2</sup> − (4·1)<sup>2</sup>/(7·5)<sup>2</sup> + (4·1)<sup>2</sup>×18＝9·72 tons per square inch.«P»:P<sub>0</sub>＝(4·1)<sup>2</sup> − (2·5)<sup>2</sup>/(4·1)<sup>2</sup> + (2·5)<sup>2</sup>×(15+9·72)+9·72＝21 tons per square inch.«P»From (3) the tension T′<sub>𝑛</sub> of the outer fibres of the hoops is obtained;
-thus«P»:T′<sub>2</sub>＝P<sub>2</sub>+T<sub>1</sub>−P<sub>1</sub>＝18−9·72＝8·28 tons per square inch.«P»:T′<sub>1</sub>＝P<sub>1</sub>+T<sub>0</sub>−P<sub>0</sub>＝9·72+15−21 =3·72 tons per square inch.«P»For any intermediate radius r the stress can be found by using
+thus«P»«OUTLINE:
+1|T′<sub>2</sub>＝P<sub>2</sub>+T<sub>1</sub>−P<sub>1</sub>＝18−9·72＝8·28 tons per square inch.
+1|T′<sub>1</sub>＝P<sub>1</sub>+T<sub>0</sub>−P<sub>0</sub>＝9·72+15−21 =3·72 tons per square inch.
+«/OUTLINE»«P»For any intermediate radius r the stress can be found by using
 equations (1) and (2) or (1) or (2) and (3).«P»For the «I»Powder Stress«/I» equations (1) and (2) are used by putting
 𝑛＝1, and then 𝑝<sub>1</sub>＝0 (also remembering that, as there are two
 hoops, the outer radius must be written 𝑟<sub>2</sub>); the formulas become«P»«EQN:6»𝑡＝𝑟<sub>0</sub><sup>2</sup> 𝑟<sub>2</sub><sup>2</sup> + 𝑟<sup>2</sup>/𝑟<sup>2</sup> + 𝑟<sub>2</sub><sup>2</sup> − 𝑟<sub>0</sub><sup>2</sup> 𝑝<sub>0</sub>«/EQN»«P»«EQN:7»𝑝＝𝑟<sub>0</sub><sup>2</sup> 𝑟<sub>2</sub><sup>2</sup> − 𝑟<sup>2</sup>/𝑟<sup>2</sup> + 𝑟<sub>2</sub><sup>2</sup> − 𝑟<sub>0</sub><sup>2</sup> 𝑝<sub>0</sub>«/EQN»«P»When 𝑟＝𝑟<sub>0</sub>＝2·5, 𝑡 =𝑡<sub>0</sub>, 𝑝<sub>0</sub>＝P<sub>0</sub> already found and:«P»«CTR»𝑡<sub>0</sub>＝(7·5)<sup>2</sup> + (2·5)<sup>2</sup>/(7·5)<sup>2</sup> − (2·5)<sup>2</sup>×21＝26·25 tons.«/CTR»«P»For the tension of the fibres at the outer circumference«P»«CTR»𝑡′<sub>2</sub>＝26·25 − 21＝5·25 tons,«/CTR»«P»from (3) and for a radius 𝑟<sub>2</sub>＝7·5 inches.«P»The stress for any intermediate radius 𝑟 can be obtained from
