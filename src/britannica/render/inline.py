@@ -32,10 +32,23 @@ def escape_html(value):
     return s
 
 
-def _default_article_url(filename):
-    # Matches the jsdom reference stub (BritannicaUrls.filenameToUrl); production
-    # emitters inject their own target-specific resolver.
-    return "/article/" + filename
+_FILENAME_RE = re.compile(r"^(\d{2}-\d{4}-[a-z0-9][a-z0-9-]*?)-([^a-z0-9-].*)$")
+
+
+def _article_url(filename, is_local=True):
+    """filename → article link URL, mirroring article-urls.js `filenameToUrl`.  The
+    ONE URL builder for every article link (inline «LN», xref panel, plate/parent).
+    is_local=True is the jsdom-stub form the byte-identical golden uses; production is
+    the clean `/article/{id}/{slug}`."""
+    if is_local:
+        return "/article/" + filename           # matches the jsdom BritannicaUrls stub
+    base = re.sub(r"\.json$", "", str(filename or ""))
+    m = _FILENAME_RE.match(base)
+    if m:
+        return f"/article/{m.group(1)}/{m.group(2).lower()}"
+    page = re.sub(r"^0+", "", base).split("-")[0]        # legacy numeric-id fallback
+    slug = base[base.index("-") + 1:].lower() if "-" in base else base.lower()
+    return f"/article/{page}/{slug}"
 
 
 def _encode_uri_component(s):
@@ -261,7 +274,10 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     list); it must be provided wherever «FN» can appear (title, prose, cells).  Without
     it FN markers are left untouched (the inline unit battery passes none).
     """
-    article_url = article_url or _default_article_url
+    # Inline «LN» links honor the render target's URL scheme via ctx.is_local, so the
+    # body's links match the panel/plate links (production clean URLs off-golden, the
+    # jsdom-stub form in the golden where is_local defaults True).
+    article_url = article_url or (lambda fn: _article_url(fn, getattr(ctx, "is_local", True)))
 
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
     # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell

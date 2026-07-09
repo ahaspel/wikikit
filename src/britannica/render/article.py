@@ -23,6 +23,7 @@ from britannica.render.inline import (
     format_footnote_text,
     parse_img_meta,
     render_img,
+    _article_url,
     _encode_uri_component as _enc,
 )
 # ── marker constants ──
@@ -101,23 +102,6 @@ def _section_slug(name):
     return re.sub(r"^-|-$", "", s)
 
 
-_FILENAME_RE = re.compile(r"^(\d{2}-\d{4}-[a-z0-9][a-z0-9-]*?)-([^a-z0-9-].*)$")
-
-
-def _article_url(filename, is_local=True):
-    """filename → article link URL, mirroring article-urls.js `filenameToUrl`.  Local is the
-    jsdom-stub form the byte-identical golden uses; production is the clean `/article/{id}/{slug}`."""
-    if is_local:
-        return "/article/" + filename           # matches the jsdom BritannicaUrls stub
-    base = re.sub(r"\.json$", "", str(filename or ""))
-    m = _FILENAME_RE.match(base)
-    if m:
-        return f"/article/{m.group(1)}/{m.group(2).lower()}"
-    page = re.sub(r"^0+", "", base).split("-")[0]        # legacy numeric-id fallback
-    slug = base[base.index("-") + 1:].lower() if "-" in base else base.lower()
-    return f"/article/{page}/{slug}"
-
-
 def find_marker_end(s, start, open_m, close_m):
     """Index just past the balanced close of the marker opening at `start` (-1 if none)."""
     depth = 1
@@ -141,11 +125,12 @@ def find_marker_end(s, start, open_m, close_m):
 class RenderContext:
     """Per-article render state (mirrors renderArticle's module-level counters)."""
 
-    def __init__(self, volume, scan_url, unproofed_pages, target="site"):
+    def __init__(self, volume, scan_url, unproofed_pages, target="site", is_local=True):
         self.volume = volume
         self.scan_url = scan_url
         self.unproofed_pages = unproofed_pages
         self.target = target            # "site" (byte-identical to the viewer) | "epub"
+        self.is_local = is_local        # article-link URL scheme (stub form vs production clean URL)
         self.math_popout_counter = 0
         self.math_popout_latex = {}
         self.footnote_counter = 0
@@ -525,6 +510,7 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
         scan_url=_scan_url(article, is_local, back_href),
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
         target=target,
+        is_local=is_local,
     )
     xrefs = sorted(article.get("xrefs") or [],
                    key=lambda x: _xref_sort_key(x.get("normalized_target") or ""))

@@ -29,6 +29,7 @@ from britannica.export.pages import (
 )
 from britannica.markers import markers_to_text, strip_title_markers
 from britannica.export.plate_parent import find_parent_by_signal
+from britannica.render.article import render_article
 
 
 _QUALITY_NOTES = {
@@ -750,6 +751,14 @@ def export_articles_to_json(
                     )
                 ],
             }
+
+            # The viewer is a thin shell now: Python owns marker→HTML, the client
+            # just inserts this and hydrates math / fixes the runtime scan href.
+            # is_local=False bakes production clean URLs (/article/{id}/{title});
+            # back_href is a placeholder — fixScanHrefs overwrites every scans.html
+            # href at load time from location.href, so its value never reaches the user.
+            payload["rendered_html"] = render_article(
+                payload, is_local=False, back_href="/", target="site")
 
             safe_filename = _safe_filename(article, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)
