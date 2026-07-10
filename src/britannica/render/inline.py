@@ -291,7 +291,10 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
     # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell
     # layers own them); the prose path passes skip_math and leaves «MATH» here.
-    img_html = []
+    # The placeholder list is ARTICLE-scoped (on ctx) so a footnote's image — shielded
+    # in the outer paragraph decode, restored inside the nested footnote decode — isn't
+    # lost when the inner call has no images of its own.  Indices stay unique via append.
+    img_html = ctx.img_html if ctx is not None and hasattr(ctx, "img_html") else []
 
     def _shield_img(m):
         img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or "", is_local))

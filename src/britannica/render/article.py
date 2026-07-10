@@ -140,6 +140,11 @@ class RenderContext:
         self.collected_footnotes = []
         self.collected_sections = []
         self.wide_table_counter = 0
+        # Image placeholders are article-scoped, not per-decode_inline call: a footnote's
+        # image is shielded by the outer paragraph decode but restored inside the nested
+        # footnote decode (or vice-versa).  A shared list keeps the «\x00IMGn\x00» → HTML
+        # restore nesting-safe; indices stay globally unique via append.
+        self.img_html = []
 
 
 # ── math (KaTeX is stubbed to «MATHPH» in the golden; reproduce the structure) ──
