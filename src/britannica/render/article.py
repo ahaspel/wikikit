@@ -531,8 +531,12 @@ def render_article(article, *, is_local=True, back_href="http://localhost/", tar
         for xref in xrefs:
             normalized = xref.get("normalized_target") or ""
             resolved = (xref.get("status") or "") == "resolved"
-            inner = (f'<a href="{_build_xref_href(xref, is_local, epub_bundled)}">{escape_html(normalized)}</a>'
-                     if resolved else escape_html(normalized))
+            # Recurse the display through the decoder like all display text — the
+            # target may carry style markers («I»/«SC») that rode in from the source;
+            # printing it raw leaked them into the panel.  Clean targets are unchanged.
+            disp = decode_inline(normalized, escape=True, ctx=ctx)
+            inner = (f'<a href="{_build_xref_href(xref, is_local, epub_bundled)}">{disp}</a>'
+                     if resolved else disp)
             items.append(
                 f'\n                <li class="xref-item {"resolved" if resolved else "unresolved"}">'
                 f"\n                  {inner}"
