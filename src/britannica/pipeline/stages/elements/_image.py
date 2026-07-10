@@ -13,10 +13,23 @@ from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
 
 
+# `[[File:…]]` / `[[ Image : …]]` → inner.  Space-tolerant to match the classifier's
+# recognizer (`_BRACKET_PREFIX_RE`, which accepts `[[ File:`); a tighter strip here left
+# a space-prefixed `[[ File:` riding in the filename → straight into the `<img>` alt.
+_FILE_BRACKET_PREFIX_RE = re.compile(r"^\s*\[\[\s*(?:File|Image)\s*:", re.I)
+
+
+def _strip_file_brackets(raw: str) -> str:
+    """Peel the `[[File:`/`[[Image:` prefix and trailing `]]` off an image bracket,
+    leaving the `filename|param|param…` inner.  The ONE owner for the strip; both
+    `_img_bracket_meta` and `_thumb_caption_raw` route through it so they agree."""
+    return re.sub(r"\]\]\s*$", "", _FILE_BRACKET_PREFIX_RE.sub("", raw))
+
+
 def _img_bracket_meta(raw: str) -> tuple[str, int | None, str | None]:
     """``[[File:X|200px|left|…]]`` → ``(filename, width, align)``.  The bracket's
     trailing text is ``alt``/caption — read by the caller (`_parse_image`), not here."""
-    inner = re.sub(r"\]\]\s*$", "", re.sub(r"^\s*\[\[(?:File|Image):", "", raw, flags=re.I))
+    inner = _strip_file_brackets(raw)
     parts = [p.strip() for p in inner.split("|")]
     fn = parts[0]
     width = align = None
@@ -56,7 +69,7 @@ def _thumb_caption_raw(raw: str) -> str:
     — a real caption — whereas a plain image's trailing text is alt.  The single
     image producer peels this off and emits `{{IMG:…}}«BR»<caption>` (the
     `[[File:]]<br>caption` shape every other figure has).  "" for a plain image."""
-    inner = re.sub(r"\]\]\s*$", "", re.sub(r"^\s*\[\[(?:File|Image):", "", raw, flags=re.I))
+    inner = _strip_file_brackets(raw)
     parts = inner.split("|")
     if not any(p.strip().lower() in _THUMB_KW for p in parts[1:]):
         return ""

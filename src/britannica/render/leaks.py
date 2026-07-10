@@ -18,7 +18,12 @@ import re
 # lowercase French « » quotation that is legitimate content.
 _MARKER_RE = re.compile(r"«/?[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?[:»]")
 _TEMPLATE_RE = re.compile(r"\{\{")
-_WIKILINK_RE = re.compile(r"\[\[")
+# A leaked wikilink is `[[Target…`, whose target is page-title TEXT.  A `[[` sitting
+# immediately before a tag (`[[</span>`, `[[<i>`) is a literal double-bracket GLYPH at
+# a markup boundary — e.g. MENSURATION's large-font `[[V_{x,y}.u]]` cubature operator,
+# authored verbatim in the source — never a link.  Excluding `[[<` sharpens what
+# "wikilink" means; it is NOT an article/marker exemption list.
+_WIKILINK_RE = re.compile(r"\[\[(?!<)")
 _SENTINEL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 # Rendered math is KaTeX-bound LaTeX, which legitimately carries `{…}`/`[…]`; so

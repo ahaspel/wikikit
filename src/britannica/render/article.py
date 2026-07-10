@@ -121,6 +121,49 @@ def find_marker_end(s, start, open_m, close_m):
     return -1
 
 
+def _fn_span_ranges(s):
+    """Balanced (start, end) ranges of every «FN:…«/FN» / «FN[name]:…«/FN» span in `s`.
+
+    A footnote is an INLINE ref whose CONTENT may be body-level (a bibliography table,
+    a verse quotation).  Its block markers belong to the footnote — the inline «FN»
+    handler decodes the whole span as a unit — so the body block-scan must NOT split
+    them out (that tears the «FN» span across block boundaries and leaks «FN:»/«/FN»).
+    """
+    ranges = []
+    i = s.find("«FN")
+    while i != -1:
+        if s.startswith("«FN:", i) or s.startswith("«FN[", i):   # opener, not the «/FN» close
+            end = find_marker_end(s, i, "«FN", "«/FN»")
+            if end != -1:
+                ranges.append((i, end))
+                i = s.find("«FN", end)
+                continue
+        i = s.find("«FN", i + 3)
+    return ranges
+
+
+def _split_lines_keep_fn(text):
+    """`text.split("\\n")`, except a "\\n" INSIDE an «FN:…«/FN» span is not a split point.
+
+    A block renderer (verse / legend / outline) decodes its content line-by-line and
+    joins with <br>.  A footnote whose body carries its own line break (a verse
+    translation quoted in a note) would otherwise be split across two lines, and each
+    line's inline decode would see a lone «FN:» or «/FN» — a torn span that leaks.
+    Identical to ``str.split`` whenever no footnote straddles a newline.
+    """
+    ranges = _fn_span_ranges(text)
+    if not ranges:
+        return text.split("\n")
+    parts, last, i = [], 0, text.find("\n")
+    while i != -1:
+        if not any(a <= i < b for a, b in ranges):
+            parts.append(text[last:i])
+            last = i + 1
+        i = text.find("\n", i + 1)
+    parts.append(text[last:])
+    return parts
+
+
 
 class RenderContext:
     """Per-article render state (mirrors renderArticle's module-level counters)."""
@@ -241,11 +284,14 @@ def render_paragraph(p, next_para, ctx):
     """Render one merged paragraph to (open-only) HTML, mirroring renderParagraph."""
     # Mixed-paragraph split: block marker(s) + surrounding prose → split and recurse.
     matches = list(BLOCK_MARKER_SCAN_RE.finditer(p))
+    fn_ranges = _fn_span_ranges(p)
     blocks = []
     guard = 0
     for m in matches:
         if m.start() < guard:
             continue
+        if any(a <= m.start() < b for a, b in fn_ranges):
+            continue   # block inside a footnote: kept whole, decoded by the «FN» handler
         text = m.group(0)
         if text.startswith(TABLE_OPEN):
             end = find_marker_end(p, m.start(), TABLE_OPEN, TABLE_CLOSE)
@@ -309,7 +355,7 @@ def render_paragraph(p, next_para, ctx):
     om = _OUTLINE_RE.match(p)
     if om:
         items = []
-        for ln in om.group(2).split("\n"):
+        for ln in _split_lines_keep_fn(om.group(2)):
             if not ln:
                 continue
             mm = _OUTLINE_ITEM_RE.match(ln)
@@ -344,14 +390,14 @@ def render_paragraph(p, next_para, ctx):
     vm = _VERSE_BLOCK_RE.match(p)
     if vm:
         style_attr = f' style="{vm.group(1).replace(chr(34), "&quot;")}"' if vm.group(1) else ""
-        lines = [decode_inline(escape_html(s), ctx=ctx) for s in vm.group(2).split("\n") if s.strip()]
+        lines = [decode_inline(escape_html(s), ctx=ctx) for s in _split_lines_keep_fn(vm.group(2)) if s.strip()]
         return f'<blockquote class="verse"{style_attr}>{"<br>".join(lines)}</blockquote>'
 
     # Figure legend → aside ("### " subhead / entry).
     lm = _LEGEND_RE.match(p)
     if lm:
         parts = []
-        for line in lm.group(1).split("\n"):
+        for line in _split_lines_keep_fn(lm.group(1)):
             s = line.strip()
             if not s:
                 continue
