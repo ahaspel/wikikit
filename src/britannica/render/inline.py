@@ -228,6 +228,54 @@ def _verse(m):
     return '<span class="cell-verse">' + "<br>".join(lines) + "</span>"
 
 
+_OUTLINE_ITEM_RE = re.compile(r"^(\d+)\|(.*)$")
+_OUTLINE_SPAN_RE = re.compile(r"«(PLATE_)?OUTLINE:([\s\S]*?)«/(?:PLATE_)?OUTLINE»")
+
+
+def build_outline_ul(items, plate, render_item):
+    """Nested ``<ul>`` from ``(depth, content)`` items — sparse source depths densified
+    to dense levels.  The ONE owner of the outline structure; ``render_item(content)``
+    renders each item body: ``render_paragraph`` for a standalone outline (block-aware),
+    identity for one inside a table cell / verse / footnote (where ``decode_inline``
+    finishes the item's inline markers in place)."""
+    if not items:
+        return ""
+    rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
+    root = "outline plate-outline" if plate else "outline"
+    # Fully-indented outline — every item carries ≥1 level of indent, no margin-level
+    # heading — renders as an indented block, keeping the indentation the source states.
+    if min(d for d, _ in items) >= 1:
+        root += " outline-indent"
+    out = [f'<ul class="{root}">']
+    cur = 0
+    for depth, content in items:
+        lvl = rank[depth]
+        while cur < lvl:
+            out.append("<ul>")
+            cur += 1
+        while cur > lvl:
+            out.append("</ul>")
+            cur -= 1
+        out.append(f"<li>{render_item(content)}</li>")
+    while cur > 0:
+        out.append("</ul>")
+        cur -= 1
+    out.append("</ul>")
+    return "".join(out)
+
+
+def _outline(m):
+    """An «OUTLINE» nested where the body block-scan can't reach — a table cell, a verse
+    line, a footnote (all decoded by ``decode_inline``).  Render the ``<ul>`` in place;
+    each item's inline markers decode in ``decode_inline``'s subsequent passes."""
+    items = []
+    for ln in m.group(2).split("\n"):
+        mm = _OUTLINE_ITEM_RE.match(ln)
+        if mm:
+            items.append((int(mm.group(1)), mm.group(2)))
+    return build_outline_ul(items, m.group(1), lambda c: c) if items else m.group(0)
+
+
 def _span_title(m):
     return f'<span class="xlit" title="{m.group(1).replace(chr(34), "&quot;")}">'
 
@@ -322,6 +370,9 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
             h = _MATH_RE.sub("«MATHPH»", h)
 
     h = _VERSE_RE.sub(_verse, h)
+    # An «OUTLINE» nested in a cell/verse/footnote — the body block-scan never reached it,
+    # so render the nested <ul> here (item markers decode in the passes below).
+    h = _OUTLINE_SPAN_RE.sub(_outline, h)
 
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)

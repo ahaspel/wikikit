@@ -119,14 +119,21 @@ def _process_math_equation(inner: str, context) -> str:
             label = _eqn_label(parts[1], context)
         content = "|".join(parts[2:]).strip()
     elif name == "ne":
+        # `{{ne|[pretext|]content[|label]}}` — arg0 is a lead-in, EMPTY in 974/983
+        # corpus uses; a lone arg is the bare equation.  Earlier this read a non-empty
+        # arg0 AS the content and the equation AS the label — swapping the slots on
+        # `{{ne|we have|<math>…</math>|(N)}}` (GEOMETRY) / `{{ne|therefore|…|}}` and
+        # dropping the number.  Byte-identical for every empty-arg0 / single-arg form.
         args = parts[1:]
-        # `{{ne||content[|label]}}` — drop the empty label-slot prefix.
-        if args and args[0].strip() == "":
-            args = args[1:]
-        if args:
+        if len(args) == 1:
             content = args[0].strip()
-            if len(args) > 1:
-                label = _eqn_label(args[1], context)
+        elif args:
+            pretext = args[0].strip()
+            content = args[1].strip()
+            if pretext:
+                content = f"{pretext} {content}"      # lead text rides in the equation row
+            if len(args) > 2:
+                label = _eqn_label(args[2], context)
     if not content:
         return ""
     # Return the inner (the equation body) through the loop: a `<math>` /

@@ -18,6 +18,8 @@ import re
 import unicodedata
 
 from britannica.render.inline import (
+    build_outline_ul,
+    _OUTLINE_SPAN_RE,
     decode_inline,
     escape_html,
     format_footnote_text,
@@ -38,7 +40,13 @@ _TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
 _EQN_PARA_RE = re.compile(
     r"^\s*((?:\x01PAGE:\d+\x01\s*)*)«EQN:([^»]*)»([\s\S]*?)«/EQN»\s*$", re.S)
-_MATH_ONLY_RE = re.compile(r"^«MATH(?:\[([^\]]*)\])?:([\s\S]*?)«/MATH»\s*[.,;:]?\s*$", re.S)
+# A genuine single-«MATH» EQN: the content group must NOT cross an internal «/MATH», so a
+# multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its
+# close backtracks to the LAST «/MATH», lumping every equation into one display span and
+# leaking the interior «/MATH»«MATH: markers) and falls to the inline decode instead — the
+# same clean path the non-leaking multi-equation rows already took.
+_MATH_ONLY_RE = re.compile(
+    r"^«MATH(?:\[([^\]]*)\])?:((?:(?!«/MATH»)[\s\S])*?)«/MATH»\s*[.,;:]?\s*$", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
@@ -142,16 +150,18 @@ def _fn_span_ranges(s):
     return ranges
 
 
-def _split_lines_keep_fn(text):
-    """`text.split("\\n")`, except a "\\n" INSIDE an «FN:…«/FN» span is not a split point.
+def _split_lines_keep_spans(text):
+    """`text.split("\\n")`, except a "\\n" inside an «FN:…«/FN» or «OUTLINE:…«/OUTLINE»
+    span is not a split point.
 
     A block renderer (verse / legend / outline) decodes its content line-by-line and
     joins with <br>.  A footnote whose body carries its own line break (a verse
-    translation quoted in a note) would otherwise be split across two lines, and each
-    line's inline decode would see a lone «FN:» or «/FN» — a torn span that leaks.
-    Identical to ``str.split`` whenever no footnote straddles a newline.
+    translation quoted in a note), or an OUTLINE whose items ARE newline-delimited, would
+    otherwise be split across lines — each line's inline decode then sees a lone «FN:» /
+    «/FN» / «OUTLINE:» / «/OUTLINE», a torn span that leaks.  Identical to ``str.split``
+    whenever no such span straddles a newline.
     """
-    ranges = _fn_span_ranges(text)
+    ranges = _fn_span_ranges(text) + [(m.start(), m.end()) for m in _OUTLINE_SPAN_RE.finditer(text)]
     if not ranges:
         return text.split("\n")
     parts, last, i = [], 0, text.find("\n")
@@ -336,6 +346,11 @@ def render_paragraph(p, next_para, ctx):
     if eqm:
         label_text = eqm.group(2)
         content = eqm.group(3).strip()
+        # A genuine single-«MATH» row renders in display mode; anything else — a multi-
+        # equation row (Y_z=Z_y,  Z_x=X_z,  …), or prose+math — decodes inline, exactly as
+        # the non-leaking multi-«MATH» rows (MOLECULE) already did.  The tightened
+        # _MATH_ONLY_RE is what stops a multi-equation row from being lumped into one span
+        # (which leaked the interior «/MATH»«MATH: markers); it now falls here, clean.
         mo = _MATH_ONLY_RE.match(content)
         content_html = (_render_display_math(mo.group(2), mo.group(1), ctx) if mo
                         else decode_inline(content, escape=True, dhr_inline=True, ctx=ctx))
@@ -351,53 +366,34 @@ def render_paragraph(p, next_para, ctx):
     if im:
         return render_img(im.group(1), parse_img_meta(im.group(2)), im.group(3) or "")
 
-    # Hierarchical outline → nested <ul>; sparse source depths densified to dense levels.
+    # Hierarchical outline → nested <ul> (shared owner build_outline_ul); a standalone
+    # outline renders each item's body through render_paragraph (block-aware).  The same
+    # owner serves an outline nested in a cell/verse via decode_inline's «OUTLINE» handler.
     om = _OUTLINE_RE.match(p)
     if om:
         items = []
-        for ln in _split_lines_keep_fn(om.group(2)):
+        for ln in _split_lines_keep_spans(om.group(2)):
             if not ln:
                 continue
             mm = _OUTLINE_ITEM_RE.match(ln)
             if mm:
                 items.append((int(mm.group(1)), mm.group(2)))
         if items:
-            rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
-            root = "outline plate-outline" if om.group(1) else "outline"
-            # Fully-indented outline — every item carries ≥1 `:` of indent, no margin-level
-            # bare-emphasis heading — renders as an indented block, so a plain `:`-list keeps the
-            # indentation the source states.  Taxonomies with a depth-0 heading are unaffected.
-            if min(d for d, _ in items) >= 1:
-                root += " outline-indent"
-            out = [f'<ul class="{root}">']
-            cur = 0
-            for depth, content in items:
-                lvl = rank[depth]
-                while cur < lvl:
-                    out.append("<ul>")
-                    cur += 1
-                while cur > lvl:
-                    out.append("</ul>")
-                    cur -= 1
-                out.append(f"<li>{render_paragraph(content, None, ctx)}</li>")
-            while cur > 0:
-                out.append("</ul>")
-                cur -= 1
-            out.append("</ul>")
-            return "".join(out)
+            return build_outline_ul(items, om.group(1),
+                                    lambda c: render_paragraph(c, None, ctx))
 
     # Verse → blockquote (lines joined by <br>).
     vm = _VERSE_BLOCK_RE.match(p)
     if vm:
         style_attr = f' style="{vm.group(1).replace(chr(34), "&quot;")}"' if vm.group(1) else ""
-        lines = [decode_inline(escape_html(s), ctx=ctx) for s in _split_lines_keep_fn(vm.group(2)) if s.strip()]
+        lines = [decode_inline(escape_html(s), ctx=ctx) for s in _split_lines_keep_spans(vm.group(2)) if s.strip()]
         return f'<blockquote class="verse"{style_attr}>{"<br>".join(lines)}</blockquote>'
 
     # Figure legend → aside ("### " subhead / entry).
     lm = _LEGEND_RE.match(p)
     if lm:
         parts = []
-        for line in _split_lines_keep_fn(lm.group(1)):
+        for line in _split_lines_keep_spans(lm.group(1)):
             s = line.strip()
             if not s:
                 continue
