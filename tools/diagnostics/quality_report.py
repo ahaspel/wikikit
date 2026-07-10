@@ -14,10 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.markers import (  # noqa: E402
-    RENDERED_MARKER_OPENS,
-    RENDERED_GUILLEMET_MARKER_NAMES,
-)
+from britannica.markers import RENDERED_MARKER_OPENS  # noqa: E402
+from britannica.render.leaks import find_render_leaks  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -214,35 +212,6 @@ def _strip_table_blocks(body: str) -> str:
     return "".join(out)
 
 
-def _iter_table_inners(body: str):
-    """Yield the inner content of each TABLE block (nest-aware).
-
-    Nested TABLE markers are preserved inside the yielded inner —
-    callers do their own substitution.  Mirrors the strip helper above."""
-    i = 0
-    while True:
-        opener = body.find(_TABLE_OPEN, i)
-        if opener < 0:
-            return
-        depth = 1
-        j = opener + len(_TABLE_OPEN)
-        inner_start = j
-        while j < len(body) and depth > 0:
-            n_open = body.find(_TABLE_OPEN, j)
-            n_close = body.find(_TABLE_CLOSE, j)
-            if n_close < 0:
-                return
-            if 0 <= n_open < n_close:
-                depth += 1
-                j = n_open + len(_TABLE_OPEN)
-            else:
-                if depth == 1:
-                    yield body[inner_start:n_close]
-                depth -= 1
-                j = n_close + len(_TABLE_CLOSE)
-        i = j
-
-
 def run_file_checks() -> dict:
     """File-level quality checks on exported articles."""
     files = sorted(
@@ -358,59 +327,14 @@ def run_file_checks() -> dict:
         if re.search(r"(?:colspan|rowspan|cellpadding|nowrap)\s*=", check, re.I):
             issues["leaked_html_attr"] += 1
 
-        # Unhandled inline markers inside TABLE blocks. formatCell
-        # handles B/I/SC, FN, IMG, hieroglyph, MATH, VERSE, LN, LEGEND.
-        # Anything else inside a cell is a new leak worth investigating.
-        for ht in _iter_table_inners(body):
-            stripped = re.sub(
-                r"</?(?:table|tr|td|th)(?:\s[^>]*)?>", "", ht)
-            # Strip known markers; iterate to handle nested FN (the
-            # «-content-« pairs can nest, so a single pass of the
-            # non-greedy regex leaves the outer shells intact).
-            # Strip openers and closers SEPARATELY \u2014 the previous
-            # regex tried to match `\u00abMARKER:content\u00bb` as a single
-            # token, but our markers are wrapping pairs
-            # (`\u00abMATH:expr\u00ab/MATH\u00bb`) where the opener's content is the
-            # body between the two tokens.  Iterate so inner markers
-            # get stripped first, exposing outer.  Also strip nested
-            # TABLE/CHEM markers \u2014 the viewer's depth-aware
-            # rendering handles those; flagging them as leaks is a
-            # metric false positive.
-            # The complete viewer-decoded `«…»` vocabulary (single source
-            # of truth in britannica.markers), sorted longest-first so an
-            # alternation prefix (`XL`) can't shadow a longer sibling
-            # (`XXL`).  Stripping these leaves only genuinely-unhandled
-            # markers behind for the leak check below.
-            _MARKER_NAMES = "|".join(
-                sorted(RENDERED_GUILLEMET_MARKER_NAMES, key=len, reverse=True))
-            # Strip opener TOKEN only (no content consumption).  The
-            # earlier `(?::[^\u00ab\u00bb]*)?` form greedily ate VERSE content
-            # past an inner FN's boundary in SHIP \u2014 `\u00abFN:text\u00ab/FN\u00bb\n
-            # more VERSE content` lost everything past `\u00abFN:` because
-            # `[^\u00ab\u00bb]*` allowed newlines.  Stripping JUST the token
-            # leaves the marker's content untouched between opener and
-            # closer; the iterative loop then exposes outer markers.
-            _opener_re = re.compile(
-                r"\u00ab(?:" + _MARKER_NAMES + r")"
-                r"(?:\[[^\]]*\])?:?")
-            _closer_re = re.compile(
-                r"\u00ab/(?:" + _MARKER_NAMES + r")\u00bb")
-            prev = None
-            while prev != stripped:
-                prev = stripped
-                stripped = _closer_re.sub("", stripped)
-                stripped = _opener_re.sub("", stripped)
-            stripped = re.sub(r"\{\{IMG:[^}]*\}\}", "", stripped)
-            stripped = re.sub(
-                r"\{\{VERSE:.*?\}VERSE\}", "", stripped, flags=re.DOTALL)
-            stripped = re.sub(
-                r"\{\{LEGEND:.*?\}LEGEND\}", "", stripped, flags=re.DOTALL)
-            stripped = re.sub(
-                r"\{\{TABLE:.*?\}TABLE\}", "", stripped, flags=re.DOTALL)
-            stripped = re.sub(r"\[hieroglyph:[^\]]*\]", "", stripped)
-            if re.search(r"\u00ab[^\u00bb]+\u00bb", stripped) or "{{" in stripped:
-                issues["unhandled_marker_in_htmltable"] += 1
-                break
+        # Render-leak gate — the HONEST oracle.  Read what actually survived
+        # into `rendered_html` and count it (markers / templates / wikilinks /
+        # control sentinels).  There is NO handled-marker manifest to strip
+        # against: a KNOWN marker in the output is a recursion failure, not an
+        # exemption.  Replaces `unhandled_marker_in_htmltable`, which trusted the
+        # handled-marker list and went blind to exactly the markers that leak.
+        for _cat in {_c for _c, _ in find_render_leaks(a.get("rendered_html", ""))}:
+            issues[f"render_leak_{_cat}"] += 1
 
     results["issues"] = dict(issues.most_common())
     return results
