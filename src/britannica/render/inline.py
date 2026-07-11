@@ -345,7 +345,12 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     img_html = ctx.img_html if ctx is not None and hasattr(ctx, "img_html") else []
 
     def _shield_img(m):
-        img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or "", is_local))
+        # Image src honors the render target the SAME way article links do (ctx.is_local),
+        # not decode_inline's is_local parameter (which defaults True) — otherwise a
+        # production render (is_local=False) emits the LOCAL `/data/derived/images/` path
+        # instead of the bucket `/data/images/` path, and every image 404s on the site.
+        img_is_local = getattr(ctx, "is_local", is_local)
+        img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or "", img_is_local))
         return f"\x00IMG{len(img_html) - 1}\x00"
 
     h = _IMG_PARTS_RE.sub(_shield_img, h)
