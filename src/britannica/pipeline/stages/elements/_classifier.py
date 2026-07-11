@@ -668,7 +668,6 @@ def _classify_html_table(
 # TR/TD/TH/TABLE producers reassemble bottom-up.  `classify_article` runs ONCE
 # per article; recognition + attr-fold are reused verbatim, so the emitted
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
-_COLSPAN_RE = re.compile(r'colspan\s*=\s*"?\s*(\d+)', re.I)
 
 
 def _mint_ph() -> str:
@@ -705,8 +704,11 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
             cell_phs.append(ph)
-            cs = _COLSPAN_RE.search(cell_attr or "")
-            row_cols += int(cs.group(1)) if cs else 1
+            # Count CELLS (content columns), NOT the colspan sum: a lone cell with
+            # colspan="35" is a full-width span hack (ALGEBRA's centering table) — one
+            # content column, not 35.  `«COLS»` feeds ONLY the wide-table decision, so
+            # summing colspan wrongly trips the expand wrap; cell-count is the metric.
+            row_cols += 1
         max_cols = max(max_cols, row_cols)
         rph = _mint_ph()
         children[rph] = ClassifiedElement(

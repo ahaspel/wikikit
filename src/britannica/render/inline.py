@@ -365,12 +365,13 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
 
     if not skip_math:
         if getattr(ctx, "target", None) == "site":
-            # Site target → the same KaTeX-hydration placeholder the prose path emits.  Inline
-            # (cell/caption/verse) MATH is display=0; the viewer runs KaTeX over `.tex-math`.
-            def _math_ph(m):
-                inner = re.match(r"«MATH(?:\[[^\]]*\])?:([\s\S]*?)«/MATH»", m.group(0))
-                return f'<span class="tex-math" data-display="0">{inner.group(1) if inner else ""}</span>'
-            h = _MATH_RE.sub(_math_ph, h)
+            # Site target → the SAME renderer the prose path uses (ONE owner), so a cell's «MATH»
+            # honors its [display]/popout/fs hint instead of being forced inline.  A «MATH[display]»
+            # inside a cell — ALGEBRA's detached-coefficients tableau holds \begin{align} — MUST
+            # emit data-display="1", or KaTeX rejects the align environment and the raw LaTeX leaks.
+            # The old inline stub hardcoded display=0 and dropped the hint: that WAS the leak.
+            from britannica.render.article import _render_math_markers  # deferred: article imports inline
+            h = _render_math_markers(h, ctx)
         else:
             h = _MATH_RE.sub("«MATHPH»", h)
 

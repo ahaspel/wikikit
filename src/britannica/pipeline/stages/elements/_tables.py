@@ -589,8 +589,9 @@ def _process_chemistry_layout(raw: str, inner: str, context,
                 if sentinel in content:
                     content = content.replace(sentinel, glyph)
             cells_html.append(_tag(tag, attr_part, content))
-            cs = _COLSPAN_RE.search(attr_part or "")
-            row_cols += int(cs.group(1)) if cs else 1
+            # Wide-table metric counts CELLS (content columns), not the colspan sum —
+            # a lone colspan="N" cell is one content column (see _classify_table_composite).
+            row_cols += 1
         if cells_html:
             html_rows.append("\u00abTR\u00bb" + "".join(cells_html) + "\u00ab/TR\u00bb")
             max_cols = max(max_cols, row_cols)
@@ -926,7 +927,6 @@ def _process_inline_glyph_wrapper(
 
 
 _COLS_RE = re.compile(r"«COLS:(\d+)»")
-_COLSPAN_RE = re.compile(r'colspan\s*=\s*"?\s*(\d+)', re.I)
 
 
 def _process_table_unified(
