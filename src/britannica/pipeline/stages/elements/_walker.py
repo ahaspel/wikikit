@@ -688,5 +688,14 @@ def walk(
     ``_allow_figure=False`` for every recursive descent so a figure — a
     body-level construct — is recognized only at the article level.
     """
-    return _walk_balanced_shapes(
-        text, _allow_outline=_allow_outline, _allow_figure=_allow_figure)
+    # OUTLINE runs as a PRE-PASS on the raw text (construct-aware via `_skip`), so a
+    # `:`-block is bounded WHOLE — including a `:<math>…` line's raw math — BEFORE the
+    # balanced walk extracts any construct.  It used to run per-body-run inside
+    # `_flush_body`, AFTER extraction, which stranded a `:<math>` line's math as a
+    # sibling and left the item empty.  The balanced walk then runs with outline off.
+    outline_extracts: list[tuple[str, str, str]] = []
+    if _allow_outline:
+        text, outline_extracts = _walk_outline(text)
+    ph_text, extracts = _walk_balanced_shapes(
+        text, _allow_outline=False, _allow_figure=_allow_figure)
+    return ph_text, outline_extracts + extracts

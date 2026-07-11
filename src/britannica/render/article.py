@@ -60,13 +60,33 @@ _IMG_ANCHORED_RE = re.compile(
     r"(?:\|([^{}]*))?\}\}$"
 )
 _OUTLINE_ITEM_RE = re.compile(r"^(\d+)\|(.*)$")
+
+
+# ── Single-outline render: parse the flat «OLI:depth» items and hand them to the
+# ONE owner (build_outline_ul), which stamps class="outline" (bullet-free) and
+# densifies the sparse depths into nested <ul>s.  No forked renderer, no bullets.
+def _render_outline_block(marker: str, ctx) -> str:
+    """Parse the flat depth-tagged `«OLI:depth»…«/OLI»` items out of an `«OUTLINE»`
+    block and render them through `build_outline_ul`.  Item content renders block-aware
+    (a `:<math>` item's math, etc.) via `render_paragraph`."""
+    inner = marker[len("«OUTLINE»"):-len("«/OUTLINE»")]
+    items, i = [], 0
+    while True:
+        a = inner.find("«OLI:", i)
+        if a == -1:
+            break
+        colon = inner.find("»", a)
+        end = inner.find("«/OLI»", colon)
+        items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
+        i = end + len("«/OLI»")
+    return build_outline_ul(items, None, lambda c: render_paragraph(c, None, ctx))
 _ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
 
 BLOCK_MARKER_SCAN_RE = re.compile(
     r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"
     r"|\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"
     r"|\{\{LEGEND:[\s\S]*?\}LEGEND\}"
-    r"|«OUTLINE:[\s\S]*?«/OUTLINE»"
+    r"|«OUTLINE»[\s\S]*?«/OUTLINE»"
     r"|«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"
     r"|«TABLE\[[\s\S]*?«/TABLE»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
@@ -369,6 +389,12 @@ def render_paragraph(p, next_para, ctx):
     # Hierarchical outline → nested <ul> (shared owner build_outline_ul); a standalone
     # outline renders each item's body through render_paragraph (block-aware).  The same
     # owner serves an outline nested in a cell/verse via decode_inline's «OUTLINE» handler.
+    # Single recursive outline block — the new «OUTLINE»…«/OUTLINE» of nested
+    # «OLI:depth» items.  The colon-form `_OUTLINE_RE` below now serves only
+    # PLATE_OUTLINE's flat captions.
+    if p.startswith("«OUTLINE»") and p.endswith("«/OUTLINE»"):
+        return _render_outline_block(p, ctx)
+
     om = _OUTLINE_RE.match(p)
     if om:
         items = []

@@ -722,6 +722,34 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         "TABLE", raw, f"«COLS:{max_cols}»" + "".join(row_phs), children)
 
 
+def _classify_outline_composite(raw: str, block: str) -> ClassifiedElement:
+    """The OUTLINE decomposer — twin of `_classify_table_composite`.  ONE outline
+    whose items nest: split the block into leveled items (`recognize_outline`),
+    and let each item own the deeper items that follow it directly as its own
+    item-children — not a tree of wrapper outlines.  Each item's own content
+    recurses back through `classify_article`, so a `:<math>…` item's math becomes
+    a real MATH child, exactly as a table cell's content does."""
+    from britannica.pipeline.stages.elements._outline import recognize_outline
+    phs, reg = _outline_items(recognize_outline(block))
+    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+
+
+def _outline_items(items: "list[tuple[int, str]]"):
+    """`(ordered placeholders, registry)` — one flat depth-tagged OUTLINE_ITEM per
+    source item.  Nesting is NOT this producer's job: the render's one owner,
+    `build_outline_ul`, densifies the sparse depths into nested `<ul>`s.  Each item's
+    own content recurses through `classify_article`, so a `:<math>…` item's math
+    becomes a real MATH child, exactly as a table cell's content does."""
+    phs: list[str] = []
+    reg: dict[str, ClassifiedElement] = {}
+    for depth, content in items:
+        item_body, item_reg = classify_article(content, _allow_figure=False)
+        iph = _mint_ph()
+        reg[iph] = ClassifiedElement("OUTLINE_ITEM", str(depth), item_body, item_reg)
+        phs.append(iph)
+    return phs, reg
+
+
 def _is_table_html_tag(raw: str) -> bool:
     """A `<table>` opener — the one HTML tag that decomposes as a table (the
     OPAQUE `<math>`/`<nowiki>`/`<score>` tags stay leaves via `_is_leaf_html_tag`)."""
@@ -815,6 +843,12 @@ def classify(
     if shape == SHAPE_BRACE_PIPE or (
             shape == SHAPE_HTML_TAG and _is_table_html_tag(raw)):
         return _classify_table_element(shape, raw)
+    # An OUTLINE is a COMPOSITE too: its indented block decomposes into a single
+    # outline of nested OUTLINE_ITEM nodes (each item's content recursed), exactly
+    # as a table's grid decomposes into rows/cells.  Intercept before the leaf path
+    # below — which would hand the raw block to the old flattening producer.
+    if shape == SHAPE_OUTLINE:
+        return _classify_outline_composite(raw, raw)
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.

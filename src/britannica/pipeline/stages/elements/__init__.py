@@ -978,7 +978,12 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "ORDERED_LIST": lambda raw, inner, ctx, reg: _process_ordered_list(raw),
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
-    "OUTLINE": lambda raw, inner, ctx, reg: _process_outline(inner),
+    # OUTLINE is now a composite: the classifier built nested OUTLINE_ITEM children,
+    # so the producers just fold their already-produced markers — `«OUTLINE»…«/OUTLINE»`
+    # around the items, `«OLI:depth»…«/OLI»` around each item's content and the deeper
+    # items it owns.  The render walks that structure; nothing is flattened.
+    "OUTLINE": lambda raw, inner, ctx, reg: f"«OUTLINE»{inner}«/OUTLINE»",
+    "OUTLINE_ITEM": lambda raw, inner, ctx, reg: f"«OLI:{raw}»{inner}«/OLI»",
     "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
     # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  Recurses its inner
     # (the carved title span) like any wrapper; produce_tree substitutes the children,
