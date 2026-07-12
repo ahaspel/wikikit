@@ -749,35 +749,52 @@ _SIZE_KEYWORD_CSS = {"xxl": "xx-large", "xl": "x-large", "l": "large",
                      "m": "medium", "s": "small", "xs": "x-small", "xxs": "xx-small"}
 
 
-def process_param(raw, inner, context, inner_registry):
-    """PARAM producer (walker SHAPE_PARAM): the param-valued font-size styler
-    `{{Fs|108%|X}}` / `{{font size|N%|X}}`.
-
-    Same styler family as STRIP, but the size is arg-1.  Split value | content
-    on the first pipe (content keeps its own pipes), recurse the content, carry
-    as an INLINE `«SPAN[style:font-size:…]»` (font-size is inline).  A bare
-    integer arg is a percent.  Body is the verbatim PARAM branch formerly in
-    `_process_styled`, now unconditional (PARAM only reaches here when
-    `_TEMPLATE_PARAM_STYLE_RE` matched in the walker)."""
-    from britannica.pipeline.stages.elements._tables import (
-        _TEMPLATE_PARAM_STYLE_RE, _TEMPLATE_PARAM_STYLE_WRAPPERS, style_block)
+def _param_peel(raw):
+    """Peel a param-valued styler `{{name|value|content}}` → (name, value, clean content).
+    The CSS value rides in arg-1, the content is arg-2+ (its own pipes kept); the content's
+    top-level `<br>` is carried as «BR».  Shared so `process_param` (name + value → CSS) and
+    `_classify_param_composite` (the content to recurse into child nodes) peel one and the same
+    way — the PARAM twin of `_strip_peel`."""
+    from britannica.pipeline.stages.elements._tables import _TEMPLATE_PARAM_STYLE_RE
     pm = _TEMPLATE_PARAM_STYLE_RE.match(raw)
     name = re.sub(r"\s+", " ", pm.group(1).strip().lower())
-    tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
     rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
     bar = rest.find("|")
     value = (rest[:bar] if bar >= 0 else "").strip()
+    return name, value, _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
+
+
+def process_param(raw, inner, context, inner_registry):
+    """PARAM producer (walker SHAPE_PARAM): the param-valued styler `{{Fs|108%|X}}` /
+    `{{font size|N%|X}}` (+ the ti / margin-left / size indent/size frames).  Same styler
+    family as STRIP, but the CSS value is arg-1.
+
+    `_classify_param_composite` decomposed the content (arg-2+) into real child nodes; we
+    substitute their markers into `inner` and `.strip()` the ASSEMBLED content (like
+    `process_strip`), and carry the styler as an INLINE `«SPAN[style:…]»`.  The name + value
+    (→ CSS) are re-derived from raw via `_param_peel`; a bare integer arg is a percent."""
+    from britannica.pipeline.stages.elements._tables import (
+        _TEMPLATE_PARAM_STYLE_WRAPPERS, style_block)
+    name, value, _content = _param_peel(raw)
+    tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
     if name == "size":           # keyword size (xl/l/…) → a CSS font-size keyword
         value = _SIZE_KEYWORD_CSS.get(value.lower(), value)
-    inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
-    content = process_elements(
-        inner_raw, context, _allow_figure=False).strip()
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    content = content.strip()
     if pct and value.isdigit():
         value += "%"             # font-size family: bare int is a percent
     elif not value and "letter-spacing" in tmpl:
         value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
-    # The styler is one uniform inline `«SPAN[style:…]»`, same as every other
-    # styler — the CSS property comes from the registry, the value from arg-1.
     return style_block(content, css=tmpl.format(v=value) if value else "",
                        tag="SPAN")
 

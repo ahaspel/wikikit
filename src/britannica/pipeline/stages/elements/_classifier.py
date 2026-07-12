@@ -911,6 +911,23 @@ def _classify_html_style_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_param_composite(raw: str) -> ClassifiedElement:
+    """A param-valued styler `{{Fs|108%|X}}` / `{{ti|1em|X}}` / `{{size|xl|X}}` is a COMPOSITE
+    — the PARAM twin of STRIP/HTML_STYLE.  Its content (arg-2+) decomposes into real child
+    nodes (the SAME `classify_article` the old `process_elements` ran, minus flattening to a
+    string).  `_param_peel` carries the top-level `<br>`→«BR» before decomposing; the value +
+    CSS stay the producer's to re-derive from raw.  Byte-identical: `produce_tree` over these
+    children reproduces the string the old producer built."""
+    from britannica.pipeline.stages.elements import _param_peel
+    _name, _value, content = _param_peel(raw)
+    placeholderized, tree = classify_article(content, _allow_figure=False)
+    return ClassifiedElement(
+        label="PARAM", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -952,6 +969,11 @@ def classify(
     # content is a spec default, nothing to recurse.
     if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_STYLE_RE.match(raw):
         return _classify_strip_composite(raw)
+    # A param-valued styler `{{Fs|108%|X}}` / `{{ti|1em|X}}` / `{{size|xl|X}}` is a COMPOSITE
+    # too — the PARAM twin of STRIP.  Intercept before the leaf path so its content decomposes
+    # into nodes, not a producer-flattened string.
+    if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_PARAM_STYLE_RE.match(raw):
+        return _classify_param_composite(raw)
     # An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE too — the HTML
     # twin of the STRIP case just above.  Intercept before the generic decompose so
     # `_classify_html_style_composite` carries the wrapper's top-level `<br>`→«BR» (the generic
