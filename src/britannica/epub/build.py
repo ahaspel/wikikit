@@ -21,9 +21,9 @@ import html5lib
 from britannica.render.article import render_article, _section_slug
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-IMAGES_SRC = os.path.join(ROOT, "data", "derived", "images")
+IMAGES_SRC = os.path.join(ROOT, "data", "images")
 _MODIFIED = "2026-07-07T00:00:00Z"        # fixed for reproducible builds
-_IMG_SRC_RE = re.compile(r'src="/data/derived/images/([^"]+)"')
+_IMG_SRC_RE = re.compile(r'src="/data/images/([^"]+)"')
 
 
 def epub_css():

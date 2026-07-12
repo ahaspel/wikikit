@@ -82,15 +82,18 @@ _IMG_PARTS_RE = re.compile(
 )
 
 
-def commons_url(filename, is_local=True):
+def commons_url(filename):
     if filename.startswith("http://") or filename.startswith("https://"):
         return filename
     name = filename.replace(" ", "_")             # Commons: spaces ↔ underscores
     name = re.sub(r'["<>|?*]', "_", name)          # match download_images.py disk sanitization
     if name.lower().endswith(".svg"):              # SVGs rasterized to .svg.png
         name += ".png"
-    base = "/data/derived/images/" if is_local else "/data/images/"
-    return base + _encode_uri_component(name)
+    # Images are location-agnostic: the files sit in data/images/ locally and deploy to the
+    # same /data/images/ on S3, so one path serves both — no local-vs-web branch to bake in
+    # (the imageless-local bug was this path frozen to the web form at export while the files
+    # lived under data/derived/images/).  `is_local` still steers LINKS and scans, not images.
+    return "/data/images/" + _encode_uri_component(name)
 
 
 def parse_img_meta(meta_block):
@@ -101,9 +104,9 @@ def parse_img_meta(meta_block):
     return out
 
 
-def render_img(filename, meta, caption, is_local=True):
+def render_img(filename, meta, caption):
     fn = unescape_html(filename)
-    url = fn if fn.startswith("http") else commons_url(fn, is_local)
+    url = fn if fn.startswith("http") else commons_url(fn)
     alt = re.sub(r"«[^»]*»", "", caption or fn)
     s = "max-width:100%;height:auto;vertical-align:middle;"
     if meta.get("width"):
@@ -349,12 +352,9 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     img_html = ctx.img_html if ctx is not None and hasattr(ctx, "img_html") else []
 
     def _shield_img(m):
-        # Image src honors the render target the SAME way article links do (ctx.is_local),
-        # not decode_inline's is_local parameter (which defaults True) — otherwise a
-        # production render (is_local=False) emits the LOCAL `/data/derived/images/` path
-        # instead of the bucket `/data/images/` path, and every image 404s on the site.
-        img_is_local = getattr(ctx, "is_local", is_local)
-        img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or "", img_is_local))
+        # Images resolve to one location-agnostic path (/data/images/, local and web), so —
+        # unlike article links — they no longer key on is_local.  Just render and shield.
+        img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or ""))
         return f"\x00IMG{len(img_html) - 1}\x00"
 
     h = _IMG_PARTS_RE.sub(_shield_img, h)
