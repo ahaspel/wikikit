@@ -585,50 +585,60 @@ def process_running_header(raw, inner, context, inner_registry):
         f"«SPAN[style:text-align:right]»{right}«/SPAN»«/DIV»")
 
 
-def process_html_style(raw, inner, context, inner_registry):
-    """HTML_STYLE producer (walker SHAPE_HTML_STYLE): a `<div>`/`<p>`/`<span>`/
-    `<ins>` carrying style (`{{Ts}}` / `style=` / `align=`).
-
-    Style is orthogonal to structure.  This producer (1) derives the wrapper's
-    CSS via the EXISTING `_cell_styles` (the same `{{Ts}}` / inline-`style` /
-    `align`/`valign` translator the table cell/opener uses — no second style
-    parser), (2) RECURSES the wrapper's inner content through the MAIN dispatch
-    (`process_elements(..., _allow_figure=False)`) so a table / MATH / CHEM /
-    nested styled-wrapper inside is handled by its OWN producer (not leaked or
-    re-classified by a partial second classifier), and (3) wraps the recursed
-    content in the marker the viewer decodes via `style_block` — `«CTR»` for a
-    pure-centred block, `«DIV[style:CSS]»` / `«SPAN[style:CSS]»` otherwise.
-
-    Subsumes body-text's `_p_ts` / `_div_ts` / `_span_ts` (the `<p>`/`<div>`/
-    `<span>` `{{Ts}}`-opener rewriters) and the styled-`<div>`→figure gate.
-    The `_p_ts` image-drop defect is fixed for free: an `<p {{Ts}}>[[Image]]…</p>`
-    nested where figure-recognition is off now recurses its inner through
-    `process_elements`, so the image is produced rather than dropped.
-
-    Body is the verbatim former `m = _STYLED_OPEN_RE.match(raw)` fallthrough of
-    `_process_styled`, keeping its `if not m: return raw` guard."""
-    from britannica.pipeline.stages.elements._tables import style_block
+def _html_style_peel(raw):
+    """Peel an HTML-form styler `<div|p|span|ins attrs>content</tag>` → (marker_tag, css,
+    clean inner_raw).  Decode the opener's OWN `{{=}}` attr-escape (context-safe — an HTML
+    opener has no named args, so `fold_cell_styles` sees `style="…"`, not `style{{=}}"…"`; the
+    content `{{=}}` stays SPACER's post-walk job [[feedback_context_sensitive_is_producer]]),
+    drop the walker-balanced close tag off the tail, and carry the wrapper's own top-level
+    `<br>` as «BR» (a styled block's line breaks are meaningful).  Shared so `process_html_style`
+    (marker_tag + css for the style shell) and `_classify_html_style_composite` (the clean inner
+    to recurse into child nodes) peel one and the same way — the HTML twin of `_strip_peel`."""
     from britannica.pipeline.stages.elements._table_fold import fold_cell_styles
     m = _STYLED_OPEN_RE.match(raw)
     if not m:
-        return raw
+        return None
     tag = m.group(1).lower()
-    # Decode the `{{=}}` attribute-separator escape in this opener's OWN attrs
-    # (context-safe — an HTML opener has no named-args) so `fold_cell_styles` sees
-    # `style="…"`, not `style{{=}}"…"`.  The producer owns its outer wrapper; the
-    # content `{{=}}` stays SPACER's post-walk job.  [[feedback_context_sensitive_is_producer]]
     attrs = re.sub(r"\{\{\s*=\s*\}\}", "=", m.group(2))
-    # Peel the matching close tag off the tail (the walker already balanced the
-    # span, so the last `</tag>` is ours).
-    inner_raw = raw[m.end():]
-    inner_raw = re.sub(rf"</{tag}\s*>\s*$", "", inner_raw, flags=re.IGNORECASE)
-    # Carry the wrapper's own (top-level) `<br>` as «BR» before recursing — a
-    # styled block's line breaks are meaningful (see `_styled_br_to_marker`).
-    inner_raw = _styled_br_to_marker(inner_raw)
-    content = process_elements(
-        inner_raw, context, _allow_figure=False).strip()
-    css = ";".join(fold_cell_styles(attrs))
+    inner_raw = re.sub(rf"</{tag}\s*>\s*$", "",
+                       raw[m.end():], flags=re.IGNORECASE)
     marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
+    return marker_tag, ";".join(fold_cell_styles(attrs)), _styled_br_to_marker(inner_raw)
+
+
+def process_html_style(raw, inner, context, inner_registry):
+    """HTML_STYLE producer (walker SHAPE_HTML_TAG → HTML_STYLE label): a `<div>`/`<p>`/
+    `<span>`/`<ins>` carrying style (`{{Ts}}` / `style=` / `align=`).  Style ⊥ structure —
+    the HTML twin of STRIP.
+
+    `_classify_html_style_composite` decomposed the wrapper's inner into real child nodes (the
+    SAME `classify_article` the old body ran, minus flattening the result to a string), so a
+    nested table / MATH / CHEM / verse / footnote is a NODE the render walks, not a producer-
+    flattened span.  We substitute those children's markers into `inner` and `.strip()` the
+    ASSEMBLED content (like `process_strip` / `_process_cell`: the strip trims a `{{em}}`/
+    `{{spaces}}` edge and drops an all-empty wrapper, matching the old `process_elements(...)
+    .strip()` exactly; `produce_tree`'s later substitution is then a no-op).  The style shell
+    (tag + CSS) is re-derived from raw via the shared `_html_style_peel`, then wrapped by
+    `style_block` — `«CTR»` for a pure-centred block, `«DIV[style:CSS]»` / `«SPAN[style:CSS]»`
+    otherwise.  Subsumes body-text's `_p_ts` / `_div_ts` / `_span_ts` and the styled-`<div>`→
+    figure gate."""
+    from britannica.pipeline.stages.elements._tables import style_block
+    peel = _html_style_peel(raw)
+    if peel is None:                          # opener didn't match — pass raw through
+        return raw
+    marker_tag, css, _ = peel
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    content = content.strip()
     return style_block(content, css=css, tag=marker_tag)
 
 

@@ -855,6 +855,27 @@ def _classify_strip_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_html_style_composite(raw: str) -> ClassifiedElement:
+    """An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE, not a leaf —
+    the HTML twin of STRIP (`_classify_strip_composite`).  Its content decomposes into real
+    child nodes (the SAME `classify_article` the producer's old `process_elements(inner_raw)`
+    ran, minus flattening the result to a string), so a nested table / verse / footnote is a
+    NODE the render walks.  The shared `_html_style_peel` carries the wrapper's top-level
+    `<br>`→«BR» BEFORE decomposing — the generic path leaves `<br>` raw, which body-text would
+    eat to a soft-wrap space — so the break survives exactly as the old re-walk kept it.  The
+    style shell (tag + CSS) stays the producer's to re-derive from raw (style ⊥ content).
+    Byte-identical body: `produce_tree` over these children reproduces the string the old
+    producer built from the same peel; only the tree gains depth."""
+    from britannica.pipeline.stages.elements import _html_style_peel
+    _marker_tag, _css, inner_raw = _html_style_peel(raw)
+    placeholderized, tree = classify_article(inner_raw, _allow_figure=False)
+    return ClassifiedElement(
+        label="HTML_STYLE", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -891,6 +912,15 @@ def classify(
     # content is a spec default, nothing to recurse.
     if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_STYLE_RE.match(raw):
         return _classify_strip_composite(raw)
+    # An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE too — the HTML
+    # twin of the STRIP case just above.  Intercept before the generic decompose so
+    # `_classify_html_style_composite` carries the wrapper's top-level `<br>`→«BR» (the generic
+    # path leaves it raw for body-text to eat to a space) and hands a nested table/verse/footnote
+    # to the render as a NODE, not a producer-flattened string.  Fires for exactly the HTML_STYLE
+    # label set — MIRROR_GLYPH / SPAN_TITLE take precedence inside `_derive_html_tag_label`, and
+    # `<table>` was already caught above.
+    if shape == SHAPE_HTML_TAG and _derive_html_tag_label(raw) == "HTML_STYLE":
+        return _classify_html_style_composite(raw)
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.
