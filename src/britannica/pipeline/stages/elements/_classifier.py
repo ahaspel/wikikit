@@ -486,7 +486,7 @@ _COORD_NAMES: frozenset[str] = frozenset({"11co"})
 _FRAME_NAMES: frozenset[str] = frozenset({
     "outdent", "nodent",
     "familytree", "tree chart", "chart2",
-    "flex wrap centre", "columns",
+    "flex wrap centre",  # `columns` is a TABLE — routed to _classify_columns_as_table upstream
     # `{{size|xl|CONTENT}}` — keyword-sized wrapper (xl/l/s/…).  The keyword has no
     # clean CSS value here (it isn't a percent), so we drop the size frame and keep
     # the content (the longest positional slot) faithfully.
@@ -743,6 +743,50 @@ def _classify_ordered_list_composite(raw: str) -> ClassifiedElement:
     return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
 
 
+_COLUMNS_RE = re.compile(r"\{\{\s*columns\b", re.IGNORECASE)
+_COL_CONTENT_RE = re.compile(r"^\s*col(\d+)\s*=(.*)$", re.DOTALL | re.IGNORECASE)
+
+
+def _columns_content_slots(raw: str) -> list[str]:
+    """The CONTENT columns of a `{{columns|colwidth=…|col1=A|col2=B|…}}` frame — the `colN=`
+    slots in N order (plus any bare positional), dropping the layout params
+    (`colwidth`/`class`/`style`/`gap`/`rules`/…).  These are the table's cells; the frame is
+    presentation the single-column medium renders as a plain row."""
+    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
+    numbered: dict[int, str] = {}
+    positional: list[str] = []
+    for part in _split_top_pipes(inner)[1:]:          # drop the template name
+        m = _COL_CONTENT_RE.match(part)
+        if m:
+            numbered[int(m.group(1))] = m.group(2)
+        elif "=" not in part.split("|", 1)[0] and part.strip():
+            positional.append(part)                    # bare positional content
+        # else: a layout param (colwidth/class/style/…) — dropped
+    return [numbered[k] for k in sorted(numbered)] + positional
+
+
+def _classify_columns_as_table(raw: str) -> ClassifiedElement:
+    """`{{columns|col1=A|col2=B|…}}` IS a table in template syntax — one row of column-cells.
+    Decompose it straight into the ONE recursive TABLE engine (twin of
+    `_classify_table_composite`): each content column becomes a TD whose body recurses via
+    `classify_article` exactly like a wikitable cell, the layout params are dropped.  Recovers
+    what `process_frame`'s max-by-len drop threw away — CASHEW's 8-item botanical legend lived
+    across col1+col2, and both now render as cells instead of one being discarded."""
+    cols = _columns_content_slots(raw)
+    cell_children: dict[str, ClassifiedElement] = {}
+    cell_phs: list[str] = []
+    for content in cols:
+        cell_body, cell_reg = classify_article(content, _allow_figure=False)
+        ph = _mint_ph()
+        cell_children[ph] = ClassifiedElement("TD", "", cell_body, cell_reg)
+        cell_phs.append(ph)
+    rph = _mint_ph()
+    return ClassifiedElement(
+        "TABLE", raw, f"«COLS:{len(cols)}»" + rph,
+        {rph: ClassifiedElement("ROW", "", "".join(cell_phs), cell_children)})
+
+
 def _outline_items(items: "list[tuple[int, str]]"):
     """`(ordered placeholders, registry)` — one flat depth-tagged OUTLINE_ITEM per
     source item.  Nesting is NOT this producer's job: the render's one owner,
@@ -904,6 +948,11 @@ def classify(
     # `:`-indent — decompose it through the one outline path, not a separate leaf.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
+    # `{{columns|col1=…|col2=…}}` is a TABLE in template syntax — one row of column-cells.
+    # Decompose through the ONE table engine, NOT the FRAME producer that kept only the longest
+    # column (dropping CASHEW's legend). Columns IS a table; the layout frame is just its syntax.
+    if _COLUMNS_RE.match(raw):
+        return _classify_columns_as_table(raw)
     # A PIPE-form template styler `{{center|X}}` / `{{Fine block|X}}` / … is a COMPOSITE
     # too: its content is content-in-a-wrapper.  Decompose it here, before the leaf path
     # hands raw to the producer to flatten via `process_elements` — so a nested block
