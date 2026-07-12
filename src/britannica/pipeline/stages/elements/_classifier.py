@@ -275,8 +275,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.match(r"\{\{\s*(?:(?:em|gap|clear|ditto|dhr|rule|bar|shy)\b"
                 r"|=|\(|\)|'|!|\*\*\*|\*|–|\.\.\.|…)", raw, re.IGNORECASE):
         return "SPACER"
-    # Content extractors — display arg is the content; producer unwraps + recurses it.
-    if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial|di)\b", raw, re.IGNORECASE):
+    # Content extractors — the visible arg is the content; producer unwraps + recurses it.
+    # FRAME-dissolution unwrappers (vrl/phn/definition/nsl/wdl/suspect/nodent) join here —
+    # metadata wrappers whose content is the arg the producer keeps.
+    if re.match(r"\{\{\s*(?:tooltip|abbr|lang|sic|fqm|drop\s?initial"
+                r"|definition|nodent|vrl|phn|nsl|wdl|suspect|di)\b", raw, re.IGNORECASE):
         return "CONTENT_EXTRACT"
     # Bar-less `num \over den` fraction (`{{1\over 2}}` / `{{\it a \over b}}` /
     # `{{\kappa\over\kappa'}}`) — NO `name|` token, the whole inner is the fraction.
@@ -415,9 +418,14 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # `{{11co|DEG|[MIN|]DIR}}` — a single lat/long coordinate; render the value.
     if full in _COORD_NAMES:
         return "COORD"
-    # Layout FRAMES that CARRY content — drop the frame, recurse the content.
-    if full in _FRAME_NAMES:
-        return "FRAME"
+    # A standalone `{{familytree|…}}` / `{{chart2|…}}` / `{{tree chart|…}}` — a genealogy grid
+    # macro OUTSIDE the paired `/start…/end` region the walker normally captures as CHART2
+    # (a page-split-orphaned row) → CHART2, so it still renders the tree image rather than
+    # leaking.  The rest of the old FRAME catch-all is dissolved to real homes: columns/flex-
+    # wrap → TABLE, ti/margin-left/size → PARAM, outdent → HANGING_INDENT, the metadata
+    # unwrappers (vrl/phn/definition/nsl/wdl/suspect/nodent) → CONTENT_EXTRACT.
+    if full in ("familytree", "tree chart", "chart2"):
+        return "CHART2"
 
     # Table-of-contents rows — one dotted-leader row each; the producer reads the
     # template params as cells and renders the row content in place.
@@ -458,10 +466,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
 # element package, so this back-import is cycle-free.)
 from britannica.pipeline.stages.elements._spacer import _SPACER_NAMES
 
-# Hanging indent — `{{hi}}` / `{{hanging indent}}` (synonyms).  RENDERED, not
-# dropped: the source states the indent width (default 2em) and it formats a list,
-# so its own producer (`_hanging.py`) reads the width and emits the block.
-_HANGING_INDENT_NAMES: frozenset[str] = frozenset({"hi", "hanging indent"})
+# Hanging indent — `{{hi}}` / `{{hanging indent}}` / `{{outdent}}` (synonyms: a
+# first-line outdent).  RENDERED, not dropped: the source states the indent width
+# (default 2em) and it formats a list, so its producer (`_hanging.py`) reads the
+# width and emits the block.  `{{outdent}}` (no width arg) takes the 2em default.
+_HANGING_INDENT_NAMES: frozenset[str] = frozenset({"hi", "hanging indent", "outdent"})
 
 # Row-spanning curly brace grouping table rows — `{{brace2|N|dir}}` (4000+ uses).
 # Its own producer (`_brace.py`) renders the glyph; we CARRY it, never strip it.
@@ -479,32 +488,10 @@ _LANG_NAMES: frozenset[str] = frozenset(
 # renders `DEG° [MIN′ ]DIR` (was a mislabeled `{}` "column wrapper" strip entry).
 _COORD_NAMES: frozenset[str] = frozenset({"11co"})
 
-# Layout FRAMES that carry content — `{{outdent|text}}`, `{{nodent|text}}`, the
-# multi-cell `{{familytree|…}}` / `{{Tree chart|…}}` / `{{flex wrap centre|…}}` /
-# `{{columns|…}}`.  The frame is presentation scaffolding with no faithful render
-# here; the FRAME producer drops it and recurses the content.
-_FRAME_NAMES: frozenset[str] = frozenset({
-    "outdent", "nodent",
-    "familytree", "tree chart", "chart2",
-    "flex wrap centre",  # `columns` is a TABLE — routed to _classify_columns_as_table upstream
-    # `{{size|xl|CONTENT}}` — keyword-sized wrapper (xl/l/s/…).  The keyword has no
-    # clean CSS value here (it isn't a percent), so we drop the size frame and keep
-    # the content (the longest positional slot) faithfully.
-    "size",
-    # Indent / content wrappers — `{{ti|1em|TEXT}}`, `{{margin-left|3.2em|TEXT}}`
-    # (text-indent / left-margin frames around prose); the indent has no faithful
-    # render here, so drop the frame and keep the longest-positional content.
-    "ti", "margin-left",
-    # Content-bearing wrappers with no faithful styling here — keep the prose,
-    # drop the wrapper.  `{{vrl|Label}}` (vertical-rule label), `{{phn|x}}`
-    # (phonetic), `{{definition|term|gloss}}`, `{{nsl|disp|…}}` (navigation),
-    # `{{wdl|Qid|Display}}` (Wikidata link → its display text).
-    "vrl", "phn", "definition", "nsl", "wdl",
-    # `{{suspect|X}}` — Wikisource flags X as a possible misprint but DISPLAYS it;
-    # the flag is editorial, the text is content.  Drop the wrapper, keep the
-    # (longest-positional) word — `on` / `.` / `''dróttkvaett''`.
-    "suspect",
-})
+# The old FRAME catch-all is DISSOLVED — each shape routed to its real family (2026-07):
+# columns / flex-wrap → TABLE, ti / margin-left / size → PARAM, outdent → HANGING_INDENT,
+# familytree / tree chart / chart2 → CHART2, the metadata unwrappers (vrl / phn / definition
+# / nsl / wdl / suspect / nodent) → CONTENT_EXTRACT.  `process_frame` is gone.
 
 # Page-split words — a word broken across a page break: the START marker owns the
 # whole rejoined word, the END marker renders nothing.  Two encodings, one producer
@@ -744,6 +731,10 @@ def _classify_ordered_list_composite(raw: str) -> ClassifiedElement:
 
 
 _COLUMNS_RE = re.compile(r"\{\{\s*columns\b", re.IGNORECASE)
+# `{{flex wrap centre|A|B|…}}` (double-brace cell-row, e.g. vol21 PIG's breed photos) — the
+# same row-of-cells shape as `{{columns}}`.  Require the content pipe so the paired
+# `{{flex wrap centre/s}}…/e` CENTER wrapper (a different shape) is NOT caught here.
+_FLEXWRAP_CELLS_RE = re.compile(r"\{\{\s*flex\s+wrap\s+centre\s*\|", re.IGNORECASE)
 _COL_CONTENT_RE = re.compile(r"^\s*col(\d+)\s*=(.*)$", re.DOTALL | re.IGNORECASE)
 
 
@@ -767,12 +758,12 @@ def _columns_content_slots(raw: str) -> list[str]:
 
 
 def _classify_columns_as_table(raw: str) -> ClassifiedElement:
-    """`{{columns|col1=A|col2=B|…}}` IS a table in template syntax — one row of column-cells.
-    Decompose it straight into the ONE recursive TABLE engine (twin of
-    `_classify_table_composite`): each content column becomes a TD whose body recurses via
-    `classify_article` exactly like a wikitable cell, the layout params are dropped.  Recovers
-    what `process_frame`'s max-by-len drop threw away — CASHEW's 8-item botanical legend lived
-    across col1+col2, and both now render as cells instead of one being discarded."""
+    """`{{columns|col1=A|col2=B|…}}` and `{{flex wrap centre|cell|cell|…}}` ARE tables in
+    template syntax — one row of cells.  Decompose straight into the ONE recursive TABLE engine
+    (twin of `_classify_table_composite`): each content column / cell becomes a TD whose body
+    recurses via `classify_article` exactly like a wikitable cell, the layout params dropped.
+    Recovers what `process_frame`'s max-by-len threw away — CASHEW's 8-item legend (col1+col2)
+    and PIG's breed photos (2 per flex-wrap row), where only the longest cell used to survive."""
     cols = _columns_content_slots(raw)
     cell_children: dict[str, ClassifiedElement] = {}
     cell_phs: list[str] = []
@@ -948,10 +939,10 @@ def classify(
     # `:`-indent — decompose it through the one outline path, not a separate leaf.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
-    # `{{columns|col1=…|col2=…}}` is a TABLE in template syntax — one row of column-cells.
-    # Decompose through the ONE table engine, NOT the FRAME producer that kept only the longest
-    # column (dropping CASHEW's legend). Columns IS a table; the layout frame is just its syntax.
-    if _COLUMNS_RE.match(raw):
+    # `{{columns|col1=…|col2=…}}` / `{{flex wrap centre|cell|cell|…}}` are TABLEs in template
+    # syntax — one row of cells. Decompose through the ONE table engine, NOT the FRAME producer
+    # that kept only the longest cell (dropping CASHEW's legend, half of PIG's breed photos).
+    if _COLUMNS_RE.match(raw) or _FLEXWRAP_CELLS_RE.match(raw):
         return _classify_columns_as_table(raw)
     # A PIPE-form template styler `{{center|X}}` / `{{Fine block|X}}` / … is a COMPOSITE
     # too: its content is content-in-a-wrapper.  Decompose it here, before the leaf path

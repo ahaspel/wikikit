@@ -154,16 +154,22 @@ class TestBacklogFamilyRoutes:
         assert self._label("{{nop}}") == "SPACER"
         assert self._label("{{ae}}") == "SPACER"
 
-    def test_frame_keeps_content(self):
-        assert self._label("{{outdent|some text}}") == "FRAME"
-        assert self._label("{{familytree|border=0| | |ALD|ALD=John}}") == "FRAME"
+    def test_frame_dissolved_to_real_homes(self):
+        # The old FRAME catch-all is dissolved — each shape routes to its family.
+        assert self._label("{{ti|1em|indented}}") == "PARAM"
+        assert self._label("{{margin-left|3.2em|text}}") == "PARAM"
+        assert self._label("{{familytree|border=0| | |ALD|ALD=John}}") == "CHART2"
+        assert self._label("{{vrl|Label}}") == "CONTENT_EXTRACT"
+        assert self._label("{{wdl|Q123|Display}}") == "CONTENT_EXTRACT"
+        assert self._label("{{nodent|content}}") == "CONTENT_EXTRACT"
 
     def test_hanging_indent_routes(self):
-        # `{{hi}}` and `{{hanging indent}}` are synonyms → ONE owner, RENDERED at
-        # the source's stated width (not dropped to FRAME, not a hardcoded styler).
+        # `{{hi}}` / `{{hanging indent}}` / `{{outdent}}` are synonyms → ONE owner,
+        # RENDERED at the source's stated (or 2em-default) width, not dropped.
         assert self._label("{{hi|3.5em|1867. Paris. 1 Kolisch.}}") == "HANGING_INDENT"
         assert self._label("{{hi|content, no width given}}") == "HANGING_INDENT"
         assert self._label("{{hanging indent|caption}}") == "HANGING_INDENT"
+        assert self._label("{{outdent|some text}}") == "HANGING_INDENT"
 
     def test_frame_control_marker_is_spacer(self):
         assert self._label("{{multicol-break}}") == "SPACER"
@@ -182,7 +188,7 @@ class TestBacklogFamilyRoutes:
         assert self._label("{{hws|frag|WORD}}") == "SPLIT_WORD"
         assert self._label("{{lps|hws=A|hwe=B}}") == "SPLIT_WORD"
         assert self._label("{{lpe|hws=A|hwe=B}}") == "SPLIT_WORD"
-        assert self._label("{{suspect|on}}") == "FRAME"
+        assert self._label("{{suspect|on}}") == "CONTENT_EXTRACT"
         assert self._label("{{main other|x|}}") == "MAIN_OTHER"
 
     def test_missing_stub(self):
@@ -199,8 +205,9 @@ class TestBacklogFamilyRoutes:
         assert self._label(
             "{{ne||<math>\\tfrac12\\overline{mu^2}</math>|(7)}}") == "MATH_NE"
 
-    def test_size_keyword_wrapper_keeps_content(self):
-        assert self._label("{{size|xl|CAPE COLONY}}") == "FRAME"
+    def test_size_keyword_wrapper_routes_param(self):
+        # `{{size|xl|X}}` — the keyword size is a font-size styler (PARAM); xl→x-large.
+        assert self._label("{{size|xl|CAPE COLONY}}") == "PARAM"
 
     def test_bare_styler_form_routes_strip(self):
         # `{{sc}}` (no pipe) — a registered styler still routes via name membership.

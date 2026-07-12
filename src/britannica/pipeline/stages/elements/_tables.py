@@ -810,6 +810,12 @@ _TEMPLATE_PARAM_STYLE_WRAPPERS: dict[str, tuple[str, bool]] = {
     "lsp":            ("letter-spacing:{v}", False),
     "font-stretch":   ("transform:scaleX({v});display:inline-block", False),
     "word-spacing":   ("word-spacing:{v}", False),  # currency-column alignment (was preprocess-stripped)
+    # ── FRAME-dissolution indent/size stylers (2026-07): layout frames carrying a
+    # width/size in arg-1 — the same param-valued styler shape as the font-size
+    # family, so they belong in this registry, not a FRAME catch-all.
+    "ti":             ("text-indent:{v}", False),   # {{ti|1em|text}} first-line indent
+    "margin-left":    ("margin-left:{v}", False),   # {{margin-left|3.2em|text}}
+    "size":           ("font-size:{v}", False),     # {{size|xl|text}}: keyword→CSS in process_param
 }
 _TEMPLATE_PARAM_STYLE_RE = re.compile(
     r"\{\{\s*(" + "|".join(

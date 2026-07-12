@@ -34,7 +34,7 @@ from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._frame import (
-    process_frame, process_refs, process_missing, process_main_other)
+    process_refs, process_missing, process_main_other)
 from britannica.pipeline.stages.elements._hanging import process_hanging_indent
 from britannica.pipeline.stages.elements._brace import process_brace
 from britannica.pipeline.stages.elements._lang import process_lang
@@ -743,6 +743,12 @@ def _process_title(raw, context):
     return f"«TITLE:{inner}«/TITLE»"
 
 
+# `{{size|KEYWORD|X}}` (FRAME-dissolution home for `size`) — the keyword font-size
+# scale mapped to CSS font-size keywords; PARAM carries it like any arg-1 styler.
+_SIZE_KEYWORD_CSS = {"xxl": "xx-large", "xl": "x-large", "l": "large",
+                     "m": "medium", "s": "small", "xs": "x-small", "xxs": "xx-small"}
+
+
 def process_param(raw, inner, context, inner_registry):
     """PARAM producer (walker SHAPE_PARAM): the param-valued font-size styler
     `{{Fs|108%|X}}` / `{{font size|N%|X}}`.
@@ -761,6 +767,8 @@ def process_param(raw, inner, context, inner_registry):
     rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
     bar = rest.find("|")
     value = (rest[:bar] if bar >= 0 else "").strip()
+    if name == "size":           # keyword size (xl/l/…) → a CSS font-size keyword
+        value = _SIZE_KEYWORD_CSS.get(value.lower(), value)
     inner_raw = _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
     content = process_elements(
         inner_raw, context, _allow_figure=False).strip()
@@ -960,11 +968,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(raw, ctx),
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
-    # FRAME — a layout frame (multicol / div-col / outdent / hanging indent /
-    # familytree / …).  Drop the presentation scaffolding, recurse + keep content.
-    "FRAME": lambda raw, inner, ctx, reg: process_frame(raw, ctx),
-    # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}`: render the
-    # block at the source's own indent width (default 2em), recurse the text.
+    # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:
+    # render the block at the source's own indent width (default 2em), recurse the text.
     "HANGING_INDENT": lambda raw, inner, ctx, reg: process_hanging_indent(raw, ctx),
     # BRACE — `{{brace2|N|dir}}`: render a row-spanning curly brace glyph, not the
     # leaked `N|dir` arguments (and not nothing).
