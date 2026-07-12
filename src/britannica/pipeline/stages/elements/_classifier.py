@@ -928,6 +928,22 @@ def _classify_param_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
+    """A shoulder heading `{{EB1911 Shoulder Heading|…LABEL}}` is a COMPOSITE — its LABEL
+    decomposes into child nodes (the SAME `classify_article` the old `process_elements` ran).
+    `_shoulder_peel` extracts the last-positional label (dropping width=/align= params, its
+    margin-wrap `<br>`s → space) before decomposing; the producer mints the «SH» slug off the
+    assembled content.  Byte-identical."""
+    from britannica.pipeline.stages.elements import _shoulder_peel
+    label = _shoulder_peel(raw)
+    placeholderized, tree = classify_article(label, _allow_figure=False)
+    return ClassifiedElement(
+        label="SHOULDER", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -974,6 +990,10 @@ def classify(
     # into nodes, not a producer-flattened string.
     if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_PARAM_STYLE_RE.match(raw):
         return _classify_param_composite(raw)
+    # A shoulder heading `{{EB1911 Shoulder Heading|…}}` is a COMPOSITE too — its label
+    # decomposes into nodes, not a producer-flattened string.
+    if shape == SHAPE_DOUBLE_BRACE and _SHOULDER_HEADING_RE.match(raw):
+        return _classify_shoulder_composite(raw)
     # An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE too — the HTML
     # twin of the STRIP case just above.  Intercept before the generic decompose so
     # `_classify_html_style_composite` carries the wrapper's top-level `<br>`→«BR» (the generic

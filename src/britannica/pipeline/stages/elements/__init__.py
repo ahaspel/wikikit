@@ -522,39 +522,44 @@ def process_span_title(raw, inner, context, inner_registry):
     return content  # transcription furniture → drop the wrapper, keep the content
 
 
-def process_shoulder(raw, inner, context, inner_registry):
-    """SHOULDER producer (walker SHAPE_SHOULDER): a shoulder heading —
-    `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / the `…HeadingSmall` /
-    `{{EB9 Margin Note}}` synonyms.
-
-    A marginal SECTION label: emit «SH:slug»…«/SH» (what `detect_sections` keys on for
-    the TOC), recursing the LABEL (after the last top-level pipe, dropping
-    `width=N`) so its inner `{{Fs}}` carries as the styler it is.  Replaces the
-    flat `_convert_shoulder_headings`.  Body is the verbatim former `sh = …`
-    branch of `_process_styled`, now unconditional (SHOULDER only reaches here
-    when `_SHOULDER_HEADING_RE` matched in the walker)."""
+def _shoulder_peel(raw):
+    """Peel a shoulder heading `{{EB1911 Shoulder Heading|[width=N|][align=…|]LABEL}}` → the
+    clean LABEL to recurse.  The LABEL is the last POSITIONAL slot (named `width=`/`align=`
+    params may TRAIL it — `{{…|'''Label'''.|align=right}}`); its `<br>`s are margin-column wrap
+    typography, dropped to a space (not carried).  Shared so `_classify_shoulder_composite` (the
+    label to recurse into child nodes) and the producer agree — the SHOULDER twin of
+    `_strip_peel` (the producer needs no value from it, only the slug off the content)."""
     from britannica.pipeline.stages.elements._tables import _SHOULDER_HEADING_RE
     from britannica.pipeline.stages.elements._link import _split_top_pipes
-    from britannica.util.strings import section_slug, strip_markers
     sh = _SHOULDER_HEADING_RE.match(raw)
-    rest = re.sub(r"\}\}\s*$", "", raw[sh.end():])
-    # The LABEL is the last POSITIONAL slot.  Named params (align=right/left,
-    # width=N) may TRAIL it in the source
-    # ({{EB1911 Shoulder Heading|'''Label'''.|align=right}}), so skip key=value
-    # slots -- else the heading stamps as "align=right" instead of its title.
-    slots = _split_top_pipes(rest)
+    slots = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[sh.end():]))
     positional = [g for g in slots if not re.match(r"\s*[A-Za-z][\w-]*\s*=", g)]
     label = (positional or slots)[-1]
-    # A shoulder heading's `<br>`s are margin-column wrap typography, not
-    # content — drop them to a space.  Hyphenation across the wrap is NOT
-    # healed here: that is one leaf concern, not scattered into this producer.
     label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
-    label = _styled_br_to_marker(label)
-    content = process_elements(
-        label, context, _allow_figure=False).strip()
-    # Carry the section slug in the marker — minted here once by the one slug
-    # function, exactly as «SEC» carries its slug — so the viewer and export
-    # read it and nothing downstream recomputes it.
+    return _styled_br_to_marker(label)
+
+
+def process_shoulder(raw, inner, context, inner_registry):
+    """SHOULDER producer (walker SHAPE_SHOULDER): a shoulder heading —
+    `{{EB1911 Shoulder Heading|[width=N|]LABEL}}` / `…HeadingSmall` / `{{EB9 Margin Note}}`.
+
+    A marginal SECTION label: emit «SH:slug»…«/SH» (what `detect_sections` keys on for the
+    TOC).  `_classify_shoulder_composite` decomposed the LABEL into child nodes; we substitute
+    their markers into `inner`, `.strip()`, mint the section slug off the assembled content
+    (once, by the one slug function, exactly as «SEC» carries its slug), and wrap."""
+    from britannica.util.strings import section_slug, strip_markers
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    content = content.strip()
     slug = section_slug(strip_markers(content))
     return f"«SH:{slug}»{content}«/SH»"
 
