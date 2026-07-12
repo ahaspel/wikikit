@@ -296,8 +296,9 @@ def render_page_markers(s, ctx):
             return f'<span class="{cls}" data-page="{page}">{ctx.volume}:{page}</span>'
         title = (f"Volume {ctx.volume}, page {page} (unproofed source) — click to view scan"
                  if unproofed else f"Volume {ctx.volume}, page {page} — click to view scan")
-        href = f"{ctx.scan_url}&pinit={page}"
-        return (f'<a class="{cls}" data-page="{page}" title="{title}" href="{href}">'
+        # Bare `scans.html` anchor: fixScanHrefs rebuilds the real URL at load and adds
+        # &pinit from data-page, so we bake neither the query string nor &pinit here.
+        return (f'<a class="{cls}" data-page="{page}" title="{title}" href="{ctx.scan_url}">'
                 f"{ctx.volume}:{page}</a>")
     return _PAGE_RE.sub(repl, s)
 
@@ -560,13 +561,6 @@ def _render_body(article, ctx):
     return toc_html + f'<div class="body-text">{body_html}</div>'
 
 
-def _scan_url(article, is_local, back_href):
-    base = "scans.html" if is_local else "/scans.html"
-    return (f"{base}?vol={article.get('volume')}&start={article.get('leaf_start')}"
-            f"&end={article.get('leaf_end')}&label={_enc(str(article.get('title') or ''))}"
-            f"&back={_enc(back_href)}")
-
-
 def _build_xref_href(xref, is_local, bundled=None):
     if xref.get("target_filename"):
         base = _article_url(xref["target_filename"], is_local, bundled)
@@ -581,14 +575,14 @@ def _build_xref_href(xref, is_local, bundled=None):
     return base
 
 
-def render_article(article, *, is_local=True, back_href="http://localhost/", target="site", epub_bundled=None):
+def render_article(article, *, is_local=True, target="site", epub_bundled=None):
     """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
     (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor
     links → appendix, scans dropped, …).  ``epub_bundled`` — a set of in-book stems —
     selects the EPUB link policy (see ``_article_url``); leave None for site."""
     ctx = RenderContext(
         volume=article.get("volume", "?"),
-        scan_url=_scan_url(article, is_local, back_href),
+        scan_url="scans.html",   # bare anchor; fixScanHrefs rebuilds the real URL at runtime
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
         target=target,
         is_local=is_local,

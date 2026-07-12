@@ -774,13 +774,13 @@ def export_articles_to_json(
                 ],
             }
 
-            # The viewer is a thin shell now: Python owns marker→HTML, the client
-            # just inserts this and hydrates math / fixes the runtime scan href.
-            # is_local=False bakes production clean URLs (/article/{id}/{title});
-            # back_href is a placeholder — fixScanHrefs overwrites every scans.html
-            # href at load time from location.href, so its value never reaches the user.
+            # The viewer is a thin shell now: Python owns marker→HTML, the client just
+            # inserts this and hydrates math / rebuilds the runtime scan href.  is_local=False
+            # bakes production clean URLs (/article/{id}/{title}); scans render as a bare
+            # `scans.html` anchor that fixScanHrefs rebuilds at load (the back param is
+            # location.href — runtime-only, never bakeable).
             payload["rendered_html"] = render_article(
-                payload, is_local=False, back_href="/", target="site")
+                payload, is_local=False, target="site")
 
             safe_filename = _safe_filename(article, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)
