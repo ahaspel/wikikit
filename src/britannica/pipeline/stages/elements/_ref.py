@@ -102,34 +102,52 @@ def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
         # inside a styler / table cell / figure is collected too (was top-level only — which,
         # once stylers became composites, dropped styler-nested follow/multi-part bodies and
         # left reuses resolving against a name the collector never saw).  Depth-first in
-        # registry (document) order preserves multi-part concatenation order.  A REF's own
-        # body is its concern (process_ref recurses it), so don't descend into one.
+        # registry (document) order preserves multi-part concatenation order.  Yield REF
+        # (definition / follow — carries a body) AND REF_SELF (`<ref name=X/>` reuse — an
+        # anchor with no body, but the resolved subtree must still hang on it); a ref's own
+        # body is its concern, so don't descend into one.
         for _ph, ce in reg.items():
-            if ce.label == "REF":
+            if ce.label in ("REF", "REF_SELF"):
                 yield ce
             elif ce.inner_registry:
                 yield from _iter_refs(ce.inner_registry)
 
     parts: dict[str, list[str]] = {}
+    anchors: dict[str, list] = {}      # NAME → the REF nodes that emit «FN[NAME]:body
     for ce in _iter_refs(tree):
         name, follow = _ref_attrs(ce.raw)
         body = re.sub(
             r"<ref(?:\s[^>]*)?>|</ref>", "", ce.raw,
             flags=re.IGNORECASE | re.DOTALL,
         ).strip()
-        if not body:
-            continue
         target = follow or name
-        if not target:
-            continue
-        parts.setdefault(target, []).append(body)
+        if target and body:
+            parts.setdefault(target, []).append(body)
+        # A name-only ref — `<ref name=X>…</ref>` (definition) or `<ref name=X/>` (reuse) —
+        # emits «FN[X]:body at its anchor; a `follow=` continuation emits nothing (its body
+        # folds into X).  Collect the anchors so the resolved body SUBTREE hangs on each.
+        if name and not follow:
+            anchors.setdefault(name, []).append(ce)
     resolved: dict[str, str] = {}
     for nm, bodies in parts.items():
-        if context is not None:
-            from britannica.pipeline.stages.elements import process_elements
-            produced = [process_elements(b, context)
-                        for b in bodies]
-        else:
-            produced = [b for b in bodies]
-        resolved[nm] = " ".join(p.strip() for p in produced).strip()
+        if context is None:
+            resolved[nm] = " ".join(bodies).strip()   # no-context fallback: raw concat
+            continue
+        # CLASSIFY (not flatten) each contributing body into real child NODES and hang the
+        # merged registry on every «FN[X] anchor.  `produce_tree` then substitutes those
+        # children into the placeholderized body, reproducing exactly the string the old
+        # `process_elements` built (byte-identical) — while a table / verse / figure inside a
+        # NAMED footnote is now a NODE `render_tree` can walk, not flattened prose.  The body
+        # is shared by NAME (definition + continuations, N reuse anchors), so ONE subtree
+        # registry hangs on every anchor.
+        from britannica.pipeline.stages.elements._classifier import classify_article
+        ph_parts: list[str] = []
+        body_reg: dict = {}
+        for b in bodies:
+            body_ph, body_children = classify_article(b, _allow_figure=False)
+            ph_parts.append(body_ph.strip())
+            body_reg.update(body_children)
+        resolved[nm] = " ".join(ph_parts).strip()
+        for ce in anchors.get(nm, []):
+            ce.inner_registry = body_reg
     return resolved
