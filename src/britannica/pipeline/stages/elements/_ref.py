@@ -97,10 +97,21 @@ def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
     Falls back to the old flatten only when no ``context`` is supplied
     (``process_elements`` needs it); production always passes one.
     """
+    def _iter_refs(reg):
+        # Named/follow ref collection is ARTICLE-WIDE: recurse every nesting level so a ref
+        # inside a styler / table cell / figure is collected too (was top-level only — which,
+        # once stylers became composites, dropped styler-nested follow/multi-part bodies and
+        # left reuses resolving against a name the collector never saw).  Depth-first in
+        # registry (document) order preserves multi-part concatenation order.  A REF's own
+        # body is its concern (process_ref recurses it), so don't descend into one.
+        for _ph, ce in reg.items():
+            if ce.label == "REF":
+                yield ce
+            elif ce.inner_registry:
+                yield from _iter_refs(ce.inner_registry)
+
     parts: dict[str, list[str]] = {}
-    for _ph, ce in tree.items():
-        if ce.label != "REF":
-            continue
+    for ce in _iter_refs(tree):
         name, follow = _ref_attrs(ce.raw)
         body = re.sub(
             r"<ref(?:\s[^>]*)?>|</ref>", "", ce.raw,

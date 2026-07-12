@@ -72,22 +72,7 @@ especially in minor systematic categories, such as families.«P»The following i
 Adopted in the present article. Groups founded on polyp-characters
 are printed in ordinary type, those founded on medusa-characters
 in italics. For definitions of the groups see below.«P»«CTR»Sub-class Hydromedusae («I»Hydrozoa Craspedota«/I»).«/CTR»
-«CTR»«OUTLINE:
-1|Order I. Eleutheroblastea.
-1|Order II. Hydroidea («I»Leptolinae«/I»).
-2|Sub-order 1. Gymnoblastea («I»Anthomedusae«/I»).
-2|Sub-order 2. Calyptoblastea («I»Leptomedusae«/I»).
-1|Order III. Hydrocorallinae.
-1|Order IV. Graptolitoidea.
-1|Order V. Trachylinae.
-2|Sub-order 1. «I»Trachomedusae«/I».
-2|Sub-order 2. «I»Narcomedusae«/I».
-1|Order VI. Siphonophora.
-2|Sub-order 1. Chondrophorida.
-2|Sub-order 2. Calycophorida.
-2|Sub-order 3. Physophorida.
-2|Sub-order 4. Cystophorida.
-«/OUTLINE»«/CTR»«P»«CTR»«I»Organization and Morphology of the Hydromedusae.«/I»«/CTR»«P»«TABLE[cols:1|style:float:left;width:150px;padding-right:1em]»«TR»«TD»{{IMG:EB1911 Hydromedusae - Diagram of a typical Hydropolyp.jpg|width=150}}«/TD»«/TR»«TR»«TD[style:text-align:center]»«SC»Fig.«/SC» 1.—Diagram of a typical
+«CTR»«OUTLINE»«OLI:1»Order I.  Eleutheroblastea.«/OLI»«OLI:1»Order II.  Hydroidea («I»Leptolinae«/I»).«/OLI»«OLI:2»Sub-order 1. Gymnoblastea («I»Anthomedusae«/I»).«/OLI»«OLI:2»Sub-order 2. Calyptoblastea («I»Leptomedusae«/I»).«/OLI»«OLI:1»Order III. Hydrocorallinae.«/OLI»«OLI:1»Order IV. Graptolitoidea.«/OLI»«OLI:1»Order  V. Trachylinae.«/OLI»«OLI:2»Sub-order 1. «I»Trachomedusae«/I».«/OLI»«OLI:2»Sub-order 2. «I»Narcomedusae«/I».«/OLI»«OLI:1»Order VI. Siphonophora.«/OLI»«OLI:2»Sub-order 1. Chondrophorida.«/OLI»«OLI:2»Sub-order 2. Calycophorida.«/OLI»«OLI:2»Sub-order 3. Physophorida.«/OLI»«OLI:2»Sub-order 4. Cystophorida.«/OLI»«/OUTLINE»«/CTR»«P»«CTR»«I»Organization and Morphology of the Hydromedusae.«/I»«/CTR»«P»«TABLE[cols:1|style:float:left;width:150px;padding-right:1em]»«TR»«TD»{{IMG:EB1911 Hydromedusae - Diagram of a typical Hydropolyp.jpg|width=150}}«/TD»«/TR»«TR»«TD[style:text-align:center]»«SC»Fig.«/SC» 1.—Diagram of a typical
 Hydropolyp.«/TD»«/TR»«TR»«TD[style:padding-left: 2.5em;text-indent: -2.5em]»«I»a«/I», Hydranth;«P»«I»b«/I», Hydrocaulus;«P»«I»c«/I», Hydrorhiza;«P»«I»t«/I», Tentacle;«P»«I»ps«/I», Perisarc, forming in the
 region of the hydranth
 «I»a«/I» cup or hydrotheca («I»h.t«/I»),—which,
@@ -1234,7 +1219,7 @@ of «I»Phialidium«/I».«/TD»«/TR»«TR[style:vertical-align:top]»«TD»«I
 «I»Nervensystem und Sinnesorgane der«/I»
 «I»Medusen«/I», by permission of F. C. W.
 Vogel.«/TD»«/TR»«TR»«TD[colspan:2]»«SC»Fig. 33.«/SC»—Optical Section of
-a Statocyst of «I»Octorchis«/I».«/TD»«/TR»«TR[style:vertical-align:top]»«TD»«I»con«/I»,«/TD»«TD»Concrement-cell with otolith.«/TD»«/TR»«TR[style:vertical-align:top]»«TD»«I»st.c«/I»,«/TD»«TD»Cavity of statocyst.«/TD»«/TR»«/TABLE»«/TD»«/TR»«/TABLE»«P»«TABLE[cols:2|style:float:right;width:250px;margin-left: 1em]»«TR»«TD[colspan:2]»{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina solmaris.jpg|width=250}}«/TD»«/TR»«TR»«TD[colspan:2|style:font-size: smaller]»After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
+a Statocyst of «I»Octorchis«/I».«/TD»«/TR»«TR[style:vertical-align:top]»«TD»«I»con«/I»,«/TD»«TD»Concrement-cell with otolith.«/TD»«/TR»«TR[style:vertical-align:top]»«TD»«I»st.c«/I»,«/TD»«TD»Cavity of statocyst.«/TD»«/TR»«/TABLE»«/TD»«/TR»«/TABLE»«P»«TABLE[cols:1|style:float:right;width:250px;margin-left: 1em]»«TR»«TD[colspan:2]»{{IMG:EB1911 Hydromedusae - Tentaculocyst of Cunina solmaris.jpg|width=250}}«/TD»«/TR»«TR»«TD[colspan:2|style:font-size: smaller]»After O. and R. Hertwig, «I»Nervensystem und Sinnesorgane«/I»
 «I»der Medusen«/I», by permission of F. C. W.
 Vogel.«/TD»«/TR»«TR»«TD[colspan:2]»«SC»Fig. 34.«/SC»—Tentaculocyst (statorhabd)
 of «I»Cunina solmaris«/I». «I»n.c«/I», Nerve-cushion;
@@ -2352,19 +2337,8 @@ groups of medusiform
 buds.«/TD»«/TR»«/TABLE»«/TD»«/TR»«/TABLE»«P»Speaking generally, three principal types of hydranth can be
 distinguished, each with subordinate varieties of form.«P»1. Club-shaped hydranths with numerous tentacles, generally
 scattered irregularly, sometimes with a spiral arrangement, or in
-whorls (“verticillate”).«P»«OUTLINE:
-1|(«I»a«/I») Tentacles filiform; type of «I»Clava«/I» (fig. 5), «I»Cordylophora«/I», &c.
-1|(«I»b«/I») Tentacles capitate, simple; type of «I»Coryne«/I» and «I»Syncoryne«/I»; «I»Myriothela«/I» is an aberrant form with some of the tentacles modified as “claspers” to hold the ova.
-1|(«I»c«/I») Tentacles capitate, branched, wholly or in part; type of «I»Cladocoryne«/I».
-1|(«I»d«/I») Tentacles filiform or capitate, tending to be arranged in definite whorls; type of «I»Stauridium«/I» (fig. 2), «I»Cladonema«/I» and «I»Pennaria«/I».
-«/OUTLINE»«P»2. Hydranth more shortened, daisy-like in form, with two whorls
-of tentacles, oral and aboral.«P»«OUTLINE:
-1|(«I»a«/I») Tentacles filiform, simple, radially arranged or scattered irregularly; type of «I»Tubularia«/I» (fig. 4), «I»Corymorpha«/I» (fig. 3), «I»Nemopsis«/I», «I»Pelagohydra«/I», &c.
-1|(«I»b«/I») Tentacles with a bilateral arrangement, branched tentacles in addition to simple filiform ones; type of «I»Branchiocerianthus«/I».
-«/OUTLINE»«P»3. Hydranth with a single circlet of tentacles.«P»«OUTLINE:
-1|(«I»a«/I») With filiform tentacles; the commonest type, seen in «I»Bougainvillea«/I» (fig. 13), «I»Eudendrium«/I», &c.
-1|(«I»b«/I») With capitate tentacles; type of «I»Clavatella«/I».
-«/OUTLINE»«P»4. Hydranth with tentacles reduced below four; type of «I»Lar«/I»
+whorls (“verticillate”).«P»«OUTLINE»«OLI:1»(«I»a«/I») Tentacles filiform; type of «I»Clava«/I» (fig. 5), «I»Cordylophora«/I», &c.«/OLI»«OLI:1»(«I»b«/I») Tentacles capitate, simple; type of «I»Coryne«/I» and «I»Syncoryne«/I»; «I»Myriothela«/I» is an aberrant form with some of the tentacles modified as “claspers” to hold the ova.«/OLI»«OLI:1»(«I»c«/I») Tentacles capitate, branched, wholly or in part; type of «I»Cladocoryne«/I».«/OLI»«OLI:1»(«I»d«/I») Tentacles filiform or capitate, tending to be arranged in definite whorls; type of «I»Stauridium«/I» (fig. 2), «I»Cladonema«/I» and «I»Pennaria«/I».«/OLI»«/OUTLINE»«P»2. Hydranth more shortened, daisy-like in form, with two whorls
+of tentacles, oral and aboral.«P»«OUTLINE»«OLI:1»(«I»a«/I») Tentacles filiform, simple, radially arranged or scattered irregularly; type of «I»Tubularia«/I» (fig. 4), «I»Corymorpha«/I» (fig. 3), «I»Nemopsis«/I», «I»Pelagohydra«/I», &c.«/OLI»«OLI:1»(«I»b«/I») Tentacles with a bilateral arrangement, branched tentacles in addition to simple filiform ones; type of «I»Branchiocerianthus«/I».«/OLI»«/OUTLINE»«P»3. Hydranth with a single circlet of tentacles.«P»«OUTLINE»«OLI:1»(«I»a«/I») With filiform tentacles; the commonest type, seen in «I»Bougainvillea«/I» (fig. 13), «I»Eudendrium«/I», &c.«/OLI»«OLI:1»(«I»b«/I») With capitate tentacles; type of «I»Clavatella«/I».«/OLI»«/OUTLINE»«P»4. Hydranth with tentacles reduced below four; type of «I»Lar«/I»
 (fig. 11), «I»Monobrachium«/I», &c.«P»PAGE:163The «I»Anthomedusa«/I» in form is generally deep, bell-shaped.
 The sense organs are typically ocelli, never otocysts. The gonads
 are borne on the manubrium, either forming a continuous ring

@@ -24,5 +24,5 @@ from dataclasses import dataclass, field
 class ElementContext:
     volume: int = 0
     page_number: int = 0
-    ref_bodies: dict[str, str] = field(default_factory=dict)
+    ref_bodies: dict[str, str] | None = None
     contributor_initials: frozenset[str] = field(default_factory=frozenset)

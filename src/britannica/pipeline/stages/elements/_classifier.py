@@ -834,6 +834,27 @@ def _is_leaf_html_tag(raw: str) -> bool:
     return name == "table" or name in _OPAQUE_TAGS
 
 
+def _classify_strip_composite(raw: str) -> ClassifiedElement:
+    """A PIPE-form styler `{{name|content}}` is a COMPOSITE, not a leaf: its content
+    decomposes into real child nodes — the SAME `classify_article` the producer's old
+    `process_elements(inner_raw)` ran, minus flattening the result to a string — so a
+    nested block (verse / outline / table / footnote) is a NODE the render walks, not a
+    marker a span-match re-pairs.  Byte-identical body: `produce_tree` over these children
+    reproduces exactly the string the old producer built; only the tree gains depth.  The
+    style shell stays the producer's to re-derive from raw (style ⊥ content).  The `.strip()`
+    / empty-drop run in the PRODUCER on the SUBSTITUTED content (not here on `inner_raw`), so
+    a `{{em}}`-spacer at the content edge and an all-empty styler resolve exactly as the old
+    `process_elements(...).strip()` did."""
+    from britannica.pipeline.stages.elements import _strip_peel
+    _, inner_raw, _ = _strip_peel(raw)
+    placeholderized, tree = classify_article(inner_raw, _allow_figure=False)
+    return ClassifiedElement(
+        label="STRIP", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -862,6 +883,14 @@ def classify(
     # `:`-indent — decompose it through the one outline path, not a separate leaf.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
+    # A PIPE-form template styler `{{center|X}}` / `{{Fine block|X}}` / … is a COMPOSITE
+    # too: its content is content-in-a-wrapper.  Decompose it here, before the leaf path
+    # hands raw to the producer to flatten via `process_elements` — so a nested block
+    # (verse / outline / table / footnote) inside a styler becomes a NODE the render
+    # walks, not a re-parsed span.  BARE `{{name}}` stylers (no pipe) stay leaves: their
+    # content is a spec default, nothing to recurse.
+    if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_STYLE_RE.match(raw):
+        return _classify_strip_composite(raw)
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.

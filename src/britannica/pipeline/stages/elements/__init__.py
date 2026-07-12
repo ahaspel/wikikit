@@ -660,43 +660,56 @@ def _carry_named_params(inner_raw):
     return inner_raw, css
 
 
-def process_strip(raw, inner, context, inner_registry):
-    """STRIP producer (walker SHAPE_STRIP): the template-form styler
-    `{{center|…}}` / `{{csc|…}}` / `{{left|…}}` / ….
+def _strip_peel(raw):
+    """Peel a PIPE-form styler `{{name|content}}` → (name, clean content, param CSS).
+    Drop the matched `{{name|` opener + trailing `}}`, the `1=` explicit-positional
+    escape (guards a literal `=`; a real named param never has a bare-number key), and
+    leading NAMED params (`{{Hebrew|small=yes|א}}` — presentation, CARRIED as CSS, not
+    dropped), then convert the wrapper's own top-level `<br>` to «BR».  Shared so the
+    STRIP producer (name + param_css for the style shell) and `_classify_strip_composite`
+    (the clean content to recurse into child nodes) peel one and the same way."""
+    from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_RE
+    tm = _TEMPLATE_STYLE_RE.match(raw)
+    inner_raw = re.sub(r"^\s*\d+\s*=\s*", "",
+                       re.sub(r"\}\}\s*$", "", raw[tm.end():]))
+    inner_raw, param_css = _carry_named_params(inner_raw)
+    return tm.group(1).lower(), _styled_br_to_marker(inner_raw), param_css
 
-    The SAME producer as the HTML form: a `{{center|X}}` is handled identically
-    whether X is text, an image, or a table (style ⊥ content).  Peel `{{name|`
-    + the matching trailing `}}` (the walker already balanced the construct),
-    recurse, wrap per the registry spec.  Body is the verbatim TEMPLATE branch
-    formerly in `_process_styled`, now unconditional (STRIP only reaches here
-    when `_TEMPLATE_STYLE_RE` matched in the walker)."""
+
+def process_strip(raw, inner, context, inner_registry):
+    """STRIP producer: the template-form styler `{{center|…}}` / `{{block center|…}}` /
+    `{{Fine block|…}}` / `{{csc|…}}` / ….  Style ⊥ content: the same wrap whether the
+    content is text, an image, a table, or a nested block.
+
+    PIPE form (`{{name|X}}`) is a COMPOSITE — `_classify_strip_composite` recursed X into
+    real child nodes.  We substitute their markers into `inner` and `.strip()` the ASSEMBLED
+    content (like `_process_cell`: the strip trims `{{em}}`/`{{spaces}}` padding that is only
+    literal once the spacer producer has run, and drops an all-empty styler — matching the
+    old `process_elements(...).strip()` exactly; `produce_tree`'s later substitution is then
+    a no-op).  BARE form (`{{0}}`) carries no source content — a spec default — leaf, here."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, style_block)
-    param_css: list[str] = []
-    tm = _TEMPLATE_STYLE_RE.match(raw)
-    if tm is not None:                       # `{{name|content}}` — the pipe form
-        name = tm.group(1).lower()
-        inner_raw = re.sub(r"\}\}\s*$", "", raw[tm.end():])
-        # A leading `N=` is MediaWiki's explicit-positional escape: `{{center|1=X}}`
-        # forces "positional arg 1 = X" (used to guard a literal `=` in the value),
-        # NOT a named param — a real named param never has a bare-number key.  It's
-        # the LAST arg here so its own `|` is nested, and `_carry_named_params`'
-        # trailing-`|` rule rightly skips it — but then `1=` rode through into the
-        # heading.  Strip it unambiguously, before param-carry: `1=X` → `X`.
-        inner_raw = re.sub(r"^\s*\d+\s*=\s*", "", inner_raw)
-        # Leading NAMED params (`{{Hebrew|small=yes|א}}`) are presentation, not
-        # content — CARRY them as CSS (see `_carry_named_params`), don't drop.
-        inner_raw, param_css = _carry_named_params(inner_raw)
-    else:                                    # `{{name}}` — bare form: the classifier
-        # routes a registered styler with OR without content (see _classifier
-        # line ~390), so supply the styler's default content — e.g. `{{0}}` is
-        # one invisible width-reserving zero.
+    if _TEMPLATE_STYLE_RE.match(raw):        # pipe form — content recursed to children
+        name, _, param_css = _strip_peel(raw)
+        content = inner
+        if inner_registry is not None:
+            for _ in range(5):
+                changed = False
+                for ph in list(inner_registry.elements):
+                    if ph in content:
+                        content = content.replace(
+                            ph, inner_registry.markers.get(ph, ""))
+                        changed = True
+                if not changed:
+                    break
+        content = content.strip()
+    else:                                    # bare form — spec-default content, a leaf
         name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
-        inner_raw = _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")
+        content = process_elements(
+            _styled_br_to_marker(_TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")),
+            context, _allow_figure=False).strip()
+        param_css = []
     spec = _TEMPLATE_STYLE_WRAPPERS[name]
-    inner_raw = _styled_br_to_marker(inner_raw)
-    content = process_elements(
-        inner_raw, context, _allow_figure=False).strip()
     css = ";".join(c for c in [spec.get("css", ""), *param_css] if c)
     # A carried param on a tag-less script wrapper ({{Hebrew}} = {}) decorates an
     # inline glyph → SPAN, not the block DIV default.
@@ -1293,10 +1306,17 @@ def process_elements_tree(
     # tree render — needs reading order, so make the tree carry it.
     tree = {ph: tree[ph] for ph in sorted(tree, key=placeholderized_text.find)}
 
-    # Article-wide ref-body resolution, threaded into a COPY of context so the
-    # REF producer reads it without mutating the caller's context.
+    # Gather named / continuation footnotes ONCE per article (resolve_ref_bodies' own
+    # contract — "runs once per article").  A definition, its `<ref name=X/>` reuses, and its
+    # `<ref follow=X>` continuations can each live ANYWHERE in the article, so the gather is
+    # only meaningful over the whole tree.  `ref_bodies is None` marks the top-level article
+    # call; every nested process_elements (a FRAME's content, a bare styler, a `main other`)
+    # already carries this article-wide map in its threaded context and INHERITS it — it must
+    # not re-gather its own fragment (that per-fragment gather WAS the styler-local footnote
+    # scope, the flattener-era bug).  Threaded into a COPY so the caller's context is untouched.
     context = _dc_replace(context)
-    context.ref_bodies = resolve_ref_bodies(tree, context)
+    if context.ref_bodies is None:
+        context.ref_bodies = resolve_ref_bodies(tree, context)
 
     # Produce: bottom-up over the tree; child markers substituted into each
     # producer's output by the framework.
