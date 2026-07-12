@@ -233,12 +233,8 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "IMAGE"
     if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
         return "IMAGE"
-    # `{{ordered list|…}}` — a nested ordered-list classification (GEOGRAPHY nests
-    # 4 deep).  Matched on the raw opener (the first-token name is the ambiguous
-    # bare "ordered").  A leaf — the ORDERED_LIST producer parses the whole nested
-    # template from raw into one depth-encoded marker.
-    if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
-        return "ORDERED_LIST"
+    # (`{{ordered list|…}}` is intercepted upstream as an OUTLINE composite — see
+    # `_classify_ordered_list_composite` — so it never reaches this leaf-label path.)
     # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
     # `CE article link` (Catholic Encyclopedia cross-edition) joins the family — a
@@ -734,6 +730,19 @@ def _classify_outline_composite(raw: str, block: str) -> ClassifiedElement:
     return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
 
 
+def _classify_ordered_list_composite(raw: str) -> ClassifiedElement:
+    """`{{ordered list|…}}` is a degenerate OUTLINE — the same nested-item structure,
+    recognized by an explicit `{{…}}` delimiter (like a table's `{|`) instead of by
+    `:`-indent, its items pre-labelled (I./a./1.).  `_walk` parses the template into the
+    same `(depth, content)` rows a `:`-block yields; run them through the ONE outline
+    decomposer so an ordered list produces `«OUTLINE»«OLI»` and renders like any other."""
+    from britannica.pipeline.stages.elements._ordered_list import _walk
+    rows: list[tuple[int, str]] = []
+    _walk(raw, 0, rows)
+    phs, reg = _outline_items(rows)
+    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+
+
 def _outline_items(items: "list[tuple[int, str]]"):
     """`(ordered placeholders, registry)` — one flat depth-tagged OUTLINE_ITEM per
     source item.  Nesting is NOT this producer's job: the render's one owner,
@@ -849,6 +858,10 @@ def classify(
     # below — which would hand the raw block to the old flattening producer.
     if shape == SHAPE_OUTLINE:
         return _classify_outline_composite(raw, raw)
+    # `{{ordered list|…}}` is that same OUTLINE with an explicit delimiter instead of
+    # `:`-indent — decompose it through the one outline path, not a separate leaf.
+    if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
+        return _classify_ordered_list_composite(raw)
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.

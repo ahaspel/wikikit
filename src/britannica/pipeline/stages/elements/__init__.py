@@ -42,7 +42,6 @@ from britannica.pipeline.stages.elements._coord import process_coord
 from britannica.pipeline.stages.elements._splitword import process_split_word
 from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import process_content_extract
-from britannica.pipeline.stages.elements._ordered_list import _process_ordered_list
 from britannica.pipeline.stages.elements._math import (
     _process_math_equation,
 )
@@ -64,7 +63,6 @@ from britannica.pipeline.stages.elements._outline import (
     _outline_indent_depth,
     _outline_is_bare_emphasis,
     _outline_is_list_shaped,
-    _process_outline,
 )
 from britannica.pipeline.stages.elements._section import (
     _process_section,
@@ -975,7 +973,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
         process_content_extract(inner, ctx),
     "POEM": lambda raw, inner, ctx, reg: _process_poem(inner, ctx),
     "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner, ctx),
-    "ORDERED_LIST": lambda raw, inner, ctx, reg: _process_ordered_list(raw),
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
     # OUTLINE is now a composite: the classifier built nested OUTLINE_ITEM children,
@@ -1287,6 +1284,14 @@ def process_elements_tree(
     # BODY-wrap on, the placeholderized text is placeholders only.
     placeholderized_text, tree = classify_article(
         text, _allow_figure=_allow_figure)
+
+    # Order top-level nodes by DOCUMENT position — their placeholder's spot in the
+    # placeholderized text — not walker EXTRACTION order.  The outline pre-pass (and any
+    # pre-extraction) registers elements out of reading order, so `tree` as built is NOT
+    # document-ordered.  `substitute`/`produce` place each node by its own placeholder and
+    # are order-independent (body stays byte-identical); a document-order consumer — the
+    # tree render — needs reading order, so make the tree carry it.
+    tree = {ph: tree[ph] for ph in sorted(tree, key=placeholderized_text.find)}
 
     # Article-wide ref-body resolution, threaded into a COPY of context so the
     # REF producer reads it without mutating the caller's context.

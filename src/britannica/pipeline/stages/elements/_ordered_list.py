@@ -1,4 +1,4 @@
-"""Producer for the ORDERED_LIST element.
+"""Recognizer for `{{ordered list|…}}` — a degenerate OUTLINE.
 
 `{{ordered list|type=…|item|item|{{ordered list|…}}|…}}` is a Wikisource nested
 numbered-list macro.  Its only corpus use is GEOGRAPHY (vol 11)'s "Richthofen's
@@ -6,12 +6,13 @@ Classification of Mountains" — a 4-level taxonomy (upper-roman → lower-alpha
 decimal → lower-roman), each item a «I»German term«/I»—English gloss, with a
 sub-list folded into its parent item's arg after a newline.
 
-It is a LEAF shape (`_shapes.SHAPE_ORDERED_LIST`): the producer reads the raw
-template and owns the recursion, so the classifier doesn't split each nested
-level into its own element.  Output is ONE depth-encoded `«OUTLINE:…«/OUTLINE»`
-marker (reusing the existing outline rendering — nested, indented), with each
-level's `type=` label (I/II, a/b, i/ii, 1/2) preserved as the item-text prefix.
-The printed source shows both the indentation and the labels.
+An ordered list IS an outline: the same nested-item structure, recognized by an
+explicit `{{…}}` delimiter instead of `:`-indent, its items pre-labelled with the
+`type=` numbering (I/II, a/b, i/ii, 1/2).  `_walk` parses the raw template into the
+same `(depth, "label. text")` rows a `:`-block yields; the classifier
+(`_classify_ordered_list_composite`) runs them through the ONE outline decomposer,
+so it produces `«OUTLINE»«OLI»` and renders through `build_outline_ul` like any
+other outline — no separate producer, no separate marker format.
 """
 from __future__ import annotations
 
@@ -105,10 +106,3 @@ def _walk(block: str, depth: int, out: list[tuple[int, str]]) -> None:
             _walk(nested, depth + 1, out)
 
 
-def _process_ordered_list(raw: str) -> str:
-    rows: list[tuple[int, str]] = []
-    _walk(raw, 0, rows)
-    if not rows:
-        return ""
-    body = "\n".join(f"{d}|{c}" for d, c in rows)
-    return f"«OUTLINE:\n{body}\n«/OUTLINE»"

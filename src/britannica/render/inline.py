@@ -228,8 +228,7 @@ def _verse(m):
     return '<span class="cell-verse">' + "<br>".join(lines) + "</span>"
 
 
-_OUTLINE_ITEM_RE = re.compile(r"^(\d+)\|(.*)$")
-_OUTLINE_SPAN_RE = re.compile(r"«(PLATE_)?OUTLINE:([\s\S]*?)«/(?:PLATE_)?OUTLINE»")
+_OUTLINE_SPAN_RE = re.compile(r"«OUTLINE»([\s\S]*?)«/OUTLINE»")
 
 
 def build_outline_ul(items, plate, render_item):
@@ -266,14 +265,19 @@ def build_outline_ul(items, plate, render_item):
 
 def _outline(m):
     """An «OUTLINE» nested where the body block-scan can't reach — a table cell, a verse
-    line, a footnote (all decoded by ``decode_inline``).  Render the ``<ul>`` in place;
-    each item's inline markers decode in ``decode_inline``'s subsequent passes."""
-    items = []
-    for ln in m.group(2).split("\n"):
-        mm = _OUTLINE_ITEM_RE.match(ln)
-        if mm:
-            items.append((int(mm.group(1)), mm.group(2)))
-    return build_outline_ul(items, m.group(1), lambda c: c) if items else m.group(0)
+    line, a footnote (all decoded by ``decode_inline``).  Parse the flat «OLI:depth» items
+    and render the ``<ul>`` in place; each item's own inline markers finish in
+    ``decode_inline``'s subsequent passes, so the item body renders as identity here."""
+    inner, items, i = m.group(1), [], 0
+    while True:
+        a = inner.find("«OLI:", i)
+        if a == -1:
+            break
+        colon = inner.find("»", a)
+        end = inner.find("«/OLI»", colon)
+        items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
+        i = end + len("«/OLI»")
+    return build_outline_ul(items, None, lambda c: c) if items else m.group(0)
 
 
 def _span_title(m):
