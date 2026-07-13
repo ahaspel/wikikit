@@ -77,6 +77,30 @@ def _process_ref(raw, inner, ref_bodies=None):
     return f"«FN:{content}«/FN»"
 
 
+_REF_TAGS_RE = re.compile(r"<ref(?:\s[^>]*)?>|</ref>", re.IGNORECASE | re.DOTALL)
+
+
+def _produce_ref_body(ce, context) -> str:
+    """Produce ONE ref/continuation body from the node the walker already classified —
+    produce its child subtree, then substitute the child markers into its placeholderized
+    ``inner_text``.  The decompose-native render of a footnote body: a ``<table>`` / styler /
+    link inside is a real child node (``produce_tree`` owns it), NOT a re-``process_elements``
+    of the raw body that re-walks + re-classifies it in a throwaway tree (the last producer-
+    side flattener).  Producing the subtree here sets the same markers the main producer pass
+    sets — idempotent — so calling it before that pass is safe.
+
+    Byte-identical to the old recurse: the body text is the same (no ref nests in a ref) and
+    the classification is the same (the old ``process_elements`` defaulted ``_allow_figure=
+    True`` vs the walker's ``False`` on the ref inner, but that flag is dead — its walker
+    consumer was deleted with the figure recognizer)."""
+    from britannica.pipeline.stages.elements._classifier import (
+        produce_tree, substitute_top_level_markers)
+    if not ce.inner_registry:
+        return ce.inner_text
+    produce_tree(ce.inner_registry, context)
+    return substitute_top_level_markers(ce.inner_text, ce.inner_registry)
+
+
 def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
     """Article-scoped resolution of named / continuation footnotes.
 
@@ -85,17 +109,18 @@ def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
     continuation can each live anywhere in the article.  This reunites
     them into NAME → body.
 
-    Each contributing body is RECURSED to the ground through the element
-    pipeline (``process_elements``) — a table / figure / poem inside a
-    named or ``follow`` footnote becomes a real nested element, not
-    flattened prose.  The plain ``<ref>`` path already recurses (its inner
-    is classified and ``produce_tree`` substitutes the child markers); this
-    brings name/follow into line, instead of flattening
-    the concatenated RAW bodies (which dropped a ``<table>`` to ``<td …>``
-    debris — the MACHINE-GUN table-in-ref leak).  [[project_walker_one_matcher]]
+    Each contributing body is produced from the node the walker already CLASSIFIED
+    (``_produce_ref_body`` — produce its child subtree, substitute the markers) — a table /
+    styler / link inside a named or ``follow`` footnote is a real nested element, not
+    flattened prose.  This is the decompose the plain ``<ref>`` path already gets (its inner
+    is classified and ``produce_tree`` substitutes the child markers); name/follow now render
+    the SAME way, off the classified tree, instead of re-``process_elements``-ing the raw
+    bodies in a throwaway tree (the last producer-side flattener; the earlier flatten dropped
+    a ``<table>`` to ``<td …>`` debris — the MACHINE-GUN table-in-ref leak).
+    [[project_walker_one_matcher]]
 
-    Falls back to the old flatten only when no ``context`` is supplied
-    (``process_elements`` needs it); production always passes one.
+    Falls back to the raw bodies only when no ``context`` is supplied (production always
+    passes one).
     """
     def _iter_refs(reg):
         # Named/follow ref collection is ARTICLE-WIDE: recurse every nesting level so a ref
@@ -103,33 +128,27 @@ def resolve_ref_bodies(tree, context=None) -> dict[str, str]:
         # once stylers became composites, dropped styler-nested follow/multi-part bodies and
         # left reuses resolving against a name the collector never saw).  Depth-first in
         # registry (document) order preserves multi-part concatenation order.  A REF's own
-        # body is its concern (process_ref recurses it), so don't descend into one.
+        # body is its concern (_produce_ref_body recurses it), so don't descend into one.
         for _ph, ce in reg.items():
             if ce.label == "REF":
                 yield ce
             elif ce.inner_registry:
                 yield from _iter_refs(ce.inner_registry)
 
-    parts: dict[str, list[str]] = {}
+    parts: dict[str, list] = {}
     for ce in _iter_refs(tree):
         name, follow = _ref_attrs(ce.raw)
-        body = re.sub(
-            r"<ref(?:\s[^>]*)?>|</ref>", "", ce.raw,
-            flags=re.IGNORECASE | re.DOTALL,
-        ).strip()
-        if not body:
+        if not _REF_TAGS_RE.sub("", ce.raw).strip():   # empty body contributes nothing
             continue
         target = follow or name
         if not target:
             continue
-        parts.setdefault(target, []).append(body)
+        parts.setdefault(target, []).append(ce)
     resolved: dict[str, str] = {}
-    for nm, bodies in parts.items():
+    for nm, nodes in parts.items():
         if context is not None:
-            from britannica.pipeline.stages.elements import process_elements
-            produced = [process_elements(b, context)
-                        for b in bodies]
+            produced = [_produce_ref_body(ce, context) for ce in nodes]
         else:
-            produced = [b for b in bodies]
+            produced = [_REF_TAGS_RE.sub("", ce.raw).strip() for ce in nodes]
         resolved[nm] = " ".join(p.strip() for p in produced).strip()
     return resolved
