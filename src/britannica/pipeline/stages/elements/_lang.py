@@ -12,5 +12,5 @@ from __future__ import annotations
 
 
 # `{{greek|…}}`/`{{polytonic|…}}`/… folded into the peel/recurse/wrap mechanism: the peel
-# (`_recurse_slot_content`, LANG case) takes the post-name content and recurses it with
-# `_allow_figure=True`; the wrap is `_wrap_bare` (the glyphs ARE the text).  No bespoke producer.
+# (`_recurse_slot_content`, LANG case) takes the post-name content and recurses it; the wrap
+# is `_wrap_bare` (the glyphs ARE the text).  No bespoke producer.

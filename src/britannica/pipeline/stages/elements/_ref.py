@@ -89,10 +89,8 @@ def _produce_ref_body(ce, context) -> str:
     side flattener).  Producing the subtree here sets the same markers the main producer pass
     sets — idempotent — so calling it before that pass is safe.
 
-    Byte-identical to the old recurse: the body text is the same (no ref nests in a ref) and
-    the classification is the same (the old ``process_elements`` defaulted ``_allow_figure=
-    True`` vs the walker's ``False`` on the ref inner, but that flag is dead — its walker
-    consumer was deleted with the figure recognizer)."""
+    Byte-identical to the old ``process_elements`` recurse: the body text is the same (no ref
+    nests in a ref) and it classifies the same way — the ref inner the walker already built."""
     from britannica.pipeline.stages.elements._classifier import (
         produce_tree, substitute_top_level_markers)
     if not ce.inner_registry:

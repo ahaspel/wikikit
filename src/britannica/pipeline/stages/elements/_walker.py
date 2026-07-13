@@ -415,7 +415,7 @@ def _paired_wrapper_end(text: str, pos: int) -> int | None:
 
 
 def _walk_balanced_shapes(
-    text: str, _allow_outline: bool = True, _allow_figure: bool = True,
+    text: str, _allow_outline: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """Single linear walk over `text`, at one depth.
 
@@ -434,7 +434,6 @@ def _walk_balanced_shapes(
     body_buf: list[str] = []
     pos = 0
     n = len(text)
-    figures = _allow_figure
 
     def _flush_body() -> None:
         """Emit the body-text run accumulated so far.  An outline inside it is
@@ -676,7 +675,6 @@ _PLACEHOLDER_RE = re.compile(rf"{re.escape(_PH)}ELEM:\d+{re.escape(_PH)}")
 def walk(
     text: str,
     _allow_outline: bool = True,
-    _allow_figure: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """One-level walk: emit every element at this depth — brackets, outlines,
     AND the body-text runs between them — in a single scan.
@@ -685,8 +683,6 @@ def walk(
     everywhere by the same code: no article-level special case, no later
     body-wrap, no flag.  ``_allow_outline=False`` when the parent is OUTLINE so
     the outline recognizer doesn't re-trigger on its own bytes.
-    ``_allow_figure=False`` for every recursive descent so a figure — a
-    body-level construct — is recognized only at the article level.
     """
     # OUTLINE runs as a PRE-PASS on the raw text (construct-aware via `_skip`), so a
     # `:`-block is bounded WHOLE — including a `:<math>…` line's raw math — BEFORE the
@@ -697,5 +693,5 @@ def walk(
     if _allow_outline:
         text, outline_extracts = _walk_outline(text)
     ph_text, extracts = _walk_balanced_shapes(
-        text, _allow_outline=False, _allow_figure=_allow_figure)
+        text, _allow_outline=False)
     return ph_text, outline_extracts + extracts

@@ -436,8 +436,7 @@ def _process_subsup(raw, context):
     if not m:
         return raw
     table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP
-    inner = process_elements(m.group(2), context,
-                             _allow_figure=False)
+    inner = process_elements(m.group(2), context)
     inner = (inner.replace("«B»", "").replace("«/B»", "")
                   .replace("«I»", "").replace("«/I»", ""))
     out, last = [], 0
@@ -521,8 +520,7 @@ def process_span_title(raw, inner, context, inner_registry):
         "]", "").replace("»", "")
     inner_raw = _styled_br_to_marker(
         re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
-    content = process_elements(
-        inner_raw, context, _allow_figure=False).strip()
+    content = process_elements(inner_raw, context).strip()
     # Carry the tooltip UNLESS the title is transcription FURNITURE (see
     # `_FURNITURE_TITLE_RE`) — every other title is a gloss the reader wants
     # (romanization, translation, retroactive death year), and the printed text is
@@ -777,46 +775,46 @@ def _substitute_children(inner, inner_registry):
 def _recurse_slot_content(raw, label):
     """The ONE recursive slot — EXACTLY as the old producer passed it to `process_elements` — for
     a single-slot leaf producer, per label; `_classify_recurse_slot` decomposes it into nodes.
-    Returns (slot, allow_figure).  Mirrors each producer's slot parse so the classified slot
-    matches what the producer wraps."""
+    Returns the slot.  Mirrors each producer's slot parse so the classified slot matches what the
+    producer wraps."""
     if label == "LANG":                       # script wrapper → its bare content (glyphs)
         body = raw.strip()
         if body.startswith("{{"):
             body = body[2:]
         if body.endswith("}}"):
             body = body[:-2]
-        return body.partition("|")[2], True   # process_lang used the bare (figure-allowing) recurse
+        return body.partition("|")[2]
     if label in _LINK_LABELS:                 # a link → its DISPLAY slot (both [[…]] and {{…}} forms)
-        return _link_display(raw, label), False
+        return _link_display(raw, label)
     if label == "PARAM":                      # {{Fs|value|X}} param-styler → its content (arg-2+)
-        return _param_peel(raw)[2], False
+        return _param_peel(raw)[2]
     if label == "HTML_STYLE":                 # <div|span … style>X</> → the clean inner (<br>→«BR»)
         p = _html_style_peel(raw)
-        return (p[2] if p else ""), False
+        return p[2] if p else ""
     if label == "STRIP":                      # {{name|X}} styler → content; bare {{name}} → spec default
         from britannica.pipeline.stages.elements._tables import (
             _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS)
         if _TEMPLATE_STYLE_RE.match(raw):
-            return _strip_peel(raw)[1], False
+            return _strip_peel(raw)[1]
         name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
         return _styled_br_to_marker(
-            _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")), False
+            _TEMPLATE_STYLE_WRAPPERS[name].get("bare", ""))
     args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     if label == "LB":                         # `{{lb-|N}}` → the quantity N
         return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,
-                      flags=re.IGNORECASE).strip(), False
+                      flags=re.IGNORECASE).strip()
     if label == "CITE":                       # `{{cite|Title}}` → the title
-        return args.partition("|")[2].strip(), False
+        return args.partition("|")[2].strip()
     if label == "MAIN_OTHER":                 # `{{main other|main|other}}` → the main copy (param 1)
         from britannica.pipeline.stages.elements._frame import _main_other_content
-        return _main_other_content(raw), False
+        return _main_other_content(raw)
     if label == "SPLIT_WORD":                 # page-split word → the rejoined word (END → empty)
         from britannica.pipeline.stages.elements._splitword import (
             _split_word_word, _marker_name, _END_NAMES)
         if _marker_name(raw) in _END_NAMES:
-            return "", False
-        return _split_word_word(raw), False
-    return "", False
+            return ""
+        return _split_word_word(raw)
+    return ""
 
 
 # ── Strategy: peel → recurse → wrap ──────────────────────────────────────────
@@ -1335,8 +1333,7 @@ def _classify_table(raw: str, inner: str,
 # ── Public API ────────────────────────────────────────────────────────
 
 def process_elements(text: str,
-                     context: ElementContext,
-                     _allow_figure: bool = True) -> str:
+                     context: ElementContext) -> str:
     """Extract, process, and reassemble all embedded elements.
 
     Walker–classifier–producer pipeline.  The classifier drives
@@ -1359,13 +1356,12 @@ def process_elements(text: str,
     Returns:
         text with all embedded elements processed to their final form
     """
-    return process_elements_tree(text, context, _allow_figure)[0]
+    return process_elements_tree(text, context)[0]
 
 
 def process_elements_tree(
     text: str,
     context: ElementContext,
-    _allow_figure: bool = True,
 ) -> tuple[str, dict]:
     """Walk + classify + produce, returning BOTH the assembled body and the
     element tree.
@@ -1388,8 +1384,7 @@ def process_elements_tree(
     # plus a tree of ClassifiedElement records — each knows its label, raw
     # bytes, inner text, and inner registry of classified children.  With
     # BODY-wrap on, the placeholderized text is placeholders only.
-    placeholderized_text, tree = classify_article(
-        text, _allow_figure=_allow_figure)
+    placeholderized_text, tree = classify_article(text)
 
     # Order top-level nodes by DOCUMENT position — their placeholder's spot in the
     # placeholderized text — not walker EXTRACTION order.  The outline pre-pass (and any

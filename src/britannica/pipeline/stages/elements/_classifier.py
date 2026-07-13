@@ -660,16 +660,16 @@ def _mint_ph() -> str:
 def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
     """Decompose a `TABLE`-labelled grid into a TABLE node whose children are ROW
     nodes (each holding TD/TH cell nodes) plus, if present, a CAPTION node.  Each
-    cell / caption body classifies generically into the tree — figures OFF, so a
-    bare `[[File:]]` in a cell is an inline image leaf (the old `cell_recurse`
-    contract).  The cell body's own `.strip(' \\t')` lives in the TD/TH producer
+    cell / caption body classifies generically into the tree — a bare `[[File:]]`
+    in a cell is an inline image leaf (the old `cell_recurse` contract).  The cell
+    body's own `.strip(' \\t')` lives in the TD/TH producer
     (it must run AFTER a `{{spaces|N}}` padding decodes to real space); the
     caption's `.strip()` lives in the TABLE producer, both post-recursion."""
     from britannica.pipeline.stages.elements._table_fold import recognize_table
     caption_raw, rows = recognize_table(_COMMENT_RE.sub("", grid))
     children: dict[str, ClassifiedElement] = {}
     if caption_raw:
-        cap_body, cap_reg = classify_article(caption_raw, _allow_figure=False)
+        cap_body, cap_reg = classify_article(caption_raw)
         children[_mint_ph()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
     row_phs: list[str] = []
     max_cols = 0
@@ -680,7 +680,7 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cell_children: dict[str, ClassifiedElement] = {}
         row_cols = 0
         for sep, cell_attr, content in cells:
-            cell_body, cell_reg = classify_article(content, _allow_figure=False)
+            cell_body, cell_reg = classify_article(content)
             ph = _mint_ph()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
@@ -766,7 +766,7 @@ def _classify_columns_as_table(raw: str) -> ClassifiedElement:
     cell_children: dict[str, ClassifiedElement] = {}
     cell_phs: list[str] = []
     for content in cols:
-        cell_body, cell_reg = classify_article(content, _allow_figure=False)
+        cell_body, cell_reg = classify_article(content)
         ph = _mint_ph()
         cell_children[ph] = ClassifiedElement("TD", "", cell_body, cell_reg)
         cell_phs.append(ph)
@@ -785,7 +785,7 @@ def _outline_items(items: "list[tuple[int, str]]"):
     phs: list[str] = []
     reg: dict[str, ClassifiedElement] = {}
     for depth, content in items:
-        item_body, item_reg = classify_article(content, _allow_figure=False)
+        item_body, item_reg = classify_article(content)
         iph = _mint_ph()
         reg[iph] = ClassifiedElement("OUTLINE_ITEM", str(depth), item_body, item_reg)
         phs.append(iph)
@@ -875,7 +875,7 @@ def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
     assembled content.  Byte-identical."""
     from britannica.pipeline.stages.elements import _shoulder_peel
     label = _shoulder_peel(raw)
-    placeholderized, tree = classify_article(label, _allow_figure=False)
+    placeholderized, tree = classify_article(label)
     return ClassifiedElement(
         label="SHOULDER", raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -904,7 +904,7 @@ def _classify_title_composite(raw: str) -> ClassifiedElement:
     inner_raw = re.sub(r"^«TITLE»", "", raw)
     inner_raw = re.sub(r"«/TITLE»\s*$", "", inner_raw)
     placeholderized, tree = classify_article(
-        strip_title_joint(inner_raw), _allow_figure=False)
+        strip_title_joint(inner_raw))
     return ClassifiedElement(
         label="TITLE", raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -915,12 +915,11 @@ def _classify_title_composite(raw: str) -> ClassifiedElement:
 def _classify_ppoem_composite(raw: str) -> ClassifiedElement:
     """`{{ppoem|…}}` is a COMPOSITE — its verse (peeled of the stanza-frame control params)
     decomposes into child nodes (the SAME classification the old `process_elements` ran, so a
-    styler / link / footnote in the verse is a REAL node, not a produce-time re-parse).  The
-    old producer recursed via bare `process_elements` (`_allow_figure=True`), so we match.
+    styler / link / footnote in the verse is a REAL node, not a produce-time re-parse).
     Byte-identical."""
     from britannica.pipeline.stages.elements._leaf import _ppoem_verse
     verse = _ppoem_verse(strip_outer(SHAPE_DOUBLE_BRACE, raw))
-    placeholderized, tree = classify_article(verse, _allow_figure=True)
+    placeholderized, tree = classify_article(verse)
     return ClassifiedElement(
         label="PPOEM", raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -931,12 +930,12 @@ def _classify_ppoem_composite(raw: str) -> ClassifiedElement:
 def _classify_hanging_composite(raw: str) -> ClassifiedElement:
     """`{{hi|W|text}}` / `{{hanging indent|…}}` / `{{outdent|…}}` is a COMPOSITE — its content
     (the longest content slot, `<br>`→«BR») decomposes into child nodes (the SAME classification
-    the old `process_elements(..., _allow_figure=False)` ran), so a list the hanging indent
+    the old `process_elements` ran), so a list the hanging indent
     formats keeps its links / stylers / footnotes as REAL nodes.  The width is re-derived in the
     producer.  Byte-identical."""
     from britannica.pipeline.stages.elements._hanging import _hanging_peel
     _width, content = _hanging_peel(raw)
-    placeholderized, tree = classify_article(content, _allow_figure=False)
+    placeholderized, tree = classify_article(content)
     return ClassifiedElement(
         label="HANGING_INDENT", raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -946,13 +945,13 @@ def _classify_hanging_composite(raw: str) -> ClassifiedElement:
 
 def _classify_image_composite(raw: str) -> ClassifiedElement:
     """An IMAGE with a caption is a COMPOSITE — the CAPTION decomposes into child nodes (the
-    SAME classify the old `process_elements(caption_raw, _allow_figure=False)` ran), so a
+    SAME classify the old `process_elements(caption_raw)` ran), so a
     caption's links / stylers / footnotes are REAL nodes in the one tree.  The fn / width /
     align stay a pure leaf parse in the producer; only the caption is a child.  A caption-less
     image → empty children → the producer emits the bare leaf.  Byte-identical."""
     from britannica.pipeline.stages.elements import _parse_image
     _fn, _w, _align, caption_raw = _parse_image(raw)
-    placeholderized, tree = classify_article(caption_raw or "", _allow_figure=False)
+    placeholderized, tree = classify_article(caption_raw or "")
     return ClassifiedElement(
         label="IMAGE", raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -971,12 +970,11 @@ _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
     """A single-slot leaf producer whose ONE recursive slot decomposes into child nodes (the SAME
-    classify the old `process_elements(slot)` ran).  `_recurse_slot_content` returns the slot +
-    its figure-mode per label (LANG recursed with `_allow_figure=True`, the rest False); the
+    classify the old `process_elements(slot)` ran).  `_recurse_slot_content` returns the slot; the
     producer substitutes.  Byte-identical."""
     from britannica.pipeline.stages.elements import _recurse_slot_content
-    slot, allow_figure = _recurse_slot_content(raw, label)
-    placeholderized, tree = classify_article(slot, _allow_figure=allow_figure)
+    slot = _recurse_slot_content(raw, label)
+    placeholderized, tree = classify_article(slot)
     return ClassifiedElement(
         label=label, raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -986,7 +984,7 @@ def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
 
 def _decompose_cells(label: str, raw: str, slots: "list[str]") -> ClassifiedElement:
     """Decompose `raw` into a row of CELL nodes — one per slot string, each recursed via
-    `classify_article` (figures off, exactly like a table cell).  The container producer
+    `classify_article`, exactly like a table cell.  The container producer
     reassembles its OWN layout from the ordered cell markers (RUNNING_HEADER's flex row,
     DUAL_LINE's stack, TOC_ROW's dotted leader, FRACTION's vulgar glyph).
 
@@ -998,7 +996,7 @@ def _decompose_cells(label: str, raw: str, slots: "list[str]") -> ClassifiedElem
     cells: dict[str, ClassifiedElement] = {}
     phs: list[str] = []
     for slot in slots:
-        body, reg = classify_article(slot, _allow_figure=False)
+        body, reg = classify_article(slot)
         ph = _mint_ph()
         cells[ph] = ClassifiedElement("CELL", slot, body, reg)
         phs.append(ph)
@@ -1124,7 +1122,7 @@ def classify(
         # already-extracted element (incl. the FIGURE producer's own
         # re-processing of its span, which would recurse forever).
         inner_text, extracts = walk(
-            peeled, _allow_outline=next_allow_outline, _allow_figure=False)
+            peeled, _allow_outline=next_allow_outline)
         inner_registry = {}
         for ph, child_shape, child_raw in extracts:
             inner_registry[ph] = classify(
@@ -1173,7 +1171,7 @@ def classify(
 
 
 def classify_article(
-    text: str, _allow_figure: bool = True,
+    text: str,
 ) -> tuple[str, dict[str, ClassifiedElement]]:
     """Top-level entry: classify every embedded element in an article
     body.
@@ -1182,18 +1180,13 @@ def classify_article(
     ``top_level_registry`` is ``dict[placeholder, ClassifiedElement]``
     — one record per top-level placeholder, recursively populated.
 
-    ``_allow_figure=False`` (used by the FIGURE producer's own re-process
-    of its span) suppresses figure recognition so it doesn't re-recognize —
-    and recurse on — its own span.
-
     The walk emits a SHAPE_BODY extract for every body-text run between
     elements — at this depth and (via ``classify``'s recursion) every deeper
     one — so after this call the placeholderized text contains only
     placeholders: every byte is owned by some classified element, body
     text included.
     """
-    placeholderized_text, extracts = walk(
-        text, _allow_figure=_allow_figure)
+    placeholderized_text, extracts = walk(text)
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)

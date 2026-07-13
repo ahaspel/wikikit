@@ -929,7 +929,7 @@ def _process_inline_glyph_wrapper(
     # finally kept.  `<hiero>` → `[hieroglyph: …]`, a glyph IMAGE inline (not a
     # block figure), `{{nowrap}}`/`«I»`/`&nbsp;` resolved.  It was returned raw
     # before — the 298-leak bug the comment described but the code skipped.
-    return process_elements(prose, context, _allow_figure=False).strip()
+    return process_elements(prose, context).strip()
 
 
 _COLS_RE = re.compile(r"«COLS:(\d+)»")

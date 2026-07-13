@@ -17,7 +17,7 @@ from britannica.pipeline.stages.elements._link import _split_top_pipes
 
 def process_content_extract(inner: str, context) -> str:
     from britannica.pipeline.stages.elements import process_elements
-    rec = (lambda s: process_elements(s, context, _allow_figure=False).strip())
+    rec = (lambda s: process_elements(s, context).strip())
     parts = [p.strip() for p in _split_top_pipes(inner)]
     name = parts[0].lower().replace(" ", "")
     args = parts[1:]
