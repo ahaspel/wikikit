@@ -805,6 +805,21 @@ def _classify_table_element(shape: str, raw: str) -> ClassifiedElement:
     return ClassifiedElement(label, raw, grid, {})
 
 
+def _classify_chart2_composite(raw: str) -> ClassifiedElement:
+    """A `{{chart2}}` / `{{familytree}}` / `{{tree chart}}` genealogy block renders to a pre-
+    cropped image (`_process_genealogy`), NOT a constructed chart — but a tree node can carry an
+    inner `<ref>` footnote that must survive.  Classify JUST those inner refs (extracted by
+    `_GENEALOGY_INNER_REF`, never the chart grammar) into REF nodes; the producer emits the image
+    then substitutes their markers.  Replaces the old `recurse=process_elements` ref rescue."""
+    from britannica.pipeline.stages.elements._image import _GENEALOGY_INNER_REF
+    refs_raw = "".join(_GENEALOGY_INNER_REF.findall(raw))
+    placeholderized, tree = classify_article(refs_raw)
+    return ClassifiedElement(
+        label="CHART2", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)})
+
+
 def _classify_inline_glyph_composite(raw: str, grid: str) -> ClassifiedElement:
     """An inline-glyph wrapper (`{|…|}` of `<hiero>` cells, 0 `|-` rows) DECOMPOSES into a
     row of CELL nodes — the SAME chop as RUNNING_HEADER — the layout scaffolding (`||`
@@ -971,7 +986,7 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
 # WRAP side.
 _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
     {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER",
-     "STRIP", "PARAM", "HTML_STYLE"}) | _LINK_LABELS
+     "STRIP", "PARAM", "HTML_STYLE", "CONTENT_EXTRACT", "ANCHOR"}) | _LINK_LABELS
 
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
@@ -1102,14 +1117,16 @@ def classify(
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.
-    # A CHART2-family paired wrapper ({{familytree/start}}…{{familytree/end}}) is
-    # chart-grammar we never walk (its `/start`/`/end` delimiters aren't the CENTER
-    # peel's `/s`/`/e`, so `strip_outer` can't reduce it — walking would re-extract
-    # it forever); a LEAF, its producer reads raw.  Only CENTER paired wrappers are
-    # composites, decomposed by the generic path below.
+    # A CHART2-family paired wrapper ({{familytree/start}}…{{familytree/end}}) is chart-
+    # grammar we never walk (its `/start`/`/end` delimiters aren't the CENTER peel's `/s`/`/e`,
+    # so `strip_outer` can't reduce it — walking would re-extract it forever).  The chart itself
+    # renders to a pre-cropped image, but its inner `<ref>` footnotes ARE content: classify JUST
+    # those into REF nodes (`_classify_chart2_composite`), so the producer reads them as children
+    # instead of re-`process_elements`-ing them.  Only CENTER paired wrappers decompose fully.
+    if shape == SHAPE_PAIRED_WRAPPER and _CHART2_FAMILY_RE.search(raw):
+        return _classify_chart2_composite(raw)
     if shape in LEAF_SHAPES or (
-            shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)) or (
-            shape == SHAPE_PAIRED_WRAPPER and _CHART2_FAMILY_RE.search(raw)):
+            shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
         # Leaf shapes own their entire payload — the producer reads
         # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
         # and does whatever internal parsing it needs.  We still call

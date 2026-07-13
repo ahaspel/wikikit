@@ -39,7 +39,8 @@ from britannica.pipeline.stages.elements._hanging import process_hanging_indent
 from britannica.pipeline.stages.elements._brace import process_brace
 from britannica.pipeline.stages.elements._coord import process_coord
 from britannica.pipeline.stages.elements._toc import process_toc_row
-from britannica.pipeline.stages.elements._content import process_content_extract
+from britannica.pipeline.stages.elements._content import (
+    _content_parse, _wrap_content_extract)
 from britannica.pipeline.stages.elements._math import (
     _process_math_equation,
 )
@@ -65,7 +66,8 @@ from britannica.pipeline.stages.elements._outline import (
 from britannica.pipeline.stages.elements._section import (
     _process_section,
 )
-from britannica.pipeline.stages.elements._anchor import process_anchor
+from britannica.pipeline.stages.elements._anchor import (
+    _anchor_display, _wrap_anchor)
 from britannica.pipeline.stages.elements._tables import (
     _process_inline_glyph_wrapper,
     _process_table_unified,
@@ -780,6 +782,10 @@ def _recurse_slot_content(raw, label):
         if body.endswith("}}"):
             body = body[:-2]
         return body.partition("|")[2]
+    if label == "CONTENT_EXTRACT":            # tooltip/abbr/lang/sic/… → its one DISPLAY arg
+        return _content_parse(raw)[1]
+    if label == "ANCHOR":                     # `{{anchor+|id|display}}` → the display (else "")
+        return _anchor_display(raw)
     if label in _LINK_LABELS:                 # a link → its DISPLAY slot (both [[…]] and {{…}} forms)
         return _link_display(raw, label)
     if label == "PARAM":                      # {{Fs|value|X}} param-styler → its content (arg-2+)
@@ -874,6 +880,8 @@ _PR_WRAP = {
     "PARAM":      _wrap_param,        # {{Fs|108%|X}}      → «SPAN[style:…]»X
     "HTML_STYLE": _wrap_html_style,   # <div|span … style>X → «DIV/SPAN[style:…]»X / «CTR»
     "STRIP":      _wrap_strip,        # {{center|X}}/{{csc|X}}/… → style_block (pipe or bare form)
+    "CONTENT_EXTRACT": _wrap_content_extract,  # {{tooltip|X|hint}}→«SPAN[title]»X; lang/sic/…→X
+    "ANCHOR":     _wrap_anchor,       # {{anchor+|id|X}} → «ANCHOR:id»X ; {{anchor|a|b}} → anchors
 }
 
 
@@ -976,8 +984,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # passthrough, its marker IS its recursed content; the container producer reassembles.
     "CELL": _passthrough_inner,
     # Single-label kinds — element_type == label.
-    "CHART2": lambda raw, inner, ctx, reg:
-        _process_genealogy(raw, ctx, lambda s: process_elements(s, ctx)),
+    # CHART2 — a genealogy block → its pre-cropped image + any inner-<ref> footnotes (classified
+    # as REF children by `_classify_chart2_composite`; the producer substitutes their «FN»).
+    "CHART2": _process_genealogy,
     "MATH": lambda raw, inner, ctx, reg: _process_math(raw, inner),
     "SCORE": lambda raw, inner, ctx, reg: _process_score(inner),
     "REF_SELF": lambda raw, inner, ctx, reg:
@@ -1061,8 +1070,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
     # lang/sic/dropinitial/fqm unwrap to the display arg.
-    "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
-        process_content_extract(inner, ctx),
     "POEM": lambda raw, inner, ctx, reg: _process_poem(inner, ctx),
     "PPOEM": _process_ppoem,
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
@@ -1083,10 +1090,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
     "SECTION": lambda raw, inner, ctx, reg: _process_section(raw),
-    # ANCHOR — `{{section|…}}` / `{{anchor|…}}` / `{{anchor+|…}}`: Wikisource link
-    # targets carried as «ANCHOR:slug|name» (a «SEC» sibling, but kind="anchor" so the
-    # TOC ignores it); anchor+ also renders its display text.
-    "ANCHOR": lambda raw, inner, ctx, reg: process_anchor(raw, ctx),
+    # ANCHOR — `{{section|…}}` / `{{anchor|…}}` / `{{anchor+|…}}`: Wikisource link targets
+    # carried as «ANCHOR:slug|name» (a «SEC» sibling, kind="anchor" so the TOC ignores it);
+    # anchor+ also renders its display.  Generated from `_PR_WRAP` below (peel/recurse/wrap):
+    # `_anchor_display` peels the anchor+ display slot, `_wrap_anchor` emits the anchors.
     # PAGEQUALITY — `<pagequality level=N user=X />` Wikisource metadata.
     # Previously inside a `<noinclude>` block claimed by NOINCLUDE.  With
     # noinclude wiped in `_transform_text_v2`, this self-closing tag sits

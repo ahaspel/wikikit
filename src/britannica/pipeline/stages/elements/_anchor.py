@@ -36,22 +36,31 @@ def _anchor(name: str) -> str:
     return f"«ANCHOR:{section_slug(name)}|{name}»" if name else ""
 
 
-def process_anchor(raw: str, context) -> str:
-    """``{{anchor|…}}`` / ``{{anchor+|…}}`` / ``{{section|…}}`` → ``«ANCHOR»`` point
-    anchors, plus the recursed display text for the ``anchor+`` variant."""
-    from britannica.pipeline.stages.elements import process_elements
-    inner = re.sub(r"^\{\{", "", raw.strip())
-    inner = re.sub(r"\}\}\s*$", "", inner)
+def _anchor_display(raw: str) -> str:
+    """The one recursed slot (the PEEL side) — `{{anchor+|id|display}}`'s visible text (arg-1,
+    or the id if that's all there is).  The pure-target spellings (`{{anchor|…}}` /
+    `{{section|…}}` / `{{anchor#id}}`) have no visible content → ''."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
+    parts = _split_top_pipes(inner)
+    if parts[0].strip().lower() != "anchor+":
+        return ""
+    args = parts[1:]
+    if not args:
+        return ""
+    return args[1] if len(args) > 1 else args[0]
+
+
+def _wrap_anchor(raw, body, ctx):
+    """ANCHOR wrap (a `_PR_WRAP` row): ``{{anchor|…}}`` / ``{{anchor+|…}}`` / ``{{section|…}}``
+    → ``«ANCHOR:slug|name»`` point anchors; ``anchor+`` also appends its recursed display
+    ``body``.  Folds the old `process_anchor` — the display is now a classified child slot."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
     parts = _split_top_pipes(inner)
     tmpl = parts[0].strip().lower()
     args = parts[1:]
-
     if tmpl == "anchor+":
-        # The one spelling with visible content: id = args[0]; display = args[1] (or the id).
-        if not args:
-            return ""
-        display = args[1] if len(args) > 1 else args[0]
-        return _anchor(args[0]) + process_elements(display, context)
+        # id = args[0]; the visible display (arg-1 / the id) is the recursed `body`.
+        return (_anchor(args[0]) + body) if args else ""
     if tmpl.startswith("anchor#"):
         # `{{anchor#Exterior}}` — a no-pipe spelling; the id rides after the `#`.
         return _anchor(parts[0].split("#", 1)[1])

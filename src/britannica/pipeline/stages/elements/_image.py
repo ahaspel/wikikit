@@ -181,21 +181,20 @@ _RAW_DJVU_REF_RE = re.compile(r"EB1911\s*-\s*Volume\s*(\d+)\.djvu/(\d+)", re.IGN
 _GENEALOGY_INNER_REF = re.compile(r"<ref\b[^>]*>[\s\S]*?</ref>", re.IGNORECASE)
 
 
-def _process_genealogy(raw: str, context: ElementContext, recurse) -> str:
+def _process_genealogy(raw, inner, context, inner_registry) -> str:
     """A ``{{chart2}}`` / ``{{familytree}}`` / ``{{Tree chart}}`` genealogical-tree
     block → its pre-cropped page-scan image (the grid macro renders to a mess).
 
     The crops are a fixed, corpus-verified set — exactly seven, each on a distinct
-    volume (``GENEALOGY_IMAGES``) — so the lookup keys on volume.  A tree node can
-    carry an inner ``<ref>`` footnote (vol-28 chart2; vol-7 COWPER familytree); the
-    tree becomes a flat image so the note can't sit on a node — ``recurse`` it to a
-    ``«FN»`` emitted after the image, where it survives as an ordinary article
-    footnote.  (The old preprocess chart2 substitution dropped that vol-28 ref; the
-    familytree one rescued it.  Both now flow through here, handled alike.)"""
-    vol = context.volume
+    volume (``GENEALOGY_IMAGES``) — so the lookup keys on volume.  A tree node can carry an
+    inner ``<ref>`` footnote (vol-28 chart2; vol-7 COWPER familytree); the tree becomes a flat
+    image so the note can't sit on a node.  ``_classify_chart2_composite`` classified those
+    inner refs into REF nodes; ``inner`` is their placeholderized subtree — appended after the
+    image, ``produce_tree`` substitutes each ``«FN»`` so it survives as an ordinary article
+    footnote.  (The old preprocess chart2 substitution dropped the vol-28 ref; now it flows
+    through as a real child node, no re-``process_elements``.)"""
     filename = next(
-        (fn for (v, _p), fn in GENEALOGY_IMAGES.items() if v == vol), None)
+        (fn for (v, _p), fn in GENEALOGY_IMAGES.items() if v == context.volume), None)
     if not filename:
         return ""   # unknown volume — strip rather than leak the raw grid macro
-    refs = "".join(recurse(r) for r in _GENEALOGY_INNER_REF.findall(raw))
-    return build_img_marker(filename, "Genealogical table") + refs
+    return build_img_marker(filename, "Genealogical table") + inner
