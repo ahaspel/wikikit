@@ -30,24 +30,8 @@ def _main_other_content(raw: str) -> str:
     return parts[1] if len(parts) > 1 else ""
 
 
-def process_main_other(raw, inner, context, inner_registry) -> str:
-    """`{{main other|main-NS|other-NS}}` — a namespace switch.  We assemble the MAIN-namespace
-    article, so keep param 1 and drop the rest.  A COMPOSITE: `_classify_main_other_composite`
-    decomposed param 1 into child nodes; we substitute their markers.  It places a page-
-    straddling clause on exactly one side of the break without duplicating it — the
-    "Needlepoint lace…" split (vol 16) is the lone case."""
-    body = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in body:
-                    body = body.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
-    return body.strip()
+# `{{main other|main|other}}` folded into the peel/recurse/wrap mechanism: `_main_other_content`
+# is its peel (`_recurse_slot_content`), `_wrap_bare` its wrap.  No bespoke producer.
 
 
 def process_refs(raw: str, context) -> str:

@@ -11,13 +11,6 @@ producer of its own.
 from __future__ import annotations
 
 
-def process_lang(raw: str, context) -> str:
-    """Unwrap a script template to its bare content — the glyphs are the text."""
-    from britannica.pipeline.stages.elements import process_elements
-    body = raw.strip()
-    if body.startswith("{{"):
-        body = body[2:]
-    if body.endswith("}}"):
-        body = body[:-2]
-    _name, _sep, content = body.partition("|")
-    return process_elements(content, context).strip()
+# `{{greek|…}}`/`{{polytonic|…}}`/… folded into the peel/recurse/wrap mechanism: the peel
+# (`_recurse_slot_content`, LANG case) takes the post-name content and recurses it with
+# `_allow_figure=True`; the wrap is `_wrap_bare` (the glyphs ARE the text).  No bespoke producer.

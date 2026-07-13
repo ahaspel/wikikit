@@ -1034,20 +1034,6 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
     )
 
 
-def _classify_main_other_composite(raw: str) -> ClassifiedElement:
-    """`{{main other|main-NS|other-NS}}` is a COMPOSITE — its kept main-namespace copy (param 1)
-    decomposes into child nodes (the SAME classify the old `process_elements(..., _allow_figure=
-    False)` ran).  Byte-identical."""
-    from britannica.pipeline.stages.elements._frame import _main_other_content
-    content = _main_other_content(raw)
-    placeholderized, tree = classify_article(content, _allow_figure=False)
-    return ClassifiedElement(
-        label="MAIN_OTHER", raw=raw, inner_text=placeholderized,
-        inner_registry={ph: tree[ph]
-                        for ph in sorted(tree, key=placeholderized.find)},
-    )
-
-
 # Every link label whose producer recurses a DISPLAY slot — the composite decomposes that one
 # slot; the producer parses target/section from raw and substitutes the classified display.
 _LINK_DISPLAY_LABELS: frozenset[str] = frozenset({
@@ -1064,6 +1050,27 @@ def _classify_link_composite(raw: str, label: str) -> ClassifiedElement:
     from britannica.pipeline.stages.elements._link import _link_display
     display = _link_display(raw, label)
     placeholderized, tree = classify_article(display, _allow_figure=False)
+    return ClassifiedElement(
+        label=label, raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
+# Single-slot leaf producers whose ONE recursive slot decomposes into nodes — LANG (unwrap to
+# content), LB (the quantity), CITE (the title), SPLIT_WORD (the rejoined word).
+_RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
+    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER"})
+
+
+def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
+    """A single-slot leaf producer whose ONE recursive slot decomposes into child nodes (the SAME
+    classify the old `process_elements(slot)` ran).  `_recurse_slot_content` returns the slot +
+    its figure-mode per label (LANG recursed with `_allow_figure=True`, the rest False); the
+    producer substitutes.  Byte-identical."""
+    from britannica.pipeline.stages.elements import _recurse_slot_content
+    slot, allow_figure = _recurse_slot_content(raw, label)
+    placeholderized, tree = classify_article(slot, _allow_figure=allow_figure)
     return ClassifiedElement(
         label=label, raw=raw, inner_text=placeholderized,
         inner_registry={ph: tree[ph]
@@ -1107,9 +1114,6 @@ def classify(
     # content into nodes here (leaf otherwise), the width stated by the source preserved.
     if shape == SHAPE_DOUBLE_BRACE and _db_name(raw) in _HANGING_INDENT_NAMES:
         return _classify_hanging_composite(raw)
-    # `{{main other|main-NS|other-NS}}` — decompose the kept main-namespace copy into nodes.
-    if shape == SHAPE_DOUBLE_BRACE and _db_name(raw) == "main other":
-        return _classify_main_other_composite(raw)
     # `{{columns|col1=…|col2=…}}` / `{{flex wrap centre|cell|cell|…}}` are TABLEs in template
     # syntax — one row of cells. Decompose through the ONE table engine, NOT the FRAME producer
     # that kept only the longest cell (dropping CASHEW's legend, half of PIG's breed photos).
@@ -1200,6 +1204,10 @@ def classify(
     # raw target/section parse (and any raw-display check: author initials, article roman).
     if label in _LINK_DISPLAY_LABELS:
         return _classify_link_composite(raw, label)
+    # A single-slot leaf producer (LANG / LB / CITE / SPLIT_WORD) — decompose its one recursive
+    # slot into nodes here; the producer substitutes rather than re-`process_elements`.
+    if label in _RECURSE_SLOT_LABELS:
+        return _classify_recurse_slot(raw, label)
 
     # NOTE: the walker is conservative — what comes in goes out unchewed.
     # An IMAGE element therefore carries its raw `[[File:…]]` VERBATIM; the

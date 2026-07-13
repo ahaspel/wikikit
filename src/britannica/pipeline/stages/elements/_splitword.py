@@ -30,10 +30,10 @@ def _marker_name(raw: str) -> str:
     return m.group(1).lower() if m else ""
 
 
-def process_split_word(raw: str, context) -> str:
-    from britannica.pipeline.stages.elements import process_elements
-    if _marker_name(raw) in _END_NAMES:
-        return ""
+def _split_word_word(raw: str) -> str:
+    """The rejoined whole word a START split-word marker owns — the longest positional slot
+    (hws form) or the `hws=`+`hwe=` halves (lps form).  Shared so `_classify_recurse_slot`
+    recurses the SAME word the producer emits."""
     inner = re.sub(r"^\{\{", "", raw)
     inner = re.sub(r"\}\}\s*$", "", inner)
     positional: list[str] = []
@@ -45,9 +45,10 @@ def process_split_word(raw: str, context) -> str:
         elif arg != "":
             positional.append(arg)
     if positional:                                  # hws form — word is a slot
-        word = max(positional, key=len)
-    else:                                           # lps form — join the halves
-        word = named.get("hws", "") + named.get("hwe", "")
-    if not word:
-        return ""
-    return process_elements(word, context, _allow_figure=False).strip()
+        return max(positional, key=len)
+    return named.get("hws", "") + named.get("hwe", "")  # lps form — join the halves
+
+
+# `{{hws|frag|WORD}}` / `{{lps|…}}` folded into the peel/recurse/wrap mechanism: the peel
+# (`_recurse_slot_content`, END → empty) uses `_split_word_word` + `_marker_name`/`_END_NAMES`,
+# the wrap is `_wrap_bare`.  No bespoke producer.

@@ -34,12 +34,10 @@ from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
 from britannica.pipeline.stages.elements._frame import (
-    process_refs, process_missing, process_main_other)
+    process_refs, process_missing)
 from britannica.pipeline.stages.elements._hanging import process_hanging_indent
 from britannica.pipeline.stages.elements._brace import process_brace
-from britannica.pipeline.stages.elements._lang import process_lang
 from britannica.pipeline.stages.elements._coord import process_coord
-from britannica.pipeline.stages.elements._splitword import process_split_word
 from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import process_content_extract
 from britannica.pipeline.stages.elements._math import (
@@ -372,14 +370,8 @@ def _process_image(raw, inner, context, inner_registry):
     return f"«SPAN[style:{box};text-align:center]»{leaf}«BR»{cap}«/SPAN»"
 
 
-def _process_lb(inner, context):
-    """`{{lb-|N}}` → `N lb`, bare `{{lb-}}` → `lb` (pound-weight glyph ℔ unwrapped
-    to literal "lb").  Peel the `lb-` name + optional pipe, then RETURN the quantity
-    through the loop (a nested `{{tfrac}}`/`{{sub}}` in N is produced by its own
-    producer) — DOUBLE_BRACE is a leaf, so the producer recurses its own content."""
-    rest = re.sub(r"^\s*lb-?\s*\|?\s*", "", inner, flags=re.IGNORECASE).strip()
-    rest = process_elements(rest, context, _allow_figure=False).strip()
-    return f"{rest} lb" if rest else "lb"
+# LB / CITE producers folded into the peel/recurse/wrap mechanism (`_PR_WRAP` rows
+# `_wrap_lb` / `_wrap_italic`); the bespoke functions are gone.
 
 
 def _process_nowiki(raw):
@@ -393,14 +385,6 @@ def _process_nowiki(raw):
     return re.sub(r"</nowiki>\s*$", "", inner, flags=re.IGNORECASE)
 
 
-def _process_cite(inner, context):
-    """`{{cite|Title}}` → «I»Title«/I» (the work-title italic the template supplies;
-    the title is not pre-italicized in source).  Strip the name, then RETURN the title
-    through the loop (an embedded `[[link]]`/`{{sc}}` is produced by its own producer),
-    italic-wrap — DOUBLE_BRACE is a leaf, so the producer recurses its own content."""
-    _name, _bar, title = inner.partition("|")
-    title = process_elements(title.strip(), context, _allow_figure=False).strip()
-    return f"«I»{title}«/I»" if title else ""
 
 
 def _process_coordinates(inner):
@@ -841,6 +825,75 @@ def _substitute_children(inner, inner_registry):
     return content
 
 
+def _recurse_slot_content(raw, label):
+    """The ONE recursive slot — EXACTLY as the old producer passed it to `process_elements` — for
+    a single-slot leaf producer, per label; `_classify_recurse_slot` decomposes it into nodes.
+    Returns (slot, allow_figure).  Mirrors each producer's slot parse so the classified slot
+    matches what the producer wraps."""
+    if label == "LANG":                       # script wrapper → its bare content (glyphs)
+        body = raw.strip()
+        if body.startswith("{{"):
+            body = body[2:]
+        if body.endswith("}}"):
+            body = body[:-2]
+        return body.partition("|")[2], True   # process_lang used the bare (figure-allowing) recurse
+    args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
+    if label == "LB":                         # `{{lb-|N}}` → the quantity N
+        return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,
+                      flags=re.IGNORECASE).strip(), False
+    if label == "CITE":                       # `{{cite|Title}}` → the title
+        return args.partition("|")[2].strip(), False
+    if label == "MAIN_OTHER":                 # `{{main other|main|other}}` → the main copy (param 1)
+        from britannica.pipeline.stages.elements._frame import _main_other_content
+        return _main_other_content(raw), False
+    if label == "SPLIT_WORD":                 # page-split word → the rejoined word (END → empty)
+        from britannica.pipeline.stages.elements._splitword import (
+            _split_word_word, _marker_name, _END_NAMES)
+        if _marker_name(raw) in _END_NAMES:
+            return "", False
+        return _split_word_word(raw), False
+    return "", False
+
+
+# ── Strategy: peel → recurse → wrap ──────────────────────────────────────────
+# ONE mechanism for every producer that peels an outer, recurses its inner slot(s) to child
+# nodes, and wraps the result.  The per-label variation is DATA, not code: the classifier peels
+# the slot (`_recurse_slot_content`, the PEEL side) and `_PR_WRAP[label]` turns the substituted
+# body into the label's marker.  Adding such a producer is a ROW in `_PR_WRAP`, not a bespoke
+# function — the same collapse the figure/image family already got (see the `_process_image`
+# note further down).  `body` arrives substituted-but-unstripped; each wrap owns its own strip.
+def _wrap_italic(raw, body):
+    b = body.strip()
+    return f"«I»{b}«/I»" if b else ""
+
+
+def _wrap_lb(raw, body):
+    b = body.strip()
+    return f"{b} lb" if b else "lb"
+
+
+def _wrap_bare(raw, body):
+    return body.strip()
+
+
+# label → how to WRAP the substituted body into its marker.  Grows as each peel/recurse/wrap
+# producer folds in (its bespoke producer function deleted, replaced by this one row).
+_PR_WRAP = {
+    "CITE":       _wrap_italic,   # {{cite|Title}}          → «I»Title«/I»
+    "LB":         _wrap_lb,       # {{lb-|N}}               → "N lb" / "lb"
+    "LANG":       _wrap_bare,     # {{greek|X}}             → X  (glyphs are the text)
+    "SPLIT_WORD": _wrap_bare,     # {{hws|frag|WORD}}       → WORD (END → "")
+    "MAIN_OTHER": _wrap_bare,     # {{main other|main|other}} → main copy (param 1)
+}
+
+
+def _make_peel_recurse(label):
+    """Bind one `_PR_WRAP` row into a dispatch handler: substitute the classified children, then
+    wrap.  `produce_tree` post-substitutes too, so this is the whole producer."""
+    wrap = _PR_WRAP[label]
+    return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg))
+
+
 def process_param(raw, inner, context, inner_registry):
     """PARAM producer (walker SHAPE_PARAM): the param-valued styler `{{Fs|108%|X}}` /
     `{{font size|N%|X}}` (+ the ti / margin-left / size indent/size frames).  Same styler
@@ -998,7 +1051,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "FRACTION": lambda raw, inner, ctx, reg:
         _process_fraction(inner, ctx),
     # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
-    "LB": lambda raw, inner, ctx, reg: _process_lb(inner, ctx),
+    # LB — generated from `_PR_WRAP` below (peel/recurse/wrap).
     # NOWIKI — `<nowiki>X</nowiki>` wiki-escape; unwrap to the literal inner.
     "NOWIKI": lambda raw, inner, ctx, reg: _process_nowiki(raw),
     # INCLUDEONLY — `<includeonly>X</includeonly>` transclusion complement of
@@ -1009,7 +1062,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "COORDINATES": lambda raw, inner, ctx, reg: _process_coordinates(inner),
     # CITE — `{{cite|Work Title}}` → «I»title«/I»; the framework already recursed any
     # embedded `[[link]]` in the (placeholdered) inner.
-    "CITE": lambda raw, inner, ctx, reg: _process_cite(inner, ctx),
+    # CITE — generated from `_PR_WRAP` below (peel/recurse/wrap).
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
     # MATH family — walker lifts labeled-display-equation templates
@@ -1062,7 +1115,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # leaked `N|dir` arguments (and not nothing).
     "BRACE": lambda raw, inner, ctx, reg: process_brace(raw),
     # LANG — `{{greek|…}}` / `{{polytonic|…}}` / …: unwrap to content (glyphs are text).
-    "LANG": lambda raw, inner, ctx, reg: process_lang(raw, ctx),
+    # LANG — generated from `_PR_WRAP` (peel/recurse/wrap).
     # COORD — `{{11co|DEG|[MIN|]DIR}}`: render the lat/long value.
     "COORD": lambda raw, inner, ctx, reg: process_coord(raw),
     # DOUBLE_BRACE_LEAK — a template we don't handle yet: emit it RAW so it leaks
@@ -1077,9 +1130,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "TOC_ROW": lambda raw, inner, ctx, reg: process_toc_row(raw, ctx),
     # SPLIT_WORD — `{{hws}}`/`{{hwe}}`/`{{lps}}`/`{{lpe}}`: a page-split word; the
     # start marker rejoins it, the end marker renders empty.
-    "SPLIT_WORD": lambda raw, inner, ctx, reg: process_split_word(raw, ctx),
+    # SPLIT_WORD — generated from `_PR_WRAP` (peel/recurse/wrap).
     # MAIN_OTHER — `{{main other|main|other}}`: keep param 1 (main-namespace copy).
-    "MAIN_OTHER": process_main_other,
+    # MAIN_OTHER — generated from `_PR_WRAP` (peel/recurse/wrap).
     # MISSING — a missing-asset placeholder → a visible `[missing …]` stub.
     "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
@@ -1132,6 +1185,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "MIRROR_GLYPH": lambda raw, inner, ctx, reg:
         f"«MIRROR:{inner.strip()}«/MIRROR»",
 }
+
+# Generate the peel/recurse/wrap producers from `_PR_WRAP` — each label is a DATA ROW, not a
+# hand-written function.  As families fold in, this loop grows and the dict above shrinks.
+for _pr_label in _PR_WRAP:
+    _PRODUCER_DISPATCH[_pr_label] = _make_peel_recurse(_pr_label)
 
 
 # ── ONE figure/image producer ─────────────────────────────────────────────
