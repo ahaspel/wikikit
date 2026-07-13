@@ -966,6 +966,26 @@ def _classify_running_header_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_title_composite(raw: str) -> ClassifiedElement:
+    """The «TITLE»…«/TITLE» heading stamp is a COMPOSITE — its content decomposes into child
+    nodes (the SAME classification the old `process_elements` ran, but at classify time, so a
+    `«FN` in a bracketed title becomes a REF node in the one tree — which lets
+    `resolve_ref_bodies` see the title's footnote definition — instead of a produce-time re-parse
+    with fresh placeholders it can't match).  `strip_title_joint` removes the trailing display
+    joint (comma / terminator period) BEFORE decomposing, exactly where the old producer stripped
+    it, so both the DISPLAY marker and the PLAIN field stay joint-free and byte-identical."""
+    from britannica.pipeline.stages.elements._title import strip_title_joint
+    inner_raw = re.sub(r"^«TITLE»", "", raw)
+    inner_raw = re.sub(r"«/TITLE»\s*$", "", inner_raw)
+    placeholderized, tree = classify_article(
+        strip_title_joint(inner_raw), _allow_figure=False)
+    return ClassifiedElement(
+        label="TITLE", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -1029,6 +1049,12 @@ def classify(
     # `<table>` was already caught above.
     if shape == SHAPE_HTML_TAG and _derive_html_tag_label(raw) == "HTML_STYLE":
         return _classify_html_style_composite(raw)
+    # The «TITLE»…«/TITLE» heading stamp is a COMPOSITE — decompose its joint-stripped content
+    # into nodes at classify time (before the generic path, which peels WITHOUT the joint strip
+    # and whose decomposition the old producer threw away to re-`process_elements` the raw), so a
+    # title-embedded «FN is a REF node in the one tree `resolve_ref_bodies` walks.
+    if shape == SHAPE_TITLE:
+        return _classify_title_composite(raw)
     # An OPAQUE `<math>`/`<nowiki>`/`<score>`/… owns its verbatim interior (LaTeX
     # braces, lilypond chords) — a LEAF: we do NOT placeholderize its children, so
     # the re-walk never tears a `{{…}}` out of a `<math>` to mis-read as a template.

@@ -757,19 +757,32 @@ def process_strip(raw, inner, context, inner_registry):
                        ctr=spec.get("ctr", False), sc=spec.get("sc", False))
 
 
-def _process_title(raw, context):
+def _process_title(raw, inner, context, inner_registry):
     """TITLE producer (the «TITLE»…«/TITLE» stamp from preprocess_article).
 
-    Strip the trailing joint comma off the RAW span BEFORE recursing it
-    (transform-then-recurse, like any producer) — so the comma never enters the
-    walk and so reaches neither the rendered marker nor the decoded plain field.
-    One removal on the shared input; PLAIN and DISPLAY both descend from it clean."""
-    from britannica.pipeline.stages.elements._title import strip_title_joint
-    inner_raw = re.sub(r"^«TITLE»", "", raw)
-    inner_raw = re.sub(r"«/TITLE»\s*$", "", inner_raw)
-    inner = process_elements(
-        strip_title_joint(inner_raw), context, _allow_figure=False)
-    return f"«TITLE:{inner}«/TITLE»"
+    TITLE is special: it feeds BOTH the DISPLAY heading marker («TITLE:…«/TITLE»)
+    and — via that same marker, stripped to text — the PLAIN title field.  The raw
+    span carries a trailing JOINT (a comma, or a terminator period) that in print
+    joins the headword to the body; `strip_title_joint` removes it (in
+    `_classify_title_composite`, before the recurse) so neither output dangles it.
+
+    `_classify_title_composite` decomposed the joint-stripped heading into child
+    nodes; we substitute their markers into `inner` — no produce-time re-
+    `process_elements`, so a `«FN` in a bracketed title is a REF NODE in the one
+    tree (which lets `resolve_ref_bodies` see the title's footnote definition),
+    not a re-parse with fresh placeholders that don't match the resolved body."""
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    return f"«TITLE:{content}«/TITLE»"
 
 
 # `{{size|KEYWORD|X}}` (FRAME-dissolution home for `size`) — the keyword font-size
@@ -1056,11 +1069,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "OUTLINE": lambda raw, inner, ctx, reg: f"«OUTLINE»{inner}«/OUTLINE»",
     "OUTLINE_ITEM": lambda raw, inner, ctx, reg: f"«OLI:{raw}»{inner}«/OLI»",
     "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
-    # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  Recurses its inner
-    # (the carved title span) like any wrapper; produce_tree substitutes the children,
-    # so the node carries the fully-walked title.  The viewer renders the node
-    # in-stream as the H1; `walk_article` decodes it to the plain `title` field.
-    "TITLE": lambda raw, inner, ctx, reg: _process_title(raw, ctx),
+    # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  A COMPOSITE:
+    # `_classify_title_composite` decomposed the joint-stripped heading into child nodes;
+    # the producer substitutes their markers (no produce-time re-walk).  The viewer renders
+    # the node in-stream as the H1; `walk_article` decodes it to the plain `title` field.
+    "TITLE": _process_title,
     # SECTION — `<section begin/end/>` transclusion marker; renders nothing
     # (boundary signal, not content).  Owned element instead of a catch-all
     # HTML strip; the catcher for the honest super-walker (B3).
