@@ -1,12 +1,11 @@
-"""Link producers — recognized walker elements whose DISPLAY recurses.
+"""Link wraps — the `«LN:target|display»` family, folded into the peel/recurse/wrap mechanism.
 
-The body-text link handlers flat-read their display and pre-unwrapped `{{sc|…}}`,
-dropping the small-caps, because a `([^{}]*)` regex can't bound nested braces.  Here the
-construct is bounded by the ONE balanced matcher (`_construct_end`, driven by an
-opener-only recognizer — see `_walker._walk_balanced_shapes`), and the producer simply
-splits its display slots and emits «LN» — a nested `{{sc|…}}` rides through as a
-walker-extracted placeholder that `produce_tree` substitutes.  No re-parse of the raw:
-the walker hands us the bounded `inner`.
+Every link emits `«LN:target|display»`; they differ only in how the TARGET is parsed from the raw
+(display-first vs target-first vs `#fragment` vs `Author:` vs the `1911 Enc…/` prefix strip). The
+DISPLAY is the recursed slot: `_link_display` peels it (the PEEL side of the mechanism), the
+classifier decomposes it to child nodes, and the wrap here parses the target from `raw` and wraps
+the substituted `body`. So the seven old producers are seven `_PR_WRAP` rows on one shared peel —
+no bespoke producer functions, no `_classify_link_composite`.
 """
 
 from __future__ import annotations
@@ -40,15 +39,21 @@ def _split_top_pipes(s: str) -> list[str]:
 
 
 def _link_args(raw: str) -> str:
-    """The inner args of a `{{…link…}}` template (delimiters peeled) — the producer's
-    target/positional parse reads this now that `inner` carries the classified DISPLAY."""
+    """The inner args of a `{{…link…}}` template (delimiters peeled) — the wrap's
+    target/positional parse reads this (`inner` carries the classified DISPLAY, not the args)."""
     return re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
 
 
+_LINK_LABELS = frozenset({
+    "EB1911_ARTICLE_LINK", "TARGET_FIRST_LINK", "EB1911_SELFREF",
+    "AUTHOR_LINK", "FRAGMENT_LINK", "INTRA_ARTICLE_LINK", "WIKILINK",
+})
+
+
 def _link_display(raw: str, label: str) -> str:
-    """The DISPLAY slot for `label`'s link form — the one arg the composite recurses.  Mirrors
-    each producer's own display parse so the classified display matches what the producer wraps:
-    `[[…|Display]]` forms take the post-pipe slot; the `{{…}}` forms take the display-first
+    """The DISPLAY slot for `label`'s link form — the one arg the mechanism recurses (the PEEL
+    side).  Mirrors each wrap's own display parse so the classified display matches what the wrap
+    emits: `[[…|Display]]` forms take the post-pipe slot; the `{{…}}` forms take the display-first
     (ARTICLE) or display-second (TARGET_FIRST / INTRA) positional."""
     if raw.startswith("[["):
         body = raw[2:-2] if raw.endswith("]]") else raw
@@ -62,14 +67,20 @@ def _link_display(raw: str, label: str) -> str:
     return pos[1] if len(pos) > 1 else pos[0]
 
 
-def process_eb1911_article_link(raw, inner, context, inner_registry) -> str:
-    """`{{EB1911 article link|Display|Target}}` → `«LN:Target|»{recursed display}«/LN»`.
+def _strip_link_prefix(t: str) -> str:
+    """Drop a single leading `word:` namespace/interwiki prefix (w:/Portal:/…); the
+    colon must be followed by a non-space, so the section colon form `Europe: History`
+    is NOT treated as a prefix.  Mirrors the resolver's normalizer strip."""
+    i = t.find(":")
+    if 0 < i < len(t) - 1 and " " not in t[:i] and not t[i + 1].isspace():
+        return t[i + 1:].strip()
+    return t
 
-    A COMPOSITE: `_classify_link_composite` decomposed the DISPLAY into child nodes; we
-    substitute their markers (`inner`) rather than re-`process_elements`.  The template name +
-    target are parsed from `raw` (outer, consumed here).  A subpage target (`Article/Section`)
-    with a roman-numeral display is a plain section label, else a self-link."""
-    from britannica.pipeline.stages.elements import _substitute_children
+
+# ── The seven link wraps (rows in `_PR_WRAP`; `body` = the substituted display) ─────────────
+def _wrap_article_link(raw, body, ctx):
+    """`{{EB1911 article link|Display|Target}}` → «LN:Target|display».  Name + target from raw; a
+    subpage target (`Article/Section`) with a roman-numeral display is a plain section label."""
     parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
     positional = [p for p in parts[1:] if "=" not in p and p]
     if len(positional) >= 2:
@@ -78,7 +89,7 @@ def process_eb1911_article_link(raw, inner, context, inner_registry) -> str:
         display = target = positional[0]
     else:
         return ""
-    disp = _substitute_children(inner, inner_registry).strip()
+    disp = body.strip()
     if "/" in target:
         if re.match(r"^[IVXLC]+\.", display):
             return disp
@@ -86,35 +97,24 @@ def process_eb1911_article_link(raw, inner, context, inner_registry) -> str:
     return f"«LN:{target}|{disp}«/LN»"
 
 
-def process_target_first_link(raw, inner, context, inner_registry) -> str:
-    """`{{EB1911/DNB lkpl|Target|Display}}` / `{{1911link|Target|Display}}` /
-    `{{EB1911 link|…}}` — the TARGET-first cross-reference convention (vs the article
-    link's display-first).  Slot 0 is the template name; target is the first positional.
-    A COMPOSITE: the display (second positional, falling back to the target) is decomposed into
-    child nodes by `_classify_link_composite`; we substitute their markers (`inner`)."""
-    from britannica.pipeline.stages.elements import _substitute_children
+def _wrap_target_first(raw, body, ctx):
+    """`{{lkpl|Target|Display}}` / `{{1911link|…}}` / `{{EB1911 link|…}}` — target-first: target
+    is the first positional (after the name)."""
     parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
     positional = [p for p in parts[1:] if "=" not in p and p]
     if not positional:
         return ""
-    target = positional[0]
-    disp = _substitute_children(inner, inner_registry).strip()
-    return f"«LN:{target}|{disp}«/LN»"
+    return f"«LN:{positional[0]}|{body.strip()}«/LN»"
 
 
-def process_eb1911_selfref_link(raw, inner, context, inner_registry) -> str:
-    """`[[1911 Encyclopædia Britannica/Article#Section|Display]]` — an internal EB1911
-    cross-reference in raw bracket form (the `{{EB1911 article link}}` template's twin).
-    Emit «LN:Article#Section|Display»: strip the `1911 Encyclopædia Britannica/` prefix
-    and KEEP the `#Section` fragment (resolve_one splits it → article + section, so the
-    link lands on that section's «SEC» anchor).  A bare `[[1911 Encyclopædia Britannica|
-    Disp]]` (the work as a whole, no article) has no target → emit the display as prose.
-    A COMPOSITE: the display is decomposed into child nodes; we substitute their markers."""
-    from britannica.pipeline.stages.elements import _substitute_children
-    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target_raw, _sep, display = body.partition("|")
+def _wrap_selfref(raw, body, ctx):
+    """`[[1911 Encyclopædia Britannica/Article#Section|Display]]` → «LN:Article#Section|display».
+    Strip the `1911 Encyclopædia Britannica/` prefix, KEEP the `#Section` fragment.  A bare ref
+    to the work (no `/Article`) has no target → emit the display as prose."""
+    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    target_raw, _sep, display = b.partition("|")
     target_raw = target_raw.strip()
-    disp = _substitute_children(inner, inner_registry).strip() if display.strip() else ""
+    disp = body.strip() if display.strip() else ""
     rest = re.sub(r"^1911\s+[Ee]ncyclop[^/]*/", "", target_raw, flags=re.IGNORECASE)
     if rest == target_raw:                      # no `/Article` — a ref to the work itself
         return disp or target_raw
@@ -128,86 +128,52 @@ def process_eb1911_selfref_link(raw, inner, context, inner_registry) -> str:
     return f"«LN:{target}|{disp}«/LN»"
 
 
-def process_author_link(raw, inner, context, inner_registry) -> str:
-    """`[[Author:Name|Display]]` — route on the display, element-alone.
-
-    A contributor signature (the display's initials are a known contributor,
-    per ``context.contributor_initials``) → render just the initials; everything
-    else → `«LN:Name|Display»`, an xref to the *referenced* author.
-
-    The index decision reads the RAW display so a `{{sc|…}}` shell or `(…)`
-    parens fold to bare initials via `_normalize_initials`; the rendered output
-    substitutes the COMPOSITE's classified display children, so a contributor's
-    small-caps survive.  No surrounding context is consulted — recursion already
-    delivered a lone link."""
+def _wrap_author_link(raw, body, ctx):
+    """`[[Author:Name|Display]]` — a contributor signature (display initials in
+    `ctx.contributor_initials`) renders bare initials; else an «LN:Name|Display» xref.  The
+    initials check reads the RAW display (folds a `{{sc}}` shell / parens via `_normalize_initials`);
+    the rendered output uses the recursed `body`."""
     from britannica.pipeline.stages.extract_contributors import _normalize_initials
-    from britannica.pipeline.stages.elements import _substitute_children
-    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target_raw, _s, disp_raw = body.partition("|")          # parse the outer from raw
+    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    target_raw, _s, disp_raw = b.partition("|")             # parse the outer from raw
     target = re.sub(r"^\s*Author:\s*", "", target_raw, flags=re.IGNORECASE).strip()
-    disp_out = _substitute_children(inner, inner_registry).strip() or target
+    disp_out = body.strip() or target
     key = _normalize_initials(disp_raw.strip("() "))
-    if key and key in context.contributor_initials:
+    if key and key in ctx.contributor_initials:
         return disp_out                                    # contributor → initials
     return f"«LN:{target}|{disp_out}«/LN»"                  # reference → xref
 
 
-def process_fragment_link(raw, inner, context, inner_registry) -> str:
-    """`[[#Section]]` / `[[#Section|Display]]` — a bare same-article anchor link.
-
-    Transform the outer (parse `#Section` from `raw` → `«LN:#Section`) and substitute the
-    COMPOSITE's classified display children.  The leading-`#` target the resolver reads as
-    "this article, section Section"; display defaults to the section name."""
-    from britannica.pipeline.stages.elements import _substitute_children
-    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target, _sep, display = body.partition("|")
+def _wrap_fragment_link(raw, body, ctx):
+    """`[[#Section]]` / `[[#Section|Display]]` → «LN:#Section|display» (display defaults to the
+    section name)."""
+    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    target, _sep, display = b.partition("|")
     section = target.strip().lstrip("#").strip()
-    disp = (_substitute_children(inner, inner_registry).strip()
-            if display.strip() else section)
+    disp = body.strip() if display.strip() else section
     if not section:
         return disp
     return f"«LN:#{section}|{disp}«/LN»"
 
 
-def process_intra_article_link(raw, inner, context, inner_registry) -> str:
-    """`{{EB1911 intra-article link|Section}}` / `{{…|Section|Display}}` — the template
-    twin of the bare `[[#Section]]` anchor.  Slot 0 is the template name; the section is
-    the first positional.  A COMPOSITE: the display (second positional, falling back to the
-    section) is decomposed into child nodes; we substitute their markers (`inner`)."""
-    from britannica.pipeline.stages.elements import _substitute_children
+def _wrap_intra_link(raw, body, ctx):
+    """`{{EB1911 intra-article link|Section[|Display]}}` → «LN:#Section|display» — the template
+    twin of `[[#Section]]`; the section is the first positional."""
     parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
     positional = [p for p in parts[1:] if "=" not in p and p]
     if not positional:
         return ""
-    section = positional[0]
-    disp = _substitute_children(inner, inner_registry).strip()
-    return f"«LN:#{section}|{disp}«/LN»"
+    return f"«LN:#{positional[0]}|{body.strip()}«/LN»"
 
 
-def _strip_link_prefix(t: str) -> str:
-    """Drop a single leading `word:` namespace/interwiki prefix (w:/Portal:/…); the
-    colon must be followed by a non-space, so the section colon form `Europe: History`
-    is NOT treated as a prefix.  Mirrors the resolver's normalizer strip."""
-    i = t.find(":")
-    if 0 < i < len(t) - 1 and " " not in t[:i] and not t[i + 1].isspace():
-        return t[i + 1:].strip()
-    return t
-
-
-def process_wikilink(raw, inner, context, inner_registry) -> str:
-    """`[[Target]]` / `[[Target|Display]]` — a generic wiki cross-reference (anything
-    not claimed by the File / Author / SELFREF / `#` recognizers).  Transform the outer
-    (parse `Target` from `raw`, consuming it into the `«LN:…` scaffold) and substitute the
-    COMPOSITE's classified display children, so a styler/footnote inside the link text is a
-    node, not swept.  The target's prefix is preserved (the resolver needs it); with no
-    display, show the bare name (w:/Portal: prefix is noise)."""
-    from britannica.pipeline.stages.elements import _substitute_children
-    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target, _sep, display = body.partition("|")
+def _wrap_wikilink(raw, body, ctx):
+    """`[[Target]]` / `[[Target|Display]]` → «LN:Target|display».  With no display, show the bare
+    name (w:/Portal: prefix stripped as noise); the target keeps its prefix for the resolver."""
+    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    target, _sep, display = b.partition("|")
     target = target.strip()
     display = display.strip()
-    disp = (_substitute_children(inner, inner_registry).strip()
-            if display else _strip_link_prefix(target))
+    disp = body.strip() if display else _strip_link_prefix(target)
     if not target:
         return disp
     return f"«LN:{target}|{disp}«/LN»"

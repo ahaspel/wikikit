@@ -27,9 +27,9 @@ from britannica.pipeline.stages.elements._image import (
 )
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
-    process_eb1911_article_link, process_target_first_link,
-    process_eb1911_selfref_link, process_author_link,
-    process_fragment_link, process_intra_article_link, process_wikilink)
+    _LINK_LABELS, _link_display,
+    _wrap_article_link, _wrap_target_first, _wrap_selfref, _wrap_author_link,
+    _wrap_fragment_link, _wrap_intra_link, _wrap_wikilink)
 from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
@@ -837,6 +837,8 @@ def _recurse_slot_content(raw, label):
         if body.endswith("}}"):
             body = body[:-2]
         return body.partition("|")[2], True   # process_lang used the bare (figure-allowing) recurse
+    if label in _LINK_LABELS:                 # a link → its DISPLAY slot (both [[…]] and {{…}} forms)
+        return _link_display(raw, label), False
     args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     if label == "LB":                         # `{{lb-|N}}` → the quantity N
         return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,
@@ -862,17 +864,17 @@ def _recurse_slot_content(raw, label):
 # body into the label's marker.  Adding such a producer is a ROW in `_PR_WRAP`, not a bespoke
 # function — the same collapse the figure/image family already got (see the `_process_image`
 # note further down).  `body` arrives substituted-but-unstripped; each wrap owns its own strip.
-def _wrap_italic(raw, body):
+def _wrap_italic(raw, body, ctx):
     b = body.strip()
     return f"«I»{b}«/I»" if b else ""
 
 
-def _wrap_lb(raw, body):
+def _wrap_lb(raw, body, ctx):
     b = body.strip()
     return f"{b} lb" if b else "lb"
 
 
-def _wrap_bare(raw, body):
+def _wrap_bare(raw, body, ctx):
     return body.strip()
 
 
@@ -884,14 +886,24 @@ _PR_WRAP = {
     "LANG":       _wrap_bare,     # {{greek|X}}             → X  (glyphs are the text)
     "SPLIT_WORD": _wrap_bare,     # {{hws|frag|WORD}}       → WORD (END → "")
     "MAIN_OTHER": _wrap_bare,     # {{main other|main|other}} → main copy (param 1)
+    # the «LN:target|display» family — one wrap each, all on the shared `_link_display` peel
+    "EB1911_ARTICLE_LINK": _wrap_article_link,
+    "TARGET_FIRST_LINK":   _wrap_target_first,
+    "EB1911_SELFREF":      _wrap_selfref,
+    "AUTHOR_LINK":         _wrap_author_link,
+    "FRAGMENT_LINK":       _wrap_fragment_link,
+    "INTRA_ARTICLE_LINK":  _wrap_intra_link,
+    "WIKILINK":            _wrap_wikilink,
 }
 
 
 def _make_peel_recurse(label):
     """Bind one `_PR_WRAP` row into a dispatch handler: substitute the classified children, then
-    wrap.  `produce_tree` post-substitutes too, so this is the whole producer."""
+    wrap.  The wrap gets (raw, body, ctx) — most ignore ctx; the rare one needs it (a link's
+    contributor-initials check reads `ctx.contributor_initials`).  `produce_tree` post-
+    substitutes too, so this is the whole producer."""
     wrap = _PR_WRAP[label]
-    return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg))
+    return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg), ctx)
 
 
 def process_param(raw, inner, context, inner_registry):
@@ -1087,25 +1099,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # separately by extract_contributors off those initials, via the vol-29/front-matter index.
     "CONTRIBUTOR_FOOTER": lambda raw, inner, ctx, reg:
         _process_contributor_footer(raw),
-    # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
-    # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
-    # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
-    "EB1911_ARTICLE_LINK": process_eb1911_article_link,
-    # Target-first link siblings — lkpl / 1911link / EB1911 link.  Same recurse-the-
-    # display producer, target-first convention.
-    "TARGET_FIRST_LINK": process_target_first_link,
-    # AUTHOR_LINK — `[[Author:Name|Display]]`.  Routed on the display: a contributor's
-    # initials (in ctx.contributor_initials) → render the initials; else → «LN» xref.
-    "AUTHOR_LINK": process_author_link,
-    # EB1911_SELFREF — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`, the internal
-    # cross-link in raw bracket form; same «LN» family as the template links above.
-    "EB1911_SELFREF": process_eb1911_selfref_link,
-    # FRAGMENT_LINK — `[[#Section]]`, a bare same-article anchor link → «LN:#Section».
-    "FRAGMENT_LINK": process_fragment_link,
-    # INTRA_ARTICLE_LINK — `{{EB1911 intra-article link|Section}}`, its template twin.
-    "INTRA_ARTICLE_LINK": process_intra_article_link,
-    # WIKILINK — generic `[[Target]]` cross-reference → «LN», resolved by the ladder.
-    "WIKILINK": process_wikilink,
+    # The «LN:target|display» link family (EB1911_ARTICLE_LINK / TARGET_FIRST_LINK / AUTHOR_LINK /
+    # EB1911_SELFREF / FRAGMENT_LINK / INTRA_ARTICLE_LINK / WIKILINK) is generated from `_PR_WRAP`
+    # below (peel/recurse/wrap): `_link_display` peels the display, each `_wrap_*` parses the
+    # target from raw and emits «LN».
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:

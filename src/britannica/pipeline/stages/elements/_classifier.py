@@ -58,6 +58,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_TITLE,
     strip_outer,
 )
+from britannica.pipeline.stages.elements._link import _LINK_LABELS
 from britannica.pipeline.stages.elements._walker import (
     walk,
     _OPAQUE_TAGS,
@@ -1034,33 +1035,12 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
     )
 
 
-# Every link label whose producer recurses a DISPLAY slot — the composite decomposes that one
-# slot; the producer parses target/section from raw and substitutes the classified display.
-_LINK_DISPLAY_LABELS: frozenset[str] = frozenset({
-    "EB1911_ARTICLE_LINK", "TARGET_FIRST_LINK", "INTRA_ARTICLE_LINK",
-    "EB1911_SELFREF", "AUTHOR_LINK", "FRAGMENT_LINK", "WIKILINK",
-})
-
-
-def _classify_link_composite(raw: str, label: str) -> ClassifiedElement:
-    """A link whose DISPLAY recurses is a COMPOSITE — only the display slot decomposes into child
-    nodes (the SAME classify the old `process_elements(display, _allow_figure=False)` ran); the
-    target / section stays a raw parse in the producer.  `_link_display` mirrors each producer's
-    display parse.  Byte-identical."""
-    from britannica.pipeline.stages.elements._link import _link_display
-    display = _link_display(raw, label)
-    placeholderized, tree = classify_article(display, _allow_figure=False)
-    return ClassifiedElement(
-        label=label, raw=raw, inner_text=placeholderized,
-        inner_registry={ph: tree[ph]
-                        for ph in sorted(tree, key=placeholderized.find)},
-    )
-
-
-# Single-slot leaf producers whose ONE recursive slot decomposes into nodes — LANG (unwrap to
-# content), LB (the quantity), CITE (the title), SPLIT_WORD (the rejoined word).
+# Every peel/recurse/wrap label routed through the ONE classify path (`_classify_recurse_slot`):
+# the leaf single-slot ones + the whole «LN» link family (`_LINK_LABELS`, whose recursed slot is
+# the DISPLAY).  `_recurse_slot_content` (in `__init__`) is the shared PEEL side; `_PR_WRAP` the
+# WRAP side.
 _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
-    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER"})
+    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER"}) | _LINK_LABELS
 
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
@@ -1200,12 +1180,9 @@ def classify(
     # file-ref / width / align stay a leaf parse in the producer.
     if label == "IMAGE":
         return _classify_image_composite(raw)
-    # A link whose DISPLAY recurses — decompose that one slot into nodes; the producer keeps its
-    # raw target/section parse (and any raw-display check: author initials, article roman).
-    if label in _LINK_DISPLAY_LABELS:
-        return _classify_link_composite(raw, label)
-    # A single-slot leaf producer (LANG / LB / CITE / SPLIT_WORD) — decompose its one recursive
-    # slot into nodes here; the producer substitutes rather than re-`process_elements`.
+    # A peel/recurse/wrap label — the single-slot leaves (LANG / LB / CITE / SPLIT_WORD /
+    # MAIN_OTHER) AND the whole «LN» link family — decompose their one recursive slot into nodes
+    # here; the producer (a `_PR_WRAP` row) substitutes rather than re-`process_elements`.
     if label in _RECURSE_SLOT_LABELS:
         return _classify_recurse_slot(raw, label)
 
