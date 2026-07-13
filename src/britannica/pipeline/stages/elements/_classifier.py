@@ -1048,6 +1048,29 @@ def _classify_main_other_composite(raw: str) -> ClassifiedElement:
     )
 
 
+# Every link label whose producer recurses a DISPLAY slot — the composite decomposes that one
+# slot; the producer parses target/section from raw and substitutes the classified display.
+_LINK_DISPLAY_LABELS: frozenset[str] = frozenset({
+    "EB1911_ARTICLE_LINK", "TARGET_FIRST_LINK", "INTRA_ARTICLE_LINK",
+    "EB1911_SELFREF", "AUTHOR_LINK", "FRAGMENT_LINK", "WIKILINK",
+})
+
+
+def _classify_link_composite(raw: str, label: str) -> ClassifiedElement:
+    """A link whose DISPLAY recurses is a COMPOSITE — only the display slot decomposes into child
+    nodes (the SAME classify the old `process_elements(display, _allow_figure=False)` ran); the
+    target / section stays a raw parse in the producer.  `_link_display` mirrors each producer's
+    display parse.  Byte-identical."""
+    from britannica.pipeline.stages.elements._link import _link_display
+    display = _link_display(raw, label)
+    placeholderized, tree = classify_article(display, _allow_figure=False)
+    return ClassifiedElement(
+        label=label, raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -1173,6 +1196,10 @@ def classify(
     # file-ref / width / align stay a leaf parse in the producer.
     if label == "IMAGE":
         return _classify_image_composite(raw)
+    # A link whose DISPLAY recurses — decompose that one slot into nodes; the producer keeps its
+    # raw target/section parse (and any raw-display check: author initials, article roman).
+    if label in _LINK_DISPLAY_LABELS:
+        return _classify_link_composite(raw, label)
 
     # NOTE: the walker is conservative — what comes in goes out unchewed.
     # An IMAGE element therefore carries its raw `[[File:…]]` VERBATIM; the

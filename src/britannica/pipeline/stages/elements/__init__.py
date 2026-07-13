@@ -821,6 +821,26 @@ def _param_peel(raw):
     return name, value, _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
 
 
+def _substitute_children(inner, inner_registry):
+    """Substitute a composite's child markers into its placeholderized `inner` (5-pass, so a
+    child marker that itself carries another child's placeholder resolves — cross-references).
+    The shared body every composite producer runs when it needs the ASSEMBLED content (a slug,
+    a strip, a wrap, a display slot); `produce_tree` also post-substitutes, so this is belt-and-
+    braces for producers that read `content` before returning."""
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    return content
+
+
 def process_param(raw, inner, context, inner_registry):
     """PARAM producer (walker SHAPE_PARAM): the param-valued styler `{{Fs|108%|X}}` /
     `{{font size|N%|X}}` (+ the ti / margin-left / size indent/size frames).  Same styler
@@ -1017,28 +1037,22 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # EB1911_ARTICLE_LINK — a cross-reference link recursed at the walker: the producer
     # recurses its display so a nested `{{sc|…}}` is carried as «SC», not flat-stripped
     # by body-text (whose `[^{}]*` regex couldn't bound the nested braces).
-    "EB1911_ARTICLE_LINK": lambda raw, inner, ctx, reg:
-        process_eb1911_article_link(inner, ctx),
+    "EB1911_ARTICLE_LINK": process_eb1911_article_link,
     # Target-first link siblings — lkpl / 1911link / EB1911 link.  Same recurse-the-
     # display producer, target-first convention.
-    "TARGET_FIRST_LINK": lambda raw, inner, ctx, reg:
-        process_target_first_link(inner, ctx),
+    "TARGET_FIRST_LINK": process_target_first_link,
     # AUTHOR_LINK — `[[Author:Name|Display]]`.  Routed on the display: a contributor's
     # initials (in ctx.contributor_initials) → render the initials; else → «LN» xref.
-    "AUTHOR_LINK": lambda raw, inner, ctx, reg:
-        process_author_link(raw, inner, ctx),
+    "AUTHOR_LINK": process_author_link,
     # EB1911_SELFREF — `[[1911 Encyclopædia Britannica/Article#Sec|Disp]]`, the internal
     # cross-link in raw bracket form; same «LN» family as the template links above.
-    "EB1911_SELFREF": lambda raw, inner, ctx, reg:
-        process_eb1911_selfref_link(raw, ctx),
+    "EB1911_SELFREF": process_eb1911_selfref_link,
     # FRAGMENT_LINK — `[[#Section]]`, a bare same-article anchor link → «LN:#Section».
-    "FRAGMENT_LINK": lambda raw, inner, ctx, reg:
-        process_fragment_link(raw, ctx),
+    "FRAGMENT_LINK": process_fragment_link,
     # INTRA_ARTICLE_LINK — `{{EB1911 intra-article link|Section}}`, its template twin.
-    "INTRA_ARTICLE_LINK": lambda raw, inner, ctx, reg:
-        process_intra_article_link(inner, ctx),
+    "INTRA_ARTICLE_LINK": process_intra_article_link,
     # WIKILINK — generic `[[Target]]` cross-reference → «LN», resolved by the ladder.
-    "WIKILINK": lambda raw, inner, ctx, reg: process_wikilink(raw, ctx),
+    "WIKILINK": process_wikilink,
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:
