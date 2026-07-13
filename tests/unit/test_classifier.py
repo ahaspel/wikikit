@@ -203,7 +203,7 @@ class TestBacklogFamilyRoutes:
         # A real `{{name|…}}` whose CONTENT carries `\over`/`\overline` routes by
         # its NAME, NOT to FRACTION (the bare-`\over` route must not steal it).
         assert self._label(
-            "{{ne||<math>\\tfrac12\\overline{mu^2}</math>|(7)}}") == "MATH_NE"
+            "{{ne||<math>\\tfrac12\\overline{mu^2}</math>|(7)}}") == "MATH_EQUATION"
 
     def test_size_keyword_wrapper_routes_param(self):
         # `{{size|xl|X}}` — the keyword size is a font-size styler (PARAM); xl→x-large.

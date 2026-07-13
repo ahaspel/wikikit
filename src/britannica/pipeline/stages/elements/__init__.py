@@ -1025,23 +1025,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # CITE — generated from `_PR_WRAP` below (peel/recurse/wrap).
     # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
     "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
-    # MATH family — walker lifts labeled-display-equation templates
-    # because they're declared as math by their template name and
-    # have their own paragraph context.  One producer covers all
-    # three labels:
-    #   * `_process_math_equation` — labeled display equations
-    #     (equation / MathForm1 / ne all share the `«EQN:…»` contract;
-    #     producer selects per-template arg parsing keyed on name)
-    # Inline `{{sfrac|...}}` fractions and `{{sub|x}}` / `{{sup|x}}`
-    # stay in body-text — they're typography whose output flows back
-    # into prose, and body-text's `_convert_sfrac` / `_convert_sub_sup`
-    # own them.
-    "MATH_EQUATION": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner, ctx),
-    "MATH_FORMULA_LABELED": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner, ctx),
-    "MATH_NE": lambda raw, inner, ctx, reg:
-        _process_math_equation(inner, ctx),
+    # MATH_EQUATION — one label for the labeled-display-equation templates
+    # (equation / MathForm1 / ne): a decompose node of a NUMBER cell + a BODY
+    # cell the producer reassembles into the `«EQN:…»` block.  (`<math>` tags
+    # inside stay opaque leaves — that's the math-qua-math bit.)
+    "MATH_EQUATION": _process_math_equation,
     # CONTRIBUTOR_FOOTER — the `{{EB1911 footer …}}` signature.  Renders ONLY the initials
     # signoff a reader sees (right-aligned parenthetical); the byline binding is harvested
     # separately by extract_contributors off those initials, via the vol-29/front-matter index.

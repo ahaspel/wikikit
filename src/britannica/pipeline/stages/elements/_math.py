@@ -2,15 +2,16 @@
 
 Owns the math templates the walker lifts out of body-text:
 
-  Labeled display equations (`MATH_EQUATION`, `MATH_FORMULA_LABELED`,
-  `MATH_NE`)
+  Labeled display equations (ONE label, `MATH_EQUATION`)
     `{{equation|…}}` / `{{MathForm1|label|content}}` / `{{ne|...}}`.
-    All three labels dispatch to ONE producer (`_process_math_equation`)
-    which selects per-template arg parsing and emits the shared
-    `«EQN:LABEL»content«/EQN»` marker with `\\n\\n` paragraph margins.
-    These templates are declared as math by their template name —
-    they have their own paragraph context and marker contract, so
-    the walker recognizes them structurally.
+    NOT three math things — three arg conventions of one labeling WRAPPER
+    whose body is mixed content (prose, `«I»`, {{Greek}}, {{sfrac}}, an
+    optional opaque `<math>` child).  So it's a DECOMPOSE, like TOC_ROW /
+    DUAL_LINE: `_eqn_parse` (parse-args, the "label business") slices a
+    NUMBER slot + a BODY slot, `_classify_equation_composite` recurses each
+    to a CELL, and `_process_math_equation` reassembles `«EQN:LABEL»…«/EQN»`
+    (decode the number, finish the body).  The `«EQN»` block is the one
+    math-qua-math bit; a `<math>` tag inside stays an opaque leaf.
 
 Inline `{{sfrac|...}}` fraction variants and `{{sub|x}}` / `{{sup|x}}`
 super/subscripts are NOT walker chunks — they're typography whose
@@ -36,94 +37,57 @@ from britannica.pipeline.stages.elements._dual_line import (
 _PAREN_LABEL_RE = re.compile(r"\(([^()]+)\)")
 
 
-def _eqn_label(raw_label: str, context) -> str:
-    """The equation number for the `«EQN:LABEL»` slot.
-
-    The label is article markup ({{sc}}, «I», {{ditto}}, a paren-wrapped
-    number), so RECURSE it like any content, then decode the resulting markers
-    to plain text: the viewer renders the label `escapeHtml`-ed (it can't show
-    markup in the margin) and the slot is `»`-delimited, so a stray `«…»` marker
-    would both display literally and collide with the marker boundary.
-    `decode_title` is the shared marker→plain-text flattener — the same PLAIN
-    view the dropdown/xref title uses. The outer `(N)` parens are presentational
-    (the viewer supplies its own), so strip them first.
-
-    Replaces `_clean_eqn_label`, a partial mauler that stripped parens + `''`
-    (already dead — quote-runs convert `''`→«I» upstream) and leaked every other
-    markup form ({{sc}}, {{ditto}}, …) raw into the label slot.
-    """
-    from britannica.pipeline.stages.elements import process_elements
-    from britannica.pipeline.stages.elements._title import decode_title
+def _eqn_strip_paren_label(raw_label: str) -> str:
+    """The equation number's recurse-slot — its presentational outer `(N)` parens stripped
+    (the viewer supplies its own).  The stripped inner is article markup ({{sc}}, «I»,
+    {{ditto}}, a number) recursed to a CELL node; the producer decodes its markers to the
+    plain-text margin label.  Replaces `_eqn_label`'s paren-strip; its process/decode moved
+    to the producer, so the label recurses in the tree instead of a per-label flatten."""
     paren = _PAREN_LABEL_RE.match(raw_label.strip())
-    inner = (paren.group(1) if paren else raw_label).strip()
-    if not inner:
-        return ""
-    return decode_title(process_elements(inner, context, _allow_figure=False))
+    return (paren.group(1) if paren else raw_label).strip()
 
 
-_INTERNAL_WHITESPACE_RE = re.compile(r"[ \t]+")
-_SPACE_BEFORE_PUNCT_RE = re.compile(r" +([,.;:!?])")
+def _eqn_parse(raw: str) -> "tuple[str, str]":
+    """`(number_slot, body_slot)` — the equation NUMBER and BODY sliced from a labeled-
+    equation template by its per-name arg convention.  This is the parse-args "label
+    business" (standard producer stuff): the three template names differ only in WHICH arg
+    carries the number vs the body; the body itself is MIXED content (prose lead-ins, `«I»`,
+    {{Greek}}, {{sfrac}}, an optional opaque `<math>` child), so it decomposes to nodes like
+    anything else — the only math-qua-math bit is the `«EQN»` block the producer emits.
 
+      * `{{equation|body[|tag=(N)|pretext=…]}}` — body is the positional(s); `tag=` the number.
+      * `{{MathForm1|(N)|body}}` — number-first, body-second.
+      * `{{ne|[pretext|]body[|(N)]}}` — arg0 a lead-in (EMPTY in 974/983 uses; a lone arg is
+        the bare equation), then body, then number.  (Earlier this read a non-empty arg0 AS
+        the body and the equation AS the number — swapping the slots on `{{ne|we have|<math>…|
+        (N)}}` (GEOMETRY) and dropping the number.  Byte-identical for every empty-arg0 form.)
 
-def _process_math_equation(inner: str, context) -> str:
-    """Render any labeled-display-equation template.
-
-    One producer covers three templates that share the
-    `«EQN:LABEL»content«/EQN»` rendering contract; the only
-    per-template variation is HOW the label and content are sliced
-    out of the args.  Selecting by template name keeps the
-    dispatch out of the classifier:
-
-      * `{{equation|content[|tag=(N)|pretext=…]}}` — content is the
-        first positional; `tag=` (a named param) carries the label.
-      * `{{MathForm1|label|content}}` — label-first, content-second.
-      * `{{ne|content}}` / `{{ne||content}}` / `{{ne||content|(N)}}` —
-        three numbered-equation shapes; first slot is the (often
-        empty) label, content follows.
-
-    Body-text used to handle these via the iterative regex+_ne_labeled
-    block; now lifted at the walker.  `\\n\\n` margins isolate the
-    equation as its own paragraph, matching the legacy contract.
-
-    Internal whitespace in the rendered content is collapsed to single
-    spaces — mirrors body-text's old `[ \\t]+` collapse that
-    body-text used to apply to ne content when it was rendered in
-    body.  Keeps byte-identity with the legacy iterative `_ne_labeled`
-    path (ORDNANCE eqn (14) has `{{sfrac|...|E|r}}  + {{sfrac|...|F|r}}`
-    with double space, source-faithful but historically collapsed).
-    """
+    Shared by the composite (which recurses each slot to a CELL) and the producer (which reads
+    the empty-body early-out + the number-empty guard off it) — one parse, called twice."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     parts = _split_top_level_pipe(inner)
     if not parts:
-        return ""
+        return "", ""
     name = parts[0].strip().lower()
-    label = ""
+    label_raw = ""
     content = ""
     if name == "equation":
         positional: list[str] = []
         for p in parts[1:]:
             s = p.strip()
             if s.lower().startswith("tag="):
-                label = _eqn_label(s[4:], context)
+                label_raw = s[4:]
             elif s.lower().startswith("pretext="):
-                # Inter-equation connector ("to", "and", …); no marker
-                # support yet — drop and revisit if the renderer ever
-                # needs it.
+                # Inter-equation connector ("to", "and", …); no marker support — dropped.
                 continue
             else:
                 positional.append(s)
         content = "|".join(positional).strip()
     elif name == "mathform1":
-        # label-first, content-second (joined back for multi-pipe
-        # content).
-        if len(parts) >= 2:
-            label = _eqn_label(parts[1], context)
+        if len(parts) >= 2:                       # number-first, body-second
+            label_raw = parts[1]
         content = "|".join(parts[2:]).strip()
     elif name == "ne":
-        # `{{ne|[pretext|]content[|label]}}` — arg0 is a lead-in, EMPTY in 974/983
-        # corpus uses; a lone arg is the bare equation.  Earlier this read a non-empty
-        # arg0 AS the content and the equation AS the label — swapping the slots on
-        # `{{ne|we have|<math>…</math>|(N)}}` (GEOMETRY) / `{{ne|therefore|…|}}` and
-        # dropping the number.  Byte-identical for every empty-arg0 / single-arg form.
         args = parts[1:]
         if len(args) == 1:
             content = args[0].strip()
@@ -133,26 +97,40 @@ def _process_math_equation(inner: str, context) -> str:
             if pretext:
                 content = f"{pretext} {content}"      # lead text rides in the equation row
             if len(args) > 2:
-                label = _eqn_label(args[2], context)
-    if not content:
+                label_raw = args[2]
+    return _eqn_strip_paren_label(label_raw), content
+
+
+_INTERNAL_WHITESPACE_RE = re.compile(r"[ \t]+")
+_SPACE_BEFORE_PUNCT_RE = re.compile(r" +([,.;:!?])")
+
+
+def _process_math_equation(raw, inner, context, inner_registry) -> str:
+    """Reassemble a labeled display equation from its two decomposed CELL markers.
+
+    `_classify_equation_composite` chopped the template (`_eqn_parse`) into a NUMBER slot and
+    a BODY slot and recursed each — so the body's `«I»` / {{Greek}} / {{sfrac}} / opaque
+    `<math>` are real child nodes, not a re-`process_elements` flatten.  Here we read the two
+    markers: decode the number to a plain-text margin label (the viewer `escapeHtml`s the
+    label and can't show markup in the margin — and the slot is `»`-delimited, so a stray
+    marker would collide), finish the body, and emit the self-delimiting `«EQN:LABEL»…«/EQN»`
+    block.  The `«EQN»` block + finishing is the one math-qua-math bit; the slicing is
+    standard parse-args."""
+    from britannica.pipeline.stages.elements import _cell_markers
+    from britannica.pipeline.stages.elements._title import decode_title
+    label_slot, content_slot = _eqn_parse(raw)
+    if not content_slot:
         return ""
-    # Return the inner (the equation body) through the loop: a `<math>` /
-    # `{{sfrac}}` / `{{sub}}` / `{{Greek}}` inside is produced by its own producer,
-    # not left raw.  (The old non-leaf classify lifted these to child placeholders;
-    # with DOUBLE_BRACE a leaf, the producer recurses its own content.)
-    from britannica.pipeline.stages.elements import process_elements
-    rendered = process_elements(content, context, _allow_figure=False)
-    # `[ \t]+` is ASCII-only and leaves \xa0 alone: a non-breaking space is
-    # carried content, not equation layout, so it rides through intact rather
-    # than being flattened to a plain (collapsible) space.
-    rendered = _INTERNAL_WHITESPACE_RE.sub(" ", rendered)
-    # Strip space-before-punctuation — same as body-text's old
-    # body-only finishing.  Collapses MOLECULE's literal `+ . . . ` to
-    # `+...` (the source spells out the ellipsis with spaces between
-    # each period; body-text used to drop those spaces by the same
-    # rule, and that's what the snapshot baseline assumes).
-    rendered = _SPACE_BEFORE_PUNCT_RE.sub(r"\1", rendered)
+    label_marker, content = (_cell_markers(inner_registry) + ["", ""])[:2]
+    label = decode_title(label_marker) if label_slot else ""
+    # `[ \t]+` is ASCII-only and leaves \xa0 alone: a non-breaking space is carried content,
+    # not equation layout, so it rides through intact rather than flattened to a collapsible
+    # space.  (ORDNANCE eqn (14)'s `{{sfrac|…}}  + {{sfrac|…}}` double space collapses here.)
+    content = _INTERNAL_WHITESPACE_RE.sub(" ", content)
+    # Strip space-before-punctuation — body-text's old body-only finishing.  Collapses
+    # MOLECULE's literal `+ . . .` to `+...` (the source spells the ellipsis with spaces).
+    content = _SPACE_BEFORE_PUNCT_RE.sub(r"\1", content)
     # `«EQN»` is a self-delimiting block marker (like `«TABLE»`): the renderer's block scan
-    # peels it in place and it renders as its own `math-system` grid.  No `\n\n` paragraph
-    # margins — paragraph structure is carried by `«P»`, never re-inferred from blank lines.
-    return f"«EQN:{label}»{rendered}«/EQN»"
+    # peels it in place and it renders as its own `math-system` grid.  Paragraph structure is
+    # carried by `«P»`, never re-inferred from blank lines.
+    return f"«EQN:{label}»{content}«/EQN»"

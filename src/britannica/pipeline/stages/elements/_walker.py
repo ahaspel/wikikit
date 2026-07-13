@@ -614,7 +614,7 @@ def _walk_balanced_shapes(
         # the ONE generic `{{…}}` recognizer above bounds them as DOUBLE_BRACE via
         # `_construct_end`, which skips an opaque `<math>` interior whole exactly as
         # the old `_find_balanced_template_end` did.  The classifier routes the name
-        # → ORDERED_LIST / MATH_EQUATION / MATH_FORMULA_LABELED / MATH_NE.)
+        # → ORDERED_LIST / MATH_EQUATION (one label for equation / MathForm1 / ne).)
 
         # BRACE_PIPE doesn't have a regex pattern — its closer
         # requires balanced depth tracking.  Try it last (lowest

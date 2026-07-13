@@ -348,17 +348,14 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # produced by its own producer as a cell child, so the split bought nothing.
     if name == "dual":
         return "DUAL_LINE"
-    # Labeled-display-equation templates — declared as math by their
-    # template name.  All three labels dispatch to one producer
-    # (`_process_math_equation`) which selects the per-template arg
-    # convention and emits the shared `«EQN:LABEL»content«/EQN»`
-    # marker with `\n\n` paragraph margins.
-    if name == "equation":
+    # Labeled-display-equation templates (`{{equation}}` / `{{MathForm1}}` / `{{ne}}`) —
+    # ONE label.  They are not three math things but three arg conventions of one labeling
+    # WRAPPER whose body is MIXED content (prose lead-ins, `«I»`, {{Greek}}, {{sfrac}}, an
+    # optional opaque `<math>`).  So it decomposes (`_classify_equation_composite`: a NUMBER
+    # cell + a BODY cell); the parse-args slicing is standard producer stuff, the `«EQN»`
+    # block the one math-qua-math bit.  Corpus: 521/983 `ne` bodies carry no `<math>` at all.
+    if name in ("equation", "mathform1", "ne"):
         return "MATH_EQUATION"
-    if name == "mathform1":
-        return "MATH_FORMULA_LABELED"
-    if name == "ne":
-        return "MATH_NE"
 
     # ── Name-driven routing for the backlog families ──────────────────────────
     # With the ONE generic `{{…}}` recognizer, EVERY double-brace reaches here, so
@@ -1028,6 +1025,17 @@ def _classify_fraction_composite(raw: str) -> ClassifiedElement:
     return _decompose_cells("FRACTION", raw, _fraction_parse(raw)[1])
 
 
+def _classify_equation_composite(raw: str) -> ClassifiedElement:
+    """A labeled display equation `{{equation|…}}` / `{{MathForm1|…}}` / `{{ne|…}}` decomposes
+    into a NUMBER cell and a BODY cell (`_eqn_parse` slices which arg is which per template);
+    the producer decodes the number and renders the body into the `«EQN»` block.  The body's
+    mixed content — prose lead-ins, `«I»`, {{Greek}}, {{sfrac}}, an opaque `<math>` — recurses
+    to real nodes, so the equation is standard parse-args + decompose, not a math flatten."""
+    from britannica.pipeline.stages.elements._math import _eqn_parse
+    number_slot, body_slot = _eqn_parse(raw)
+    return _decompose_cells("MATH_EQUATION", raw, [number_slot, body_slot])
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -1143,6 +1151,8 @@ def classify(
         return _classify_toc_row_composite(raw)
     if label == "FRACTION":
         return _classify_fraction_composite(raw)
+    if label == "MATH_EQUATION":
+        return _classify_equation_composite(raw)
     # A peel/recurse/wrap label — the single-slot leaves (LANG / LB / CITE / SPLIT_WORD /
     # MAIN_OTHER) AND the whole «LN» link family — decompose their one recursive slot into nodes
     # here; the producer (a `_PR_WRAP` row) substitutes rather than re-`process_elements`.
