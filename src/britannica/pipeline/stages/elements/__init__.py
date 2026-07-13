@@ -950,10 +950,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # identically — the shadow producer they fed is gone.)
     # INLINE_GLYPHS — a `{|…|}` with no `|-` rows that flows `<hiero>` glyphs
     # (and the odd glyph-image) inline in a sentence; the transcriber's table
-    # is layout scaffolding, not data.  Producer joins the cells back into
-    # inline prose, glyphs inline, no table marker (kills the pipe leak).
-    "INLINE_GLYPHS": lambda raw, inner, ctx, reg:
-        _process_inline_glyph_wrapper(inner, ctx),
+    # is layout scaffolding, not data.  A decompose node of CELL children (like
+    # RUNNING_HEADER); the producer concatenates them into one inline run.
+    "INLINE_GLYPHS": _process_inline_glyph_wrapper,
     # TABLE — every wikitable (`{|`) and HTML `<table>`, whatever its
     # source sub-shape (data grid, single-column text box, verse-quotation,
     # compound/nested, rowspan-complex), decomposes through the ONE

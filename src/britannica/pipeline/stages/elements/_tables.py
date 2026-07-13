@@ -566,34 +566,23 @@ def _parse_ts_codes(codes_str: str) -> list[str]:
     return rules
 
 
-def _process_inline_glyph_wrapper(
-        inner: str, context,
-        inner_registry: ElementRegistry | None = None) -> str:
+def _process_inline_glyph_wrapper(raw, inner, context, inner_registry) -> str:
     """Render an inline-glyph wrapper as the inline prose it actually is.
 
-    EB1911 transcribers wrapped runs of `<hiero>` glyphs (and the odd
-    glyph-IMAGE — e.g. EGYPT's Neith sign, which has no WikiHiero code, so an
-    image stands in for it) in a `{|{{Ts|ma}}…|}` table purely to centre/flow
-    them inside a sentence.  That is not a table: rendering it as one shatters
-    the sentence and sprays the cell pipes into the prose.  Selected by
-    `_is_inline_glyph_wrapper` (0 `|-` rows + a `<hiero>`); genuine multi-row
-    hieroglyph reference grids never reach here (they keep ≥1 `|-` row).
+    EB1911 transcribers wrapped runs of `<hiero>` glyphs (and the odd glyph-IMAGE — e.g.
+    EGYPT's Neith sign, which has no WikiHiero code, so an image stands in for it) in a
+    `{|{{Ts|ma}}…|}` table purely to centre/flow them inside a sentence.  That is not a table:
+    rendering it as one shatters the sentence.  Selected by `_is_inline_glyph_wrapper` (0 `|-`
+    rows + a `<hiero>`); genuine multi-row hieroglyph reference grids never reach here.
 
-    The cells are joined back into one run — cell separators and `{{Ts|…}}`
-    styling dropped (layout, never content) — then run through body-text, so
-    `{{nowrap}}` / `«I»` / `&nbsp;` resolve.  Each `<hiero>` child renders
-    inline (`[hieroglyph: …]`); a glyph IMAGE child is re-emitted in INLINE
-    form (the block `{{IMG:…}}` produce_tree would otherwise substitute renders
-    as a figure and breaks the flow).  No table marker → no pipe leak.
-    """
-    from britannica.pipeline.stages.elements import process_elements
-    parts = [content for _sep, _attr, content in split_wiki_row(inner)]
-    prose = "".join(parts).strip()
-    # RECURSE the joined run through the one dispatch — the docstring's promise,
-    # finally kept.  `<hiero>` → `[hieroglyph: …]`, a glyph IMAGE inline (not a
-    # block figure), `{{nowrap}}`/`«I»`/`&nbsp;` resolved.  It was returned raw
-    # before — the 298-leak bug the comment described but the code skipped.
-    return process_elements(prose, context).strip()
+    Structurally this IS a running header — a row of cells — so it decomposes the same way:
+    `_classify_inline_glyph_composite` chopped it into CELL nodes (the `||` separators and
+    `{{Ts}}` styling dropped as pure layout), each recursed to its own subtree (`<hiero>` →
+    `[hieroglyph: …]`, glyph IMAGE inline, `{{nowrap}}`/`«I»`/`&nbsp;` resolved).  Here we just
+    concatenate the cell markers into one inline run — no re-`process_elements`, no table marker,
+    no pipe leak."""
+    from britannica.pipeline.stages.elements import _cell_markers
+    return "".join(_cell_markers(inner_registry)).strip()
 
 
 _COLS_RE = re.compile(r"«COLS:(\d+)»")

@@ -793,14 +793,28 @@ def _is_table_html_tag(raw: str) -> bool:
 
 def _classify_table_element(shape: str, raw: str) -> ClassifiedElement:
     """A `{|` or `<table>`.  Derive its label from the SAME empty registry the old
-    leaf saw (so the label is byte-identical), then: a genuine `TABLE` decomposes
-    into the tree; an INLINE_GLYPHS wrapper keeps its raw-reading producer and
-    stays a leaf, exactly as before."""
+    leaf saw (so the label is byte-identical), then decompose: a genuine `TABLE`
+    into ROW/cell nodes, an INLINE_GLYPHS wrapper into a row of CELL nodes (like
+    RUNNING_HEADER) the producer concatenates inline."""
     grid = strip_outer(shape, raw)
     label = _derive_label(shape, raw, grid, {})
     if label == "TABLE":
         return _classify_table_composite(raw, grid)
+    if label == "INLINE_GLYPHS":
+        return _classify_inline_glyph_composite(raw, grid)
     return ClassifiedElement(label, raw, grid, {})
+
+
+def _classify_inline_glyph_composite(raw: str, grid: str) -> ClassifiedElement:
+    """An inline-glyph wrapper (`{|…|}` of `<hiero>` cells, 0 `|-` rows) DECOMPOSES into a
+    row of CELL nodes — the SAME chop as RUNNING_HEADER — the layout scaffolding (`||`
+    separators, `{{Ts}}` styling) dropped as the pure layout it is.  The producer concatenates
+    the cell markers back into one inline run.  `split_wiki_row` splits on `||` at bracket-
+    depth 0, so no `{{…}}` spans two cells: recursing each cell then concatenating equals
+    recursing the joined run, so this is byte-identical to the old join-then-`process_elements`."""
+    from britannica.pipeline.stages.elements._tables import split_wiki_row
+    cells = [content for _sep, _attr, content in split_wiki_row(grid)]
+    return _decompose_cells("INLINE_GLYPHS", raw, cells)
 
 
 # ── Top-level label dispatcher ────────────────────────────────────────
