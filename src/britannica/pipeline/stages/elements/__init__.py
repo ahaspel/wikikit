@@ -563,12 +563,6 @@ def process_shoulder(raw, inner, context, inner_registry):
     return f"«SH:{slug}»{content}«/SH»"
 
 
-# Unit separator — joins the 3 running-header cells in the composite's inner_text so the
-# producer can split them back after `produce_tree` substitutes each cell's child markers.
-# Not a byte EB1911 content ever carries.
-_RH_CELL_SEP = "\x1f"
-
-
 def _running_header_cells(raw):
     """Peel `{{rh|left|center|right}}` / `{{Running header|…}}` → its 3 cell raws (padded /
     truncated to exactly 3).  Shared so `_classify_running_header_composite` (classify each cell
@@ -582,30 +576,17 @@ def _running_header_cells(raw):
 
 
 def process_running_header(raw, inner, context, inner_registry):
-    """RUNNING_HEADER producer (walker SHAPE_RUNNING_HEADER): `{{rh|left|center|right}}` /
-    `{{Running header|…}}` — a 3-column flex frame.  Body content, ~34 articles: displayed-
-    equation layouts (margin connective/number | centred equation | equation number) and plate
-    title bars (empty | centred title | plate number).  The cells carry nested markup — italic
-    equation variables, small-caps/sized plate numbers — which the old `process_elements`
-    flattened to a string.
+    """RUNNING_HEADER producer: `{{rh|left|center|right}}` — a 3-column flex frame.  Body content,
+    ~34 articles: displayed-equation layouts (margin connective/number | centred equation |
+    equation number) and plate title bars (empty | centred title | plate number).
 
-    `_classify_running_header_composite` decomposed each of the 3 cells into child nodes and
-    joined them in `inner_text` with `_RH_CELL_SEP`.  We substitute the children into `inner`,
-    split back on the sentinel, `.strip()` each cell, and emit the flex row so the centre stays
-    centred between the margins.  Each cell's content is now a node, not a flattened string."""
-    content = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+    `_classify_running_header_composite` DECOMPOSED the row into three CELL nodes; we read the
+    three cell markers (each already its recursed content, in order) and REASSEMBLE the flex row
+    so the centre stays centred between the margins.  No sentinel split — the cells are nodes."""
+    cells = ([inner_registry.markers.get(ph, "") for ph in inner_registry.elements]
+             if inner_registry is not None else [])
     left, center, right = (
-        c.strip() for c in (content.split(_RH_CELL_SEP) + ["", "", ""])[:3])
+        c.strip() for c in (cells + ["", "", ""])[:3])
     return (
         "«DIV[style:display:flex;align-items:baseline]»"
         f"«SPAN[style:text-align:left]»{left}«/SPAN»"
@@ -981,6 +962,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "TD": lambda raw, inner, ctx, reg: _process_cell("td", raw, inner, reg),
     "TH": lambda raw, inner, ctx, reg: _process_cell("th", raw, inner, reg),
     "CAPTION": _passthrough_inner,
+    # CELL — a decompose cell node (RUNNING_HEADER, and the multi-slot set as it folds in):
+    # passthrough, its marker IS its recursed content; the container producer reassembles.
+    "CELL": _passthrough_inner,
     "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
         _process_chemistry_layout(raw, inner, ctx, reg),
     # Single-label kinds — element_type == label.
