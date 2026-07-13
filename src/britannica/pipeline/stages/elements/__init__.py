@@ -134,6 +134,17 @@ def _passthrough_inner(raw, inner, context,
     return inner
 
 
+def _cell_markers(inner_registry) -> list:
+    """The produced markers of a decompose node's CELL children, IN ORDER, empties kept.
+
+    Iterate `.elements` (every placeholder, source order) — NOT `.markers` (which omits an
+    empty marker) — so a decompose producer reassembling its layout keeps every slot in
+    position: a blank running-header margin, a missing TOC value, an empty fraction part."""
+    if inner_registry is None:
+        return []
+    return [inner_registry.markers.get(ph, "") for ph in inner_registry.elements]
+
+
 def _process_cell(tag, raw, inner, reg):
     """A TD / TH cell: substitute the child markers into the cell body, then
     `.strip(' \\t')`, and wrap in the tag with the raw attr-slot folded (`_tag`).
@@ -583,10 +594,8 @@ def process_running_header(raw, inner, context, inner_registry):
     `_classify_running_header_composite` DECOMPOSED the row into three CELL nodes; we read the
     three cell markers (each already its recursed content, in order) and REASSEMBLE the flex row
     so the centre stays centred between the margins.  No sentinel split — the cells are nodes."""
-    cells = ([inner_registry.markers.get(ph, "") for ph in inner_registry.elements]
-             if inner_registry is not None else [])
     left, center, right = (
-        c.strip() for c in (cells + ["", "", ""])[:3])
+        c.strip() for c in (_cell_markers(inner_registry) + ["", "", ""])[:3])
     return (
         "«DIV[style:display:flex;align-items:baseline]»"
         f"«SPAN[style:text-align:left]»{left}«/SPAN»"
@@ -883,31 +892,39 @@ def _make_peel_recurse(label):
     return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg), ctx)
 
 
-def _process_fraction(inner, context):
-    """FRACTION producer: a `{{sfrac|n|d}}`-family styler (sfrac / mfrac / frac /
-    over / EB1911 tfrac / …) lifted as a bounded element so its slots RECURSE.
-    Each numerator/denominator slot is RETURNED through the loop (the producer
-    transforms its outer — the `name` token + the bar-fraction scaffold — and hands
-    each slot to ``process_elements``), so a `{{Greek}}`/`{{sub}}`/`<math>` inside is
-    produced by its own producer.  Replaces body-text's ``_expand_fractions`` flatten."""
+def _process_fraction(raw, inner, context, inner_registry):
+    """FRACTION producer: a `{{sfrac|n|d}}`-family fraction reassembled from its decomposed
+    CELL markers.  `_classify_fraction_composite` chopped the slots (`_fraction_parse`) and
+    recursed each — so a `{{Greek}}`/`{{sub}}`/`<math>` in a numerator is a real child node;
+    here we read the cell markers and PRODUCE the fraction (vulgar-Unicode where available,
+    else `n/d`).  The reassembly FORM re-derives from raw — the producer's own leaf parse,
+    like IMAGE re-reading file/width/align while its caption is the decomposed child.
+    Replaces body-text's `_expand_fractions` flatten."""
     from britannica.pipeline.stages.elements._fraction import (
-        _render_fraction, render_over_fraction)
-    recurse = (lambda s: process_elements(s, context, _allow_figure=False))
-    bar = inner.find("|")                       # strip the `name` token
-    if bar < 0:
-        # Bar-less LaTeX-ish `num \over den` form (`{{1\over 2}}` /
-        # `{{\it a \over b}}` / `{{\kappa\over\kappa'}}`) — no `name|` token, the
-        # whole inner is the fraction.  (Reaches the producer only via the bare
-        # standalone form; in real bodies every `\over` rides inside an opaque
+        _fraction_parse, _frac, _strip_latex_font)
+    form, _slots = _fraction_parse(raw)
+    cells = _cell_markers(inner_registry)
+    if form == "over":
+        # Bar-less LaTeX-ish `num \over den` (`{{1\over 2}}` / `{{\it a \over b}}`) — a leading
+        # `\it`/`\rm` font directive has no Unicode form here, dropped.  (Reaches the producer
+        # only via the bare standalone form; in real bodies every `\over` rides inside an opaque
         # `<math>`, so this is the harness-exercised / defensive path.)
-        if r"\over" in inner:
-            return render_over_fraction(inner, recurse)
-        return inner
-    rendered = _render_fraction(inner[bar:], recurse)
-    if inner[:bar].strip().lower() == "binom":
-        # Binomial coefficient — a GROUPED pair (parens), not a bare bar-fraction.
-        return f"({rendered})"
-    return rendered
+        num = _strip_latex_font(cells[0].strip()) if cells else ""
+        den = _strip_latex_font(cells[1].strip()) if len(cells) > 1 else ""
+        return _frac(num, den)
+    if form == "bare":                          # a bare `{{sfrac}}` — echo the name (defensive)
+        return re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
+    # piped / binom — positional count selects mixed / num-den / 1-n
+    if len(cells) >= 3:
+        rendered = f"{cells[0].strip()}{_frac(cells[1], cells[2])}"
+    elif len(cells) == 2:
+        rendered = _frac(cells[0], cells[1])
+    elif len(cells) == 1:
+        rendered = _frac("1", cells[0])
+    else:
+        rendered = ""
+    # Binomial coefficient — a GROUPED pair (parens), not a bare bar-fraction.
+    return f"({rendered})" if form == "binom" else rendered
 
 
 # ── Producer dispatch ─────────────────────────────────────────────────
@@ -985,16 +1002,14 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "IMAGE": _process_image,
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack: table headers, hyphenations, figure-caption splits, stacked
-    # math/chem notation).  ONE producer that recurses each line, so its
+    # math/chem notation).  A decompose node of two CELL children, so its
     # chem/math content is produced by its own producer — no chem/math-
     # specific dual_line label or producer (see the classifier note: the
     # old CHEM_DUAL / MATH_DUAL split was speculative specificity).
-    "DUAL_LINE": lambda raw, inner, ctx, reg:
-        _process_dual_line(inner, ctx),
-    # FRACTION — the `{{sfrac|n|d}}` family, a STYLER lifted as an element so
-    # its slots recurse (the dual-line model for a two-slot wrapper).
-    "FRACTION": lambda raw, inner, ctx, reg:
-        _process_fraction(inner, ctx),
+    "DUAL_LINE": _process_dual_line,
+    # FRACTION — the `{{sfrac|n|d}}` family, a decompose node of CELL slots the
+    # producer reassembles to a vulgar glyph or `n/d`.
+    "FRACTION": _process_fraction,
     # LB — `{{lb-|N}}` pound-weight glyph leaf (out of body-text's flat re.sub).
     # LB — generated from `_PR_WRAP` below (peel/recurse/wrap).
     # NOWIKI — `<nowiki>X</nowiki>` wiki-escape; unwrap to the literal inner.
@@ -1055,9 +1070,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # (footnotes render inline in this edition).
     "REFS": lambda raw, inner, ctx, reg: process_refs(raw, ctx),
     # TOC_ROW — one `{{Dotted TOC line}}` / `{{Dotted TOC page listing}}` /
-    # `{{TOC line}}` dotted-leader row → its content (cells from template params),
-    # rendered in place inside whatever fences it ({|, <div>, block-center).
-    "TOC_ROW": lambda raw, inner, ctx, reg: process_toc_row(raw, ctx),
+    # `{{TOC line}}` dotted-leader row: a decompose node of a left-label CELL and a
+    # right-value CELL, rendered in place inside whatever fences it ({|, <div>, block-center).
+    "TOC_ROW": process_toc_row,
     # SPLIT_WORD — `{{hws}}`/`{{hwe}}`/`{{lps}}`/`{{lpe}}`: a page-split word; the
     # start marker rejoins it, the end marker renders empty.
     # SPLIT_WORD — generated from `_PR_WRAP` (peel/recurse/wrap).

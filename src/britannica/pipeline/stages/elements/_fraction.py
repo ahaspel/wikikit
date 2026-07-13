@@ -1,11 +1,12 @@
 """Fraction production — the `{{sfrac|n|d}}` family's output, for the FRACTION element.
 
-Out of body_text (deleted).  `_process_fraction` parses its slots (nested elements ride
-through as walker-extracted placeholders), then calls
-`_render_fraction` to PRODUCE the fraction from them — vulgar-Unicode where available (½,
-¾, …), else `n/d`.  This is the producer assembling its OWN output from its recursed
-parts, not an across-the-board transform of inner content.  `_split_top_pipes` is the
-canonical parse primitive from `_link` (it splits, never strips).
+A fraction DECOMPOSES: `_fraction_parse` chops the slots (numerator / denominator, plus an
+optional whole part), the classifier recurses each to a CELL node, and `_process_fraction`
+reassembles the fraction from the cell markers — vulgar-Unicode where available (½, ¾, …),
+else `n/d`.  The producer assembles its OWN output from its recursed parts (a `{{Greek}}` /
+`{{sub}}` / `<math>` in a numerator is a real child node), not an across-the-board transform
+of inner content.  `_split_top_pipes` is the canonical parse primitive from `_link` (it
+splits, never strips).
 """
 
 from __future__ import annotations
@@ -30,40 +31,32 @@ def _frac(num: str, den: str) -> str:
                                  f"{num.strip()}/{den.strip()}")
 
 
-def _render_fraction(args: str, recurse) -> str:
-    """Produce one fraction from its ``|``-joined slot string (which begins with the
-    leading ``|``).  Drops ``name=value`` styling args; each positional slot is RETURNED
-    through the loop via ``recurse`` (so a `{{Greek}}`/`{{sub}}`/`<math>` in a numerator
-    is produced, not left raw); the positional count selects mixed / num-den / 1-n."""
-    parts = _split_top_pipes(args)
-    if parts and parts[0] == "":          # empty slot before the first `|`
+def _fraction_parse(raw: str) -> tuple[str, list[str]]:
+    """``(form, slots)`` — the reassembly FORM and the recurse-SLOTS of a fraction.
+
+    A fraction decomposes: chop the slots, recurse each to a CELL node, and the producer
+    reassembles vulgar-Unicode-or-``n/d`` from the cell markers.  This is the CHOP — the
+    single parse the composite (for the slots) and the producer (for the form) both call:
+
+      * ``'piped'``  — ``{{sfrac|n|d}}`` / ``{{sfrac|whole|n|d}}``: the positional slots
+        (``name=value`` styling args dropped), count selects mixed / num-den / 1-n.
+      * ``'binom'``  — a ``{{binom|n|d}}`` grouped pair; same slots, producer wraps in parens.
+      * ``'over'``   — the bar-less ``num \\over den`` form (`{{1\\over 2}}` / `{{\\it a \\over
+        b}}`); ``[num, den]``, the producer strips a leading ``\\it``/``\\rm`` font directive.
+      * ``'bare'``   — a bare ``{{sfrac}}`` with no slots; producer echoes the name (defensive)."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
+    bar = inner.find("|")
+    if bar < 0:
+        if r"\over" in inner:
+            num, _sep, den = inner.partition(r"\over")
+            return "over", [num, den]
+        return "bare", []
+    parts = _split_top_pipes(inner[bar:])     # slot string begins with the leading `|`
+    if parts and parts[0] == "":              # empty slot before the first `|`
         parts = parts[1:]
-    pos = [recurse(p) for p in parts if not re.match(r"^[a-zA-Z_-]+=", p)]
-    if len(pos) >= 3:
-        return f"{pos[0].strip()}{_frac(pos[1], pos[2])}"
-    if len(pos) == 2:
-        return _frac(pos[0], pos[1])
-    if len(pos) == 1:
-        return _frac("1", pos[0])
-    return ""
-
-
-def render_over_fraction(inner: str, recurse) -> str:
-    """Produce one fraction from the bar-less ``num \\over den`` form (the LaTeX-ish
-    ``{{1\\over 2}}`` / ``{{\\it a \\over b}}`` / ``{{\\kappa\\over\\kappa'}}`` family —
-    no ``name|`` token, the whole inner is ``num \\over den``).
-
-    Splits on the literal ``\\over`` token, recurses each slot through ``recurse``
-    (so a nested element / glyph in a numerator is produced, not left raw), and
-    renders via the same vulgar-Unicode-or-``n/d`` rule the piped form uses.  A
-    leading ``\\it``/``\\rm`` LaTeX font directive on a slot is a presentation hint
-    with no Unicode equivalent here — dropped, the bare variable kept."""
-    num, _sep, den = inner.partition(r"\over")
-    if not _sep:                          # no \over token → nothing to do
-        return inner
-    num = _strip_latex_font(recurse(num).strip())
-    den = _strip_latex_font(recurse(den).strip())
-    return _frac(num, den)
+    slots = [p for p in parts if not re.match(r"^[a-zA-Z_-]+=", p)]
+    form = "binom" if inner[:bar].strip().lower() == "binom" else "piped"
+    return form, slots
 
 
 _LATEX_FONT_RE = re.compile(r"^\\(?:it|rm|bf|mathit|mathrm|textstyle)\s+")

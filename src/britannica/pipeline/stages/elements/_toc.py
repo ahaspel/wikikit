@@ -20,10 +20,15 @@ from britannica.pipeline.stages.elements._link import _split_top_pipes
 _NAMED_RE = re.compile(r"^\s*([A-Za-z_][\w\-]*)\s*=(.*)$", re.DOTALL)
 
 
-def process_toc_row(raw: str, context) -> str:
-    from britannica.pipeline.stages.elements import process_elements
-    inner = re.sub(r"^\{\{", "", raw)
-    inner = re.sub(r"\}\}\s*$", "", inner)
+def _toc_row_cells(raw: str) -> list[str]:
+    """Chop a TOC-row template into its two recurse-slots — ``[left, right]``.  The cells
+    are TEMPLATE PARAMETERS, not divider fields: positional ``col1|col2|col3`` (number |
+    entry | value) or named ``entrytext=…|pagetext=…`` (the `page listing` variant), the
+    layout params (``spaces=``/``col3-width``) dropped.  The left label folds the number +
+    entry into one recursed unit (``(col1 + " " + col2).strip()``); the right is the value
+    (``col3``).  The classifier recurses each to a CELL node; the producer lays out the
+    dotted-leader row, so hyphenation / ``{{ditto}}`` / inline markup render as nodes."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     parts = _split_top_pipes(inner)
     positional: list[str] = []
     named: dict[str, str] = {}
@@ -40,12 +45,21 @@ def process_toc_row(raw: str, context) -> str:
         col1 = positional[0] if len(positional) > 0 else ""
         col2 = positional[1] if len(positional) > 1 else ""
         col3 = positional[2] if len(positional) > 2 else ""
+    return [(col1 + " " + col2).strip(), col3]
 
-    def rec(s: str) -> str:
-        return process_elements(s, context, _allow_figure=False).strip() if s.strip() else ""
 
-    left = rec((col1 + " " + col2).strip())
-    right = rec(col3)
+def process_toc_row(raw, inner, context, inner_registry) -> str:
+    """Render a dotted-leader TOC row from its two decomposed CELL markers.
+
+    ``_classify_toc_row_composite`` chopped the row (``_toc_row_cells``) and recursed each
+    side to a node; here we read the two markers and ``.strip()`` each (the old ``rec``
+    stripped its recurse output).  An empty value column collapses to the plain label; an
+    empty row to nothing.  The surrounding wrapper (block-center / a `{|` cell / `<div>`)
+    does the stacking."""
+    from britannica.pipeline.stages.elements import _cell_markers
+    cells = _cell_markers(inner_registry)
+    left = cells[0].strip() if len(cells) > 0 else ""
+    right = cells[1].strip() if len(cells) > 1 else ""
     if not left and not right:
         return ""
     if not right:                               # no value column (col3 empty / col3-width=0)

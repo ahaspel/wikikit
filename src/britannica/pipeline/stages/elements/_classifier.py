@@ -287,8 +287,8 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # Matched on the raw containing the literal `\over` token (as a whole LaTeX
     # command — NOT `\overline`/`\overrightarrow`, hence the no-letter lookahead),
     # BEFORE the name extractor (which would capture `1\over` and raise).  →
-    # FRACTION; the producer's `render_over_fraction` splits on `\over` and recurses
-    # each slot.  Guarded by `"|" not in name region`: a real `{{name|…}}` template
+    # FRACTION; the composite chops on `\over` into num/den CELL nodes the producer
+    # reassembles.  Guarded by `"|" not in name region`: a real `{{name|…}}` template
     # whose CONTENT happens to carry `\over` (e.g. `{{ne||<math>…\over…</math>}}`)
     # routes by its NAME below, not here.  (In real bodies every bare `\over` rides
     # inside an opaque `<math>` and never reaches here; this routes the bare
@@ -340,12 +340,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "PPOEM"
     # `{{dual line|A|B}}` — pure layout primitive (two-line stack: table
     # headers, hyphenations, figure-caption splits, stacked math/chem
-    # notation).  ONE label, ONE producer that recurses each line.  The old
-    # chem-shaped → CHEM_DUAL / math-shaped → MATH_DUAL sub-classification was
-    # speculative specificity — a content-shape predicate routing to
-    # byte-identical producers, reserving a home for family-specific rendering
-    # that never arrived.  Collapsed: recursion already hands each line's
-    # chem/math content to its own producer, so the split bought nothing.
+    # notation).  ONE label → a two-CELL decompose node (`_classify_dual_line_
+    # composite`).  The old chem-shaped → CHEM_DUAL / math-shaped → MATH_DUAL
+    # sub-classification was speculative specificity — a content-shape predicate
+    # routing to byte-identical producers, reserving a home for family-specific
+    # rendering that never arrived.  Collapsed: each line's chem/math content is
+    # produced by its own producer as a cell child, so the split bought nothing.
     if name == "dual":
         return "DUAL_LINE"
     # Labeled-display-equation templates — declared as math by their
@@ -889,21 +889,10 @@ def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
 def _classify_running_header_composite(raw: str) -> ClassifiedElement:
     """A running header `{{rh|left|centre|right}}` DECOMPOSES into three CELL nodes — one row of
     cells, exactly like `{{columns}}`→TABLE and an indent ladder→OUTLINE.  Chop the pipe args
-    (`_running_header_cells`), recurse each cell's content via `classify_article` (its italic
-    equation variables, small-caps plate numbers → real nodes), and the producer reassembles the
-    flex row from the three cell markers.  No sentinel — the cell boundaries ARE the node
-    boundaries (a CELL is a passthrough node: its marker is its recursed content)."""
+    (`_running_header_cells`) and recurse each cell (its italic equation variables, small-caps
+    plate numbers → real nodes); the producer reassembles the flex row from the three markers."""
     from britannica.pipeline.stages.elements import _running_header_cells
-    cells: dict[str, ClassifiedElement] = {}
-    phs: list[str] = []
-    for cell in _running_header_cells(raw):
-        cell_body, cell_reg = classify_article(cell, _allow_figure=False)
-        ph = _mint_ph()
-        cells[ph] = ClassifiedElement("CELL", cell, cell_body, cell_reg)
-        phs.append(ph)
-    return ClassifiedElement(
-        label="RUNNING_HEADER", raw=raw, inner_text="".join(phs),
-        inner_registry=cells)
+    return _decompose_cells("RUNNING_HEADER", raw, _running_header_cells(raw))
 
 
 def _classify_title_composite(raw: str) -> ClassifiedElement:
@@ -996,6 +985,47 @@ def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
         inner_registry={ph: tree[ph]
                         for ph in sorted(tree, key=placeholderized.find)},
     )
+
+
+def _decompose_cells(label: str, raw: str, slots: "list[str]") -> ClassifiedElement:
+    """Decompose `raw` into a row of CELL nodes — one per slot string, each recursed via
+    `classify_article` (figures off, exactly like a table cell).  The container producer
+    reassembles its OWN layout from the ordered cell markers (RUNNING_HEADER's flex row,
+    DUAL_LINE's stack, TOC_ROW's dotted leader, FRACTION's vulgar glyph).
+
+    The multi-slot twin of `_classify_columns_as_table`: same chop → recurse-each →
+    reassemble, minus the TABLE engine's ROW/`«COLS»` wrapping — these producers own their
+    reassembly instead of going through the table path.  A CELL is a passthrough node (its
+    marker IS its recursed content); iterate `inner_registry.elements` to read them back so
+    an empty slot keeps its position."""
+    cells: dict[str, ClassifiedElement] = {}
+    phs: list[str] = []
+    for slot in slots:
+        body, reg = classify_article(slot, _allow_figure=False)
+        ph = _mint_ph()
+        cells[ph] = ClassifiedElement("CELL", slot, body, reg)
+        phs.append(ph)
+    return ClassifiedElement(
+        label=label, raw=raw, inner_text="".join(phs), inner_registry=cells)
+
+
+def _classify_dual_line_composite(raw: str) -> ClassifiedElement:
+    """`{{dual line|A|B}}` decomposes into a row of two stacked CELL nodes."""
+    from britannica.pipeline.stages.elements._dual_line import _dual_line_cells
+    return _decompose_cells("DUAL_LINE", raw, _dual_line_cells(raw))
+
+
+def _classify_toc_row_composite(raw: str) -> ClassifiedElement:
+    """A dotted-TOC-line template decomposes into a left-label CELL and a right-value CELL."""
+    from britannica.pipeline.stages.elements._toc import _toc_row_cells
+    return _decompose_cells("TOC_ROW", raw, _toc_row_cells(raw))
+
+
+def _classify_fraction_composite(raw: str) -> ClassifiedElement:
+    """A `{{sfrac|n|d}}`-family fraction decomposes into a CELL per slot (numerator /
+    denominator, plus an optional whole part or the bar-less `\\over` pair)."""
+    from britannica.pipeline.stages.elements._fraction import _fraction_parse
+    return _decompose_cells("FRACTION", raw, _fraction_parse(raw)[1])
 
 
 def classify(
@@ -1102,6 +1132,17 @@ def classify(
     # file-ref / width / align stay a leaf parse in the producer.
     if label == "IMAGE":
         return _classify_image_composite(raw)
+    # The multi-slot decompose family — a row of CELL nodes, one per slot, the producer
+    # reassembling its own layout (twin of `{{columns}}`→TABLE, but each owns its reassembly):
+    # DUAL_LINE stacks two, TOC_ROW lays out label|leader|value, FRACTION picks a vulgar glyph.
+    # Branch on the derived label (their detection already lives in `_derive_double_brace_label`,
+    # esp. FRACTION's three forms) rather than replicating it in a pre-walk intercept.
+    if label == "DUAL_LINE":
+        return _classify_dual_line_composite(raw)
+    if label == "TOC_ROW":
+        return _classify_toc_row_composite(raw)
+    if label == "FRACTION":
+        return _classify_fraction_composite(raw)
     # A peel/recurse/wrap label — the single-slot leaves (LANG / LB / CITE / SPLIT_WORD /
     # MAIN_OTHER) AND the whole «LN» link family — decompose their one recursive slot into nodes
     # here; the producer (a `_PR_WRAP` row) substitutes rather than re-`process_elements`.

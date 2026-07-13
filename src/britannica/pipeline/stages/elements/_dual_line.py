@@ -72,39 +72,40 @@ def _split_top_level_pipe(s: str) -> list[str]:
     return parts
 
 
-def _process_dual_line(inner: str, context) -> str:
-    """Render a DUAL_LINE element as ``A<br>B``.
+def _dual_line_cells(raw: str) -> list[str]:
+    """Chop ``{{dual line|A|B}}`` into its cell slots — the strings the old producer
+    handed to ``recurse``.  Two-arg form → ``[A, B]`` (``<br>``-stacked by the producer);
+    a leading ``style=…`` decoration is dropped; a degenerate <2-arg form → its lone slot
+    (space-joined + outer-stripped by the producer).  Each slot is ``.strip()``-ed HERE —
+    while its entities are still ENCODED, so the strip can't eat a decoded U+2007 figure
+    space (ORDNANCE's `{{dual line|1·75|1·6&numsp;}}`, whose trailing figure space is
+    display content); ``classify_article`` then decodes it like the rest of the pipeline.
 
-    A dual_line is a WRAPPER, not a leaf: each line is article markup that can
-    carry inline stylers / sub-sup / refs / math vars ({{Polytonic}}, {{sub}},
-    `<ref>`, …).  Recurse each line through ``process_elements`` — exactly the
-    two-slot model `_process_fraction` follows — so that content renders instead
-    of leaking as raw markup.  (Walker-lifted children arrive as opaque
-    placeholders; they ride through the recursion untouched and are substituted
-    by ``produce_tree`` after this producer returns.)
-
-    ``inner`` is the content between ``{{`` and ``}}`` (e.g. ``"dual line|A|B"``).
-    We strip the leading template name + pipe, split the remainder on top-level
-    pipes, drop a leading style decoration if any, and join the recursed args
-    with ``<br>``.
-
-    The arg is `.strip()`-ed BEFORE recursing — while its entities are still
-    ENCODED, so `.strip()` can't eat a `&numsp;` the way it would the decoded
-    U+2007 figure space (ORDNANCE's `{{dual line|1·75|1·6&numsp;}}`, where the
-    trailing figure space is part of the column's display content); the recursion
-    then decodes it like the rest of the pipeline.
-
-    Degenerate single-arg form falls back to a plain-space join.
-    """
-    from britannica.pipeline.stages.elements import process_elements
-    recurse = lambda s: process_elements(s, context, _allow_figure=False)
+    A dual_line is a decompose node (one row of two stacked cells), not a leaf: each cell
+    is article markup carrying inline stylers / sub-sup / refs / math vars ({{Polytonic}},
+    {{sub}}, `<ref>`, …).  The classifier recurses each slot to a CELL node; the producer
+    reassembles the stack from the two cell markers."""
+    inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     m = _DUAL_LINE_NAME_RE.match(inner)
     body = inner[m.end():] if m else inner
     parts = _split_top_level_pipe(body)
     if parts and parts[0].lstrip().lower().startswith("style="):
         parts = parts[1:]
     if len(parts) < 2:
-        return " ".join(recurse(p.strip()) for p in parts).strip()
-    a = recurse(parts[0].strip())
-    b = recurse("|".join(parts[1:]).strip())
-    return f"{a}<br>{b}"
+        return [p.strip() for p in parts]
+    return [parts[0].strip(), "|".join(parts[1:]).strip()]
+
+
+def _process_dual_line(raw, inner, context, inner_registry) -> str:
+    """Render a DUAL_LINE element as ``A<br>B`` from its two decomposed CELL markers.
+
+    ``_classify_dual_line_composite`` chopped the row into cell slots
+    (``_dual_line_cells``) and recursed each to a node; here we read the cell markers
+    (each already its recursed content, in order) and stack them.  Two cells → the
+    ``A<br>B`` stack; a degenerate single cell → its content, space-joined + stripped.
+    No re-``process_elements`` — the cells ARE the recursion."""
+    from britannica.pipeline.stages.elements import _cell_markers
+    cells = _cell_markers(inner_registry)
+    if len(cells) < 2:
+        return " ".join(cells).strip()
+    return f"{cells[0]}<br>{cells[1]}"
