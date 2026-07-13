@@ -83,23 +83,23 @@ def _process_math(raw: str, inner: str) -> str:
 
 
 def _process_poem(inner: str, context) -> str:
-    """Convert poem content to {{VERSE:...}VERSE}.
+    """VERSE producer — wrap a poem's recursed content in the block-level
+    {{VERSE:…}VERSE} marker.
 
-    A poem is a WRAPPER, not a leaf: its lines are article prose that can
-    carry inline stylers / links / footnotes ({{sc}}, {{em}}, «I», `[[…]]`).
-    Recurse the content so those render instead of leaking as raw markup; the
-    verse line structure (newlines) rides through ``process_elements``
-    untouched, so the marker's block shape is unchanged.
+    A poem is a WRAPPER, not a leaf: <poem> is generic-decomposed, so `inner` is
+    already the poem body as placeholderized child nodes (its stylers / links /
+    footnotes are REAL nodes in the one tree), and `produce_tree` substitutes their
+    markers into this output after we return.  No produce-time re-`process_elements`
+    — that re-walked an already-placeholderized string.  The verse line structure
+    (newlines) rides through in the BODY children, so the marker's block shape is
+    unchanged.
 
-    The marker is block-level: <poem> blocks are virtually always block-level
-    in EB1911 (block-quoted verse, classical citation, inscription).  The
-    viewer's paragraph-level VERSE handler (``^{{VERSE:…}VERSE}$``) keys on
-    that; the inline-VERSE fallback renders the whole verse as a continuation
-    of the prose line (MOLECULE p684's Lucretius quote was the canonical case).
-    """
-    from britannica.pipeline.stages.elements import process_elements
-    content = process_elements(inner, context)
-    return "{{VERSE:" + content + "}VERSE}"
+    The marker is block-level: <poem> blocks are virtually always block-level in
+    EB1911 (block-quoted verse, classical citation, inscription).  The viewer's
+    paragraph-level VERSE handler (``^{{VERSE:…}VERSE}$``) keys on that; the inline-
+    VERSE fallback renders the whole verse as a continuation of the prose line
+    (MOLECULE p684's Lucretius quote was the canonical case)."""
+    return "{{VERSE:" + inner + "}VERSE}"
 
 
 # `{{ppoem|…}}` — Wikisource preformatted-poem template, the verse analog of
@@ -113,7 +113,11 @@ _PPOEM_CTRL_RE = re.compile(r"^\s*(?:start|end|class|style)\s*=", re.IGNORECASE)
 _PPOEM_NUMBERED_RE = re.compile(r"^\s*1\s*=")
 
 
-def _process_ppoem(inner: str, context) -> str:
+def _ppoem_verse(inner: str) -> str:
+    """Peel `{{ppoem|…}}`'s verse from its args: drop the template name + the stanza-frame
+    control params (start=/end=/class=/style=), take the positional / `1=` verse, rejoin on
+    `|` (a verse line may legitimately hold a top-level pipe), strip the frame newlines.
+    Shared so `_classify_ppoem_composite` recurses the SAME verse the producer wraps."""
     segs = _split_top_level_pipe(inner)[1:]   # drop the "ppoem" template name
     verse: list[str] = []
     for seg in segs:
@@ -125,7 +129,25 @@ def _process_ppoem(inner: str, context) -> str:
         verse.append(seg)
     # Rejoin on `|` in the rare case a verse line legitimately held a top-level
     # pipe (split above would have severed it); strip the frame newlines.
-    content = "|".join(verse).strip("\n")
+    return "|".join(verse).strip("\n")
+
+
+def _process_ppoem(raw, inner, context, inner_registry) -> str:
+    """PPOEM producer — `{{ppoem|…}}`, the preformatted-poem template (verse analog of
+    `<poem>`).  A COMPOSITE: `_classify_ppoem_composite` peeled the verse (`_ppoem_verse`)
+    and decomposed it into child nodes; we substitute their markers and wrap in the SAME
+    `{{VERSE:…}VERSE}` marker as `<poem>`.  An all-control / empty ppoem renders to nothing."""
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
     if not content.strip():
         return ""
-    return _process_poem(content, context)
+    return "{{VERSE:" + content + "}VERSE}"

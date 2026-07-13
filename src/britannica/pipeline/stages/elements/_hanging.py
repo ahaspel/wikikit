@@ -20,15 +20,17 @@ _MEASURE_RE = re.compile(r"^-?\d*\.?\d+\s*(?:em|ex|px|pt|rem|%|cm|mm|in)$",
 _DEFAULT_WIDTH = "2em"   # the Wikisource `{{hi}}` default when no width arg is given
 
 
-def process_hanging_indent(raw: str, context) -> str:
-    """Render the hanging indent at its stated (or default) width, recurse text."""
-    from britannica.pipeline.stages.elements import (
-        process_elements, _styled_br_to_marker)
+def _hanging_peel(raw: str) -> tuple[str, str]:
+    """Peel `{{hi|W|text}}` → (width, content).  W is the first positional arg WHEN it is a CSS
+    length (else the 2em default); content is the longest content slot with its top-level `<br>`
+    carried as «BR».  Bare `{{hi}}` / no content → (width, "").  Shared so
+    `_classify_hanging_composite` recurses the SAME content the producer wraps at the SAME width."""
+    from britannica.pipeline.stages.elements import _styled_br_to_marker
     inner = re.sub(r"^\{\{", "", raw)
     inner = re.sub(r"\}\}\s*$", "", inner)
     bar = inner.find("|")
     if bar < 0:                                   # bare `{{hi}}` — no content
-        return ""
+        return _DEFAULT_WIDTH, ""
     parts = _split_top_pipes(inner[bar:])
     positional = [
         p for p in parts
@@ -41,12 +43,33 @@ def process_hanging_indent(raw: str, context) -> str:
     else:
         content_slots = positional
     if not content_slots:
-        return ""
+        return width, ""
     # A hanging indent is a display block, so its own (top-level) `<br>` is a
     # meaningful line break — carry it as «BR» before recursing, exactly like the
     # styled-block producers (else the body producer eats it as a soft-wrap space).
-    content = _styled_br_to_marker(max(content_slots, key=len))
-    body = process_elements(content, context, _allow_figure=False).strip()
+    return width, _styled_br_to_marker(max(content_slots, key=len))
+
+
+def process_hanging_indent(raw, inner, context, inner_registry) -> str:
+    """HANGING_INDENT producer — `{{hi|W|text}}` / `{{hanging indent|…}}` / `{{outdent|…}}`.
+    The source states a first-line outdent of width W (default 2em); we RENDER it
+    (`padding-left:W; text-indent:-W`), never drop it (dropping flattens the list it formats —
+    the CHESS tournament rolls).  A COMPOSITE: `_classify_hanging_composite` decomposed the
+    content into child nodes; we substitute their markers, re-derive the width from raw
+    (`_hanging_peel`), and wrap.  Empty content renders to nothing."""
+    width, _content = _hanging_peel(raw)
+    body = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in body:
+                    body = body.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    body = body.strip()
     if not body:
         return ""
     return (f"«DIV[style:padding-left:{width}; text-indent:-{width}]»"

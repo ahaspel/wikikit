@@ -326,7 +326,7 @@ def _parse_image(raw):
     return "", None, None, ""
 
 
-def _process_image(raw, context):
+def _process_image(raw, inner, context, inner_registry):
     """The ONE image producer.  An image is a pure LEAF; a caption — if the wrapper glued
     one on — rides with it as ONE inline-float unit.  The figure floats to the side (prose
     wraps it) at the placement the source chose via `align` — default LEFT, as `img float`
@@ -336,13 +336,28 @@ def _process_image(raw, context):
     only real jobs (float + shrink-to-image-width) a floated span does natively.  Every
     spelling (bare `[[File:]]`, `{{Css image crop}}`, `{{raw image}}`, `thumb`/`frame`,
     `{{plain image with caption}}`, `{{img float|figure|FI}}`) funnels through one parse
-    (`_parse_image`) and this one emit."""
+    (`_parse_image`) and this one emit.
+
+    The CAPTION is a COMPOSITE child: `_classify_image_composite` decomposed `caption_raw`
+    into child nodes, so a caption's links / stylers / footnotes are REAL nodes in the one
+    tree (not a produce-time re-`process_elements`).  We substitute their markers into `inner`
+    for `cap`; the fn / width / align are re-parsed from raw (a pure leaf parse)."""
     from britannica.pipeline.stages.elements._image import build_img_marker
     fn, width, align, caption_raw = _parse_image(raw)
     if not fn:
         return ""
-    cap = (process_elements(caption_raw, context, _allow_figure=False).strip()
-           if caption_raw else "")
+    cap = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in cap:
+                    cap = cap.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
+    cap = cap.strip()
     if not cap:
         return build_img_marker(fn, align=align, width=width)      # bare leaf carries its align
     # Captioned figure: image + caption as ONE inline-float unit.  The span is inline-LEVEL,
@@ -949,8 +964,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # producer parses the spelling to a filename and, if the wrapper glued a caption
     # on, renders it CENTERED DIRECTLY BELOW the plate (a centered `«DIV»` block).  An
     # image is a pure leaf; a free-standing sibling caption still recurses in place.
-    "IMAGE": lambda raw, inner, ctx, reg:
-        _process_image(raw, ctx),
+    "IMAGE": _process_image,
     # DUAL_LINE — `{{dual line|A|B}}`, a pure layout primitive (two-line
     # stack: table headers, hyphenations, figure-caption splits, stacked
     # math/chem notation).  ONE producer that recurses each line, so its
@@ -1029,7 +1043,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:
     # render the block at the source's own indent width (default 2em), recurse the text.
-    "HANGING_INDENT": lambda raw, inner, ctx, reg: process_hanging_indent(raw, ctx),
+    "HANGING_INDENT": process_hanging_indent,
     # BRACE — `{{brace2|N|dir}}`: render a row-spanning curly brace glyph, not the
     # leaked `N|dir` arguments (and not nothing).
     "BRACE": lambda raw, inner, ctx, reg: process_brace(raw),
@@ -1051,7 +1065,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # start marker rejoins it, the end marker renders empty.
     "SPLIT_WORD": lambda raw, inner, ctx, reg: process_split_word(raw, ctx),
     # MAIN_OTHER — `{{main other|main|other}}`: keep param 1 (main-namespace copy).
-    "MAIN_OTHER": lambda raw, inner, ctx, reg: process_main_other(raw, ctx),
+    "MAIN_OTHER": process_main_other,
     # MISSING — a missing-asset placeholder → a visible `[missing …]` stub.
     "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
@@ -1059,7 +1073,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CONTENT_EXTRACT": lambda raw, inner, ctx, reg:
         process_content_extract(inner, ctx),
     "POEM": lambda raw, inner, ctx, reg: _process_poem(inner, ctx),
-    "PPOEM": lambda raw, inner, ctx, reg: _process_ppoem(inner, ctx),
+    "PPOEM": _process_ppoem,
     "HIEROGLYPH": lambda raw, inner, ctx, reg:
         f"[hieroglyph: {inner}]",
     # OUTLINE is now a composite: the classifier built nested OUTLINE_ITEM children,

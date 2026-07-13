@@ -986,6 +986,68 @@ def _classify_title_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_ppoem_composite(raw: str) -> ClassifiedElement:
+    """`{{ppoem|…}}` is a COMPOSITE — its verse (peeled of the stanza-frame control params)
+    decomposes into child nodes (the SAME classification the old `process_elements` ran, so a
+    styler / link / footnote in the verse is a REAL node, not a produce-time re-parse).  The
+    old producer recursed via bare `process_elements` (`_allow_figure=True`), so we match.
+    Byte-identical."""
+    from britannica.pipeline.stages.elements._leaf import _ppoem_verse
+    verse = _ppoem_verse(strip_outer(SHAPE_DOUBLE_BRACE, raw))
+    placeholderized, tree = classify_article(verse, _allow_figure=True)
+    return ClassifiedElement(
+        label="PPOEM", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
+def _classify_hanging_composite(raw: str) -> ClassifiedElement:
+    """`{{hi|W|text}}` / `{{hanging indent|…}}` / `{{outdent|…}}` is a COMPOSITE — its content
+    (the longest content slot, `<br>`→«BR») decomposes into child nodes (the SAME classification
+    the old `process_elements(..., _allow_figure=False)` ran), so a list the hanging indent
+    formats keeps its links / stylers / footnotes as REAL nodes.  The width is re-derived in the
+    producer.  Byte-identical."""
+    from britannica.pipeline.stages.elements._hanging import _hanging_peel
+    _width, content = _hanging_peel(raw)
+    placeholderized, tree = classify_article(content, _allow_figure=False)
+    return ClassifiedElement(
+        label="HANGING_INDENT", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
+def _classify_image_composite(raw: str) -> ClassifiedElement:
+    """An IMAGE with a caption is a COMPOSITE — the CAPTION decomposes into child nodes (the
+    SAME classify the old `process_elements(caption_raw, _allow_figure=False)` ran), so a
+    caption's links / stylers / footnotes are REAL nodes in the one tree.  The fn / width /
+    align stay a pure leaf parse in the producer; only the caption is a child.  A caption-less
+    image → empty children → the producer emits the bare leaf.  Byte-identical."""
+    from britannica.pipeline.stages.elements import _parse_image
+    _fn, _w, _align, caption_raw = _parse_image(raw)
+    placeholderized, tree = classify_article(caption_raw or "", _allow_figure=False)
+    return ClassifiedElement(
+        label="IMAGE", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
+def _classify_main_other_composite(raw: str) -> ClassifiedElement:
+    """`{{main other|main-NS|other-NS}}` is a COMPOSITE — its kept main-namespace copy (param 1)
+    decomposes into child nodes (the SAME classify the old `process_elements(..., _allow_figure=
+    False)` ran).  Byte-identical."""
+    from britannica.pipeline.stages.elements._frame import _main_other_content
+    content = _main_other_content(raw)
+    placeholderized, tree = classify_article(content, _allow_figure=False)
+    return ClassifiedElement(
+        label="MAIN_OTHER", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -1014,6 +1076,17 @@ def classify(
     # `:`-indent — decompose it through the one outline path, not a separate leaf.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
+    # `{{ppoem|…}}` is VERSE in template form — decompose its verse (control params dropped)
+    # into nodes here, not a produce-time re-parse in the leaf producer.
+    if re.match(r"\{\{\s*ppoem\b", raw, re.IGNORECASE):
+        return _classify_ppoem_composite(raw)
+    # `{{hi|W|text}}` / `{{hanging indent|…}}` / `{{outdent|…}}` — decompose the indented
+    # content into nodes here (leaf otherwise), the width stated by the source preserved.
+    if shape == SHAPE_DOUBLE_BRACE and _db_name(raw) in _HANGING_INDENT_NAMES:
+        return _classify_hanging_composite(raw)
+    # `{{main other|main-NS|other-NS}}` — decompose the kept main-namespace copy into nodes.
+    if shape == SHAPE_DOUBLE_BRACE and _db_name(raw) == "main other":
+        return _classify_main_other_composite(raw)
     # `{{columns|col1=…|col2=…}}` / `{{flex wrap centre|cell|cell|…}}` are TABLEs in template
     # syntax — one row of cells. Decompose through the ONE table engine, NOT the FRAME producer
     # that kept only the longest cell (dropping CASHEW's legend, half of PIG's breed photos).
@@ -1092,6 +1165,14 @@ def classify(
                 _allow_outline=next_allow_outline,
             )
     label = _derive_label(shape, raw, inner_text, inner_registry)
+
+    # An IMAGE with a caption is a COMPOSITE — the label is known now (IMAGE spans several
+    # shapes: `[[File:]]`, `{{plain image with caption}}`, `{{img float}}`, …, so branching on
+    # the derived label beats replicating that detection in a pre-leaf intercept).  The caption
+    # decomposes into child nodes instead of the producer re-`process_elements`-ing it; the
+    # file-ref / width / align stay a leaf parse in the producer.
+    if label == "IMAGE":
+        return _classify_image_composite(raw)
 
     # NOTE: the walker is conservative — what comes in goes out unchewed.
     # An IMAGE element therefore carries its raw `[[File:…]]` VERBATIM; the
