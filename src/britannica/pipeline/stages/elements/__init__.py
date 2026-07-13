@@ -564,25 +564,49 @@ def process_shoulder(raw, inner, context, inner_registry):
     return f"«SH:{slug}»{content}«/SH»"
 
 
-def process_running_header(raw, inner, context, inner_registry):
-    """RUNNING_HEADER producer (walker SHAPE_RUNNING_HEADER): a running header —
-    `{{rh|left|center|right}}` / `{{Running header|…}}` alias.
+# Unit separator — joins the 3 running-header cells in the composite's inner_text so the
+# producer can split them back after `produce_tree` substitutes each cell's child markers.
+# Not a byte EB1911 content ever carries.
+_RH_CELL_SEP = "\x1f"
 
-    A 3-COLUMN frame: plate title bars, captioned figures, and displayed-
-    equation layouts (margin label/number | centred equation | number).  Split
-    the top-level pipes (a nested `{{…|…}}` / «MATH» stays intact), recurse each
-    cell, and emit a flex row so the centre stays centred between the margins.
-    Body is the verbatim former `rh = …` branch of `_process_styled`, now
-    unconditional (RUNNING_HEADER only reaches here when `_RUNNING_HEADER_RE`
-    matched in the walker)."""
+
+def _running_header_cells(raw):
+    """Peel `{{rh|left|center|right}}` / `{{Running header|…}}` → its 3 cell raws (padded /
+    truncated to exactly 3).  Shared so `_classify_running_header_composite` (classify each cell
+    into child nodes) and the producer agree on the split — the RUNNING_HEADER twin of the
+    other styler peels, but for THREE content regions (margin | centre | margin)."""
     from britannica.pipeline.stages.elements._tables import _RUNNING_HEADER_RE
     from britannica.pipeline.stages.elements._link import _split_top_pipes
     rh = _RUNNING_HEADER_RE.match(raw)
     cells = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
-    cells = (cells + ["", "", ""])[:3]
+    return (cells + ["", "", ""])[:3]
+
+
+def process_running_header(raw, inner, context, inner_registry):
+    """RUNNING_HEADER producer (walker SHAPE_RUNNING_HEADER): `{{rh|left|center|right}}` /
+    `{{Running header|…}}` — a 3-column flex frame.  Body content, ~34 articles: displayed-
+    equation layouts (margin connective/number | centred equation | equation number) and plate
+    title bars (empty | centred title | plate number).  The cells carry nested markup — italic
+    equation variables, small-caps/sized plate numbers — which the old `process_elements`
+    flattened to a string.
+
+    `_classify_running_header_composite` decomposed each of the 3 cells into child nodes and
+    joined them in `inner_text` with `_RH_CELL_SEP`.  We substitute the children into `inner`,
+    split back on the sentinel, `.strip()` each cell, and emit the flex row so the centre stays
+    centred between the margins.  Each cell's content is now a node, not a flattened string."""
+    content = inner
+    if inner_registry is not None:
+        for _ in range(5):
+            changed = False
+            for ph in list(inner_registry.elements):
+                if ph in content:
+                    content = content.replace(
+                        ph, inner_registry.markers.get(ph, ""))
+                    changed = True
+            if not changed:
+                break
     left, center, right = (
-        process_elements(c, context, _allow_figure=False).strip()
-        for c in cells)
+        c.strip() for c in (content.split(_RH_CELL_SEP) + ["", "", ""])[:3])
     return (
         "«DIV[style:display:flex;align-items:baseline]»"
         f"«SPAN[style:text-align:left]»{left}«/SPAN»"

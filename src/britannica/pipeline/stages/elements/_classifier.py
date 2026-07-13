@@ -944,6 +944,28 @@ def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_running_header_composite(raw: str) -> ClassifiedElement:
+    """A running header `{{rh|left|centre|right}}` is a 3-CELL COMPOSITE — each cell decomposes
+    into child nodes (the SAME `classify_article` the old `process_elements` ran per cell).  The
+    three placeholderized cells are joined in `inner_text` by `_RH_CELL_SEP` so the producer can
+    split them back after substitution; the registry keeps every cell's nested markup (italic
+    equation variables, small-caps plate numbers) as real nodes.  Byte-identical."""
+    from britannica.pipeline.stages.elements import (
+        _running_header_cells, _RH_CELL_SEP)
+    ph_parts: list[str] = []
+    reg: dict = {}
+    for cell in _running_header_cells(raw):
+        cell_ph, cell_tree = classify_article(cell, _allow_figure=False)
+        ph_parts.append(cell_ph)
+        reg.update(cell_tree)
+    inner_text = _RH_CELL_SEP.join(ph_parts)
+    return ClassifiedElement(
+        label="RUNNING_HEADER", raw=raw, inner_text=inner_text,
+        inner_registry={ph: reg[ph]
+                        for ph in sorted(reg, key=inner_text.find)},
+    )
+
+
 def classify(
     shape: str, raw: str, _allow_outline: bool = True
 ) -> ClassifiedElement:
@@ -994,6 +1016,10 @@ def classify(
     # decomposes into nodes, not a producer-flattened string.
     if shape == SHAPE_DOUBLE_BRACE and _SHOULDER_HEADING_RE.match(raw):
         return _classify_shoulder_composite(raw)
+    # A running header `{{rh|left|centre|right}}` is a 3-cell COMPOSITE — each cell decomposes
+    # into nodes, joined by `_RH_CELL_SEP` in inner_text so the producer splits them back.
+    if shape == SHAPE_DOUBLE_BRACE and _RUNNING_HEADER_RE.match(raw):
+        return _classify_running_header_composite(raw)
     # An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE too — the HTML
     # twin of the STRIP case just above.  Intercept before the generic decompose so
     # `_classify_html_style_composite` carries the wrapper's top-level `<br>`→«BR» (the generic
