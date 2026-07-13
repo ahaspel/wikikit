@@ -634,20 +634,12 @@ def _html_style_peel(raw):
     return marker_tag, ";".join(fold_cell_styles(attrs)), _styled_br_to_marker(inner_raw)
 
 
-def process_html_style(raw, inner, context, inner_registry):
-    """HTML_STYLE producer (walker SHAPE_HTML_TAG → HTML_STYLE label): a `<div>`/`<p>`/
-    `<span>`/`<ins>` carrying style (`{{Ts}}` / `style=` / `align=`).  Style ⊥ structure —
-    the HTML twin of STRIP.
-
-    `_classify_html_style_composite` decomposed the wrapper's inner into real child nodes (the
-    SAME `classify_article` the old body ran, minus flattening the result to a string), so a
-    nested table / MATH / CHEM / verse / footnote is a NODE the render walks, not a producer-
-    flattened span.  We substitute those children's markers into `inner` and `.strip()` the
-    ASSEMBLED content (like `process_strip` / `_process_cell`: the strip trims a `{{em}}`/
-    `{{spaces}}` edge and drops an all-empty wrapper, matching the old `process_elements(...)
-    .strip()` exactly; `produce_tree`'s later substitution is then a no-op).  The style shell
-    (tag + CSS) is re-derived from raw via the shared `_html_style_peel`, then wrapped by
-    `style_block` — `«CTR»` for a pure-centred block, `«DIV[style:CSS]»` / `«SPAN[style:CSS]»`
+def _wrap_html_style(raw, body, ctx):
+    """HTML_STYLE wrap (a `_PR_WRAP` row): a `<div>`/`<p>`/`<span>`/`<ins>` carrying style
+    (`{{Ts}}` / `style=` / `align=`).  Style ⊥ structure — the HTML twin of STRIP.  The classified
+    inner (a nested table / MATH / verse / footnote → a NODE) arrives substituted as `body`; the
+    style shell (tag + CSS) is re-derived from raw via the shared `_html_style_peel`, then wrapped
+    by `style_block` — «CTR» for a pure-centred block, «DIV[style:CSS]» / «SPAN[style:CSS]»
     otherwise.  Subsumes body-text's `_p_ts` / `_div_ts` / `_span_ts` and the styled-`<div>`→
     figure gate."""
     from britannica.pipeline.stages.elements._tables import style_block
@@ -655,19 +647,7 @@ def process_html_style(raw, inner, context, inner_registry):
     if peel is None:                          # opener didn't match — pass raw through
         return raw
     marker_tag, css, _ = peel
-    content = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
-    content = content.strip()
-    return style_block(content, css=css, tag=marker_tag)
+    return style_block(body.strip(), css=css, tag=marker_tag)
 
 
 _NAMED_PARAM_RE = re.compile(r"^\s*([A-Za-z][\w -]*?)\s*=\s*([^|]*)\|")
@@ -714,45 +694,24 @@ def _strip_peel(raw):
     return tm.group(1).lower(), _styled_br_to_marker(inner_raw), param_css
 
 
-def process_strip(raw, inner, context, inner_registry):
-    """STRIP producer: the template-form styler `{{center|…}}` / `{{block center|…}}` /
-    `{{Fine block|…}}` / `{{csc|…}}` / ….  Style ⊥ content: the same wrap whether the
-    content is text, an image, a table, or a nested block.
-
-    PIPE form (`{{name|X}}`) is a COMPOSITE — `_classify_strip_composite` recursed X into
-    real child nodes.  We substitute their markers into `inner` and `.strip()` the ASSEMBLED
-    content (like `_process_cell`: the strip trims `{{em}}`/`{{spaces}}` padding that is only
-    literal once the spacer producer has run, and drops an all-empty styler — matching the
-    old `process_elements(...).strip()` exactly; `produce_tree`'s later substitution is then
-    a no-op).  BARE form (`{{0}}`) carries no source content — a spec default — leaf, here."""
+def _wrap_strip(raw, body, ctx):
+    """STRIP wrap (a `_PR_WRAP` row): the template-form styler `{{center|…}}` / `{{block center|…}}`
+    / `{{Fine block|…}}` / `{{csc|…}}` / ….  Style ⊥ content.  The peel already gave `body` the
+    right content — the PIPE form's recursed inner, or the BARE form's spec-default constant — so
+    here we re-derive name + carried-param CSS from raw and wrap via `style_block`."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS, style_block)
-    if _TEMPLATE_STYLE_RE.match(raw):        # pipe form — content recursed to children
+    if _TEMPLATE_STYLE_RE.match(raw):        # pipe form — carried named-param CSS
         name, _, param_css = _strip_peel(raw)
-        content = inner
-        if inner_registry is not None:
-            for _ in range(5):
-                changed = False
-                for ph in list(inner_registry.elements):
-                    if ph in content:
-                        content = content.replace(
-                            ph, inner_registry.markers.get(ph, ""))
-                        changed = True
-                if not changed:
-                    break
-        content = content.strip()
-    else:                                    # bare form — spec-default content, a leaf
+    else:                                    # bare form — spec default, no carried params
         name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
-        content = process_elements(
-            _styled_br_to_marker(_TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")),
-            context, _allow_figure=False).strip()
         param_css = []
     spec = _TEMPLATE_STYLE_WRAPPERS[name]
     css = ";".join(c for c in [spec.get("css", ""), *param_css] if c)
     # A carried param on a tag-less script wrapper ({{Hebrew}} = {}) decorates an
     # inline glyph → SPAN, not the block DIV default.
     tag = spec.get("tag") or ("SPAN" if param_css else "DIV")
-    return style_block(content, css=css, tag=tag,
+    return style_block(body.strip(), css=css, tag=tag,
                        ctr=spec.get("ctr", False), sc=spec.get("sc", False))
 
 
@@ -839,6 +798,19 @@ def _recurse_slot_content(raw, label):
         return body.partition("|")[2], True   # process_lang used the bare (figure-allowing) recurse
     if label in _LINK_LABELS:                 # a link → its DISPLAY slot (both [[…]] and {{…}} forms)
         return _link_display(raw, label), False
+    if label == "PARAM":                      # {{Fs|value|X}} param-styler → its content (arg-2+)
+        return _param_peel(raw)[2], False
+    if label == "HTML_STYLE":                 # <div|span … style>X</> → the clean inner (<br>→«BR»)
+        p = _html_style_peel(raw)
+        return (p[2] if p else ""), False
+    if label == "STRIP":                      # {{name|X}} styler → content; bare {{name}} → spec default
+        from britannica.pipeline.stages.elements._tables import (
+            _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS)
+        if _TEMPLATE_STYLE_RE.match(raw):
+            return _strip_peel(raw)[1], False
+        name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
+        return _styled_br_to_marker(
+            _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")), False
     args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     if label == "LB":                         # `{{lb-|N}}` → the quantity N
         return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,
@@ -878,8 +850,28 @@ def _wrap_bare(raw, body, ctx):
     return body.strip()
 
 
+def _wrap_param(raw, body, ctx):
+    """PARAM wrap (a `_PR_WRAP` row): the param-valued styler `{{Fs|108%|X}}` / `{{font size|N%|X}}`
+    (+ ti / margin-left / size).  Same styler family as STRIP, but the CSS value is arg-1; re-
+    derived from raw via `_param_peel` (a bare integer arg is a percent; a `size` keyword → a CSS
+    font-size keyword).  Wraps the substituted body as an INLINE «SPAN[style:…]»."""
+    from britannica.pipeline.stages.elements._tables import (
+        _TEMPLATE_PARAM_STYLE_WRAPPERS, style_block)
+    name, value, _content = _param_peel(raw)
+    tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
+    if name == "size":           # keyword size (xl/l/…) → a CSS font-size keyword
+        value = _SIZE_KEYWORD_CSS.get(value.lower(), value)
+    if pct and value.isdigit():
+        value += "%"             # font-size family: bare int is a percent
+    elif not value and "letter-spacing" in tmpl:
+        value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
+    return style_block(body.strip(), css=tmpl.format(v=value) if value else "",
+                       tag="SPAN")
+
+
 # label → how to WRAP the substituted body into its marker.  Grows as each peel/recurse/wrap
-# producer folds in (its bespoke producer function deleted, replaced by this one row).
+# producer folds in (its bespoke producer function deleted, replaced by this one row).  NB: every
+# wrap named here must be DEFINED ABOVE this dict (module-load order).
 _PR_WRAP = {
     "CITE":       _wrap_italic,   # {{cite|Title}}          → «I»Title«/I»
     "LB":         _wrap_lb,       # {{lb-|N}}               → "N lb" / "lb"
@@ -894,6 +886,10 @@ _PR_WRAP = {
     "FRAGMENT_LINK":       _wrap_fragment_link,
     "INTRA_ARTICLE_LINK":  _wrap_intra_link,
     "WIKILINK":            _wrap_wikilink,
+    # stylers — the substituted body wrapped by `style_block`; each re-derives its CSS from raw
+    "PARAM":      _wrap_param,        # {{Fs|108%|X}}      → «SPAN[style:…]»X
+    "HTML_STYLE": _wrap_html_style,   # <div|span … style>X → «DIV/SPAN[style:…]»X / «CTR»
+    "STRIP":      _wrap_strip,        # {{center|X}}/{{csc|X}}/… → style_block (pipe or bare form)
 }
 
 
@@ -904,41 +900,6 @@ def _make_peel_recurse(label):
     substitutes too, so this is the whole producer."""
     wrap = _PR_WRAP[label]
     return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg), ctx)
-
-
-def process_param(raw, inner, context, inner_registry):
-    """PARAM producer (walker SHAPE_PARAM): the param-valued styler `{{Fs|108%|X}}` /
-    `{{font size|N%|X}}` (+ the ti / margin-left / size indent/size frames).  Same styler
-    family as STRIP, but the CSS value is arg-1.
-
-    `_classify_param_composite` decomposed the content (arg-2+) into real child nodes; we
-    substitute their markers into `inner` and `.strip()` the ASSEMBLED content (like
-    `process_strip`), and carry the styler as an INLINE `«SPAN[style:…]»`.  The name + value
-    (→ CSS) are re-derived from raw via `_param_peel`; a bare integer arg is a percent."""
-    from britannica.pipeline.stages.elements._tables import (
-        _TEMPLATE_PARAM_STYLE_WRAPPERS, style_block)
-    name, value, _content = _param_peel(raw)
-    tmpl, pct = _TEMPLATE_PARAM_STYLE_WRAPPERS[name]
-    if name == "size":           # keyword size (xl/l/…) → a CSS font-size keyword
-        value = _SIZE_KEYWORD_CSS.get(value.lower(), value)
-    content = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
-    content = content.strip()
-    if pct and value.isdigit():
-        value += "%"             # font-size family: bare int is a percent
-    elif not value and "letter-spacing" in tmpl:
-        value = "0.1em"          # {{lsp||X}}: arg-1 empty → default spacing
-    return style_block(content, css=tmpl.format(v=value) if value else "",
-                       tag="SPAN")
 
 
 def _process_fraction(inner, context):
@@ -987,21 +948,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "SHOULDER": process_shoulder,
     # RUNNING_HEADER — `{{rh|l|c|r}}` 3-column flex frame.
     "RUNNING_HEADER": process_running_header,
-    # HTML_STYLE — `<div>`/`<p>`/`<span>`/`<ins>` carrying style (`{{Ts}}`/`style=`/
-    # `align=`).  Derives the CSS via the shared `_cell_styles`, recurses the
-    # inner through the main dispatch, and wraps via `style_block` (`«CTR»` /
-    # `«DIV[style]»` / `«SPAN[style]»`).  Subsumes body-text `_p_ts`/`_div_ts`/
-    # `_span_ts` and the styled-`<div>`→figure gate.
-    "HTML_STYLE": process_html_style,
-    # STRIP — the template-form styler `{{center|…}}`/`{{csc|…}}`/… (walker
-    # SHAPE_STRIP).  Split out of STYLED: its own single-structure producer
-    # (verbatim former TEMPLATE branch) peels `{{name|`…`}}`, recurses, wraps.
-    "STRIP": process_strip,
-    # PARAM — the param-valued styler `{{Fs|N%|X}}`/`{{font size|N%|X}}`/…
-    # (walker SHAPE_PARAM).  Split out of STYLED: its own single-structure
-    # producer (verbatim former PARAM branch) splits value|content, recurses,
-    # wraps inline.
-    "PARAM": process_param,
+    # STRIP / HTML_STYLE / PARAM — the styler family, generated from `_PR_WRAP` (peel/recurse/wrap
+    # → `_wrap_strip` / `_wrap_html_style` / `_wrap_param`, all wrapping the substituted body with
+    # `style_block`).  STRIP's peel branches pipe-form content vs the bare form's spec default.
     # (Figure `{|`-tables are de-recognized: LEGENDED_FIGURE / CAPTIONED_FIGURE(
     # _INLINE) / LEGENDED_FIGURE_BESIDE/_CHILD / FIGURE_GROUP / UNPAIRED_FIGURE_GROUP
     # / LAYOUT_WRAPPER / FIGURE classify as TABLE and dispatch to the same

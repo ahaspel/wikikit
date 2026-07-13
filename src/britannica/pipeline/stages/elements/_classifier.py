@@ -870,65 +870,6 @@ def _is_leaf_html_tag(raw: str) -> bool:
     return name == "table" or name in _OPAQUE_TAGS
 
 
-def _classify_strip_composite(raw: str) -> ClassifiedElement:
-    """A PIPE-form styler `{{name|content}}` is a COMPOSITE, not a leaf: its content
-    decomposes into real child nodes — the SAME `classify_article` the producer's old
-    `process_elements(inner_raw)` ran, minus flattening the result to a string — so a
-    nested block (verse / outline / table / footnote) is a NODE the render walks, not a
-    marker a span-match re-pairs.  Byte-identical body: `produce_tree` over these children
-    reproduces exactly the string the old producer built; only the tree gains depth.  The
-    style shell stays the producer's to re-derive from raw (style ⊥ content).  The `.strip()`
-    / empty-drop run in the PRODUCER on the SUBSTITUTED content (not here on `inner_raw`), so
-    a `{{em}}`-spacer at the content edge and an all-empty styler resolve exactly as the old
-    `process_elements(...).strip()` did."""
-    from britannica.pipeline.stages.elements import _strip_peel
-    _, inner_raw, _ = _strip_peel(raw)
-    placeholderized, tree = classify_article(inner_raw, _allow_figure=False)
-    return ClassifiedElement(
-        label="STRIP", raw=raw, inner_text=placeholderized,
-        inner_registry={ph: tree[ph]
-                        for ph in sorted(tree, key=placeholderized.find)},
-    )
-
-
-def _classify_html_style_composite(raw: str) -> ClassifiedElement:
-    """An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE, not a leaf —
-    the HTML twin of STRIP (`_classify_strip_composite`).  Its content decomposes into real
-    child nodes (the SAME `classify_article` the producer's old `process_elements(inner_raw)`
-    ran, minus flattening the result to a string), so a nested table / verse / footnote is a
-    NODE the render walks.  The shared `_html_style_peel` carries the wrapper's top-level
-    `<br>`→«BR» BEFORE decomposing — the generic path leaves `<br>` raw, which body-text would
-    eat to a soft-wrap space — so the break survives exactly as the old re-walk kept it.  The
-    style shell (tag + CSS) stays the producer's to re-derive from raw (style ⊥ content).
-    Byte-identical body: `produce_tree` over these children reproduces the string the old
-    producer built from the same peel; only the tree gains depth."""
-    from britannica.pipeline.stages.elements import _html_style_peel
-    _marker_tag, _css, inner_raw = _html_style_peel(raw)
-    placeholderized, tree = classify_article(inner_raw, _allow_figure=False)
-    return ClassifiedElement(
-        label="HTML_STYLE", raw=raw, inner_text=placeholderized,
-        inner_registry={ph: tree[ph]
-                        for ph in sorted(tree, key=placeholderized.find)},
-    )
-
-
-def _classify_param_composite(raw: str) -> ClassifiedElement:
-    """A param-valued styler `{{Fs|108%|X}}` / `{{ti|1em|X}}` / `{{size|xl|X}}` is a COMPOSITE
-    — the PARAM twin of STRIP/HTML_STYLE.  Its content (arg-2+) decomposes into real child
-    nodes (the SAME `classify_article` the old `process_elements` ran, minus flattening to a
-    string).  `_param_peel` carries the top-level `<br>`→«BR» before decomposing; the value +
-    CSS stay the producer's to re-derive from raw.  Byte-identical: `produce_tree` over these
-    children reproduces the string the old producer built."""
-    from britannica.pipeline.stages.elements import _param_peel
-    _name, _value, content = _param_peel(raw)
-    placeholderized, tree = classify_article(content, _allow_figure=False)
-    return ClassifiedElement(
-        label="PARAM", raw=raw, inner_text=placeholderized,
-        inner_registry={ph: tree[ph]
-                        for ph in sorted(tree, key=placeholderized.find)},
-    )
-
-
 def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
     """A shoulder heading `{{EB1911 Shoulder Heading|…LABEL}}` is a COMPOSITE — its LABEL
     decomposes into child nodes (the SAME `classify_article` the old `process_elements` ran).
@@ -1040,7 +981,8 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
 # the DISPLAY).  `_recurse_slot_content` (in `__init__`) is the shared PEEL side; `_PR_WRAP` the
 # WRAP side.
 _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
-    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER"}) | _LINK_LABELS
+    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER",
+     "STRIP", "PARAM", "HTML_STYLE"}) | _LINK_LABELS
 
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:
@@ -1099,19 +1041,10 @@ def classify(
     # that kept only the longest cell (dropping CASHEW's legend, half of PIG's breed photos).
     if _COLUMNS_RE.match(raw) or _FLEXWRAP_CELLS_RE.match(raw):
         return _classify_columns_as_table(raw)
-    # A PIPE-form template styler `{{center|X}}` / `{{Fine block|X}}` / … is a COMPOSITE
-    # too: its content is content-in-a-wrapper.  Decompose it here, before the leaf path
-    # hands raw to the producer to flatten via `process_elements` — so a nested block
-    # (verse / outline / table / footnote) inside a styler becomes a NODE the render
-    # walks, not a re-parsed span.  BARE `{{name}}` stylers (no pipe) stay leaves: their
-    # content is a spec default, nothing to recurse.
-    if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_STYLE_RE.match(raw):
-        return _classify_strip_composite(raw)
-    # A param-valued styler `{{Fs|108%|X}}` / `{{ti|1em|X}}` / `{{size|xl|X}}` is a COMPOSITE
-    # too — the PARAM twin of STRIP.  Intercept before the leaf path so its content decomposes
-    # into nodes, not a producer-flattened string.
-    if shape == SHAPE_DOUBLE_BRACE and _TEMPLATE_PARAM_STYLE_RE.match(raw):
-        return _classify_param_composite(raw)
+    # (The styler family — STRIP `{{center|X}}`, PARAM `{{Fs|108%|X}}`, and the HTML-form
+    # `<div|span style>` — folds through the `_RECURSE_SLOT_LABELS` label-branch below: their
+    # content is the recursed slot, the style
+    # shell a wrap re-derives from raw.)
     # A shoulder heading `{{EB1911 Shoulder Heading|…}}` is a COMPOSITE too — its label
     # decomposes into nodes, not a producer-flattened string.
     if shape == SHAPE_DOUBLE_BRACE and _SHOULDER_HEADING_RE.match(raw):
@@ -1120,15 +1053,6 @@ def classify(
     # into nodes, joined by `_RH_CELL_SEP` in inner_text so the producer splits them back.
     if shape == SHAPE_DOUBLE_BRACE and _RUNNING_HEADER_RE.match(raw):
         return _classify_running_header_composite(raw)
-    # An HTML-form styler `<div>/<p>/<span style=…>` / `<ins>` is a COMPOSITE too — the HTML
-    # twin of the STRIP case just above.  Intercept before the generic decompose so
-    # `_classify_html_style_composite` carries the wrapper's top-level `<br>`→«BR» (the generic
-    # path leaves it raw for body-text to eat to a space) and hands a nested table/verse/footnote
-    # to the render as a NODE, not a producer-flattened string.  Fires for exactly the HTML_STYLE
-    # label set — MIRROR_GLYPH / SPAN_TITLE take precedence inside `_derive_html_tag_label`, and
-    # `<table>` was already caught above.
-    if shape == SHAPE_HTML_TAG and _derive_html_tag_label(raw) == "HTML_STYLE":
-        return _classify_html_style_composite(raw)
     # The «TITLE»…«/TITLE» heading stamp is a COMPOSITE — decompose its joint-stripped content
     # into nodes at classify time (before the generic path, which peels WITHOUT the joint strip
     # and whose decomposition the old producer threw away to re-`process_elements` the raw), so a
