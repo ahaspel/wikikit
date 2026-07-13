@@ -67,10 +67,6 @@ from britannica.pipeline.stages.elements._section import (
 )
 from britannica.pipeline.stages.elements._anchor import process_anchor
 from britannica.pipeline.stages.elements._tables import (
-    _CHEM_BRACKET_IMG_RE,
-    _has_chem_equation_content,
-    _has_chem_reaction_content,
-    _process_chemistry_layout,
     _process_inline_glyph_wrapper,
     _process_table_unified,
 )
@@ -980,8 +976,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # CELL — a decompose cell node (RUNNING_HEADER, and the multi-slot set as it folds in):
     # passthrough, its marker IS its recursed content; the container producer reassembles.
     "CELL": _passthrough_inner,
-    "CHEMISTRY_LAYOUT": lambda raw, inner, ctx, reg:
-        _process_chemistry_layout(raw, inner, ctx, reg),
     # Single-label kinds — element_type == label.
     "CHART2": lambda raw, inner, ctx, reg:
         _process_genealogy(raw, ctx, lambda s: process_elements(s, ctx)),
@@ -1158,27 +1152,6 @@ def _is_compound_table_pred(raw: str, inner: str,
     return _is_compound_table(raw, registry)
 
 
-def _is_chemistry_layout_pred(raw: str, inner: str,
-                               registry: ElementRegistry | None) -> bool:
-    """A chemistry-reaction / structural-formula layout, recognized by any of:
-    a descendant Langle/Rangle bracket IMAGE; the `<big>`-operator + `<sub>`
-    formula signal (ACCUMULATOR discharge/energy, acetone); or — the
-    element-aware arm — operator-connected molecular formulae in a cell,
-    which catches reactions typeset with plain =/+/-> and {{sub}} formulae
-    that otherwise fall through to DATA_TABLE / SINGLE_COLUMN.
-
-    Reads RAW (`_raw_inner`), never the placeholderized `inner`/`registry`:
-    classification must be invariant under extraction, so a styled `<span>`
-    wrapping a Langle/Rangle bracket image or a reaction formula can't blind it
-    (the flagless-recursion invariant — [[feedback_walker_on_raw_source]]).  The
-    `[[File:[LR]angle…]]` ref is unambiguous in raw, so the old registry walk
-    (chosen to avoid a prose false-match) is unnecessary."""
-    raw_inner = _raw_inner(raw)
-    return (bool(_CHEM_BRACKET_IMG_RE.search(raw_inner))
-            or _has_chem_equation_content(raw)
-            or _has_chem_reaction_content(raw_inner))
-
-
 def _raw_inner(raw: str) -> str:
     """Peel a wikitable / HTML-table's OWN outer delimiters, returning the
     raw inner bytes (un-placeholderized).  Mirrors ``strip_outer`` for the
@@ -1229,7 +1202,6 @@ _TABLE_LABEL_PREDS: list[tuple[Callable[
     [str, str, "ElementRegistry | None"], bool], str]] = [
     (_is_inline_glyph_wrapper,   "INLINE_GLYPHS"),
     (_is_compound_table_pred,    "TABLE"),
-    (_is_chemistry_layout_pred,  "CHEMISTRY_LAYOUT"),
 ]
 
 

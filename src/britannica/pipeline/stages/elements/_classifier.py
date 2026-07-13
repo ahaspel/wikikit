@@ -617,24 +617,16 @@ _FIGURE_TABLE_LABELS: frozenset[str] = frozenset({
     "LEGENDED_FIGURE", "LEGENDED_FIGURE_BESIDE", "LEGENDED_FIGURE_CHILD",
     "FIGURE_GROUP", "LAYOUT_WRAPPER",
 })
-# Only CHEM keeps its own `<table>`-aware producer (`_split_html_chem_row`); MATH
-# isn't routed away (`<math>` is a leaf, so a math-cell table is just a TABLE).
-_HTML_TABLE_ROUTE_AWAY: frozenset[str] = frozenset({"CHEMISTRY_LAYOUT"})
-
-
 def _classify_html_table(
     raw: str,
     inner_text: str,
     inner_registry: dict[str, ClassifiedElement],
 ) -> str:
-    """Classify a `<table>` element via the shared table classifier.  A
-    non-table producer family (figure/math/chem) keeps its own label and
-    leaves the table path; every genuine table is "TABLE" and renders through
-    the unified, syntax-neutral table engine."""
-    from britannica.pipeline.stages.elements import _classify_table
-    legacy = _to_legacy_registry(inner_registry)
-    label = _classify_table(raw, inner_text, legacy)
-    return label if label in _HTML_TABLE_ROUTE_AWAY else "TABLE"
+    """Classify a `<table>` element: every `<table>` is a genuine TABLE and
+    renders through the unified, syntax-neutral table engine.  (Figure / math
+    families are leaves recognized earlier; chem is a TABLE too now — its
+    bespoke producer was a shadow of this engine and is gone.)"""
+    return "TABLE"
 
 
 # ── Table composite: the grid recurses into ROW / CELL nodes in the one tree ──
@@ -802,8 +794,8 @@ def _is_table_html_tag(raw: str) -> bool:
 def _classify_table_element(shape: str, raw: str) -> ClassifiedElement:
     """A `{|` or `<table>`.  Derive its label from the SAME empty registry the old
     leaf saw (so the label is byte-identical), then: a genuine `TABLE` decomposes
-    into the tree; a COMPOUND_TABLE / CHEMISTRY_LAYOUT keeps its
-    raw-reading producer and stays a leaf, exactly as before."""
+    into the tree; an INLINE_GLYPHS wrapper keeps its raw-reading producer and
+    stays a leaf, exactly as before."""
     grid = strip_outer(shape, raw)
     label = _derive_label(shape, raw, grid, {})
     if label == "TABLE":
