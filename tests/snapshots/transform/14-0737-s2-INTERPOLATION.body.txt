@@ -167,21 +167,8 @@ a horizontal line with «I»u«/I»<sub>0</sub>, and μδ«I»u«/I»<sub>0</sub
 of the differences of odd order immediately below and above this
 line, then (see «LN:Differences, Calculus of|Differences, Calculus of«/LN») the values of «I»c«/I»<sub>1</sub>, «I»c«/I»<sub>2</sub>, ...
 are given by
-«TABLE[cols:1|style:width:100%]»«TR[style:text-align:center]»«TD»«TABLE[cols:2|style:margin-right:auto;margin-left:auto]»«TR»«TD»{{VERSE:«I»c«/I»<sub>1</sub> = μδ«I»u«/I»<sub>0</sub> − ⅙μδ<sup>3</sup>«I»u«/I»<sub>0</sub> + 1/30μδ<sup>5</sup>«I»u«/I»<sub>0</sub> − 1/140μδ<sup>7</sup>«I»u«/I»<sub>0</sub> + ...
-«I»c«/I»<sub>2</sub> = δ<sup>2</sup>«I»u«/I»<sub>0</sub> − 1/12δ<sup>4</sup>«I»u«/I»<sub>0</sub> + 1/90δ<sup>6</sup>«I»u«/I»<sub>0</sub> − 1/560δ<sup>8</sup>«I»u«/I»<sub>0</sub> + ...
-«I»c«/I»<sub>3</sub> = μδ<sup>3</sup>«I»u«/I»<sub>0</sub> − ¼μδ<sup>5</sup>«I»u«/I»<sub>0</sub> + 7/120μδ<sup>7</sup>«I»u«/I»<sub>0</sub> − ...
-«I»c«/I»<sub>4</sub> = δ<sup>4</sup>«I»u«/I»<sub>0</sub> − ⅙δ<sup>6</sup>«I»u«/I»<sub>0</sub> + 7/240δ<sup>8</sup>«I»u«/I»<sub>0</sub> − ...
-«I»c«/I»<sub>5</sub> = μδ<sup>5</sup>«I»u«/I»<sub>0</sub> − ⅓μδ<sup>7</sup>«I»u«/I»<sub>0</sub> + ...
-«I»c«/I»<sub>6</sub> = δ<sup>6</sup>«I»u«/I»<sub>0</sub> − ¼δ<sup>8</sup>«I»u«/I»<sub>0</sub> + ...
- .    .
- .    .
- .    .}VERSE}«/TD»«TD[style:text-align:left]»«SPAN[style:display:inline-block; transform:scaleY(10); transform-origin:center]»}«/SPAN»«/TD»«/TR»«/TABLE»«/TD»«/TR»«TR»«TD[style:width:5%]»(4).«/TD»«/TR»«/TABLE»«P»If a calculating machine is used, the formula (2) is most conveniently
-written«P»«TABLE[cols:1|style:width:100%]»«TR[style:text-align:center]»«TD»«TABLE[cols:2]»«TR»«TD»{{VERSE:«I»u«/I»<sub>θ</sub> = «I»u«/I»<sub>0</sub> + P<sub>1</sub>θ
-P<sub>1</sub>       = «I»c«/I»<sub>1</sub> + ½P<sub>2</sub>θ
-P<sub>2</sub>       = «I»c«/I»<sub>2</sub> + ⅓P<sub>3</sub>θ
- .   .
- .   .
- .   .}VERSE}«/TD»«TD[style:text-align:left]»«SPAN[style:display:inline-block; transform:scaleY(7); transform-origin:center]»}«/SPAN»«/TD»«/TR»«/TABLE»«/TD»«/TR»«TR»«TD[style:width:5%]»(5).«/TD»«/TR»«/TABLE»
+«TABLE[cols:1|style:width:100%]»«TR[style:text-align:center]»«TD»«TABLE[cols:2|style:margin-right:auto;margin-left:auto]»«TR»«TD»{{VERSE:«I»c«/I»<sub>1</sub> = μδ«I»u«/I»<sub>0</sub> − ⅙μδ<sup>3</sup>«I»u«/I»<sub>0</sub> + 1/30μδ<sup>5</sup>«I»u«/I»<sub>0</sub> − 1/140μδ<sup>7</sup>«I»u«/I»<sub>0</sub> + ...«BR»«I»c«/I»<sub>2</sub> = δ<sup>2</sup>«I»u«/I»<sub>0</sub> − 1/12δ<sup>4</sup>«I»u«/I»<sub>0</sub> + 1/90δ<sup>6</sup>«I»u«/I»<sub>0</sub> − 1/560δ<sup>8</sup>«I»u«/I»<sub>0</sub> + ...«BR»«I»c«/I»<sub>3</sub> = μδ<sup>3</sup>«I»u«/I»<sub>0</sub> − ¼μδ<sup>5</sup>«I»u«/I»<sub>0</sub> + 7/120μδ<sup>7</sup>«I»u«/I»<sub>0</sub> − ...«BR»«I»c«/I»<sub>4</sub> = δ<sup>4</sup>«I»u«/I»<sub>0</sub> − ⅙δ<sup>6</sup>«I»u«/I»<sub>0</sub> + 7/240δ<sup>8</sup>«I»u«/I»<sub>0</sub> − ...«BR»«I»c«/I»<sub>5</sub> = μδ<sup>5</sup>«I»u«/I»<sub>0</sub> − ⅓μδ<sup>7</sup>«I»u«/I»<sub>0</sub> + ...«BR»«I»c«/I»<sub>6</sub> = δ<sup>6</sup>«I»u«/I»<sub>0</sub> − ¼δ<sup>8</sup>«I»u«/I»<sub>0</sub> + ...«BR» .    .«BR» .    .«BR» .    .}VERSE}«/TD»«TD[style:text-align:left]»«SPAN[style:display:inline-block; transform:scaleY(10); transform-origin:center]»}«/SPAN»«/TD»«/TR»«/TABLE»«/TD»«/TR»«TR»«TD[style:width:5%]»(4).«/TD»«/TR»«/TABLE»«P»If a calculating machine is used, the formula (2) is most conveniently
+written«P»«TABLE[cols:1|style:width:100%]»«TR[style:text-align:center]»«TD»«TABLE[cols:2]»«TR»«TD»{{VERSE:«I»u«/I»<sub>θ</sub> = «I»u«/I»<sub>0</sub> + P<sub>1</sub>θ«BR»P<sub>1</sub>       = «I»c«/I»<sub>1</sub> + ½P<sub>2</sub>θ«BR»P<sub>2</sub>       = «I»c«/I»<sub>2</sub> + ⅓P<sub>3</sub>θ«BR» .   .«BR» .   .«BR» .   .}VERSE}«/TD»«TD[style:text-align:left]»«SPAN[style:display:inline-block; transform:scaleY(7); transform-origin:center]»}«/SPAN»«/TD»«/TR»«/TABLE»«/TD»«/TR»«TR»«TD[style:width:5%]»(5).«/TD»«/TR»«/TABLE»
 Using θ as the multiplicand in each case, the successive expressions
 ... P<sub>3</sub>, P<sub>2</sub>, P<sub>1</sub>, «I»u«/I»<sub>θ</sub> are easily calculated.«P»As an example, take «I»u«/I» = tan «I»x«/I» to five places of decimals, the
 values of «I»x«/I» proceeding by a difference of 1°. It will be found that

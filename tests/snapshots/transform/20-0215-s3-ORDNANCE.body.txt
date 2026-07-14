@@ -929,16 +929,7 @@ engraved ribs instead of being concentrated at the front of the ribs
 as in progressive or increasing rifling.«P»The following formulae showing the driving pressures for increasing
 and uniform rifling are calculated from Sir Andrew Noble’s formula,
 which Sir G. Greenhill has obtained independently by another
-method.«P»{{VERSE:Let R＝total pressure, in tons, between rifling and driving band.
-G＝gaseous pressure, in tons, on the base of the projectile.
- 𝑟＝radius, in feet, of the bore.
-μτ＝coefficient of friction.
- ρ＝radius of gyration of projectile.
- δ＝angle between the normal to the driving surface of groove and radius.
- ℎ＝the pitch of the rifling, in feet.
- 𝑘＝cotangent of angle of rifling at any point of rifling.
-M＝weight of the projectile in pounds.
- 𝑧＝the length, in feet, travelled by the projectile.}VERSE}«P»Then for parabolic rifling«P»«CTR»«MATH:\text{R} = 2\rho^2(\text{G}z+\text{M}v^2)«/MATH»/«MATH:{\frac{(r^2 k^2+4\rho^2 z^2) \sin \delta}{(4z^2 \sin^2 \delta+k^2)^{\tfrac{1}{2}}} + \frac{2\mu_1kz(\rho^2 - r^2)}{(4z^2 + k^2)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For uniform rifling«P»«CTR»«MATH:\text{R} = 2\pi\rho^2\text{G}«/MATH»/«MATH:{\frac{\mu_1(2\pi^2k-rh}{(1+k^2)^{\tfrac{1}{2}}} + \frac{2\pi\rho^2+rhk) \sin \delta}{(k^2 + \sin^2\delta)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For modern rifling δ＝90°; therefore sin δ＝1; by which the above
+method.«P»{{VERSE:Let R＝total pressure, in tons, between rifling and driving band.«BR»G＝gaseous pressure, in tons, on the base of the projectile.«BR» 𝑟＝radius, in feet, of the bore.«BR»μτ＝coefficient of friction.«BR» ρ＝radius of gyration of projectile.«BR» δ＝angle between the normal to the driving surface of groove and radius.«BR» ℎ＝the pitch of the rifling, in feet.«BR» 𝑘＝cotangent of angle of rifling at any point of rifling.«BR»M＝weight of the projectile in pounds.«BR» 𝑧＝the length, in feet, travelled by the projectile.}VERSE}«P»Then for parabolic rifling«P»«CTR»«MATH:\text{R} = 2\rho^2(\text{G}z+\text{M}v^2)«/MATH»/«MATH:{\frac{(r^2 k^2+4\rho^2 z^2) \sin \delta}{(4z^2 \sin^2 \delta+k^2)^{\tfrac{1}{2}}} + \frac{2\mu_1kz(\rho^2 - r^2)}{(4z^2 + k^2)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For uniform rifling«P»«CTR»«MATH:\text{R} = 2\pi\rho^2\text{G}«/MATH»/«MATH:{\frac{\mu_1(2\pi^2k-rh}{(1+k^2)^{\tfrac{1}{2}}} + \frac{2\pi\rho^2+rhk) \sin \delta}{(k^2 + \sin^2\delta)^{\tfrac{1}{2}}}}«/MATH»«/CTR»«P»For modern rifling δ＝90°; therefore sin δ＝1; by which the above
 expressions may be considerably simplified.«P»For parabolic rifling«P»«CTR»R＝2ρ<sup>2</sup>(4«I»z«/I»𝑧<sup>2</sup>+𝑘<sup>2</sup>)<sup>½</sup>(G𝑧 + M«I»v«/I»<sup>2</sup>)/𝑘𝑟<sup>2</sup>(𝑘−2μ<sub>1</sub>𝑧)+2ρ<sup>2</sup>𝑧(2𝑧+μ<sub>1</sub>𝑘).«/CTR»«P»For uniform rifling we can write ℎ𝑘＝2π𝑟 and the expression reduces
 to«P»«CTR»R＝ρ<sup>2</sup>(1+𝑘<sup>2</sup>)<sup>½</sup>/μ<sub>1</sub>«SPAN[style:font-size:120%]»(«/SPAN»ρ<sup>2</sup>𝑘−𝑟<sup>2</sup>/𝑘«SPAN[style:font-size:120%]»)«/SPAN»+ρ<sup>2</sup>«I»z«/I»)+𝑟<sup>2</sup>.G.«/CTR»«P»«CTR»{{IMG:EB1911 - Ordnance Fig 31.png|width=360}}«BR»
 «SC»Fig«/SC». 31 —Pressure Curves (uniform and increasing twist).«/CTR»«P»Fig. 31 shows graphically the calculated results obtained for a

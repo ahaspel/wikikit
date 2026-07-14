@@ -47,7 +47,6 @@ from britannica.pipeline.stages.elements._leaf import (
     _process_math,
     _process_ppoem,
     _process_score,
-    _verse_br,
 )
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry,
@@ -1046,9 +1045,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # lang/sic/dropinitial/fqm unwrap to the display arg.
     # POEM / HIEROGLYPH — generated from `_MARKER_WRAP` below (wrap the recursed inner in a marker).
     "PPOEM": _process_ppoem,
-    # POEM — <poem> → block-level {{VERSE:…}VERSE}; verse lines carried as «BR» (a top-level split of
-    # the placeholderized inner, children opaque) so the render never re-derives them.
-    "POEM": lambda raw, inner, ctx, reg: "{{VERSE:" + _verse_br(inner) + "}VERSE}",
     # OUTLINE is a composite: the classifier built nested OUTLINE_ITEM children; the producers
     # fold their already-produced markers.  OUTLINE (`«OUTLINE»…«/OUTLINE»`) is a `_MARKER_WRAP`
     # row; OUTLINE_ITEM stays hand-written — its opener embeds the item's `raw` depth.
@@ -1103,6 +1099,9 @@ for _pr_label in _PR_WRAP:
 _MARKER_WRAP = {
     "OUTLINE":    ("«OUTLINE»", "«/OUTLINE»"),   # the nested OUTLINE_ITEM ladder
     "HIEROGLYPH": ("[hieroglyph: ", "]"),        # <hiero> → the Gardiner-code stub
+    # POEM — <poem> → block-level {{VERSE:…}VERSE}; the recursed inner already carries its verse
+    # line breaks as «BR» (recognized at the read point in `_classify_poem_composite`).
+    "POEM":       ("{{VERSE:", "}VERSE}"),
 }
 
 

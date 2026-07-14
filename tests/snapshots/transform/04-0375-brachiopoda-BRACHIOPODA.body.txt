@@ -15,16 +15,7 @@ later scheme based on our increased knowledge of fossil forms,
 the Brachiopoda are divided into four primary groups (orders).
 This is given at the end of the article, but it must not be forgotten
 that the existing forms with an anus (Ecardines) differ markedly
-from the aproctous members of the group (Testicardines).«P»{{IMG:EB1911 Brachiopoda.png|align=center|width=423}}«P»«TABLE[cols:2|style:margin:auto;font-size:92%;line-height:125%]»«TR»«TD[colspan:2]»«CTR»«SC»Figs«/SC». 1–11.—Various forms of Brachiopoda.«/CTR»«/TD»«/TR»«TR»«TD[style:width: 50%;vertical-align: top]»{{VERSE:1. «I»Magellania«/I» [«I»Waldheimia«/I»] «I»cranium«/I». A, ventral,
-  B, dorsal valve.
-2. «I»Rhynchonella (Hemithyris) psittacea«/I».
-3. and 4. «I»Thecidea«/I».
-5. «I»Spirifer«/I». Dorsal valve, showing calcareous spiral coils. 
-6. «I»Orthis calligramma«/I».}VERSE}«/TD»«TD[style:width: 50%]»{{VERSE:7. «I»Leptaena transversalis«/I». A, ventral, B, dorsal valve.
- 8. «I»Productus horridus«/I».
- 9. «I»Lingula pyramidata«/I» (after Morse).
-10. «I»Discinisca lamellosa«/I».
-11. «I»Crania anomala«/I» Interior of dorsal valve, showing«BR»   muscular impressions and labial appendages.}VERSE}«/TD»«/TR»«/TABLE»«P»The soft body of the Brachiopod is in all cases protected by a
+from the aproctous members of the group (Testicardines).«P»{{IMG:EB1911 Brachiopoda.png|align=center|width=423}}«P»«TABLE[cols:2|style:margin:auto;font-size:92%;line-height:125%]»«TR»«TD[colspan:2]»«CTR»«SC»Figs«/SC». 1–11.—Various forms of Brachiopoda.«/CTR»«/TD»«/TR»«TR»«TD[style:width: 50%;vertical-align: top]»{{VERSE:1. «I»Magellania«/I» [«I»Waldheimia«/I»] «I»cranium«/I». A, ventral,«BR»  B, dorsal valve.«BR»2. «I»Rhynchonella (Hemithyris) psittacea«/I».«BR»3. and 4. «I»Thecidea«/I».«BR»5. «I»Spirifer«/I». Dorsal valve, showing calcareous spiral coils. «BR»6. «I»Orthis calligramma«/I».}VERSE}«/TD»«TD[style:width: 50%]»{{VERSE:7. «I»Leptaena transversalis«/I». A, ventral, B, dorsal valve.«BR» 8. «I»Productus horridus«/I».«BR» 9. «I»Lingula pyramidata«/I» (after Morse).«BR»10. «I»Discinisca lamellosa«/I».«BR»11. «I»Crania anomala«/I» Interior of dorsal valve, showing«BR»   muscular impressions and labial appendages.}VERSE}«/TD»«/TR»«/TABLE»«P»The soft body of the Brachiopod is in all cases protected by a
 shell composed of two distinct valves; these valves are always,
 except in cases of malformation, equal-sided, but not equivalved.
 The valves are, consequently, essentially symmetrical, which is

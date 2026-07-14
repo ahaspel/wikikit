@@ -936,6 +936,23 @@ def _classify_ppoem_composite(raw: str) -> ClassifiedElement:
     )
 
 
+def _classify_poem_composite(raw: str) -> ClassifiedElement:
+    """`<poem>…</poem>` is a COMPOSITE — recognize its verse LINE BREAKS at the read point
+    (top-level `\\n` on the RAW body → `<br>`, which the walker owns as «BR»), THEN decompose:
+    each line's stylers / links / footnotes become real child nodes (fully recursive), exactly
+    the classification `{{ppoem}}` gets.  The producer wraps the recursed inner in the SAME
+    `{{VERSE:…}VERSE}` marker.  This is where the verse `\\n` becomes structure — never the old
+    producer-side flatten on a placeholder."""
+    from britannica.pipeline.stages.elements._leaf import _verse_lines_to_br
+    body = _verse_lines_to_br(strip_outer(SHAPE_HTML_TAG, raw))
+    placeholderized, tree = classify_article(body)
+    return ClassifiedElement(
+        label="POEM", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
+
+
 def _classify_hanging_composite(raw: str) -> ClassifiedElement:
     """`{{hi|W|text}}` / `{{hanging indent|…}}` / `{{outdent|…}}` is a COMPOSITE — its content
     (the longest content slot, `<br>`→«BR») decomposes into child nodes (the SAME classification
@@ -1162,6 +1179,8 @@ def classify(
         return _classify_fraction_composite(raw)
     if label == "MATH_EQUATION":
         return _classify_equation_composite(raw)
+    if label == "POEM":
+        return _classify_poem_composite(raw)
     # A peel/recurse/wrap label — the single-slot leaves (LANG / LB / CITE / SPLIT_WORD /
     # MAIN_OTHER) AND the whole «LN» link family — decompose their one recursive slot into nodes
     # here; the producer (a `_PR_WRAP` row) substitutes rather than re-`process_elements`.

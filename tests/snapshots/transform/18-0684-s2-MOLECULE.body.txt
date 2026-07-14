@@ -87,20 +87,11 @@ they said, do not fill up the universe; there are void spaces between
 them. If it were not so, Lucretius tells us, there could be no motion,
 for the atom which gives way first must have some empty place to
 move into.
-«CTR»{{VERSE:‘Quapropter locus est intactus, inane, vacansque
-Quod si non esset, nulla ratione moveri
-Res possent; namque, officium quod corporis exstat,
-Officere atque obstare, id in omni tempore adesset
-Omnibus: haud igitur quicquam procedere posset,
-Principium quoniam cedendi nulla daret res.’
-               «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»«P»“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
+«CTR»{{VERSE:‘Quapropter locus est intactus, inane, vacansque«BR»Quod si non esset, nulla ratione moveri«BR»Res possent; namque, officium quod corporis exstat,«BR»Officere atque obstare, id in omni tempore adesset«BR»Omnibus: haud igitur quicquam procedere posset,«BR»Principium quoniam cedendi nulla daret res.’«BR»               «I»De rerum natura«/I», i. 335.}VERSE}«/CTR»«P»“The opposite school maintained then, as they have always done,PAGE:685that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
-«CTR»{{VERSE:‘Cedere squamigeris latices nitentibus aiunt
-Et liquidas aperire vias, quia post loca pisces
-Linquant, quo possint cedentes confluere undae.’
-                  Ibid. i. 373.}VERSE}«/CTR»«P»“In modern times Descartes held that, as it is of the essence of
+«CTR»{{VERSE:‘Cedere squamigeris latices nitentibus aiunt«BR»Et liquidas aperire vias, quia post loca pisces«BR»Linquant, quo possint cedentes confluere undae.’«BR»                  Ibid. i. 373.}VERSE}«/CTR»«P»“In modern times Descartes held that, as it is of the essence of
 matter to be extended in length, breadth and thickness, so it is of
 the essence of extension to be occupied by matter, for extension
 cannot be an extension of nothing.«P»“ ‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
