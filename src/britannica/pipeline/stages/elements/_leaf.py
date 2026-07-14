@@ -122,12 +122,20 @@ def _ppoem_verse(inner: str) -> str:
     return "|".join(verse).strip("\n")
 
 
+def _verse_br(content: str) -> str:
+    """Verse line breaks → «BR», dropping blank lines.  Applied to the PLACEHOLDERIZED inner (child
+    elements are opaque ``\\x03ELEM\\x03`` tokens), so these newlines are the top-level verse lines —
+    a footnote's own ``\\n`` stays behind its placeholder, untouched.  Carries the line structure in
+    the marker so the render never re-derives it (the ``_split_lines_keep_spans`` guess)."""
+    return "«BR»".join(ln for ln in content.split("\n") if ln.strip())
+
+
 def _process_ppoem(raw, inner, context, inner_registry) -> str:
     """PPOEM producer — `{{ppoem|…}}`, the preformatted-poem template (verse analog of
     `<poem>`).  A COMPOSITE: `_classify_ppoem_composite` peeled the verse (`_ppoem_verse`)
     and decomposed it into child nodes; we substitute their markers and wrap in the SAME
     `{{VERSE:…}VERSE}` marker as `<poem>`.  An all-control / empty ppoem renders to nothing."""
-    content = inner
+    content = _verse_br(inner)   # verse lines → «BR» on the placeholderized inner (top-level only)
     if inner_registry is not None:
         for _ in range(5):
             changed = False
