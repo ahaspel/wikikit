@@ -266,9 +266,11 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # producer renders its initials and the harvest binds the contributor.
     if re.match(r"\{\{\s*[Ee][Bb]1911\s+[A-Z][A-Za-z*.\-]{0,5}\s*\}\}", raw):
         return "CONTRIBUTOR_FOOTER"
-    # `{{EB1911 Coordinates|D|M[|S]|H}}` — a single geographic coordinate (lat or
-    # lon).  Real place data; the COORDINATES producer formats it `D°M′[S″]H`.
-    if re.match(r"\{\{\s*EB1911\s+Coordinates\b", raw, re.IGNORECASE):
+    # `{{EB1911 Coordinates|D|M[|S]|H}}` and its older twin `{{11co|D|[M|]H}}` — a single
+    # geographic coordinate (lat or lon).  Real place data; ONE COORDINATES producer formats both
+    # as `D°M′[S″]H`.  The `11co` split was historical (a later spaced rescue of the same data);
+    # merged, so neither depends on its own format and `11co` gains the seconds slot it dropped.
+    if re.match(r"\{\{\s*(?:EB1911\s+Coordinates|11co)\b", raw, re.IGNORECASE):
         return "COORDINATES"
     # Spacer / rule / char-escape leaves — em/gap/clear/ditto/dhr/rule/bar/shy
     # and the literal-char escapes ({{=}}, {{(}}, {{...}}, …).  (`anchor` is NOT
@@ -413,9 +415,6 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (the glyphs ARE the text).  An explicit producer, NOT a strip-by-name.
     if full in _LANG_NAMES:
         return "LANG"
-    # `{{11co|DEG|[MIN|]DIR}}` — a single lat/long coordinate; render the value.
-    if full in _COORD_NAMES:
-        return "COORD"
     # A standalone `{{familytree|…}}` / `{{chart2|…}}` / `{{tree chart|…}}` — a genealogy grid
     # macro OUTSIDE the paired `/start…/end` region the walker normally captures as CHART2
     # (a page-split-orphaned row) → CHART2, so it still renders the tree image rather than
@@ -481,10 +480,6 @@ _BRACE_NAMES: frozenset[str] = frozenset({"brace2"})
 # script is a DECISION (content bare), not a blind strip-by-name.
 _LANG_NAMES: frozenset[str] = frozenset(
     {"greek", "polytonic", "hebrew", "arabic", "he", "latin", "coptic", "grc"})
-
-# `{{11co|DEG|[MIN|]DIR}}` — a single EB1911 geographic coordinate; `_coord.py`
-# renders `DEG° [MIN′ ]DIR` (was a mislabeled `{}` "column wrapper" strip entry).
-_COORD_NAMES: frozenset[str] = frozenset({"11co"})
 
 # The old FRAME catch-all is DISSOLVED — each shape routed to its real family (2026-07):
 # columns / flex-wrap → TABLE, ti / margin-left / size → PARAM, outdent → HANGING_INDENT,
@@ -985,8 +980,8 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
 # the DISPLAY).  `_recurse_slot_content` (in `__init__`) is the shared PEEL side; `_PR_WRAP` the
 # WRAP side.
 _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
-    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER",
-     "STRIP", "PARAM", "HTML_STYLE", "CONTENT_EXTRACT", "ANCHOR"}) | _LINK_LABELS
+    {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER", "STRIP", "PARAM", "HTML_STYLE",
+     "CONTENT_EXTRACT", "ANCHOR", "SUBSUP", "SPAN_TITLE"}) | _LINK_LABELS
 
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:

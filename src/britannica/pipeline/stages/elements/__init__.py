@@ -37,7 +37,6 @@ from britannica.pipeline.stages.elements._frame import (
     process_refs, process_missing)
 from britannica.pipeline.stages.elements._hanging import process_hanging_indent
 from britannica.pipeline.stages.elements._brace import process_brace
-from britannica.pipeline.stages.elements._coord import process_coord
 from britannica.pipeline.stages.elements._toc import process_toc_row
 from britannica.pipeline.stages.elements._content import (
     _content_parse, _wrap_content_extract)
@@ -46,7 +45,6 @@ from britannica.pipeline.stages.elements._math import (
 )
 from britannica.pipeline.stages.elements._leaf import (
     _process_math,
-    _process_poem,
     _process_ppoem,
     _process_score,
 )
@@ -397,10 +395,13 @@ def _process_nowiki(raw):
 
 
 def _process_coordinates(inner):
-    """`{{EB1911 Coordinates|D|M[|S]|H}}` (one lat OR lon) → `D°M′[S″]H`.  Real
-    place data the old body-text handler used to format and which then leaked raw.
-    The trailing N/S/E/W is the hemisphere; the leading numerics are
-    degrees/minutes/seconds (2-arg form `D|M` carries no hemisphere)."""
+    """`{{EB1911 Coordinates|D|M[|S]|H}}` OR `{{11co|D|[M|]H}}` (one lat OR lon) → `D°M′[S″]H`.
+    Real place data the old body-text handler used to format and which then leaked raw.  ONE
+    producer for both templates (the `11co` fork was historical, spaced `D° M′ H`; unified to the
+    no-space form — the format is ours, not the source's, so there's nothing to preserve).  The
+    trailing N/S/E/W is the hemisphere; the leading numerics are degrees/minutes/seconds (2-arg
+    form `D|M` carries no hemisphere).  `inner` includes the template name as `parts[0]`, dropped
+    below, so `EB1911 Coordinates` / `11co` both parse identically."""
     parts = [p.strip() for p in inner.split("|")]
     args = [p for p in parts[1:] if p and "=" not in p]  # drop name + named params
     if not args:
@@ -421,28 +422,26 @@ _SUP_MAP = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻�
 _MARKER_TOKEN_RE = re.compile(r"«[^«»]*»|\x03[^\x03]*\x03")
 
 
-def _process_subsup(raw, context):
-    """`{{sub|x}}` / `{{sup|x}}` → Unicode subscript / superscript.  Relocated
-    from body-text's `_convert_sub_sup` so it carries in every context (it leaked
-    inside math/italic/centred blocks).  The slot RECURSES — it can hold a walker
-    element (STEAM_ENGINE's `{{sup|{{sfrac|1|n}}}}`) — and flat runs translate to
-    Unicode while element markers (`«…»`) pass through verbatim (their digits would
-    otherwise be mangled).  Bold/italic inside is dropped, as the old pass did (it
-    doesn't render in super/subscript)."""
+def _wrap_subsup(raw, body, ctx):
+    """SUBSUP wrap (a `_PR_WRAP` row): `{{sub|x}}` / `{{sup|x}}` → Unicode subscript /
+    superscript.  The slot is the recursed `body` — it can hold a walker element
+    (STEAM_ENGINE's `{{sup|{{sfrac|1|n}}}}`), so flat runs translate to the Unicode digits/
+    letters while element markers (`«…»`) pass through verbatim (their digits would else be
+    mangled).  Bold/italic inside is dropped (it doesn't render in super/subscript).  Carries
+    in every context — was body-text's `_convert_sub_sup`, which leaked inside math/centred."""
     m = re.match(r"\{\{\s*(sub|sup)\s*\|(.*)\}\}\s*$", raw,
                  re.IGNORECASE | re.DOTALL)
     if not m:
         return raw
     table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP
-    inner = process_elements(m.group(2), context)
-    inner = (inner.replace("«B»", "").replace("«/B»", "")
-                  .replace("«I»", "").replace("«/I»", ""))
+    body = (body.replace("«B»", "").replace("«/B»", "")
+                .replace("«I»", "").replace("«/I»", ""))
     out, last = [], 0
-    for mk in _MARKER_TOKEN_RE.finditer(inner):
-        out.append(inner[last:mk.start()].translate(table))
+    for mk in _MARKER_TOKEN_RE.finditer(body):
+        out.append(body[last:mk.start()].translate(table))
         out.append(mk.group(0))
         last = mk.end()
-    out.append(inner[last:].translate(table))
+    out.append(body[last:].translate(table))
     return "".join(out)
 
 
@@ -502,30 +501,30 @@ _FURNITURE_TITLE_RE = re.compile(
     re.IGNORECASE)
 
 
-def process_span_title(raw, inner, context, inner_registry):
-    """SPAN_TITLE producer (walker SHAPE_SPAN_TITLE): a `<span title="T">X</span>`.
+def _span_title_slot(raw):
+    """The recursed slot (the PEEL side) of a `<span title="T">X</span>` — its content X, `<br>`
+    → «BR» (a styled block's line breaks are meaningful), the `</span>` tail dropped."""
+    from britannica.pipeline.stages.elements._walker import _SPAN_TITLE_OPEN_RE
+    sp = _SPAN_TITLE_OPEN_RE.match(raw)
+    return _styled_br_to_marker(
+        re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
 
-    A `title=` tooltip is a reader-facing gloss (a romanization, a translation, a
-    retroactive death year) UNLESS it's transcription furniture — a Wikisource note
-    ABOUT the transcription ("amended from 'X'").  Carry T as «SPAN[title:T]» (the
-    HTML twin of {{tooltip}}) unless `_FURNITURE_TITLE_RE` matches the title, in
-    which case drop the wrapper and keep X.  Re-promotes the gutted body-text
-    `_handle_title_spans`; SPAN_TITLE only reaches here when `_SPAN_TITLE_OPEN_RE`
-    matched in the walker."""
+
+def _wrap_span_title(raw, body, ctx):
+    """SPAN_TITLE wrap (a `_PR_WRAP` row): a `<span title="T">X</span>`.  A `title=` tooltip is
+    a reader-facing gloss (a romanization, a translation, a retroactive death year) UNLESS it's
+    transcription FURNITURE — a Wikisource note ABOUT the transcription ("amended from 'X'").
+    Carry T as «SPAN[title:T]» (the HTML twin of {{tooltip}}) unless `_FURNITURE_TITLE_RE`
+    matches; then drop the wrapper, keep the recursed X (`body`).  Re-promotes the gutted
+    body-text `_handle_title_spans`.  [[feedback_when_in_doubt_carry]]"""
     from britannica.pipeline.stages.elements._walker import _SPAN_TITLE_OPEN_RE
     sp = _SPAN_TITLE_OPEN_RE.match(raw)
     title = (sp.group("q") or sp.group("uq") or "").strip().replace(
         "]", "").replace("»", "")
-    inner_raw = _styled_br_to_marker(
-        re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
-    content = process_elements(inner_raw, context).strip()
-    # Carry the tooltip UNLESS the title is transcription FURNITURE (see
-    # `_FURNITURE_TITLE_RE`) — every other title is a gloss the reader wants
-    # (romanization, translation, retroactive death year), and the printed text is
-    # unchanged either way since it only shows on hover.  [[feedback_when_in_doubt_carry]]
+    body = body.strip()
     if title and not _FURNITURE_TITLE_RE.search(title):
-        return f"«SPAN[title:{title}]»{content}«/SPAN»"
-    return content  # transcription furniture → drop the wrapper, keep the content
+        return f"«SPAN[title:{title}]»{body}«/SPAN»"
+    return body  # transcription furniture → drop the wrapper, keep the content
 
 
 def _shoulder_peel(raw):
@@ -786,6 +785,11 @@ def _recurse_slot_content(raw, label):
         return _content_parse(raw)[1]
     if label == "ANCHOR":                     # `{{anchor+|id|display}}` → the display (else "")
         return _anchor_display(raw)
+    if label == "SUBSUP":                     # `{{sub|x}}`/`{{sup|x}}` → x (translated by the wrap)
+        m = re.match(r"\{\{\s*(?:sub|sup)\s*\|(.*)\}\}\s*$", raw, re.IGNORECASE | re.DOTALL)
+        return m.group(1) if m else ""
+    if label == "SPAN_TITLE":                 # `<span title=T>X</span>` → X (the wrap adds title)
+        return _span_title_slot(raw)
     if label in _LINK_LABELS:                 # a link → its DISPLAY slot (both [[…]] and {{…}} forms)
         return _link_display(raw, label)
     if label == "PARAM":                      # {{Fs|value|X}} param-styler → its content (arg-2+)
@@ -882,6 +886,8 @@ _PR_WRAP = {
     "STRIP":      _wrap_strip,        # {{center|X}}/{{csc|X}}/… → style_block (pipe or bare form)
     "CONTENT_EXTRACT": _wrap_content_extract,  # {{tooltip|X|hint}}→«SPAN[title]»X; lang/sic/…→X
     "ANCHOR":     _wrap_anchor,       # {{anchor+|id|X}} → «ANCHOR:id»X ; {{anchor|a|b}} → anchors
+    "SUBSUP":     _wrap_subsup,       # {{sub|x}}/{{sup|x}}   → Unicode sub/superscript
+    "SPAN_TITLE": _wrap_span_title,   # <span title=T>X</span> → «SPAN[title:T]»X (furniture→X)
 }
 
 
@@ -942,8 +948,8 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CENTER": _process_center,
     # The four structures drained out of the former STYLED shape, each its own
     # single-structure producer (verbatim former `_process_styled` branch).
-    # SPAN_TITLE — `<span title="T">X</span>` translit-tooltip / editorial-drop.
-    "SPAN_TITLE": process_span_title,
+    # SPAN_TITLE — `<span title="T">X</span>` translit-tooltip / editorial-drop:
+    # generated from `_PR_WRAP` below (peel/recurse/wrap).
     # SHOULDER — `{{EB1911 Shoulder Heading|…}}` marginal section label → «SH».
     "SHOULDER": process_shoulder,
     # RUNNING_HEADER — `{{rh|l|c|r}}` 3-column flex frame.
@@ -1023,8 +1029,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # CITE — `{{cite|Work Title}}` → «I»title«/I»; the framework already recursed any
     # embedded `[[link]]` in the (placeholdered) inner.
     # CITE — generated from `_PR_WRAP` below (peel/recurse/wrap).
-    # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography (out of `_convert_sub_sup`).
-    "SUBSUP": lambda raw, inner, ctx, reg: _process_subsup(raw, ctx),
+    # SUBSUP — `{{sub|x}}`/`{{sup|x}}` typography: generated from `_PR_WRAP` (peel/recurse/wrap).
     # MATH_EQUATION — one label for the labeled-display-equation templates
     # (equation / MathForm1 / ne): a decompose node of a NUMBER cell + a BODY
     # cell the producer reassembles into the `«EQN:…»` block.  (`<math>` tags
@@ -1049,8 +1054,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "BRACE": lambda raw, inner, ctx, reg: process_brace(raw),
     # LANG — `{{greek|…}}` / `{{polytonic|…}}` / …: unwrap to content (glyphs are text).
     # LANG — generated from `_PR_WRAP` (peel/recurse/wrap).
-    # COORD — `{{11co|DEG|[MIN|]DIR}}`: render the lat/long value.
-    "COORD": lambda raw, inner, ctx, reg: process_coord(raw),
+    # ({{11co}} now routes to COORDINATES too — one coordinate producer, no per-format fork.)
     # DOUBLE_BRACE_LEAK — a template we don't handle yet: emit it RAW so it leaks
     # visibly (surfaces in the audit), never crashing the walk.
     "DOUBLE_BRACE_LEAK": lambda raw, inner, ctx, reg: raw,
@@ -1070,15 +1074,11 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "MISSING": lambda raw, inner, ctx, reg: process_missing(raw, ctx),
     # Content extractors — tooltip/abbr carry the hint as «SPAN[title:…]»;
     # lang/sic/dropinitial/fqm unwrap to the display arg.
-    "POEM": lambda raw, inner, ctx, reg: _process_poem(inner, ctx),
+    # POEM / HIEROGLYPH — generated from `_MARKER_WRAP` below (wrap the recursed inner in a marker).
     "PPOEM": _process_ppoem,
-    "HIEROGLYPH": lambda raw, inner, ctx, reg:
-        f"[hieroglyph: {inner}]",
-    # OUTLINE is now a composite: the classifier built nested OUTLINE_ITEM children,
-    # so the producers just fold their already-produced markers — `«OUTLINE»…«/OUTLINE»`
-    # around the items, `«OLI:depth»…«/OLI»` around each item's content and the deeper
-    # items it owns.  The render walks that structure; nothing is flattened.
-    "OUTLINE": lambda raw, inner, ctx, reg: f"«OUTLINE»{inner}«/OUTLINE»",
+    # OUTLINE is a composite: the classifier built nested OUTLINE_ITEM children; the producers
+    # fold their already-produced markers.  OUTLINE (`«OUTLINE»…«/OUTLINE»`) is a `_MARKER_WRAP`
+    # row; OUTLINE_ITEM stays hand-written — its opener embeds the item's `raw` depth.
     "OUTLINE_ITEM": lambda raw, inner, ctx, reg: f"«OLI:{raw}»{inner}«/OLI»",
     "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
     # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  A COMPOSITE:
@@ -1121,6 +1121,26 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
 # hand-written function.  As families fold in, this loop grows and the dict above shrinks.
 for _pr_label in _PR_WRAP:
     _PRODUCER_DISPATCH[_pr_label] = _make_peel_recurse(_pr_label)
+
+
+# Marker-wrap producers — a composite whose node marker IS its recursed inner, wrapped in a fixed
+# (opener, closer).  Each is a DATA ROW, not a function: the handler emits `opener + inner + closer`
+# and `produce_tree` substitutes the child markers into `inner` afterward.  (OUTLINE_ITEM embeds
+# `raw` in its opener and MIRROR_GLYPH strips `inner`, so those stay hand-written.)
+_MARKER_WRAP = {
+    "OUTLINE":    ("«OUTLINE»", "«/OUTLINE»"),   # the nested OUTLINE_ITEM ladder
+    "POEM":       ("{{VERSE:", "}VERSE}"),       # <poem> → block-level verse
+    "HIEROGLYPH": ("[hieroglyph: ", "]"),        # <hiero> → the Gardiner-code stub
+}
+
+
+def _make_marker_wrap(label):
+    opener, closer = _MARKER_WRAP[label]
+    return lambda raw, inner, ctx, reg: f"{opener}{inner}{closer}"
+
+
+for _mw_label in _MARKER_WRAP:
+    _PRODUCER_DISPATCH[_mw_label] = _make_marker_wrap(_mw_label)
 
 
 # ── ONE figure/image producer ─────────────────────────────────────────────

@@ -82,24 +82,14 @@ def _process_math(raw: str, inner: str) -> str:
     return f"«MATH:{inner}«/MATH»"
 
 
-def _process_poem(inner: str, context) -> str:
-    """VERSE producer — wrap a poem's recursed content in the block-level
-    {{VERSE:…}VERSE} marker.
-
-    A poem is a WRAPPER, not a leaf: <poem> is generic-decomposed, so `inner` is
-    already the poem body as placeholderized child nodes (its stylers / links /
-    footnotes are REAL nodes in the one tree), and `produce_tree` substitutes their
-    markers into this output after we return.  No produce-time re-`process_elements`
-    — that re-walked an already-placeholderized string.  The verse line structure
-    (newlines) rides through in the BODY children, so the marker's block shape is
-    unchanged.
-
-    The marker is block-level: <poem> blocks are virtually always block-level in
-    EB1911 (block-quoted verse, classical citation, inscription).  The viewer's
-    paragraph-level VERSE handler (``^{{VERSE:…}VERSE}$``) keys on that; the inline-
-    VERSE fallback renders the whole verse as a continuation of the prose line
-    (MOLECULE p684's Lucretius quote was the canonical case)."""
-    return "{{VERSE:" + inner + "}VERSE}"
+# <poem> — a WRAPPER, not a leaf: generic-decomposed, so its `inner` is already the poem body as
+# placeholderized child nodes (stylers / links / footnotes are REAL nodes in the one tree), and
+# `produce_tree` substitutes their markers after the producer returns.  The producer just wraps the
+# recursed inner in the block-level `{{VERSE:…}VERSE}` marker — a `_MARKER_WRAP` data row now, no
+# hand-written function.  The verse line structure (newlines) rides through in the BODY children.
+# The marker is block-level (EB1911 <poem> is virtually always block-quoted verse / classical
+# citation / inscription); the viewer's paragraph-level VERSE handler (`^{{VERSE:…}VERSE}$`) keys on
+# that, the inline fallback renders it as a continuation of the prose line (MOLECULE p684's Lucretius).
 
 
 # `{{ppoem|…}}` — Wikisource preformatted-poem template, the verse analog of
