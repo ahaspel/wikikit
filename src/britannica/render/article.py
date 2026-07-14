@@ -50,15 +50,12 @@ _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
 _SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
-_OUTLINE_RE = re.compile(r"^«(PLATE_)?OUTLINE:([\s\S]*)«/(?:PLATE_)?OUTLINE»$")
 _VERSE_BLOCK_RE = re.compile(r"^\{\{VERSE(?:\[style:([^\]]*)\])?:([\s\S]*)\}VERSE\}$")
-_LEGEND_RE = re.compile(r"^\{\{LEGEND:([\s\S]*)\}LEGEND\}$")
 _IMG_ANCHORED_RE = re.compile(
     r"^\{\{IMG:([^|}]+)"
     r"((?:\|(?:align=(?:center|left|right)|width=\d+|height=\d+))*)"
     r"(?:\|([^{}]*))?\}\}$"
 )
-_OUTLINE_ITEM_RE = re.compile(r"^(\d+)\|(.*)$")
 
 
 # ── Single-outline render: parse the flat «OLI:depth» items and hand them to the
@@ -82,11 +79,8 @@ def _render_outline_block(marker: str, ctx) -> str:
 _ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
 
 BLOCK_MARKER_SCAN_RE = re.compile(
-    r"\{\{TABLEH?(?:\[style:[^\]]*\])?:[\s\S]*?\}TABLE\}"
-    r"|\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"
-    r"|\{\{LEGEND:[\s\S]*?\}LEGEND\}"
+    r"\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"
     r"|«OUTLINE»[\s\S]*?«/OUTLINE»"
-    r"|«PLATE_OUTLINE:[\s\S]*?«/PLATE_OUTLINE»"
     r"|«TABLE\[[\s\S]*?«/TABLE»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
     r"|«TITLE:[\s\S]*?«/TITLE»"
@@ -401,27 +395,11 @@ def render_paragraph(p, next_para, ctx):
     if im:
         return render_img(im.group(1), parse_img_meta(im.group(2)), im.group(3) or "")
 
-    # Hierarchical outline → nested <ul> (shared owner build_outline_ul); a standalone
-    # outline renders each item's body through render_paragraph (block-aware).  The same
-    # owner serves an outline nested in a cell/verse via decode_inline's «OUTLINE» handler.
-    # Single recursive outline block — the new «OUTLINE»…«/OUTLINE» of nested
-    # «OLI:depth» items.  The colon-form `_OUTLINE_RE` below now serves only
-    # PLATE_OUTLINE's flat captions.
+    # Hierarchical outline → a single recursive «OUTLINE»…«/OUTLINE» of nested «OLI:depth»
+    # items, rendered through the shared owner build_outline_ul.  The same owner serves an
+    # outline nested in a cell/verse via decode_inline's «OUTLINE» handler.
     if p.startswith("«OUTLINE»") and p.endswith("«/OUTLINE»"):
         return _render_outline_block(p, ctx)
-
-    om = _OUTLINE_RE.match(p)
-    if om:
-        items = []
-        for ln in _split_lines_keep_spans(om.group(2)):
-            if not ln:
-                continue
-            mm = _OUTLINE_ITEM_RE.match(ln)
-            if mm:
-                items.append((int(mm.group(1)), mm.group(2)))
-        if items:
-            return build_outline_ul(items, om.group(1),
-                                    lambda c: render_paragraph(c, None, ctx))
 
     # Verse → blockquote (lines joined by <br>).
     vm = _VERSE_BLOCK_RE.match(p)
@@ -429,22 +407,6 @@ def render_paragraph(p, next_para, ctx):
         style_attr = f' style="{vm.group(1).replace(chr(34), "&quot;")}"' if vm.group(1) else ""
         lines = [decode_inline(escape_html(s), ctx=ctx) for s in _split_lines_keep_spans(vm.group(2)) if s.strip()]
         return f'<blockquote class="verse"{style_attr}>{"<br>".join(lines)}</blockquote>'
-
-    # Figure legend → aside ("### " subhead / entry).
-    lm = _LEGEND_RE.match(p)
-    if lm:
-        parts = []
-        for line in _split_lines_keep_spans(lm.group(1)):
-            s = line.strip()
-            if not s:
-                continue
-            if s.startswith("### "):
-                parts.append(f'<h5 class="legend-subhead">'
-                             f'{decode_inline(s[4:], escape=True, dhr_inline=True, ctx=ctx)}</h5>')
-            else:
-                parts.append(f'<div class="legend-entry">'
-                             f'{decode_inline(s, escape=True, dhr_inline=True, ctx=ctx)}</div>')
-        return f'<aside class="figure-legend">{"".join(parts)}</aside>'
 
     # Complex table (rowspan/colspan/nested/chem preserved) — «TABLE[…]».  It rides
     # as recursive markers, so it decodes through the SAME sequence as prose (escape
