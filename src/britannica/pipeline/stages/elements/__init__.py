@@ -229,10 +229,16 @@ def _produce_body(raw, inner, context, inner_registry):
     and the walker, both of which read raw `\\n\\n`; swapping it there blinds them.
     By the time the body producer runs, every `\\n\\n`-dependent stage is done.
     """
-    # Dehyphenate AFTER the «P» split: a paragraph break is now «P» (not
-    # whitespace), so a wrap can't rejoin across it — only single line breaks and
-    # spaces remain for the wrap regex to see.
-    return _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
+    # Resolve the single `\n` BY CONTEXT — the one fact the body producer needs,
+    # threaded in as its parent's label.  A `\n` is ambiguous alone: inside a poem it
+    # is a verse LINE BREAK, everywhere else a prose SOFT-WRAP.  Same pipeline either
+    # way — a paragraph break becomes «P», then dehyphenate (the corpus map decides
+    # join/keep, and it applies to verse wraps too: `Cow-\nsheds`→`Cowsheds`) — and
+    # ONLY the leftover single `\n` differs: «BR» under a POEM/PPOEM parent, else a
+    # space.  Nothing raw leaks; the render sees only «BR» / «P» / spaces.
+    out = _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
+    sep = "«BR»" if context.parent_label in ("POEM", "PPOEM") else " "
+    return out.replace("\n", sep)
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")

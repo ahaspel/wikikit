@@ -117,32 +117,11 @@ def _ppoem_verse(inner: str) -> str:
         if m:
             seg = seg[m.end():]               # `1=<verse>` → take the verse
         verse.append(seg)
-    # Rejoin on `|` in the rare case a verse line legitimately held a top-level
-    # pipe (split above would have severed it); strip the frame newlines, then
-    # recognize the verse line breaks (top-level `\n` → `<br>`) at this read point.
-    return _verse_lines_to_br("|".join(verse).strip("\n"))
-
-
-def _verse_lines_to_br(body: str) -> str:
-    """Mark a verse body's line breaks, letting the WALKER draw the nesting line.  Walk the raw
-    body once: its top-level text lands in SHAPE_BODY runs — the walker has already lifted every
-    nested construct (``<ref>``, ``{{…}}``, ``[[…]]``, a styled span) into its own extract — so a
-    ``\\n`` in a BODY run is, by construction, top-level.  Mark those: a single ``\\n`` → ``<br>``
-    (the walker then owns it as «BR»); a ``\\n{2,}`` gap is left intact for the body producer to
-    render as «P».  Every nested extract rides back verbatim, its own ``\\n`` untouched.  The
-    caller decomposes the reassembled body, so the marks become real BR / «P» nodes.
-
-    The nesting line is the walker's, not a re-derivation: no ``_construct_end`` skip that can
-    diverge from what the walker actually extracts (a bare ``<span>`` it leaves transparent)."""
-    from britannica.pipeline.stages.elements._walker import walk
-    from britannica.pipeline.stages.elements._shapes import SHAPE_BODY
-    ph_text, extracts = walk(body.strip("\n"))
-    out = ph_text
-    for ph, shape, raw in extracts:
-        if shape == SHAPE_BODY:
-            raw = re.sub(r"(?<!\n)\n(?!\n)", "<br>", raw)   # single \n → break; \n{2,} → «P»
-        out = out.replace(ph, raw)
-    return out
+    # Rejoin on `|` in the rare case a verse line legitimately held a top-level pipe
+    # (split above would have severed it); strip the frame newlines.  The line breaks
+    # are NOT recognized here — a `\n` between verse lines becomes «BR» in the BODY
+    # producer, which knows it is under a PPOEM (parent_label threaded by produce_tree).
+    return "|".join(verse).strip("\n")
 
 
 def _process_ppoem(raw, inner, context, inner_registry) -> str:
@@ -150,7 +129,7 @@ def _process_ppoem(raw, inner, context, inner_registry) -> str:
     `<poem>`).  A COMPOSITE: `_classify_ppoem_composite` peeled the verse (`_ppoem_verse`)
     and decomposed it into child nodes; we substitute their markers and wrap in the SAME
     `{{VERSE:…}VERSE}` marker as `<poem>`.  An all-control / empty ppoem renders to nothing."""
-    content = inner   # verse line breaks already recognized as «BR» at the read point (_ppoem_verse)
+    content = inner   # verse line breaks are «BR»: the BODY producer, seeing its PPOEM parent, made them
     if inner_registry is not None:
         for _ in range(5):
             changed = False

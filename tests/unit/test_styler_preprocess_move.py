@@ -18,7 +18,7 @@ from britannica.pipeline.stages.elements import ElementContext, process_elements
 
 def _run(raw: str) -> str:
     return process_elements(
-        preprocess(raw), ElementContext(volume=1, page_number=1)).strip()
+        preprocess(raw), ElementContext(volume=1)).strip()
 
 
 def test_word_spacing_carries_as_styler():

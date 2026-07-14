@@ -23,7 +23,7 @@ from britannica.pipeline.stages.elements import process_elements, ElementContext
 
 
 def _render(text: str) -> str:
-    return process_elements(text, ElementContext(volume=1, page_number=1))
+    return process_elements(text, ElementContext(volume=1))
 
 
 # Each fixture is a self-contained construct whose producer is NOT body-text:

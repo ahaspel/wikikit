@@ -937,14 +937,13 @@ def _classify_ppoem_composite(raw: str) -> ClassifiedElement:
 
 
 def _classify_poem_composite(raw: str) -> ClassifiedElement:
-    """`<poem>…</poem>` is a COMPOSITE — recognize its verse LINE BREAKS at the read point
-    (top-level `\\n` on the RAW body → `<br>`, which the walker owns as «BR»), THEN decompose:
-    each line's stylers / links / footnotes become real child nodes (fully recursive), exactly
-    the classification `{{ppoem}}` gets.  The producer wraps the recursed inner in the SAME
-    `{{VERSE:…}VERSE}` marker.  This is where the verse `\\n` becomes structure — never the old
-    producer-side flatten on a placeholder."""
-    from britannica.pipeline.stages.elements._leaf import _verse_lines_to_br
-    body = _verse_lines_to_br(strip_outer(SHAPE_HTML_TAG, raw))
+    """`<poem>…</poem>` — strip the frame newlines and decompose; each verse line's stylers /
+    links / footnotes become real child nodes.  The line breaks are NOT recognized here: a `\\n`
+    between poem lines becomes «BR» in the BODY producer, which knows it is under a POEM
+    (``parent_label`` threaded by ``produce_tree``).  So all this composite adds over the generic
+    decompose is the frame-strip — leading / trailing newlines would else surface as stray
+    breaks."""
+    body = strip_outer(SHAPE_HTML_TAG, raw).strip("\n")
     placeholderized, tree = classify_article(body)
     return ClassifiedElement(
         label="POEM", raw=raw, inner_text=placeholderized,
@@ -1227,7 +1226,7 @@ def classify_article(
 
 
 def produce_tree(
-    tree: dict[str, ClassifiedElement], context
+    tree: dict[str, ClassifiedElement], context, parent_label: str | None = None
 ) -> None:
     """Producer pass: bottom-up over the classified tree.
 
@@ -1236,12 +1235,21 @@ def produce_tree(
     Substitutes child markers into the producer's output afterwards.
     Stores the final marker on ``ce.marker``.
 
+    ``parent_label`` is the label of the node these children hang under, threaded
+    down so a producer can read its own parent — the BODY producer keys on it to
+    tell a verse line break from a prose soft-wrap.  It rides an immutable per-level
+    ``replace`` of the context, never a mutate-and-restore.
+
     Mutates ``tree`` in place by populating each element's
     ``marker`` field.
     """
+    from dataclasses import replace
     from britannica.pipeline.stages.elements import (
         _PRODUCER_DISPATCH, _passthrough_inner,
     )
+
+    node_ctx = (replace(context, parent_label=parent_label)
+                if context.parent_label != parent_label else context)
 
     for ph, ce in tree.items():
         # Recurse first — children's markers must be populated
@@ -1249,7 +1257,7 @@ def produce_tree(
         # `_to_legacy_registry` is called below (which copies
         # children's markers into the registry view).
         if ce.inner_registry:
-            produce_tree(ce.inner_registry, context)
+            produce_tree(ce.inner_registry, context, ce.label)
 
         legacy_inner_reg = (
             _to_legacy_registry(ce.inner_registry)
@@ -1257,7 +1265,7 @@ def produce_tree(
         )
         handler = _PRODUCER_DISPATCH.get(ce.label, _passthrough_inner)
         marker = handler(
-            ce.raw, ce.inner_text, context, legacy_inner_reg)
+            ce.raw, ce.inner_text, node_ctx, legacy_inner_reg)
 
         # Substitute child markers into the producer's output.
         # Multi-pass because a substituted child marker can itself

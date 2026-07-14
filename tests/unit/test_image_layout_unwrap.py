@@ -47,7 +47,7 @@ def _transform(src: str, volume: int, page_number: int) -> str:
     fails to recognise still-`''`-wrapped italic labels."""
     return process_elements(
         _convert_quote_runs(src),
-        ElementContext(volume=volume, page_number=page_number))
+        ElementContext(volume=volume))
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────

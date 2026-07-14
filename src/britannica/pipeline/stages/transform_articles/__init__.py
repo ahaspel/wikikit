@@ -166,7 +166,6 @@ def walk_article(session, article) -> str:
         return ""
     walked = process_elements(
         raw, ElementContext(volume=article.volume,
-                            page_number=article.page_start,
                             contributor_initials=_contributor_initials(session)))
     # Section recognition runs post-walk over the finished body — the post-walk
     # extraction family, beside the contributor / xref extractors — where the whole

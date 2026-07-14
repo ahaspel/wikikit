@@ -58,12 +58,13 @@ class TestAtomicLabels:
     def test_poem(self):
         ce = classify(SHAPE_HTML_TAG, "<poem>line one\nline two</poem>")
         assert ce.label == "POEM"
-        # Verse line breaks are recognized at the READ POINT: each `\n` between lines becomes a
-        # `<br>` (which the walker owns as «BR»), so the body decomposes into per-line BODY
-        # children separated by a BR node — fully recursive, the breaks carried as structure.
-        children = list(ce.inner_registry.values())
-        assert [c.label for c in children] == ["BODY", "BR", "BODY"]
-        assert [c.raw for c in children if c.label == "BODY"] == ["line one", "line two"]
+        # Inner prose is a single BODY child with its `\n` intact.  The verse line break is
+        # recognized at PRODUCE time by the BODY producer, which knows — via the threaded
+        # ``parent_label`` — that it is under a POEM and turns the `\n` into «BR».  Classify
+        # itself makes no verse-specific decision; a `\n` is just body text here.
+        (child,) = ce.inner_registry.values()
+        assert child.label == "BODY"
+        assert child.raw == "line one\nline two"
 
     def test_ref(self):
         ce = classify(SHAPE_HTML_TAG, "<ref>note text</ref>")
