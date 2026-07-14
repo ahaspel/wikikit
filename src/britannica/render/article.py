@@ -19,7 +19,6 @@ import unicodedata
 
 from britannica.render.inline import (
     build_outline_ul,
-    _OUTLINE_SPAN_RE,
     decode_inline,
     escape_html,
     format_footnote_text,
@@ -170,6 +169,21 @@ def _fn_span_ranges(s):
     return ranges
 
 
+def _outline_span_ranges(s):
+    """Balanced (start, end) ranges of every «OUTLINE»…«/OUTLINE» span in `s` — depth-matched, so a
+    nested outline doesn't tear.  Parallel to `_fn_span_ranges`: keeps the body block-scan from
+    splitting an outline whose items are newline-delimited across a line boundary."""
+    ranges = []
+    i = s.find("«OUTLINE»")
+    while i != -1:
+        end = find_marker_end(s, i, "«OUTLINE»", "«/OUTLINE»")
+        if end == -1:
+            break
+        ranges.append((i, end))
+        i = s.find("«OUTLINE»", end)
+    return ranges
+
+
 def _split_lines_keep_spans(text):
     """`text.split("\\n")`, except a "\\n" inside an «FN:…«/FN» or «OUTLINE:…«/OUTLINE»
     span is not a split point.
@@ -181,7 +195,7 @@ def _split_lines_keep_spans(text):
     «/FN» / «OUTLINE:» / «/OUTLINE», a torn span that leaks.  Identical to ``str.split``
     whenever no such span straddles a newline.
     """
-    ranges = _fn_span_ranges(text) + [(m.start(), m.end()) for m in _OUTLINE_SPAN_RE.finditer(text)]
+    ranges = _fn_span_ranges(text) + _outline_span_ranges(text)
     if not ranges:
         return text.split("\n")
     parts, last, i = [], 0, text.find("\n")

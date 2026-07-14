@@ -202,7 +202,7 @@ def _apply_size_markers(h):
 
 
 # ── parametrized markers ──
-_FN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:([\s\S]*?)«/FN»")
+_FN_OPEN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:")
 # Inline MATH (cell/caption/verse default): katex is stubbed to «MATHPH» and the cell path
 # does NOT do popout / fs-scaling (that's the prose path, which passes skip_math and handles
 # «MATH» itself).  So here MATH is just the placeholder.
@@ -219,8 +219,12 @@ _DIV_RE = re.compile(r"«DIV\[style:([^\]]*)\]»")
 _SPAN_STYLE_RE = re.compile(r"«SPAN\[style:([^\]]*)\]»")
 _SPAN_TITLE_RE = re.compile(r"«SPAN\[title:([^\]]*)\]»")
 _BRACE2_RE = re.compile(r"«BRACE2\[(\d+)\|([lrud])\]»")
-_LN_RE = re.compile(r"«LN:([^|]*)\|([^|«]*?)(?:\|([^«]*))?«/LN»")
-_XL_RE = re.compile(r"«XL:([^|«]*)(?:\|((?:(?!«/XL»)[\s\S])*?))?«/XL»")
+# «LN» decodes as INDEPENDENT open/close: the opener «LN:filename?|target|» → <a …>, «/LN» → </a>.
+# The display rides through and finishes decoding in the later passes (order-invariant), unlike the old
+# span-match whose display group excluded « and so leaked whenever a link held a marker decoded AFTER
+# this pass (XL/SEC/TABLE).  A trailing second capture marks the 3-part (resolved) form.
+_LN_OPEN_RE = re.compile(r"«LN:([^|«]*)\|(?:([^|«]*)\|)?")
+_XL_OPEN_RE = re.compile(r"«XL:([^|«]*)(\|)?")
 _SEC_RE = re.compile(r"«(?:SEC|ANCHOR):([^|»]*)\|[^»]*»")
 
 _BRACE2_GLYPH = {"l": "⎧", "r": "⎫", "u": "⏞", "d": "⏟"}  # ⎧ ⎫ ⏞ ⏟
@@ -229,9 +233,6 @@ _BRACE2_GLYPH = {"l": "⎧", "r": "⎫", "u": "⏞", "d": "⏟"}  # ⎧ ⎫ ⏞ 
 def _verse(m):
     lines = [ln for ln in m.group(1).split("\n") if ln.strip()]
     return '<span class="cell-verse">' + "<br>".join(lines) + "</span>"
-
-
-_OUTLINE_SPAN_RE = re.compile(r"«OUTLINE»([\s\S]*?)«/OUTLINE»")
 
 
 def build_outline_ul(items, plate, render_item):
@@ -266,12 +267,11 @@ def build_outline_ul(items, plate, render_item):
     return "".join(out)
 
 
-def _outline(m):
-    """An «OUTLINE» nested where the body block-scan can't reach — a table cell, a verse
-    line, a footnote (all decoded by ``decode_inline``).  Parse the flat «OLI:depth» items
-    and render the ``<ul>`` in place; each item's own inline markers finish in
-    ``decode_inline``'s subsequent passes, so the item body renders as identity here."""
-    inner, items, i = m.group(1), [], 0
+def _outline_body(inner):
+    """One outline body → its nested <ul>: parse the flat «OLI:depth»…«/OLI» items and render.
+    Each item's own inline markers finish in ``decode_inline``'s subsequent passes (identity here).
+    No items ⇒ hand the raw span back unchanged."""
+    items, i = [], 0
     while True:
         a = inner.find("«OLI:", i)
         if a == -1:
@@ -280,7 +280,39 @@ def _outline(m):
         end = inner.find("«/OLI»", colon)
         items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
         i = end + len("«/OLI»")
-    return build_outline_ul(items, None, lambda c: c) if items else m.group(0)
+    return build_outline_ul(items, None, lambda c: c) if items else f"«OUTLINE»{inner}«/OUTLINE»"
+
+
+def _render_outlines(h):
+    """Render each «OUTLINE»…«/OUTLINE» in place, matching its close by DEPTH — a balanced scan,
+    not a span-match that would mis-pair on a nested outline.  (These are the outlines the body
+    block-scan can't reach: inside a table cell, a verse line, a footnote.)"""
+    OPEN, CLOSE = "«OUTLINE»", "«/OUTLINE»"
+    out, i = [], 0
+    while True:
+        a = h.find(OPEN, i)
+        if a == -1:
+            out.append(h[i:])
+            break
+        out.append(h[i:a])
+        depth, j, close_end = 1, a + len(OPEN), None
+        while depth:
+            no, nc = h.find(OPEN, j), h.find(CLOSE, j)
+            if nc == -1:
+                break                                  # unbalanced (a non-case)
+            if no != -1 and no < nc:
+                depth, j = depth + 1, no + len(OPEN)
+            else:
+                depth, j = depth - 1, nc + len(CLOSE)
+                if depth == 0:
+                    close_end = j
+        if close_end is None:                          # unbalanced: leave the marker raw, move on
+            out.append(OPEN)
+            i = a + len(OPEN)
+            continue
+        out.append(_outline_body(h[a + len(OPEN):close_end - len(CLOSE)]))
+        i = close_end
+    return "".join(out)
 
 
 def _span_title(m):
@@ -292,21 +324,26 @@ def _brace2(m):
     return f'<span class="brace2 brace2-{side}">{_BRACE2_GLYPH[side]}</span>'
 
 
-def _ln_factory(article_url):
-    def _ln(m):
-        g1, g2, g3 = m.group(1), m.group(2), m.group(3)
-        has_file = g3 is not None
-        target = g2 if has_file else g1
-        display = g3 if has_file else g2
+def _ln_open_factory(article_url):
+    def _ln_open(m):
+        # «LN:filename|target|» (3-part, resolved) or «LN:target|» (2-part, unresolved).  A second
+        # capture => the 3-part form: g1=filename, g2=target; else g1=target and there is no file.
+        g1, g2 = m.group(1), m.group(2)
+        has_file = g2 is not None
         filename = g1 if has_file else None
+        target = g2 if has_file else g1
         href = article_url(filename) if filename else "/search.html?q=" + _encode_uri_component(target)
-        return f'<a href="{href}" class="article-link" title="{target}">{display}</a>'
-    return _ln
+        return f'<a href="{href}" class="article-link" title="{target}">'
+    return _ln_open
 
 
-def _xl(m):
-    url, disp = m.group(1), m.group(2)
-    return f'<a href="{url}" class="external-link" target="_blank" rel="noopener">{disp or url}</a>'
+def _xl_open(m):
+    # «XL:url|display«/XL» → <a>…</a> as INDEPENDENT open/close (open here, «/XL»→</a> below).
+    # No pipe ⇒ no display, so mirror the old `disp or url` fallback and emit the url as the link
+    # text at the opener.  Order-invariant; a display finishes decoding in the later passes.
+    url, pipe = m.group(1), m.group(2)
+    tag = f'<a href="{url}" class="external-link" target="_blank" rel="noopener">'
+    return tag if pipe else tag + url
 
 
 _TABLE_OPEN_RE = re.compile(r"«(TABLE|TR|TD|TH)\[([^\]]*)\]»")
@@ -365,7 +402,7 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     # Footnotes decode the same in every context (title, prose, cell) — numbered and
     # collected through the shared ctx so a title footnote is #1.
     if ctx is not None:
-        h = _FN_RE.sub(lambda m: render_fn_marker(m.group(1), m.group(2), ctx), h)
+        h = _render_footnotes(h, ctx)
 
     if not skip_math:
         if getattr(ctx, "target", None) == "site":
@@ -382,7 +419,7 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _VERSE_RE.sub(_verse, h)
     # An «OUTLINE» nested in a cell/verse/footnote — the body block-scan never reached it,
     # so render the nested <ul> here (item markers decode in the passes below).
-    h = _OUTLINE_SPAN_RE.sub(_outline, h)
+    h = _render_outlines(h)
 
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)
@@ -422,8 +459,8 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _BRACE2_RE.sub(_brace2, h)
     h = _HIEROGLYPH_RE.sub(_render_hieroglyph, h)
 
-    h = _LN_RE.sub(_ln_factory(article_url), h)
-    h = _XL_RE.sub(_xl, h)
+    h = _LN_OPEN_RE.sub(_ln_open_factory(article_url), h).replace("«/LN»", "</a>")
+    h = _XL_OPEN_RE.sub(_xl_open, h).replace("«/XL»", "</a>")
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
 
     # Recursive table markers — «TABLE[…]»/«TR[…]»/«TD[…]»/«TH[…]»/«CAPTION».  The
@@ -445,6 +482,38 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
         h = re.sub(r"\x00IMG(\d+)\x00", lambda m: img_html[int(m.group(1))], h)
 
     return h
+
+
+def _render_footnotes(h, ctx):
+    """Replace each «FN[name]?:body«/FN» with its numbered superscript + popup (via
+    ``render_fn_marker``, the one owner of numbering/collection), matching its close by DEPTH —
+    a balanced scan, not a span-match that would mis-pair a footnote-in-footnote."""
+    out, i = [], 0
+    while True:
+        m = _FN_OPEN_RE.search(h, i)
+        if m is None:
+            out.append(h[i:])
+            break
+        out.append(h[i:m.start()])
+        name = m.group(1)
+        depth, j, close_end = 1, m.end(), None
+        while depth:
+            no, nc = _FN_OPEN_RE.search(h, j), h.find("«/FN»", j)
+            if nc == -1:
+                break                                   # unbalanced (a non-case)
+            if no is not None and no.start() < nc:
+                depth, j = depth + 1, no.end()
+            else:
+                depth, j = depth - 1, nc + len("«/FN»")
+                if depth == 0:
+                    close_end = j
+        if close_end is None:                           # unbalanced: leave the opener raw, move on
+            out.append(h[m.start():m.end()])
+            i = m.end()
+            continue
+        out.append(render_fn_marker(name, h[m.end():close_end - len("«/FN»")], ctx))
+        i = close_end
+    return "".join(out)
 
 
 def render_fn_marker(name, content, ctx):
