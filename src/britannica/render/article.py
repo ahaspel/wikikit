@@ -78,13 +78,43 @@ def _render_outline_block(marker: str, ctx) -> str:
     return build_outline_ul(items, None, lambda c: render_paragraph(c, None, ctx))
 _ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
 
-BLOCK_MARKER_SCAN_RE = re.compile(
-    r"\{\{VERSE(?:\[style:[^\]]*\])?:[\s\S]*?\}VERSE\}"
-    r"|«OUTLINE»[\s\S]*?«/OUTLINE»"
-    r"|«TABLE\[[\s\S]*?«/TABLE»"
-    r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
-    r"|«TITLE:[\s\S]*?«/TITLE»"
+# The block markers, each an (open, close) pair.  `render_paragraph` walks `p` and peels each
+# balanced block in place with the ONE matcher (`find_marker_end`) — a nested table / outline is
+# bounded correctly, where a non-greedy `«X»[\s\S]*?«/X»` span-match would mis-pair on nesting.
+_BLOCK_OPENERS = (
+    ("«TITLE:", "«/TITLE»"),
+    ("«EQN:", "«/EQN»"),
+    ("«OUTLINE»", "«/OUTLINE»"),
+    ("{{VERSE", "}VERSE}"),
+    ("«TABLE[", "«/TABLE»"),
 )
+
+
+def _find_blocks(p):
+    """Every top-level block marker in `p` as (start, text), left to right, balanced-matched and
+    skipping any that opens inside an «FN» span (the footnote handler decodes those whole)."""
+    fn_ranges = _fn_span_ranges(p)
+    blocks = []
+    i, n = 0, len(p)
+    while i < n:
+        nxt = None
+        for opener, closer in _BLOCK_OPENERS:
+            pos = p.find(opener, i)
+            if pos != -1 and (nxt is None or pos < nxt[0]):
+                nxt = (pos, opener, closer)
+        if nxt is None:
+            break
+        pos, opener, closer = nxt
+        if any(a <= pos < b for a, b in fn_ranges):
+            i = pos + len(opener)
+            continue
+        end = find_marker_end(p, pos, opener, closer)
+        if end == -1:
+            i = pos + len(opener)
+            continue
+        blocks.append((pos, p[pos:end]))
+        i = end
+    return blocks
 
 
 # Latin ligatures / letters NFKD leaves whole — expand to their base sequence for the
@@ -321,23 +351,9 @@ def _render_sh(html):
 
 def render_paragraph(p, next_para, ctx):
     """Render one merged paragraph to (open-only) HTML, mirroring renderParagraph."""
-    # Mixed-paragraph split: block marker(s) + surrounding prose → split and recurse.
-    matches = list(BLOCK_MARKER_SCAN_RE.finditer(p))
-    fn_ranges = _fn_span_ranges(p)
-    blocks = []
-    guard = 0
-    for m in matches:
-        if m.start() < guard:
-            continue
-        if any(a <= m.start() < b for a, b in fn_ranges):
-            continue   # block inside a footnote: kept whole, decoded by the «FN» handler
-        text = m.group(0)
-        if text.startswith(TABLE_OPEN):
-            end = find_marker_end(p, m.start(), TABLE_OPEN, TABLE_CLOSE)
-            if end != -1:
-                text = p[m.start():end]
-                guard = end
-        blocks.append((m.start(), text))
+    # Mixed-paragraph split: block marker(s) + surrounding prose → split and recurse.  The blocks
+    # are found by ONE balanced descent (`_find_blocks`), not a non-greedy span-match.
+    blocks = _find_blocks(p)
     if blocks:
         only_block = len(blocks) == 1 and blocks[0][1] == p.strip()
         if not only_block:
