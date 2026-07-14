@@ -181,11 +181,11 @@ def test_abbey_02_float_is_faithful_figure():
     filename, caption = imgs[0]
     assert filename == "Abbey_02.png"
     assert caption is None, f"image must be a pure leaf, got caption {caption!r}"
-    # «SC» intact; the image-to-caption seam is «BR», the caption's own line-breaks
-    # ride through as <br> — carried verbatim, never shredded.
+    # «SC» intact; the image-to-caption seam is «BR», and the caption's own line
+    # breaks are «BR» too — the walker owns every `<br>` uniformly, nothing left literal.
     assert "«SC»Fig. 2.«/SC»" in body
     assert "Plan of Coptic Monastery" in body
-    assert "«BR»" in body and "<br" in body
+    assert "«BR»" in body and "<br" not in body
 
 
 # ── Tests: AIR_ENGINE_1 — `{{Img float}}` mid-paragraph ───────────────

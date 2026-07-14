@@ -81,6 +81,14 @@ _REF_SELF_RE = re.compile(r"<ref\s[^>]*/\s*>", re.IGNORECASE)
 _PAGEQUALITY_RE = re.compile(
     r"<pagequality\b[^>]*/\s*>", re.IGNORECASE)
 
+# `<br>` / `<br/>` / `<br />` — an explicit line break.  A structural marker the
+# walker OWNS: recognized as its own leaf element → «BR» (the canonical break
+# marker, the same one `{{br}}` emits), so no downstream peel has to transform it.
+# Inside an opaque tag (`<math>`/`<nowiki>`/…) it is never reached — the walker
+# skips those interiors whole — which is the one place a `<br>` is literal text,
+# not a break.
+_BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
+
 # `<ref>`/`<table>`/`<poem>`/`<math>`/`<score>` no longer have per-tag
 # recognizer regexes — they are bounded by the one balanced `_construct_end`
 # rule (see `_ELEMENT_TAGS`).  The old `<tag\b[^>]*>.*?</tag>` non-greedy
@@ -173,6 +181,10 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     (SHAPE_HTML_TAG,          _MIRROR_GLYPH_RE),
     (SHAPE_HTML_SELF_CLOSING, _REF_SELF_RE),
     (SHAPE_HTML_SELF_CLOSING, _PAGEQUALITY_RE),
+    # `<br>` line break → its own leaf; the classifier routes `br` → BR, the
+    # producer emits «BR».  (Un-owning the `<br>→«BR»` transform the styler peels
+    # used to each do at classify time.)
+    (SHAPE_HTML_SELF_CLOSING, _BR_RE),
     # `<table>`/`<ref>`/`<poem>`/`<math>`/`<score>` are bounded by the one
     # balanced `_construct_end` rule (see the `_ELEMENT_TAGS` handler in
     # `_walk_balanced_shapes`), NOT by per-tag non-greedy regexes — those
@@ -207,6 +219,7 @@ _OPENER_HINT_RE = re.compile(
     r"|\{\|"                        # BRACE_PIPE
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
+    r"|<br\b"                       # HTML_SELF_CLOSING line break → «BR»
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
     r"|<(?:table|poem|math|score|hiero|nowiki|includeonly)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span

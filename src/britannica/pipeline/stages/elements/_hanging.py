@@ -22,10 +22,9 @@ _DEFAULT_WIDTH = "2em"   # the Wikisource `{{hi}}` default when no width arg is 
 
 def _hanging_peel(raw: str) -> tuple[str, str]:
     """Peel `{{hi|W|text}}` → (width, content).  W is the first positional arg WHEN it is a CSS
-    length (else the 2em default); content is the longest content slot with its top-level `<br>`
-    carried as «BR».  Bare `{{hi}}` / no content → (width, "").  Shared so
-    `_classify_hanging_composite` recurses the SAME content the producer wraps at the SAME width."""
-    from britannica.pipeline.stages.elements import _styled_br_to_marker
+    length (else the 2em default); content is the longest content slot, its `<br>` left raw for
+    the walker to recognize as «BR» on re-walk.  Bare `{{hi}}` / no content → (width, "").  Shared
+    so `_classify_hanging_composite` recurses the SAME content the producer wraps at the SAME width."""
     inner = re.sub(r"^\{\{", "", raw)
     inner = re.sub(r"\}\}\s*$", "", inner)
     bar = inner.find("|")
@@ -44,10 +43,10 @@ def _hanging_peel(raw: str) -> tuple[str, str]:
         content_slots = positional
     if not content_slots:
         return width, ""
-    # A hanging indent is a display block, so its own (top-level) `<br>` is a
-    # meaningful line break — carry it as «BR» before recursing, exactly like the
-    # styled-block producers (else the body producer eats it as a soft-wrap space).
-    return width, _styled_br_to_marker(max(content_slots, key=len))
+    # A hanging indent is a display block, so its own `<br>` is a meaningful line
+    # break — left raw here; the walker recognizes it as «BR» when this slot is
+    # re-walked, exactly like every other `<br>` in the article.
+    return width, max(content_slots, key=len)
 
 
 def process_hanging_indent(raw, inner, context, inner_registry) -> str:

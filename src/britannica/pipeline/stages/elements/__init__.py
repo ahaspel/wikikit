@@ -450,44 +450,6 @@ def _wrap_subsup(raw, body, ctx):
 # wrapper without a second balanced scanner.
 _STYLED_OPEN_RE = re.compile(
     r"^\s*<(div|p|span|ins)\b([^>]*)>", re.IGNORECASE)
-_BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
-
-
-def _styled_br_to_marker(text: str) -> str:
-    """A styled wrapper is a display block (centred equations, stacked labels);
-    its OWN `<br>` is a meaningful line break, so carry it as the canonical
-    «BR» (matching the prior figure producer's rendering).  Only TOP-LEVEL `<br>`
-    is converted — a `<br>` inside a nested balanced construct (table cell,
-    nested wrapper) belongs to that construct's own producer, so we skip every
-    nested span whole via the walker's one `_construct_end` matcher.  Without
-    this, the recursion routes the wrapper's prose to the BODY producer, which
-    renders `<br>` as a SPACE (its soft-wrap rule) and silently drops the
-    break (INTERPOLATION's multi-line centred series)."""
-    from britannica.pipeline.stages.elements._walker import _construct_end
-    out: list[str] = []
-    i, n = 0, len(text)
-    while i < n:
-        ch = text[i]
-        if ch == "<":
-            mbr = _BR_RE.match(text, i)
-            if mbr:
-                out.append("«BR»")
-                i = mbr.end()
-                continue
-            j = _construct_end(text, i)        # skip any nested construct whole
-            if j is not None and j > i:
-                out.append(text[i:j])
-                i = j
-                continue
-        elif ch in "{[":
-            j = _construct_end(text, i)        # skip `{{…}}` / `{|…|}` / `[[…]]`
-            if j is not None and j > i:
-                out.append(text[i:j])
-                i = j
-                continue
-        out.append(ch)
-        i += 1
-    return "".join(out)
 
 
 _FURNITURE_TITLE_RE = re.compile(
@@ -502,12 +464,12 @@ _FURNITURE_TITLE_RE = re.compile(
 
 
 def _span_title_slot(raw):
-    """The recursed slot (the PEEL side) of a `<span title="T">X</span>` — its content X, `<br>`
-    → «BR» (a styled block's line breaks are meaningful), the `</span>` tail dropped."""
+    """The recursed slot (the PEEL side) of a `<span title="T">X</span>` — its content X, the
+    `</span>` tail dropped.  A `<br>` rides through raw; the walker recognizes it as «BR» when
+    this slot is re-walked."""
     from britannica.pipeline.stages.elements._walker import _SPAN_TITLE_OPEN_RE
     sp = _SPAN_TITLE_OPEN_RE.match(raw)
-    return _styled_br_to_marker(
-        re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE))
+    return re.sub(r"</span\s*>\s*$", "", raw[sp.end():], flags=re.IGNORECASE)
 
 
 def _wrap_span_title(raw, body, ctx):
@@ -541,7 +503,7 @@ def _shoulder_peel(raw):
     positional = [g for g in slots if not re.match(r"\s*[A-Za-z][\w-]*\s*=", g)]
     label = (positional or slots)[-1]
     label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
-    return _styled_br_to_marker(label)
+    return label
 
 
 def process_shoulder(raw, inner, context, inner_registry):
@@ -616,7 +578,7 @@ def _html_style_peel(raw):
     inner_raw = re.sub(rf"</{tag}\s*>\s*$", "",
                        raw[m.end():], flags=re.IGNORECASE)
     marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
-    return marker_tag, ";".join(fold_cell_styles(attrs)), _styled_br_to_marker(inner_raw)
+    return marker_tag, ";".join(fold_cell_styles(attrs)), inner_raw
 
 
 def _wrap_html_style(raw, body, ctx):
@@ -676,7 +638,7 @@ def _strip_peel(raw):
     inner_raw = re.sub(r"^\s*\d+\s*=\s*", "",
                        re.sub(r"\}\}\s*$", "", raw[tm.end():]))
     inner_raw, param_css = _carry_named_params(inner_raw)
-    return tm.group(1).lower(), _styled_br_to_marker(inner_raw), param_css
+    return tm.group(1).lower(), inner_raw, param_css
 
 
 def _wrap_strip(raw, body, ctx):
@@ -746,7 +708,7 @@ def _param_peel(raw):
     rest = re.sub(r"\}\}\s*$", "", raw[pm.end():])
     bar = rest.find("|")
     value = (rest[:bar] if bar >= 0 else "").strip()
-    return name, value, _styled_br_to_marker(rest[bar + 1:] if bar >= 0 else rest)
+    return name, value, rest[bar + 1:] if bar >= 0 else rest
 
 
 def _substitute_children(inner, inner_registry):
@@ -803,8 +765,7 @@ def _recurse_slot_content(raw, label):
         if _TEMPLATE_STYLE_RE.match(raw):
             return _strip_peel(raw)[1]
         name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
-        return _styled_br_to_marker(
-            _TEMPLATE_STYLE_WRAPPERS[name].get("bare", ""))
+        return _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")
     args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     if label == "LB":                         # `{{lb-|N}}` → the quantity N
         return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,
@@ -995,6 +956,9 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CHART2": _process_genealogy,
     "MATH": lambda raw, inner, ctx, reg: _process_math(raw, inner),
     "SCORE": lambda raw, inner, ctx, reg: _process_score(inner),
+    # BR — an explicit `<br>` line break, walker-owned.  A leaf constant: emit the
+    # canonical break marker «BR» (the same one `{{br}}` yields via SPACER).
+    "BR": lambda raw, inner, ctx, reg: "«BR»",
     "REF_SELF": lambda raw, inner, ctx, reg:
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, ctx, reg:

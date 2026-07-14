@@ -179,6 +179,9 @@ def _derive_html_self_closing_label(raw: str) -> str:
     # The producer reads the raw tag (its name is boundary metadata).
     if raw[:9].lower().startswith("<section"):
         return "SECTION"
+    # `<br>` / `<br/>` / `<br />` — an explicit line break; the producer emits «BR».
+    if raw[:3].lower() == "<br":
+        return "BR"
     return "REF_SELF"
 
 
