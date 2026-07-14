@@ -413,7 +413,7 @@ def render_paragraph(p, next_para, ctx):
     # → page markers → inline decode → math): `decode_inline` owns the marker→tag
     # substitution for the table structure AND any nested table, in one pass, with
     # no html5lib re-parse.  Balanced-match the close so a table whose cell holds
-    # another table isn't truncated; `cols` (off the opener, computed at classify)
+    # another table isn't truncated; `cols` (off the opener, derived by the table producer)
     # drives the wide-table wrap.
     if p.startswith(TABLE_OPEN):
         end = find_marker_end(p, 0, TABLE_OPEN, TABLE_CLOSE)

@@ -493,18 +493,21 @@ def _wrap_span_title(raw, body, ctx):
 def _shoulder_peel(raw):
     """Peel a shoulder heading `{{EB1911 Shoulder Heading|[width=N|][align=…|]LABEL}}` → the
     clean LABEL to recurse.  The LABEL is the last POSITIONAL slot (named `width=`/`align=`
-    params may TRAIL it — `{{…|'''Label'''.|align=right}}`); its `<br>`s are margin-column wrap
-    typography, dropped to a space (not carried).  Shared so `_classify_shoulder_composite` (the
-    label to recurse into child nodes) and the producer agree — the SHOULDER twin of
-    `_strip_peel` (the producer needs no value from it, only the slug off the content)."""
+    params may TRAIL it — `{{…|'''Label'''.|align=right}}`).  Its margin-column-wrap `<br>`s are
+    typographic FURNITURE — the narrow print margin forced a line break (often mid-word) we have
+    the column width to unwrap — so they drop to a space HERE, on the raw label, BEFORE
+    decomposition.  That ordering is load-bearing: the body producer's `_dehyphenate` must see the
+    rejoined run to fuse a hyphen-split word (`Premonst-<br>ratensians` → `Premonstratensians`;
+    `trans-<br>African` → `trans-African`, hyphen kept).  Dropping it post-decomposition (as a
+    «BR» node the producer removes) splits the run at the break and defeats dehyphenation — so
+    this is extraction, NOT a movable transform.  Called only by `_classify_shoulder_composite`."""
     from britannica.pipeline.stages.elements._tables import _SHOULDER_HEADING_RE
     from britannica.pipeline.stages.elements._link import _split_top_pipes
     sh = _SHOULDER_HEADING_RE.match(raw)
     slots = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[sh.end():]))
     positional = [g for g in slots if not re.match(r"\s*[A-Za-z][\w-]*\s*=", g)]
     label = (positional or slots)[-1]
-    label = re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)
-    return label
+    return re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)  # margin-wrap furniture → space
 
 
 def process_shoulder(raw, inner, context, inner_registry):
@@ -514,7 +517,9 @@ def process_shoulder(raw, inner, context, inner_registry):
     A marginal SECTION label: emit «SH:slug»…«/SH» (what `detect_sections` keys on for the
     TOC).  `_classify_shoulder_composite` decomposed the LABEL into child nodes; we substitute
     their markers into `inner`, `.strip()`, mint the section slug off the assembled content
-    (once, by the one slug function, exactly as «SEC» carries its slug), and wrap."""
+    (once, by the one slug function, exactly as «SEC» carries its slug), and wrap.  (The
+    margin-wrap `<br>` was already dropped in `_shoulder_peel`, before decomposition, so
+    `_dehyphenate` could span it — see there.)"""
     from britannica.util.strings import section_slug, strip_markers
     content = inner
     if inner_registry is not None:

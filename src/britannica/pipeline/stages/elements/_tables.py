@@ -585,7 +585,24 @@ def _process_inline_glyph_wrapper(raw, inner, context, inner_registry) -> str:
     return "".join(_cell_markers(inner_registry)).strip()
 
 
-_COLS_RE = re.compile(r"«COLS:(\d+)»")
+def _outer_col_count(inner_registry) -> int:
+    """Max cells across the OUTER rows of a TABLE node — the column count for the
+    wide-table decision.  DERIVED from the ROW→CELL tree the classifier decomposed
+    (each ROW child's own cell registry), so a nested table's cells — which live
+    inside a CELL body, never as a sibling cell — can't inflate it, and a lone
+    `colspan="35"` full-width hack counts as one cell, not 35."""
+    if inner_registry is None:
+        return 0
+    n = 0
+    for ph, label in inner_registry.labels.items():
+        if label != "ROW":
+            continue
+        row_reg = inner_registry.inner_registries.get(ph)
+        if row_reg is None:
+            continue
+        cells = sum(1 for lbl in row_reg.labels.values() if lbl in ("TD", "TH"))
+        n = max(n, cells)
+    return n
 
 
 def _process_table_unified(
@@ -609,13 +626,13 @@ def _process_table_unified(
     border=N / rules=) keeps `data-table` + its source class; a class-less layout
     `{|` (figure / verse / single-column quote) gets none, so it renders
     borderless for free (only `.data-table` adds a border)."""
-    # `«COLS:N»` prefix (from `_classify_table_composite`, off the OUTER cells) →
-    # the column count for the wide-table decision; the rest is the row body.
-    m = _COLS_RE.match(inner)
-    cols = m.group(1) if m else "0"
-    body = inner[m.end():] if m else inner
+    # Column count for the wide-table decision, DERIVED here off the ROW→CELL tree
+    # the classifier decomposed (max cells per OUTER row) — the classifier no longer
+    # computes it for us; a producer owns its own render metadata.
+    cols = str(_outer_col_count(inner_registry))
+    body = inner
     if not body:
-        return ""  # no rows — matches the former `if not body: return ""`
+        return ""  # no rows
     # Caption child: produced already (bottom-up), so read its finished marker
     # and wrap only if non-empty.  Read off the classified child registry — the
     # ONE place the caption now lives.  It rides as a `«CAPTION»…«/CAPTION»`

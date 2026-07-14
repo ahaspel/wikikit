@@ -662,35 +662,25 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cap_body, cap_reg = classify_article(caption_raw)
         children[_mint_ph()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
     row_phs: list[str] = []
-    max_cols = 0
     for row_attr, cells in rows:
         if not cells:
             continue
         cell_phs: list[str] = []
         cell_children: dict[str, ClassifiedElement] = {}
-        row_cols = 0
         for sep, cell_attr, content in cells:
             cell_body, cell_reg = classify_article(content)
             ph = _mint_ph()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
             cell_phs.append(ph)
-            # Count CELLS (content columns), NOT the colspan sum: a lone cell with
-            # colspan="35" is a full-width span hack (ALGEBRA's centering table) — one
-            # content column, not 35.  `«COLS»` feeds ONLY the wide-table decision, so
-            # summing colspan wrongly trips the expand wrap; cell-count is the metric.
-            row_cols += 1
-        max_cols = max(max_cols, row_cols)
         rph = _mint_ph()
         children[rph] = ClassifiedElement(
             "ROW", row_attr, "".join(cell_phs), cell_children)
         row_phs.append(rph)
-    # The column count rides the TABLE node's inner_text as a `«COLS:N»` prefix
-    # (consumed by the producer, never emitted) — computed HERE, off the OUTER
-    # rows/cells, so a nested table's cells can't inflate it.  The producer needs
-    # it for the wide-table decision but only sees (raw, inner_text) at emit.
-    return ClassifiedElement(
-        "TABLE", raw, f"«COLS:{max_cols}»" + "".join(row_phs), children)
+    # Classifier returns ONLY the ROW/CELL tree; the column count for the wide-table
+    # decision is DERIVED from it by the producer (max cells per OUTER row), not
+    # smuggled here as data past the label.
+    return ClassifiedElement("TABLE", raw, "".join(row_phs), children)
 
 
 def _classify_outline_composite(raw: str, block: str) -> ClassifiedElement:
@@ -762,7 +752,7 @@ def _classify_columns_as_table(raw: str) -> ClassifiedElement:
         cell_phs.append(ph)
     rph = _mint_ph()
     return ClassifiedElement(
-        "TABLE", raw, f"«COLS:{len(cols)}»" + rph,
+        "TABLE", raw, rph,
         {rph: ClassifiedElement("ROW", "", "".join(cell_phs), cell_children)})
 
 
@@ -1008,7 +998,7 @@ def _decompose_cells(label: str, raw: str, slots: "list[str]") -> ClassifiedElem
     DUAL_LINE's stack, TOC_ROW's dotted leader, FRACTION's vulgar glyph).
 
     The multi-slot twin of `_classify_columns_as_table`: same chop → recurse-each →
-    reassemble, minus the TABLE engine's ROW/`«COLS»` wrapping — these producers own their
+    reassemble, minus the TABLE engine's ROW wrapping — these producers own their
     reassembly instead of going through the table path.  A CELL is a passthrough node (its
     marker IS its recursed content); iterate `inner_registry.elements` to read them back so
     an empty slot keeps its position."""
