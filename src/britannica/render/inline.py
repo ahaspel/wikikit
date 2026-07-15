@@ -213,7 +213,10 @@ _MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»")
 # ("Fig. 3." is also a pure centered small-caps, but has no «SEC» before it).
 _EPUB_SEC_HEAD_RE = re.compile(r"«SEC:([^|»]*)\|[^»]*»\s*«CTR»«SC»([\s\S]*?)«/SC»«/CTR»")
 _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
-_VERSE_RE = re.compile(r"\{\{VERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}VERSE\}")
+# The INLINE verse form — `{{IVERSE:…}IVERSE}`, stamped by the producer when the poem sits
+# inside a TABLE/REF.  It decodes to a `cell-verse` span (its «BR» line breaks decode to <br>
+# further down).  The BLOCK form `{{VERSE:…}VERSE}` is a top-level blockquote, owned elsewhere.
+_VERSE_RE = re.compile(r"\{\{IVERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}IVERSE\}")
 _BAR_RE = re.compile(r"«BAR\[(\d+)\]»")
 _DIV_RE = re.compile(r"«DIV\[style:([^\]]*)\]»")
 _SPAN_STYLE_RE = re.compile(r"«SPAN\[style:([^\]]*)\]»")
@@ -231,16 +234,17 @@ _BRACE2_GLYPH = {"l": "⎧", "r": "⎫", "u": "⏞", "d": "⏟"}  # ⎧ ⎫ ⏞ 
 
 
 def _verse(m):
-    lines = [ln for ln in m.group(1).split("\n") if ln.strip()]
-    return '<span class="cell-verse">' + "<br>".join(lines) + "</span>"
+    # Verse line breaks ride as «BR» in the body (decoded to <br> further down); there is
+    # no «\n» to split.  The span is the inline (in-cell / in-footnote) verse form.
+    return '<span class="cell-verse">' + m.group(1) + "</span>"
 
 
 def build_outline_ul(items, plate, render_item):
     """Nested ``<ul>`` from ``(depth, content)`` items — sparse source depths densified
     to dense levels.  The ONE owner of the outline structure; ``render_item(content)``
-    renders each item body: ``render_paragraph`` for a standalone outline (block-aware),
-    identity for one inside a table cell / verse / footnote (where ``decode_inline``
-    finishes the item's inline markers in place)."""
+    styles each item body: a ``<p>``-wrap for the standalone BLOCK outline, identity for one
+    inside a table cell / verse / footnote (where ``decode_inline`` finishes the item's inline
+    markers in place — the wrap and the item markers alike decode in the passes below)."""
     if not items:
         return ""
     rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
@@ -267,10 +271,11 @@ def build_outline_ul(items, plate, render_item):
     return "".join(out)
 
 
-def _outline_body(inner):
+def _outline_body(inner, open_m, close_m, render_item):
     """One outline body → its nested <ul>: parse the flat «OLI:depth»…«/OLI» items and render.
-    Each item's own inline markers finish in ``decode_inline``'s subsequent passes (identity here).
-    No items ⇒ hand the raw span back unchanged."""
+    ``render_item`` styles each item — identity for the INLINE form (item markers finish in
+    ``decode_inline``'s later passes), a `<p>`-wrap for the BLOCK form (top-level outline).  No
+    items ⇒ hand the raw span back unchanged."""
     items, i = [], 0
     while True:
         a = inner.find("«OLI:", i)
@@ -280,37 +285,37 @@ def _outline_body(inner):
         end = inner.find("«/OLI»", colon)
         items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
         i = end + len("«/OLI»")
-    return build_outline_ul(items, None, lambda c: c) if items else f"«OUTLINE»{inner}«/OUTLINE»"
+    return build_outline_ul(items, None, render_item) if items else f"{open_m}{inner}{close_m}"
 
 
-def _render_outlines(h):
-    """Render each «OUTLINE»…«/OUTLINE» in place, matching its close by DEPTH — a balanced scan,
-    not a span-match that would mis-pair on a nested outline.  (These are the outlines the body
-    block-scan can't reach: inside a table cell, a verse line, a footnote.)"""
-    OPEN, CLOSE = "«OUTLINE»", "«/OUTLINE»"
+def _render_outlines(h, open_m="«IOUTLINE»", close_m="«/IOUTLINE»", render_item=lambda c: c):
+    """Render each ``open_m``…``close_m`` outline in place, matching its close by DEPTH — a
+    balanced scan, not a span-match that would mis-pair on a nested outline.  Serves BOTH forms:
+    the INLINE «IOUTLINE» (in a cell / footnote — plain <li> items) and the BLOCK «OUTLINE»
+    (top-level — `<p>`-wrapped items), selected by the caller via ``open_m``/``render_item``."""
     out, i = [], 0
     while True:
-        a = h.find(OPEN, i)
+        a = h.find(open_m, i)
         if a == -1:
             out.append(h[i:])
             break
         out.append(h[i:a])
-        depth, j, close_end = 1, a + len(OPEN), None
+        depth, j, close_end = 1, a + len(open_m), None
         while depth:
-            no, nc = h.find(OPEN, j), h.find(CLOSE, j)
+            no, nc = h.find(open_m, j), h.find(close_m, j)
             if nc == -1:
                 break                                  # unbalanced (a non-case)
             if no != -1 and no < nc:
-                depth, j = depth + 1, no + len(OPEN)
+                depth, j = depth + 1, no + len(open_m)
             else:
-                depth, j = depth - 1, nc + len(CLOSE)
+                depth, j = depth - 1, nc + len(close_m)
                 if depth == 0:
                     close_end = j
         if close_end is None:                          # unbalanced: leave the marker raw, move on
-            out.append(OPEN)
-            i = a + len(OPEN)
+            out.append(open_m)
+            i = a + len(open_m)
             continue
-        out.append(_outline_body(h[a + len(OPEN):close_end - len(CLOSE)]))
+        out.append(_outline_body(h[a + len(open_m):close_end - len(close_m)], open_m, close_m, render_item))
         i = close_end
     return "".join(out)
 
@@ -366,13 +371,103 @@ def _table_open(m):
     return f"<{tag}{attrs}>"
 
 
-def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article_url=None,
-                  is_local=True, ctx=None):
+# ── block-level forms — render_paragraph's former job, folded into the ONE decoder ──────────
+# These fire only for the article BODY (``decode_inline(..., body_blocks=True)``); a cell /
+# footnote never carries them (a verse / outline there is the IVERSE / IOUTLINE inline form).
+# The browser closes the open-only «P» — so there is no paragraph re-inference and no block
+# re-scan: every construct is one balanced marker decoded in place, exactly like the inline ones.
+_VERSE_BLOCK_OPEN_RE = re.compile(r"\{\{VERSE(?:\[style:([^\]]*)\])?:")
+_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
+
+
+def _verse_block_open(m):
+    style = f' style="{m.group(1).replace(chr(34), "&quot;")}"' if m.group(1) else ""
+    return f'<blockquote class="verse"{style}>'
+
+
+def _balanced_end(h, a, open_m, close_m):
+    """Index just past the depth-balanced close of the marker opening at ``a`` (None if none)."""
+    depth, j = 1, a + len(open_m)
+    while depth:
+        no, nc = h.find(open_m, j), h.find(close_m, j)
+        if nc == -1:
+            return None
+        if no != -1 and no < nc:
+            depth, j = depth + 1, no + len(open_m)
+        else:
+            depth, j = depth - 1, nc + len(close_m)
+            if depth == 0:
+                return j
+
+
+def _render_eqn(h, ctx):
+    """Each «EQN:label»content«/EQN» → the math-system grid (content row + right-margin label).
+    A lone «MATH» content renders in forced display mode; other content decodes inline in the
+    passes below.  Close matched by DEPTH (uniform with FN/OUTLINE; EQN itself does not nest)."""
+    from britannica.render.article import _MATH_ONLY_RE, _render_display_math
+    OPEN, CLOSE = "«EQN:", "«/EQN»"
+    out, i = [], 0
+    while True:
+        a = h.find(OPEN, i)
+        if a == -1:
+            out.append(h[i:]); break
+        out.append(h[i:a])
+        lbl_end = h.find("»", a + len(OPEN))
+        label = h[a + len(OPEN):lbl_end]
+        close_end = _balanced_end(h, a, OPEN, CLOSE) if lbl_end != -1 else None
+        if close_end is None:
+            out.append(h[a:lbl_end + 1] if lbl_end != -1 else h[a:]); i = (lbl_end + 1) if lbl_end != -1 else len(h); continue
+        content = h[lbl_end + 1:close_end - len(CLOSE)].strip()
+        mo = _MATH_ONLY_RE.match(content)
+        content_html = _render_display_math(mo.group(2), mo.group(1), ctx) if mo else content
+        label_html = f'<div class="math-system-label">({label})</div>' if label else ""
+        out.append(f'<div class="math-system"><div class="math-system-rows">'
+                   f'<div class="math-system-row">{content_html}</div></div>{label_html}</div>')
+        i = close_end
+    return "".join(out)
+
+
+def _wrap_wide_tables(h, ctx):
+    """Wrap each cols≥10 «TABLE[…]…«/TABLE» in a `wide-table-wrap` figure + Expand button
+    (balanced close, so a nested table isn't torn).  The corpus has NO wide table nested inside
+    another table, so this left-to-right scan wraps exactly the top-level wide ones."""
+    OPEN, CLOSE = "«TABLE[", "«/TABLE»"
+    out, i = [], 0
+    while True:
+        a = h.find(OPEN, i)
+        if a == -1:
+            out.append(h[i:]); break
+        out.append(h[i:a])
+        close_end = _balanced_end(h, a, OPEN, CLOSE)
+        if close_end is None:
+            out.append(h[a:a + len(OPEN)]); i = a + len(OPEN); continue
+        span = h[a:close_end]
+        cm = _TABLE_COLS_RE.match(span)
+        cols = int(cm.group(1)) if cm else 0
+        if cols >= 10:
+            ctx.wide_table_counter += 1
+            out.append(f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
+                       f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
+                       f'⤢ Expand ({cols} columns)</button>'
+                       f'<div class="wide-table-inline">{span}</div></figure>')
+        else:
+            out.append(span)
+        i = close_end
+    return "".join(out)
+
+
+def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
+                  is_local=True, body_blocks=False, ctx=None):
     """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``.
 
     ``ctx`` carries the per-article footnote state (counter / named numbers / collected
     list); it must be provided wherever «FN» can appear (title, prose, cells).  Without
     it FN markers are left untouched (the inline unit battery passes none).
+
+    ``body_blocks=True`` (the article body only) additionally decodes the block-level forms
+    render_paragraph used to own — page markers, «SH», «EQN» grids, top-level «VERSE» /
+    «OUTLINE», and the cols≥10 wide-table wrap — as balanced markers in place, letting the
+    browser close the open «P».  A cell / footnote leaves it False (no block form appears there).
     """
     # Inline «LN» links honor the render target's URL scheme via ctx.is_local, so the
     # body's links match the panel/plate links (production clean URLs off-golden, the
@@ -399,10 +494,23 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     if escape:
         h = escape_html(h)
 
+    if body_blocks:
+        # BODY-only block forms.  Page markers + shoulder headings go first: «SH» derives its
+        # display text by STRIPPING its inner markers, so it must consume the span before the
+        # footnote / styler passes decode those same markers.
+        from britannica.render.article import render_page_markers, _render_sh
+        h = render_page_markers(h, ctx)
+        h = _render_sh(h)
+
     # Footnotes decode the same in every context (title, prose, cell) — numbered and
     # collected through the shared ctx so a title footnote is #1.
     if ctx is not None:
         h = _render_footnotes(h, ctx)
+
+    if body_blocks:
+        # «EQN» display-equation grids — BEFORE the math pass, so a lone-«MATH» equation is
+        # forced into display mode (and its «MATH» consumed) here rather than decoded inline.
+        h = _render_eqn(h, ctx)
 
     if not skip_math:
         if getattr(ctx, "target", None) == "site":
@@ -416,10 +524,15 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
         else:
             h = _MATH_RE.sub("«MATHPH»", h)
 
-    h = _VERSE_RE.sub(_verse, h)
-    # An «OUTLINE» nested in a cell/verse/footnote — the body block-scan never reached it,
-    # so render the nested <ul> here (item markers decode in the passes below).
+    h = _VERSE_RE.sub(_verse, h)   # IVERSE (inline) → cell-verse span
+    if body_blocks:
+        # Top-level «VERSE» → blockquote (independent open/close subs; «BR» → <br> below).
+        h = _VERSE_BLOCK_OPEN_RE.sub(_verse_block_open, h).replace("}VERSE}", "</blockquote>")
+    # An «IOUTLINE» in a cell/footnote — the item markers decode in the passes below (identity).
     h = _render_outlines(h)
+    if body_blocks:
+        # Top-level «OUTLINE» → the same nested <ul>, its items <p>-wrapped (block-level).
+        h = _render_outlines(h, "«OUTLINE»", "«/OUTLINE»", lambda c: f"<p>{c}</p>")
 
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)
@@ -444,8 +557,11 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _apply_size_markers(h)
 
     h = _BAR_RE.sub(lambda m: f'<span class="inline-bar" style="width:{m.group(1)}em">&nbsp;</span>', h)
-    h = re.sub(r"«DHR(?:\[[^\]]*\])?»",
-               '<span class="dhr-inline"></span>' if dhr_inline else '<span class="dhr-block"></span>', h)
+    # DHR divider — the block-vs-inline choice rides in the marker («DHR» vs «DHRI», stamped by the
+    # producer off ctx.inline), so the render is a plain token sub with no per-caller flag.  «DHRI»
+    # first (it is not a prefix of «DHR», but resolve it before «DHR» to keep the two independent).
+    h = re.sub(r"«DHRI(?:\[[^\]]*\])?»", '<span class="dhr-inline"></span>', h)
+    h = re.sub(r"«DHR(?:\[[^\]]*\])?»", '<span class="dhr-block"></span>', h)
 
     # Paragraph + wrapper markers — open/close substituted independently.
     h = h.replace("«P»", "<p>")
@@ -462,6 +578,12 @@ def decode_inline(h, *, escape=False, dhr_inline=False, skip_math=False, article
     h = _LN_OPEN_RE.sub(_ln_open_factory(article_url), h).replace("«/LN»", "</a>")
     h = _XL_OPEN_RE.sub(_xl_open, h).replace("«/XL»", "</a>")
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
+
+    # Wide-table wrap (BODY only): a cols≥10 table gains its `wide-table-wrap` figure + Expand
+    # button BEFORE the markers decode, so the balanced «TABLE…«/TABLE» inside becomes the
+    # wrapped <table>.  (A cell / footnote leaves body_blocks False — no wrap, as before.)
+    if body_blocks:
+        h = _wrap_wide_tables(h, ctx)
 
     # Recursive table markers — «TABLE[…]»/«TR[…]»/«TD[…]»/«TH[…]»/«CAPTION».  The
     # producer carried the table AS markers (no HTML on the wire), so this is pure

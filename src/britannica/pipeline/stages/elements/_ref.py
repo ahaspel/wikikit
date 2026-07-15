@@ -91,11 +91,15 @@ def _produce_ref_body(ce, context) -> str:
 
     Byte-identical to the old ``process_elements`` recurse: the body text is the same (no ref
     nests in a ref) and it classifies the same way — the ref inner the walker already built."""
+    from dataclasses import replace
     from britannica.pipeline.stages.elements._classifier import (
         produce_tree, substitute_top_level_markers)
     if not ce.inner_registry:
         return ce.inner_text
-    produce_tree(ce.inner_registry, context)
+    # A footnote body renders through decode_inline (format_footnote_text), so its subtree is
+    # INLINE context — mark it sticky so a verse / outline inside a NAMED ref stamps its inline
+    # form, matching the plain-<ref> path (which the main produce_tree recursion already flags).
+    produce_tree(ce.inner_registry, replace(context, inline=True), "REF")
     return substitute_top_level_markers(ce.inner_text, ce.inner_registry)
 
 

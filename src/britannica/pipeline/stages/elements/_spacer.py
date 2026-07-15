@@ -67,7 +67,7 @@ _LEAF_RE = re.compile(r"\{\{\s*([^|{}]*?)\s*(?:\|(.*))?\}\}", re.DOTALL)
 _ESCAPE = {"=": "=", "(": "(", ")": ")", "'": "'", "!": "|", "*": "*", "–": "–"}
 
 
-def process_spacer(raw: str) -> str:
+def process_spacer(raw: str, ctx=None) -> str:
     m = _LEAF_RE.match(raw)
     if not m:
         return raw  # malformed leaf — leak it raw, never sweep to ""
@@ -86,7 +86,11 @@ def process_spacer(raw: str) -> str:
     if low == "ditto":
         return "″"
     if low == "dhr":
-        return f"«DHR[{arg}]»" if arg else "«DHR»"
+        # Decorative divider: block form («DHR») at top level, inline form («DHRI») inside a
+        # TABLE/REF (ctx.inline, threaded sticky by produce_tree) — the render decodes each to
+        # dhr-block / dhr-inline mechanically, no per-caller flag.
+        tag = "DHRI" if getattr(ctx, "inline", False) else "DHR"
+        return f"«{tag}[{arg}]»" if arg else f"«{tag}»"
     if low in ("rule", "bar"):
         mn = re.match(r"(\d+)", arg)
         if mn:

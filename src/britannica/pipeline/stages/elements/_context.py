@@ -29,3 +29,10 @@ class ElementContext:
     # producer read its own parent — the BODY producer keys on it to tell a verse
     # line break (parent POEM/PPOEM → «BR») from a prose soft-wrap (→ space).
     parent_label: str | None = None
+    # STICKY (set once a TABLE/REF ancestor is entered, inherited by every descendant):
+    # this node's content is decoded wholesale by ``decode_inline`` (a table is one
+    # decode pass; a footnote body is another), so a verse / outline here must render in
+    # its INLINE form (span / plain <li>), never a top-level block (blockquote / <p>-item).
+    # The producer stamps the block-vs-inline marker off this; the render decodes it
+    # mechanically, no context re-inference.  Threaded by ``produce_tree``.
+    inline: bool = False

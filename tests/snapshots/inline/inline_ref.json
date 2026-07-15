@@ -100,7 +100,7 @@
   "output": "safe html <sub>2</sub> <sup>3</sup> <small>fine</small> <big>large</big> <br> break"
  },
  {
-  "input": "{{VERSE:line one\nline two\n\nline three}VERSE}",
+  "input": "{{IVERSE:line one«BR»line two«BR»line three}IVERSE}",
   "output": "<span class=\"cell-verse\">line one<br>line two<br>line three</span>"
  },
  {

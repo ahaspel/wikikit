@@ -1,13 +1,15 @@
-"""Article marker-stream → HTML: the Python port of the viewer's renderArticle/renderParagraph.
+"""Article marker-stream → HTML: the Python port of the viewer's renderArticle.
 
 Builds the SAME open-only template the viewer builds (mechanical marker decode); a browser
 (or normalize_html) does the tag fixup.  Verified by diffing normalize_html(this) against the
 jsdom golden (tests/snapshots/render/<stem>.html), per project_render_to_python.
 
-Scope: the shell (card / metadata / contributors / xref) and renderParagraph's block-in-place
-render — the mixed-block split peels every block («TABLE»/«EQN»/VERSE/LEGEND/OUTLINE) in place,
-then TITLE, the self-rendering «EQN» (its own `math-system` grid + right-margin label), and the
-prose path (page markers, inline decode, «P»→<p>, MATH→«MATHPH» stub).
+Scope: the shell (card / metadata / contributors / xref / TITLE h1) only.  The BODY is decoded
+by the ONE mechanical decoder — ``decode_inline(..., body_blocks=True)`` (inline.py) — which
+substitutes every marker in place: prose breaks (open-only «P»→<p>, browser closes at the next
+block), «SH» shoulder headings, «EQN» display-math grids, «VERSE»/«OUTLINE» blocks, the cols≥10
+wide-table wrap, and every inline styler.  There is no render_paragraph, no block re-scan, and
+no span-match regex.
 
 Paragraph structure is CARRIED — prose breaks ride as «P», each numbered equation is a
 self-delimiting «EQN» block — never re-inferred at render: no `\\n\\n` split, no merge pass,
@@ -18,103 +20,30 @@ import re
 import unicodedata
 
 from britannica.render.inline import (
-    build_outline_ul,
     decode_inline,
     escape_html,
     format_footnote_text,
-    parse_img_meta,
-    render_img,
     _article_url,
     _encode_uri_component as _enc,
 )
 # ── marker constants ──
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
-# The table rides as recursive markers now (`«TABLE[…]»…«TR»…«TD[…]»…«/TABLE»`),
-# decoded mechanically by `decode_inline` — no `render_table`, no html5lib
-# re-parse.  `«TABLE[` is the open (the `cols`/attr payload always follows).
-TABLE_OPEN, TABLE_CLOSE = "«TABLE[", "«/TABLE»"
 
 _PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
-_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
-_EQN_PARA_RE = re.compile(
-    r"^\s*((?:\x01PAGE:\d+\x01\s*)*)«EQN:([^»]*)»([\s\S]*?)«/EQN»\s*$", re.S)
-# A genuine single-«MATH» EQN: the content group must NOT cross an internal «/MATH», so a
-# multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its
-# close backtracks to the LAST «/MATH», lumping every equation into one display span and
-# leaking the interior «/MATH»«MATH: markers) and falls to the inline decode instead — the
-# same clean path the non-leaking multi-equation rows already took.
+# A genuine single-«MATH» EQN row: the content group must NOT cross an internal «/MATH», so a
+# multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its close
+# backtracks to the LAST «/MATH», lumping every equation into one display span and leaking the
+# interior «/MATH»«MATH: markers) and each equation decodes inline instead.  The «EQN» grid owner
+# (inline._render_eqn) imports this to force a lone-«MATH» row into display mode.
 _MATH_ONLY_RE = re.compile(
     r"^«MATH(?:\[([^\]]*)\])?:((?:(?!«/MATH»)[\s\S])*?)«/MATH»\s*[.,;:]?\s*$", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
 _SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
-_VERSE_BLOCK_RE = re.compile(r"^\{\{VERSE(?:\[style:([^\]]*)\])?:([\s\S]*)\}VERSE\}$")
-_IMG_ANCHORED_RE = re.compile(
-    r"^\{\{IMG:([^|}]+)"
-    r"((?:\|(?:align=(?:center|left|right)|width=\d+|height=\d+))*)"
-    r"(?:\|([^{}]*))?\}\}$"
-)
 
-
-# ── Single-outline render: parse the flat «OLI:depth» items and hand them to the
-# ONE owner (build_outline_ul), which stamps class="outline" (bullet-free) and
-# densifies the sparse depths into nested <ul>s.  No forked renderer, no bullets.
-def _render_outline_block(marker: str, ctx) -> str:
-    """Parse the flat depth-tagged `«OLI:depth»…«/OLI»` items out of an `«OUTLINE»`
-    block and render them through `build_outline_ul`.  Item content renders block-aware
-    (a `:<math>` item's math, etc.) via `render_paragraph`."""
-    inner = marker[len("«OUTLINE»"):-len("«/OUTLINE»")]
-    items, i = [], 0
-    while True:
-        a = inner.find("«OLI:", i)
-        if a == -1:
-            break
-        colon = inner.find("»", a)
-        end = inner.find("«/OLI»", colon)
-        items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
-        i = end + len("«/OLI»")
-    return build_outline_ul(items, None, lambda c: render_paragraph(c, None, ctx))
 _ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
-
-# The block markers, each an (open, close) pair.  `render_paragraph` walks `p` and peels each
-# balanced block in place with the ONE matcher (`find_marker_end`) — a nested table / outline is
-# bounded correctly, where a non-greedy `«X»[\s\S]*?«/X»` span-match would mis-pair on nesting.
-_BLOCK_OPENERS = (
-    ("«TITLE:", "«/TITLE»"),
-    ("«EQN:", "«/EQN»"),
-    ("«OUTLINE»", "«/OUTLINE»"),
-    ("{{VERSE", "}VERSE}"),
-    ("«TABLE[", "«/TABLE»"),
-)
-
-
-def _find_blocks(p):
-    """Every top-level block marker in `p` as (start, text), left to right, balanced-matched and
-    skipping any that opens inside an «FN» span (the footnote handler decodes those whole)."""
-    fn_ranges = _fn_span_ranges(p)
-    blocks = []
-    i, n = 0, len(p)
-    while i < n:
-        nxt = None
-        for opener, closer in _BLOCK_OPENERS:
-            pos = p.find(opener, i)
-            if pos != -1 and (nxt is None or pos < nxt[0]):
-                nxt = (pos, opener, closer)
-        if nxt is None:
-            break
-        pos, opener, closer = nxt
-        if any(a <= pos < b for a, b in fn_ranges):
-            i = pos + len(opener)
-            continue
-        end = find_marker_end(p, pos, opener, closer)
-        if end == -1:
-            i = pos + len(opener)
-            continue
-        blocks.append((pos, p[pos:end]))
-        i = end
-    return blocks
 
 
 # Latin ligatures / letters NFKD leaves whole — expand to their base sequence for the
@@ -147,90 +76,23 @@ def _render_title_markers(value, ctx):
     return decode_inline(escape_html(value or ""), ctx=ctx)
 
 
+def _render_title_h1(marker, ctx):
+    """The head-of-body «TITLE:…«/TITLE» element → an <h1> with a drop-cap first character.
+    The one block form the shell renders directly (it sits above the body, not in the «P» flow),
+    so it stays here rather than in the body's mechanical decode."""
+    inner = marker[len(TITLE_OPEN):len(marker) - len(TITLE_CLOSE)]
+    h = decode_inline(escape_html(inner), ctx=ctx)
+    dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
+    if dc:
+        h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
+             f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
+    return f"<h1>{h}</h1>"
+
+
 def _section_slug(name):
     s = name.strip().lower()
     s = re.sub(r"[^a-z0-9]+", "-", s)
     return re.sub(r"^-|-$", "", s)
-
-
-def find_marker_end(s, start, open_m, close_m):
-    """Index just past the balanced close of the marker opening at `start` (-1 if none)."""
-    depth = 1
-    i = start + len(open_m)
-    n = len(s)
-    while i < n:
-        if s.startswith(open_m, i):
-            depth += 1
-            i += len(open_m)
-        elif s.startswith(close_m, i):
-            depth -= 1
-            i += len(close_m)
-            if depth == 0:
-                return i
-        else:
-            i += 1
-    return -1
-
-
-def _fn_span_ranges(s):
-    """Balanced (start, end) ranges of every «FN:…«/FN» / «FN[name]:…«/FN» span in `s`.
-
-    A footnote is an INLINE ref whose CONTENT may be body-level (a bibliography table,
-    a verse quotation).  Its block markers belong to the footnote — the inline «FN»
-    handler decodes the whole span as a unit — so the body block-scan must NOT split
-    them out (that tears the «FN» span across block boundaries and leaks «FN:»/«/FN»).
-    """
-    ranges = []
-    i = s.find("«FN")
-    while i != -1:
-        if s.startswith("«FN:", i) or s.startswith("«FN[", i):   # opener, not the «/FN» close
-            end = find_marker_end(s, i, "«FN", "«/FN»")
-            if end != -1:
-                ranges.append((i, end))
-                i = s.find("«FN", end)
-                continue
-        i = s.find("«FN", i + 3)
-    return ranges
-
-
-def _outline_span_ranges(s):
-    """Balanced (start, end) ranges of every «OUTLINE»…«/OUTLINE» span in `s` — depth-matched, so a
-    nested outline doesn't tear.  Parallel to `_fn_span_ranges`: keeps the body block-scan from
-    splitting an outline whose items are newline-delimited across a line boundary."""
-    ranges = []
-    i = s.find("«OUTLINE»")
-    while i != -1:
-        end = find_marker_end(s, i, "«OUTLINE»", "«/OUTLINE»")
-        if end == -1:
-            break
-        ranges.append((i, end))
-        i = s.find("«OUTLINE»", end)
-    return ranges
-
-
-def _split_lines_keep_spans(text):
-    """`text.split("\\n")`, except a "\\n" inside an «FN:…«/FN» or «OUTLINE:…«/OUTLINE»
-    span is not a split point.
-
-    A block renderer (verse / legend / outline) decodes its content line-by-line and
-    joins with <br>.  A footnote whose body carries its own line break (a verse
-    translation quoted in a note), or an OUTLINE whose items ARE newline-delimited, would
-    otherwise be split across lines — each line's inline decode then sees a lone «FN:» /
-    «/FN» / «OUTLINE:» / «/OUTLINE», a torn span that leaks.  Identical to ``str.split``
-    whenever no such span straddles a newline.
-    """
-    ranges = _fn_span_ranges(text) + _outline_span_ranges(text)
-    if not ranges:
-        return text.split("\n")
-    parts, last, i = [], 0, text.find("\n")
-    while i != -1:
-        if not any(a <= i < b for a, b in ranges):
-            parts.append(text[last:i])
-            last = i + 1
-        i = text.find("\n", i + 1)
-    parts.append(text[last:])
-    return parts
-
 
 
 class RenderContext:
@@ -349,122 +211,6 @@ def _render_sh(html):
     return _SH_RE.sub(repl, html)
 
 
-def render_paragraph(p, next_para, ctx):
-    """Render one merged paragraph to (open-only) HTML, mirroring renderParagraph."""
-    # Mixed-paragraph split: block marker(s) + surrounding prose → split and recurse.  The blocks
-    # are found by ONE balanced descent (`_find_blocks`), not a non-greedy span-match.
-    blocks = _find_blocks(p)
-    if blocks:
-        only_block = len(blocks) == 1 and blocks[0][1] == p.strip()
-        if not only_block:
-            pieces = []
-            cursor = 0
-            for idx, text in blocks:
-                if idx > cursor:
-                    before = p[cursor:idx]
-                    if before.strip():
-                        pieces.append(before)
-                pieces.append(text)
-                cursor = idx + len(text)
-            if cursor < len(p):
-                after = p[cursor:]
-                if after.strip():
-                    pieces.append(after)
-            return "".join(render_paragraph(piece.strip(), None, ctx) for piece in pieces)
-
-    # Article title — «TITLE» heading element: escape, decode, drop-cap the first char.
-    if p.startswith(TITLE_OPEN) and p.endswith(TITLE_CLOSE):
-        inner = p[len(TITLE_OPEN):len(p) - len(TITLE_CLOSE)]
-        h = decode_inline(escape_html(inner), ctx=ctx)
-        dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
-        if dc:
-            h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
-                 f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
-        return f"<h1>{h}</h1>"
-
-    # Numbered display-math block — a self-contained «EQN:label»content«/EQN».  It renders its
-    # own math plus its label in the right margin (the `math-system` CSS grid), the SAME HTML
-    # the render-time «EQNGROUP» wrapper produced for a lone equation — which is every equation:
-    # a group never carried a second numbered row (a 2nd label breaks the old loop), so there is
-    # nothing to bundle.  The label rides inside the marker; no wrapper, no `\n\n` grouping.
-    eqm = _EQN_PARA_RE.match(p)
-    if eqm:
-        label_text = eqm.group(2)
-        content = eqm.group(3).strip()
-        # A genuine single-«MATH» row renders in display mode; anything else — a multi-
-        # equation row (Y_z=Z_y,  Z_x=X_z,  …), or prose+math — decodes inline, exactly as
-        # the non-leaking multi-«MATH» rows (MOLECULE) already did.  The tightened
-        # _MATH_ONLY_RE is what stops a multi-equation row from being lumped into one span
-        # (which leaked the interior «/MATH»«MATH: markers); it now falls here, clean.
-        mo = _MATH_ONLY_RE.match(content)
-        content_html = (_render_display_math(mo.group(2), mo.group(1), ctx) if mo
-                        else decode_inline(content, escape=True, dhr_inline=True, ctx=ctx))
-        row_html = (f'<div class="math-system-row">'
-                    f'{render_page_markers(eqm.group(1) or "", ctx)}{content_html}</div>')
-        label_html = (f'<div class="math-system-label">({escape_html(label_text)})</div>'
-                      if label_text else "")
-        return (f'<div class="math-system"><div class="math-system-rows">'
-                f'{row_html}</div>{label_html}</div>')
-
-    # Standalone block image (a paragraph that IS one image) → the <img>, no <p> wrap.
-    im = _IMG_ANCHORED_RE.match(p)
-    if im:
-        return render_img(im.group(1), parse_img_meta(im.group(2)), im.group(3) or "")
-
-    # Hierarchical outline → a single recursive «OUTLINE»…«/OUTLINE» of nested «OLI:depth»
-    # items, rendered through the shared owner build_outline_ul.  The same owner serves an
-    # outline nested in a cell/verse via decode_inline's «OUTLINE» handler.
-    if p.startswith("«OUTLINE»") and p.endswith("«/OUTLINE»"):
-        return _render_outline_block(p, ctx)
-
-    # Verse → blockquote (lines joined by <br>).
-    vm = _VERSE_BLOCK_RE.match(p)
-    if vm:
-        style_attr = f' style="{vm.group(1).replace(chr(34), "&quot;")}"' if vm.group(1) else ""
-        lines = [decode_inline(escape_html(s), ctx=ctx) for s in _split_lines_keep_spans(vm.group(2)) if s.strip()]
-        return f'<blockquote class="verse"{style_attr}>{"<br>".join(lines)}</blockquote>'
-
-    # Complex table (rowspan/colspan/nested/chem preserved) — «TABLE[…]».  It rides
-    # as recursive markers, so it decodes through the SAME sequence as prose (escape
-    # → page markers → inline decode → math): `decode_inline` owns the marker→tag
-    # substitution for the table structure AND any nested table, in one pass, with
-    # no html5lib re-parse.  Balanced-match the close so a table whose cell holds
-    # another table isn't truncated; `cols` (off the opener, derived by the table producer)
-    # drives the wide-table wrap.
-    if p.startswith(TABLE_OPEN):
-        end = find_marker_end(p, 0, TABLE_OPEN, TABLE_CLOSE)
-        if end != -1:
-            cm = _TABLE_COLS_RE.match(p)
-            cols = int(cm.group(1)) if cm else 0
-            html = escape_html(p[:end])
-            html = render_page_markers(html, ctx)
-            # Cell context: `dhr_inline=True`, and `skip_math` default False so a
-            # cell's «MATH» decodes INLINE to the «MATHPH» stub — exactly as the old
-            # per-cell decode did (the golden's katex stub returns «MATHPH» too).
-            html = decode_inline(html, dhr_inline=True, ctx=ctx)
-            trailing = p[end:].strip()
-            trailing_html = render_paragraph(trailing, None, ctx) if trailing else ""
-            if cols >= 10:
-                # Wide table: renders inline but gains an "Expand" button to a full-width modal.
-                ctx.wide_table_counter += 1
-                rendered = (f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
-                            f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
-                            f'⤢ Expand ({cols} columns)</button>'
-                            f'<div class="wide-table-inline">{html}</div></figure>')
-            else:
-                rendered = html
-            return rendered + trailing_html
-
-    # Prose → <p> with left-margin page markers + inline decode + MATH stub.
-    html = escape_html(p)
-    html = render_page_markers(html, ctx)
-    html = _render_sh(html)
-    html = decode_inline(html, skip_math=True, ctx=ctx)
-    html = _render_math_markers(html, ctx)
-    return f"<p>{html}</p>"
-
-
-
 def dedupe_anchor_id(seen, id_):
     seen[id_] = seen.get(id_, 0) + 1
     return id_ if seen[id_] == 1 else f"{id_}-{seen[id_]}"
@@ -539,11 +285,13 @@ def _render_body(article, ctx):
     if "\x01PAGE:" not in marked and article.get("page_start"):
         marked = f"\x01PAGE:{article['page_start']}\x01" + marked
     # Paragraph structure is CARRIED, not re-inferred: prose breaks ride as «P» (→<p>, the
-    # browser auto-closes) and each numbered equation is a self-delimiting «EQN» block.  So there
-    # is no `\n\n` split and no merge pass — render the whole body once; render_paragraph's block
-    # scan peels every block («TABLE»/«EQN»/VERSE/…) in place and the prose runs through «P»→<p>.
+    # browser auto-closes at the next block) and each numbered equation is a self-delimiting «EQN».
+    # A leading «P» opens the first paragraph — the body has no separator before its first prose
+    # run.  decode_inline(body_blocks=True) is the ONE mechanical decoder: it owns every block form
+    # in place (page markers, «SH», «EQN» grids, «VERSE»/«OUTLINE», the cols≥10 wide-table wrap)
+    # as balanced markers — no render_paragraph, no `\n\n` split, no block re-scan.
     detect_sections([marked], ctx)
-    body_html = render_paragraph(marked, None, ctx)
+    body_html = decode_inline("«P»" + marked, escape=True, body_blocks=True, ctx=ctx)
     # De-dup colliding section ids in the SAME document order detect_sections used, so
     # each TOC link resolves to its own anchor (first keeps section-<slug>, reuses get -N).
     id_seen = {}
@@ -604,11 +352,12 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
                      f'\n            {"".join(items)}'
                      f"\n          </ul>")
 
-    # h1 — the «TITLE» element at the head of the body, rendered through renderParagraph.
+    # h1 — the «TITLE» element at the head of the body (drop-cap first char); if the body
+    # carries no «TITLE», fall back to the article's title field.
     body = article.get("body") or ""
     tm = re.match(r"^«TITLE:[\s\S]*?«/TITLE»", body)
     if tm:
-        h1 = render_paragraph(tm.group(0), None, ctx)
+        h1 = _render_title_h1(tm.group(0), ctx)
     else:
         h1 = f'<h1>{_render_title_markers(article.get("title") or "Untitled", ctx)}</h1>'
 

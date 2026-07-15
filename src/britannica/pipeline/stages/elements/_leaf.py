@@ -128,7 +128,8 @@ def _process_ppoem(raw, inner, context, inner_registry) -> str:
     """PPOEM producer — `{{ppoem|…}}`, the preformatted-poem template (verse analog of
     `<poem>`).  A COMPOSITE: `_classify_ppoem_composite` peeled the verse (`_ppoem_verse`)
     and decomposed it into child nodes; we substitute their markers and wrap in the SAME
-    `{{VERSE:…}VERSE}` marker as `<poem>`.  An all-control / empty ppoem renders to nothing."""
+    `{{VERSE:…}VERSE}` marker as `<poem>` — the INLINE variant (`{{IVERSE:…}IVERSE}`) when the
+    ppoem sits inside a TABLE/REF (ctx.inline).  An all-control / empty ppoem renders to nothing."""
     content = inner   # verse line breaks are «BR»: the BODY producer, seeing its PPOEM parent, made them
     if inner_registry is not None:
         for _ in range(5):
@@ -142,4 +143,5 @@ def _process_ppoem(raw, inner, context, inner_registry) -> str:
                 break
     if not content.strip():
         return ""
-    return "{{VERSE:" + content + "}VERSE}"
+    opener, closer = ("{{IVERSE:", "}IVERSE}") if context.inline else ("{{VERSE:", "}VERSE}")
+    return opener + content + closer

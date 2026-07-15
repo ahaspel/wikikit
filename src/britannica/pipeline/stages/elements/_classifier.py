@@ -1225,6 +1225,13 @@ def classify_article(
 # ── Producer pass over the classified tree ────────────────────────────
 
 
+# Labels whose subtree the render decodes wholesale through decode_inline (a table as one
+# pass, a footnote body as another) — so every descendant sits in INLINE context.  Entering
+# one flips ``context.inline`` sticky for the whole subtree (see ``produce_tree``).  The
+# figure/legend family all classify as TABLE now, so this one label covers them too.
+_INLINE_FORCING = frozenset({"TABLE", "REF"})
+
+
 def produce_tree(
     tree: dict[str, ClassifiedElement], context, parent_label: str | None = None
 ) -> None:
@@ -1257,7 +1264,13 @@ def produce_tree(
         # `_to_legacy_registry` is called below (which copies
         # children's markers into the registry view).
         if ce.inner_registry:
-            produce_tree(ce.inner_registry, context, ce.label)
+            # A TABLE / REF renders its whole subtree through decode_inline (the table is one
+            # decode pass, a footnote body another), so every descendant is in INLINE context —
+            # set it sticky here and let it ride down every level unchanged.
+            child_context = (replace(context, inline=True)
+                             if ce.label in _INLINE_FORCING and not context.inline
+                             else context)
+            produce_tree(ce.inner_registry, child_context, ce.label)
 
         legacy_inner_reg = (
             _to_legacy_registry(ce.inner_registry)

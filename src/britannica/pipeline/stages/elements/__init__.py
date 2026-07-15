@@ -1019,8 +1019,10 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # EB1911_SELFREF / FRAGMENT_LINK / INTRA_ARTICLE_LINK / WIKILINK) is generated from `_PR_WRAP`
     # below (peel/recurse/wrap): `_link_display` peels the display, each `_wrap_*` parses the
     # target from raw and emits «LN».
-    # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.
-    "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw),
+    # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.  `ctx` rides in
+    # for the ONE context-dependent leaf: a `{{dhr}}` divider is block («DHR») in prose, inline
+    # («DHRI») inside a TABLE/REF — the same sticky-flag distinction verse/outline carry.
+    "SPACER": lambda raw, inner, ctx, reg: process_spacer(raw, ctx),
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:
     # render the block at the source's own indent width (default 2em), recurse the text.
     "HANGING_INDENT": process_hanging_indent,
@@ -1103,11 +1105,7 @@ for _pr_label in _PR_WRAP:
 # and `produce_tree` substitutes the child markers into `inner` afterward.  (OUTLINE_ITEM embeds
 # `raw` in its opener and MIRROR_GLYPH strips `inner`, so those stay hand-written.)
 _MARKER_WRAP = {
-    "OUTLINE":    ("«OUTLINE»", "«/OUTLINE»"),   # the nested OUTLINE_ITEM ladder
     "HIEROGLYPH": ("[hieroglyph: ", "]"),        # <hiero> → the Gardiner-code stub
-    # POEM — <poem> → block-level {{VERSE:…}VERSE}; the recursed inner already carries its verse
-    # line breaks as «BR» (recognized at the read point in `_classify_poem_composite`).
-    "POEM":       ("{{VERSE:", "}VERSE}"),
 }
 
 
@@ -1118,6 +1116,33 @@ def _make_marker_wrap(label):
 
 for _mw_label in _MARKER_WRAP:
     _PRODUCER_DISPATCH[_mw_label] = _make_marker_wrap(_mw_label)
+
+
+# Block-vs-inline marker-wrap producers — like `_MARKER_WRAP`, but the (opener, closer) pair is
+# chosen by `ctx.inline` (threaded sticky by `produce_tree`).  A verse / outline at top level is
+# a BLOCK (blockquote / <p>-wrapped <li> items); the SAME construct inside a TABLE/REF is INLINE
+# (a `cell-verse` span / plain <li>), because that container is decoded wholesale by
+# decode_inline.  The producer stamps the distinction into the marker; the render decodes each
+# variant mechanically, with no context re-inference.  (OUTLINE's nested OUTLINE_ITEM ladder and
+# POEM's «BR» line breaks ride through `inner` either way — only the wrapper differs.)
+_BLOCK_INLINE_WRAP = {
+    #           BLOCK (opener, closer)         INLINE (opener, closer)
+    "POEM":    (("{{VERSE:", "}VERSE}"),       ("{{IVERSE:", "}IVERSE}")),
+    "OUTLINE": (("«OUTLINE»", "«/OUTLINE»"),   ("«IOUTLINE»", "«/IOUTLINE»")),
+}
+
+
+def _make_block_inline_wrap(label):
+    (b_open, b_close), (i_open, i_close) = _BLOCK_INLINE_WRAP[label]
+
+    def _produce(raw, inner, ctx, reg):
+        opener, closer = (i_open, i_close) if ctx.inline else (b_open, b_close)
+        return f"{opener}{inner}{closer}"
+    return _produce
+
+
+for _bi_label in _BLOCK_INLINE_WRAP:
+    _PRODUCER_DISPATCH[_bi_label] = _make_block_inline_wrap(_bi_label)
 
 
 # ── ONE figure/image producer ─────────────────────────────────────────────
