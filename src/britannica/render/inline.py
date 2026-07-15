@@ -33,30 +33,21 @@ def escape_html(value):
     return s
 
 
-_FILENAME_RE = re.compile(r"^(\d{2}-\d{4}-[a-z0-9][a-z0-9-]*?)-([^a-z0-9-].*)$")
-
-
 def _article_url(filename, is_local=True, bundled=None):
-    """filename → article link URL, mirroring article-urls.js `filenameToUrl`.  The
-    ONE URL builder for every article link (inline «LN», xref panel, plate/parent).
-    is_local=True is the jsdom-stub form the byte-identical golden uses; production is
-    the clean `/article/{id}/{slug}`.  ``bundled`` (a set of in-book stems) selects the
-    EPUB policy: a target IN the book → relative `{stem}.xhtml`; one that isn't → the
-    absolute live-site URL (a book can't hold the whole corpus, and an absolute URL is
-    valid inside an EPUB — it carries the link instead of dropping it)."""
+    """``{stable_id}.json`` filename → article link URL.  The ONE URL builder for every
+    article link (inline «LN», xref panel, plate/parent).  Production URLs route on the
+    stable_id ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title
+    is not in the key); the viewer canonicalises a readable slug into the address bar after
+    load.  is_local returns the jsdom BritannicaUrls stub the byte-identical golden uses;
+    ``bundled`` (a set of in-book stems) selects the EPUB policy (in-book → relative
+    `{stem}.xhtml`, else the absolute live-site URL)."""
+    stem = re.sub(r"\.json$", "", str(filename or ""))
     if bundled is not None:
-        stem = re.sub(r"\.json$", "", str(filename or ""))
         return (f"{stem}.xhtml" if stem in bundled
                 else "https://britannica11.org" + _article_url(filename, is_local=False))
     if is_local:
-        return "/article/" + filename           # matches the jsdom BritannicaUrls stub
-    base = re.sub(r"\.json$", "", str(filename or ""))
-    m = _FILENAME_RE.match(base)
-    if m:
-        return f"/article/{m.group(1)}/{m.group(2).lower()}"
-    page = re.sub(r"^0+", "", base).split("-")[0]        # legacy numeric-id fallback
-    slug = base[base.index("-") + 1:].lower() if "-" in base else base.lower()
-    return f"/article/{page}/{slug}"
+        return "/article/" + filename           # jsdom BritannicaUrls stub
+    return "/article/" + stem
 
 
 def _encode_uri_component(s):

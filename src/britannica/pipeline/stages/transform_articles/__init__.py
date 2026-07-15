@@ -19,7 +19,7 @@ from britannica.db.session import SessionLocal
 
 from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
 from britannica.pipeline.stages.elements._title import (
-    produce_title, decode_title, recover_title_from_section)
+    produce_title, decode_title)
 
 
 
@@ -184,8 +184,12 @@ def walk_article(session, article) -> str:
     # product (AMERICA, PLATE II), NOT a `produce_title` shape — leave the
     # detection-set plate title alone.
     if article.article_type != "plate":
-        field = recover_title_from_section(
-            decode_title(marker), article.section_name or "")
+        # The title IS the decoded «TITLE» headword — the 1911 print is the sole title
+        # authority.  (Previously recover_title_from_section overrode it with the
+        # Wikisource «section» id whenever the id was a longer prefix — manufacturing
+        # ALGEBRAB / POLANDB from continuation sections and re-spelling TISIO →
+        # TISIO BENVENUTO.  The section id is transcriber scaffolding, never the title.)
+        field = decode_title(marker)
         if field:
             article.title = field
     # Keep the «TITLE:…«/TITLE» node in the body: the viewer renders it

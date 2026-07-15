@@ -215,30 +215,76 @@ def _source_quality(session, article: Article) -> dict:
 from britannica.util.strings import section_slug as _section_slug
 
 
-def stable_id(article) -> str:
-    """Deterministic article identifier: {vol:02d}-{page:04d}-{section}.
+# Deterministic collision-suffix registry.  A section slug can collide within a (vol, page):
+# BOG and BOGÓ both slug to "04-0131-bog" (the accent drops to nothing).  While the title rode
+# in the filename this was invisible (…-BOG.json vs …-BOGÓ.json); with the title-independent
+# `{stable_id}.json` key the stable_id must itself be unique.  `register_stable_id_dedup` runs
+# ONCE over the whole corpus at export start; the loser of each collision (deterministic order)
+# takes a `-2`/`-3` suffix — the only source of non-uniqueness once the filename dropped the title.
+_STABLE_ID_SUFFIX: dict[int, str] = {}
 
-    - `volume` and `page_start` are intrinsic source properties — only
-      change when the article's physical location in the wikitext moves.
-    - Section slug disambiguates the up-to-12 articles that can share a
-      (vol, page) on a crowded page. Derived from the article's
-      `<section begin="X">` tag; falls back to a slug of the title when
-      no section name is stored (plates, legacy rows).
 
-    Stable URLs / S3 keys / Meilisearch doc IDs rely on this form.
-    External citations to britannica11.org/article/{stable_id}/{slug}
-    survive rebuilds."""
+def _section_slug_for(article) -> str:
+    """The article's raw section slug — the identity discriminator that WAS the visible
+    stable_id tail, and is still what an OLD `/article/{vol}-{page}-{slug}` URL carries.
+    Hashed into the id below; the forwarder recomputes the same hash from this slug."""
     slug = _section_slug(article.section_name) if article.section_name else ""
-    if not slug:
-        slug = _section_slug(article.title)
-    return f"{article.volume:02d}-{article.page_start:04d}-{slug}"
+    return slug or _section_slug(article.title)
 
 
-def _safe_filename(article_id, title: str) -> str:
-    """Generate a filename from an Article instance (or precomputed stable_id).
+def _base_stable_id(article) -> str:
+    # Hash the section slug to an opaque 6-hex tail: keeps the id stable + article-anchored,
+    # but off the URL go the accent-mangling (poincar), the cruft (algebrab), and the readable
+    # name (which returns, correctly, as the cosmetic title slug).  A forwarder recomputes this
+    # SAME hash from an old URL's slug — table-free.  `hashlib` is deterministic (no Date/random).
+    import hashlib
+    h = hashlib.sha1(_section_slug_for(article).encode("utf-8")).hexdigest()[:6]
+    return f"{article.volume:02d}-{article.page_start:04d}-{h}"
 
-    Numeric int IDs are no longer accepted — callers must pass the full
-    Article object or the stable-id string."""
+
+def register_stable_id_dedup(articles) -> int:
+    """Assign deterministic collision suffixes so every article's stable_id is unique.  Call
+    once over the FULL corpus before any stable_id / filename / «LN» baking.  Returns how many
+    articles received a suffix (0 in a clean corpus)."""
+    from collections import defaultdict as _dd
+    _STABLE_ID_SUFFIX.clear()
+    by_base: dict[str, list] = _dd(list)
+    for a in articles:
+        by_base[_base_stable_id(a)].append(a)
+    n = 0
+    for _base, arts in by_base.items():
+        if len(arts) <= 1:
+            continue
+        # Deterministic: sort by (title, id).  First keeps the bare id; the rest get -2, -3…
+        for i, a in enumerate(sorted(arts, key=lambda x: ((x.title or ""), x.id))[1:], start=2):
+            _STABLE_ID_SUFFIX[a.id] = f"-{i}"
+            n += 1
+    return n
+
+
+def stable_id(article) -> str:
+    """Deterministic, UNIQUE article identifier: {vol:02d}-{page:04d}-{section}[-N].
+
+    - `volume` and `page_start` are intrinsic source properties — only change when the
+      article's physical location in the wikitext moves.
+    - The section slug disambiguates the up-to-12 articles that can share a (vol, page).
+      Derived from the article's `<section begin="X">` tag (article-anchored, so it never
+      shifts when a page-mate is added/removed — unlike a positional ordinal); falls back to
+      a slug of the title when no section name is stored (plates, legacy rows).
+    - A rare within-page slug collision (BOG vs BOGÓ) takes a deterministic `-N` suffix from
+      `register_stable_id_dedup` — see above.
+
+    Stable URLs / S3 keys / Meilisearch doc IDs rely on this form.  External citations to
+    britannica11.org/article/{stable_id} survive rebuilds (the title is title-independent)."""
+    return _base_stable_id(article) + _STABLE_ID_SUFFIX.get(getattr(article, "id", None), "")
+
+
+def _safe_filename(article_id, title: str = "") -> str:
+    """Article JSON filename = ``{stable_id}.json`` — TITLE-INDEPENDENT, so a title change
+    (ALGEBRAB→ALGEBRA) or a title-formatting difference never moves the file or the URL; the
+    viewer routes on the stable_id alone.  Accepts an Article instance or a precomputed
+    stable-id string.  (``title`` is retained for call-site compatibility but is no longer
+    part of the key.)"""
     if isinstance(article_id, Article):
         stable = stable_id(article_id)
     elif isinstance(article_id, str):
@@ -247,14 +293,7 @@ def _safe_filename(article_id, title: str) -> str:
         raise TypeError(
             f"_safe_filename expected str stable_id or Article, got "
             f"{type(article_id).__name__}")
-    # Strip title-formatting markers (`«B»`/`«I»`/`«SC»`) so the
-    # filename slug doesn't carry underscore noise from the markers.
-    plain = strip_title_markers(title)
-    safe_title = "".join(
-        ch if ch.isalnum() or ch in ("-", "_") else "_"
-        for ch in plain.upper()
-    )
-    return f"{stable}-{safe_title}.json"
+    return f"{stable}.json"
 
 
 # Structured-content spans we must not wrap inside (breaking them
@@ -820,9 +859,16 @@ def export_articles_to_json(
                 first_line = ln
                 break
             first_line = re.sub(r"  +", " ", first_line).strip()
+            # Reach the identifying clause: drop a leading parenthetical (dates /
+            # etymology / pronunciation) and its trailing punctuation so the
+            # description opens on the defining appositive ("king of England,
+            # surnamed the Conqueror") instead of "(1027–1087),".  Repeated for
+            # stacked parens; the title itself is already gone (markers_to_text
+            # strips the «TITLE» head).
+            first_line = re.sub(r"^(?:\([^()]*\)[,;:.]?\s*)+", "", first_line).strip()
             words = first_line.split()
-            if len(words) > 10:
-                body_start = " ".join(words[:10]) + "…"
+            if len(words) > 12:
+                body_start = " ".join(words[:12]) + "…"
             else:
                 body_start = " ".join(words)
             index.append({

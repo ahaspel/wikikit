@@ -122,18 +122,6 @@ def decode_title(marker: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def recover_title_from_section(field: str, section_name: str) -> str:
-    """When the bold heading was a PARTIAL capture — a strict prefix of the
-    article's section id (``«B»TISIO`` vs section "Tisio Benvenuto") — the section
-    carries the fuller title.  Full-prefix match only, so a spelling variant keeps
-    the authoritative source heading."""
-    sec = re.sub(r"\s+", " ", (section_name or "").replace("_", " ")).strip()
-    if (sec and field and sec.upper() != field.upper()
-            and sec.upper().startswith(field.upper())):
-        return sec.upper()
-    return field
-
-
 def _first_template_arg(text: str) -> str | None:
     """Return the first positional argument of an open template.
 

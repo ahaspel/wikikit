@@ -18,7 +18,8 @@ from britannica.contributors.link_frontmatter import link_from_frontmatter
 from britannica.contributors.link_vol29_articles import link_vol29_articles
 from britannica.db.models import Article, ArticleContributor, ContributorInitials
 from britannica.db.session import SessionLocal
-from britannica.export.article_json import export_articles_to_json
+from britannica.export.article_json import (
+    export_articles_to_json, register_stable_id_dedup)
 from britannica.pipeline.stages.extract_contributors import (
     _harvest_signature_contributors,
 )
@@ -92,6 +93,12 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
     session = SessionLocal()
     try:
         all_articles, corpus = assemble_corpus(session)
+        # Assign deterministic stable_id collision suffixes ONCE, corpus-wide, BEFORE any
+        # id / filename / «LN» / resolution-index baking reads stable_id.  With the hashed,
+        # title-independent `{id}.json` key a same-slug pair (BOG/BOGÓ → both "bog") would
+        # write to one file and silently drop an article; the suffix keeps both.
+        n_dedup = register_stable_id_dedup(all_articles)
+        print(f"  [assemble] stable_id dedup: {n_dedup} collision suffix(es)", flush=True)
         # Contributor LINKING folded in (was Phase 3b / 3b2): the harvest above
         # bound footer sign-offs; these bind the front-matter-table fallback and
         # the vol-29 master-Index attributions.  In-process, because the corpus is
