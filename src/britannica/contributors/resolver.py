@@ -23,7 +23,6 @@ _TITLE_RE = re.compile(
     r"^(?:(?:Prof(?:essor)?\.?|Dr\.?|Mr\.?|Mrs\.?|Miss|Sir|Rev(?:erend)?\.?|The)\s+)+",
     re.IGNORECASE,
 )
-_INITIAL_RE = re.compile(r"^([A-Za-z])\.?$")
 
 
 def _strip_title(name: str) -> str:
@@ -48,15 +47,6 @@ def _parts(name: str) -> list[str]:
     return _strip_title(
         _strip_trailing_paren(_normalise_spaces(name))
     ).split(" ")
-
-
-def _first_letter(token: str) -> str | None:
-    m = _INITIAL_RE.match(token)
-    if m:
-        return m.group(1).upper()
-    if token and token[0].isalpha():
-        return token[0].upper()
-    return None
 
 
 def _score_first(input_first: str, cand_first: str) -> int:
