@@ -71,9 +71,10 @@ def section_key(text: str) -> str:
 _ROMAN_PREFIX_RE = re.compile(r"^[ivxlcdm]+")
 
 
-def match_section_slug(sections, name: str, *, aggressive: bool = False) -> str | None:
-    """Resolve a section reference `name` to a section slug within `sections`
-    (each a ``{"title", "slug", …}`` dict), or None.
+def match_section(sections, name: str, *, aggressive: bool = False):
+    """Resolve a section reference `name` to the matching section — a
+    ``{"title", "slug", …}`` dict — within `sections`, or None.  Callers read
+    its ``slug`` and/or ``title``.
 
     One cascade, tuned only on precision — the same per-caller knob as the xref
     resolver ([[project_resolver_consolidation]]).  Tiers: exact key → roman-
@@ -104,11 +105,13 @@ def match_section_slug(sections, name: str, *, aggressive: bool = False) -> str 
     tiers = (exact, prefix, suffix, contained) if aggressive else (exact, prefix, contained)
     for bucket in tiers:
         if len(bucket) == 1:
-            return bucket[0].get("slug") or None
+            return bucket[0]
         if bucket:
             if aggressive:
-                return min(
-                    bucket, key=lambda s: len(section_key(s.get("title", "")))
-                ).get("slug") or None
+                # Tightest match on a tie — measured on the roman-numeral-
+                # stripped key, so a "IV.—" section prefix isn't counted as
+                # length (a numeral prefix is furniture, not specificity).
+                return min(bucket, key=lambda s: len(
+                    _ROMAN_PREFIX_RE.sub("", section_key(s.get("title", "")))))
             return None  # precise: ambiguous → skip
     return None
