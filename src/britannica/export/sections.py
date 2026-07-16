@@ -57,3 +57,58 @@ def detect_sections(body: str) -> list[dict]:
             "level": level, "kind": kind,
         })
     return sections
+
+
+def section_key(text: str) -> str:
+    """The section-title match key: lowercase, alphanumerics only, so
+    'History of Astronomy' matches 'historyofastronomy'.  The single Python
+    owner ([[project_resolver_consolidation]]) for what was forked across the
+    Reader's Guide (`_normalize_for_match`) and the topic index; the viewer's
+    `sectionKey` mirrors it across the JS runtime boundary."""
+    return re.sub(r"[^a-z0-9]+", "", (text or "").lower())
+
+
+_ROMAN_PREFIX_RE = re.compile(r"^[ivxlcdm]+")
+
+
+def match_section_slug(sections, name: str, *, aggressive: bool = False) -> str | None:
+    """Resolve a section reference `name` to a section slug within `sections`
+    (each a ``{"title", "slug", …}`` dict), or None.
+
+    One cascade, tuned only on precision — the same per-caller knob as the xref
+    resolver ([[project_resolver_consolidation]]).  Tiers: exact key → roman-
+    numeral-prefix-stripped key → (aggressive only) suffix → substring.
+
+    ``aggressive=False`` (Reader's Guide, precise): abstain on any tie — a wrong
+    deep-link is a visible error, better skipped.  ``aggressive=True`` (topic
+    index, recall): take the tightest (shortest-title) match on a tie."""
+    target = section_key(name)
+    if not target:
+        return None
+    exact: list = []
+    prefix: list = []
+    suffix: list = []
+    contained: list = []
+    for sec in sections:
+        tkey = section_key(sec.get("title", ""))
+        if not tkey:
+            continue
+        if tkey == target:
+            exact.append(sec)
+        elif _ROMAN_PREFIX_RE.sub("", tkey) == target:
+            prefix.append(sec)
+        elif aggressive and tkey.endswith(target):
+            suffix.append(sec)
+        elif target in tkey:
+            contained.append(sec)
+    tiers = (exact, prefix, suffix, contained) if aggressive else (exact, prefix, contained)
+    for bucket in tiers:
+        if len(bucket) == 1:
+            return bucket[0].get("slug") or None
+        if bucket:
+            if aggressive:
+                return min(
+                    bucket, key=lambda s: len(section_key(s.get("title", "")))
+                ).get("slug") or None
+            return None  # precise: ambiguous → skip
+    return None

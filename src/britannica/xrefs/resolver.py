@@ -113,10 +113,10 @@ def disambiguate_among(
 
 
 def resolve_xref_fuzzy(
-    xref: CrossReference, title_map: dict[str, int]
+    xref: CrossReference, title_map: dict[str, int], aggressive: bool = False
 ) -> int | None:
     target = normalize_xref_target(xref.normalized_target or "")  # 1b: canonical (was .strip().upper())
-    return find_fuzzy_match(target, title_map)
+    return find_fuzzy_match(target, title_map, aggressive=aggressive)
 
 
 # ---------------------------------------------------------------------------
@@ -365,12 +365,19 @@ def build_index(all_articles: list[Article], corpus=None) -> ResolutionIndex:
 
 
 def resolve(
-    xref: CrossReference, idx: ResolutionIndex
+    xref: CrossReference, idx: ResolutionIndex, *, aggressive: bool = False
 ) -> tuple[int | None, str | None]:
     """The resolution ladder for one xref, with no DB writes.
 
     Returns ``(target_article_id, target_section)`` — both ``None`` when
     nothing resolves.
+
+    ``aggressive`` is the per-caller precision knob
+    ([[project_resolver_consolidation]]): False (default) for inline article
+    xrefs — a wrong link is a visible error the reader clicks; True for the
+    classified-TOC / recall callers — an occasional miss is fine and an
+    OCR-repaired hit is a win.  It gates only the fuzzy OCR-edit-distance pass;
+    exact/alias/section/collision picking are decisive either way.
     """
     target = normalize_xref_target(xref.normalized_target or "")  # 1b: canonical (was .strip().upper())
     target_article_id: int | None = None
@@ -419,9 +426,10 @@ def resolve(
                     xref, base_candidates, idx.body_of)
                 section = suffix
 
-    # 3. Fuzzy matching.
+    # 3. Fuzzy matching (aggressive gates the OCR edit-distance pass).
     if target_article_id is None:
-        target_article_id = resolve_xref_fuzzy(xref, idx.title_map)
+        target_article_id = resolve_xref_fuzzy(
+            xref, idx.title_map, aggressive=aggressive)
 
     # 4. LLM-resolved unresolveds (last-resort).
     if target_article_id is None and idx.disambig_cache:

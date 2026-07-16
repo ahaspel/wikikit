@@ -14,4 +14,8 @@ def normalize_xref_target(text: str) -> str:
     #   "Europe: History" (editorial colon form)
     # Normalize both to "ARTICLE: SECTION" so they collapse to one entry.
     text = re.sub(r"\s*#\s*", ": ", text)
-    return text.upper()
+    # Fold the Æ ligature to AE — a pure canonicalization (unambiguous in
+    # English), so "Ægean"/"Aegean" and "Encyclopædia"/"Encyclopaedia" resolve
+    # as one entry.  Was a bespoke pre-step in the Reader's Guide title
+    # resolver, now shared by every caller ([[project_resolver_consolidation]]).
+    return text.upper().replace("Æ", "AE")
