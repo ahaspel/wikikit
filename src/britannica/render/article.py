@@ -334,6 +334,19 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
     xrefs = sorted(article.get("xrefs") or [],
                    key=lambda x: _xref_sort_key(
                        x.get("target_title") or x.get("normalized_target") or ""))
+    # Dedupe by target: two source refs to one article (ALGEBRA's "Continued
+    # Fraction" + "Continued Fractions" → CONTINUED FRACTIONS) collapse to one
+    # panel entry.  The old source-phrasing display masked this (the labels read
+    # differently); the canonical display exposes it.
+    _seen: set = set()
+    _deduped = []
+    for x in xrefs:
+        key = x.get("target_filename") or x.get("normalized_target") or ""
+        if key in _seen:
+            continue
+        _seen.add(key)
+        _deduped.append(x)
+    xrefs = _deduped
     contributors = article.get("contributors") or []
 
     xref_html = ""
