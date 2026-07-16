@@ -328,8 +328,12 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
         is_local=is_local,
         epub_bundled=epub_bundled,
     )
+    # Sort by the SAME name the panel shows — the canonical title for a resolved
+    # xref, the normalized reference otherwise — so the alphabetical order matches
+    # the displayed labels (was sorting by the source phrasing, `normalized_target`).
     xrefs = sorted(article.get("xrefs") or [],
-                   key=lambda x: _xref_sort_key(x.get("normalized_target") or ""))
+                   key=lambda x: _xref_sort_key(
+                       x.get("target_title") or x.get("normalized_target") or ""))
     contributors = article.get("contributors") or []
 
     xref_html = ""
@@ -338,10 +342,15 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
         for xref in xrefs:
             normalized = xref.get("normalized_target") or ""
             resolved = (xref.get("status") or "") == "resolved"
-            # Recurse the display through the decoder like all display text — the
-            # target may carry style markers («I»/«SC») that rode in from the source;
-            # printing it raw leaked them into the panel.  Clean targets are unchanged.
-            disp = decode_inline(normalized, escape=True, ctx=ctx)
+            # The panel is OUR index, so a resolved xref shows OUR canonical title
+            # (DESCARTES, RENÉ), not the source's phrasing — the inline prose keeps
+            # the original text ([[project_resolver_consolidation]] display policy).
+            # Unresolved falls back to the normalized reference.  Recurse the display
+            # through the decoder like all display text — the target may carry style
+            # markers («I»/«SC») that rode in from the source; printing it raw leaked
+            # them into the panel.
+            disp = decode_inline(xref.get("target_title") or normalized,
+                                 escape=True, ctx=ctx)
             inner = (f'<a href="{_build_xref_href(xref, is_local, epub_bundled)}">{disp}</a>'
                      if resolved else disp)
             items.append(

@@ -679,6 +679,10 @@ def export_articles_to_json(
                         entry["target_filename"] = _safe_filename(
                             target, target.title
                         )
+                        # The panel is OUR index, so it shows OUR canonical title
+                        # (DESCARTES, RENÉ), not the source's phrasing — carry it
+                        # so the renderer needn't reuse the inline display text.
+                        entry["target_title"] = target.title
                 xref_list.append(entry)
 
             xref_counts[article.id] = (
