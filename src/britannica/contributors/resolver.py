@@ -16,6 +16,8 @@ signal — callers get None rather than a wrong match.
 from __future__ import annotations
 
 import re
+import unicodedata
+from collections import defaultdict
 
 _TITLE_RE = re.compile(
     r"^(?:(?:Prof(?:essor)?\.?|Dr\.?|Mr\.?|Mrs\.?|Miss|Sir|Rev(?:erend)?\.?|The)\s+)+",
@@ -57,6 +59,24 @@ def _first_letter(token: str) -> str | None:
     return None
 
 
+def _score_first(input_first: str, cand_first: str) -> int:
+    """Score whether `input_first` names the same person as `cand_first`:
+    2 = full-name match ("Donald"/"Donald"), 1 = initial↔spelled-out
+    ("D."/"Donald"), 0 = no match.  Shared by ContributorResolver and
+    ContributorIndex."""
+    inp = input_first.rstrip(".").lower()
+    cand = cand_first.rstrip(".").lower()
+    if not inp or not cand:
+        return 0
+    if inp == cand:
+        return 2
+    if len(inp) == 1 and cand.startswith(inp):
+        return 1
+    if len(cand) == 1 and inp.startswith(cand):
+        return 1
+    return 0
+
+
 class ContributorResolver:
     """Given a list of canonical contributor full names, resolve free
     text names to the matching canonical form (or None)."""
@@ -88,24 +108,7 @@ class ContributorResolver:
 
     @staticmethod
     def _first_token_matches(input_first: str, cand_first: str) -> int:
-        """Score the likelihood that `input_first` refers to `cand_first`.
-
-        2 = full-name match ("Donald" vs "Donald").
-        1 = initial match ("D." vs "Donald", or "Donald" vs "D.").
-        0 = no match.
-        """
-        inp = input_first.rstrip(".").lower()
-        cand = cand_first.rstrip(".").lower()
-        if not inp or not cand:
-            return 0
-        if inp == cand:
-            return 2
-        # Initial vs spelled-out
-        if len(inp) == 1 and cand.startswith(inp):
-            return 1
-        if len(cand) == 1 and inp.startswith(cand):
-            return 1
-        return 0
+        return _score_first(input_first, cand_first)
 
     def resolve(self, text: str) -> str | None:
         """Return the canonical full name for `text`, or None."""
@@ -185,3 +188,140 @@ def make_resolver_from_json(contributors: list[dict]) -> ContributorResolver:
         if c.get("full_name")
     ]
     return ContributorResolver([n for n in names if isinstance(n, str)])
+
+
+def _name_core_tokens(name: str) -> list[str]:
+    """The 'First Middle Last' token list of a name — honorifics, a trailing
+    ``(…)`` qualifier, and a trailing ``, CREDENTIALS`` / ``; ORDER`` tail all
+    removed, and each token stripped of edge punctuation — so surname
+    extraction and scoring see the person, not the packaging ("Louis Bell,
+    Ph.D" → ['Louis', 'Bell']; "Edward Cuthbert Butler; O.S.B" → [..., 'Butler'])."""
+    n = _strip_trailing_paren(_strip_title(_normalise_spaces(name or "")))
+    n = re.split(r"[;,]", n, 1)[0]
+    toks = [t.strip(".,;") for t in n.split(" ")]
+    return [t for t in toks if t]
+
+
+def _norm_initials(initials: str) -> str:
+    """Asterisk-preserving initials key.  Lazy import keeps resolver.py free of
+    the extract-contributors dependency (and its import cycle)."""
+    if not initials:
+        return ""
+    from britannica.pipeline.stages.extract_contributors import _normalize_initials
+    return _normalize_initials(initials)
+
+
+def _fold(s: str) -> str:
+    """Diacritic-folded lowercase, so 'Müller' and 'Muller' compare equal."""
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", s or "")
+        if not unicodedata.combining(c)
+    ).lower()
+
+
+class ContributorIndex:
+    """The single owner of ``(name, initials) → contributor id`` resolution
+    ([[project_contributor_resolver_consolidation]]).
+
+    Built from records ``(id, full_name, [initials])``; resolves over two
+    indexes — an ASTERISK-PRESERVING initials map (``V. C.`` and ``V. C.*`` are
+    distinct people) and diacritic-folded surname buckets scored on first/middle
+    names (via the shared ``_score_first``).
+
+    It NEVER guesses ([[feedback_contributor_zero_false_positives]]): anything
+    short of a confident, unique determination returns None; there is no
+    abstain/guess knob.  A unique initials owner is trusted whenever its SURNAME
+    agrees with the entry's (diacritic-folded) — same person despite first-name
+    drift (Harry/Henry, ``W.``/William, Müller/Muller).  Only a surname MISMATCH
+    signals a dropped-mark collision (Bell/Bénédite, Muir/Muther) where the
+    initials are corrupt; then the name resolves the true owner — and if the
+    name resolves nowhere, the initials owner stands (spelling drift,
+    McNaught/M'Naught).
+    """
+
+    def __init__(self, records) -> None:
+        self._by_id: dict[int, str] = {}
+        self._by_initials: dict[str, list[int]] = defaultdict(list)
+        self._by_surname: dict[str, list[int]] = defaultdict(list)
+        self._core: dict[int, list[str]] = {}
+        for cid, full_name, initials in records:
+            self._by_id[cid] = full_name
+            core = _name_core_tokens(full_name)
+            self._core[cid] = core
+            if core:
+                self._by_surname[_fold(core[-1])].append(cid)
+            for ini in initials:
+                key = _norm_initials(ini)
+                if key:
+                    self._by_initials[key].append(cid)
+
+    def _surname_of(self, cid: int) -> str:
+        core = self._core.get(cid) or []
+        return _fold(core[-1]) if core else ""
+
+    def _best(self, core: list[str], ids: list[int]) -> int | None:
+        """The unique best-scoring id among `ids` for the entry's core tokens —
+        first name must be compatible (initial↔spelled-out counts); ties and
+        no-first-match return None (never a guess)."""
+        scored: list[tuple[int, int, int]] = []
+        for cid in ids:
+            cc = self._core.get(cid) or []
+            if not cc:
+                continue
+            first_score = _score_first(core[0], cc[0])
+            if first_score == 0:
+                continue
+            cand_middles = cc[1:-1]
+            middle_score = sum(
+                1 for im in core[1:-1]
+                if any(_score_first(im, cm) > 0 for cm in cand_middles)
+            )
+            scored.append((first_score, middle_score, cid))
+        if not scored:
+            return None
+        scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+        if len(scored) == 1 or (scored[0][0], scored[0][1]) > (scored[1][0], scored[1][1]):
+            return scored[0][2]
+        return None
+
+    def _resolve_name(self, core: list[str]) -> int | None:
+        """Confident unique contributor for the entry's core tokens, by surname
+        bucket + first/middle score; None when unknown or ambiguous."""
+        if not core:
+            return None
+        return self._best(core, self._by_surname.get(_fold(core[-1]), []))
+
+    def resolve(self, name: str | None = None,
+                initials: str | None = None) -> int | None:
+        """Resolve ``(name, initials)`` to a contributor id, or None."""
+        init_ids = (self._by_initials.get(_norm_initials(initials), [])
+                    if initials else [])
+        core = _name_core_tokens(name) if name else []
+
+        if init_ids:
+            if len(init_ids) == 1:
+                owner = init_ids[0]
+                if not core:
+                    return owner
+                # Surname agrees → same person despite first-name drift.
+                if _fold(core[-1]) == self._surname_of(owner):
+                    return owner
+                # Surname differs.  If the owner still corroborates on first
+                # name AND a middle name, it's a surname variant/typo of the
+                # same person (George Croom Roberston→Robertson; McNaught/
+                # M'Naught) — keep the owner.  Only when the owner ISN'T
+                # corroborated is this a dropped-mark collision (Bell/Bénédite,
+                # Muir/Muther): the name resolves the true owner, or the owner
+                # stands if the name resolves nowhere.
+                oc = self._core.get(owner) or []
+                if (oc and _score_first(core[0], oc[0]) > 0
+                        and any(_score_first(im, om) > 0
+                                for im in core[1:-1] for om in oc[1:-1])):
+                    return owner
+                named = self._resolve_name(core)
+                return named if named is not None else owner
+            # Several owners at this initials key → the entry name must land
+            # uniquely on one of them, else abstain.
+            return self._best(core, init_ids) if core else None
+        # No initials signal → confident name resolution, or None.
+        return self._resolve_name(core)

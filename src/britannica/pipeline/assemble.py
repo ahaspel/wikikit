@@ -106,7 +106,7 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
         # land before the export reads `ArticleContributor`.
         print("  [assemble] linking contributors (front-matter + vol-29)…",
               flush=True)
-        link_from_frontmatter()
+        link_from_frontmatter(apply_mode=True)
         link_vol29_articles(apply_mode=True)
         print("  [assemble] building cross-reference resolution index…", flush=True)
         idx = build_resolution_index(all_articles, corpus=corpus)
