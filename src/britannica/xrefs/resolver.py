@@ -73,7 +73,7 @@ def _display_disambiguator(xref: CrossReference) -> str | None:
 
 
 def disambiguate_among(
-    xref: CrossReference, candidates: list[Article], body_of=None
+    xref: CrossReference, candidates: list[Article], body_of=None, kinds_of=None
 ) -> int | None:
     """Apply self-reference + display-disambiguator + fallback rules
     to pick one candidate's id.  Returns None only when the candidate
@@ -102,7 +102,8 @@ def disambiguate_among(
         # article, never mis-firing on the canton's "capital").
         want = hint_kind(disambiguator)
         if want:
-            pick = pick_by_kind([(c, c.title) for c in remaining], want, _open)
+            pick = pick_by_kind([(c, c.title) for c in remaining], want, _open,
+                                kinds_of=kinds_of)
             if pick is not None:
                 return pick.id
         # 2b: legacy whole-opening word-grep, kept as a fallback until the
@@ -273,12 +274,12 @@ class ResolutionIndex:
     __slots__ = (
         "title_to_articles", "section_lookup", "title_map",
         "ambiguous_titles", "stable_id_to_article_id", "disambig_cache",
-        "articles_by_id", "body_of",
+        "articles_by_id", "body_of", "kinds_of",
     )
 
     def __init__(self, title_to_articles, section_lookup, title_map,
                  ambiguous_titles, stable_id_to_article_id, disambig_cache,
-                 articles_by_id, body_of):
+                 articles_by_id, body_of, kinds_of=None):
         self.title_to_articles = title_to_articles
         self.section_lookup = section_lookup
         self.title_map = title_map
@@ -287,6 +288,10 @@ class ResolutionIndex:
         self.disambig_cache = disambig_cache
         self.articles_by_id = articles_by_id
         self.body_of = body_of
+        # candidate → its kinds from the post-export kind index (C-full); a
+        # no-op returning ∅ when the index isn't built yet (in-DB resolve).
+        self.kinds_of = kinds_of if kinds_of is not None else (
+            lambda _c: frozenset())
 
 
 def build_core_maps(items, *, value_of):
@@ -368,10 +373,31 @@ def build_index(all_articles: list[Article], corpus=None) -> ResolutionIndex:
         def body_of(c):
             return c.body or ""
 
+    # C-full: the post-export kind index (filename → [kinds]).  Keyed on the
+    # stable_ids already resolved for the ambiguity state, so no extra hashing.
+    # Absent during the in-DB build (before Phase 6b3 writes it); present in the
+    # Phase-6b4 post-export resolve, where it lets the disambiguator pick a
+    # candidate by its topic bucket when its own opening's lead is silent or
+    # misleading.  [[project_resolver_consolidation]]
+    kinds_by_id: dict[int, frozenset] = {}
+    kind_index_file = Path("data/derived/kind_index.json")
+    if kind_index_file.exists():
+        try:
+            raw_kinds = json.loads(kind_index_file.read_text(encoding="utf-8"))
+        except Exception:
+            raw_kinds = {}
+        for sid, aid in stable_id_to_article_id.items():
+            ks = raw_kinds.get(f"{sid}.json")
+            if ks:
+                kinds_by_id[aid] = frozenset(ks)
+
+    def kinds_of(c):
+        return kinds_by_id.get(c.id, frozenset())
+
     return ResolutionIndex(
         title_to_articles, section_lookup, title_map,
         ambiguous_titles, stable_id_to_article_id, disambig_cache,
-        articles_by_id, body_of,
+        articles_by_id, body_of, kinds_of,
     )
 
 
@@ -411,7 +437,8 @@ def resolve(
     # 1. Exact title / alias / section-alias (collision-aware).
     candidates = idx.title_to_articles.get(target)
     if candidates:
-        target_article_id = disambiguate_among(xref, candidates, idx.body_of)
+        target_article_id = disambiguate_among(
+            xref, candidates, idx.body_of, idx.kinds_of)
         if target in idx.section_lookup:
             section = idx.section_lookup[target]
 
@@ -434,7 +461,7 @@ def resolve(
             base_candidates = idx.title_to_articles.get(base)
             if base_candidates and suffix:
                 target_article_id = disambiguate_among(
-                    xref, base_candidates, idx.body_of)
+                    xref, base_candidates, idx.body_of, idx.kinds_of)
                 section = suffix
 
     # 3. Fuzzy matching (aggressive gates the OCR edit-distance pass).

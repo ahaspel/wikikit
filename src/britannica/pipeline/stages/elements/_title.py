@@ -39,6 +39,12 @@ _LETTER_OPENER_RE = re.compile(
 # node instead of mangling the link (HOLLAR, WENZEL or WENCESLAUS).
 _AUTHORLINK = re.compile(
     r"\[\[(?:Author|Portal):[^\]|]*\|(.*?)\]\]", re.DOTALL | re.IGNORECASE)
+# The OPENING of that link alone — matched at the head of a title span whose
+# closing `]]` straddled into the body (see produce_title).
+_AUTHORLINK_OPEN = re.compile(
+    r"\s*\[\[(?:Author|Portal):[^\]|]*\|", re.IGNORECASE)
+# The orphaned closing brackets that link left behind in the body.
+_ORPHAN_CLOSE = re.compile(r"\]\]")
 
 # The trailing JOINT comma EB1911 leaves at the end of the bold headword
 # (``«B»ARTEMIS,«/B»``, ``«B»{{uc|Colenso,}}«/B»``) — the inline separator to the
@@ -312,7 +318,20 @@ def produce_title(opening: str, section_name: str = "") -> tuple[str, str]:
         # freight-strip runs in the TITLE element producer, on the recursed marker
         # — the joint comma can hide inside `{{uc|Colenso,}}` until the walk
         # collapses it, so it isn't visible to a strip here, pre-walk.
-        return page + rest.lstrip(" \t,."), _AUTHORLINK.sub(r"\1", span)
+        span = _AUTHORLINK.sub(r"\1", span)
+        # STRADDLING author-link: the subject is a Wikisource author, so the
+        # heading is wrapped `[[Author:X|'''NAME,''' {{sc|Rank}}]]` — but the bold
+        # ends before the `]]`, so `_title_span` captured the opening `[[Author:X|`
+        # with the closing `]]` (and the trailing rank) left in the body.  The
+        # full-link `_AUTHORLINK` above can't fire without the `]]`, so strip the
+        # orphaned opening off the title and drop its orphan `]]` from the body —
+        # else the raw wikilink leaks into the title field (DOVER, LIVY, …) and,
+        # via the xref panel, into every article that links to them.
+        om = _AUTHORLINK_OPEN.match(span)
+        if om:
+            span = span[om.end():]
+            rest = _ORPHAN_CLOSE.sub("", rest, count=1)
+        return page + rest.lstrip(" \t,."), span
     # Letter articles open with a drop-cap, not a bold heading.  Carve the
     # drop-cap construct as the title span (all six documented shapes) so the
     # letter rides the «TITLE» node exactly like a bold heading — one decider.

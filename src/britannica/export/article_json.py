@@ -443,6 +443,31 @@ def _xrefs_from_body(body, article_id, link_index):
     return xrefs
 
 
+def xref_panel_entries(xrefs, session):
+    """Panel rows for a set of resolved xrefs: normalized_target + status +,
+    for a resolved one, OUR canonical target_filename/target_title (the panel is
+    OUR index — it shows DESCARTES, RENÉ, not the source's phrasing).  One owner,
+    shared by the in-export path and the post-export resolve phase (Phase F)."""
+    out = []
+    for xref in xrefs:
+        entry = {
+            "surface_text": xref.surface_text,
+            "normalized_target": xref.normalized_target,
+            "xref_type": xref.xref_type,
+            "status": xref.status,
+            "target_article_id": xref.target_article_id,
+        }
+        if xref.target_section:
+            entry["target_section"] = xref.target_section
+        if xref.target_article_id is not None:
+            target = session.get(Article, xref.target_article_id)
+            if target:
+                entry["target_filename"] = _safe_filename(target, target.title)
+                entry["target_title"] = target.title
+        out.append(entry)
+    return out
+
+
 def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                         global_title_to_filename):
     """The body-linking half of the xref decorator, lifted out of
@@ -515,6 +540,7 @@ def export_articles_to_json(
     only_article_id: int | None = None,
     link_index=None,
     xref_sink: list | None = None,
+    defer_xrefs: bool = False,
 ) -> int:
     """Export one volume's articles to JSON.
 
@@ -659,31 +685,13 @@ def export_articles_to_json(
             if (only_article_id is not None
                     and article.id != only_article_id):
                 continue
-            xrefs = _xrefs_from_body(
-                _body_for(article), article.id, link_index)
+            # defer_xrefs (Phase-F): the whole xref+render tail moves to the
+            # post-export resolve phase (6b4), which can see the kind index.
+            # Here the body is written with its raw producer markers.
+            xrefs = ([] if defer_xrefs else _xrefs_from_body(
+                _body_for(article), article.id, link_index))
 
-            xref_list = []
-            for xref in xrefs:
-                entry = {
-                    "surface_text": xref.surface_text,
-                    "normalized_target": xref.normalized_target,
-                    "xref_type": xref.xref_type,
-                    "status": xref.status,
-                    "target_article_id": xref.target_article_id,
-                }
-                if xref.target_section:
-                    entry["target_section"] = xref.target_section
-                if xref.target_article_id is not None:
-                    target = session.get(Article, xref.target_article_id)
-                    if target:
-                        entry["target_filename"] = _safe_filename(
-                            target, target.title
-                        )
-                        # The panel is OUR index, so it shows OUR canonical title
-                        # (DESCARTES, RENÉ), not the source's phrasing — carry it
-                        # so the renderer needn't reuse the inline display text.
-                        entry["target_title"] = target.title
-                xref_list.append(entry)
+            xref_list = xref_panel_entries(xrefs, session)
 
             xref_counts[article.id] = (
                 len(xref_list),
@@ -718,10 +726,10 @@ def export_articles_to_json(
 
             # Resolve inline link markers (xrefs + EB9): the body-linking
             # half of the decorator.
-            body = _link_xrefs_in_body(
+            body = (_body_for(article) if defer_xrefs else _link_xrefs_in_body(
                 _body_for(article), xrefs, stable_id(article), session,
                 global_title_to_filename,
-            )
+            ))
 
             # Convert PAGE markers from Wikisource to printed page numbers.
             # A ws page with no direct entry in printed_pages.json is
@@ -822,8 +830,12 @@ def export_articles_to_json(
             # bakes production clean URLs (/article/{id}/{title}); scans render as a bare
             # `scans.html` anchor that fixScanHrefs rebuilds at load (the back param is
             # location.href — runtime-only, never bakeable).
-            payload["rendered_html"] = render_article(
-                payload, is_local=False, target="site")
+            # Rendered HTML is a pure function of the RESOLVED payload (decorated
+            # body + panel), so under defer_xrefs the render moves to 6b4 too --
+            # rendered exactly once, after resolution.
+            if not defer_xrefs:
+                payload["rendered_html"] = render_article(
+                    payload, is_local=False, target="site")
 
             safe_filename = _safe_filename(article, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)

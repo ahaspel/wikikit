@@ -121,6 +121,11 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
                 body_override=corpus,
                 link_index=idx,
                 xref_sink=xref_rows,
+                # Phase F: defer xref resolution + baking + render to the
+                # post-export resolve phase (tools/pipeline/resolve_xrefs_post.py,
+                # rebuild phase 6b4), which can disambiguate against the kind
+                # index.  [[project_resolver_consolidation]]
+                defer_xrefs=True,
             )
             total += n
             print(f"  [export] vol {volume}: {n} articles ({total} total)", flush=True)

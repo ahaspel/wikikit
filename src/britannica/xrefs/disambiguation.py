@@ -226,15 +226,27 @@ def kind_qualifies(lk: str | None, want: str) -> bool:
     return lk == want
 
 
-def pick_by_kind(candidates, want, opening_of):
-    """The UNIQUE candidate whose lead-kind qualifies for `want`, ignoring
+def pick_by_kind(candidates, want, opening_of, kinds_of=None):
+    """The UNIQUE candidate whose kind qualifies for `want`, ignoring
     institutional/event decoys.  Returns None (abstain) if zero or many
     qualify, or if `want` is falsy.  `candidates` is a list of (key, title);
-    `opening_of(key)` yields that candidate's body opening."""
+    `opening_of(key)` yields that candidate's body opening.
+
+    ``kinds_of(key)``, when supplied (the post-export kind index, C-full), adds
+    that candidate's recorded kinds (its topic bucket ∪ its stored lead) to the
+    live ``lead_kind``, so a candidate whose OPENING misleads ("...on the river
+    X" → river) or lacks an is-a noun still qualifies by its bucket."""
     if not want:
         return None
     elig = [(k, t) for k, t in candidates if not INSTITUTIONAL_RE.search(t)]
-    hits = [k for k, _t in elig if kind_qualifies(lead_kind(opening_of(k)), want)]
+
+    def _qualifies(k):
+        kinds = {lead_kind(opening_of(k))}
+        if kinds_of is not None:
+            kinds |= kinds_of(k)
+        return any(kind_qualifies(lk, want) for lk in kinds)
+
+    hits = [k for k, _t in elig if _qualifies(k)]
     return hits[0] if len(hits) == 1 else None
 
 
