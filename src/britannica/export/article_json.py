@@ -222,6 +222,11 @@ from britannica.util.strings import section_slug as _section_slug
 # ONCE over the whole corpus at export start; the loser of each collision (deterministic order)
 # takes a `-2`/`-3` suffix — the only source of non-uniqueness once the filename dropped the title.
 _STABLE_ID_SUFFIX: dict[int, str] = {}
+# A collision LOSER is preferentially re-slugged on its ACCENT-FOLD (BOGÓ ->
+# "bogo" -> a real, forwarder-routable hash) rather than an opaque, un-routable
+# "-N" counter; the numeric suffix is only the fallback when the fold ALSO
+# collides.  Keyed by article id; consulted by stable_id ahead of base+suffix.
+_STABLE_ID_OVERRIDE: dict[int, str] = {}
 
 
 def _section_slug_for(article) -> str:
@@ -242,22 +247,46 @@ def _base_stable_id(article) -> str:
     return f"{article.volume:02d}-{article.page_start:04d}-{h}"
 
 
+def _folded_base_stable_id(article) -> str:
+    """A collision loser's id hashed on the ACCENT-FOLDED slug source (NFKD:
+    'Bogó' -> 'bogo'), so it stays a real {vv}-{pppp}-{hash6} the forwarder can
+    recompute — not an opaque, un-routable -N counter."""
+    import hashlib
+    import unicodedata
+    raw = article.section_name or ""
+    slug = _section_slug(unicodedata.normalize("NFKD", raw)) if raw else ""
+    slug = slug or _section_slug(unicodedata.normalize("NFKD", article.title or ""))
+    h = hashlib.sha1(slug.encode("utf-8")).hexdigest()[:6]
+    return f"{article.volume:02d}-{article.page_start:04d}-{h}"
+
+
 def register_stable_id_dedup(articles) -> int:
-    """Assign deterministic collision suffixes so every article's stable_id is unique.  Call
-    once over the FULL corpus before any stable_id / filename / «LN» baking.  Returns how many
-    articles received a suffix (0 in a clean corpus)."""
+    """Make every article's stable_id UNIQUE across collisions.  A collision
+    LOSER is re-slugged on its accent-fold (a real, forwarder-routable hash);
+    only if that fold ALSO collides does it fall back to a numeric -N suffix.
+    Call once over the FULL corpus before any stable_id / filename / «LN» baking.
+    Returns how many articles were re-slugged."""
     from collections import defaultdict as _dd
     _STABLE_ID_SUFFIX.clear()
+    _STABLE_ID_OVERRIDE.clear()
     by_base: dict[str, list] = _dd(list)
     for a in articles:
         by_base[_base_stable_id(a)].append(a)
+    used = set(by_base)                       # every base id already in use
     n = 0
     for _base, arts in by_base.items():
         if len(arts) <= 1:
             continue
-        # Deterministic: sort by (title, id).  First keeps the bare id; the rest get -2, -3…
-        for i, a in enumerate(sorted(arts, key=lambda x: ((x.title or ""), x.id))[1:], start=2):
-            _STABLE_ID_SUFFIX[a.id] = f"-{i}"
+        counter = 2
+        # Deterministic: sort by (title, id).  First keeps the bare id.
+        for a in sorted(arts, key=lambda x: ((x.title or ""), x.id))[1:]:
+            alt = _folded_base_stable_id(a)
+            if alt != _base and alt not in used:
+                _STABLE_ID_OVERRIDE[a.id] = alt   # accent-fold: forwarder-routable
+                used.add(alt)
+            else:
+                _STABLE_ID_SUFFIX[a.id] = f"-{counter}"
+                counter += 1
             n += 1
     return n
 
@@ -276,7 +305,10 @@ def stable_id(article) -> str:
 
     Stable URLs / S3 keys / Meilisearch doc IDs rely on this form.  External citations to
     britannica11.org/article/{stable_id} survive rebuilds (the title is title-independent)."""
-    return _base_stable_id(article) + _STABLE_ID_SUFFIX.get(getattr(article, "id", None), "")
+    aid = getattr(article, "id", None)
+    if aid in _STABLE_ID_OVERRIDE:            # collision loser re-slugged on its fold
+        return _STABLE_ID_OVERRIDE[aid]
+    return _base_stable_id(article) + _STABLE_ID_SUFFIX.get(aid, "")
 
 
 def _safe_filename(article_id, title: str = "") -> str:
