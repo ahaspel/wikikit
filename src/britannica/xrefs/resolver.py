@@ -112,9 +112,15 @@ def disambiguate_among(
         if len(matched) == 1:
             return matched[0].id
 
-    # Rule 3: fallback — first remaining candidate.  Deterministic
-    # and matches the "first-wins" behavior of the pre-fix code.
-    return remaining[0].id
+    # Rule 3: salience fallback.  A bare collision (or one whose hint didn't
+    # resolve) has no kind signal, so pick the most PROMINENT article -- the
+    # longest body, the main subject over a same-named stub -- instead of
+    # dict-order first-wins.  `max` keeps the first candidate on a length tie, so
+    # it stays deterministic and degrades to the old first-wins when bodies match.
+    return max(
+        remaining,
+        key=lambda c: len(body_of(c) if body_of else (c.body or "")),
+    ).id
 
 
 def resolve_xref_fuzzy(
