@@ -236,3 +236,34 @@ def pick_by_kind(candidates, want, opening_of):
     elig = [(k, t) for k, t in candidates if not INSTITUTIONAL_RE.search(t)]
     hits = [k for k, _t in elig if kind_qualifies(lead_kind(opening_of(k)), want)]
     return hits[0] if len(hits) == 1 else None
+
+
+# ── A parenthetical disambiguator word -> a wanted-kind ────────────────────
+# An explicit source xref carries its kind in a parenthetical -- Zürich (city),
+# David (king of Judah), Alcázar (province).  Map that word into the SAME kind
+# space `lead_kind` emits, so `pick_by_kind` settles the collision by the
+# candidates' own leads (the sharp signal) instead of the whole-opening word-grep
+# (`matches_disambiguator`, which mis-fires: the canton says "the capital is
+# Zürich").  Built off `_LEAD_NOUNS` so hint and lead share one vocabulary.
+_NOUN_KIND = dict(_LEAD_NOUNS)
+_NOUN_KIND.update({"colony": "division", "dependency": "division",
+                   "protectorate": "division", "shire": "division",
+                   "territory": "division"})
+# Settlement words go to the lenient 'town' want (lead may say town OR city).
+_SETTLEMENT = {"city", "town", "village", "borough", "burgh", "seaport",
+               "capital", "port", "watering-place"}
+
+
+def hint_kind(parenthetical: str):
+    """The wanted-kind a disambiguator parenthetical denotes, or None.  Scans
+    its words (so 'king of Judah' -> king, 'grand-duchy' -> division), tolerating
+    a plural ('popes' -> pope).  None for a place-of / subject-domain hint
+    ('South Carolina', 'Law') -- those need the post-export topic tree (step C
+    after F)."""
+    for w in re.findall(r"[a-z]+", (parenthetical or "").lower()):
+        if w in _SETTLEMENT or w.rstrip("s") in _SETTLEMENT:
+            return "town"
+        k = _NOUN_KIND.get(w) or _NOUN_KIND.get(w.rstrip("s"))
+        if k:
+            return k
+    return None

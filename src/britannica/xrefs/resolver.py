@@ -47,7 +47,9 @@ from britannica.xrefs.alias_table import (
     build_section_alias_map,
     build_vol29_index_aliases,
 )
-from britannica.xrefs.disambiguation import body_opening, matches_disambiguator
+from britannica.xrefs.disambiguation import (
+    body_opening, hint_kind, matches_disambiguator, pick_by_kind,
+)
 from britannica.xrefs.normalizer import normalize_xref_target
 from britannica.xrefs.scoring import find_fuzzy_match
 
@@ -57,21 +59,17 @@ _PAREN_DISAMBIG_RE = re.compile(r"\(([^)]+)\)")
 
 
 def _display_disambiguator(xref: CrossReference) -> str | None:
-    """Extract a parenthesized disambiguator from the xref's display,
-    e.g. 'Zürich (city)' → 'city'.  Returns lowercase or None."""
-    surface = xref.surface_text or ""
-    m = _LN_DISPLAY_RE.search(surface)
-    if not m:
-        return None
-    display = m.group(1)
-    dm = _PAREN_DISAMBIG_RE.search(display)
-    if not dm:
-        return None
-    word = dm.group(1).strip().lower()
-    # Don't treat dates or numerals as disambiguators.
-    if not word or not re.search(r"[a-z]", word):
-        return None
-    return word
+    """The parenthesized disambiguator on EITHER side of the marker -- the
+    source writes it in the target (`[[Zürich (city)|Zürich]]`, ~85% of them) OR
+    the display -- so scan the whole surface plus the normalized target.  Returns
+    the parenthetical text lowercased, or None for a bare date/numeral."""
+    for text in (xref.surface_text or "", xref.normalized_target or ""):
+        for dm in _PAREN_DISAMBIG_RE.finditer(text):
+            word = dm.group(1).strip().lower()
+            if word and re.search(r"[a-z]", word) and not re.fullmatch(
+                    r"q\.?\s*v\.?", word):
+                return word
+    return None
 
 
 def disambiguate_among(
@@ -94,16 +92,23 @@ def disambiguate_among(
     if len(remaining) == 1:
         return remaining[0].id
 
-    # Rule 2: display disambiguator against body opening.
+    # Rule 2: kind disambiguator (from either marker side).
     disambiguator = _display_disambiguator(xref)
     if disambiguator:
-        matched = [
-            c for c in remaining
-            if matches_disambiguator(
-                disambiguator,
-                body_opening(body_of(c) if body_of else (c.body or ""))
-            )
-        ]
+        def _open(c):
+            return body_opening(body_of(c) if body_of else (c.body or ""))
+        # 2a: the sharp path -- map the hint to a wanted-kind and let pick_by_kind
+        # settle it by the candidates' own leads (Zürich (city) -> the town-lead
+        # article, never mis-firing on the canton's "capital").
+        want = hint_kind(disambiguator)
+        if want:
+            pick = pick_by_kind([(c, c.title) for c in remaining], want, _open)
+            if pick is not None:
+                return pick.id
+        # 2b: legacy whole-opening word-grep, kept as a fallback until the
+        # post-export kind index subsumes it (step C after F).
+        matched = [c for c in remaining
+                   if matches_disambiguator(disambiguator, _open(c))]
         if len(matched) == 1:
             return matched[0].id
 
