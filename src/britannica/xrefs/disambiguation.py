@@ -189,13 +189,27 @@ INSTITUTIONAL_RE = re.compile(
 
 
 def lead_kind(opening: str):
-    """The article's own kind = the earliest is-a noun in its opening."""
+    """The article's own kind = the earliest is-a noun in its opening.
+
+    Matches the singular, plus the plural ONLY in the "one of the …Xs" is-a form
+    ("Zürich, one of the *cantons* of…").  A bare PARTITIVE plural is
+    containment, not is-a — "a republic of 31 *states*", "the largest of the
+    *islands*" — and must not match, or a country reads as a division and the
+    largest-of-islands as an island (the Zürich-canton fix's overreach)."""
     text = opening.lower()[:220]
     best_pos, best_kind = len(text) + 1, None
     for word, kind in _LEAD_NOUNS:
-        m = re.search(r"\b" + re.escape(word) + r"\b", text)
-        if m and m.start() < best_pos:
-            best_pos, best_kind = m.start(), kind
+        w = re.escape(word)
+        singular = re.search(r"\b" + w + r"\b", text)
+        # Plural ONLY in the "one of the …Xs" is-a form (Zürich, ONE OF THE
+        # cantons of…).  Every other plural is too risky to read as this
+        # article's kind: a bare partitive is containment ("a republic of 31
+        # states"), and a named-plural feature ("the Jura Mountains") is
+        # indistinguishable from it in prose -- deferred rather than guessed.
+        plural = re.search(r"\bone of\b[^.]{0,30}?\b" + w + r"s\b", text)
+        pos = min((m.start() for m in (singular, plural) if m), default=None)
+        if pos is not None and pos < best_pos:
+            best_pos, best_kind = pos, kind
     return best_kind
 
 
