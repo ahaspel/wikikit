@@ -86,6 +86,14 @@ def find_fuzzy_match(
     if result is not None:
         return result
 
+    # Strategy 10b: compose the fold with the name strategies.  A target and a
+    # title that agree only up to accents (RENE DESCARTES / DESCARTES, RENÉ)
+    # never matched, because inversion checks the un-folded map and strategy 10
+    # never inverts.  Retry inversion + initial-expansion in the folded space.
+    result = _try_folded_name(target, title_map)
+    if result is not None:
+        return result
+
     # Strategy 11 (aggressive only): OCR edit-distance.  A single garbled
     # character (BORBERS<->BERBERS, BROCN<->BROCA).  Off by default because a
     # loose edit-1 can mis-resolve; on for recall-first callers (the TOC).
@@ -189,6 +197,69 @@ def _try_diacritic_fold(target: str, title_map: dict[str, int]) -> int | None:
     # always fold the query and look it up in the folded title view -- don't
     # skip when the query itself is already plain.
     return _folded_view(title_map).get(_fold(target))
+
+
+def _try_folded_name(target: str, title_map: dict[str, int]) -> int | None:
+    """Run the precise NAME strategies in the diacritic-folded space, so a fold
+    COMPOSES with inversion / initial-expansion.  `RENE DESCARTES` never matched
+    `DESCARTES, RENÉ` because inversion checks the un-folded map and the fold
+    pass never inverts; here inversion runs against the folded title view (which
+    is first-wins, like the plain map)."""
+    fmap = _folded_view(title_map)
+    ft = _fold(target)
+    for strat in (_try_name_inversion, _try_initial_expansion):
+        r = strat(ft, fmap)
+        if r is not None:
+            return r
+    return _try_name_prefix(ft, fmap)
+
+
+_NAME_PARTICLE = {"DE", "VON", "VAN", "DU", "DA", "DI", "DEL", "DELLA",
+                  "LA", "LE", "OF", "Y", "BEN", "DES", "TEN", "TER", "DELLE"}
+
+
+def _name_compatible(t: str, m: str) -> bool:
+    """A target given-name word is compatible with a matched one: identical, an
+    initial of it, an abbreviation/prefix, or one edit away (spelling)."""
+    t = t.rstrip(".")
+    if not t or t == m:
+        return True
+    if len(t) == 1:                       # an initial
+        return m.startswith(t)
+    if m.startswith(t) or t.startswith(m):
+        return True
+    return _lev_le(t, m, 1)               # one-edit spelling variant
+
+
+def _try_name_prefix(target: str, folded_map: dict[str, int]) -> int | None:
+    """FIRST [MIDDLE…] LAST -> a UNIQUE 'LAST, FIRST…' title, keyed on surname +
+    first given name and GATED on middle-name consistency: every target middle
+    (surname particles dropped) must match some matched given-name word (equal /
+    initial / prefix / one edit).  Abstains otherwise -- so it resolves the fuller
+    filed name (TYCHO BRAHE -> BRAHE, TYCHO; JULIUS ANDRÁSSY) but never crosses to
+    a same-first-name RELATIVE (John WILLIS Clark vs CLARK, JOHN BATES; John
+    TAYLOR vs John DUKE Coleridge).  Runs folded, so accents land too."""
+    words = target.split()
+    if len(words) < 2 or "," in target:
+        return None
+    surname, first = words[-1], words[0]
+    tmid = [w for w in words[1:-1] if w not in _NAME_PARTICLE]
+    prefix = f"{surname}, {first}"
+    hit = hit_val = None
+    for title, val in folded_map.items():
+        if not (title.startswith(prefix)
+                and (len(title) == len(prefix) or title[len(prefix)] in " ,")):
+            continue
+        if hit is not None:
+            return None                   # ambiguous surname+first-given -> abstain
+        hit, hit_val = title, val
+    if hit is None:
+        return None
+    mmid = hit[len(surname) + 2:].split()[1:]   # matched given words after FIRST
+    for t in tmid:
+        if not any(_name_compatible(t, m) for m in mmid):
+            return None                   # a distinct middle -> a different person
+    return hit_val
 
 
 def _try_plural_singular(target: str, title_map: dict[str, int]) -> int | None:
