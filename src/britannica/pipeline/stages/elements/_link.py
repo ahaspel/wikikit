@@ -129,19 +129,17 @@ def _wrap_selfref(raw, body, ctx):
 
 
 def _wrap_author_link(raw, body, ctx):
-    """`[[Author:Name|Display]]` — a contributor signature (display initials in
-    `ctx.contributor_initials`) renders bare initials; else an «LN:Name|Display» xref.  The
-    initials check reads the RAW display (folds a `{{sc}}` shell / parens via `_normalize_initials`);
-    the rendered output uses the recursed `body`."""
-    from britannica.pipeline.stages.extract_contributors import _normalize_initials
+    """`[[Author:Name|Display]]` — carried through the walk NEUTRALLY as
+    `«AL:name|display»`.  The signature-vs-reference decision is DEFERRED to 6b4,
+    where the finished roster resolves it ([[project_roster_from_author_links]]):
+    a display that is a known contributor's initials becomes the bare-initials
+    signoff, otherwise an `«LN»` xref.  The walk no longer needs a roster, and
+    render + binding become one roster-driven decision.  Output uses `body`."""
     b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target_raw, _s, disp_raw = b.partition("|")             # parse the outer from raw
+    target_raw, _s, _disp = b.partition("|")               # target from raw
     target = re.sub(r"^\s*Author:\s*", "", target_raw, flags=re.IGNORECASE).strip()
     disp_out = body.strip() or target
-    key = _normalize_initials(disp_raw.strip("() "))
-    if key and key in ctx.contributor_initials:
-        return disp_out                                    # contributor → initials
-    return f"«LN:{target}|{disp_out}«/LN»"                  # reference → xref
+    return f"«AL:{target}|{disp_out}«/AL»"
 
 
 def _wrap_fragment_link(raw, body, ctx):

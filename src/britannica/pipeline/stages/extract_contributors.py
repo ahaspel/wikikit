@@ -1,13 +1,56 @@
 import re
 
-# Matches: {{EB1911 footer initials|Full Name|Initials|name2=Name2|initials2=Init2}}
-#   or:    {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
+# Matches the START of: {{EB1911 footer initials|Full Name|Initials|name2=…|initials2=…}}
+#   or:                  {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
 # The "double" variant uses four positional args instead of named
 # parameters; _parse_contributors handles both shapes.
-_FOOTER_PATTERN = re.compile(
-    r"\{\{\s*EB1911\s+footer(?:\s+double)?\s+initials\s*\|([^}]+)\}\}",
-    re.IGNORECASE,
-)
+_FOOTER_START = re.compile(
+    r"\{\{\s*EB1911\s+footer(?:\s+double)?\s+initials\s*\|", re.IGNORECASE)
+
+
+def _iter_footers(text: str):
+    """Yield the brace-balanced field content (``Name|Initials|…``) of every
+    footer author-link.
+
+    Balancing is load-bearing: the old ``([^}]+)`` capture stopped at the first
+    ``}`` — which for a nested ``{{sc|Wi}}`` in the initials field lands INSIDE
+    that template, truncating Pitcher's "C. {{sc|Wi}}." down to "C." and
+    colliding him with Crewe.  Count braces and stop at the footer's OWN closing
+    ``}}`` instead (same technique as the front-matter reader's _iter_entries)."""
+    for mo in _FOOTER_START.finditer(text):
+        depth, k, n = 1, mo.end(), len(text)
+        start = mo.end()
+        while k < n:
+            two = text[k:k + 2]
+            if two == "{{":
+                depth += 1
+                k += 2
+            elif two == "}}":
+                depth -= 1
+                if depth == 0:
+                    yield text[start:k]
+                    break
+                k += 2
+            else:
+                k += 1
+
+
+def _first_footer(text: str):
+    """The first footer's field content, or None — the single-match shape the
+    element render producer wants."""
+    return next(_iter_footers(text), None)
+
+def _unwrap_templates(s: str) -> str:
+    """Unwrap an inline presentation template to its DISPLAY text — the LAST
+    positional arg: ``{{sc|Wi}}`` → ``Wi``, ``{{Fs|108%|K.}}`` → ``K.``.
+
+    Taking the FIRST arg instead left the size string behind and, once the ``%``
+    sentinel filter ran, dropped Kropotkin's size-wrapped ``K.`` — turning
+    ``P. A. {{Fs|108%|K.}}`` into a bare ``K.`` instead of ``P. A. K.``.  The
+    ``[^{}]`` classes only match a template with no nested braces, so callers that
+    might see nesting strip any residue afterwards."""
+    return re.sub(r"\{\{[^{}]*\|([^{}|]*)\}\}", r"\1", s)
+
 
 def _clean_footer_initials(initials: str) -> list[str]:
     """Clean and split footer initials string.
@@ -21,8 +64,8 @@ def _clean_footer_initials(initials: str) -> list[str]:
     s = s.strip("[]()").lstrip("✠").strip()
     # Decode HTML entities
     s = s.replace("&thinsp;", "").replace("&nbsp;", " ")
-    # Unwrap wiki templates (e.g. {{small-caps|He}} → He)
-    s = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", s)
+    # Unwrap wiki templates (e.g. {{small-caps|He}} → He, {{Fs|108%|K.}} → K.)
+    s = _unwrap_templates(s)
     s = re.sub(r"\{\{[^{}]*\}\}", "", s)
     s = re.sub(r"\{\{[^{}]*", "", s)
     s = re.sub(r"\}\}", "", s)
@@ -47,6 +90,13 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     arguments (name1|init1|name2|init2).
     """
     results = []
+    # Unwrap inner templates / wikilinks (e.g. {{sc|Wi}} -> Wi, [[A:X|Y]] -> Y)
+    # BEFORE the positional split: their internal `|` otherwise splits a field
+    # mid-token, so "C. {{sc|Wi}}." would parse as a bare "C." and collide
+    # Pitcher with Crewe.  The content is brace-balanced upstream (_iter_footers),
+    # so the whole template survives intact to be unwrapped here.
+    template_content = _unwrap_templates(template_content)
+    template_content = re.sub(r"\[\[[^\]|]*\|([^\]]*)\]\]", r"\1", template_content)
     parts = template_content.split("|")
 
     # Positional args (skip font-size sentinels like "108%")
@@ -117,7 +167,7 @@ def _normalize_initials(initials: str) -> str:
     # Strip leaked wiki/HTML markup.  Unwrap `{{X|Y}}` template forms
     # to their inner text first (so `{{unicode|✠}}` → `✠`), then drop
     # any remaining template residue and HTML tags.
-    s = re.sub(r"\{\{[^{}|]*\|([^{}]*)\}\}", r"\1", initials)
+    s = _unwrap_templates(initials)
     s = re.sub(r"\{\{[^{}]*", "", s)
     s = re.sub(r"<[^>]+>", "", s)
     s = re.sub(r"\}\}", "", s)

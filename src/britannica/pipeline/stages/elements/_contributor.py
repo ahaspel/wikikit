@@ -41,10 +41,10 @@ def _process_contributor_footer(raw: str) -> str:
     index, so this emits the initials and nothing else.
     """
     from britannica.pipeline.stages.extract_contributors import (
-        _FOOTER_PATTERN, _parse_contributors)
-    m = _FOOTER_PATTERN.search(raw)
-    if m:
-        inits = [c["initials"] for c in _parse_contributors(m.group(1))]
+        _first_footer, _parse_contributors)
+    content = _first_footer(raw)
+    if content:
+        inits = [c["initials"] for c in _parse_contributors(content)]
         return f"«SPAN[style:float:right]»({'; '.join(inits)})«/SPAN»" if inits else ""
     sm = _SHORTCUT_RE.match(raw.strip())
     if sm:

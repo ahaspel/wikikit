@@ -7,23 +7,21 @@ Carries the small amount of cross-element state a handler may need:
   * ``ref_bodies`` — name → resolved-footnote-body map, built once per
     article by ``resolve_ref_bodies`` and consumed by ``<ref name=X/>``
     anchors.
-  * ``contributor_initials`` — normalized initials of every known
-    contributor (front-matter + vol-29 index), loaded once by the caller.
-    The Author-link producer routes on membership: a display whose initials
-    are in here is a contributor signature → render the initials; everything
-    else → «LN» (xref).
+
+The Author-link producer no longer needs a roster here: it classifies an
+``[[Author:…]]`` display by PATTERN (is it an initials form?), so the roster can
+be built after the walk ([[project_roster_from_author_links]]).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
 class ElementContext:
     volume: int = 0
     ref_bodies: dict[str, str] | None = None
-    contributor_initials: frozenset[str] = field(default_factory=frozenset)
     # PER-NODE (not article-constant): the label of the node this one hangs under,
     # threaded down by ``produce_tree`` on an immutable per-level copy.  Lets a
     # producer read its own parent — the BODY producer keys on it to tell a verse

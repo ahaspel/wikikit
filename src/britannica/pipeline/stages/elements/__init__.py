@@ -865,9 +865,9 @@ _PR_WRAP = {
 
 def _make_peel_recurse(label):
     """Bind one `_PR_WRAP` row into a dispatch handler: substitute the classified children, then
-    wrap.  The wrap gets (raw, body, ctx) — most ignore ctx; the rare one needs it (a link's
-    contributor-initials check reads `ctx.contributor_initials`).  `produce_tree` post-
-    substitutes too, so this is the whole producer."""
+    wrap.  The wrap gets (raw, body, ctx) — most ignore ctx; the rare one needs it (the ref
+    producer reads `ctx.ref_bodies`).  `produce_tree` post-substitutes too, so this is the whole
+    producer."""
     wrap = _PR_WRAP[label]
     return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg), ctx)
 

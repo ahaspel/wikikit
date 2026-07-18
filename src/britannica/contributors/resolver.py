@@ -202,11 +202,16 @@ def _norm_initials(initials: str) -> str:
 
 
 def _fold(s: str) -> str:
-    """Diacritic-folded lowercase, so 'Müller' and 'Muller' compare equal."""
-    return "".join(
+    """Diacritic-folded lowercase, with the Scottish patronymic prefix normalized
+    (McLachlan / MacLachlan / M'Lachlan all → 'mclachlan') so a surname's spelling
+    variants across sources compare equal — a signer's footer 'McLachlan' matches
+    the front matter's 'M'Lachlan'.  The ≥3-letter-root guard keeps short
+    look-alikes intact (Mace, Macy, Mack are not prefixed names)."""
+    t = "".join(
         c for c in unicodedata.normalize("NFKD", s or "")
         if not unicodedata.combining(c)
     ).lower()
+    return re.sub(r"^m(?:['’‘]|ac|c)([a-z]{3,})", r"mc\1", t)
 
 
 class ContributorIndex:
@@ -248,6 +253,21 @@ class ContributorIndex:
     def _surname_of(self, cid: int) -> str:
         core = self._core.get(cid) or []
         return _fold(core[-1]) if core else ""
+
+    def _match_count(self, core: list[str], cid: int) -> int:
+        """How many of the entry's name tokens (first + each middle + surname)
+        candidate ``cid`` matches — the tie-break between an initials-owner and a
+        same-surname name candidate when their surnames disagree."""
+        cc = self._core.get(cid) or []
+        if not cc or not core:
+            return -1
+        n = 1 if _score_first(core[0], cc[0]) > 0 else 0
+        cand_mid = cc[1:-1]
+        n += sum(1 for im in core[1:-1]
+                 if any(_score_first(im, cm) > 0 for cm in cand_mid))
+        if _fold(core[-1]) == _fold(cc[-1]):
+            n += 1
+        return n
 
     def _best(self, core: list[str], ids: list[int]) -> int | None:
         """The unique best-scoring id among `ids` for the entry's core tokens —
@@ -293,23 +313,30 @@ class ContributorIndex:
                 owner = init_ids[0]
                 if not core:
                     return owner
-                # Surname agrees → same person despite first-name drift.
-                if _fold(core[-1]) == self._surname_of(owner):
-                    return owner
-                # Surname differs.  If the owner still corroborates on first
-                # name AND a middle name, it's a surname variant/typo of the
-                # same person (George Croom Roberston→Robertson; McNaught/
-                # M'Naught) — keep the owner.  Only when the owner ISN'T
-                # corroborated is this a dropped-mark collision (Bell/Bénédite,
-                # Muir/Muther): the name resolves the true owner, or the owner
-                # stands if the name resolves nowhere.
-                oc = self._core.get(owner) or []
-                if (oc and _score_first(core[0], oc[0]) > 0
-                        and any(_score_first(im, om) > 0
-                                for im in core[1:-1] for om in oc[1:-1])):
-                    return owner
+                # The initials point to `owner`, but a name can share a surname
+                # with a DIFFERENT person, and the true person can be stored under
+                # an OCR-typo'd surname.  So bind whichever of the initials-owner
+                # or a name-resolved candidate matches the entry's full name on
+                # MORE tokens (first + each middle + surname); the initials-owner
+                # keeps ties, as the default.  Name-first, over-trusting neither
+                # signal — the surname alone is NOT enough (initials-overdependence
+                # is how we misclassify):
+                #  · SAVONAROLA signs Linda Mary Villari's initials but names her
+                #    son "Luigi Villari" — same surname, yet Luigi matches
+                #    first+surname (2) vs Linda's surname-only (1) → the NAME wins.
+                #  · SCHUBERT names "William Henry Hadow" (first+middle+surname, 3)
+                #    but signs Howell's "W. H. H." (first+middle, 2) → NAME wins.
+                #  · HOBBES names "George Croom Robertson" but the philosopher is
+                #    stored under the typo "Roberston": the owner matches
+                #    first+MIDDLE Croom (2), the bucket's George *Scott* Robertson
+                #    first+surname (2) — a tie, so the owner (same person, typo
+                #    surname) stands, not the wrong George Robertson.
                 named = self._resolve_name(core)
-                return named if named is not None else owner
+                if (named is not None and named != owner
+                        and self._match_count(core, named)
+                        > self._match_count(core, owner)):
+                    return named
+                return owner
             # Several owners at this initials key → the entry name must land
             # uniquely on one of them, else abstain.
             return self._best(core, init_ids) if core else None

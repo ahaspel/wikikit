@@ -119,24 +119,6 @@ def preprocess_article(session, article) -> str:
 _TITLE_NODE_RE = re.compile(r"«TITLE:(.*?)«/TITLE»", re.DOTALL)
 
 
-_CONTRIBUTOR_INITIALS_CACHE: frozenset[str] | None = None
-
-
-def _contributor_initials(session) -> frozenset[str]:
-    """Normalized initials of every known contributor — loaded once and cached.
-
-    Built upstream from the per-volume front-matter tables + the vol-29 master
-    index (``ContributorInitials``), static for a run.  The Author-link producer
-    routes on membership: a display whose initials are in here is a contributor
-    signature → render the initials; everything else → «LN» xref."""
-    global _CONTRIBUTOR_INITIALS_CACHE
-    if _CONTRIBUTOR_INITIALS_CACHE is None:
-        from britannica.db.models import ContributorInitials
-        _CONTRIBUTOR_INITIALS_CACHE = frozenset(
-            ci.initials for ci in session.query(ContributorInitials).all())
-    return _CONTRIBUTOR_INITIALS_CACHE
-
-
 def walk_article(session, article) -> str:
     """Walk one article in a SINGLE pass and split off its title node.
 
@@ -165,8 +147,7 @@ def walk_article(session, article) -> str:
     if not raw:
         return ""
     walked = process_elements(
-        raw, ElementContext(volume=article.volume,
-                            contributor_initials=_contributor_initials(session)))
+        raw, ElementContext(volume=article.volume))
     # Section recognition runs post-walk over the finished body — the post-walk
     # extraction family, beside the contributor / xref extractors — where the whole
     # produced structure is in view: every «CTR»«SC» heading (fine-print ones too)
