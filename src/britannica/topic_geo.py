@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.topic_subject import _FIELD
+
 # EB parenthetical abbreviations -> full place name (US states, AU/CA/UK regions).
 _ABBREV = {
     "o.": "ohio", "ind.": "indiana", "ill.": "illinois", "mass.": "massachusetts",
@@ -61,11 +63,33 @@ _GENERIC = {
     "towns, etc.", "towns, etc. (modern names)", "divisions", "divisions and towns",
     "countries (with division and towns)", "subjects", "general list", "general subjects and terms",
     "physical features", "natural history", "locomotion", "biographies",
-    "europe", "europe (continental)", "america", "asia", "africa", "australasia",
-    "oceania",
+    "europe", "europe (continental)", "america", "australasia", "oceania",
+}
+
+# A continent bucket ("Asia > Ancient geography") never names the country a lead
+# does, so map the continent to its member regions: an Asia bucket matches a lead
+# saying "Mesopotamia" (the Asian Edessa) but not "Macedonia" (the European one).
+# Starter map for the continents whose ancient-geography buckets collide with
+# European homonyms; extend as needed.
+_CONTINENT_MEMBERS = {
+    "asia": ["asia", "asiatic", "asia minor", "anatolia", "mesopotamia", "syria",
+             "palestine", "arabia", "persia", "india", "china", "japan", "siberia",
+             "armenia", "afghanistan", "turkestan", "tibet", "burma", "siam",
+             "ceylon", "korea", "manchuria", "osroene", "phrygia", "cappadocia",
+             "bithynia", "assyria", "babylonia", "media", "parthia"],
+    "africa": ["africa", "african", "egypt", "abyssinia", "ethiopia", "nubia",
+               "sudan", "morocco", "algeria", "tunis", "tripoli", "libya",
+               "sahara", "guinea", "congo", "somaliland", "zanzibar", "carthage",
+               "numidia", "mauretania", "cyrenaica"],
 }
 
 _PAREN = re.compile(r"\(([^)]*)\)")
+# A category/field segment (Geology, Medical Science, Painting) names a PROFESSION,
+# not a place; the field matcher owns it, so geo must skip it -- else "Geology"
+# leaks in as a pseudo-place matching a geologist's lead.  Whole-word so a place
+# like "Sparta" isn't skipped for containing "art".
+_FIELD_RE = re.compile(
+    r"(?<![a-z])(?:" + "|".join(sorted(map(re.escape, _FIELD), key=len, reverse=True)) + r")(?![a-z])")
 _ADJ = {"spain": "spanish", "france": "french", "germany": "german", "italy": "italian",
         "russia": "russian", "portugal": "portuguese", "greece": "greek", "china": "chinese",
         "japan": "japanese", "sweden": "swedish", "norway": "norwegian", "denmark": "danish",
@@ -121,10 +145,15 @@ def location_terms(path, topic: str) -> list[tuple[str, float]]:
                 if e in _PLACES:
                     add_term(e, FINE)
     # bucket path — later (deeper) segments discriminate better than earlier ones
-    segs = [s for s in path if _norm(s) not in _GENERIC]
+    segs = [s for s in path if _norm(s) not in _GENERIC and not _FIELD_RE.search(_norm(s))]
     for i, seg in enumerate(segs):
-        for e in _expand(seg):
-            add_term(e, 1.0 + 0.4 * i / max(len(segs), 1))
+        members = _CONTINENT_MEMBERS.get(_norm(seg))
+        if members:                       # a continent -> its member regions
+            for m in members:
+                add_term(m, 0.9)
+        else:
+            for e in _expand(seg):
+                add_term(e, 1.0 + 0.4 * i / max(len(segs), 1))
     return sorted(terms.items(), key=lambda kv: -kv[1])
 
 
