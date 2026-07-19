@@ -81,9 +81,14 @@ class Fisher:
     def _tally(self, method):
         self.stats[method] = self.stats.get(method, 0) + 1
 
-    def fish(self, topic: str, cands, path, want_kind):
+    def fish(self, topic: str, cands, path, want_kind, prose=None):
         """topic: raw name; cands: [(fn, title)]; path: [root, ..., leaf];
-        want_kind: str|None.  Returns (fn, title, method).  Always picks."""
+        want_kind: str|None.  Returns (fn, title, method).  Always picks.
+
+        The disambiguation context is a BUCKET PATH by default (topics).  Pass
+        ``prose`` — the text surrounding a reference — instead, and the fisher keys
+        its embedding rung on that prose and skips the bucket-only geo/field rung:
+        the xref path has no bucket (docs/xref_resolution_strategy.md)."""
         title_of = dict(cands)
         if len(cands) == 1:
             fn = cands[0][0]
@@ -95,26 +100,28 @@ class Fisher:
         #    (a) geography — country/region/nationality; (b) field — the person's
         #    profession vs the bucket subject.  Either can settle it alone, and
         #    they compose (a French bucket then narrowed to the painter).
-        winners, gstat = geo_filter(path, topic, cands, self._opening)
-        pool = winners if (gstat in ("pick", "narrow") and winners) else cands
-        if gstat in ("pick", "narrow") and len(pool) == 1:
-            fn = pool[0][0]
-            self._tally("geo")
-            return fn, title_of[fn], "geo"
-        fterms = field_terms(path)
-        if fterms and len(pool) > 1:
-            fs = {fn: field_score(self._opening(fn), fterms) for fn, _ in pool}
-            best = max(fs.values())
-            if best > 0:
-                fwin = [ft for ft in pool if fs[ft[0]] == best]
-                if len(fwin) == 1:
-                    fn = fwin[0][0]
-                    self._tally("field")
-                    return fn, title_of[fn], "field"
-                pool = fwin
-        if len(pool) < len(cands):
-            cands = pool
-            title_of = dict(cands)
+        #    Bucket-only: skipped when the context is prose (xrefs have no bucket).
+        if prose is None:
+            winners, gstat = geo_filter(path, topic, cands, self._opening)
+            pool = winners if (gstat in ("pick", "narrow") and winners) else cands
+            if gstat in ("pick", "narrow") and len(pool) == 1:
+                fn = pool[0][0]
+                self._tally("geo")
+                return fn, title_of[fn], "geo"
+            fterms = field_terms(path)
+            if fterms and len(pool) > 1:
+                fs = {fn: field_score(self._opening(fn), fterms) for fn, _ in pool}
+                best = max(fs.values())
+                if best > 0:
+                    fwin = [ft for ft in pool if fs[ft[0]] == best]
+                    if len(fwin) == 1:
+                        fn = fwin[0][0]
+                        self._tally("field")
+                        return fn, title_of[fn], "field"
+                    pool = fwin
+            if len(pool) < len(cands):
+                cands = pool
+                title_of = dict(cands)
 
         # 1. kind — a unique qualifier of the wanted kind.
         kpick = pick_by_kind(cands, want_kind, self._opening) if want_kind else None
@@ -124,8 +131,9 @@ class Fisher:
             self._tally("kind-hard")
             return kpick, title_of[kpick], "kind"
 
-        # 2. embedding — cosine against the weighted bucket path.
-        q = self._path_vec(path)
+        # 2. embedding — cosine against the weighted bucket path, or the reference
+        #    prose when there is no bucket (xrefs).
+        q = self._emb.embed_text(prose) if prose is not None else self._path_vec(path)
         scored = sorted(cands, key=lambda ft: self._emb.cosine(ft[0], q), reverse=True)
         epick = scored[0][0]
         top = self._emb.cosine(scored[0][0], q)
