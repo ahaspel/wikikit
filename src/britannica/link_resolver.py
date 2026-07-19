@@ -53,6 +53,9 @@ _WANT_PLACE = {"division", "town", "lake", "river", "mountain", "island"}
 _OR_SPLIT = re.compile(r"\s+or\s+", re.I)
 _PAREN_RE = re.compile(r"\s*\(([^)]*)\)")
 _SECT_RE = re.compile(r"^(.*?)[\s,(]*§+\s*(.+?)[\s).]*$")
+# ``BIBLE (KING JAMES)/EXODUS: 4:27`` — a scripture ref whose target is the EB1911
+# entry for that book (``EXODUS`` / ``EXODUS, BOOK OF`` / ``EXODUS, THE``).
+_BIBLE_REF_RE = re.compile(r"^BIBLE\b.*?/([A-Z][A-Z\s]+?)(?:\s*[:#]|$)", re.IGNORECASE)
 
 
 def _art_norm(s: str) -> str:
@@ -113,11 +116,16 @@ def _topic_alternates(raw: str) -> list:
 class LinkResolver:
     """Build once over the exported corpus; resolve many names."""
 
-    def __init__(self):
+    def __init__(self, aliases: bool = False):
         article_index = json.loads(ARTICLES_INDEX.read_text(encoding="utf-8"))
         arts = [e for e in article_index if e.get("article_type") == "article"]
         # The shared FILL substrate — word-set / fold / subset / first-word / fuzzy.
         self.idx = NameIndex(arts)
+        # Alias overlay (title aliases + section + vol29 index): opt-in, so the
+        # topic path stays byte-identical.  The xref path enables it — it's what
+        # resolver.py's build_index adds, so the sole resolver keeps that reach.
+        if aliases:
+            self._overlay_aliases()
         self.title_by_fn = self.idx.title_by_fn
         self.section_index = load_section_index()
         # "RUSSIAN LITERATURE" keyed by last word -> [(prefix, fn, title)], so an
@@ -139,6 +147,20 @@ class LinkResolver:
             build_cache()
             _emb = LeadEmbeddings.load()
         self.fisher = Fisher(_emb, self._opening)
+
+    def _overlay_aliases(self):
+        """Merge the alias / section-alias / vol29-index-alias maps: each alias
+        inherits its canonical title's article (recall only)."""
+        from britannica.xrefs.alias_table import (
+            build_alias_map, build_section_alias_map, build_vol29_index_aliases)
+        merged: dict[str, str] = {}
+        for m in (build_alias_map(), build_section_alias_map(),
+                  build_vol29_index_aliases()):
+            merged.update(m)
+        for alias, canonical in merged.items():
+            cands = self.idx.by_norm.get(normalize_xref_target(canonical))
+            if cands:
+                self.idx.add_alias(alias, cands[0][0])
 
     # -- small readers -------------------------------------------------------
     def _article_sections(self, fn: str) -> list:
@@ -176,6 +198,45 @@ class LinkResolver:
         if disambig:
             d["disambig"] = disambig
         return d
+
+    # -- folded-in xref target forms (Bible ref, colon-suffix) --------------
+    def _try_bible(self, name: str):
+        """`BIBLE (KING JAMES)/EXODUS: …` -> the EB entry for that book."""
+        m = _BIBLE_REF_RE.match(normalize_xref_target(name))
+        if not m:
+            return None
+        book = m.group(1).strip().upper()
+        for variant in (book, f"{book}, BOOK OF", f"{book}, THE"):
+            cands = self.idx.by_norm.get(normalize_xref_target(variant))
+            if cands:
+                return self._res(cands[0][0], "bible")
+        return None
+
+    def _resolve_colon(self, name: str, self_fn: str = None):
+        """Normalized section-suffix form ``ARTICLE: SECTION`` (a `#section` target
+        that normalize_xref_target rewrote to `: `).  Empty base = a same-article
+        section (the xref caller supplies ``self_fn``)."""
+        target = normalize_xref_target(name)
+        if ": " not in target:
+            return None
+        base, _, suffix = target.rpartition(": ")
+        base, suffix = base.strip(), suffix.strip()
+        if not suffix:
+            return None
+        if not base:
+            return ({"target": name, "display": suffix.title(),
+                     "filename": self_fn, "anchor": suffix} if self_fn else None)
+        xm = self._resolve_plain(base)
+        if not xm:
+            return None
+        xfn, xdisp = xm
+        sec = match_section(self._article_sections(xfn), suffix, aggressive=True)
+        if sec:
+            sl, t = sec.get("slug", ""), sec.get("title", "")
+            tc = re.sub(r"^[ivxlc]+\.\s*", "", t, flags=re.I).strip("—. ")
+            return {"target": f"{xdisp}#{sl}", "display": f"{xdisp} — {tc}",
+                    "filename": xfn, "anchor": sl}
+        return None
 
     # -- 1. sections (a separate pass) --------------------------------------
     def _resolve_sect(self, raw: str):
@@ -317,6 +378,14 @@ class LinkResolver:
                                  want_kind=want_kind)
             if fn:
                 return self._res(fn, "fish:" + m)
+        # 3b. folded-in xref target forms — reached only on an empty exact bag;
+        #     inert for topics (no BIBLE/ shapes, no resolving colon-suffixes).
+        b = self._try_bible(raw_name)
+        if b:
+            return b
+        c = self._resolve_colon(raw_name)
+        if c:
+            return c
         # 4. loosen empty bags (recall only, tightest first, then fish; kind-gated)
         for alt in _topic_alternates(raw_name):               # name-side or/paren alts
             h = self.idx.exact(alt)

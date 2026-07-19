@@ -89,3 +89,24 @@ class NameIndex:
     def fuzzy(self, name: str):
         """Edit-distance last resort → a filename or None."""
         return find_fuzzy_match(normalize_xref_target(name), self.tmap, aggressive=True)
+
+    def add_alias(self, alias_title: str, canonical_fn: str) -> None:
+        """Index ``alias_title`` as an alternate name for ``canonical_fn`` — recall
+        only, and never shadowing a real title's word-set / fold / normalized key
+        (a collision with an existing title keeps the title)."""
+        canonical_title = self.title_by_fn.get(canonical_fn)
+        if canonical_title is None:
+            return
+        cand = [(canonical_fn, canonical_title)]
+        ws = wordset(alias_title)
+        if ws and ws not in self.by_ws:
+            self.by_ws[ws] = cand
+        wsf = wordset_f(alias_title)
+        if wsf and wsf not in self.by_wsf:
+            self.by_wsf[wsf] = cand
+        for w in wsf:
+            self.word_fns.setdefault(w, set()).add(canonical_fn)
+        n = normalize_xref_target(alias_title)
+        if n and n not in self.by_norm:
+            self.by_norm[n] = cand
+            self.tmap.setdefault(n, canonical_fn)
