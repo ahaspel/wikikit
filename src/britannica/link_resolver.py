@@ -296,10 +296,16 @@ class LinkResolver:
         return self._section_post(raw, ctx or set())
 
     # -- 2. propose candidates (FILL) ---------------------------------------
-    def candidates(self, name: str):
+    def candidates(self, name: str, *, superset: bool = False):
         """The tightest non-empty candidate bag from the fill ladder, with the rung
-        that produced it: exact → alt → fold → subset → first-word → fuzzy.  Pure
-        recall (no picking, no gates)."""
+        that produced it: exact → alt → fold → subset → [superset] → first-word →
+        fuzzy.  Pure recall (no picking, no gates).
+
+        ``superset`` (title ⊂ link, reverse containment) is OFF by default: it wins
+        on verbose work-title xrefs (UNITED STATES DECLARATION OF INDEPENDENCE ->
+        the Declaration) but is poison for topics, where the contained title is a
+        red herring (a given name / half a compound: Custard Apple -> APPLE).  The
+        xref path turns it on; the topic path leaves it off."""
         bag = self.idx.exact(name)
         if bag:
             return bag, "exact"
@@ -313,6 +319,10 @@ class LinkResolver:
         bag = self.idx.subset(name)
         if bag:
             return bag, "subset"
+        if superset:
+            bag = self.idx.superset(name)              # title ⊂ link (reverse)
+            if bag:
+                return bag, "superset"
         bag = self.idx.firstword(name)
         if bag:
             return bag, "firstword"
@@ -402,7 +412,7 @@ class LinkResolver:
             r = _fish_gated(h, "loosen:fold-fish")
             if r:
                 return r
-        h = self.idx.subset(raw_name)                         # subset (name ⊂ title)
+        h = self.idx.subset(raw_name)                         # subset (name ⊂ title; content)
         if h:
             r = _fish_gated(h, "loosen:subset")
             if r:
