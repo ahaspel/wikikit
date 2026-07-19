@@ -189,17 +189,23 @@ def render_page_markers(s, ctx):
         page = m.group(1)
         unproofed = page in ctx.unproofed_pages
         cls = "page-marker unproofed" if unproofed else "page-marker"
+        # The page break IS a word separator; the marker floats to the margin (out
+        # of flow), so FLANK it with a space or 'an⟨p.121⟩oath' collapses to
+        # 'anoath'.  The 'vol:page' label lives in a `::after` pseudo-element
+        # (data-vol/data-page), NOT a text node — generated content is excluded from
+        # in-article/browser find and `textContent`, so the marker stays furniture
+        # and a search for 'an oath' matches.
         if ctx.epub_bundled is not None:
             # EPUB drops scans (can't bundle page images; readers don't want the viewer
             # link).  Keep the printed-page boundary as a non-linked indicator — the
             # bibliographic reference survives without the scan.
-            return f'<span class="{cls}" data-page="{page}">{ctx.volume}:{page}</span>'
+            return f' <span class="{cls}" data-page="{page}" data-vol="{ctx.volume}"></span> '
         title = (f"Volume {ctx.volume}, page {page} (unproofed source) — click to view scan"
                  if unproofed else f"Volume {ctx.volume}, page {page} — click to view scan")
         # Bare `scans.html` anchor: fixScanHrefs rebuilds the real URL at load and adds
         # &pinit from data-page, so we bake neither the query string nor &pinit here.
-        return (f'<a class="{cls}" data-page="{page}" title="{title}" href="{ctx.scan_url}">'
-                f"{ctx.volume}:{page}</a>")
+        return (f' <a class="{cls}" data-page="{page}" data-vol="{ctx.volume}" '
+                f'title="{title}" href="{ctx.scan_url}"></a> ')
     return _PAGE_RE.sub(repl, s)
 
 
