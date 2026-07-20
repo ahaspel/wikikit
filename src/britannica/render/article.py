@@ -105,8 +105,6 @@ class RenderContext:
         self.target = target            # "site" (byte-identical to the viewer) | "epub"
         self.is_local = is_local        # article-link URL scheme (stub form vs production clean URL)
         self.epub_bundled = epub_bundled  # None on site; a set of in-book stems → the EPUB link policy
-        self.math_popout_counter = 0
-        self.math_popout_latex = {}
         self.footnote_counter = 0
         self.named_fn_numbers = {}
         self.fn_anchor_instance = 0
@@ -140,12 +138,13 @@ def _process_latex(latex):
 
 
 def render_math_popout(latex, is_display, ctx):
-    mid = "mp-" + str(ctx.math_popout_counter)
-    ctx.math_popout_counter += 1
-    ctx.math_popout_latex[mid] = latex
+    # The LaTeX must ride IN the markup: the render runs in Python, the click
+    # handler in the browser — an id into a render-side dict is a carry into a
+    # void.  Attribute-escape it into data-latex; the handler reads the DOM.
     cls = "math-popout-link popout-display" if is_display else "math-popout-link"
-    return (f'<a class="{cls}" data-mp="{mid}" '
-            f"onclick=\"openMathPopout('{mid}');return false;\" href=\"#\">"
+    esc = _html.escape(latex, quote=True)
+    return (f'<a class="{cls}" data-latex="{esc}" '
+            "onclick=\"openMathPopout(this);return false;\" href=\"#\">"
             "[equation ⤢ click to view]</a>")
 
 
@@ -162,9 +161,12 @@ def _render_math_markers(html, ctx):
     def repl(m):
         hint, latex = m.group(1), m.group(2)
         ph = parse_math_hint(hint)
-        if ph["popout"]:
+        # popout is a SITE policy (click-to-modal needs JS + a viewport that
+        # can't fit the equation).  Every other target renders the equation
+        # itself — a popout-hinted expression is display math there.
+        if ph["popout"] and ctx.target == "site":
             return render_math_popout(_process_latex(latex), ph["display"], ctx)
-        result = _tex_math(latex, ph["display"], ctx)
+        result = _tex_math(latex, ph["display"] or ph["popout"], ctx)
         fs = ph["fsPct"]
         if fs and 0 < fs < 100:
             return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
@@ -175,7 +177,7 @@ def _render_math_markers(html, ctx):
 def _render_display_math(latex, hint, ctx):
     """A display-mode equation («EQN» row) → a KaTeX-hydration placeholder (or popout / fs-scaled)."""
     ph = parse_math_hint(hint)
-    if ph["popout"]:
+    if ph["popout"] and ctx.target == "site":
         return render_math_popout(_process_latex(latex), True, ctx)
     result = _tex_math(latex, True, ctx)
     fs = ph["fsPct"]
