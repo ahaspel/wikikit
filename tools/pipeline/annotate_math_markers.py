@@ -17,10 +17,11 @@ expression that fell out of the cache).
 """
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, "src")
 
 # Force a fresh cache load — measure_math_widths.py may have just
 # rewritten the file from under us.
@@ -48,32 +49,35 @@ def _annotate(body: str) -> str:
     return MATH_RE.sub(_replace, body)
 
 
-def main() -> int:
-    files = sorted(ARTICLES_DIR.glob("*.json"))
-    total = 0
-    changed = 0
-    for path in files:
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception as e:
-            print(f"  skip {path.name}: {e}", file=sys.stderr)
-            continue
-        if not isinstance(data, dict):
-            continue
+def annotate_payloads(payloads: dict) -> tuple[int, int]:
+    """Re-hint every math marker IN MEMORY → ``(changed, with_math)``.
+
+    The phase as a pure transform over the loaded corpus, so the merged
+    post-export pass (``tools/pipeline/post_export.py``) can apply it without a
+    corpus round-trip of its own.  ``main()`` below is the standalone wrapper."""
+    changed = with_math = 0
+    for data in payloads.values():
         body = data.get("body", "")
         if not isinstance(body, str) or "«MATH" not in body:
             continue
-        total += 1
+        with_math += 1
         new_body = _annotate(body)
-        if new_body == body:
-            continue
-        data["body"] = new_body
-        path.write_text(
-            json.dumps(data, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        changed += 1
-    print(f"Annotated math markers: {changed} articles updated / {total} with math")
+        if new_body != body:
+            data["body"] = new_body
+            changed += 1
+    return changed, with_math
+
+
+def main() -> int:
+    """Standalone: load the corpus, annotate, write back what changed."""
+    from britannica.export.corpus import load_corpus, write_payload
+    payloads, _ = load_corpus(ARTICLES_DIR)
+    before = {p: d.get("body", "") for p, d in payloads.items()}
+    changed, with_math = annotate_payloads(payloads)
+    for path, data in payloads.items():
+        if data.get("body", "") != before[path]:
+            write_payload(path, data)
+    print(f"Annotated math markers: {changed} articles updated / {with_math} with math")
     return 0
 
 

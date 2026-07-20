@@ -81,14 +81,12 @@ def load_section_index() -> dict[str, list]:
         except Exception:
             pass
     from collections import defaultdict
+    from britannica.export.corpus import load_corpus
     bucket: dict[str, set] = defaultdict(set)
-    for fn in Path("data/derived/articles").glob("*.json"):
-        try:
-            d = json.loads(fn.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        if not isinstance(d, dict):
-            continue
+    # Total load: a silently skipped article used to shrink this index for the
+    # WHOLE run — fewer resolvable section links, no signal that it happened.
+    payloads, _ = load_corpus(ARTS_DIR, require=())
+    for fn, d in payloads.items():
         for s in d.get("sections") or []:
             if isinstance(s, dict) and (s.get("title") or "").strip():
                 bucket[_art_norm(s["title"])].add(

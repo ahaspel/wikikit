@@ -64,14 +64,12 @@ def _collect_latex() -> dict[str, list[str]]:
     plus all markers >100 chars (any of these MIGHT render display
     depending on paragraph context; measuring is cheap).
     """
+    from britannica.export.corpus import load_corpus
     by_hash: dict[str, dict] = {}
-    for path in sorted(Path("data/derived/articles").glob("*.json")):
-        try:
-            d = json.load(open(path, encoding="utf-8"))
-        except Exception:
-            continue
-        if not isinstance(d, dict):
-            continue
+    # Total load — an unparseable article here would silently go UNMEASURED, so
+    # its wide math would ship unhinted (no fs= / popout) rather than loudly fail.
+    payloads, _ = load_corpus(Path("data/derived/articles"), require=("body",))
+    for path, d in sorted(payloads.items()):
         body = d.get("body", "")
         if not isinstance(body, str):
             continue

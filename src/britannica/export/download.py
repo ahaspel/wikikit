@@ -109,17 +109,15 @@ def build_download(articles_dir: str = "data/derived/articles",
 
     roster: dict[str, dict] = {}          # initials → {name, credentials, bio, articles}
     n_arts = n_edges = 0
-    files = sorted(arts.glob("*.json"))
+    # Total load: a payload that won't parse RAISES rather than being skipped —
+    # a silent skip here drops an article from the PUBLIC dataset while every
+    # count downstream still looks right ([[feedback_honesty_surface_failures]]).
+    from britannica.export.corpus import load_corpus
+    payloads, _ = load_corpus(arts, require=("body",))
     with (out / "articles.jsonl").open("w", encoding="utf-8") as af, \
          (out / "xref_edges.jsonl").open("w", encoding="utf-8") as ef:
-        for fp in files:
-            if fp.name in ("index.json", "contributors.json"):
-                continue
-            try:
-                d = json.loads(fp.read_text(encoding="utf-8"))
-            except Exception:
-                continue
-            if not isinstance(d, dict) or not d.get("body"):
+        for fp, d in sorted(payloads.items()):
+            if not d.get("body"):
                 continue
             aid = _id(fp.name)
             body = d["body"]
