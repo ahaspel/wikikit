@@ -45,7 +45,7 @@ def resolve_and_render(session, payloads: dict) -> int:
     all_articles = session.query(Article).all()
     # The ONE name→article resolver (reads the exported index.json — same
     # filename space as _safe_filename post-dedup); fn_to_id maps its picks
-    # back to DB ids for the CrossReference rows.
+    # back to DB ids for the resolved Xref values.
     resolver = LinkResolver(aliases=True)
     fn_to_id = {_safe_filename(a, a.title): a.id for a in all_articles
                 if a.article_type != "plate"}

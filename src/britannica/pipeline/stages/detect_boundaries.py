@@ -498,33 +498,20 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
 
 def wipe_articles(volume: int) -> int:
     """Delete every Article in ``volume`` and all FK-dependent rows
-    (ArticleSegment, ArticleContributor, CrossReference).
+    (ArticleSegment, ArticleContributor).
     Returns the count of articles deleted.
 
     SourcePages are kept (they're owned by the import stage).  Callers
     that want a fully-deterministic re-detect call this before
     ``persist_articles``.
-
-    X-refs that target one of these articles from ANOTHER volume are
-    UNLINKED (target_article_id ← None, status ← "unresolved") rather
-    than deleted, so the originating volume's resolution work survives.
     """
-    from britannica.db.models import (
-        ArticleContributor, CrossReference)
+    from britannica.db.models import ArticleContributor
     session = SessionLocal()
     try:
         art_ids = [a[0] for a in session.query(Article.id).filter(
             Article.volume == volume).all()]
         if not art_ids:
             return 0
-        session.query(CrossReference).filter(
-            CrossReference.target_article_id.in_(art_ids)
-        ).update({"target_article_id": None,
-                  "status": "unresolved"},
-                 synchronize_session=False)
-        session.query(CrossReference).filter(
-            CrossReference.article_id.in_(art_ids)
-        ).delete(synchronize_session=False)
         session.query(ArticleContributor).filter(
             ArticleContributor.article_id.in_(art_ids)
         ).delete(synchronize_session=False)

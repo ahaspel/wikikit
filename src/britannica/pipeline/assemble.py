@@ -69,7 +69,7 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
     """Walk → assemble → decorate → serialize the whole corpus.
 
     Builds the in-memory corpus + resolution index once, then exports each
-    volume off them.  No ``article.body`` / ``CrossReference`` reads.
+    volume off them.  No ``article.body`` reads.
     ``only_volume`` restricts which volumes are serialized (the corpus +
     index are always corpus-wide, since resolution spans volumes).
     """

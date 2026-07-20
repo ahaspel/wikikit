@@ -8,7 +8,7 @@ from sqlalchemy import func
 from britannica.export.sections import detect_sections
 from britannica.db.models import (
     Article, ArticleContributor, ArticleSegment,
-    Contributor, ContributorInitials, CrossReference, SourcePage,
+    Contributor, ContributorInitials, SourcePage,
 )
 from britannica.db.session import SessionLocal
 from britannica.export.body_postprocess import (
@@ -455,7 +455,7 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     """The candidate-source half of the xref decorator: extract every
     reference from the body and resolve it through the shared ``LinkResolver``
     (fill + prose-fish — docs/xref_resolution_strategy.md), returning transient
-    (un-persisted) CrossReference rows.  No DB read.
+    ``Xref`` values.  No DB read.
 
     ``resolver`` resolves in filename space; ``fn_to_id`` maps its picks back
     to DB ids and ``self_fn`` is THIS article's filename (the see-tier topic
@@ -467,11 +467,12 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     if resolver is None:
         return []
     from britannica.xrefs.extractor import extract_xrefs
+    from britannica.xrefs.reference import Xref
     from britannica.link_resolver import prose_window
     fn_to_id = fn_to_id or {}
     xrefs = []
     for m in extract_xrefs(body):
-        xr = CrossReference(
+        xr = Xref(
             article_id=article_id,
             surface_text=m["surface_text"],
             normalized_target=m["normalized_target"],
