@@ -293,7 +293,7 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
     # SIGNOFFS and leaves the rest for us.  Its target names a PERSON, not an
     # article title, so it is its own kind: the resolver matches a surname
     # against EB's surname-first titles instead of running the article ladder.
-    for m in re.finditer("«AL:([^|]*)\\|([^«]*)«/AL»", text):
+    for m in re.finditer("«AL:([^|»]*)\\|(.*?)«/AL»", text, re.DOTALL):
         target = m.group(1).strip()
         if _is_plausible_target(target):
             _add(m.group(0), target, "author")

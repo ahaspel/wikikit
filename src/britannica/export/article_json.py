@@ -448,7 +448,10 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
-_LN_DISPLAY_RE = re.compile(r"«(?:LN|AL):[^|]*\|([^«]*)«/(?:LN|AL)»")
+# Non-greedy display so a nested marker in the display (`«SC»r. v. h.«/SC»`, an
+# author signature) is captured whole rather than truncated at the first «.
+_LN_DISPLAY_RE = re.compile(r"«(?:LN|AL):[^|]*\|(.*?)«/(?:LN|AL)»", re.DOTALL)
+_INLINE_MARK_RE = re.compile(r"«[^«»]*»")
 
 
 def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
@@ -480,7 +483,10 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
         )
         trusted = m["xref_type"] in ("link", "qv")
         dm = _LN_DISPLAY_RE.search(m["surface_text"])
-        display = dm.group(1).strip() if dm else None
+        # Strip nested inline markers from the display — the resolver wants the
+        # plain name (`r. v. h.`), not `«SC»r. v. h.«/SC»`, whose stray tokens
+        # would mistokenize as name parts.
+        display = _INLINE_MARK_RE.sub("", dm.group(1)).strip() if dm else None
         ruled = resolver.adjudicated(m["normalized_target"])
         if ruled is not None:
             # A hand ruling wins over every tier — but the self-reference rule
@@ -606,9 +612,14 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         if fn:
             return f"«LN:{fn}|{target_text}|{display}«/LN»"
         return display
+    # DOTALL + non-greedy display: an author signature's display carries nested
+    # markers (`«SC»r. v. h.«/SC»`), so a `[^«]*` display slot stops at the first
+    # nested `«` and leaves the «AL» unbaked — it then leaks through render,
+    # which has no «AL» open/close substitution (unlike «LN»).  Mirrors 6b4's
+    # `_AL_RE`, the shape that already spans these.
     body = re.sub(
-        r"«AL:([^|]*)\|([^«]*)«/AL»",
-        _resolve_author, body,
+        r"«AL:([^|»]*)\|(.*?)«/AL»",
+        _resolve_author, body, flags=re.DOTALL,
     )
 
     # Prose-scan wraps LAST: its 3-part markers are final and must not be re-scanned by
