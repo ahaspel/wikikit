@@ -313,7 +313,16 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
                 if current:
                     fields.append(current)
                 for f in fields[1:]:
-                    clean = _title_plaintext(f).rstrip("}]")
+                    clean = _title_plaintext(f)
+                    # A field that did NOT project to plain text is not a
+                    # headword — it is furniture the projection deliberately
+                    # refuses to delete (`{{gap}}`, the running-header's empty
+                    # left slot).  Rejecting it here moves on to the field that
+                    # DOES carry the name (`{{fs|180%|BOOKBINDING}}`); stripping
+                    # its braces instead manufactured the title `{{gap`.
+                    if "{{" in clean or "}}" in clean:
+                        continue
+                    clean = clean.rstrip("}]")
                     if (clean and len(clean) > 2 and not clean.isdigit()
                             and not re.match(r"^Plate\b", clean)
                             and re.search(r"[A-Za-z]{3,}", clean)):

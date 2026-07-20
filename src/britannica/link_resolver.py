@@ -32,18 +32,44 @@ from britannica.xrefs.disambiguation import (
     body_opening, kind_qualifies, lead_kind, pick_by_kind)
 from britannica.embeddings import LeadEmbeddings, build_cache
 from britannica.topic_fisher import Fisher
-from britannica.name_index import NameIndex, content, wordset_f
+from britannica.name_index import (
+    NameIndex, _FURNITURE, _TOK, content, fold, wordset_f)
+
+# Nobiliary/patronymic particles: they ride with the SURNAME in a personal name
+# (`Charles de Rémusat` -> RÉMUSAT), so they are never a given-name token.  EB
+# drops them when it inverts, which is why containment on them fails.
+_PARTICLES = frozenset({
+    "DE", "DU", "DES", "DELLA", "DELLE", "DI", "DA", "DAL", "VON", "VAN",
+    "DER", "DEN", "TER", "TEN", "LA", "LE", "LES", "EL", "AL", "IBN", "BIN",
+})
 
 ARTICLES_INDEX = Path("data/derived/articles/index.json")
 ARTS_DIR = ARTICLES_INDEX.parent
 SECTION_INDEX = Path("data/derived/classified_section_index.json")
 CLASSIFIED_TOC = Path("data/derived/classified_toc.json")
+# Hand-adjudicated resolutions.  The corpus is static, so a ruling here is
+# permanent.  Accreted as cases are found (like data/corrections.json) — there
+# is no systematic enumeration.  ONLY `by: user` entries resolve: model verdicts
+# in the same file are regression fixtures, and must never become policy.
+ADJUDICATIONS = Path("data/xref_adjudications.json")
 
 # The trusted-xref ladder runs the fill rungs in two tiers over BOTH the target
 # and the display name: every full-containment rung on either name before any
 # partial-match recovery rung — a tight display match beats a loose target one.
 _XREF_TIGHT = ("exact", "alt", "fold", "subset", "superset")
+# EB's OWN cue (`q.v.`) asserts the target is an EB article, so a loose rung may
+# still bind.  An EMBEDDED wikilink asserts nothing of the sort — it points into
+# Wikisource's namespace (DNB entries, scripture, standalone works), and ~59% of
+# the ones that reach a loose rung name something EB never covered.  `firstword`
+# ("any title CONTAINING the name's first word") then matches a given-name-first
+# citation against a surname-first EB title — JOHN VENN -> McADAM, JOHN LOUDON.
+# So embedded links get the safe canonicalizations only, and abstain otherwise.
 _XREF_LOOSE = ("firstword", "fuzzy")
+_XREF_LINK_LOOSE = ("fuzzy",)
+
+# Returned by `_xref_pass` when the reference names the SOURCE article itself:
+# a terminal abstain, distinct from "this rung found nothing, try the next".
+_SELF = object()
 
 # A2 broadening (reach past the exact collision to a leading-token candidate) is
 # safe ONLY where the bucket wants a PHYSICAL FEATURE filed as a variant of the
@@ -163,8 +189,19 @@ def _topic_alternates(raw: str) -> list:
 class LinkResolver:
     """Build once over the exported corpus; resolve many names."""
 
-    def __init__(self, aliases: bool = False):
-        article_index = json.loads(ARTICLES_INDEX.read_text(encoding="utf-8"))
+    def __init__(self, aliases: bool = False, *, article_index=None,
+                 embeddings=None, section_index=None, openings=None):
+        """Production callers pass nothing: the index, the section index and the
+        embedding cache are read off the exported corpus.
+
+        The keyword args are a TEST SEAM (the ``body_override`` pattern) — pass an
+        in-memory ``article_index`` (rows of ``filename``/``title``/
+        ``article_type``), an ``embeddings`` stub, a ``section_index`` and an
+        ``openings`` map (filename → body opening) to exercise the resolution
+        policy on a handful of articles instead of the 37k corpus."""
+        if article_index is None:
+            article_index = json.loads(ARTICLES_INDEX.read_text(encoding="utf-8"))
+        self._openings = openings or {}
         arts = [e for e in article_index if e.get("article_type") == "article"]
         # The shared FILL substrate — word-set / fold / subset / first-word / fuzzy.
         self.idx = NameIndex(arts)
@@ -188,6 +225,7 @@ class LinkResolver:
         self._sec_cache: dict[str, list] = {}
         self._open_cache: dict[str, str] = {}
         self._topic_map: dict[str, set] | None = None    # lazy: see-tier only
+        self._adjudged: dict | None = None               # lazy: hand rulings
         # Embeddings for the fisher's semantic rung (built once, cached; regenerable).
         try:
             _emb = LeadEmbeddings.load()
@@ -368,7 +406,9 @@ class LinkResolver:
         if bag:
             return bag, "subset"
         if superset:
-            bag = self.idx.superset(name)              # title ⊂ link (reverse)
+            # `single_head_ok` is the xref path's opt-in: the topic path leaves
+            # superset off entirely, so this cannot reach it.
+            bag = self.idx.superset(name, single_head_ok=True)   # title ⊂ link
             if bag:
                 return bag, "superset"
         bag = self.idx.firstword(name)
@@ -416,6 +456,12 @@ class LinkResolver:
                 continue
             match = [c for c in bag
                      if (self._topics_of(c[0]) or set()) & src_cats]
+            if any(c[0] == self_fn for c in match):
+                # `see ABIGAIL` inside ABIGAIL, `see JOANNA BAILLIE` inside
+                # BAILLIE, JOANNA: the cue names THIS article, so there is
+                # nothing to point at — and picking a runner-up would bind a
+                # different subject entirely.  Terminal abstain.
+                return None
             if len(match) == 1:
                 return match[0][0]
             if len(match) >= 2:
@@ -424,23 +470,197 @@ class LinkResolver:
                     return fn
         return None
 
+    # -- adjudicated overrides (first pass) ----------------------------------
+    def adjudicated(self, target: str):
+        """A hand-ruled resolution for this reference, consulted BEFORE any tier.
+
+        Returns the target filename, ``""`` to abstain outright, or ``None`` when
+        there is no ruling.  Keyed on the normalized target's first path segment,
+        so one ruling covers every citation of the same work — the rulings are
+        about the WORK, not the individual citation.
+
+        These are the irreducible cases: `Wealth of Nations` names no author in
+        its link text, so NO resolver can reach SMITH, ADAM.  The caller still
+        applies the self-reference rule afterwards (pointing Absalom and
+        Achitophel at Dryden makes the citation INSIDE the Dryden article a
+        self-link, which must still abstain)."""
+        if self._adjudged is None:
+            self._adjudged = {}
+            try:
+                d = json.loads(ADJUDICATIONS.read_text(encoding="utf-8"))
+            except OSError:
+                d = {"entries": []}
+            for e in d.get("entries", []):
+                if e.get("by") != "user":
+                    continue                      # model verdicts are FIXTURES
+                key = e.get("key")
+                if not key:
+                    continue
+                self._adjudged[key] = e.get("should") or ""
+        return self._adjudged.get(
+            normalize_xref_target((target or "").split("/")[0]))
+
+    # -- person tier ([[Author:…]] references) -------------------------------
+    def _person_parts(self, raw: str):
+        """(given tokens, SURNAME) for a personal name.  `Palmer, Roger` is
+        already inverted (surname before the comma); `Charles de Rémusat` and
+        `H. J. Mackinder` are given-first, so the surname is the last token.
+        Particles ride with the surname, never with the givens."""
+        def _givens(toks):
+            # Initials are KEPT (they are the citation's whole given-name
+            # content), but furniture must go: an `of`/`the` counted as a given
+            # name "agrees" with any title carrying one — HENRY VIII OF ENGLAND
+            # matched ENGLAND, THE CHURCH OF on the shared `OF`.
+            return [t for t in toks
+                    if t not in _PARTICLES and t not in _FURNITURE]
+
+        raw = (raw or "").strip()
+        if not raw:
+            return [], None
+        head, sep, tail = raw.partition(",")
+        if sep and _TOK.findall(tail):                 # SURNAME, Given …
+            toks = _TOK.findall(fold(head).upper())
+            return _givens(_TOK.findall(fold(tail).upper())), (toks[-1] if toks else None)
+        toks = [t for t in _TOK.findall(fold(raw).upper())]
+        if not toks:
+            return [], None
+        return _givens(toks[:-1]), toks[-1]
+
+    def resolve_person(self, target: str, display: str = None, *,
+                       self_fn: str = None, prose: str = ""):
+        """An `[[Author:…]]` reference → the EB biography of that person, or None.
+
+        EB titles are SURNAME-FIRST (`RÉMUSAT, CHARLES FRANCOIS MARIE`) while a
+        citation is given-first and often abbreviated (`Charles de Rémusat`,
+        `H. J. Mackinder`).  So the SURNAME must be the candidate title's HEAD —
+        matching on a given name identifies a DIFFERENT person, which is what
+        produced JOHN VENN → McADAM, JOHN LOUDON — and at least one given name
+        or initial must agree.  Most of these people have no EB article at all
+        (MACKINDER, THORESEN, BARROWS: zero titles), so the default is abstain."""
+        names = [n for n in (target, display) if n]
+        # 1. Surname tier FIRST — it is the PRECISE one.  Rank candidates by how
+        #    many givens agree and require a STRICT best: two equally supported
+        #    candidates are two different people (ROUSSEAU, JEAN JACQUES vs
+        #    ROUSSEAU DE LA ROTTIÈRE, JEAN SIMEON both answer to "Jean"), so
+        #    abstain rather than guess.  It must precede the article rungs
+        #    because an initials citation reduces to its surname alone, and
+        #    `subset` then returns every article carrying that word ANYWHERE
+        #    (W. M. Ramsay -> WILES, IRVNG RAMSAY).
+        # Only the RICHEST form gets a vote on the surname tier.  Trying target
+        # then display lets an abbreviation rescue a full name that correctly
+        # declined: `James Craigie Robertson` abstains, then `J. C. Robertson`
+        # binds ROBERTSON, JOSEPH on the `J`.  More spelled-out givens = more
+        # evidence, so that form decides, and its abstention is final.
+        def _richness(n):
+            g, _s = self._person_parts(n)
+            return (sum(1 for t in g if len(t) > 1), len(g))
+        for raw in sorted(names, key=_richness, reverse=True)[:1]:
+            givens, surname = self._person_parts(raw)
+            if not surname or len(surname) < 2 or not givens:
+                continue
+            bag = [fn for fn in self.idx.word_fns.get(surname, ())
+                   if fn != self_fn
+                   and _TOK.findall(fold(self.title_by_fn[fn]).upper())[:1] == [surname]]
+            if not bag:
+                continue
+
+            def _title_givens(fn):
+                """The title's given names IN ORDER — everything after the
+                surname head, minus honorifics/particles (`RAMSAY, SIR WILLIAM
+                MITCHELL` -> [WILLIAM, MITCHELL])."""
+                toks = _TOK.findall(fold(self.title_by_fn[fn]).upper())[1:]
+                return [t for t in toks
+                        if t not in _FURNITURE and t not in _PARTICLES]
+
+            def _matches(g, t):
+                return g == t or (len(g) == 1 and t.startswith(g))
+
+            def _score(fn):
+                t_giv = _title_givens(fn)
+                # The FIRST given must agree.  A later one matching on its own is
+                # a different person: `W. S. Crockett` binds SAMUEL on the `S`
+                # while the `W` answers to nothing -> CROCKETT, SAMUEL RUTHERFORD.
+                if not t_giv or not _matches(givens[0], t_giv[0]):
+                    return 0
+                rest = set(t_giv[1:])
+                n = 2
+                for g in givens[1:]:
+                    if g in rest:
+                        n += 2                          # a full given name
+                    elif len(g) == 1 and any(w.startswith(g) for w in rest):
+                        n += 1                          # an initial
+                return n
+
+            scored = sorted(((_score(fn), fn) for fn in bag), reverse=True)
+            if scored and scored[0][0] > 0 and (
+                    len(scored) == 1 or scored[0][0] > scored[1][0]):
+                return scored[0][1]
+        # 2. The TIGHT article rungs — an EB title often matches the citation
+        #    outright, and covers what the surname tier cannot shape: mononyms
+        #    (VOLTAIRE, MOSES) and `X of Y` regnal forms (HENRY VIII OF ENGLAND).
+        # BOTH names here, unlike the surname tier.  Word-set matching is
+        # ORDER-INDEPENDENT, which is how the old ladder got 1,390 of these right
+        # ({PERCY,BYSSHE,SHELLEY} == {SHELLEY,PERCY,BYSSHE}) — and the short form
+        # is often the one that matches: AULUS PERSIUS FLACCUS resolves through
+        # its display `Persius`, JAN HUS through `John Huss`.  Restricting this
+        # tier to the richest form threw those away.
+        for raw in names:
+            bag, tag = self.candidates(raw, superset=True)
+            if tag not in _XREF_TIGHT:
+                continue
+            bag = [c for c in bag if c[0] != self_fn]
+            if len(bag) == 1:
+                return bag[0][0]
+            # A lone surname may not be FISHED: {GARDNER} is contained in every
+            # article mentioning a Gardner, and the fisher then picks one
+            # (E. A. Gardner -> HEWETT, SIR PRESCOTT GARDNER).  An unambiguous
+            # single hit is still fine — that is how VOLTAIRE binds.
+            if len(bag) > 1 and len(content(wordset_f(raw))) >= 2:
+                fn, _, _ = self.fish(raw, bag, prose=prose)
+                if fn:
+                    return fn
+        # NOT attempted: person-kind containment (bind a title CONTAINED in the
+        # reference when the candidate is person-kind), to recover the classical
+        # /regnal short forms AULUS PERSIUS FLACCUS -> PERSIUS and WENCESLAUS II
+        # OF BOHEMIA -> WENCESLAUS.  MEASURED: 63 binds, ~55 of them wrong —
+        # knowing BOTH sides are people does not discriminate, because the
+        # dangerous collision IS person-to-person: a modern author's GIVEN name
+        # against the saint or monarch of that name (BERNARD BERENSON ->
+        # BERNARD, SAINT; AGNES REPPLIER -> AGNES, SAINT).  What is missing is
+        # not the kind but WHICH component identifies the person, and for these
+        # name shapes the surname heuristic picks the wrong one (FLACCUS,
+        # BOHEMIA).  That needs a name-shape model, not another gate.
+        return None
+
     def _xref_pass(self, name, prose, self_fn, rungs):
         """One tier of the trusted ladder over one name: the folded-in target
         forms (Bible ref, colon-suffix), then the fill bag IF its rung is in
         this tier, fished on the reference's prose.  -> (fn, section) | None."""
+        # A self-reference is only meaningful when it carries a SECTION anchor —
+        # `ALGEBRAIC FORMS: SYMMETRIC FUNCTIONS` inside ALGEBRAIC FORMS is an
+        # intra-article jump and must survive.  Without one it points the reader
+        # at the page they are already on (SUPPLIANTS (AESCHYLUS) inside
+        # AESCHYLUS), so it is a terminal abstain like any other self-match.
         b = self._try_bible(name)
         if b:
-            return b["filename"], None
+            return _SELF if b["filename"] == self_fn else (b["filename"], None)
         c = self._resolve_colon(name, self_fn=self_fn)
         if c:
+            if c["filename"] == self_fn and not c.get("anchor"):
+                return _SELF
             return c["filename"], c.get("anchor")
         bag, tag = self.candidates(name, superset=True)
         if not bag or tag not in rungs:
             return None
-        if len(bag) > 1 and self_fn:
-            # An article never links to ITSELF while another candidate shares
-            # the name (the old resolver's self-reference rule).
-            bag = [c for c in bag if c[0] != self_fn] or bag
+        if self_fn:
+            # An article never links to ITSELF.  When self is the ONLY candidate
+            # the reference NAMES this article (ANATOMY citing "Anatomy"), so the
+            # whole ladder stops — descending would shop for an alternative and
+            # bind something worse (ANATOMY -> ARTICLE).  Rendering falls back to
+            # the display text, which is what a self-reference should read as.
+            bag = [c for c in bag if c[0] != self_fn]
+            if not bag:
+                return _SELF
         if len(bag) == 1:
             return bag[0][0], None
         fn, _, _ = self.fish(name, bag, prose=prose)
@@ -448,7 +668,7 @@ class LinkResolver:
 
     def resolve_xref(self, target: str, display: str = None, *,
                      prose: str = "", self_fn: str = None,
-                     trusted: bool = True):
+                     trusted: bool = True, embedded: bool = False):
         """One inline article reference -> ``(filename, section)`` (both None
         when nothing binds).  ``target`` is the extractor's normalized target;
         ``display`` the marker's display text when it differs.  TRUSTED cues
@@ -466,9 +686,12 @@ class LinkResolver:
         # words identifies the reference better (target `SAY` vs display
         # `Léon Say`).  Stable sort → target still leads on a tie.
         names.sort(key=lambda n: -len(content(wordset_f(n))))
-        for rungs in (_XREF_TIGHT, _XREF_LOOSE):
+        loose = _XREF_LINK_LOOSE if embedded else _XREF_LOOSE
+        for rungs in (_XREF_TIGHT, loose):
             for name in names:
                 r = self._xref_pass(name, prose, self_fn, rungs)
+                if r is _SELF:          # names THIS article — terminal abstain
+                    return None, None
                 if r:
                     return r
         return None, None
@@ -560,7 +783,9 @@ class LinkResolver:
             r = _fish_gated(h, "loosen:firstword-fish")
             if r:
                 return r
-        fn = self.idx.fuzzy(raw_name)
+        # The TOC path opts INTO the OCR edit-distance pass: recall beats
+        # precision for topics, and the kind gate below catches the wild hits.
+        fn = self.idx.fuzzy(raw_name, aggressive=True)
         if fn and _kind_ok(fn):
             return self._res(fn, "loosen:fuzzy")
         # 5. post-fill section forms (`#anchor`, or the name IS a section title)

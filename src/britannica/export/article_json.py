@@ -448,7 +448,7 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
-_LN_DISPLAY_RE = re.compile(r"«LN:[^|]*\|([^«]*)«/LN»")
+_LN_DISPLAY_RE = re.compile(r"«(?:LN|AL):[^|]*\|([^«]*)«/(?:LN|AL)»")
 
 
 def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
@@ -481,10 +481,27 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
         trusted = m["xref_type"] in ("link", "qv")
         dm = _LN_DISPLAY_RE.search(m["surface_text"])
         display = dm.group(1).strip() if dm else None
-        fn, section = resolver.resolve_xref(
-            m["normalized_target"], display,
-            prose=prose_window(body, m["surface_text"]) if trusted else "",
-            self_fn=self_fn, trusted=trusted)
+        ruled = resolver.adjudicated(m["normalized_target"])
+        if ruled is not None:
+            # A hand ruling wins over every tier — but the self-reference rule
+            # still applies on top of it (Absalom and Achitophel -> DRYDEN, JOHN
+            # is a self-link inside the Dryden article, and must not render).
+            fn = ruled or None
+            section = None
+            if fn == self_fn:
+                fn = None
+        elif m["xref_type"] == "author":
+            # A PERSON, not an article title — its own tier.
+            fn = resolver.resolve_person(
+                m["normalized_target"], display, self_fn=self_fn,
+                prose=prose_window(body, m["surface_text"]))
+            section = None
+        else:
+            fn, section = resolver.resolve_xref(
+                m["normalized_target"], display,
+                prose=prose_window(body, m["surface_text"]) if trusted else "",
+                self_fn=self_fn, trusted=trusted,
+                embedded=m["xref_type"] == "link")
         xr.target_article_id = fn_to_id.get(fn) if fn else None
         xr.target_section = section
         xr.status = ("resolved" if xr.target_article_id is not None
@@ -575,6 +592,23 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     body = re.sub(
         r"«EB9:([^|]*)\|([^«]*)«/EB9»",
         _resolve_eb9, body,
+    )
+
+    # «AL» (a surviving [[Author:…]] reference) bakes exactly like a link once the
+    # PERSON tier has resolved it; an unresolved one strips to its display text —
+    # the person has no EB article, which is the common case.  Runs AFTER
+    # `_resolve_link` for the same reason `_resolve_eb9` does: it writes 3-part
+    # markers that the 2-part regex above must never re-scan.
+    def _resolve_author(m: re.Match) -> str:
+        from britannica.xrefs.normalizer import normalize_xref_target
+        target_text, display = m.group(1), m.group(2)
+        fn = link_targets.get(normalize_xref_target(target_text).lower())
+        if fn:
+            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+        return display
+    body = re.sub(
+        r"«AL:([^|]*)\|([^«]*)«/AL»",
+        _resolve_author, body,
     )
 
     # Prose-scan wraps LAST: its 3-part markers are final and must not be re-scanned by

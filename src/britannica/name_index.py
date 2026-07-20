@@ -100,7 +100,7 @@ class NameIndex:
         common = set.intersection(*sets) if all(sets) else set()
         return [(fn, self.title_by_fn[fn]) for fn in common if ws <= self.fn_ws[fn]]
 
-    def superset(self, name: str) -> list:
+    def superset(self, name: str, *, single_head_ok: bool = False) -> list:
         """Titles whose folded word-set ⊆ the name's (title ⊂ link) — the reverse
         of ``subset``.  Returns the LONGEST such title(s) (most link words covered =
         most specific): `UNITED STATES DECLARATION OF INDEPENDENCE` -> `INDEPENDENCE,
@@ -117,10 +117,22 @@ class NameIndex:
         best = max(len(self.fn_cws[fn]) for fn in cands)
         # A single contained content word is a COMPONENT, not the subject —
         # BATTLE ⊂ 'Saratoga, Battles of', CARDINAL ⊂ 'Cardinal Newman as an
-        # Anglican' — so reverse containment only binds on ≥2 covered words
-        # (1-word names recover via the first-word rung instead).
+        # Anglican' — so reverse containment only binds on ≥2 covered words.
         if best < 2:
-            return []
+            if not single_head_ok:
+                return []
+            # …EXCEPT on EB's own inversion shape `Head, Qualifier`, where the
+            # title IS the head and the rest qualifies it: UNIFORMS, NAVAL AND
+            # MILITARY -> UNIFORMS;  GROUPS, THEORY OF -> GROUPS;  PRETORIUS,
+            # ANDRIES -> PRETORIUS.  The comma is what distinguishes these from
+            # the compound-noun trap — WEALTH OF NATIONS, BLEAK HOUSE and
+            # DICTIONARY OF NATIONAL BIOGRAPHY have none, so they stay blocked.
+            head, sep, _rest = name.partition(",")
+            hw = content(wordset_f(head)) if sep else set()
+            if len(hw) != 1:
+                return []
+            cands = [fn for fn in cands if self.fn_cws[fn] == hw]
+            return [(fn, self.title_by_fn[fn]) for fn in cands]
         return [(fn, self.title_by_fn[fn]) for fn in cands
                 if len(self.fn_cws[fn]) == best]
 
@@ -132,9 +144,15 @@ class NameIndex:
         hh = self.word_fns.get(fw[0].upper())
         return [(f, self.title_by_fn[f]) for f in hh] if hh else []
 
-    def fuzzy(self, name: str):
-        """Edit-distance last resort → a filename or None."""
-        return find_fuzzy_match(normalize_xref_target(name), self.tmap, aggressive=True)
+    def fuzzy(self, name: str, *, aggressive: bool = False):
+        """Edit-distance last resort → a filename or None.
+
+        ``aggressive`` adds the OCR edit-distance pass (BORBERS->BERBERS): recall
+        over precision.  Correct for the classified TOC, poison for inline xrefs,
+        where a garbled hit binds a title the target never denoted.  Safe by
+        default — the TOC path opts in."""
+        return find_fuzzy_match(normalize_xref_target(name), self.tmap,
+                                aggressive=aggressive)
 
     def add_alias(self, alias_title: str, canonical_fn: str) -> None:
         """Index ``alias_title`` as an alternate name for ``canonical_fn`` — recall

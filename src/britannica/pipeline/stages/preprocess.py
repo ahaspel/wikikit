@@ -145,6 +145,26 @@ def _decode_entities(text: str) -> str:
     return "".join(out)
 
 
+# A template PARAMETER reference with a default — `{{{width|100%}}}`, `{{{vol|I}}}`.
+# In article space the parameter is never bound, so MediaWiki renders the DEFAULT;
+# carried verbatim it leaks the raw triple-brace into the output (ALGEBRA's table
+# styles read `width: {{{width|100%}}}`, vol 1's title page `VOLUME {{{vol|I}}}`).
+# Substituting the default is what the source MEANS, and it is context-free — no
+# structural decision, exactly like the entity decode above, so it belongs in the
+# source-clean, not a producer ([[feedback_context_sensitive_is_producer]]).
+# A parameter with NO default (`{{{foo}}}`) is left alone: MediaWiki renders that
+# literally too, so leaking it is faithful.
+_PARAM_DEFAULT = re.compile(r"\{\{\{[^{}|]+\|([^{}]*)\}\}\}")
+
+
+def _resolve_param_defaults(text: str) -> str:
+    prev = None
+    while prev != text:                      # nested defaults resolve inside-out
+        prev = text
+        text = _PARAM_DEFAULT.sub(lambda m: m.group(1), text)
+    return text
+
+
 # Page furniture the article body carries but that renders nothing: the running
 # page heading, the `{{pagenum}}` folio (redundant with our «PAGE» markers), the
 # Wikisource maintenance `{{Ambox}}` notices ("proofreading cheats"), and
@@ -229,4 +249,5 @@ def _clean_and_heal(stream: str) -> str:
     # recognition (the SPLIT_WORD producer): start marker → the whole word, end
     # marker → nothing.
     stream = _decode_entities(stream)             # presentational HTML entities → chars
+    stream = _resolve_param_defaults(stream)      # {{{width|100%}}} → 100% (unbound param)
     return stream

@@ -636,6 +636,23 @@ def _carry_named_params(inner_raw):
     return inner_raw, css
 
 
+def _lang_peel(raw):
+    """Peel a script wrapper `{{hebrew|small=y|גָּלִיל}}` → (glyph content, param CSS).
+
+    The glyphs ARE the content, but the wrapper may carry leading NAMED params —
+    `small=y|` renders the glyph smaller (375 uses corpus-wide: hebrew/he ×
+    y/yes/1).  Taking everything after the FIRST pipe leaked those params into the
+    prose as literal text (`small=y|גָּלִיל` in GALILEE).  They are presentation,
+    so they are CARRIED as CSS by the SAME `_carry_named_params` the styler peel
+    uses ([[feedback_tune_dont_fork]]) — never dropped, never leaked."""
+    body = raw.strip()
+    if body.startswith("{{"):
+        body = body[2:]
+    if body.endswith("}}"):
+        body = body[:-2]
+    return _carry_named_params(body.partition("|")[2])
+
+
 def _strip_peel(raw):
     """Peel a PIPE-form styler `{{name|content}}` → (name, clean content, param CSS).
     Drop the matched `{{name|` opener + trailing `}}`, the `1=` explicit-positional
@@ -748,12 +765,7 @@ def _recurse_slot_content(raw, label):
     Returns the slot.  Mirrors each producer's slot parse so the classified slot matches what the
     producer wraps."""
     if label == "LANG":                       # script wrapper → its bare content (glyphs)
-        body = raw.strip()
-        if body.startswith("{{"):
-            body = body[2:]
-        if body.endswith("}}"):
-            body = body[:-2]
-        return body.partition("|")[2]
+        return _lang_peel(raw)[0]
     if label == "CONTENT_EXTRACT":            # tooltip/abbr/lang/sic/… → its one DISPLAY arg
         return _content_parse(raw)[1]
     if label == "ANCHOR":                     # `{{anchor+|id|display}}` → the display (else "")
@@ -816,6 +828,16 @@ def _wrap_bare(raw, body, ctx):
     return body.strip()
 
 
+def _wrap_lang(raw, body, ctx):
+    """LANG wrap: the glyphs are the text, so the wrapper contributes nothing —
+    UNLESS it carried a presentation param (`{{hebrew|small=y|…}}`), which rides
+    out as an inline «SPAN[style:…]» exactly as the styler family does."""
+    from britannica.pipeline.stages.elements._tables import style_block
+    css = ";".join(_lang_peel(raw)[1])
+    body = body.strip()
+    return style_block(body, css=css, tag="SPAN") if css else body
+
+
 def _wrap_param(raw, body, ctx):
     """PARAM wrap (a `_PR_WRAP` row): the param-valued styler `{{Fs|108%|X}}` / `{{font size|N%|X}}`
     (+ ti / margin-left / size).  Same styler family as STRIP, but the CSS value is arg-1; re-
@@ -841,7 +863,7 @@ def _wrap_param(raw, body, ctx):
 _PR_WRAP = {
     "CITE":       _wrap_italic,   # {{cite|Title}}          → «I»Title«/I»
     "LB":         _wrap_lb,       # {{lb-|N}}               → "N lb" / "lb"
-    "LANG":       _wrap_bare,     # {{greek|X}}             → X  (glyphs are the text)
+    "LANG":       _wrap_lang,     # {{greek|X}}             → X  (+ carried small=)
     "SPLIT_WORD": _wrap_bare,     # {{hws|frag|WORD}}       → WORD (END → "")
     "MAIN_OTHER": _wrap_bare,     # {{main other|main|other}} → main copy (param 1)
     # the «LN:target|display» family — one wrap each, all on the shared `_link_display` peel

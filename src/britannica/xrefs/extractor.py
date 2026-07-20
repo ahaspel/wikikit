@@ -289,6 +289,15 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         if _is_plausible_target(target):
             _add(m.group(0), target, "link")
 
+    # «AL» is the surviving [[Author:…]] marker — 6b4 resolves the contributor
+    # SIGNOFFS and leaves the rest for us.  Its target names a PERSON, not an
+    # article title, so it is its own kind: the resolver matches a surname
+    # against EB's surname-first titles instead of running the article ladder.
+    for m in re.finditer("«AL:([^|]*)\\|([^«]*)«/AL»", text):
+        target = m.group(1).strip()
+        if _is_plausible_target(target):
+            _add(m.group(0), target, "author")
+
     # q.v. references — link-marker variant first (more precise)
     for m in _QV_LINK_PATTERN.finditer(text):
         target = m.group(1).strip()
