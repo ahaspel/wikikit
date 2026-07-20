@@ -30,7 +30,12 @@ _SENTINEL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 # brace/bracket checks run with the math spans removed.  Marker and sentinel
 # checks run over the WHOLE render — a raw `«MATH»` *inside* a math span is the
 # display-grouping leak (it over-captured an adjacent marker), and must be caught.
-_TEXMATH_RE = re.compile(r'<span class="tex-math"[^>]*>.*?</span>', re.DOTALL)
+# `data-latex` is the SAME content in a different carrier (the wide-math popout
+# link, whose LaTeX must ride in the DOM for the click handler), so it takes the
+# same exemption — `{{1 \over 2}}` is a TeX brace group (`\over` needs the
+# enclosing group), not a template.  Both are carriers of LaTeX, not of markup.
+_TEXMATH_RE = re.compile(
+    r'<span class="tex-math"[^>]*>.*?</span>|data-latex="[^"]*"', re.DOTALL)
 
 
 def find_render_leaks(rendered_html):

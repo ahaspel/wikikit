@@ -66,6 +66,23 @@ _LEAF_RE = re.compile(r"\{\{\s*([^|{}]*?)\s*(?:\|(.*))?\}\}", re.DOTALL)
 # Literal-character escapes: template name IS the char (Wikisource convention).
 _ESCAPE = {"=": "=", "(": "(", ")": ")", "'": "'", "!": "|", "*": "*", "–": "–"}
 
+# The same escapes, as a decoder for an OPAQUE interior.  `<math>`/`<nowiki>`/…
+# interiors are verbatim to the walker (no scan), so a char-escape inside one can
+# never reach this producer as its own leaf — the owning producer decodes it
+# instead ([[feedback_context_sensitive_is_producer]]), reusing THIS table so
+# there is one owner of "what `{{X}}` means as a literal character"
+# ([[feedback_tune_dont_fork]]).  Single-char names ONLY: a LaTeX brace group
+# (`{{1 \over 2}}` — `\over` needs the enclosing group) is real math, not a
+# template, and must survive untouched.
+_ESCAPE_ONLY_RE = re.compile(
+    r"\{\{\s*(" + "|".join(re.escape(k) for k in _ESCAPE) + r")\s*\}\}")
+
+
+def decode_char_escapes(text: str) -> str:
+    """Decode the Wikisource literal-char escapes (`{{=}}` → `=`) in an opaque
+    interior.  Everything else is left exactly as-is."""
+    return _ESCAPE_ONLY_RE.sub(lambda m: _ESCAPE[m.group(1)], text)
+
 
 def process_spacer(raw: str, ctx=None) -> str:
     m = _LEAF_RE.match(raw)

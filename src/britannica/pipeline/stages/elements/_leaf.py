@@ -54,8 +54,14 @@ def _process_math(raw: str, inner: str) -> str:
     ``britannica.math_widths`` and ``tools/diagnostics/measure_math_widths.py``.
     """
     from britannica.math_widths import scale_hint
+    from britannica.pipeline.stages.elements._spacer import decode_char_escapes
     display = bool(_MATH_DISPLAY_RE.search(raw)) or bool(_LATEX_ENV_RE.search(inner))
     inner = html_mod.unescape(inner.strip())
+    # `<math>` is an OPAQUE tag — the walker never scans its interior, so a
+    # Wikisource char-escape in there can never reach SPACER as its own leaf.
+    # This producer owns the math content, so it decodes them (single-char names
+    # only; a LaTeX brace group like `{{1 \over 2}}` is real math and survives).
+    inner = decode_char_escapes(inner)
     # Canonicalise whitespace: collapse all runs of whitespace
     # (including newlines) to a single space.  LaTeX is whitespace-
     # insensitive, so this is safe — and it ensures the marker's

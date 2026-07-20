@@ -144,8 +144,11 @@ _MIRROR_GLYPH_RE = re.compile(
 # isn't read as a named-param separator.  RECOGNITION only: the three opener
 # regexes below are reused by their producers to read the value, so ONE
 # definition lets the walker bound the span AND the producer parse it.  The
-# content `{{=}}` (math, `{{center|R {{=}} …}}`) is NOT touched here — it stays
-# SPACER's post-walk decode, where the `=` genuinely IS a named-arg hazard.
+# content `{{=}}` (`{{center|R {{=}} …}}`) is NOT touched here — it stays SPACER's
+# post-walk decode, where the `=` genuinely IS a named-arg hazard.  EXCEPT inside
+# an OPAQUE interior (`<math>`/`<nowiki>`/…): the walker never scans there, so
+# SPACER can't reach it and the owning producer decodes it instead (`_process_math`
+# → `_spacer.decode_char_escapes`).
 _ATTR_EQ = r"(?:=|\{\{\s*=\s*\}\})"
 
 _SPAN_TITLE_OPEN_RE = re.compile(
