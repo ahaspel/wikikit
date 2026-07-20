@@ -1,16 +1,13 @@
-"""Phase 6b4: resolve inline xrefs POST-EXPORT.
+"""Phase 6b5: resolve inline xrefs POST-EXPORT.
 
 With ``defer_xrefs`` the export writes each article's body with its raw producer
 markers (``«LN:target|display»`` / ``«EB9»``) and no ``rendered_html``.  This
 phase does the REORDER: it runs the SAME decoration + render the export used to
 do inline — ``_xrefs_from_body`` → ``xref_panel_entries`` → ``_link_xrefs_in_body``
-→ ``render_article`` — but NOW, after the topic resolution + kind index exist, so
-it can disambiguate collisions against them.  Nothing is rewritten; only the call
-site moves.  ([[project_resolver_consolidation]] F.)
-
-Decoration + PAGE-marker replacement + `«LN»`-baking commute (disjoint body
-spans), so with the standard resolution index this is byte-identical to the old
-in-export decoration; the kind-aware index (C-full) changes only collisions.
+→ ``render_article`` — but NOW, after the topic resolution + kind index + the
+classified TOC exist.  Resolution routes through the shared ``LinkResolver``
+(fill + prose-fish; the see tier filters on the source article's TOC topics) —
+docs/xref_resolution_strategy.md, [[project_resolver_consolidation]].
 
 Sole (re)writer of `xref_resolution.jsonl`; patches each article JSON in place
 (body, word_count, xrefs panel, rendered_html).
@@ -26,8 +23,8 @@ from britannica.export.article_json import (
     _link_xrefs_in_body, _safe_filename, _xrefs_from_body,
     register_stable_id_dedup, xref_panel_entries,
 )
+from britannica.link_resolver import LinkResolver
 from britannica.render.article import render_article
-from britannica.xrefs.resolver import build_index
 
 ART = Path("data/derived/articles")
 _SKIP = {"index.json", "contributors.json"}
@@ -43,11 +40,9 @@ def main() -> None:
         # would drop the -N suffix on a BOG/BOGÓ-type pair — baking a wrong
         # (dangling) resolved_to.  Must run before any _safe_filename call.
         register_stable_id_dedup(all_articles)
-        # Load every article payload; the undecorated bodies double as the
-        # disambiguation corpus (body_opening strips PAGE markers, so the
-        # printed-page form here matches the in-memory ws form).
+        # Load every article payload (undecorated bodies — the prose the
+        # fisher embeds around each reference).
         payloads: dict[Path, dict] = {}
-        corpus: dict[int, str] = {}
         for fn in ART.glob("*.json"):
             if fn.name in _SKIP:
                 continue
@@ -57,9 +52,13 @@ def main() -> None:
                 continue
             if isinstance(d, dict) and "id" in d and "body" in d:
                 payloads[fn] = d
-                corpus[d["id"]] = d["body"]
 
-        link_index = build_index(all_articles, corpus=corpus)
+        # The ONE name→article resolver (reads the exported index.json — same
+        # filename space as _safe_filename post-dedup); fn_to_id maps its picks
+        # back to DB ids for the CrossReference rows.
+        resolver = LinkResolver(aliases=True)
+        fn_to_id = {_safe_filename(a, a.title): a.id for a in all_articles
+                    if a.article_type != "plate"}
         g2f = {a.title.upper(): _safe_filename(a, a.title) for a in all_articles}
 
         xref_rows: list = []
@@ -69,7 +68,9 @@ def main() -> None:
             if article is None:
                 continue
             body = d["body"]
-            xrefs = _xrefs_from_body(body, article.id, link_index)
+            xrefs = _xrefs_from_body(body, article.id, resolver,
+                                     fn_to_id=fn_to_id,
+                                     self_fn=d["stable_id"] + ".json")
             xref_list = xref_panel_entries(xrefs, session)
             src = d["stable_id"]
             for e in xref_list:

@@ -1,98 +1,23 @@
-"""Shared, DB-free kind-disambiguation vocabulary + matcher.
+"""Shared, DB-free kind vocabulary + lead-kind reader.
 
 When two or more articles share a title (ZÜRICH canton vs ZÜRICH city,
 ABEL biblical vs chemist vs musician, ABERDEEN Scotland vs South Dakota),
 the discriminator is a *kind* word — and every EB1911 article states its
 own kind in its opening clause ("one of the cantons of…", "the capital
-of…", "(1827-1902), English chemist").
+of…", "(1827-1902), English chemist").  ``lead_kind`` reads that first
+is-a noun; ``pick_by_kind`` settles a collision on it when a caller knows
+the wanted kind (the vol29 classified-TOC resolver's bucket — ``Towns`` →
+``town``; the kind index; the contributor footprint match).
 
-This module owns that vocabulary and the body-opening matcher.  Two
-consumers feed it a *wanted kind* from different places:
-
-  - the article xref resolver (``britannica.xrefs.resolver``) reads it
-    from a link's display parenthetical — ``Zürich (city)`` → ``city``;
-  - the vol29 classified-TOC resolver reads it from the index structure
-    — the bucket name (``Towns`` → ``town``) or category path
-    (``Chemistry`` → ``chemist``).
-
-The matcher is the same either way: does the wanted kind (or one of its
-synonyms) appear as a word in the candidate's body opening.
+The old whole-opening word-grep (``matches_disambiguator``) and the display-
+parenthetical hint reader (``hint_kind``) retired with the xref cascade they
+served — article xrefs now prose-fish through ``LinkResolver``.
 """
 from __future__ import annotations
 
 import re
 
 from britannica.markers import PAGE_MARKER_RE as _PAGE_MARKER_RE
-
-# Disambiguator word (lowercase) → set of literal words that, if found
-# in a candidate's body opening, indicate a match.  Keep transparent
-# and narrow; expand as concrete collision cases reveal blind spots.
-DISAMBIGUATOR_SYNONYMS: dict[str, set[str]] = {
-    # Geographic — the ZÜRICH (city) case + friends
-    "city":       {"city", "town", "capital", "burgh", "seaport", "municipality"},
-    "town":       {"town", "city", "village", "burgh"},
-    "village":    {"village", "hamlet", "town"},
-    "canton":     {"canton", "cantonal"},
-    "county":     {"county", "shire"},
-    "state":      {"state", "commonwealth"},
-    "province":   {"province", "territory"},
-    "region":     {"region", "district", "territory"},
-    "river":      {"river", "stream", "tributary", "affluent"},
-    "lake":       {"lake", "loch", "lough"},
-    "mountain":   {"mountain", "peak", "ridge", "summit"},
-    "island":     {"island", "isle"},
-    # Administrative division — the TOC "Divisions" bucket, which the
-    # source spells with any of these depending on the country.
-    "division":   {"canton", "county", "shire", "state", "commonwealth",
-                   "province", "territory", "department", "government",
-                   "district", "circle", "region", "governorate", "duchy",
-                   "principality", "kingdom", "prefecture", "arrondissement"},
-
-    # Office / title — ABBAS I (shah) etc.
-    "saint":      {"saint"},
-    "pope":       {"pope", "pontiff"},
-    "king":       {"king", "monarch"},
-    "queen":      {"queen"},
-    "emperor":    {"emperor"},
-    "empress":    {"empress"},
-    "prince":     {"prince"},
-    "duke":       {"duke"},
-    "earl":       {"earl", "count"},
-    "baron":      {"baron"},
-    "bishop":     {"bishop", "archbishop"},
-    "priest":     {"priest", "divine", "cleric"},
-    "shah":       {"shah"},
-    "pasha":      {"pasha"},
-    "sultan":     {"sultan"},
-    "caliph":     {"caliph"},
-    "patriarch":  {"patriarch"},
-
-    # Occupation — ABERNETHY (surgeon), ABBOT (divine)
-    "writer":     {"writer", "author", "novelist", "dramatist"},
-    "poet":       {"poet"},
-    "painter":    {"painter", "artist"},
-    "sculptor":   {"sculptor"},
-    "composer":   {"composer"},
-    "musician":   {"musician", "composer", "organist", "violinist", "singer"},
-    "philosopher":{"philosopher"},
-    "historian":  {"historian"},
-    "general":    {"general", "commander"},
-    "admiral":    {"admiral"},
-    "physician":  {"physician", "surgeon", "doctor"},
-    "mathematician": {"mathematician"},
-    "astronomer": {"astronomer"},
-    "chemist":    {"chemist"},
-    "physicist":  {"physicist", "natural philosopher"},
-    "naturalist": {"naturalist", "zoologist", "botanist"},
-    "geologist":  {"geologist"},
-    "engineer":   {"engineer"},
-    "statesman":  {"statesman", "politician"},
-    "jurist":     {"jurist"},
-    "dramatist":  {"dramatist", "playwright"},
-    "surgeon":    {"surgeon", "physician"},
-    "divine":     {"divine", "priest", "cleric", "theologian"},
-    "theologian": {"theologian", "divine"},
-}
 
 _INNER_MARKER_RE = re.compile(r"«/?[A-Z]+(?::[^«»]*)?»")
 
@@ -106,23 +31,12 @@ def body_opening(body: str, chars: int = 300) -> str:
     return b[:chars]
 
 
-def matches_disambiguator(disambiguator: str, opening: str) -> bool:
-    """True if the disambiguator (or a synonym) appears as a word in the
-    candidate's body opening."""
-    words = DISAMBIGUATOR_SYNONYMS.get(disambiguator, {disambiguator})
-    text = opening.lower()
-    for w in words:
-        if re.search(r"\b" + re.escape(w) + r"\b", text):
-            return True
-    return False
-
-
 # ── The article's OWN kind, read off its lead (first is-a) ────────────────
-# `matches_disambiguator` asks "does this word appear anywhere in the
-# opening"; that mis-fires when a *city* names its canton ("the capital of
-# the canton of Zürich").  The sharper signal is the FIRST is-a noun: the
-# canton says "one of the cantons" first, the city says "the capital"
-# first.  `lead_kind` returns that earliest kind; later nouns are decoys.
+# A whole-opening word-grep mis-fires when a *city* names its canton ("the
+# capital of the canton of Zürich").  The sharper signal is the FIRST is-a
+# noun: the canton says "one of the cantons" first, the city says "the
+# capital" first.  `lead_kind` returns that earliest kind; later nouns are
+# decoys.
 _LEAD_NOUNS: list[tuple[str, str]] = [
     # places
     ("capital", "city"), ("chief town", "city"), ("chief city", "city"),
@@ -226,56 +140,14 @@ def kind_qualifies(lk: str | None, want: str) -> bool:
     return lk == want
 
 
-def pick_by_kind(candidates, want, opening_of, kinds_of=None):
+def pick_by_kind(candidates, want, opening_of):
     """The UNIQUE candidate whose kind qualifies for `want`, ignoring
     institutional/event decoys.  Returns None (abstain) if zero or many
     qualify, or if `want` is falsy.  `candidates` is a list of (key, title);
-    `opening_of(key)` yields that candidate's body opening.
-
-    ``kinds_of(key)``, when supplied (the post-export kind index, C-full), adds
-    that candidate's recorded kinds (its topic bucket ∪ its stored lead) to the
-    live ``lead_kind``, so a candidate whose OPENING misleads ("...on the river
-    X" → river) or lacks an is-a noun still qualifies by its bucket."""
+    `opening_of(key)` yields that candidate's body opening."""
     if not want:
         return None
     elig = [(k, t) for k, t in candidates if not INSTITUTIONAL_RE.search(t)]
-
-    def _qualifies(k):
-        kinds = {lead_kind(opening_of(k))}
-        if kinds_of is not None:
-            kinds |= kinds_of(k)
-        return any(kind_qualifies(lk, want) for lk in kinds)
-
-    hits = [k for k, _t in elig if _qualifies(k)]
+    hits = [k for k, _t in elig
+            if kind_qualifies(lead_kind(opening_of(k)), want)]
     return hits[0] if len(hits) == 1 else None
-
-
-# ── A parenthetical disambiguator word -> a wanted-kind ────────────────────
-# An explicit source xref carries its kind in a parenthetical -- Zürich (city),
-# David (king of Judah), Alcázar (province).  Map that word into the SAME kind
-# space `lead_kind` emits, so `pick_by_kind` settles the collision by the
-# candidates' own leads (the sharp signal) instead of the whole-opening word-grep
-# (`matches_disambiguator`, which mis-fires: the canton says "the capital is
-# Zürich").  Built off `_LEAD_NOUNS` so hint and lead share one vocabulary.
-_NOUN_KIND = dict(_LEAD_NOUNS)
-_NOUN_KIND.update({"colony": "division", "dependency": "division",
-                   "protectorate": "division", "shire": "division",
-                   "territory": "division"})
-# Settlement words go to the lenient 'town' want (lead may say town OR city).
-_SETTLEMENT = {"city", "town", "village", "borough", "burgh", "seaport",
-               "capital", "port", "watering-place"}
-
-
-def hint_kind(parenthetical: str):
-    """The wanted-kind a disambiguator parenthetical denotes, or None.  Scans
-    its words (so 'king of Judah' -> king, 'grand-duchy' -> division), tolerating
-    a plural ('popes' -> pope).  None for a place-of / subject-domain hint
-    ('South Carolina', 'Law') -- those need the post-export topic tree (step C
-    after F)."""
-    for w in re.findall(r"[a-z]+", (parenthetical or "").lower()):
-        if w in _SETTLEMENT or w.rstrip("s") in _SETTLEMENT:
-            return "town"
-        k = _NOUN_KIND.get(w) or _NOUN_KIND.get(w.rstrip("s"))
-        if k:
-            return k
-    return None

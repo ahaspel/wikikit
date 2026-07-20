@@ -448,18 +448,27 @@ def _wrap_resolved_xrefs_in_body(
     return body
 
 
-def _xrefs_from_body(body, article_id, link_index):
-    """The candidate-source half of the xref decorator: extract every
-    reference from the body and resolve it off the in-memory index,
-    returning transient (un-persisted) CrossReference rows.  No DB read.
+_LN_DISPLAY_RE = re.compile(r"«LN:[^|]*\|([^«]*)«/LN»")
 
-    No index (``link_index is None`` — a single-article look-render that skips
-    the corpus-wide resolution) means nothing to resolve against, so return no
-    xrefs; the body's «LN» markers then strip to their display text downstream."""
-    if link_index is None:
+
+def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
+    """The candidate-source half of the xref decorator: extract every
+    reference from the body and resolve it through the shared ``LinkResolver``
+    (fill + prose-fish — docs/xref_resolution_strategy.md), returning transient
+    (un-persisted) CrossReference rows.  No DB read.
+
+    ``resolver`` resolves in filename space; ``fn_to_id`` maps its picks back
+    to DB ids and ``self_fn`` is THIS article's filename (the see-tier topic
+    filter + the same-article `#section` form key on it).  Only the post-export
+    resolve phase (6b5) constructs the resolver; ``resolver is None`` — a
+    single-article look-render or a deferring export — means nothing to resolve
+    against, so return no xrefs; the body's «LN» markers then strip to their
+    display text downstream."""
+    if resolver is None:
         return []
     from britannica.xrefs.extractor import extract_xrefs
-    from britannica.pipeline.stages.resolve_xrefs import resolve_one
+    from britannica.link_resolver import prose_window
+    fn_to_id = fn_to_id or {}
     xrefs = []
     for m in extract_xrefs(body):
         xr = CrossReference(
@@ -468,7 +477,15 @@ def _xrefs_from_body(body, article_id, link_index):
             normalized_target=m["normalized_target"],
             xref_type=m["xref_type"],
         )
-        xr.target_article_id, xr.target_section = resolve_one(xr, link_index)
+        trusted = m["xref_type"] in ("link", "qv")
+        dm = _LN_DISPLAY_RE.search(m["surface_text"])
+        display = dm.group(1).strip() if dm else None
+        fn, section = resolver.resolve_xref(
+            m["normalized_target"], display,
+            prose=prose_window(body, m["surface_text"]) if trusted else "",
+            self_fn=self_fn, trusted=trusted)
+        xr.target_article_id = fn_to_id.get(fn) if fn else None
+        xr.target_section = section
         xr.status = ("resolved" if xr.target_article_id is not None
                      else "unresolved")
         xrefs.append(xr)

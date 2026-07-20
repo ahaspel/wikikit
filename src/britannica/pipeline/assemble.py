@@ -2,23 +2,21 @@
 decorate > serialize, with no per-article DB body/xref/title writes.
 
 Walks every article into an in-memory ``{id: body}`` corpus via
-``walk_article``, builds the resolution index off that corpus, then
-serializes each volume through the export's decorator path
-(``body_override`` + ``link_index``).  This is the single pass that replaces the
+``walk_article``, then serializes each volume through the export
+(``body_override``).  This is the single pass that replaces the
 ``transform_articles`` → ``extract_xrefs`` → ``resolve_xrefs`` → export
-chain: the body, the title, and every cross-link are produced once, held
-in memory, and read straight into the JSON — the DB is never written.
+chain: the body and the title are produced once, held in memory, and read
+straight into the JSON — the DB is never written.  Xref resolution +
+«LN»-baking + render are DEFERRED wholesale to the post-export resolve phase
+(``tools/pipeline/resolve_xrefs_post.py``), which runs after the classified
+TOC + kind index exist and routes through the shared ``LinkResolver``.
 """
 from __future__ import annotations
-
-import json
-from pathlib import Path
 
 from britannica.db.models import Article
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import (
     export_articles_to_json, register_stable_id_dedup)
-from britannica.pipeline.stages.resolve_xrefs import build_resolution_index
 from britannica.pipeline.stages.transform_articles import walk_article
 
 
@@ -85,41 +83,26 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
         n_dedup = register_stable_id_dedup(all_articles)
         print(f"  [assemble] stable_id dedup: {n_dedup} collision suffix(es)", flush=True)
         # Contributor binding (signatures + front-matter + vol-29) moved to the
-        # post-export Phase 6b5 (resolve_contributors_post.py) — it runs after the
+        # post-export Phase 6b4 (resolve_contributors_post.py) — it runs after the
         # kind index (6b3), so it can footprint-disambiguate vol-29 credits.  The
-        # export writes empty `contributors`; 6b5 fills them.
-        print("  [assemble] building cross-reference resolution index…", flush=True)
-        idx = build_resolution_index(all_articles, corpus=corpus)
+        # export writes empty `contributors`; 6b4 fills them.
         volumes = ([only_volume] if only_volume is not None
                    else sorted({a.volume for a in all_articles}))
         print(f"  [export] exporting {len(volumes)} volume(s)…", flush=True)
         total = 0
-        xref_rows: list = []
         for volume in volumes:
             n = export_articles_to_json(
                 volume, out_dir,
                 body_override=corpus,
-                link_index=idx,
-                xref_sink=xref_rows,
                 # Phase F: defer xref resolution + baking + render to the
                 # post-export resolve phase (tools/pipeline/resolve_xrefs_post.py,
-                # rebuild phase 6b4), which can disambiguate against the kind
-                # index.  [[project_resolver_consolidation]]
+                # rebuild phase 6b5), which resolves through the shared
+                # LinkResolver and is the sole writer of xref_resolution.jsonl.
+                # [[project_resolver_consolidation]]
                 defer_xrefs=True,
             )
             total += n
             print(f"  [export] vol {volume}: {n} articles ({total} total)", flush=True)
-
-        # Persist the full resolution (resolved AND unresolved) as one diffable
-        # snapshot — the unresolved half is otherwise discarded.  Lives beside
-        # article_index.tsv (data/derived/, not the deployed articles dir), so it
-        # is git-trackable for cross-rebuild resolution diffs.
-        if only_volume is None:
-            dump = Path(out_dir).parent / "xref_resolution.jsonl"
-            with dump.open("w", encoding="utf-8") as fh:
-                for row in xref_rows:
-                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-            print(f"  [export] persisted {len(xref_rows)} xrefs → {dump}", flush=True)
         return total
     finally:
         session.close()

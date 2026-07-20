@@ -115,6 +115,12 @@ class NameIndex:
         if not cands:
             return []
         best = max(len(self.fn_cws[fn]) for fn in cands)
+        # A single contained content word is a COMPONENT, not the subject —
+        # BATTLE ⊂ 'Saratoga, Battles of', CARDINAL ⊂ 'Cardinal Newman as an
+        # Anglican' — so reverse containment only binds on ≥2 covered words
+        # (1-word names recover via the first-word rung instead).
+        if best < 2:
+            return []
         return [(fn, self.title_by_fn[fn]) for fn in cands
                 if len(self.fn_cws[fn]) == best]
 

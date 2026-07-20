@@ -32,11 +32,18 @@ from britannica.xrefs.disambiguation import (
     body_opening, kind_qualifies, lead_kind, pick_by_kind)
 from britannica.embeddings import LeadEmbeddings, build_cache
 from britannica.topic_fisher import Fisher
-from britannica.name_index import NameIndex
+from britannica.name_index import NameIndex, content, wordset_f
 
 ARTICLES_INDEX = Path("data/derived/articles/index.json")
 ARTS_DIR = ARTICLES_INDEX.parent
 SECTION_INDEX = Path("data/derived/classified_section_index.json")
+CLASSIFIED_TOC = Path("data/derived/classified_toc.json")
+
+# The trusted-xref ladder runs the fill rungs in two tiers over BOTH the target
+# and the display name: every full-containment rung on either name before any
+# partial-match recovery rung — a tight display match beats a loose target one.
+_XREF_TIGHT = ("exact", "alt", "fold", "subset", "superset")
+_XREF_LOOSE = ("firstword", "fuzzy")
 
 # A2 broadening (reach past the exact collision to a leading-token candidate) is
 # safe ONLY where the bucket wants a PHYSICAL FEATURE filed as a variant of the
@@ -95,6 +102,48 @@ def load_section_index() -> dict[str, list]:
     return uniq
 
 
+def load_topic_map() -> dict[str, set]:
+    """filename -> {top-level category names} off the classified TOC — the
+    see-tier's source-topic filter.  Empty when the TOC isn't built yet (every
+    see/cf reference then abstains, the untrusted tier's safe default)."""
+    try:
+        d = json.loads(CLASSIFIED_TOC.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    tm: dict[str, set] = {}
+
+    def _walk(cat, node):
+        for art in node.get("articles", []):
+            fn = art.get("filename")
+            if fn:
+                tm.setdefault(fn, set()).add(cat)
+        for ch in node.get("children", []):
+            _walk(cat, ch)
+
+    for cat in d.get("categories", []):
+        for sub in cat.get("subsections", []):
+            _walk(cat["name"], sub)
+    return tm
+
+
+def _clean_prose(t: str) -> str:
+    """Marker stream -> plain prose: links to their display, markers/page
+    stamps out, whitespace collapsed.  What the fisher should embed."""
+    t = re.sub(r"«LN:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
+    t = re.sub(r"«[^»]*»", "", t)
+    t = re.sub(r"\x01PAGE:\d+\x01", " ", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def prose_window(body: str, surface: str, radius: int = 140) -> str:
+    """The prose around one reference — the xref path's disambiguation
+    context (docs/xref_resolution_strategy.md: context = PROSE, not bucket)."""
+    i = body.find(surface)
+    if i < 0:
+        return _clean_prose(surface)
+    return _clean_prose(body[max(0, i - radius): i + len(surface) + radius])
+
+
 def _topic_alternates(raw: str) -> list:
     """A name's own alternate spellings: 'Agaiambo or Agaumbu' -> both;
     'Afars (Danakil)' -> 'Afars' and 'Danakil'.  Recall only."""
@@ -122,8 +171,8 @@ class LinkResolver:
         # The shared FILL substrate — word-set / fold / subset / first-word / fuzzy.
         self.idx = NameIndex(arts)
         # Alias overlay (title aliases + section + vol29 index): opt-in, so the
-        # topic path stays byte-identical.  The xref path enables it — it's what
-        # resolver.py's build_index adds, so the sole resolver keeps that reach.
+        # topic path stays byte-identical.  The xref path enables it — the reach
+        # the retired resolver.py cascade had, kept by the sole resolver.
         if aliases:
             self._overlay_aliases()
         self.title_by_fn = self.idx.title_by_fn
@@ -140,6 +189,7 @@ class LinkResolver:
                     (_art_norm(" ".join(parts[:-1])), e["filename"], e["title"]))
         self._sec_cache: dict[str, list] = {}
         self._open_cache: dict[str, str] = {}
+        self._topic_map: dict[str, set] | None = None    # lazy: see-tier only
         # Embeddings for the fisher's semantic rung (built once, cached; regenerable).
         try:
             _emb = LeadEmbeddings.load()
@@ -332,10 +382,98 @@ class LinkResolver:
         return [], "none"
 
     # -- 3. fish (pick one) --------------------------------------------------
-    def fish(self, name, cands, *, path=None, prose=None, want_kind=None):
-        """Pick one candidate from a bag — the bucket path (topics) or the
-        reference prose (xrefs) as context.  Returns (fn, title, method)."""
-        return self.fisher.fish(name, cands, path or [], want_kind, prose=prose)
+    def fish(self, name, cands, *, path=None, prose=None, want_kind=None,
+             trusted=True):
+        """Pick one candidate from a bag — the bucket path (topics) or the reference
+        prose (xrefs) as context.  Returns (fn, title, method), or (None, None,
+        "abstain") for an untrusted cue whose prose clears no candidate."""
+        return self.fisher.fish(name, cands, path or [], want_kind, prose=prose,
+                                trusted=trusted)
+
+    # -- article-xref orchestrator (Phase 6b5) -------------------------------
+    def _topics_of(self, fn):
+        if self._topic_map is None:
+            self._topic_map = load_topic_map()
+        return self._topic_map.get(fn)
+
+    def resolve_see(self, target: str, display: str = None, *,
+                    self_fn: str = None):
+        """The UNTRUSTED tier (see / see also / cf): a real see points WITHIN
+        the source article's own subject, so filter fill candidates to those
+        sharing a source topic category and ABSTAIN when none do (bibliographic
+        authors / verb-usage `see` land in other topics or none).  The shared
+        category doubles as the fisher's bucket for any that qualify.  Only a
+        SUBSTANTIAL tight match may bind — exact/alt/fold, or a subset covering
+        ≥2 content words; a single-word surname/firstword match is a red
+        herring (a wrong same-named person who may share the topic).
+        Returns a filename or None."""
+        src_cats = self._topics_of(self_fn) if self_fn else None
+        if not src_cats:
+            return None
+        for name in (n for n in (target, display) if n):
+            bag, tag = self.candidates(name)       # superset off — component noise
+            substantial = tag in ("exact", "alt", "fold") or (
+                tag == "subset" and len(content(wordset_f(name))) >= 2)
+            if not substantial:
+                continue
+            match = [c for c in bag
+                     if (self._topics_of(c[0]) or set()) & src_cats]
+            if len(match) == 1:
+                return match[0][0]
+            if len(match) >= 2:
+                fn, _, _ = self.fish(name, match, path=sorted(src_cats))
+                if fn:
+                    return fn
+        return None
+
+    def _xref_pass(self, name, prose, self_fn, rungs):
+        """One tier of the trusted ladder over one name: the folded-in target
+        forms (Bible ref, colon-suffix), then the fill bag IF its rung is in
+        this tier, fished on the reference's prose.  -> (fn, section) | None."""
+        b = self._try_bible(name)
+        if b:
+            return b["filename"], None
+        c = self._resolve_colon(name, self_fn=self_fn)
+        if c:
+            return c["filename"], c.get("anchor")
+        bag, tag = self.candidates(name, superset=True)
+        if not bag or tag not in rungs:
+            return None
+        if len(bag) > 1 and self_fn:
+            # An article never links to ITSELF while another candidate shares
+            # the name (the old resolver's self-reference rule).
+            bag = [c for c in bag if c[0] != self_fn] or bag
+        if len(bag) == 1:
+            return bag[0][0], None
+        fn, _, _ = self.fish(name, bag, prose=prose)
+        return (fn, None) if fn else None
+
+    def resolve_xref(self, target: str, display: str = None, *,
+                     prose: str = "", self_fn: str = None,
+                     trusted: bool = True):
+        """One inline article reference -> ``(filename, section)`` (both None
+        when nothing binds).  ``target`` is the extractor's normalized target;
+        ``display`` the marker's display text when it differs.  TRUSTED cues
+        (link / q.v.) always pick — the author declared the reference real, so
+        a weak fish still beats no link; untrusted cues (see / cf) go through
+        ``resolve_see`` and abstain by default."""
+        if display and normalize_xref_target(display) == \
+                normalize_xref_target(target):
+            display = None
+        if not trusted:
+            fn = self.resolve_see(target, display, self_fn=self_fn)
+            return (fn, None) if fn else (None, None)
+        names = [n for n in (target, display) if n]
+        # Prefer the MORE-SPECIFIC name first: the side carrying more content
+        # words identifies the reference better (target `SAY` vs display
+        # `Léon Say`).  Stable sort → target still leads on a tie.
+        names.sort(key=lambda n: -len(content(wordset_f(n))))
+        for rungs in (_XREF_TIGHT, _XREF_LOOSE):
+            for name in names:
+                r = self._xref_pass(name, prose, self_fn, rungs)
+                if r:
+                    return r
+        return None, None
 
     # -- orchestrator --------------------------------------------------------
     def resolve(self, raw_name: str, want=(), ctx: set = None, path=None,

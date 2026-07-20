@@ -32,6 +32,11 @@ _PATH_WEIGHTS = (3.0, 2.0, 1.3, 1.0, 0.8, 0.6)
 # separate on its own -> defer (to kind if it spoke, else flag for the LLM).
 _MARGIN = 0.02
 
+# Absolute prose-cosine below which an UNTRUSTED cue (see/cf) ABSTAINS: the text
+# around the reference doesn't point at any candidate, so it probably isn't a real
+# link.  Trusted cues (link/q.v.) never abstain — the target IS declared real.
+_ABSTAIN_GATE = 0.45
+
 # Place/nature kinds where the bucket is DEFINITIONAL: a "Towns" bucket wants the
 # town, a "Rivers" bucket the river.  When pick_by_kind uniquely separates such a
 # bag, that pick is authoritative and WINS over embedding — embedding only ever
@@ -81,16 +86,20 @@ class Fisher:
     def _tally(self, method):
         self.stats[method] = self.stats.get(method, 0) + 1
 
-    def fish(self, topic: str, cands, path, want_kind, prose=None):
+    def fish(self, topic: str, cands, path, want_kind, prose=None, trusted=True):
         """topic: raw name; cands: [(fn, title)]; path: [root, ..., leaf];
-        want_kind: str|None.  Returns (fn, title, method).  Always picks.
+        want_kind: str|None.  Returns (fn, title, method) — or (None, None,
+        "abstain") when ``trusted`` is False and the prose doesn't point at any
+        candidate.
 
         The disambiguation context is a BUCKET PATH by default (topics).  Pass
         ``prose`` — the text surrounding a reference — instead, and the fisher keys
-        its embedding rung on that prose and skips the bucket-only geo/field rung:
-        the xref path has no bucket (docs/xref_resolution_strategy.md)."""
+        its embedding rung on that prose and skips the bucket-only geo/field rung.
+        ``trusted``: True for declared cues (link/q.v.) — always pick; False for the
+        noisy tier (see/cf) — abstain below the cosine gate, and no free len==1 pass
+        (docs/xref_resolution_strategy.md)."""
         title_of = dict(cands)
-        if len(cands) == 1:
+        if len(cands) == 1 and trusted:
             fn = cands[0][0]
             self._tally("unique")
             return fn, title_of[fn], "unique"
@@ -138,6 +147,12 @@ class Fisher:
         epick = scored[0][0]
         top = self._emb.cosine(scored[0][0], q)
         second = self._emb.cosine(scored[1][0], q) if len(scored) > 1 else -1.0
+
+        # Untrusted cue (see/cf): abstain if the prose doesn't clearly point at a
+        # candidate — a failed resolution IS the filter for the noisy tier.
+        if not trusted and top < _ABSTAIN_GATE:
+            self._tally("abstain")
+            return None, None, "abstain"
 
         # 3. the LLM arbiter's verdict wins if we have one.
         key = collision_key(topic, cands, path)
