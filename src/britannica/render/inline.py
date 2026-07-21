@@ -654,11 +654,20 @@ def render_fn_marker(name, content, ctx):
         # epub:type and the ARIA role, since readers vary on which they key.
         return (f'<sup class="footnote-ref" id="{ref_id}">'
                 f'<a epub:type="noteref" role="doc-noteref" href="#fn-{num}">{num}</a></sup>')
+    # Popup content rides in an INERT <template>, not a live inline <span>.  A
+    # footnote whose body is a <table> (block content) inside an inline <span>
+    # inside the body <p> made the parser close the <p> at the <table> start
+    # tag — emptying the popup AND foster-parenting the table loose into the
+    # body (AGRICULTURE fn5).  <template> content is parsed into its own inert
+    # fragment, so it never closes the <p>; toggleFnPopup clones it into a
+    # positioned popup on demand.  The Notes section renders the same content in
+    # a valid <li> block, unaffected.
     return (
         f'<sup class="footnote-ref" id="{ref_id}">'
         f'<a onclick="toggleFnPopup(event,\'{popup_id}\');return false;" href="#">{num}</a>'
-        f'<span class="fn-popup" id="{popup_id}"><span class="fn-popup-num">{num}.</span>'
-        f'{format_footnote_text(content, ctx)}</span></sup>'
+        f'<template class="fn-popup-tpl" data-popup-id="{popup_id}">'
+        f'<span class="fn-popup-num">{num}.</span>'
+        f'{format_footnote_text(content, ctx)}</template></sup>'
     )
 
 
