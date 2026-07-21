@@ -78,15 +78,41 @@ def _peel_caption(inner: str) -> tuple[str, str]:
         if m:
             return m.group(1).strip(), inner[:m.start()] + inner[m.end():]
         i += 1
-    # Wiki caption — a `|+` at line start.  Like a cell, it may carry an attr
-    # slot before a top-level `|` (`|+ style="…" | content`); split it off the
-    # same way `_split_cells` does, else the attributes leak into the <caption>
-    # text.  The attrs drop, consistent with an HTML `<caption …>` (whose attrs
-    # live in the tag, stripped above) and with the attr-less <caption> emit.
-    m = re.search(r"(?:^|\n)[ \t]*\|\+([^\n]*)", inner)
+    # Wiki caption — a `|+` at line start.  The caption body may span multiple
+    # source lines (a styler whose body carries a newline, e.g. a two-line
+    # `{{sc|…}}` heading), so scan from `|+` to the next TOP-LEVEL table
+    # delimiter (a line-start `|`/`!`) stepping over nested constructs with
+    # `_skip` — NOT to the first `\n`, which would truncate the styler into an
+    # unclosed `{{sc|…` fragment its producer can't match (it then leaks raw).
+    # Like a cell it may carry an attr slot before a top-level `|`; split it off
+    # the same way `_split_cells` does, else the attrs leak into the <caption>.
+    m = re.search(r"(?:^|\n)[ \t]*\|\+", inner)
     if m:
-        _attr, content = _wiki_attr_split(m.group(1))
-        return content.strip(), inner[:m.start()] + inner[m.end():]
+        cstart = m.end()                 # just after `|+`
+        i, line_nl, line_start, end = cstart, -1, False, None
+        while i < n:
+            j = _skip(inner, i)
+            if j > i:                    # step over a nested {{…}}/[[…]]/{|…|} whole
+                i, line_start = j, False
+                continue
+            if _TAG_ROW.match(inner, i) or _TAG_CELL.match(inner, i):
+                # HTML row/cell ends the caption (a table may mix `|+` with
+                # `<tr>`/`<td>`, as AGRICULTURE's livestock tables do).
+                end = line_nl if (line_start and line_nl >= 0) else i
+                break
+            ch = inner[i]
+            if line_start and ch in ("|", "!"):
+                end = line_nl            # next wiki cell / header / row / table-end
+                break
+            if ch == "\n":
+                line_nl, line_start = i, True
+            elif not (line_start and ch in " \t"):
+                line_start = False
+            i += 1
+        if end is None:
+            end = i
+        _attr, content = _wiki_attr_split(inner[cstart:end])
+        return content.strip(), inner[:m.start()] + inner[end:]
     return "", inner
 
 

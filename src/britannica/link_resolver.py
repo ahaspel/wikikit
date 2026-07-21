@@ -428,6 +428,37 @@ class LinkResolver:
         return self.fisher.fish(name, cands, path or [], want_kind, prose=prose,
                                 trusted=trusted)
 
+    # -- editor-prose reference resolver (about page / Reader's Guide) -------
+    def resolve_reference(self, name: str, *, prose: str = ""):
+        """Resolve a display reference — an article mention in editor prose
+        (about page, Reader's Guide) — to ``(filename, title)``, or ``None`` to
+        leave it unlinked.  The ONE path both prose builders share: tight fill
+        rungs (exact / alt / fold / subset) then the fisher with the surrounding
+        paragraph as context.  A trailing ``.json`` name is a direct filename
+        pin (an override target).  A single-word subset keeps comma-inverted
+        semantics (FIELDING binds only FIELDING, …), so a bare caps word can't
+        wander onto a compound title.  Abstain beats a wrong link."""
+        if name.endswith(".json"):                     # a direct override pin
+            title = self.title_by_fn.get(name)
+            return (name, title) if title else None
+        bag, tag = self.candidates(name)
+        if not bag or tag not in ("exact", "alt", "fold", "subset"):
+            return None
+        if tag == "subset" and " " not in name.strip():
+            nm = name.strip().upper()
+            bag = [c for c in bag if c[1].upper().startswith(nm + ",")
+                   or c[1].upper().startswith(nm + " ")]
+            if not bag:
+                return None
+        if len(bag) == 1:
+            return bag[0]
+        # A name that IS one candidate's verbatim title picks it.
+        exact_t = [c for c in bag if c[1].strip().upper() == name.strip().upper()]
+        if len(exact_t) == 1:
+            return exact_t[0]
+        fn, title, _ = self.fish(name, bag, prose=prose)
+        return (fn, title) if fn else None
+
     # -- article-xref orchestrator (Phase 6b5) -------------------------------
     def _topics_of(self, fn):
         if self._topic_map is None:
