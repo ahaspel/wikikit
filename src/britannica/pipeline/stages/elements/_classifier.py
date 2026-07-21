@@ -257,7 +257,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (NOT the display-first "EB9/EB1911 article link" above, NOT the EB1911
     # self-fragment "intra-article link" below.)
     if re.match(r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE|Oxon)\s+lkpl|1911link|11link|EB1911\s+link"
-                r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link)\b",
+                r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link|linktext)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
     # `{{EB1911 footer …}}` — the contributor signature footer.  RECOGNIZED as a bounded

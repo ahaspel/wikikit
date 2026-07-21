@@ -26,6 +26,7 @@ from britannica.render.inline import (
     _article_url,
     _encode_uri_component as _enc,
 )
+from britannica.markers import markers_to_text
 # ── marker constants ──
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
 
@@ -224,6 +225,20 @@ def dedupe_anchor_id(seen, id_):
     return id_ if seen[id_] == 1 else f"{id_}-{seen[id_]}"
 
 
+def _section_title_text(raw):
+    """A section title reduced to plain text for the TOC.  The title can itself be
+    a link (`«LN:Iron|Iron»`) or carry inline markers; the TOC entry is ALREADY a
+    link to the section anchor, and an `<a>` can't nest the link's own `<a>`, so
+    the marker interior collapses to its display text (recurse, don't read flat —
+    else the marker escapes straight into the TOC: SOMALILAND, UNITED KINGDOM).
+
+    `markers_to_text` SUPERSEDES the old `_SH_STRIP_RE` here: that regex matched
+    the closing `«/LN»` but not the opening `«LN:…`, so it mangled a linked title
+    into a broken half-marker.  Whitespace is NOT collapsed — same spacing the old
+    strip produced, so only link-bearing titles change."""
+    return markers_to_text(raw or "").strip()
+
+
 def detect_sections(paragraphs, ctx):
     """Walk «SEC» (L1) and «SH» (L2) anchors in document order into ctx.collected_sections."""
     ctx.collected_sections = []
@@ -233,9 +248,9 @@ def detect_sections(paragraphs, ctx):
             if m.group(1) is not None:  # «SEC:slug|name» — major section
                 ctx.collected_sections.append(
                     {"id": dedupe_anchor_id(seen, f"section-{m.group(1)}"),
-                     "title": m.group(2), "level": 1})
+                     "title": _section_title_text(m.group(2)), "level": 1})
             else:                       # «SH:slug»…«/SH» — shoulder heading
-                display = _SH_STRIP_RE.sub("", m.group(4)).strip()
+                display = _section_title_text(m.group(4))
                 ctx.collected_sections.append(
                     {"id": dedupe_anchor_id(seen, f"section-{m.group(3)}"),
                      "title": display, "level": 2})

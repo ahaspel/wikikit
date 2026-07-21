@@ -77,6 +77,24 @@ def _strip_link_prefix(t: str) -> str:
     return t
 
 
+def _ln(target: str, disp: str, ctx) -> str:
+    """Emit `«LN:target|disp«/LN»` with the TARGET flattened to a plain name.
+
+    The DISPLAY is already the recursed slot; the target is parsed flat from the
+    raw, so a target that carries markup (`{{sc|Samuel}}, Books`) went into the
+    marker verbatim — and its inner `|` then collided with the «LN» field
+    delimiter downstream, dropping the display.  Give the target the SAME
+    recursion the display gets (walk it, so `{{sc}}`→`«SC»`), then flatten to
+    text because a `|`-delimited field must be flat: `{{sc|Samuel}}, Books` →
+    `Samuel, Books`.  Fast path when there's nothing to recurse (the common case:
+    a plain name or a `#section` fragment)."""
+    if "{{" in target or "«" in target or "<" in target:
+        from britannica.pipeline.stages.elements import process_elements
+        from britannica.markers import markers_to_text
+        target = markers_to_text(process_elements(target, ctx)).strip()
+    return "«LN:" + target + "|" + disp + "«/LN»"
+
+
 # ── The seven link wraps (rows in `_PR_WRAP`; `body` = the substituted display) ─────────────
 def _wrap_article_link(raw, body, ctx):
     """`{{EB1911 article link|Display|Target}}` → «LN:Target|display».  Name + target from raw; a
@@ -93,8 +111,8 @@ def _wrap_article_link(raw, body, ctx):
     if "/" in target:
         if re.match(r"^[IVXLC]+\.", display):
             return disp
-        return f"«LN:{display}|{disp}«/LN»"
-    return f"«LN:{target}|{disp}«/LN»"
+        return _ln(display, disp, ctx)
+    return _ln(target, disp, ctx)
 
 
 def _wrap_target_first(raw, body, ctx):
@@ -104,7 +122,7 @@ def _wrap_target_first(raw, body, ctx):
     positional = [p for p in parts[1:] if "=" not in p and p]
     if not positional:
         return ""
-    return f"«LN:{positional[0]}|{body.strip()}«/LN»"
+    return _ln(positional[0], body.strip(), ctx)
 
 
 def _wrap_selfref(raw, body, ctx):
@@ -125,7 +143,7 @@ def _wrap_selfref(raw, body, ctx):
     if not article:
         return disp
     target = f"{article}#{fragment}" if fragment else article
-    return f"«LN:{target}|{disp}«/LN»"
+    return _ln(target, disp, ctx)
 
 
 def _wrap_author_link(raw, body, ctx):
@@ -151,7 +169,7 @@ def _wrap_fragment_link(raw, body, ctx):
     disp = body.strip() if display.strip() else section
     if not section:
         return disp
-    return f"«LN:#{section}|{disp}«/LN»"
+    return _ln("#" + section, disp, ctx)
 
 
 def _wrap_intra_link(raw, body, ctx):
@@ -161,7 +179,7 @@ def _wrap_intra_link(raw, body, ctx):
     positional = [p for p in parts[1:] if "=" not in p and p]
     if not positional:
         return ""
-    return f"«LN:#{positional[0]}|{body.strip()}«/LN»"
+    return _ln("#" + positional[0], body.strip(), ctx)
 
 
 def _wrap_wikilink(raw, body, ctx):
@@ -174,4 +192,4 @@ def _wrap_wikilink(raw, body, ctx):
     disp = body.strip() if display else _strip_link_prefix(target)
     if not target:
         return disp
-    return f"«LN:{target}|{disp}«/LN»"
+    return _ln(target, disp, ctx)

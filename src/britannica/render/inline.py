@@ -208,7 +208,7 @@ _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
 # inside a TABLE/REF.  It decodes to a `cell-verse` span (its «BR» line breaks decode to <br>
 # further down).  The BLOCK form `{{VERSE:…}VERSE}` is a top-level blockquote, owned elsewhere.
 _VERSE_RE = re.compile(r"\{\{IVERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}IVERSE\}")
-_BAR_RE = re.compile(r"«BAR\[(\d+)\]»")
+_BAR_RE = re.compile(r"«BAR(?:\[(\d+)\])?»")
 _DIV_RE = re.compile(r"«DIV\[style:([^\]]*)\]»")
 _SPAN_STYLE_RE = re.compile(r"«SPAN\[style:([^\]]*)\]»")
 _SPAN_TITLE_RE = re.compile(r"«SPAN\[title:([^\]]*)\]»")
@@ -547,7 +547,12 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
 
     h = _apply_size_markers(h)
 
-    h = _BAR_RE.sub(lambda m: f'<span class="inline-bar" style="width:{m.group(1)}em">&nbsp;</span>', h)
+    # «BAR[N]» = a fixed N-em rule; a bare «BAR» ({{bar}} with no width) is a
+    # sum-line rule under a figures column (MANCHURIA) → span the whole cell.
+    h = _BAR_RE.sub(
+        lambda m: (f'<span class="inline-bar" style="width:{m.group(1)}em">&nbsp;</span>'
+                   if m.group(1) else
+                   '<span class="inline-bar" style="display:block;width:100%">&nbsp;</span>'), h)
     # DHR divider — the block-vs-inline choice rides in the marker («DHR» vs «DHRI», stamped by the
     # producer off ctx.inline), so the render is a plain token sub with no per-caller flag.  «DHRI»
     # first (it is not a prefix of «DHR», but resolve it before «DHR» to keep the two independent).
