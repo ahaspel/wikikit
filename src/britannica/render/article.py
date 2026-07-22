@@ -149,13 +149,38 @@ def render_math_popout(latex, is_display, ctx):
             "[equation ⤢ click to view]</a>")
 
 
+def _epub_math_el(latex, display, ctx):
+    """EPUB targets read the pre-rendered math cache (britannica.epub.math_assets):
+    ``epub`` → inline SVG (currentColor, adapts to the reader theme); ``kindle`` →
+    an ``<img>`` PNG (Kindle renders no SVG).  An UNCACHED equation returns the
+    `«MATHPH»` stub so a missing asset surfaces as a leak, never silently drops."""
+    from britannica.epub.math_assets import collect, math_key, png_meta, svg_for
+    if collect(latex, display):          # collect pass → throwaway; assets rendered after
+        return ""
+    cls = "math-display" if display else "math-inline"
+    if ctx.target == "kindle":
+        meta = png_meta(latex, display)
+        if not meta:
+            return "«MATHPH»"
+        va = "" if display else f"vertical-align:-{meta['depth_em']:.3f}em;"
+        return (f'<img class="{cls}" src="math/{math_key(latex, display)}.png" '
+                f'alt="{_html.escape(latex, quote=True)}" '
+                f'style="width:{meta["w_em"]:.3f}em;height:{meta["h_em"]:.3f}em;{va}"/>')
+    svg = svg_for(latex, display)
+    if not svg:
+        return "«MATHPH»"
+    return svg.replace("<svg ", f'<svg class="{cls}" ', 1)
+
+
 def _tex_math(latex, display, ctx):
     """Site target → a KaTeX-hydration placeholder carrying the (HTML-escaped) LaTeX and its
-    display mode; the viewer runs KaTeX over `.tex-math` after inserting the page.  Other targets
-    keep the `«MATHPH»` stub (the byte-identical comparison stub / EPUB path)."""
-    if ctx.target != "site":
-        return "«MATHPH»"
-    return f'<span class="tex-math" data-display="{"1" if display else "0"}">{latex}</span>'
+    display mode; the viewer runs KaTeX over `.tex-math` after inserting the page.  EPUB targets
+    read the pre-rendered SVG/PNG cache; any other target keeps the `«MATHPH»` comparison stub."""
+    if ctx.target == "site":
+        return f'<span class="tex-math" data-display="{"1" if display else "0"}">{latex}</span>'
+    if ctx.target in ("epub", "kindle"):
+        return _epub_math_el(latex, display, ctx)
+    return "«MATHPH»"
 
 
 def _render_math_markers(html, ctx):

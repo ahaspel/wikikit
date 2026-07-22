@@ -504,12 +504,14 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
         h = _render_eqn(h, ctx)
 
     if not skip_math:
-        if getattr(ctx, "target", None) == "site":
-            # Site target → the SAME renderer the prose path uses (ONE owner), so a cell's «MATH»
-            # honors its [display]/popout/fs hint instead of being forced inline.  A «MATH[display]»
-            # inside a cell — ALGEBRA's detached-coefficients tableau holds \begin{align} — MUST
-            # emit data-display="1", or KaTeX rejects the align environment and the raw LaTeX leaks.
-            # The old inline stub hardcoded display=0 and dropped the hint: that WAS the leak.
+        if getattr(ctx, "target", None) in ("site", "epub", "kindle"):
+            # Rendering targets → the SAME renderer the prose path uses (ONE owner), so a cell's
+            # «MATH» honors its [display]/popout/fs hint instead of being forced inline.  A
+            # «MATH[display]» inside a cell — ALGEBRA's detached-coefficients tableau holds
+            # \begin{align} — MUST emit display mode, or KaTeX rejects the align environment and the
+            # raw LaTeX leaks.  The old inline stub hardcoded display=0 and dropped the hint: that WAS
+            # the leak.  Site hydrates KaTeX client-side; the EPUB targets read the pre-rendered
+            # SVG/PNG cache (`_tex_math` → `_epub_math_el`) — same owner, same hint handling.
             from britannica.render.article import _render_math_markers  # deferred: article imports inline
             h = _render_math_markers(h, ctx)
         else:
