@@ -229,6 +229,15 @@ def _produce_body(raw, inner, context, inner_registry):
     and the walker, both of which read raw `\\n\\n`; swapping it there blinds them.
     By the time the body producer runs, every `\\n\\n`-dependent stage is done.
     """
+    # A literal `<p>` IS a paragraph break, exactly like the blank line below — the
+    # source writes both (GENESIS/CLIMATE prose, CONTINUED FRACTIONS' matrix-cell
+    # `<p>a</p><p>-1</p>` stack).  Recognize it into the SAME «P» so it never rides
+    # through as escaped `&lt;p&gt;` text; the `</p>` close is dropped because «P» is
+    # open-only (the browser auto-closes).  A STYLED `<p style=…>` never reaches here
+    # — the walker already lifted it to HTML_STYLE; only the bare / `class=` forms
+    # fall through to body text.
+    raw = re.sub(r"</p\s*>", "", raw)
+    raw = re.sub(r"<p\b[^>]*>", "«P»", raw)
     # Resolve the single `\n` BY CONTEXT — the one fact the body producer needs,
     # threaded in as its parent's label.  A `\n` is ambiguous alone: inside a poem it
     # is a verse LINE BREAK, everywhere else a prose SOFT-WRAP.  Same pipeline either
@@ -287,6 +296,39 @@ def _process_center(raw, inner, context, inner_registry):
     if spec and spec.get("css") and not spec.get("ctr"):
         return style_block(inner.strip(), css=spec["css"], tag=spec.get("tag", "DIV"))
     return _center_wrap(inner)   # centring family
+
+
+_WRAP_HALF_NAME_RE = re.compile(r"^\{\{\s*([^{}/|]*?)\s*/[se]\s*\}\}",
+                                re.IGNORECASE)
+
+
+def _process_wrap_half(raw, opening):
+    """WRAP_OPEN / WRAP_CLOSE — ONE half of a `{{NAME/s}}`…`{{NAME/e}}` styler whose
+    partner the source never wrote.
+
+    The style comes from the SAME `_TEMPLATE_STYLE_WRAPPERS` registry `_process_center`
+    reads, so a wrapper spells its CSS one way whether or not it happened to close
+    [[feedback_tune_dont_fork]] — centring family → «CTR»/«/CTR», small-type family →
+    «DIV[style:font-size:83%]»/«/DIV».
+
+    We emit the half and stop.  The source states where the styling STARTS and nothing
+    else; choosing an end — the next page break, the next wrapper, the end of the
+    paragraph — would invent structure the source never gave, and it would be
+    indistinguishable afterwards from an end the source really wrote.  So the half
+    rides, the render pairs markers independently, and `_contain` closes the fragment
+    at the body boundary so it can neither escape nor be dropped.  The visible
+    consequence IS the defect, which is what makes it findable and correctable per
+    article in `data/corrections.json` [[feedback_honesty_surface_failures]]."""
+    from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_WRAPPERS
+    m = _WRAP_HALF_NAME_RE.match(raw)
+    name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
+    spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
+    if not spec:                                  # not a registered styler — carry raw
+        return raw
+    if spec.get("ctr"):
+        return "«CTR»" if opening else "«/CTR»"
+    tag = spec.get("tag", "DIV")
+    return f"«{tag}[style:{spec['css']}]»" if opening else f"«/{tag}»"
 
 
 def _parse_image(raw):
@@ -592,6 +634,39 @@ def _html_style_peel(raw):
     return marker_tag, ";".join(fold_cell_styles(attrs)), inner_raw
 
 
+def _process_style_open(raw):
+    """STYLE_OPEN — an UNPAIRED `<div|span|ins attrs>` open: emit its style marker
+    ALONE («DIV[style:CSS]» / «SPAN[style:CSS]»), no close.
+
+    The twin of «P»: an open-only marker whose close is the BROWSER's job.  Reached
+    only when no balanced matcher could bound the tag — because the source's spans
+    OVERLAP (a `<div>` opened inside `{{EB1911 fine print/s}}…{{/e}}` and closed
+    after it), so the close is a real tag living in a different span and rides out
+    as its own STYLE_CLOSE mark.  Same peel as the balanced HTML_STYLE producer, so
+    one wrapper spells its CSS one way whether or not it happened to nest.
+
+    Unlike `style_block` there is no «CTR» shortcut and no empty-content bail: a
+    lone opener HAS no content to inspect, and dropping it would drop the styling
+    of everything that follows it."""
+    peel = _html_style_peel(raw)
+    if peel is None:                          # not a styler open — carry raw
+        return raw
+    marker_tag, css, _ = peel
+    return f"«{marker_tag}[style:{css}]»"
+
+
+def _process_style_close(raw):
+    """STYLE_CLOSE — an UNPAIRED `</div>`/`</span>`/`</ins>`: emit «/DIV» / «/SPAN».
+
+    The close half of an overlapping span (its open is outside this one), or the
+    close of a bare wrapper.  Tag→marker is the SAME mapping `_html_style_peel`
+    uses on the open side (span/ins → SPAN, div → DIV), so the two halves of one
+    source tag always agree on which marker they are."""
+    m = re.match(r"</\s*([A-Za-z]+)", raw)
+    tag = m.group(1).lower() if m else "div"
+    return "«/SPAN»" if tag in ("span", "ins") else "«/DIV»"
+
+
 def _wrap_html_style(raw, body, ctx):
     """HTML_STYLE wrap (a `_PR_WRAP` row): a `<div>`/`<p>`/`<span>`/`<ins>` carrying style
     (`{{Ts}}` / `style=` / `align=`).  Style ⊥ structure — the HTML twin of STRIP.  The classified
@@ -866,6 +941,7 @@ _PR_WRAP = {
     "LANG":       _wrap_lang,     # {{greek|X}}             → X  (+ carried small=)
     "SPLIT_WORD": _wrap_bare,     # {{hws|frag|WORD}}       → WORD (END → "")
     "MAIN_OTHER": _wrap_bare,     # {{main other|main|other}} → main copy (param 1)
+    "BLOCKQUOTE": _wrap_bare,     # <blockquote><poem>…</> → recursed inner (verse self-indents)
     # the «LN:target|display» family — one wrap each, all on the shared `_link_display` peel
     "EB1911_ARTICLE_LINK": _wrap_article_link,
     "TARGET_FIRST_LINK":   _wrap_target_first,
@@ -992,6 +1068,17 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # BR — an explicit `<br>` line break, walker-owned.  A leaf constant: emit the
     # canonical break marker «BR» (the same one `{{br}}` yields via SPACER).
     "BR": lambda raw, inner, ctx, reg: "«BR»",
+    # STYLE_OPEN / STYLE_CLOSE — the two halves of an UNPAIRED `<div>`/`<span>`/
+    # `<ins>`.  Leaf marks, not containers: each emits its own marker and the
+    # browser pairs them, which is the only way to carry a styling span that
+    # OVERLAPS another (the source's `<div>`-across-fine-print) rather than nesting.
+    "STYLE_OPEN": lambda raw, inner, ctx, reg: _process_style_open(raw),
+    "STYLE_CLOSE": lambda raw, inner, ctx, reg: _process_style_close(raw),
+    # WRAP_OPEN / WRAP_CLOSE — the template-form twins: one half of an unpaired
+    # `{{NAME/s}}`…`{{NAME/e}}` styler.  Same "a styler is a mark" answer as
+    # STYLE_OPEN/STYLE_CLOSE, one syntax up.
+    "WRAP_OPEN": lambda raw, inner, ctx, reg: _process_wrap_half(raw, True),
+    "WRAP_CLOSE": lambda raw, inner, ctx, reg: _process_wrap_half(raw, False),
     "REF_SELF": lambda raw, inner, ctx, reg:
         _process_ref_self(raw, ctx.ref_bodies),
     "REF": lambda raw, inner, ctx, reg:

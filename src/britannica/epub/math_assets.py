@@ -33,8 +33,15 @@ PNG_SCALE = 2         # device pixel ratio for the Kindle PNGs (crisp, not huge)
 
 
 def math_key(latex: str, display: bool) -> str:
+    """Cache key for a `(latex, display)` render.  Keyed on the PROCESSED LaTeX —
+    the exact string that reaches MathJax/KaTeX — not the raw source, so a change
+    to `_process_latex` (a new normalization, a fixed `\\sqrt` re-brace) self-
+    invalidates every affected entry: the next build re-renders it instead of
+    serving the stale (e.g. black-bar) asset under an unchanged raw-LaTeX key."""
+    from britannica.render.article import _process_latex
     return hashlib.sha256(
-        (("D:" if display else "I:") + latex).encode("utf-8")).hexdigest()[:16]
+        (("D:" if display else "I:")
+         + _process_latex(latex)).encode("utf-8")).hexdigest()[:16]
 
 
 # ── readers (used by the render — no Playwright) ─────────────────────────

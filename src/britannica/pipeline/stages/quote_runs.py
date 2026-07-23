@@ -13,7 +13,24 @@ import mwparserfromhell as _mwp
 
 
 _QUOTE_RUN_HINT = re.compile(
-    r"''|<[bi][>\s/]|\{\{bold\|", re.IGNORECASE)
+    r"''|<(?:[biu]|em)[>\s/]|\{\{bold\|", re.IGNORECASE)
+
+# The inline emphasis/decoration HTML tags this stage owns, each → its marker
+# pair.  `mwparserfromhell` does the STRUCTURAL work (it only yields a Tag for a
+# BALANCED `<name>…</name>`, so a lone unbalanced `<consul;>` / math `<t>` is
+# never a tag and stays literal); this map only names the render semantics of a
+# recognized tag.  `i`/`em` are the italic family, `b` the bold, `u` the
+# underline — the complete set of inline presentational tags that actually occur
+# unhandled in the (static) corpus (`em`×17, `u`×31; `strong`/`s`/`strike` never
+# appear, so they are not dead-mapped).  `<sub>`/`<sup>` are NOT here — they ride
+# the size/script render path already; `<div>`/`<span>` are the walker's styled-
+# wrapper job.  Extending this map is how a newly-surfaced inline styler is
+# carried — never a render-layer un-escape.
+_INLINE_TAG_MARKERS: dict[str, tuple[str, str]] = {
+    "i": ("«I»", "«/I»"), "em": ("«I»", "«/I»"),
+    "b": ("«B»", "«/B»"),
+    "u": ("«SPAN[style:text-decoration:underline]»", "«/SPAN»"),
+}
 
 
 def _convert_quote_runs(text: str) -> str:
@@ -105,13 +122,16 @@ def _convert_quote_runs(text: str) -> str:
 
 
 def _convert_quote_runs_line(line: str) -> str:
-    """Convert italic/bold tags in a SINGLE line of wikitext.
+    """Convert italic/bold/emphasis/underline tags in a SINGLE line of wikitext.
 
     Quote-run pairing is therefore line-scoped: a stray ``'`` at the
     end of one line cannot pair with markup on a later line.  Also
     converts ``{{bold|X}}`` template (used by ~7 articles in EB1911
     including SPARKS, JARED vol 25 p629) to the same ``«B»…«/B»``
-    marker as wikitext / HTML bold.
+    marker as wikitext / HTML bold.  HTML inline stylers ride
+    ``_INLINE_TAG_MARKERS`` — `<i>`/`<em>` → «I», `<b>` → «B»,
+    `<u>` → an underline «SPAN» — recognized structurally (a Tag is only
+    yielded for a balanced pair), so a lone `<Secundus>` never converts.
     """
     parsed = _mwp.parse(line)
     # First pass: convert any `{{bold|X}}` templates to the same
@@ -131,19 +151,16 @@ def _convert_quote_runs_line(line: str) -> str:
     # loop is cheap insurance.
     while True:
         tags = [t for t in parsed.filter_tags(recursive=True)
-                if str(t.tag).lower() in ("i", "b")]
+                if str(t.tag).lower() in _INLINE_TAG_MARKERS]
         if not tags:
             break
         for tag in tags:
-            tag_str = str(tag.tag).lower()
+            open_m, close_m = _INLINE_TAG_MARKERS[str(tag.tag).lower()]
             # ``tag.contents`` is a Wikicode whose ``str()`` emits
             # the original wikitext slice intact — including any
             # nested templates, wikilinks, etc.
             inner = str(tag.contents)
-            if tag_str == "i":
-                replacement = f"«I»{inner}«/I»"
-            else:
-                replacement = f"«B»{inner}«/B»"
+            replacement = f"{open_m}{inner}{close_m}"
             try:
                 parsed.replace(tag, replacement)
             except ValueError:

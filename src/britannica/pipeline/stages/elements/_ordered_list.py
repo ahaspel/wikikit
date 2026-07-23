@@ -106,3 +106,103 @@ def _walk(block: str, depth: int, out: list[tuple[int, str]]) -> None:
             _walk(nested, depth + 1, out)
 
 
+# ── HTML-list form: `<ol style="list-style-type:…"><li>…</li>…</ol>` ──────────
+#
+# The HTML twin of `{{ordered list}}` (GEOLOGY's A/B/C sections, ALBUMIN's
+# roman-numbered protein taxonomy).  Same target — the ONE outline decomposer —
+# so `_walk_html_list` emits the SAME `(depth, "label. text")` rows `_walk`
+# does.  Recognition is the walker's (a balanced `<ol>…</ol>` is a SHAPE_HTML_TAG
+# element); this only parses the already-bounded raw into rows.
+_HTML_LIST_OPEN = re.compile(r"<\s*(ol|ul)\b([^>]*)>", re.IGNORECASE)
+_HTML_LIST_CLOSE = re.compile(r"</\s*(?:ol|ul)\s*>", re.IGNORECASE)
+_LI_OPEN = re.compile(r"<\s*li\b[^>]*>", re.IGNORECASE)
+_LI_CLOSE_RE = re.compile(r"</\s*li\s*>", re.IGNORECASE)
+_LIST_STYLE_TYPE = re.compile(r"list-style-type\s*:\s*([\w-]+)", re.IGNORECASE)
+
+
+def _html_list_end(text: str, start: int) -> int:
+    """Index one past the `</ol>`/`</ul>` that balances the list opening at
+    ``start`` — depth-counted so a nested list's close can't end the outer."""
+    depth, i, n = 0, start, len(text)
+    while i < n:
+        mo = _HTML_LIST_OPEN.match(text, i)
+        if mo:
+            depth += 1
+            i = mo.end()
+            continue
+        mc = _HTML_LIST_CLOSE.match(text, i)
+        if mc:
+            depth -= 1
+            i = mc.end()
+            if depth == 0:
+                return i
+            continue
+        i += 1
+    return n
+
+
+def _split_top_li(inner: str) -> list[str]:
+    """Chop a list's inner into one chunk per TOP-LEVEL `<li>` (each chunk runs to
+    the next top-level `<li>` or the end).  A nested `<ol>`/`<ul>` is skipped whole,
+    so its own `<li>`s never split the outer — the chunk carries the sublist along
+    for the caller to recurse."""
+    starts: list[int] = []
+    i, n = 0, len(inner)
+    while i < n:
+        mo = _HTML_LIST_OPEN.match(inner, i)
+        if mo:                                   # skip a nested list whole
+            i = _html_list_end(inner, i)
+            continue
+        mli = _LI_OPEN.match(inner, i)
+        if mli:
+            starts.append(i)
+            i = mli.end()
+            continue
+        i += 1
+    return [inner[s:(starts[k + 1] if k + 1 < len(starts) else n)]
+            for k, s in enumerate(starts)]
+
+
+def _walk_html_list(block: str, depth: int, out: list[tuple[int, str]]) -> None:
+    """Emit `(depth, "label. text")` rows for one `<ol>`/`<ul>` block and its nested
+    lists — the HTML twin of `_walk`.  `list-style-type` sets the numbering (default
+    decimal); a `<ul>` is unlabelled.  Each `<li>`'s own text is one row — recursed
+    downstream by `_outline_items`, so an item's `«I»`/`{{sub}}`/nested markup stays a
+    real child — and a nested list folded into the item recurses at ``depth+1``."""
+    block = block.strip()
+    mo = _HTML_LIST_OPEN.match(block)
+    if not mo:
+        return
+    ordered = mo.group(1).lower() == "ol"
+    kind, upper = "decimal", False
+    stm = _LIST_STYLE_TYPE.search(mo.group(2))
+    if stm:
+        kind, upper = _OL_TYPE.get(stm.group(1).lower(), ("decimal", False))
+    inner = block[mo.end():]
+    last = None                                  # drop the outer close (the LAST list-close)
+    for last in _HTML_LIST_CLOSE.finditer(inner):
+        pass
+    if last:
+        inner = inner[:last.start()]
+    n = 0
+    for chunk in _split_top_li(inner):
+        m = _LI_OPEN.match(chunk)
+        body = chunk[m.end():] if m else chunk
+        nest_at = None                           # a sublist folded into this item
+        i, L = 0, len(body)
+        while i < L:
+            if _HTML_LIST_OPEN.match(body, i):
+                nest_at = i
+                break
+            i += 1
+        text = body[:nest_at] if nest_at is not None else body
+        text = _LI_CLOSE_RE.sub("", text).strip()
+        if text:
+            n += 1
+            label = f"{_label(kind, upper, n)}. " if ordered else ""
+            out.append((depth, f"{label}{text}"))
+        if nest_at is not None:
+            _walk_html_list(body[nest_at:_html_list_end(body, nest_at)],
+                            depth + 1, out)
+
+

@@ -135,6 +135,12 @@ def _process_latex(latex):
     raw = re.sub(r"\\mbox\b", r"\\text", raw)
     raw = re.sub(r"[          ​]", " ", raw)
     raw = re.sub(r"\\overset\{([^}]*)\}\s*\\underset\{([^}]*)\}\s*\{\\Sigma\s*", r"\\sum_{\2}^{\1}{", raw)
+    # Re-brace an unbraced `\sqrt \text{…}` radicand.  The source omits the braces
+    # (`\sqrt \mbox{A}_{11}`, ALGEBRAIC FORMS / vol24 p1005), so `\sqrt` swallows the
+    # bare `\text` token and leaves it argument-less → MathJax "Missing argument for
+    # \text", rendered as a wide dark ERROR BAR.  Wrap the `\text{…}` (with any
+    # trailing sub/sup) back into the radicand so it renders the intended √A.
+    raw = re.sub(r"\\sqrt\s*(\\text\s*\{[^{}]*\}(?:[_^]\{[^{}]*\})*)", r"\\sqrt{\1}", raw)
     return raw
 
 
@@ -327,6 +333,48 @@ def _build_toc(sections):
     return ""
 
 
+_WRAP_TAG_RE = re.compile(r"<(/?)(div|span)\b[^>]*>", re.IGNORECASE)
+
+
+def _contain(fragment):
+    """Make the body fragment SELF-CONTAINED: it may not close a tag it didn't open.
+
+    The source legitimately carries unpaired `<div>`/`<span>` halves — an unclosed
+    wrapper, or one half of a pair of spans that CROSS — and the pipeline carries
+    each half faithfully rather than dropping the styling.  That is right, but a
+    close with nothing of ours to close is not inert: `rendered_html` carries its
+    OWN `div.card` / `div.body-text` wrappers, so a stray `</div>` inside them
+    closes one and the rest of the article spills out of the body styling (two of
+    them escape the card).  Verified: with two strays the trailing prose reparents
+    to `div.card`.
+
+    So the fragment is balanced at its own boundary, with exactly the semantics
+    HTML5 fragment parsing gives (checked against html5lib, the engine
+    `normalize_html` uses): a close at depth 0 is DROPPED — it has no element in
+    scope, and a browser ignores it — and an open still standing at the end is
+    CLOSED.  Nothing else moves; the styling both halves carry survives.
+
+    This is containment, not cleanup: no producer can enforce it, because "is
+    there a matching open?" is whole-body context that only exists here
+    [[feedback_recursion_cannot_provide_context]].  It is deliberately blind to
+    WHY a half is unpaired — that stays the producer's business."""
+    depth = {"div": 0, "span": 0}
+    out, last = [], 0
+    for m in _WRAP_TAG_RE.finditer(fragment):
+        tag = m.group(2).lower()
+        if not m.group(1):                        # open
+            depth[tag] += 1
+            continue
+        if depth[tag]:                            # close with a partner
+            depth[tag] -= 1
+            continue
+        out.append(fragment[last:m.start()])      # stray close → drop it
+        last = m.end()
+    out.append(fragment[last:])
+    return "".join(out) + "".join(
+        f"</{t}>" for t in ("span", "div") for _ in range(depth[t]))
+
+
 def _render_body(article, ctx):
     body = article.get("body") or ""
     marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
@@ -345,6 +393,7 @@ def _render_body(article, ctx):
     id_seen = {}
     body_html = _SECTION_ID_RE.sub(
         lambda m: f'id="{dedupe_anchor_id(id_seen, m.group(1))}"', body_html)
+    body_html = _contain(body_html)
     toc_html = _build_toc(ctx.collected_sections)
     return toc_html + f'<div class="body-text">{body_html}</div>'
 

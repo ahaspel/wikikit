@@ -67,6 +67,7 @@ from britannica.pipeline.stages.elements._walker import (
     _STYLED_WRAPPER_RE,
     _INS_OPEN_RE,
     _SPAN_TITLE_OPEN_RE,
+    _STYLE_MARK_RE,
 )
 from britannica.pipeline.stages.elements._tables import (
     # Styler / heading template-name recognizers — the SAME regexes the walker
@@ -134,6 +135,11 @@ _HTML_TAG_LABEL: dict[str, str] = {
     "hiero": "HIEROGLYPH",
     "nowiki": "NOWIKI",
     "includeonly": "INCLUDEONLY",
+    # A `<blockquote>` wraps a quoted block — in the corpus always a `<poem>`, which
+    # ALREADY renders as `<blockquote class="verse">` (its own indent).  Carrying the
+    # outer wrapper too would double-indent, so BLOCKQUOTE is a TRANSPARENT unwrap
+    # (`_wrap_bare`): recurse the inner, keep the content, drop the redundant shell.
+    "blockquote": "BLOCKQUOTE",
 }
 
 
@@ -182,6 +188,14 @@ def _derive_html_self_closing_label(raw: str) -> str:
     # `<br>` / `<br/>` / `<br />` — an explicit line break; the producer emits «BR».
     if raw[:3].lower() == "<br":
         return "BR"
+    # An UNPAIRED `<div>`/`<span>`/`<ins>` — a styler MARK, not a container (the
+    # walker's `_STYLE_MARK_RE`, claimed only after every bounding recognizer
+    # declined).  Its partner lives outside this span (the source's fine-print /
+    # `<div>` spans OVERLAP) or is a bare wrapper; either way the half we hold is
+    # real styling, so it rides as its own open / close marker and the browser does
+    # the pairing.  CLOSE first — `</div` also starts with `<d`.
+    if _STYLE_MARK_RE.match(raw):
+        return "STYLE_CLOSE" if raw.lstrip().startswith("</") else "STYLE_OPEN"
     return "REF_SELF"
 
 
@@ -205,7 +219,18 @@ def _derive_double_bracket_label(raw: str) -> str:
     return "WIKILINK"
 
 
+# An UNPAIRED half of the `{{NAME/s}}`…`{{NAME/e}}` styler family (the walker
+# claims it only after the paired matcher declines, so a well-formed pair never
+# reaches here).  Labelled by HALF: the producer emits one side of the style
+# marker and the render pairs open/close independently.
+_WRAP_HALF_RE = re.compile(r"^\{\{\s*([^{}/|]*?)\s*/([se])\s*\}\}\s*$",
+                           re.IGNORECASE)
+
+
 def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
+    hm = _WRAP_HALF_RE.match(raw)
+    if hm is not None:
+        return "WRAP_OPEN" if hm.group(2).lower() == "s" else "WRAP_CLOSE"
     # ── The four template-form STYLED-derived structures ──────────────────
     # Drained out of the old SHAPE_STRIP / SHAPE_PARAM / SHAPE_SHOULDER /
     # SHAPE_RUNNING_HEADER walker shapes: recognized by NAME (the SAME regexes
@@ -695,6 +720,20 @@ def _classify_outline_composite(raw: str, block: str) -> ClassifiedElement:
     return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
 
 
+def _classify_html_list_composite(raw: str) -> ClassifiedElement:
+    """`<ol>…<li>…</li>…</ol>` is a degenerate OUTLINE — the HTML twin of
+    `{{ordered list}}`.  `_walk_html_list` parses the `<li>` items (reading
+    `list-style-type` for the numbering, recursing a nested `<ol>` at depth+1) into the
+    same `(depth, content)` rows a `:`-block yields; run them through the ONE outline
+    decomposer so an HTML list produces `«OUTLINE»«OLI»` and renders through
+    `build_outline_ul` like any other outline — no separate producer, no marker format."""
+    from britannica.pipeline.stages.elements._ordered_list import _walk_html_list
+    rows: list[tuple[int, str]] = []
+    _walk_html_list(raw, 0, rows)
+    phs, reg = _outline_items(rows)
+    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+
+
 def _classify_ordered_list_composite(raw: str) -> ClassifiedElement:
     """`{{ordered list|…}}` is a degenerate OUTLINE — the same nested-item structure,
     recognized by an explicit `{{…}}` delimiter (like a table's `{|`) instead of by
@@ -1087,6 +1126,10 @@ def classify(
     # `:`-indent — decompose it through the one outline path, not a separate leaf.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
+    # `<ol>…<li>…</ol>` is that same OUTLINE in HTML syntax (GEOLOGY / ALBUMIN) —
+    # the same decomposer, `list-style-type` supplying the numbering.
+    if shape == SHAPE_HTML_TAG and re.match(r"<\s*ol\b", raw, re.IGNORECASE):
+        return _classify_html_list_composite(raw)
     # `{{ppoem|…}}` is VERSE in template form — decompose its verse (control params dropped)
     # into nodes here, not a produce-time re-parse in the leaf producer.
     if re.match(r"\{\{\s*ppoem\b", raw, re.IGNORECASE):

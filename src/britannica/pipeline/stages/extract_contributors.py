@@ -223,6 +223,35 @@ _SIGNATURE_RE = re.compile(r"\(([^()]{1,80})\)")
 _SIG_MARKER_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
 
 
+def recognize_signoff_initials(part: str) -> str | None:
+    """LOCAL, structural recognition of a contributor signoff from ONE parenthetical
+    part → its normalized initials, or ``None`` if it is not signoff-shaped.
+
+    Pure function of the part's own content — NO roster, NO corpus.  This is the
+    RECOGNITION half; the roster match that CONFIRMS it (which contributor) is the
+    separate, deferred RESOLUTION step.  It lives in one function precisely so that
+    "whatever the late harvest does, a producer can do the same" is literally the
+    SAME code, not a fork ([[feedback_tune_dont_fork]]) — the harvest runs it on
+    re-scanned parens today; the contributor / body producers will run it on their
+    own ``(…)`` content next, and the candidate set is provably identical.
+
+    Two structural gates, because a false attribution is far worse than a miss
+    (misses are recovered from the explicit front-matter passes):
+      (1) the signature is SPACED initials ("A. D.", "E. He."); a run-together form
+          ("A.D.", "q.v.") is a source date / abbreviation, never a signoff — and
+          this also drops the lone single initial ("M."), which has no space and
+          collides with figure-key labels everywhere (ABBEY → 11 bogus authors);
+      (2) a contributor's first initial is ALWAYS capitalized, so a lower-case lead
+          ("q. v.", "l. c.") is not a signoff."""
+    stripped = _SIG_MARKER_RE.sub("", part).strip()
+    if " " not in stripped:
+        return None
+    norm = _normalize_initials(stripped)
+    if not norm[:1].isupper():
+        return None
+    return norm
+
+
 def _harvest_signature_contributors(
     body: str, initials_map: dict[str, int]
 ) -> list[int]:
@@ -232,38 +261,20 @@ def _harvest_signature_contributors(
     The footer producer renders ``{{EB1911 footer …}}`` to ``(initials)`` and
     the Author-link producer renders a contributor signature to its initials, so
     footers, Author signoffs, and bare parentheticals all reduce to one shape: a
-    ``(…)`` whose marker-stripped, normalized content is a known contributor's
+    ``(…)`` whose ``recognize_signoff_initials`` result is a known contributor's
     initials.  The index is the discriminator for MULTI-initial signatures
     (``(E. V.)``) — prose parentheticals (dates, ``op. cit.``) and reference «LN»
-    name-displays never match.
-
-    A SINGLE initial is explicitly NOT bound, even when it is in the index: a
-    one-letter parenthetical ``(M.)``/``(B.)`` collides with figure-key labels
-    (ABBEY's plan is ``A. Gateway … M. Tower``), cross-references, and abbreviations
-    everywhere, so binding it attributes whole articles to whatever contributor
-    happens to sign with that one letter (ABBEY → 11 bogus "authors").  Single-
-    initial contributors are recovered from the front-matter / vol-29 attribution
-    passes instead, where the article binding is explicit, not inferred."""
+    name-displays never match.  A single initial is dropped by the recognizer
+    itself (no space); those contributors are recovered from the front-matter /
+    vol-29 attribution passes, where the article binding is explicit."""
     found: list[int] = []
     seen: set[int] = set()
     for sig in _SIGNATURE_RE.finditer(body):
         for part in sig.group(1).split(";"):
-            stripped = _SIG_MARKER_RE.sub("", part).strip()
-            # Two structural gates, because a false attribution is far worse than
-            # a miss (misses are recovered from the explicit front-matter passes):
-            #   (1) the producer renders a signature as SPACED initials ("A. D.",
-            #       "E. He."); a run-together form ("A.D.", "q.v.") is a source
-            #       date / abbreviation, never a signoff — and this also drops the
-            #       lone single initial ("M."), which has no space and collides
-            #       with figure-key labels everywhere (ABBEY → 11 bogus authors);
-            #   (2) a contributor's first initial is ALWAYS capitalized, so a
-            #       lower-case lead ("q. v.", "l. c.") is not a signoff.
-            if " " not in stripped:
+            norm = recognize_signoff_initials(part)   # RECOGNITION (local)
+            if norm is None:
                 continue
-            norm = _normalize_initials(stripped)
-            if not norm[:1].isupper():
-                continue
-            cid = initials_map.get(norm)
+            cid = initials_map.get(norm)              # RESOLUTION (roster)
             if cid is not None and cid not in seen:
                 seen.add(cid)
                 found.append(cid)

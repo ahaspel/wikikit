@@ -3,6 +3,14 @@
 
 Runs both DB-level and file-level quality checks, saves results to
 data/derived/quality_reports/, and diffs against the previous run.
+
+The leak signal is ONE honest number: `find_render_leaks` over each article's
+`rendered_html` (`render_leak_*`).  The old body-level `stray_*` heuristics were
+retired — they read the pre-render marker stream, so they conflated legit content
+with leaks (prime `a'''` as italic, math `}}` as a stray brace, `<sub>` chem as a
+tag) AND missed what the render actually emits.  Alongside the oracle, a few
+structural-integrity checks (marker imbalance, dropped bodies) catch producer
+bugs that don't surface as visible output residue.
 """
 import json
 import re
@@ -14,7 +22,6 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.markers import RENDERED_MARKER_OPENS  # noqa: E402
 from britannica.render.leaks import find_render_leaks  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -100,7 +107,7 @@ def run_db_checks() -> dict:
         def _has_stray_lowercase(title):
             stripped = re.sub(r"\([^)]*\)|\[[^\]]*\]", "", title)
             stripped = re.sub(
-                r"\b(?:Mc|Mac|De|La|Di|Van|O\u2019|O')[A-Z]\w*", "",
+                r"\b(?:Mc|Mac|De|La|Di|Van|O’|O')[A-Z]\w*", "",
                 stripped)
             return bool(re.search(r"[a-z]", stripped))
         results["titles_with_lowercase"] = sum(
@@ -115,8 +122,8 @@ def run_db_checks() -> dict:
         )
 
         # Embedded bold headings
-        bold_open = "\u00abB\u00bb"
-        bold_close = "\u00ab/B\u00bb"
+        bold_open = "«B»"
+        bold_close = "«/B»"
         embedded = 0
         for a in articles:
             body = bodies.get(a.id, "")
@@ -174,46 +181,18 @@ def run_db_checks() -> dict:
         session.close()
 
 
-_TABLE_OPEN = "«TABLE["
-_TABLE_CLOSE = "«/TABLE»"
-
-
-def _strip_table_blocks(body: str) -> str:
-    """Remove all TABLE blocks from `body`, respecting nesting.
-
-    The viewer's renderer walks marker depth (`findMarkerEnd`) so
-    nested TABLE markers render correctly; a non-greedy regex
-    strip would match the FIRST close marker and leave the outer
-    block's leftover content visible — mis-flagging properly-wrapped
-    nested-table content as leaked HTML."""
-    out: list[str] = []
-    i = 0
-    while i < len(body):
-        opener = body.find(_TABLE_OPEN, i)
-        if opener < 0:
-            out.append(body[i:])
-            break
-        out.append(body[i:opener])
-        depth = 1
-        j = opener + len(_TABLE_OPEN)
-        while j < len(body) and depth > 0:
-            n_open = body.find(_TABLE_OPEN, j)
-            n_close = body.find(_TABLE_CLOSE, j)
-            if n_close < 0:
-                # Unbalanced — bail (preserve original to avoid hiding the bug)
-                return body
-            if 0 <= n_open < n_close:
-                depth += 1
-                j = n_open + len(_TABLE_OPEN)
-            else:
-                depth -= 1
-                j = n_close + len(_TABLE_CLOSE)
-        i = j
-    return "".join(out)
-
-
 def run_file_checks() -> dict:
-    """File-level quality checks on exported articles."""
+    """File-level quality checks on exported articles.
+
+    Two families:
+      * ``render_leak_*`` — the HONEST leak oracle, `find_render_leaks` over the
+        actual `rendered_html`.  This is the single leak number; it replaces the
+        retired body-level `stray_*` heuristics (see the module docstring).
+      * structural integrity — an unbalanced `«FN»`/`«TABLE»` marker, a dropped
+        (tiny) body, a stray control char, wikitable rows escaped from `«TABLE»`.
+        These are producer bugs that need NOT surface as visible output residue,
+        so the render-leak oracle can't see them.
+    """
     files = sorted(
         f for f in glob.glob("data/derived/articles/*.json")
         if "index.json" not in f and "contributors.json" not in f
@@ -227,112 +206,34 @@ def run_file_checks() -> dict:
             a = json.load(fh)
         title = a.get("title", "")
         body = a.get("body", "")
-        if not title:
-            continue
-        if not body:
+        if not title or not body:
             continue
 
-        # A chemical-reaction layout is just a «TABLE[…class:chem-grid…]» now
-        # (no separate «CHEM» marker), so every table check below covers it for
-        # free — no normalization needed.
-
-        # Strip blocks that intentionally contain HTML/wiki markup
-        clean = _strip_table_blocks(body)
-        clean = re.sub(r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", clean, flags=re.DOTALL)
-
-        # Stray wiki markup.  A paragraph contains "legitimate" template
-        # braces iff at least one of the rendered-marker opens appears
-        # in it (from `britannica.markers.RENDERED_MARKER_OPENS` — single
-        # source of truth, shared with the body-text strip regex).  Same
-        # rule used symmetrically for both stray_braces (opens) and
-        # stray_close_braces (closes).
-        has_legitimate_marker = any(o in clean for o in RENDERED_MARKER_OPENS)
-        if "{{" in clean and not has_legitimate_marker:
-            issues["stray_braces"] += 1
-        if "}}" in clean and not has_legitimate_marker:
-            issues["stray_close_braces"] += 1
-        if re.search(r"\[\[.*?\]\]", clean):
-            issues["stray_wikilink"] += 1
-        if "''" in clean:
-            issues["stray_wiki_italic"] += 1
-
-        # Bare HTML tags.  The carried presentational set
-        # ``<sub>/<sup>/<small>/<big>/<br>`` is NOT flagged: the producer
-        # keeps these raw (CHEM/MATH classifiers key on them) and the
-        # viewer un-escapes + renders them uniformly on every path
-        # (decodeInlineMarkers, viewer.html ~2165).  Only STRUCTURAL tags
-        # that should have become markers leak here — table chrome
-        # (``<table>/<tr>/<td>/<th>`` outside «TABLE»), un-regularized
-        # ``<div>/<span>`` (should be «DIV»/«SPAN»), ``<ref>`` (→«FN»),
-        # ``<poem>`` (→VERSE), ``<score>``/``<math>``.  Strip ``{{IMG:…}}``
-        # first so a tag-shaped filename can't trip the prose check.
-        tag_clean = re.sub(r"\{\{IMG:[^}]*\}\}", "", clean)
-        if re.search(r"<(?:table|tr|td|th|div|span|ref|poem|score|math)\b[^>]*>",
-                      tag_clean, re.I):
-            issues["html_tag"] += 1
-
-        # Unclosed markers. ``\u00abFN:`` is the unnamed form; ``\u00abFN[NAME]:``
-        # is the named form (Wikisource ``<ref name=X>`` / ``<ref name=X/>``
-        # \u2014 viewer groups all anchors with the same NAME under one
-        # footnote number). Both share the ``\u00ab/FN\u00bb`` closer, so count
-        # any ``\u00abFN`` opener regardless of suffix.
-        fn_opens = len(re.findall(r"\u00abFN(?:\[[^\]]+\])?:", body))
-        if fn_opens != body.count("\u00ab/FN\u00bb"):
+        # ── Structural integrity — producer bugs that need not show as output. ──
+        # `«FN:` (unnamed) / `«FN[NAME]:` (named, from `<ref name=X>`) share the
+        # `«/FN»` closer, so count any `«FN` opener regardless of suffix.
+        fn_opens = len(re.findall(r"«FN(?:\[[^\]]+\])?:", body))
+        if fn_opens != body.count("«/FN»"):
             issues["unclosed_footnote"] += 1
         if body.count("{{TABLE") != body.count("}TABLE}"):
             issues["unclosed_table"] += 1
-
-        # Very short body
-        words = len(body.split())
-        if words < 5 and a.get("article_type") == "article":
+        if len(body.split()) < 5 and a.get("article_type") == "article":
             issues["tiny_article"] += 1
-
-        # Pipe leaks — tabular data that should be inside TABLE markers.
-        # Strip tables, verses, and math before checking.
-        bare_body = re.sub(
-            r"\{\{TABLE.*?\}TABLE\}", "", body, flags=re.DOTALL
-        )
-        bare_body = re.sub(
-            r"\{\{VERSE:.*?\}VERSE\}", "", bare_body, flags=re.DOTALL
-        )
-        bare_body = re.sub(
-            r"\u00abMATH:.*?\u00ab/MATH\u00bb", "", bare_body, flags=re.DOTALL
-        )
-        # Only count lines that start with | or || (table row pattern),
-        # or have figure|image leaked markup
-        pipe_lines = sum(
-            1 for line in bare_body.split("\n")
-            if re.match(r"\s*\|{1,2}\s*\S", line)
-            or "figure |" in line or "figure|" in line
-        )
-        if pipe_lines > 3:
+        # Stray control chars (\x01 = page markers, \x02 = tables are legitimate).
+        for _i in range(9):
+            if chr(_i) in body and _i not in (1, 2):
+                issues[f"stray_control_x0{_i}"] += 1
+                break
+        # Pipe leaks — wikitable rows that escaped their `«TABLE»` wrapper.  Strip
+        # the legit block markers, then count line-initial `|`/`||` rows.
+        bare = re.sub(r"\{\{TABLE.*?\}TABLE\}", "", body, flags=re.DOTALL)
+        bare = re.sub(r"\{\{VERSE:.*?\}VERSE\}", "", bare, flags=re.DOTALL)
+        bare = re.sub(r"«MATH:.*?«/MATH»", "", bare, flags=re.DOTALL)
+        if sum(1 for ln in bare.split("\n")
+               if re.match(r"\s*\|{1,2}\s*\S", ln) or "figure|" in ln) > 3:
             issues["pipe_leak"] += 1
 
-        # Stray control characters (\x01 = page markers, \x02 = tables)
-        for i in range(9):
-            if chr(i) in body and i not in (1, 2):
-                issues[f"stray_control_x0{i}"] += 1
-                break
-
-        # Leaked table attributes (skip TABLE blocks which intentionally
-        # contain these).  Match the genuine LEAK shape — the attribute's
-        # ``name=`` form (``colspan="2"``, raw ``{|cellpadding="5"`` wikitable
-        # openers) — NOT a bare substring.  ``nowrap`` in particular is now
-        # carried legitimately as the CSS value ``white-space:nowrap`` inside
-        # ``«SPAN[style:…]»`` (the producer's regularized ``{{nowrap}}``); a
-        # blanket ``/nowrap/`` matched all ~1.7k of those carried styles as
-        # false leaks.  A raw ``<span class="nowrap">`` that does leak is
-        # already counted by the ``html_tag`` check above.
-        check = _strip_table_blocks(body)
-        if re.search(r"(?:colspan|rowspan|cellpadding|nowrap)\s*=", check, re.I):
-            issues["leaked_html_attr"] += 1
-
-        # Render-leak gate — the HONEST oracle.  Read what actually survived
-        # into `rendered_html` and count it (markers / templates / wikilinks /
-        # control sentinels).  There is NO handled-marker manifest to strip
-        # against: a KNOWN marker in the output is a recursion failure, not an
-        # exemption.  Replaces `unhandled_marker_in_htmltable`, which trusted the
-        # handled-marker list and went blind to exactly the markers that leak.
+        # ── The leak signal: the HONEST oracle over the ACTUAL rendered output. ──
         for _cat in {_c for _c, _ in find_render_leaks(a.get("rendered_html", ""))}:
             issues[f"render_leak_{_cat}"] += 1
 
@@ -374,9 +275,26 @@ def format_report(db: dict, files: dict) -> str:
     lines.append(f"  Uncovered pages (mid-volume):   {db['uncovered_pages_mid_volume']}")
     lines.append("")
 
-    lines.append("=== File-Level Issues ===")
-    for issue, count in files.get("issues", {}).items():
-        lines.append(f"  {issue:30s} {count:6d}")
+    # Split the file-level issues: the render-leak oracle (the leak signal) first,
+    # then structural-integrity checks — no noisy body-level heuristics remain.
+    all_issues = files.get("issues", {})
+    leaks = {k: v for k, v in all_issues.items() if k.startswith("render_leak_")}
+    structural = {k: v for k, v in all_issues.items() if not k.startswith("render_leak_")}
+
+    lines.append("=== Render Leaks (honest oracle — articles with ANY residue in rendered_html) ===")
+    if leaks:
+        for issue, count in sorted(leaks.items(), key=lambda kv: -kv[1]):
+            lines.append(f"  {issue:30s} {count:6d}")
+    else:
+        lines.append("  (none — clean)")
+    lines.append("")
+
+    lines.append("=== Structural Integrity ===")
+    if structural:
+        for issue, count in sorted(structural.items(), key=lambda kv: -kv[1]):
+            lines.append(f"  {issue:30s} {count:6d}")
+    else:
+        lines.append("  (none)")
     lines.append("")
 
     lines.append("=== Per-Volume Article Counts ===")

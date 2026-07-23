@@ -86,8 +86,11 @@ _PAGEQUALITY_RE = re.compile(
 # marker, the same one `{{br}}` emits), so no downstream peel has to transform it.
 # Inside an opaque tag (`<math>`/`<nowiki>`/…) it is never reached — the walker
 # skips those interiors whole — which is the one place a `<br>` is literal text,
-# not a break.
-_BR_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
+# not a break.  `[^>]*` admits an attribute-carrying void form (AGRIGENTUM's
+# `<br style="clear:both"/>` after a floated image, IRON AND STEEL's malformed
+# `<br/ >`); `br` is void regardless of attributes, so the whole thing → one «BR»
+# and any float-clear decoration falls away with the tag (a break in our layout).
+_BR_RE = re.compile(r"<br\b[^>]*/?>", re.IGNORECASE)
 
 # `<ref>`/`<table>`/`<poem>`/`<math>`/`<score>` no longer have per-tag
 # recognizer regexes — they are bounded by the one balanced `_construct_end`
@@ -224,14 +227,15 @@ _OPENER_HINT_RE = re.compile(
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
     r"|<br\b"                       # HTML_SELF_CLOSING line break → «BR»
     r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
-    r"|<(?:table|poem|math|score|hiero|nowiki|includeonly)\b"  # HTML_TAG tag variants
+    r"|<(?:table|poem|math|score|hiero|nowiki|includeonly|ol|blockquote)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper
-    r"|<div\b"  # any <div> — styled ones lift to STYLED, bare ones fall through
-    r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones fall through
+    r"|<div\b"  # any <div> — styled+paired ones lift to STYLED, the rest ride the mark path
+    r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones → the body producer's «P»
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
-    r"|<span\b[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align|title)\s*" + _ATTR_EQ + r")"  # STYLED / transliteration-title <span>
-    r"|\[\[",                       # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
+    r"|<span\b"  # any <span> — styled / title ones lift, the rest ride the mark path
+    r"|</(?:div|span|ins)\b"  # an UNPAIRED close — its open lives outside this span
+    r"|\[\[",                     # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     re.IGNORECASE,
 )
 
@@ -260,9 +264,13 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # element (every one bounded by the same `_construct_end` rule; the old
 # per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
-# SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.
+# SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.  `ol` (an HTML
+# ordered list → the classifier's OUTLINE composite, GEOLOGY/ALBUMIN) and
+# `blockquote` (a quoted block → transparent BLOCKQUOTE unwrap, SESTETT/SESTINA)
+# join the block set — the `<li>`/inner recursion is the classifier's, so the
+# walker just bounds the span.
 _ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "hiero",
-                           "nowiki", "includeonly"})
+                           "nowiki", "includeonly", "ol", "blockquote"})
 # Tags the one matcher will BOUND by depth (superset of the auto-extracted
 # elements).  `div`/`p`/`span` are boundable so a styled wrapper can be matched
 # to its right `</div>`/`</p>`/`</span>` and nested same-tags skipped — but they
@@ -282,17 +290,25 @@ _BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span", "ins"}
 #
 # TWO exclusions, both ownership hand-offs to a sibling recognizer (NOT meaning
 # judgments):
-#   * `{{mirrorH}}` span → its own MIRROR_GLYPH shape (recognized before this).
-#   * any `title=` span → owned by body-text's `_handle_title_spans`.  A
+#   * `{{mirrorH}}` span/div → its own MIRROR_GLYPH shape (recognized before this).
+#   * a `title=` SPAN (only) → owned by body-text's `_handle_title_spans`.  A
 #     `title=` span is a Wikisource editorial mark: 1237 corpus spans carry BOTH
 #     `style="border-bottom:1px dashed red"` AND `title="amended from …"` (the
 #     red-dashed OCR-correction highlight) — provenance, not real styling, to be
 #     UNWRAPPED (text kept, decoration dropped); plus the Greek/Hebrew
 #     transliteration tooltips `_handle_title_spans` carries as «SPAN[title:…]».
-#     Both are that function's job, so the styled gate must not claim them.
+#     Both are that function's job, so the styled gate must not claim them.  The
+#     title-exclusion is SPAN-ONLY: a styled `<div style=… title=…>` (CAESURA's
+#     centred scansion, 6 in the corpus vs 12513 title-spans) carries REAL styling
+#     and MUST lift — excluding it orphaned its `</div>` as an escaped-tag leak.
 _STYLED_WRAPPER_RE = re.compile(
-    r"<(?:div|p|span)\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*" + _ATTR_EQ + r")"
-    r"[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align)\s*" + _ATTR_EQ + r")",
+    r"<(?:"
+    r"(?:div|p)\b(?![^>]*\{\{\s*mirrorH)"
+    r"[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align)\s*" + _ATTR_EQ + r")"
+    r"|"
+    r"span\b(?![^>]*\{\{\s*mirrorH)(?![^>]*\btitle\s*" + _ATTR_EQ + r")"
+    r"[^>]*(?:\{\{\s*[Tt]s\b|(?:style|align)\s*" + _ATTR_EQ + r")"
+    r")",
     re.IGNORECASE)
 # `<ins>` — Wikisource insertion.  UNLIKE the gated div/p/span above, EVERY <ins>
 # lifts to STYLED (ungated): its tag is editorial (the UA-default underline is dropped),
@@ -300,6 +316,27 @@ _STYLED_WRAPPER_RE = re.compile(
 # `<ins style="…overline">y</ins>` → «SPAN[style:…]».  A bare <div> is left transparent;
 # a bare <ins> must be actively unwrapped, so there is no style gate.
 _INS_OPEN_RE = re.compile(r"<ins\b", re.IGNORECASE)
+
+# An UNPAIRED `<div>`/`<span>`/`<ins>` tag — open OR close — that no bounding
+# recognizer claimed.  A styler is a MARK, not a container: «DIV[style:…]» and
+# «/DIV» decode INDEPENDENTLY in the render (the viewer substitutes each marker on
+# its own, never as a pair), so an open with no reachable close and a close with no
+# open both still emit a real `<div>`/`</div>` and the BROWSER pairs them — exactly
+# as it pairs the tags the source itself wrote.
+#
+# This is the OVERLAP case, and it is the source's own structure, not damage: a
+# `<div>` opened INSIDE `{{EB1911 fine print/s}}…{{/e}}` and closed OUTSIDE it
+# (EVIDENCE / GAS ENGINE / GREEK LANGUAGE, and the mirror-image form in CURVE /
+# DEAF AND DUMB / FUSION / IRON AND STEEL / MALT).  Neither span contains the other,
+# so NO balanced matcher can bound both — MediaWiki never required a template pair
+# and an HTML tag to nest.  Carrying each half as its own mark is the only
+# representation that keeps BOTH; bounding was never possible, and dropping either
+# half loses the source's styling.
+#
+# Bare `<div>`/`<span>` (no style attribute) ride the same path — one
+# «DIV[style:]»…«/DIV» pair carrying an empty wrapper, instead of the two escaped
+# `&lt;div&gt;` / `&lt;/div&gt;` leaks they render as today.
+_STYLE_MARK_RE = re.compile(r"</?\s*(?:div|span|ins)\b[^>]*>", re.IGNORECASE)
 
 
 def _construct_end(text: str, start: int) -> int | None:
@@ -413,6 +450,15 @@ _PAIRED_OPENER_RE = re.compile(
     + r")\s*/s\s*\}\}", re.IGNORECASE)
 
 
+# The CLOSING half of the paired-wrapper family.  A well-formed `{{NAME/e}}` is
+# consumed inside its own PAIRED_WRAPPER span (the scanner jumps past it), so a
+# `/e` REACHED by the scan is by construction unpaired — the same argument that
+# makes a `</div>` at scan level an orphan.
+_PAIRED_CLOSER_RE = re.compile(
+    r"\{\{\s*(" + "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
+    + r")\s*/e\s*\}\}", re.IGNORECASE)
+
+
 def _paired_wrapper_end(text: str, pos: int) -> int | None:
     """If a registered ``{{NAME/s}}`` opens at ``pos``, return the byte
     position one past its depth-balanced ``{{NAME/e}}`` (same-name counting);
@@ -510,6 +556,29 @@ def _walk_balanced_shapes(
             pe = _paired_wrapper_end(text, opener_pos)
             if pe is not None:
                 matched = (pe, SHAPE_PAIRED_WRAPPER, text[opener_pos:pe])
+
+        # An UNPAIRED half of that family — a `{{NAME/s}}` whose `/e` never comes
+        # (30 corpus articles) or a `{{NAME/e}}` with no open (16).  It rides as its
+        # own DOUBLE_BRACE token, and the classifier labels it WRAP_OPEN/WRAP_CLOSE
+        # so the producer emits ONE half of the style marker; the render pairs
+        # open/close independently and `_contain` closes the fragment at the body
+        # boundary, so a half can neither vanish nor escape its container.
+        #
+        # This is the [[feedback_when_in_doubt_carry]] reading: the wrapper is real
+        # styling the source states, and the ONLY thing the source tells us is where
+        # it STARTS.  Bounding it anywhere we chose — the next page break, the next
+        # wrapper — would invent an end the source never gave, and page breaks in
+        # particular are arbitrary (they are where the compositor ran out of paper),
+        # so they carry no information about a passage's extent.  Carrying the half
+        # keeps the styling AND leaves the defect visible for a per-article
+        # `corrections.json` fix that puts the `/e` where the scan shows it.
+        #
+        # Placed directly after the paired matcher: a well-formed pair always wins.
+        if matched is None:
+            hm = _PAIRED_OPENER_RE.match(text, opener_pos) \
+                or _PAIRED_CLOSER_RE.match(text, opener_pos)
+            if hm is not None:
+                matched = (hm.end(), SHAPE_DOUBLE_BRACE, hm.group(0))
 
         # Genealogy grid macro `{{chart2/start}}…/end` (+ familytree / tree-chart)
         # — also a PAIRED_WRAPPER span (classifier routes → CHART2), but it uses
@@ -638,6 +707,19 @@ def _walk_balanced_shapes(
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_BRACE_PIPE, text[opener_pos:end])
+
+        # An UNPAIRED `<div>`/`<span>`/`<ins>` tag → its own atomic MARK element
+        # (classifier: STYLE_OPEN / STYLE_CLOSE; producers emit «DIV[style:…]» /
+        # «/DIV» alone).  LAST of all — reached only once every bounding recognizer
+        # above has declined, which is exactly what "unpaired" means: a balanced
+        # styled wrapper, a mirrorH glyph, a `title=` span were all offered this
+        # position first and took it if they could.  So this claims precisely the
+        # tags no span can bound — the overlap halves and the bare wrappers — and
+        # never competes with a recognizer that would bound them properly.
+        if matched is None:
+            sm = _STYLE_MARK_RE.match(text, opener_pos)
+            if sm is not None:
+                matched = (sm.end(), SHAPE_HTML_SELF_CLOSING, sm.group(0))
 
         if matched is None:
             # Opener-hint matched (the bytes LOOK like an opener) but
