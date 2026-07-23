@@ -66,6 +66,7 @@ from britannica.pipeline.stages.elements._walker import (
     # uses to BOUND these spans; here they carve the HTML_TAG label.
     _STYLED_WRAPPER_RE,
     _INS_OPEN_RE,
+    _TAG_STYLER_RE,
     _SPAN_TITLE_OPEN_RE,
     _STYLE_MARK_RE,
 )
@@ -164,12 +165,14 @@ def _derive_html_tag_label(raw: str) -> str:
     # but span-title is the more specific discriminator and is tried first.
     if _SPAN_TITLE_OPEN_RE.match(raw):
         return "SPAN_TITLE"
-    # Styled `<div>`/`<p>`/`<span>` (carries `{{Ts}}`/`style=`/`align=`) or
-    # `<ins>` → HTML_STYLE.  The producer (`process_html_style`) derives the CSS
+    # Styled `<div>`/`<p>`/`<span>` (carries `{{Ts}}`/`style=`/`align=`),
+    # `<ins>`, or a TAG-IMPLIED styler (`<bdo>` — the tag name IS the styling)
+    # → HTML_STYLE.  The producer (`_wrap_html_style`) derives the CSS
     # and recurses the inner.  A BARE `<div>`/`<span>`/`<p>` never reaches the
     # walker as an HTML_TAG (it isn't bounded as one), so this only ever sees the
     # styled forms the walker lifted.
-    if _STYLED_WRAPPER_RE.match(raw) or _INS_OPEN_RE.match(raw):
+    if (_STYLED_WRAPPER_RE.match(raw) or _INS_OPEN_RE.match(raw)
+            or _TAG_STYLER_RE.match(raw)):
         return "HTML_STYLE"
     if tag not in _HTML_TAG_LABEL:
         raise ValueError(
@@ -326,6 +329,12 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.search(r"\\over(?![A-Za-z])", raw) and not re.match(
             r"\{\{\s*[^|{}]+\|", raw):
         return "FRACTION"
+    # A template PARAMETER reference (`{{{name|default}}}` / `{{{name}}}`) — the
+    # walker's `_PARAM_REF_RE` bounds it whole, so a `{{{`-leading raw here is
+    # always the full form.  The producer renders the default (MediaWiki's rule
+    # for the unbound name) or carries a bare one literally.
+    if raw.startswith("{{{"):
+        return "PARAM_DEFAULT"
     m = _TEMPLATE_NAME_RE.match(raw)
     if not m:
         raise ValueError(
@@ -1029,7 +1038,8 @@ def _classify_image_composite(raw: str) -> ClassifiedElement:
 # WRAP side.
 _RECURSE_SLOT_LABELS: frozenset[str] = frozenset(
     {"LANG", "LB", "CITE", "SPLIT_WORD", "MAIN_OTHER", "STRIP", "PARAM", "HTML_STYLE",
-     "CONTENT_EXTRACT", "ANCHOR", "SUBSUP", "SPAN_TITLE"}) | _LINK_LABELS
+     "CONTENT_EXTRACT", "ANCHOR", "SUBSUP", "SPAN_TITLE",
+     "PARAM_DEFAULT"}) | _LINK_LABELS
 
 
 def _classify_recurse_slot(raw: str, label: str) -> ClassifiedElement:

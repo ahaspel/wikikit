@@ -268,6 +268,25 @@ _KV_RE = re.compile(r'([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|(\S+))')
 _ATTR_CSS = {"valign": "vertical-align", "bgcolor": "background-color",
              "color": "color", "width": "width", "height": "height"}
 
+# A template PARAMETER reference with a default — `{{{width|100%}}}`,
+# `{{{align|left}}}`.  In article space the parameter is never bound, so
+# MediaWiki renders the DEFAULT.  Every article-space instance lives in a
+# table/cell attr slot (ALGEBRA's transposition table, ws 01-0640), so the
+# decode belongs HERE, to the producer that owns the slot — exactly like the
+# `{{=}}` attr-escape in `_html_style_peel` ([[feedback_context_sensitive_is_producer]];
+# J5 of docs/sweeper_removal.md).  A parameter with NO default (`{{{foo}}}`,
+# zero corpus instances) is left alone: MediaWiki renders it literally, so
+# leaking it is faithful.
+_PARAM_DEFAULT_RE = re.compile(r"\{\{\{[^{}|]+\|([^{}]*)\}\}\}")
+
+
+def _resolve_param_defaults(slot: str) -> str:
+    prev = None
+    while prev != slot:                  # nested defaults resolve inside-out
+        prev = slot
+        slot = _PARAM_DEFAULT_RE.sub(lambda m: m.group(1), slot)
+    return slot
+
 
 def fold_cell_attrs(
     attr_part: str, table_level: bool = False,
@@ -288,7 +307,7 @@ def fold_cell_attrs(
     from britannica.pipeline.stages.elements._tables import _parse_ts_codes
     rules: list[str] = []
     attrs: dict[str, str] = {}
-    slot = attr_part or ""
+    slot = _resolve_param_defaults(attr_part or "")
     for m in _TS_TMPL_RE.finditer(slot):          # {{Ts|…}} → CSS (its producer)
         rules += _parse_ts_codes(m.group(1).lstrip("|"))
     slot = _TS_TMPL_RE.sub(" ", slot)

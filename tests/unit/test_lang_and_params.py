@@ -7,13 +7,16 @@
 
 2. An unbound template parameter renders as its DEFAULT.  `{{{width|100%}}}` is
    `100%` in MediaWiki article space; carrying the raw triple-brace leaked it into
-   ALGEBRA's table styles and vol 1's title page.
+   ALGEBRA's table styles.  Every article-space instance sits in a table/cell
+   attr slot, so the decode lives in `_table_fold` (the slot's producer — J5 of
+   docs/sweeper_removal.md), not preprocess.
 """
 import pytest
 
 from britannica.pipeline.stages.elements import process_elements
 from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.preprocess import _resolve_param_defaults
+from britannica.pipeline.stages.elements._table_fold import (
+    _resolve_param_defaults, fold_cell_attrs)
 
 
 @pytest.fixture
@@ -71,3 +74,15 @@ def test_param_without_default_is_left_literal():
 
 def test_ordinary_template_is_not_touched():
     assert _resolve_param_defaults("{{sc|Real}}") == "{{sc|Real}}"
+
+
+def test_attr_slot_decodes_param_defaults():
+    """The corpus shape (ALGEBRA 01-0640): defaults inside cell attr values."""
+    css, attrs = fold_cell_attrs(
+        'width="{{{width|25%}}}" align="{{{align|left}}}" valign="{{{_valignt|top}}}"')
+    assert "width:25%" in css and "text-align:left" in css \
+        and "vertical-align:top" in css
+    css, _ = fold_cell_attrs(
+        'style="background-color: transparent; width: {{{width|100%}}}"',
+        table_level=True)
+    assert "width: 100%" in css

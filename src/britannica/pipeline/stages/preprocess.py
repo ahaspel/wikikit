@@ -83,44 +83,9 @@ _EDITORIAL_DEL = re.compile(r"<del\b[^>]*>.*?</del>", re.IGNORECASE | re.DOTALL)
 _EDITORIAL_INS = re.compile(r"</?ins\b[^>]*>", re.IGNORECASE)
 
 
-# `<bdo dir="ltr">…</bdo>` — an HTML bidirectional-override (ALPHABET's Hebrew
-# acrostic forces LTR over the right-to-left letters).  It IS a styled span by
-# another name: `<bdo dir=X>` ≡ `unicode-bidi:bidi-override; direction:X`.
-# Normalise to the canonical styled-`<span>` here — like quote-run's `<b>`→«B» —
-# so the existing styled-span path carries it (recurses the inner letters, keeps
-# the direction) instead of leaking the unrecognised `<bdo>` tag.
-_BDO_OPEN = re.compile(r"<bdo\b[^>]*\bdir\s*=\s*\"?\s*(ltr|rtl)\s*\"?[^>]*>",
-                       re.IGNORECASE)
-_BDO_CLOSE = re.compile(r"</bdo>", re.IGNORECASE)
-
-
-def _normalize_bdo(text: str) -> str:
-    if "<bdo" not in text.lower():
-        return text
-    text = _BDO_OPEN.sub(
-        lambda m: f'<span style="unicode-bidi:bidi-override;direction:'
-                  f'{m.group(1).lower()}">', text)
-    return _BDO_CLOSE.sub("</span>", text)
-
-
-# `<small>…</small>` / `<big>…</big>` — HTML semantic size tags whose entire
-# UA-stylesheet definition is `small{font-size:smaller}` / `big{font-size:larger}`.
-# They ARE styled spans by another name (like `<bdo>` above), so normalise them to
-# the canonical styled-`<span>` here and the existing styler path carries them
-# (recurses the inner, emits «SPAN[style:font-size:smaller]»).  The `smaller`/`larger`
-# keyword steps the size exactly as the tag does — not a pinned percentage.
-_SMALL_OPEN = re.compile(r"<small\b[^>]*>", re.IGNORECASE)
-_BIG_OPEN = re.compile(r"<big\b[^>]*>", re.IGNORECASE)
-_SIZE_TAG_CLOSE = re.compile(r"</(?:small|big)>", re.IGNORECASE)
-
-
-def _normalize_size_tags(text: str) -> str:
-    low = text.lower()
-    if "<small" not in low and "<big" not in low:
-        return text
-    text = _SMALL_OPEN.sub('<span style="font-size:smaller">', text)
-    text = _BIG_OPEN.sub('<span style="font-size:larger">', text)
-    return _SIZE_TAG_CLOSE.sub("</span>", text)
+# (`<bdo dir=X>`, `<small>`, `<big>` are no longer converted here — they are
+# TAG-IMPLIED stylers the walker lifts directly (`_TAG_STYLER_RE`) and the
+# HTML_STYLE producer styles; J3/J4 of docs/sweeper_removal.md.)
 
 
 # Presentational HTML entities (`&nbsp;`, `&mdash;`, `&alpha;`, `&ldquo;`, `&emsp;`,
@@ -145,24 +110,12 @@ def _decode_entities(text: str) -> str:
     return "".join(out)
 
 
-# A template PARAMETER reference with a default — `{{{width|100%}}}`, `{{{vol|I}}}`.
-# In article space the parameter is never bound, so MediaWiki renders the DEFAULT;
-# carried verbatim it leaks the raw triple-brace into the output (ALGEBRA's table
-# styles read `width: {{{width|100%}}}`, vol 1's title page `VOLUME {{{vol|I}}}`).
-# Substituting the default is what the source MEANS, and it is context-free — no
-# structural decision, exactly like the entity decode above, so it belongs in the
-# source-clean, not a producer ([[feedback_context_sensitive_is_producer]]).
-# A parameter with NO default (`{{{foo}}}`) is left alone: MediaWiki renders that
-# literally too, so leaking it is faithful.
-_PARAM_DEFAULT = re.compile(r"\{\{\{[^{}|]+\|([^{}]*)\}\}\}")
-
-
-def _resolve_param_defaults(text: str) -> str:
-    prev = None
-    while prev != text:                      # nested defaults resolve inside-out
-        prev = text
-        text = _PARAM_DEFAULT.sub(lambda m: m.group(1), text)
-    return text
+# (`{{{name|default}}}` param-defaults are no longer resolved here — every
+# article-space instance sits in a table/cell attr slot, so the decode lives in
+# `_table_fold.fold_cell_attrs`, the producer that owns the slot; J5 of
+# docs/sweeper_removal.md.  The front-matter instances — vol 1's title page
+# `VOLUME {{{vol|I}}}`, ws pages 3–4 — are outside ARTICLE_WS_RANGE and never
+# enter this chain.)
 
 
 # Page furniture the article body carries but that renders nothing: the running
@@ -242,12 +195,9 @@ def _clean_and_heal(stream: str) -> str:
     stream = _strip_chrome_furniture(stream)               # running head / pagenum / ambox / hidden-text
     stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags
     stream = _EDITORIAL_INS.sub("", stream)                # <ins> correction: keep text, drop tags
-    stream = _normalize_bdo(stream)                        # <bdo dir=X> → styled <span>
-    stream = _normalize_size_tags(stream)                  # <small>/<big> → font-size:smaller/larger <span>
     # Page-split words (`{{hws}}`/`{{hwe}}`/`{{lps}}`/`{{lpe}}`) are NOT
     # reconstructed here — they reach the walk as raw templates and are rejoined by
     # recognition (the SPLIT_WORD producer): start marker → the whole word, end
     # marker → nothing.
     stream = _decode_entities(stream)             # presentational HTML entities → chars
-    stream = _resolve_param_defaults(stream)      # {{{width|100%}}} → 100% (unbound param)
     return stream

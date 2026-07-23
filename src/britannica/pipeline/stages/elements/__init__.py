@@ -497,7 +497,7 @@ def _wrap_subsup(raw, body, ctx):
 # close is found by the walker's one balanced matcher, so the producer peels the
 # wrapper without a second balanced scanner.
 _STYLED_OPEN_RE = re.compile(
-    r"^\s*<(div|p|span|ins)\b([^>]*)>", re.IGNORECASE)
+    r"^\s*<(div|p|span|ins|bdo|small|big)\b([^>]*)>", re.IGNORECASE)
 
 
 _FURNITURE_TITLE_RE = re.compile(
@@ -628,10 +628,27 @@ def _html_style_peel(raw):
         return None
     tag = m.group(1).lower()
     attrs = re.sub(r"\{\{\s*=\s*\}\}", "=", m.group(2))
-    inner_raw = re.sub(rf"</{tag}\s*>\s*$", "",
+    # The close-tag strip must accept the same junk the walker's balanced
+    # matcher accepted when it BOUNDED the span (`</small caps>`, SLOVENES) —
+    # a closer the bounder consumed but this strip missed would survive into
+    # the recursed inner and re-emit as a stray close mark.
+    inner_raw = re.sub(rf"</{tag}\b[^>]*>\s*$", "",
                        raw[m.end():], flags=re.IGNORECASE)
-    marker_tag = "SPAN" if tag in ("span", "ins") else "DIV"
-    return marker_tag, ";".join(fold_cell_styles(attrs)), inner_raw
+    marker_tag = "DIV" if tag in ("div", "p") else "SPAN"
+    css = fold_cell_styles(attrs)
+    # TAG-IMPLIED stylers carry no style attribute — the tag name IS the
+    # styling, so the CSS is derived here, from the tag, exactly like an attr
+    # style would be: `<bdo dir=X>` ≡ bidi-override; `<small>`/`<big>` ≡ the
+    # UA-stylesheet `font-size:smaller/larger` (a relative step, not a pinned
+    # percentage).
+    if tag == "bdo":
+        dm = re.search(r"\bdir\s*=\s*\"?\s*(ltr|rtl)", attrs, re.IGNORECASE)
+        css = (["unicode-bidi:bidi-override"]
+               + ([f"direction:{dm.group(1).lower()}"] if dm else [])
+               + css)
+    elif tag in ("small", "big"):
+        css = [f"font-size:{'smaller' if tag == 'small' else 'larger'}"] + css
+    return marker_tag, ";".join(css), inner_raw
 
 
 def _process_style_open(raw):
@@ -664,7 +681,7 @@ def _process_style_close(raw):
     source tag always agree on which marker they are."""
     m = re.match(r"</\s*([A-Za-z]+)", raw)
     tag = m.group(1).lower() if m else "div"
-    return "«/SPAN»" if tag in ("span", "ins") else "«/DIV»"
+    return "«/DIV»" if tag in ("div", "p") else "«/SPAN»"
 
 
 def _wrap_html_style(raw, body, ctx):
@@ -681,6 +698,16 @@ def _wrap_html_style(raw, body, ctx):
         return raw
     marker_tag, css, _ = peel
     return style_block(body.strip(), css=css, tag=marker_tag)
+
+
+def _wrap_param_default(raw, body, ctx):
+    """PARAM_DEFAULT — an unbound `{{{name|default}}}` parameter reference renders
+    its DEFAULT (MediaWiki's rule in article space; the recursed default arrives as
+    ``body``).  A bare `{{{name}}}` renders literally in MediaWiki too, so it is
+    carried raw — a faithful leak, never a crash."""
+    if re.match(r"\{\{\{[^{}|]+\|", raw):
+        return body
+    return raw
 
 
 _NAMED_PARAM_RE = re.compile(r"^\s*([A-Za-z][\w -]*?)\s*=\s*([^|]*)\|")
@@ -879,6 +906,9 @@ def _recurse_slot_content(raw, label):
         if _marker_name(raw) in _END_NAMES:
             return ""
         return _split_word_word(raw)
+    if label == "PARAM_DEFAULT":              # {{{name|default}}} → the default ("" if bare)
+        m = re.match(r"\{\{\{[^{}|]+\|(.*)\}\}\}\s*$", raw, re.DOTALL)
+        return m.group(1) if m else ""
     return ""
 
 
@@ -941,6 +971,7 @@ _PR_WRAP = {
     "LANG":       _wrap_lang,     # {{greek|X}}             → X  (+ carried small=)
     "SPLIT_WORD": _wrap_bare,     # {{hws|frag|WORD}}       → WORD (END → "")
     "MAIN_OTHER": _wrap_bare,     # {{main other|main|other}} → main copy (param 1)
+    "PARAM_DEFAULT": _wrap_param_default,  # {{{width|100%}}} → 100% ; bare {{{x}}} → literal
     "BLOCKQUOTE": _wrap_bare,     # <blockquote><poem>…</> → recursed inner (verse self-indents)
     # the «LN:target|display» family — one wrap each, all on the shared `_link_display` peel
     "EB1911_ARTICLE_LINK": _wrap_article_link,

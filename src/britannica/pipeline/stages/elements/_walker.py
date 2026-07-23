@@ -234,6 +234,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<p\b"    # any <p> — styled ones lift to STYLED, bare/OCR ones → the body producer's «P»
     r"|<ins\b"  # any <ins> — Wikisource insertion, lifted UNGATED (always a styler)
     r"|<span\b"  # any <span> — styled / title ones lift, the rest ride the mark path
+    r"|</?(?:bdo|small|big)\b"  # TAG-IMPLIED stylers — lifted UNGATED (the tag IS the styling); close = the mark path
     r"|</(?:div|span|ins)\b"  # an UNPAIRED close — its open lives outside this span
     r"|\[\[",                     # DOUBLE_BRACKET — any wikilink; the recognizer table dispatches by kind (File/Author/SELFREF/#/generic)
     re.IGNORECASE,
@@ -279,7 +280,8 @@ _ELEMENT_TAGS = frozenset({"table", "ref", "poem", "math", "score", "hiero",
 # below).  Corpus-verified balanced: `<p>` 407 open / 403 close (5 unbalanced
 # articles, all OCR-garbage `<p.u(kp)` non-tags or close-less stubs that
 # fail-close → fall through); `<span>` 15706 / 15704 (1 unbalanced article).
-_BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span", "ins"}
+_BALANCED_TAGS = _ELEMENT_TAGS | {"div", "p", "span", "ins", "bdo",
+                                  "small", "big"}
 # A `<div>`/`<p>`/`<span>` that carries styling ({{Ts}} shorthand, inline
 # style=, or align=) — the gate that distinguishes a meaningful styled wrapper
 # (lift → STYLED, which carries the style and recurses its content) from a bare
@@ -316,6 +318,16 @@ _STYLED_WRAPPER_RE = re.compile(
 # `<ins style="…overline">y</ins>` → «SPAN[style:…]».  A bare <div> is left transparent;
 # a bare <ins> must be actively unwrapped, so there is no style gate.
 _INS_OPEN_RE = re.compile(r"<ins\b", re.IGNORECASE)
+# A template PARAMETER reference: `{{{name|default}}}` (renders the default in
+# article space — the name never binds) or bare `{{{name}}}` (renders literally).
+_PARAM_REF_RE = re.compile(r"\{\{\{[^{}|\n]+(?:\|[^{}]*)?\}\}\}")
+# TAG-IMPLIED stylers — tags whose NAME is the entire styling, so they lift
+# ungated like `<ins>` (no `style=` attribute to gate on): `<bdo dir=X>` ≡ a span
+# with `unicode-bidi:bidi-override;direction:X` (ALPHABET/LAMENTATIONS force LTR
+# over Hebrew acrostic letters); `<small>`/`<big>` ≡ `font-size:smaller/larger`
+# (their entire UA-stylesheet definition).  The producer derives the CSS from
+# the tag — recognition here is on the tag name alone, exactly like `<ins>`.
+_TAG_STYLER_RE = re.compile(r"<(?:bdo|small|big)\b", re.IGNORECASE)
 
 # An UNPAIRED `<div>`/`<span>`/`<ins>` tag — open OR close — that no bounding
 # recognizer claimed.  A styler is a MARK, not a container: «DIV[style:…]» and
@@ -336,7 +348,8 @@ _INS_OPEN_RE = re.compile(r"<ins\b", re.IGNORECASE)
 # Bare `<div>`/`<span>` (no style attribute) ride the same path — one
 # «DIV[style:]»…«/DIV» pair carrying an empty wrapper, instead of the two escaped
 # `&lt;div&gt;` / `&lt;/div&gt;` leaks they render as today.
-_STYLE_MARK_RE = re.compile(r"</?\s*(?:div|span|ins)\b[^>]*>", re.IGNORECASE)
+_STYLE_MARK_RE = re.compile(r"</?\s*(?:div|span|ins|bdo|small|big)\b[^>]*>",
+                            re.IGNORECASE)
 
 
 def _construct_end(text: str, start: int) -> int | None:
@@ -621,7 +634,8 @@ def _walk_balanced_shapes(
         #   None → falls through, no swallow.
         if matched is None and (
                 _STYLED_WRAPPER_RE.match(text, opener_pos)
-                or _INS_OPEN_RE.match(text, opener_pos)):
+                or _INS_OPEN_RE.match(text, opener_pos)
+                or _TAG_STYLER_RE.match(text, opener_pos)):
             end = _construct_end(text, opener_pos)
             if end is not None:
                 matched = (end, SHAPE_HTML_TAG, text[opener_pos:end])
@@ -652,6 +666,16 @@ def _walk_balanced_shapes(
         # opener and a styled `<div>` aren't mis-claimed), and BEFORE the regex
         # recognizers / BRACE_PIPE below (which own `[[…]]` / `{|` / page / title).
         #
+        # A template PARAMETER reference — `{{{name|default}}}` / `{{{name}}}` —
+        # is its own construct (valid MediaWiki syntax, NOT a template): bound
+        # whole so the classifier can route it (PARAM_DEFAULT: the producer
+        # renders the default, or carries a defaultless one literally).  Without
+        # this, the generic `{{` matcher would bound `{{{name|d}}` two-of-three
+        # and the classifier would crash on the un-template-like raw.
+        if matched is None and _PARAM_REF_RE.match(text, opener_pos):
+            pm = _PARAM_REF_RE.match(text, opener_pos)
+            matched = (pm.end(), SHAPE_DOUBLE_BRACE, pm.group(0))
+
         # A degenerate `{{{name|…}}` (triple-open, double-close — a source/OCR stray
         # leading `{`, e.g. `{{{Polytonic|ρ}}`) would bound from the first `{{` and
         # leave a stray `{` inside the inner, crashing the name extractor.  When the

@@ -65,10 +65,13 @@ _VETTED = frozenset({
 # The junk ledger — shrinks to ∅ as docs/sweeper_removal.md is worked.
 _JUNK = frozenset({
     "close_unclosed_attr_quotes",   # J2 sweeper
-    "_normalize_bdo",               # J3 misplaced transform
-    "_normalize_size_tags",         # J4 misplaced transform
-    "_resolve_param_defaults",      # J5 misplaced transform
 })
+# J3 `_normalize_bdo` + J4 `_normalize_size_tags` REMOVED 2026-07-23: `<bdo>`,
+# `<small>`, `<big>` are now walker-lifted TAG-IMPLIED stylers
+# (`_TAG_STYLER_RE` → HTML_STYLE producer).
+# J5 `_resolve_param_defaults` REMOVED 2026-07-23: every article-space
+# `{{{name|default}}}` sits in a table attr slot; the decode moved to
+# `_table_fold.fold_cell_attrs` (the slot's producer).
 # Borderline, owner's call (J8).
 _UNDECIDED = frozenset({"_decode_entities"})
 
@@ -169,9 +172,12 @@ def test_cruft_remover_introduces_no_new_word(name):
 
 
 def test_the_invariant_would_catch_a_conversion():
-    """Guard on the guard: the word-preservation check actually FIRES on a known
-    conversion — `_normalize_bdo` introduces `<span …>`, which `_normalize_size_tags`
-    does too.  If this ever passes silently the invariant has gone blind."""
+    """Guard on the guard: the word-preservation check actually FIRES on a
+    conversion.  The sample is SYNTHETIC (the shape `_normalize_bdo` had before
+    J3 removed it) so the guard outlives the campaign — once every conversion is
+    out of preprocess there is no live one left to point it at."""
+    def fake_conversion(s: str) -> str:
+        return re.sub(r"<bdo\b[^>]*>", '<span style="direction:ltr">', s)
     src = '<bdo dir="rtl">x</bdo>'
-    new = set(_WORD.findall(P._normalize_bdo(src))) - set(_WORD.findall(src))
+    new = set(_WORD.findall(fake_conversion(src))) - set(_WORD.findall(src))
     assert new, "word-preservation invariant failed to flag a bdo→span conversion"
