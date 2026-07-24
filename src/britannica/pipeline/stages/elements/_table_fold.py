@@ -264,7 +264,12 @@ def recognize_table(inner: str) -> tuple[str, list[Row]]:
 # replacement for `_cell_styles`'s whitelist: recursion never loses.
 
 _TS_TMPL_RE = re.compile(r"\{\{[Tt]s\s*((?:\|[^{}]*)?)\}\}")
-_KV_RE = re.compile(r'([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|(\S+))')
+# The quoted value's closing `"` is OPTIONAL: an unterminated attr quote
+# (`<td style="padding-left:2em;>` — the transcriber forgot the close) runs to
+# the end of the attr slot, which is where the tag's `>` cut it.  Reader-side
+# tolerance replacing the `close_unclosed_attr_quotes` sweeper (J2,
+# docs/sweeper_removal.md) — same semantics the sweeper's inserted quote gave.
+_KV_RE = re.compile(r'([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"?|(\S+))')
 _ATTR_CSS = {"valign": "vertical-align", "bgcolor": "background-color",
              "color": "color", "width": "width", "height": "height"}
 

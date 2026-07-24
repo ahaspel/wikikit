@@ -54,22 +54,12 @@ def strip_noinclude_blocks(text: str) -> str:
     return _NOINCLUDE_BLOCK_RE.sub("", text)
 
 
-_TAG_RE = re.compile(r"<[a-zA-Z][^>]*>")
-
-
-def close_unclosed_attr_quotes(text: str) -> str:
-    """Repair a malformed tag whose attribute quote was never closed before the
-    `>`: `<span style="…;>` → `<span style="…;">` (363 corpus-wide; the missing
-    `"` made the figtable DOMParser swallow the rest of the cell — ABBEY Fig. 10).
-    A tag with an ODD number of `"` has an unclosed quote; close it just inside
-    the `>`.  (A literal `>` inside a quoted value would false-positive, but in
-    EB1911 those are `&gt;` — none in the corpus.)"""
-    def _fix(m: "re.Match[str]") -> str:
-        tag = m.group(0)
-        if tag.count('"') % 2 == 1:
-            return tag[:-1] + '">'
-        return tag
-    return _TAG_RE.sub(_fix, text)
+# (`close_unclosed_attr_quotes` — the global odd-quote tag repair — is deleted;
+# J2 of docs/sweeper_removal.md.  The tolerance lives with the attr READERS now:
+# `_KV_RE` (fold_cell_attrs) and `_SPAN_TITLE_OPEN_RE` accept an unterminated
+# quoted value, which by construction ends at the tag's `>` — the same semantics
+# the inserted quote gave, without also injecting quotes into OCR prose that
+# merely looked tag-like.)
 
 
 # ── HTML comment strip ─────────────────────────────────────────────

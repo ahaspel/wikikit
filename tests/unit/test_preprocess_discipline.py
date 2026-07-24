@@ -63,15 +63,16 @@ _VETTED = frozenset({
     "_EDITORIAL_INS.sub",           # <ins> correction
 })
 # The junk ledger — shrinks to ∅ as docs/sweeper_removal.md is worked.
-_JUNK = frozenset({
-    "close_unclosed_attr_quotes",   # J2 sweeper
-})
-# J3 `_normalize_bdo` + J4 `_normalize_size_tags` REMOVED 2026-07-23: `<bdo>`,
-# `<small>`, `<big>` are now walker-lifted TAG-IMPLIED stylers
-# (`_TAG_STYLER_RE` → HTML_STYLE producer).
-# J5 `_resolve_param_defaults` REMOVED 2026-07-23: every article-space
-# `{{{name|default}}}` sits in a table attr slot; the decode moved to
-# `_table_fold.fold_cell_attrs` (the slot's producer).
+_JUNK = frozenset()
+# THE LEDGER IS EMPTY (2026-07-23).  What left, and where each went:
+# J3 `_normalize_bdo` + J4 `_normalize_size_tags`: `<bdo>`, `<small>`, `<big>`
+#   are walker-lifted TAG-IMPLIED stylers (`_TAG_STYLER_RE` → HTML_STYLE).
+# J5 `_resolve_param_defaults`: every article-space `{{{name|default}}}` sits in
+#   a table attr slot; the decode moved to `_table_fold.fold_cell_attrs`.
+# J1 (inside `strip_noinclude_blocks`): the `{|`/`|}` keep-branch deleted —
+#   plain wholesale strip.
+# J2 `close_unclosed_attr_quotes`: unterminated-attr-quote tolerance moved to
+#   the attr READERS (`_KV_RE`, `_SPAN_TITLE_OPEN_RE`).
 # Borderline, owner's call (J8).
 _UNDECIDED = frozenset({"_decode_entities"})
 

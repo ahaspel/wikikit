@@ -30,7 +30,6 @@ import re
 from britannica.corrections import apply_corrections
 from britannica.pipeline.stages.quote_runs import _convert_quote_runs
 from britannica.pipeline.stages.source_cleanup import (
-    close_unclosed_attr_quotes,
     strip_html_comments,
     strip_noinclude_blocks,
 )
@@ -189,7 +188,6 @@ def _clean_and_heal(stream: str) -> str:
     on already-converted markup)."""
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
     stream = _TRAILING_WS.sub("", stream)         # whitespace-only line -> clean blank line
-    stream = close_unclosed_attr_quotes(stream)   # repair `<span style="…;>` etc.
     stream = strip_noinclude_blocks(stream)
     stream = strip_html_comments(stream)
     stream = _strip_chrome_furniture(stream)               # running head / pagenum / ambox / hidden-text

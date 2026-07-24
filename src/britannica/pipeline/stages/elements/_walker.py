@@ -154,8 +154,16 @@ _MIRROR_GLYPH_RE = re.compile(
 # → `_spacer.decode_char_escapes`).
 _ATTR_EQ = r"(?:=|\{\{\s*=\s*\}\})"
 
+# The quoted value is `[^">]*` with an OPTIONAL closing quote: an attr value can
+# never cross its own tag's `>`, so an unterminated quote (363 corpus tags — the
+# transcriber forgot the close: `<span title="They cut off his head>`) ends at
+# the tag close.  This is the reader-side tolerance that replaced the global
+# `close_unclosed_attr_quotes` sweeper (J2, docs/sweeper_removal.md).  Without
+# the `>` exclusion the value ran into the NEXT tag's quote, so the walker
+# (matching against the full text) and the classifier (matching against the
+# bounded raw) disagreed → "Unknown HTML tag" crash (CARMAGNOLE, vol5 p368).
 _SPAN_TITLE_OPEN_RE = re.compile(
-    r'<span\b[^>]*?\btitle\s*' + _ATTR_EQ + r'\s*(?:"(?P<q>[^"]*)"|(?P<uq>[^\s">]+))[^>]*>',
+    r'<span\b[^>]*?\btitle\s*' + _ATTR_EQ + r'\s*(?:"(?P<q>[^">]*)"?|(?P<uq>[^\s">]+))[^>]*>',
     re.IGNORECASE)
 
 
