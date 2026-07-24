@@ -213,7 +213,52 @@ def build_download(articles_dir: str = "data/derived/articles",
             "version": version, "archive": str(archive), "out_dir": str(out)}
 
 
+def build_maps_bundle(maps_json: str = "data/maps.json",
+                      images_dir: str = "data/images/maps",
+                      out_dir: str = "data/derived") -> dict:
+    """Archive the colour maps — the EB1911 plates and the Stieler originals —
+    as a bundle of their own (eb1911-maps.tar.gz).  Kept separate from the
+    corpus bundle: ~200MB of full-resolution JPGs would bloat the agent
+    dataset for consumers who only want the text and graphs.
+
+    The registry (maps.json) rides along as the bundle's own manifest; every
+    file it names must exist — a missing referenced image RAISES rather than
+    shipping a bundle that silently lacks it."""
+    reg = json.loads(Path(maps_json).read_text(encoding="utf-8"))
+    imgs = Path(images_dir)
+    files: list[Path] = []
+    for row in reg.get("maps", []):
+        for side in ("eb1911", "stieler"):
+            block = row.get(side)
+            if not block:
+                continue
+            sheets = block.get("sheets") or [block]
+            for sheet in sheets:
+                for key in ("file", "full"):
+                    name = sheet.get(key)
+                    if not name:
+                        continue
+                    fp = imgs / name
+                    if not fp.is_file():
+                        raise RuntimeError(f"maps.json names missing file: {fp}")
+                    if fp not in files:
+                        files.append(fp)
+    out = Path(out_dir)
+    archive = out / "eb1911-maps.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(Path(maps_json), arcname="eb1911-maps/maps.json")
+        for fp in sorted(files):
+            tar.add(fp, arcname=f"eb1911-maps/{fp.name}")
+    (out / f"{archive.name}.sha256").write_text(
+        f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
+    return {"maps": len(reg.get("maps", [])), "files": len(files),
+            "bytes": archive.stat().st_size, "archive": str(archive)}
+
+
 if __name__ == "__main__":
     import sys
-    lim = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    print(json.dumps(build_download(limit=lim), indent=2))
+    if "maps" in sys.argv[1:]:
+        print(json.dumps(build_maps_bundle(), indent=2))
+    else:
+        lim = int(sys.argv[1]) if len(sys.argv) > 1 else None
+        print(json.dumps(build_download(limit=lim), indent=2))
