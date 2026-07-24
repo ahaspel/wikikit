@@ -25,40 +25,33 @@ import re
 # carried, not dropped.  Removed so preprocess stops hiding the styler work.
 
 
-# ── noinclude strip (table-marker preserving) ──────────────────────
-# Strip `<noinclude>…</noinclude>` blocks (page headers, quality
-# tags) BUT preserve any `{|` opener or `|}` closer inside them.
-# EB1911 pages routinely put a table wrapper opener `{|...` in the
-# header noinclude and the `|}` closer in the footer noinclude so
-# that the page displays standalone on Wikisource.  Stripping the
-# whole block would orphan the table rows; the balanced-table
-# extractor later pairs a `{|` on one page with a `|}` many pages
-# later, swallowing all intermediate prose (this was silently eating
-# Climate / Fauna / Population sections of UNITED STATES, THE).
-# `detect_boundaries` applies the same logic at its own preprocess
-# step; this is defence in depth.
+# ── noinclude strip ────────────────────────────────────────────────
+# Strip `<noinclude>…</noinclude>` blocks whole.  `<noinclude>` means "not
+# transcluded": MediaWiki drops the block from mainspace, so the article is
+# raw_text MINUS noinclude — including any `{|`/`|}` table delimiters inside
+# (a cross-page table's standalone-view close/reopen chrome, and the 2-column
+# page-layout tables Wikisource uses to mimic the print).  The mainspace table
+# is one continuous `{|`…`|}` span across pages, and the whole-volume balanced
+# matcher pairs it correctly.
+#
+# A keep-the-table-markers rescue lived here until 2026-07-23 (J1 of
+# docs/sweeper_removal.md).  It guarded against a table extractor that predated
+# the whole-volume stream; the A/B over all 83 affected articles showed the
+# plain strip loses ZERO words — while the rescue itself was SWALLOWING whole
+# pages (a kept 2-column layout opener wrapped the page's mainspace prose in a
+# bogus table whose parse dropped it: LIBRARIES ws 573/584 missing from the
+# shipped body, ~25 articles affected) and chopping continuous tables into
+# per-page fragments (INDIANS, NORTH AMERICAN 19→10).
 # Tolerate a malformed opener (`<noinclude">` — a stray quote is a verified
 # source/OCR typo in ~6 articles); it is still the editorial noinclude layer, so
 # strip it like the clean form rather than leak the broken tag.
 _NOINCLUDE_BLOCK_RE = re.compile(
     r"<noinclude\b[^>]*>.*?</noinclude>", re.DOTALL | re.IGNORECASE
 )
-_NOINCLUDE_KEEP_OPENER_RE = re.compile(r"(?:^|\n)\s*\{\|[^\n<]*")
-_NOINCLUDE_KEEP_CLOSER_RE = re.compile(r"(?:^|\n)\s*\|\}(?!\})")
-
-
-def _replace_noinclude(m: re.Match) -> str:
-    block = m.group(0)
-    kept: list[str] = []
-    for om in _NOINCLUDE_KEEP_OPENER_RE.finditer(block):
-        kept.append(om.group(0).strip())
-    if _NOINCLUDE_KEEP_CLOSER_RE.search(block):
-        kept.append("|}")
-    return ("\n" + "\n".join(kept) + "\n") if kept else ""
 
 
 def strip_noinclude_blocks(text: str) -> str:
-    return _NOINCLUDE_BLOCK_RE.sub(_replace_noinclude, text)
+    return _NOINCLUDE_BLOCK_RE.sub("", text)
 
 
 _TAG_RE = re.compile(r"<[a-zA-Z][^>]*>")

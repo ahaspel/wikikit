@@ -115,15 +115,19 @@ def test_noinclude_halves_are_not_transcluded():
     MediaWiki.  Keeping the halves instead moved 2174 articles and then needed a
     sweeper to undo itself.
 
-    The `{|`/`|}` table delimiters ARE still kept — not an inconsistency: an
-    orphaned table opener swallows every intervening article, so that one is a
-    documented structural rescue, not a rule about what noinclude means."""
+    `{|`/`|}` table delimiters are NOT excepted (the J1 rescue that kept them
+    is deleted, docs/sweeper_removal.md): the mainspace table is one continuous
+    span across pages and the whole-volume balanced matcher pairs it, while a
+    kept 2-column page-layout opener wrapped whole pages of mainspace prose in
+    a bogus table and silently dropped them (LIBRARIES ws 573/584)."""
     from britannica.pipeline.stages.source_cleanup import strip_noinclude_blocks
     assert strip_noinclude_blocks(
         "body<noinclude>\n{{EB1911 fine print/e}}</noinclude>") == "body"
     assert strip_noinclude_blocks(
         "<noinclude>{{EB1911 fine print/s}}</noinclude>body") == "body"
     assert strip_noinclude_blocks("a<noinclude>{{rh|1|X|2}}</noinclude>b") == "ab"
-    # The table-delimiter rescue is untouched.
-    assert "{|class=x" in strip_noinclude_blocks(
-        "a<noinclude>\n{|class=x\n</noinclude>b")
+    # Table delimiters in noinclude are page-view chrome — dropped like the rest.
+    assert strip_noinclude_blocks(
+        "a<noinclude>\n{|class=x\n</noinclude>b") == "ab"
+    assert strip_noinclude_blocks(
+        "row<noinclude>\n|}</noinclude>") == "row"

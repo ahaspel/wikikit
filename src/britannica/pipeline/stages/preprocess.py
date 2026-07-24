@@ -36,13 +36,13 @@ from britannica.pipeline.stages.source_cleanup import (
 )
 
 # Page chrome inside ``<noinclude>`` (running headers, pagequality, smallrefs,
-# rules) is furniture — but a noinclude block can ALSO carry the ONLY ``{|``/
-# ``|}`` markers of a multi-page table: INDIANS, NORTH AMERICAN wraps each
-# page's rows of its 3-page table in a standalone ``<noinclude>{|…|}</noinclude>``,
-# and that table renders correctly in current local + production.  Those markers
-# are NOT noise — wholesale-stripping them turned the table to prose.  Heuristic:
-# KEEP everything unless we're REALLY sure it's noise.  So ``strip_noinclude_blocks``
-# drops the chrome but PRESERVES the table markers.
+# rules, AND any ``{|``/``|}`` table delimiters — a cross-page table's
+# standalone-view close/reopen, or a 2-column page-layout wrapper) is furniture:
+# MediaWiki does not transclude it, so the mainspace article is raw_text MINUS
+# noinclude.  ``strip_noinclude_blocks`` drops the block whole; the mainspace
+# table stays one continuous span across pages, paired by the whole-volume
+# balanced matcher (INDIANS, NORTH AMERICAN's 13-page table).  The old
+# keep-table-markers rescue is deleted — J1 of docs/sweeper_removal.md.
 
 # NOTE: the print-economy small-type block wrappers (`{{fine block/s}}…/e}}`,
 # `{{EB1911 fine print/s}}`, `{{smaller block/s}}`) are NO LONGER stripped here.
