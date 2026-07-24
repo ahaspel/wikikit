@@ -481,14 +481,26 @@ class LinkResolver:
 
     def _see_pass(self, name: str, self_fn, src_cats):
         """One see-candidacy check for ONE name: substantial tight match +
-        shared source topic.  -> filename | _SELF | None."""
+        shared source topic.  -> filename | _SELF | None.
+
+        A TIGHT MULTI-WORD match (exact/alt/fold on ≥2 content words — a full
+        personal name folding onto its inverted title, JEAN FROISSART →
+        FROISSART, JEAN) binds WITHOUT topic agreement: the name match itself
+        is the guard the topic gate stood in for, and the coarse vol-29 topic
+        map abstained 205 such near-certain binds (targets often simply
+        uncategorized).  Everything looser keeps the topic gate — the
+        single-word exacts (LIFE, SMITH, GIBBON) are where the junk lives."""
         bag, tag = self.candidates(name)       # superset off — component noise
-        substantial = tag in ("exact", "alt", "fold") or (
-            tag == "subset" and len(content(wordset_f(name))) >= 2)
+        tight = tag in ("exact", "alt", "fold")
+        n_content = len(content(wordset_f(name)))
+        substantial = tight or (tag == "subset" and n_content >= 2)
         if not substantial:
             return None
-        match = [c for c in bag
-                 if (self._topics_of(c[0]) or set()) & src_cats]
+        if tight and n_content >= 2:
+            match = bag
+        else:
+            match = [c for c in bag
+                     if (self._topics_of(c[0]) or set()) & src_cats]
         if any(c[0] == self_fn for c in match):
             # `see ABIGAIL` inside ABIGAIL: the cue names THIS article — there
             # is nothing to point at, and a runner-up would bind a different
@@ -497,7 +509,8 @@ class LinkResolver:
         if len(match) == 1:
             return match[0][0]
         if len(match) >= 2:
-            fn, _, _ = self.fish(name, match, path=sorted(src_cats))
+            fn, _, _ = self.fish(name, match,
+                                 path=sorted(src_cats) if src_cats else None)
             if fn:
                 return fn
         return None
@@ -520,9 +533,10 @@ class LinkResolver:
         span stays TERMINAL here (unlike q.v.): the see-cue asserts one
         editorial pointer, not prose that happens to pass its own name.
         Returns ``(filename, cut)`` (both None when abstaining)."""
-        src_cats = self._topics_of(self_fn) if self_fn else None
-        if not src_cats:
-            return None, None
+        # An uncategorized SOURCE no longer aborts outright: the tight
+        # multi-word path binds without topics, and the topic-gated paths
+        # simply find no agreeing candidate.
+        src_cats = (self._topics_of(self_fn) if self_fn else None) or set()
         for name in (n for n in (target, display) if n):
             if not window:
                 r = self._see_pass(name, self_fn, src_cats)
