@@ -356,7 +356,10 @@ def _table_open(m):
     attrs = ""
     for field in m.group(2).split("|"):
         k, _, v = field.partition(":")
-        if k == "cols":
+        if k in ("cols", "wide"):
+            # Block-layer metadata, not HTML attributes: `cols` is the column
+            # count, `wide` the MEASURED overflow fact stamped by
+            # annotate_table_markers (the Expand treatment keys on it).
             continue
         attrs += f' {k}="{v}"'
     return f"<{tag}{attrs}>"
@@ -368,7 +371,7 @@ def _table_open(m):
 # The browser closes the open-only «P» — so there is no paragraph re-inference and no block
 # re-scan: every construct is one balanced marker decoded in place, exactly like the inline ones.
 _VERSE_BLOCK_OPEN_RE = re.compile(r"\{\{VERSE(?:\[style:([^\]]*)\])?:")
-_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)")
+_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)(\|wide)?")
 
 
 def _verse_block_open(m):
@@ -419,9 +422,13 @@ def _render_eqn(h, ctx):
 
 
 def _wrap_wide_tables(h, ctx):
-    """Wrap each cols≥10 «TABLE[…]…«/TABLE» in a `wide-table-wrap` figure + Expand button
-    (balanced close, so a nested table isn't torn).  The corpus has NO wide table nested inside
-    another table, so this left-to-right scan wraps exactly the top-level wide ones."""
+    """Wrap each MEASURED-wide «TABLE[…]…«/TABLE» in a `wide-table-wrap` figure + Expand
+    button (balanced close, so a nested table isn't torn).  Keys on the `|wide` param
+    stamped by annotate_table_markers from real browser measurement against the 590px
+    body column — replacing the cols≥10 proxy, which both over-fired (ten narrow
+    columns fit fine) and under-fired (CONSTELLATION's 8-column table at 871px got
+    nothing).  The corpus has NO wide table nested inside another table, so this
+    left-to-right scan wraps exactly the top-level wide ones."""
     OPEN, CLOSE = "«TABLE[", "«/TABLE»"
     out, i = [], 0
     while True:
@@ -435,7 +442,7 @@ def _wrap_wide_tables(h, ctx):
         span = h[a:close_end]
         cm = _TABLE_COLS_RE.match(span)
         cols = int(cm.group(1)) if cm else 0
-        if cols >= 10:
+        if cm and cm.group(2):
             ctx.wide_table_counter += 1
             out.append(f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
                        f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'

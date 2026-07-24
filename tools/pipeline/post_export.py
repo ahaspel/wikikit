@@ -40,6 +40,7 @@ from britannica.export.article_json import register_stable_id_dedup
 from britannica.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
 
 from annotate_math_markers import annotate_payloads
+from annotate_table_markers import annotate_payloads as annotate_tables
 from resolve_contributors_post import bind_contributors
 from resolve_xrefs_post import resolve_and_render
 
@@ -62,6 +63,8 @@ def main() -> None:
 
         changed, with_math = annotate_payloads(payloads)
         tick(f"math markers: {changed} re-hinted / {with_math} with math")
+        n_tables = annotate_tables(payloads)
+        tick(f"table wide-hints stamped ({n_tables} articles)")
 
         wrote = bind_contributors(session, payloads)
         tick("contributors bound")
