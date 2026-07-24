@@ -46,7 +46,7 @@ _TITLE_RE = re.compile(r"«TITLE:[\s\S]*?«/TITLE»")
 
 # ── phase 2: links ───────────────────────────────────────────────────────────
 
-_LINK_RE = re.compile(r"«(?:LN|XL):([\s\S]*?)«/(?:LN|XL)»")
+_LINK_RE = re.compile(r"«(?:LN|XL)(?:\[[a-z_]*\])?:([\s\S]*?)«/(?:LN|XL)»")
 
 
 def _link_md(m: re.Match) -> str:

@@ -8,7 +8,7 @@ from britannica.xrefs.normalizer import normalize_xref_target
 _QV_PATTERN = re.compile(r"([\w][\w\-]*(?:\s+[\w][\w\-]*){0,5})\s*\(q\.v\.\)")
 
 # Link-marker variant: «LN:target|display«/LN» (q.v.)
-_QV_LINK_PATTERN = re.compile(r"\u00abLN:([^|]*)\|[^«]*\u00ab/LN\u00bb\s*\(q\.v\.\)")
+_QV_LINK_PATTERN = re.compile(r"\u00abLN(?:\[[a-z_]*\])?:([^|]*)\|[^«]*\u00ab/LN\u00bb\s*\(q\.v\.\)")
 
 
 _SENTENCE_STARTERS = frozenset({
@@ -51,7 +51,7 @@ def _extract_qv_target(raw_match: str) -> str:
 # Inside the parentheses the content may itself contain parens because
 # link markers like «LN:Leopold I. (emperor)|…«/LN» embed them. So the
 # content matches either a complete link marker or any non-`)` char.
-_PAREN_CONTENT = r"(?:\u00abLN:[^\u00ab]*\u00ab/LN\u00bb|[^)])+"
+_PAREN_CONTENT = r"(?:\u00abLN(?:\[[a-z_]*\])?:[^\u00ab]*\u00ab/LN\u00bb|[^)])+"
 _PAREN_SEE_ALSO_PATTERN = re.compile(
     r"\(See also\s+(" + _PAREN_CONTENT + r")\)"
 )
@@ -117,7 +117,7 @@ _COMPARE_PATTERN = re.compile(r"\b[Cc]ompare\s+" + _TARGET_TAIL)
 def _strip_markers(text: str) -> str:
     """Remove internal markers (links, formatting) to get plain text."""
     # Replace «LN:...|...|display«/LN» or «LN:target|display«/LN» with display text
-    text = re.sub(r"\u00abLN:(?:[^|]*\|)*([^«]*)\u00ab/LN\u00bb", r"\1", text)
+    text = re.sub(r"\u00abLN(?:\[[a-z_]*\])?:(?:[^|]*\|)*([^«]*)\u00ab/LN\u00bb", r"\1", text)
     # Strip formatting markers: «B», «I», «SC», etc.
     text = re.sub(r"\u00ab/?[A-Z]+\u00bb", "", text)
     return text.strip()
@@ -177,7 +177,7 @@ def _clean_paren_see_target(raw: str) -> list[str]:
         return _MARKER_PLACEHOLDER
 
     text = re.sub(
-        r"\u00abLN:([^|]*)\|[^\u00ab]*\u00ab/LN\u00bb",
+        r"\u00abLN(?:\[[a-z_]*\])?:([^|]*)\|[^\u00ab]*\u00ab/LN\u00bb",
         _capture_marker,
         raw,
     )
@@ -284,7 +284,7 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         )
 
     # Link markers are implicit cross-references
-    for m in re.finditer(r"\u00abLN:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
+    for m in re.finditer(r"\u00abLN(?:\[[a-z_]*\])?:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
         target = m.group(1).strip()
         if _is_plausible_target(target):
             _add(m.group(0), target, "link")

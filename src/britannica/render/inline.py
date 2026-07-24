@@ -217,7 +217,7 @@ _BRACE2_RE = re.compile(r"«BRACE2\[(\d+)\|([lrud])\]»")
 # The display rides through and finishes decoding in the later passes (order-invariant), unlike the old
 # span-match whose display group excluded « and so leaked whenever a link held a marker decoded AFTER
 # this pass (XL/SEC/TABLE).  A trailing second capture marks the 3-part (resolved) form.
-_LN_OPEN_RE = re.compile(r"«LN:([^|«]*)\|(?:([^|«]*)\|)?")
+_LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:([^|«]*)\|(?:([^|«]*)\|)?")
 _XL_OPEN_RE = re.compile(r"«XL:([^|«]*)(\|)?")
 _SEC_RE = re.compile(r"«(?:SEC|ANCHOR):([^|»]*)\|[^»]*»")
 

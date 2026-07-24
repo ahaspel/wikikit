@@ -377,8 +377,10 @@ def _wrap_resolved_xrefs_in_body(
         nt = (xref.normalized_target or "").strip()
         if not nt or nt in wrapped_targets:
             continue
-        # Already-linked at its own site: nothing to do.
-        if xref.surface_text and "«LN:" in xref.surface_text:
+        # Already-linked at its own site: nothing to do.  (`«LN[` = the
+        # kind-parameterized form.)
+        if xref.surface_text and ("«LN:" in xref.surface_text
+                                  or "«LN[" in xref.surface_text):
             wrapped_targets.add(nt)
             continue
         # Bibliographic noise: refuse to propagate a likely-wrong link.
@@ -450,7 +452,8 @@ def _wrap_resolved_xrefs_in_body(
 
 # Non-greedy display so a nested marker in the display (`«SC»r. v. h.«/SC»`, an
 # author signature) is captured whole rather than truncated at the first «.
-_LN_DISPLAY_RE = re.compile(r"«(?:LN|AL):[^|]*\|(.*?)«/(?:LN|AL)»", re.DOTALL)
+_LN_DISPLAY_RE = re.compile(
+    r"«(?:LN|AL)(?:\[[a-z_]*\])?:[^|]*\|(.*?)«/(?:LN|AL)»", re.DOTALL)
 _INLINE_MARK_RE = re.compile(r"«[^«»]*»")
 
 
@@ -584,8 +587,11 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                    + target_text.strip().replace(" ", "_"))
             return f"«XL:{url}|{display}«/XL»"
         return display  # unresolvable — strip the markup, keep the text
+    # The optional `[kind]` slot (a producer-stamped reference kind, `«LN[qv]:`)
+    # is consumed HERE — the bake resolves by kind and writes the plain 3-part
+    # form, so no `[kind]` survives into a post-bake body.
     body = re.sub(
-        r"«LN:([^|]*)\|([^«]*)«/LN»",
+        r"«LN(?:\[[a-z_]*\])?:([^|]*)\|([^«]*)«/LN»",
         _resolve_link, body,
     )
 

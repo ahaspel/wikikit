@@ -153,7 +153,7 @@ def load_topic_map() -> dict[str, set]:
 def _clean_prose(t: str) -> str:
     """Marker stream -> plain prose: links to their display, markers/page
     stamps out, whitespace collapsed.  What the fisher should embed."""
-    t = re.sub(r"«LN:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
+    t = re.sub(r"«LN(?:\[[a-z_]*\])?:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
     t = re.sub(r"«[^»]*»", "", t)
     t = re.sub(r"\x01PAGE:\d+\x01", " ", t)
     return re.sub(r"\s+", " ", t).strip()

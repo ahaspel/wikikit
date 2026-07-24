@@ -176,7 +176,10 @@ _INLINE_MARKER_RE = _re.compile(r"«[^«»]*»")
 # «AL» is the DEFERRED author-link marker (walk → 6b4 resolves it against the
 # finished roster); it never survives into the render/search path, but degrade a
 # stray one to its display (the initials) like any other link, not to residue.
-_LINK_RE = _re.compile(r"«(?:LN|XL|AL):([\s\S]*?)«/(?:LN|XL|AL)»")
+# `«LN` takes an optional `[kind]` param (`«LN[qv]:…»` — the reference KIND a
+# producer stamped for the 6b5 resolve; dropped at bake, so only PRE-bake bodies
+# carry it).  The slot is tolerated wherever «LN is parsed, like «MATH[fs=N].
+_LINK_RE = _re.compile(r"«(?:LN|XL|AL)(?:\[[a-z_]*\])?:([\s\S]*?)«/(?:LN|XL|AL)»")
 # Carried presentational HTML — the SAFE-HTML set decode_inline un-escapes for the render
 # (`sub|sup|small|big|br`).  In PLAIN text it carries nothing search wants, so strip the tag
 # and KEEP the content (`H<sub>2</sub>O` → `H2O`); a raw `<br>` line break becomes a separator.
