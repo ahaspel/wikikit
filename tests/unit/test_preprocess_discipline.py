@@ -55,12 +55,21 @@ from britannica.pipeline.stages import preprocess as P
 # justifying a step is removal, not conversion — see Layer 2).
 _VETTED = frozenset({
     "_TRAILING_WS.sub",             # trailing whitespace
-    "strip_noinclude_blocks",       # noinclude removal (J1 rescue is IN its body —
-                                    #   a behavioral pin, not a chain member)
+    "strip_noinclude_blocks",       # noinclude removal (the J1 rescue is GONE;
+                                    #   plain wholesale strip)
     "strip_html_comments",          # comments
     "_strip_chrome_furniture",      # running head / pagenum / ambox
     "_EDITORIAL_DEL.sub",           # <del> correction
     "_EDITORIAL_INS.sub",           # <ins> correction
+    # J8, RULED VETTED 2026-07-24 (user): TRANSPORT DECODING, not construct
+    # conversion.  An entity is the source's SPELLING of a character (MediaWiki
+    # renders `&mdash;` as "—" in every view); decoding it is reading the
+    # source, and the character identity is needed by EVERY downstream matcher
+    # (titles, classifier names, xref normalization) — so there is no natural
+    # single owner to relocate to, which was never true of J3–J5.  The one
+    # interpretation hazard (decoding `&lt;`/`&gt;` would forge a tag) is
+    # handled by the keep-rule.  Deletion-shaped under word-preservation.
+    "_decode_entities",
 })
 # The junk ledger — shrinks to ∅ as docs/sweeper_removal.md is worked.
 _JUNK = frozenset()
@@ -73,8 +82,8 @@ _JUNK = frozenset()
 #   plain wholesale strip.
 # J2 `close_unclosed_attr_quotes`: unterminated-attr-quote tolerance moved to
 #   the attr READERS (`_KV_RE`, `_SPAN_TITLE_OPEN_RE`).
-# Borderline, owner's call (J8).
-_UNDECIDED = frozenset({"_decode_entities"})
+# J8 ruled (see _VETTED) — nothing undecided remains.
+_UNDECIDED = frozenset()
 
 
 def _extract_chain(fn) -> tuple[str, ...]:
@@ -157,6 +166,10 @@ _CRUFT_REMOVERS = {
         (P._strip_chrome_furniture, "text {{rh|left|CENTER|right}} more"),
     "_EDITORIAL_DEL.sub":
         (lambda s: P._EDITORIAL_DEL.sub("", s), "good <del>bogus OCR</del> text"),
+    # Transport decoding is deletion-shaped: {a, mdash, nbsp, b} -> {a, b};
+    # the kept &lt;/&gt; introduce nothing either.
+    "_decode_entities":
+        (P._decode_entities, "a&mdash;b&nbsp;&lt;tag&gt; &amp; more"),
 }
 
 
