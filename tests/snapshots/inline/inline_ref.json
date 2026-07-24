@@ -77,7 +77,7 @@
  },
  {
   "input": "«LN:11-0042-s5-abbey.json|ABBEY|the abbey«/LN» reference",
-  "output": "<a href=\"/article/11-0042-s5-abbey.json\" class=\"article-link\" title=\"ABBEY\">the abbey</a> reference"
+  "output": "<a href=\"/article/11-0042-s5-abbey\" class=\"article-link\" title=\"ABBEY\">the abbey</a> reference"
  },
  {
   "input": "«LN:MONASTICISM|Monasticism«/LN» bare target",
@@ -117,7 +117,7 @@
  },
  {
   "input": "«LN:11-0042-s5-abbey.json|ABBEY|«I»styled«/I» display«/LN» — markup inside the link",
-  "output": "<a href=\"/article/11-0042-s5-abbey.json\" class=\"article-link\" title=\"ABBEY\"><i>styled</i> display</a> — markup inside the link"
+  "output": "<a href=\"/article/11-0042-s5-abbey\" class=\"article-link\" title=\"ABBEY\"><i>styled</i> display</a> — markup inside the link"
  },
  {
   "input": "«XL:https://example.com/z|«B»bold«/B» external«/XL» display markup",

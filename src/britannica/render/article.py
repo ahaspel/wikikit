@@ -99,12 +99,11 @@ def _section_slug(name):
 class RenderContext:
     """Per-article render state (mirrors renderArticle's module-level counters)."""
 
-    def __init__(self, volume, scan_url, unproofed_pages, target="site", is_local=True, epub_bundled=None):
+    def __init__(self, volume, scan_url, unproofed_pages, target="site", epub_bundled=None):
         self.volume = volume
         self.scan_url = scan_url
         self.unproofed_pages = unproofed_pages
         self.target = target            # "site" (byte-identical to the viewer) | "epub"
-        self.is_local = is_local        # article-link URL scheme (stub form vs production clean URL)
         self.epub_bundled = epub_bundled  # None on site; a set of in-book stems → the EPUB link policy
         self.footnote_counter = 0
         self.named_fn_numbers = {}
@@ -398,11 +397,11 @@ def _render_body(article, ctx):
     return toc_html + f'<div class="body-text">{body_html}</div>'
 
 
-def _build_xref_href(xref, is_local, bundled=None):
+def _build_xref_href(xref, bundled=None):
     if xref.get("target_filename"):
-        base = _article_url(xref["target_filename"], is_local, bundled)
+        base = _article_url(xref["target_filename"], bundled)
     elif xref.get("normalized_target"):
-        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", is_local, bundled)
+        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", bundled)
     else:
         return "#"
     if xref.get("target_section"):
@@ -412,7 +411,7 @@ def _build_xref_href(xref, is_local, bundled=None):
     return base
 
 
-def render_article(article, *, is_local=True, target="site", epub_bundled=None):
+def render_article(article, *, target="site", epub_bundled=None):
     """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
     (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor
     links → appendix, scans dropped, …).  ``epub_bundled`` — a set of in-book stems —
@@ -422,7 +421,6 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
         scan_url="scans.html",   # bare anchor; fixScanHrefs rebuilds the real URL at runtime
         unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
         target=target,
-        is_local=is_local,
         epub_bundled=epub_bundled,
     )
     # Sort by the SAME name the panel shows — the canonical title for a resolved
@@ -461,7 +459,7 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
             # them into the panel.
             disp = decode_inline(xref.get("target_title") or normalized,
                                  escape=True, ctx=ctx)
-            inner = (f'<a href="{_build_xref_href(xref, is_local, epub_bundled)}">{disp}</a>'
+            inner = (f'<a href="{_build_xref_href(xref, epub_bundled)}">{disp}</a>'
                      if resolved else disp)
             items.append(
                 f'\n                <li class="xref-item {"resolved" if resolved else "unresolved"}">'
@@ -505,14 +503,14 @@ def render_article(article, *, is_local=True, target="site", epub_bundled=None):
     parent_html = ""
     if parent:
         parent_html = ('<div style="margin-bottom: 8px; font-size: 0.95rem;">Plate for '
-                       f'<a href="{_article_url(parent["filename"], is_local, epub_bundled)}">'
+                       f'<a href="{_article_url(parent["filename"], epub_bundled)}">'
                        f'{_render_title_markers(parent.get("title") or "", ctx)}</a></div>')
     topics_html = ""   # always empty in the golden (topicMap unloaded)
     plates = article.get("plates") or []
     plates_html = ""
     if plates and article.get("article_type") != "plate":
         links = ", ".join(
-            f'<a href="{_article_url(p["filename"], is_local, epub_bundled)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
+            f'<a href="{_article_url(p["filename"], epub_bundled)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
             for i, p in enumerate(plates))
         plates_html = f'<div class="contributors">Plates: {links}</div>'
 

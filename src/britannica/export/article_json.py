@@ -843,16 +843,15 @@ def export_articles_to_json(
             }
 
             # The viewer is a thin shell now: Python owns marker→HTML, the client just
-            # inserts this and hydrates math / rebuilds the runtime scan href.  is_local=False
-            # bakes production clean URLs (/article/{id}/{title}); scans render as a bare
-            # `scans.html` anchor that fixScanHrefs rebuilds at load (the back param is
-            # location.href — runtime-only, never bakeable).
+            # inserts this and hydrates math / rebuilds the runtime scan href.  Links bake
+            # as clean URLs (/article/{id}) — one form, local and production; scans render
+            # as a bare `scans.html` anchor that fixScanHrefs rebuilds at load (the back
+            # param is location.href — runtime-only, never bakeable).
             # Rendered HTML is a pure function of the RESOLVED payload (decorated
             # body + panel), so under defer_xrefs the render moves to 6b4 too --
             # rendered exactly once, after resolution.
             if not defer_xrefs:
-                payload["rendered_html"] = render_article(
-                    payload, is_local=False, target="site")
+                payload["rendered_html"] = render_article(payload, target="site")
 
             safe_filename = _safe_filename(article, article.title)
             article_json = json.dumps(payload, indent=2, ensure_ascii=False)

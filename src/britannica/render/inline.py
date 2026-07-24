@@ -33,20 +33,18 @@ def escape_html(value):
     return s
 
 
-def _article_url(filename, is_local=True, bundled=None):
+def _article_url(filename, bundled=None):
     """``{stable_id}.json`` filename → article link URL.  The ONE URL builder for every
-    article link (inline «LN», xref panel, plate/parent).  Production URLs route on the
-    stable_id ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title
-    is not in the key); the viewer canonicalises a readable slug into the address bar after
-    load.  is_local returns the jsdom BritannicaUrls stub the byte-identical golden uses;
+    article link (inline «LN», xref panel, plate/parent).  URLs route on the stable_id
+    ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title is not
+    in the key); the viewer canonicalises a readable slug into the address bar after load.
+    One form everywhere: the local server speaks production's URL space (tools/serve.py).
     ``bundled`` (a set of in-book stems) selects the EPUB policy (in-book → relative
     `{stem}.xhtml`, else the absolute live-site URL)."""
     stem = re.sub(r"\.json$", "", str(filename or ""))
     if bundled is not None:
         return (f"{stem}.xhtml" if stem in bundled
-                else "https://britannica11.org" + _article_url(filename, is_local=False))
-    if is_local:
-        return "/article/" + filename           # jsdom BritannicaUrls stub
+                else "https://britannica11.org" + _article_url(filename))
     return "/article/" + stem
 
 
@@ -83,7 +81,7 @@ def commons_url(filename):
     # Images are location-agnostic: the files sit in data/images/ locally and deploy to the
     # same /data/images/ on S3, so one path serves both — no local-vs-web branch to bake in
     # (the imageless-local bug was this path frozen to the web form at export while the files
-    # lived under data/derived/images/).  `is_local` still steers LINKS and scans, not images.
+    # lived under data/derived/images/).
     return "/data/images/" + _encode_uri_component(name)
 
 
@@ -455,7 +453,7 @@ def _wrap_wide_tables(h, ctx):
 
 
 def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
-                  is_local=True, body_blocks=False, ctx=None):
+                  body_blocks=False, ctx=None):
     """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``.
 
     ``ctx`` carries the per-article footnote state (counter / named numbers / collected
@@ -467,11 +465,10 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     «OUTLINE», and the cols≥10 wide-table wrap — as balanced markers in place, letting the
     browser close the open «P».  A cell / footnote leaves it False (no block form appears there).
     """
-    # Inline «LN» links honor the render target's URL scheme via ctx.is_local, so the
-    # body's links match the panel/plate links (production clean URLs off-golden, the
-    # jsdom-stub form in the golden where is_local defaults True).
+    # Inline «LN» links honor the render target's link policy (site clean URL vs the
+    # EPUB in-book form), so the body's links match the panel/plate links.
     article_url = article_url or (
-        lambda fn: _article_url(fn, getattr(ctx, "is_local", True), getattr(ctx, "epub_bundled", None)))
+        lambda fn: _article_url(fn, getattr(ctx, "epub_bundled", None)))
 
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
     # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell
@@ -482,8 +479,7 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     img_html = ctx.img_html if ctx is not None and hasattr(ctx, "img_html") else []
 
     def _shield_img(m):
-        # Images resolve to one location-agnostic path (/data/images/, local and web), so —
-        # unlike article links — they no longer key on is_local.  Just render and shield.
+        # Images resolve to one location-agnostic path (/data/images/, local and web).
         img_html.append(render_img(m.group(1), parse_img_meta(m.group(2)), m.group(3) or ""))
         return f"\x00IMG{len(img_html) - 1}\x00"
 

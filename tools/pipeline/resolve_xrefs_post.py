@@ -75,7 +75,7 @@ def resolve_and_render(session, payloads: dict) -> int:
         d["body"] = body
         d["word_count"] = len(body.split())
         d["xrefs"] = [e for e in xref_list if e["status"] == "resolved"]
-        d["rendered_html"] = render_article(d, is_local=False, target="site")
+        d["rendered_html"] = render_article(d, target="site")
         n += 1
         if n % 5000 == 0:
             print(f"  [xrefs] resolved + rendered {n} articles…", flush=True)

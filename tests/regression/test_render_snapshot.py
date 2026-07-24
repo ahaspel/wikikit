@@ -56,8 +56,8 @@ def _snapshot_pairs() -> list[tuple[str, Path, Path]]:
                          ids=lambda v: v if isinstance(v, str) else "")
 def test_render_snapshot(stem, input_path, golden_path):
     article = json.loads(input_path.read_text(encoding="utf-8"))
-    # Defaults match how the golden was produced: is_local=True stub URLs,
-    # target="site" (the production render the viewer inserts).
+    # Defaults match how the golden was produced: target="site" (the production
+    # render the viewer inserts; clean /article/{id} link URLs).
     got = normalize_html(render_article(article))
     exp = normalize_html(golden_path.read_text(encoding="utf-8"))
 
