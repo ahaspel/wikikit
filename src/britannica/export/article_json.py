@@ -11,13 +11,6 @@ from britannica.db.models import (
     Contributor, ContributorInitials, SourcePage,
 )
 from britannica.db.session import SessionLocal
-from britannica.export.body_postprocess import (
-    _BIBLIOGRAPHIC_PATTERNS,
-    _PROTECTED_SPAN_RES,
-    _clean_surface_for_matching,
-    _looks_bibliographic,
-    _protected_ranges,
-)
 from britannica.export.pages import (
     _LEAF_OFFSET,
     _get_printed_pages,
@@ -328,128 +321,6 @@ def _safe_filename(article_id, title: str = "") -> str:
     return f"{stable}.json"
 
 
-# Structured-content spans we must not wrap inside (breaking them
-# would corrupt table / math / preformatted rendering).  Footnotes
-# are intentionally NOT protected — their prose deserves the same
-# cross-reference treatment as the main body.
-
-
-def _wrap_resolved_xrefs_in_body(
-    body: str, xrefs, self_stable_id: str, session
-) -> str:
-    """Wrap resolved qv/see/see_also xref targets in body prose with
-    «LN:filename|target|display«/LN» markers.
-
-    The extractor has already identified every reliable cross-reference
-    signal from the raw source and resolved each one to a target
-    article; this pass just propagates those decisions into the body
-    text so the prose mentions render as clickable links, not just the
-    xref panel at the bottom.
-
-    Guardrails:
-      - only types qv / see / see_also (link xrefs are already wrapped
-        at their wikilink site by the transform stage)
-      - only xrefs with a resolved target_article_id
-      - skip self-references
-      - skip surfaces that look like bibliographic citations (see
-        _looks_bibliographic — catches cases the upstream
-        _is_bibliographic filter misses)
-      - skip if the xref's own surface_text already contains «LN:»
-      - **position-precise wrap**: locate the xref's surface_text in
-        body, wrap the target word inside that matched range only.
-        This ensures we link the specific mention the xref refers to,
-        not a different occurrence of the same surname elsewhere in
-        the article.
-      - never wrap inside existing LN/TABLE/MATH/PRE spans
-      - one wrap per target per article
-    """
-    if not body or not xrefs:
-        return body
-
-    WRAPPABLE_TYPES = {"qv", "see", "see_also"}
-    wrapped_targets: set[str] = set()
-
-    for xref in xrefs:
-        if xref.xref_type not in WRAPPABLE_TYPES:
-            continue
-        if xref.target_article_id is None:
-            continue
-        nt = (xref.normalized_target or "").strip()
-        if not nt or nt in wrapped_targets:
-            continue
-        # Already-linked at its own site: nothing to do.  (`«LN[` = the
-        # kind-parameterized form.)
-        if xref.surface_text and ("«LN:" in xref.surface_text
-                                  or "«LN[" in xref.surface_text):
-            wrapped_targets.add(nt)
-            continue
-        # Bibliographic noise: refuse to propagate a likely-wrong link.
-        if xref.xref_type in ("see", "see_also") \
-                and _looks_bibliographic(xref.surface_text):
-            continue
-        target_article = session.get(Article, xref.target_article_id)
-        if target_article is None:
-            continue
-        target_stable = stable_id(target_article)
-        if target_stable == self_stable_id:
-            continue
-
-        surface_clean = _clean_surface_for_matching(xref.surface_text or "")
-        if len(surface_clean) < 3:
-            continue
-
-        # Locate the surface_text in body.  Body may have interleaved
-        # markers since extraction, so match on the marker-stripped
-        # positions; walk body with a token-level approach would be
-        # nice but the surface_text is rarely rewritten post-
-        # extraction for the types we care about.
-        surf_m = re.search(
-            re.escape(surface_clean), body, re.IGNORECASE,
-        )
-        if not surf_m:
-            # Surface not found verbatim — skip rather than guess at a
-            # different occurrence.
-            continue
-
-        region_start, region_end = surf_m.start(), surf_m.end()
-
-        # Candidate probes, longest first (prefer "CLEMENT" over just
-        # the first word when both appear inside the surface).
-        probes: list[str] = [nt]
-        paren = re.match(r"^(.+?)\s*\([^)]*\)\s*$", nt)
-        if paren:
-            probes.append(paren.group(1).strip())
-        if ":" in nt:
-            probes.append(nt.split(":", 1)[0].strip())
-
-        filename = _safe_filename(target_article, target_article.title)
-        protected = _protected_ranges(body)
-
-        matched: re.Match | None = None
-        for probe in probes:
-            if len(probe) < 3:
-                continue
-            pat = re.compile(
-                r"\b" + re.escape(probe) + r"\b", re.IGNORECASE,
-            )
-            for m in pat.finditer(body, region_start, region_end):
-                if any(lo <= m.start() < hi for (lo, hi) in protected):
-                    continue
-                matched = m
-                break
-            if matched:
-                break
-        if matched is None:
-            continue
-
-        display = matched.group(0)
-        marker = f"«LN:{filename}|{nt}|{display}«/LN»"
-        body = body[:matched.start()] + marker + body[matched.end():]
-        wrapped_targets.add(nt)
-
-    return body
-
-
 # Non-greedy display so a nested marker in the display (`«SC»r. v. h.«/SC»`, an
 # author signature) is captured whole rather than truncated at the first «.
 _LN_DISPLAY_RE = re.compile(
@@ -672,9 +543,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         _resolve_author, body, flags=re.DOTALL,
     )
 
-    # Prose-scan wraps LAST: its 3-part markers are final and must not be re-scanned by
-    # `_resolve_link` above (the leak this ordering fixes).
-    body = _wrap_resolved_xrefs_in_body(body, xrefs, self_stable_id, session)
+    # (The prose-scan wrap that ran LAST here is DELETED — J7 slice 3: every
+    # qv/see reference is producer-stamped at its site, so its marker is baked
+    # by `_resolve_link` above like any link; there is no prose left to re-find.
+    # `xrefs`/`self_stable_id`/`session` feed `link_targets` at the top.)
     return body
 
 
