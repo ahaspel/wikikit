@@ -465,8 +465,45 @@ class LinkResolver:
             self._topic_map = load_topic_map()
         return self._topic_map.get(fn)
 
+    @staticmethod
+    def _name_spans(name: str, cap: int = 12) -> list:
+        """All contiguous word SPANS of a see-window, longest first.  A see
+        target can sit at either end of its window ("the article on SHIPS" vs
+        "UNIFORMS, NAVAL AND MILITARY …"), so unlike the (q.v.) suffix cuts
+        the [see] ladder tries every span; the abstain-default gates keep the
+        extra candidates cheap and safe."""
+        ws = name.split()[:cap]
+        spans = [" ".join(ws[i:j])
+                 for n in range(len(ws), 0, -1)
+                 for i in range(0, len(ws) - n + 1)
+                 for j in (i + n,)]
+        return spans or [name]
+
+    def _see_pass(self, name: str, self_fn, src_cats):
+        """One see-candidacy check for ONE name: substantial tight match +
+        shared source topic.  -> filename | _SELF | None."""
+        bag, tag = self.candidates(name)       # superset off — component noise
+        substantial = tag in ("exact", "alt", "fold") or (
+            tag == "subset" and len(content(wordset_f(name))) >= 2)
+        if not substantial:
+            return None
+        match = [c for c in bag
+                 if (self._topics_of(c[0]) or set()) & src_cats]
+        if any(c[0] == self_fn for c in match):
+            # `see ABIGAIL` inside ABIGAIL: the cue names THIS article — there
+            # is nothing to point at, and a runner-up would bind a different
+            # subject entirely.
+            return _SELF
+        if len(match) == 1:
+            return match[0][0]
+        if len(match) >= 2:
+            fn, _, _ = self.fish(name, match, path=sorted(src_cats))
+            if fn:
+                return fn
+        return None
+
     def resolve_see(self, target: str, display: str = None, *,
-                    self_fn: str = None):
+                    self_fn: str = None, window: bool = False):
         """The UNTRUSTED tier (see / see also / cf): a real see points WITHIN
         the source article's own subject, so filter fill candidates to those
         sharing a source topic category and ABSTAIN when none do (bibliographic
@@ -475,31 +512,54 @@ class LinkResolver:
         SUBSTANTIAL tight match may bind — exact/alt/fold, or a subset covering
         ≥2 content words; a single-word surname/firstword match is a red
         herring (a wrong same-named person who may share the topic).
-        Returns a filename or None."""
+
+        ``window=True`` (a producer-stamped see-window, unasserted extent):
+        every contiguous SPAN is tried; per candidate the minimal binding span,
+        candidate picked by window coverage, tie toward fewest words — the
+        same natural-extent pick as the (q.v.) suffix cuts.  A self-naming
+        span stays TERMINAL here (unlike q.v.): the see-cue asserts one
+        editorial pointer, not prose that happens to pass its own name.
+        Returns ``(filename, cut)`` (both None when abstaining)."""
         src_cats = self._topics_of(self_fn) if self_fn else None
         if not src_cats:
-            return None
+            return None, None
         for name in (n for n in (target, display) if n):
-            bag, tag = self.candidates(name)       # superset off — component noise
-            substantial = tag in ("exact", "alt", "fold") or (
-                tag == "subset" and len(content(wordset_f(name))) >= 2)
-            if not substantial:
+            if not window:
+                r = self._see_pass(name, self_fn, src_cats)
+                if r is _SELF:
+                    return None, None
+                if r:
+                    return r, name
                 continue
-            match = [c for c in bag
-                     if (self._topics_of(c[0]) or set()) & src_cats]
-            if any(c[0] == self_fn for c in match):
-                # `see ABIGAIL` inside ABIGAIL, `see JOANNA BAILLIE` inside
-                # BAILLIE, JOANNA: the cue names THIS article, so there is
-                # nothing to point at — and picking a runner-up would bind a
-                # different subject entirely.  Terminal abstain.
-                return None
-            if len(match) == 1:
-                return match[0][0]
-            if len(match) >= 2:
-                fn, _, _ = self.fish(name, match, path=sorted(src_cats))
-                if fn:
-                    return fn
-        return None
+            best: dict = {}      # fn -> (span_word_n, span)
+            for span in self._name_spans(name):
+                # A PARTIAL span must carry ≥2 content words: binding a
+                # single word out of a longer window is the given-name junk
+                # class (JAMES out of "Sir James Stephen").  The full window
+                # may still bind on one word (the substantial gate inside
+                # _see_pass governs it, as it always did).
+                if span != name and len(content(wordset_f(span))) < 2:
+                    continue
+                r = self._see_pass(span, self_fn, src_cats)
+                if r is _SELF:
+                    return None, None
+                if not r:
+                    continue
+                nw = len(span.split())
+                cur = best.get(r)
+                if cur is None or nw < cur[0]:
+                    best[r] = (nw, span)
+            if best:
+                win_ws = content(wordset_f(name))
+
+                def _spec(item):
+                    fn_c, (nw, _span) = item
+                    title_ws = content(wordset_f(
+                        self.title_by_fn.get(fn_c, "")))
+                    return (len(title_ws & win_ws), -nw)
+                fn_b, (_, span_b) = max(best.items(), key=_spec)
+                return fn_b, self._grow_cut(span_b, name, fn_b)
+        return None, None
 
     # -- adjudicated overrides (first pass) ----------------------------------
     def adjudicated(self, target: str):
@@ -741,8 +801,9 @@ class LinkResolver:
                 normalize_xref_target(target):
             display = None
         if not trusted:
-            fn = self.resolve_see(target, display, self_fn=self_fn)
-            return (fn, None, target) if fn else (None, None, None)
+            fn, cut = self.resolve_see(target, display, self_fn=self_fn,
+                                       window=window)
+            return (fn, None, cut) if fn else (None, None, None)
         names = [n for n in (target, display) if n]
         # Prefer the MORE-SPECIFIC name first: the side carrying more content
         # words identifies the reference better (target `SAY` vs display
@@ -802,20 +863,31 @@ class LinkResolver:
         return None, None, None
 
     def _grow_cut(self, cut: str, name: str, fn: str) -> str:
-        """Grow a minimal binding cut LEFTWARD while the preceding window word
+        """Grow a minimal binding cut OUTWARD while each adjacent window word
         belongs to the bound title — display polish, resolution already made:
         "BOY MACDONNELL" grows to "SORLEY BOY MACDONNELL" (every added word is
         in MACDONNELL, SORLEY BOY); "OF ALCIBIADES" never grows ("of" carries
-        no content).  The cut is a word-suffix of ``name`` by construction."""
+        no content).  The cut is a contiguous word-run of ``name``: a suffix
+        for (q.v.) windows, any span for [see] windows."""
         title_ws = content(wordset_f(self.title_by_fn.get(fn, "")))
         words = name.split()
-        i = len(words) - len(cut.split())
+        cw = cut.split()
+        start = next((k for k in range(len(words) - len(cw) + 1)
+                      if words[k:k + len(cw)] == cw), None)
+        if start is None:
+            return cut
+        i, j = start, start + len(cw)
         while i > 0:
             w = content(wordset_f(words[i - 1]))
             if not w or not w <= title_ws:
                 break
             i -= 1
-        return " ".join(words[i:])
+        while j < len(words):
+            w = content(wordset_f(words[j]))
+            if not w or not w <= title_ws:
+                break
+            j += 1
+        return " ".join(words[i:j])
 
     # -- orchestrator --------------------------------------------------------
     def resolve(self, raw_name: str, want=(), ctx: set = None, path=None,

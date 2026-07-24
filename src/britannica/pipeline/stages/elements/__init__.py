@@ -247,7 +247,7 @@ def _produce_body(raw, inner, context, inner_registry):
     # space.  Nothing raw leaks; the render sees only «BR» / «P» / spaces.
     out = _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
     sep = "«BR»" if context.parent_label in ("POEM", "PPOEM") else " "
-    return _stamp_qv_windows(out.replace("\n", sep))
+    return _stamp_see_windows(_stamp_qv_windows(out.replace("\n", sep)))
 
 
 # A `(q.v.)` site: EB's own cue that the preceding words name an EB article.
@@ -275,6 +275,47 @@ def _stamp_qv_windows(text: str) -> str:
         tail = span[len(span.rstrip()):]
         return f"{lead}«LN[w]:{window}|{window}«/LN»{tail}(q.v.)"
     return _QV_STAMP_RE.sub(_stamp, text)
+
+
+# A see/cf/compare cue: an EDITORIAL pointer whose window runs FORWARD.  Same
+# dumb-total discipline as the (q.v.) stamp — literal cue token, clause-bounded
+# window — with two lexical gates the old extractor's armor is reduced to:
+#   * the window must start with a CAPITAL (every old pattern required it; the
+#     verb "see" in running prose points at lowercase clauses);
+#   * an enumerated window splits into segments on `,` / ` and ` — each
+#     capital-led segment is its own reference ("(See Mechanics and
+#     Hodograph.)" → two stamps).
+# «I» being a boundary char gives the bibliographic gate for free: a cited work
+# is italicized, so "See «I»Geschichte…«/I»" yields an empty window — no stamp.
+# The see stamp runs AFTER the (q.v.) stamp, whose markers are boundaries here.
+# Kind [see] / [see_also] carries the UNTRUSTED abstain-default policy
+# (`resolve_see`: substantial tight match + shared source-topic, else strip).
+_SEE_STAMP_RE = re.compile(
+    r"\b(?P<cue>[Ss]ee\s+also|[Ss]ee|[Cc]f\.|[Cc]ompare)(?P<gap>\s+)"
+    r"(?P<lead>(?:the\s+)?(?:articles?\s+(?:on\s+)?)?)"
+    r"(?P<win>[^«»\x01\x03|.;:!?()\n]{1,80})")
+_SEE_SEG_SPLIT_RE = re.compile(r"(,|\s+and\s+)")
+
+
+def _stamp_see_windows(text: str) -> str:
+    def _stamp(m: re.Match) -> str:
+        win = m.group("win")
+        if not win or not win[:1].isupper():
+            return m.group(0)
+        kind = "see_also" if "also" in m.group("cue").lower() else "see"
+        parts = []
+        for seg in _SEE_SEG_SPLIT_RE.split(win):
+            s = seg.strip()
+            if (_SEE_SEG_SPLIT_RE.fullmatch(seg) or len(s) < 3
+                    or not s[:1].isupper()):
+                parts.append(seg)                  # separator / non-reference
+                continue
+            lead = seg[:len(seg) - len(seg.lstrip())]
+            tail = seg[len(seg.rstrip()):]
+            parts.append(f"{lead}«LN[{kind}]:{s}|{s}«/LN»{tail}")
+        return (m.group("cue") + m.group("gap") + m.group("lead")
+                + "".join(parts))
+    return _SEE_STAMP_RE.sub(_stamp, text)
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")

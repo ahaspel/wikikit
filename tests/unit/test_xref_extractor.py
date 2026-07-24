@@ -1,29 +1,49 @@
 from britannica.xrefs.extractor import extract_xrefs
 
 
-# --- Existing See / See also patterns ---
+# --- See / See also: producer-stamped windows (J7 slice 2) ---
+#
+# See recognition moved OUT of this extractor into the body producer: the cue
+# token stamps a forward, clause-bounded window as `«LN[see]:…»` /
+# `«LN[see_also]:…»` (capital-led, segment-split on `,`/` and `), and the
+# resolver's abstain-default tier (`resolve_see`, span cuts + topic gate)
+# decides what binds.  The extractor just reads the markers.
 
 
-def test_extract_xrefs_finds_explicit_see_reference() -> None:
-    text = "For the related topic, See ABANDONMENT."
-
-    results = extract_xrefs(text)
+def test_see_window_is_stamped_and_extracted() -> None:
+    results = _stamped("For the related topic, See ABANDONMENT.")
 
     assert len(results) == 1
     assert results[0]["xref_type"] == "see"
-    assert results[0]["surface_text"] == "See ABANDONMENT"
+    assert results[0].get("window") is True
     assert results[0]["normalized_target"] == "ABANDONMENT"
 
 
-def test_extract_xrefs_finds_see_also_reference() -> None:
-    text = "See also ABACUS."
-
-    results = extract_xrefs(text)
+def test_see_also_window() -> None:
+    results = _stamped("See also ABACUS.")
 
     assert len(results) == 1
     assert results[0]["xref_type"] == "see_also"
-    assert results[0]["surface_text"] == "See also ABACUS"
     assert results[0]["normalized_target"] == "ABACUS"
+
+
+def test_lowercase_window_not_stamped() -> None:
+    """The verb `see` in running prose points at lowercase clauses — the one
+    lexical gate the old _TARGET_TAIL armor is reduced to."""
+    assert _stamped("we see that the reader may confirm this") == []
+
+
+def test_see_article_lead_is_skipped() -> None:
+    results = _stamped("see the article on Ships.")
+
+    assert len(results) == 1
+    assert results[0]["normalized_target"] == "SHIPS"
+
+
+def test_cited_work_in_italics_gets_no_stamp() -> None:
+    """«I» is a window boundary, so a cited (italicized) work yields an empty
+    window — the old _is_bibliographic gate for free."""
+    assert _stamped("See «I»Geschichte der Mathematik«/I», 2nd Bd.") == []
 
 
 # --- q.v.: producer-stamped windows (J7 slice 1) ---
@@ -37,8 +57,10 @@ def test_extract_xrefs_finds_see_also_reference() -> None:
 
 
 def _stamped(text: str):
-    from britannica.pipeline.stages.elements import _stamp_qv_windows
-    return extract_xrefs(_stamp_qv_windows(text))
+    """Producer stamps (q.v. then see, the _produce_body order) → extract."""
+    from britannica.pipeline.stages.elements import (
+        _stamp_qv_windows, _stamp_see_windows)
+    return extract_xrefs(_stamp_see_windows(_stamp_qv_windows(text)))
 
 
 def test_qv_window_is_stamped_and_extracted() -> None:
@@ -91,9 +113,8 @@ def test_qv_after_link_gets_no_stamp() -> None:
 
 
 def test_extract_xrefs_finds_paren_see() -> None:
-    text = "(See Mechanics and Hodograph.)"
-
-    results = extract_xrefs(text)
+    """An enumerated window splits into segments — each its own stamp."""
+    results = _stamped("(See Mechanics and Hodograph.)")
 
     assert len(results) == 2
     targets = {r["normalized_target"] for r in results}
@@ -101,9 +122,7 @@ def test_extract_xrefs_finds_paren_see() -> None:
 
 
 def test_extract_xrefs_finds_paren_see_also() -> None:
-    text = "(See also Electricity.)"
-
-    results = extract_xrefs(text)
+    results = _stamped("(See also Electricity.)")
 
     assert len(results) == 1
     assert results[0]["xref_type"] == "see_also"
@@ -111,9 +130,7 @@ def test_extract_xrefs_finds_paren_see_also() -> None:
 
 
 def test_extract_xrefs_finds_paren_see_single_target() -> None:
-    text = "(See Arabian Philosophy.)"
-
-    results = extract_xrefs(text)
+    results = _stamped("(See Arabian Philosophy.)")
 
     assert len(results) == 1
     assert results[0]["normalized_target"] == "ARABIAN PHILOSOPHY"

@@ -574,6 +574,26 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # then «EB9», then the prose wraps LAST; every 3-part marker is created strictly
     # after `_resolve_link` has finished.  (A regex guard forbidding `|` in the display
     # can't work — a legit 2-part display can hold a `|` from an inline `{{IMG:…|…}}`.)
+    def _cut_span(display: str, cut: str):
+        """Char span of the bound cut inside the stamped window — token-wise,
+        case-folded, punctuation-tolerant (the cut is the NORMALIZED form).
+        None when the tokens can't be located."""
+        dtoks = list(re.finditer(r"\S+", display))
+
+        def _fold(t):
+            return re.sub(r"[\W_]+", "", t, flags=re.UNICODE).casefold()
+        cw = [f for f in (_fold(w) for w in cut.split()) if f]
+        dw = [_fold(t.group(0)) for t in dtoks]
+        k = len(cw)
+        if not cw or k > len(dw):
+            return None
+        for i in range(len(dw) - k + 1):
+            if dw[i:i + k] == cw:
+                return dtoks[i].start(), dtoks[i + k - 1].end()
+        return None
+
+    _WINDOW_KINDS = ("w", "see", "see_also")
+
     def _resolve_link(m: re.Match) -> str:
         from britannica.xrefs.normalizer import normalize_xref_target
         kind, target_text, display = m.group(1), m.group(2), m.group(3)
@@ -583,20 +603,19 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
             fn, cut = hit
-            if kind == "w" and cut:
-                # A window-stamp: the resolver bound a suffix CUT of the window
-                # — link exactly those words and return the unchosen prefix to
-                # prose.  (Token-count split: the cut is a word-suffix of the
-                # display by construction — target and display are the same
-                # stamped window.)
-                toks = list(re.finditer(r"\S+", display))
-                k = len(cut.split())
-                at = (toks[len(toks) - k].start()
-                      if toks and 0 < k <= len(toks) else 0)
-                return (display[:at]
-                        + f"«LN:{fn}|{cut}|{display[at:]}«/LN»")
+            if kind in _WINDOW_KINDS and cut:
+                # A window-stamp: the resolver bound a CUT of the window (a
+                # suffix for (q.v.), any span for see) — link exactly those
+                # words; the unchosen words return to prose.
+                span = _cut_span(display, cut)
+                if span:
+                    a, b = span
+                    return (display[:a]
+                            + f"«LN:{fn}|{cut}|{display[a:b]}«/LN»"
+                            + display[b:])
+                return f"«LN:{fn}|{cut}|{display}«/LN»"
             return f"«LN:{fn}|{target_text}|{display}«/LN»"   # internal — the link target
-        if kind == "w":
+        if kind in _WINDOW_KINDS:
             # An unresolved window-stamp strips WHOLE, never the WS fallback:
             # the window is OUR guess at a reference, not the author's page
             # name — an external link on it would assert something nobody said.
