@@ -247,7 +247,34 @@ def _produce_body(raw, inner, context, inner_registry):
     # space.  Nothing raw leaks; the render sees only «BR» / «P» / spaces.
     out = _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
     sep = "«BR»" if context.parent_label in ("POEM", "PPOEM") else " "
-    return out.replace("\n", sep)
+    return _stamp_qv_windows(out.replace("\n", sep))
+
+
+# A `(q.v.)` site: EB's own cue that the preceding words name an EB article.
+# The producer stamps the TOTAL prose window back to the nearest boundary —
+# a marker, an element placeholder, clause punctuation, a pipe — as an
+# UNASSERTED-extent reference `«LN[w]:window|window«/LN»`; the 6b5 resolver
+# picks the extent against the title index (suffix cuts, tier-major) and the
+# bake splits the display there.  Recognition is DUMB and local: find the
+# literal token, grab the span.  No capitalization walk, no stop-word list —
+# extent selection is disambiguation and lives in the resolver
+# ([[feedback_fill_dumb_fish_smart]]; J7 of docs/sweeper_removal.md).
+# A `(q.v.)` directly after a link («/LN» is a boundary char) gets no stamp —
+# a linked reference is already asserted, and the cue is just prose.
+_QV_STAMP_RE = re.compile(
+    r"([^«»\x01\x03|.;:!?()\n]{1,80})\(q\.v\.\)")
+
+
+def _stamp_qv_windows(text: str) -> str:
+    def _stamp(m: re.Match) -> str:
+        span = m.group(1)
+        window = span.strip()
+        if not re.search(r"\w", window):          # nothing to reference
+            return m.group(0)
+        lead = span[:len(span) - len(span.lstrip())]
+        tail = span[len(span.rstrip()):]
+        return f"{lead}«LN[w]:{window}|{window}«/LN»{tail}(q.v.)"
+    return _QV_STAMP_RE.sub(_stamp, text)
 
 
 _CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")

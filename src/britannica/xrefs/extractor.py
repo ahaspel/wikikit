@@ -3,50 +3,6 @@ import re
 from britannica.xrefs.normalizer import normalize_xref_target
 
 
-# Target (q.v.) — the dominant cross-reference pattern.
-# Captures up to 6 words before (q.v.), but not across sentence/clause boundaries.
-_QV_PATTERN = re.compile(r"([\w][\w\-]*(?:\s+[\w][\w\-]*){0,5})\s*\(q\.v\.\)")
-
-# Link-marker variant: «LN:target|display«/LN» (q.v.)
-_QV_LINK_PATTERN = re.compile(r"\u00abLN(?:\[[a-z_]*\])?:([^|]*)\|[^«]*\u00ab/LN\u00bb\s*\(q\.v\.\)")
-
-
-_SENTENCE_STARTERS = frozenset({
-    "A", "An", "And", "As", "At", "But", "By", "For", "From", "He", "Her",
-    "Here", "His", "How", "If", "In", "Into", "Is", "It", "Its", "Later",
-    "Many", "Most", "No", "Not", "Of", "On", "One", "Or", "She", "So",
-    "Some", "Such", "That", "The", "Their", "Then", "There", "These",
-    "They", "This", "Those", "Through", "To", "Under", "Was", "Were",
-    "What", "When", "Where", "Which", "While", "Who", "With",
-})
-
-
-def _extract_qv_target(raw_match: str) -> str:
-    """Extract the actual reference target from text preceding (q.v.).
-
-    Works backwards from the end to find the proper-noun or term:
-    - "Aleutian Islands" -> "Aleutian Islands"
-    - "celebrated in Latin alchemy as Geber" -> "Geber"
-    - "first oxidized to aldehydes" -> "aldehydes"
-    - "Later Aristotle" -> "Aristotle"
-    """
-    words = raw_match.split()
-    if not words:
-        return raw_match
-
-    # Start from the last word and extend backwards through capitalized words
-    result = [words[-1]]
-    for word in reversed(words[:-1]):
-        if not word[0].isupper():
-            break
-        if word in _SENTENCE_STARTERS:
-            break
-        if result[0][0].islower():
-            break
-        result.insert(0, word)
-
-    return " ".join(result)
-
 # (See Target) and (See also Target) — parenthesized editorial references.
 # Inside the parentheses the content may itself contain parens because
 # link markers like «LN:Leopold I. (emperor)|…«/LN» embed them. So the
@@ -263,7 +219,8 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
                                                  # whose target already
                                                  # appeared as a link xref.
 
-    def _add(surface: str, target: str, xref_type: str) -> None:
+    def _add(surface: str, target: str, xref_type: str,
+             window: bool = False) -> None:
         normalized = normalize_xref_target(target)
         if not normalized:
             return
@@ -275,18 +232,26 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
             return
         seen_by_type.add(key)
         seen_targets.add(normalized)
-        results.append(
-            {
-                "surface_text": surface.strip(),
-                "normalized_target": normalized,
-                "xref_type": xref_type,
-            }
-        )
+        rec = {
+            "surface_text": surface.strip(),
+            "normalized_target": normalized,
+            "xref_type": xref_type,
+        }
+        if window:
+            rec["window"] = True
+        results.append(rec)
 
-    # Link markers are implicit cross-references
-    for m in re.finditer(r"\u00abLN(?:\[[a-z_]*\])?:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
-        target = m.group(1).strip()
-        if _is_plausible_target(target):
+    # Link markers are implicit cross-references.  The optional [kind] slot:
+    # `w` marks a producer-stamped (q.v.) WINDOW — an UNASSERTED extent the
+    # resolver cuts against the title index (same trusted link policy).
+    for m in re.finditer(r"\u00abLN(?:\[([a-z_]*)\])?:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
+        target = m.group(2).strip()
+        if m.group(1) == "w":
+            # A window bypasses the plausibility armor: it is DELIBERATELY a
+            # raw clause span ("and Plato"); junk windows are filtered by the
+            # resolver's index cuts, not by extraction heuristics.
+            _add(m.group(0), target, "link", window=True)
+        elif _is_plausible_target(target):
             _add(m.group(0), target, "link")
 
     # «AL» is the surviving [[Author:…]] marker — 6b4 resolves the contributor
@@ -297,18 +262,6 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         target = m.group(1).strip()
         if _is_plausible_target(target):
             _add(m.group(0), target, "author")
-
-    # q.v. references — link-marker variant first (more precise)
-    for m in _QV_LINK_PATTERN.finditer(text):
-        target = m.group(1).strip()
-        if _is_plausible_target(target):
-            _add(m.group(0), target, "qv")
-
-    # q.v. references — plain text variant
-    for m in _QV_PATTERN.finditer(text):
-        target = _extract_qv_target(m.group(1))
-        if _is_plausible_target(target):
-            _add(m.group(0), target, "qv")
 
     # (See also X) before (See X) to avoid double-matching
     for m in _PAREN_SEE_ALSO_PATTERN.finditer(text):

@@ -697,21 +697,52 @@ class LinkResolver:
         fn, _, _ = self.fish(name, bag, prose=prose)
         return (fn, None) if fn else None
 
+    @staticmethod
+    def _name_cuts(name: str) -> list:
+        """Word-SUFFIX cuts of a reference name, longest first.  Extent
+        selection is DISAMBIGUATION and lives here, in the resolver, not in a
+        recognizer heuristic (fill dumb, fish smart): a producer stamps the
+        total prose window before a ``(q.v.)`` ("celebrated in Latin alchemy
+        as Geber") and which suffix IS the title is answered against the index
+        — no title matches `ALCHEMY AS GEBER`; `GEBER` exists.  A tight
+        wikilink target is its own longest cut, so cutting is a no-op on it.
+        The title sits at the window's END, hence suffixes (the see-family's
+        forward windows will cut prefixes on the [see] path when it lands)."""
+        ws = name.split()
+        return [" ".join(ws[i:]) for i in range(len(ws))] or [name]
+
     def resolve_xref(self, target: str, display: str = None, *,
                      prose: str = "", self_fn: str = None,
-                     trusted: bool = True, embedded: bool = False):
-        """One inline article reference -> ``(filename, section)`` (both None
-        when nothing binds).  ``target`` is the extractor's normalized target;
-        ``display`` the marker's display text when it differs.  TRUSTED cues
-        (link / q.v.) always pick — the author declared the reference real, so
-        a weak fish still beats no link; untrusted cues (see / cf) go through
-        ``resolve_see`` and abstain by default."""
+                     trusted: bool = True, embedded: bool = False,
+                     window: bool = False):
+        """One inline article reference -> ``(filename, section, cut)`` (all
+        None when nothing binds).  ``target`` is the extractor's normalized
+        target OR a producer-stamped prose window; ``display`` the marker's
+        display text when it differs; ``cut`` the exact name-cut that bound
+        (== the full name for an ordinary link), so the bake can shorten a
+        window-stamp's display to the words that ARE the reference.  TRUSTED
+        cues always pick — the author declared the reference real, so a weak
+        fish still beats no link; untrusted cues (see / cf) go through
+        ``resolve_see`` and abstain by default.
+
+        ``window=True`` marks an UNASSERTED extent (a producer-stamped prose
+        window before ``(q.v.)``): the ladder then runs TIER-MAJOR over suffix
+        cuts — every name and every cut at a tight tier before ANY at a loose
+        one, so an exact match on a short cut beats a fuzzy match on a long
+        one.  A wikilink's target is an ASSERTED extent — the author committed
+        to those words — and is NEVER cut: measured over the 13,657 baseline
+        link targets, uniform cutting changed 892 resolutions, heavily junk
+        (SIXTUS IV cut to 'IV'; JESUS OF NAZARETH -> 'OF NAZARETH' ->
+        NAZARETH; person citations cut to bare surnames past the first-given
+        guards).  Extent-certainty is the one bit the «LN[w]» marker carries;
+        it is NOT a policy kind — stamped windows resolve under the same
+        trusted link policy as any «LN»."""
         if display and normalize_xref_target(display) == \
                 normalize_xref_target(target):
             display = None
         if not trusted:
             fn = self.resolve_see(target, display, self_fn=self_fn)
-            return (fn, None) if fn else (None, None)
+            return (fn, None, target) if fn else (None, None, None)
         names = [n for n in (target, display) if n]
         # Prefer the MORE-SPECIFIC name first: the side carrying more content
         # words identifies the reference better (target `SAY` vs display
@@ -720,12 +751,71 @@ class LinkResolver:
         loose = _XREF_LINK_LOOSE if embedded else _XREF_LOOSE
         for rungs in (_XREF_TIGHT, loose):
             for name in names:
-                r = self._xref_pass(name, prose, self_fn, rungs)
-                if r is _SELF:          # names THIS article — terminal abstain
-                    return None, None
-                if r:
-                    return r
-        return None, None
+                if not window:
+                    r = self._xref_pass(name, prose, self_fn, rungs)
+                    if r is _SELF:      # names THIS article — terminal abstain
+                        return None, None, None
+                    if r:
+                        return r[0], r[1], name
+                    continue
+                # WINDOW cuts — evaluate every suffix cut at this tier, then
+                # pick the candidate whose bound TITLE is most specific, at
+                # its MINIMAL binding cut.
+                #   * minimal cut per candidate: the subset rung binds a title
+                #     at EVERY longer cut containing its words, so only the
+                #     shortest binding cut is informative;
+                #   * candidate choice: bound-TITLE content specificity first
+                #     ("SEVEN YEARS' WAR" (3) beats "WAR" (1)); on a tie, the
+                #     candidate whose minimal cut sits NEAREST THE CUE (fewest
+                #     words) — the word beside (q.v.) is the reference, so
+                #     PATRICIAN beats a title matched off the window's far end
+                #     (the PERIOD/CAUCASUS/POTOMAC junk class).
+                # A cut naming THIS article SKIPS (not terminal): a window
+                # sweeps arbitrary prose, and an article mentioning its own
+                # name mid-clause must not veto the real reference beside it
+                # (SICILY's "but patrician (q.v.)").
+                best: dict = {}      # fn -> (cut_word_n, cut, section)
+                for cut in self._name_cuts(name):
+                    r = self._xref_pass(cut, prose, self_fn, rungs)
+                    if r is _SELF or not r:
+                        continue
+                    fn_c, sect_c = r
+                    nw = len(cut.split())
+                    cur = best.get(fn_c)
+                    if cur is None or nw < cur[0]:     # minimal binding cut
+                        best[fn_c] = (nw, cut, sect_c)
+                if best:
+                    win_ws = content(wordset_f(name))
+
+                    def _spec(item):
+                        fn_c, (nw, _cut, _s) = item
+                        title_ws = content(wordset_f(
+                            self.title_by_fn.get(fn_c, "")))
+                        # COVERAGE, not raw title size: how much of the bound
+                        # title the window actually contains.  MACDONNELL,
+                        # SORLEY BOY covers 3 window words; ANTRIM, RANDAL
+                        # MACDONNELL covers 1 — a big title matched on one
+                        # word must not outrank the name spelled out in prose.
+                        return (len(title_ws & win_ws), -nw)
+                    fn_b, (_, cut_b, sect_b) = max(best.items(), key=_spec)
+                    return fn_b, sect_b, self._grow_cut(cut_b, name, fn_b)
+        return None, None, None
+
+    def _grow_cut(self, cut: str, name: str, fn: str) -> str:
+        """Grow a minimal binding cut LEFTWARD while the preceding window word
+        belongs to the bound title — display polish, resolution already made:
+        "BOY MACDONNELL" grows to "SORLEY BOY MACDONNELL" (every added word is
+        in MACDONNELL, SORLEY BOY); "OF ALCIBIADES" never grows ("of" carries
+        no content).  The cut is a word-suffix of ``name`` by construction."""
+        title_ws = content(wordset_f(self.title_by_fn.get(fn, "")))
+        words = name.split()
+        i = len(words) - len(cut.split())
+        while i > 0:
+            w = content(wordset_f(words[i - 1]))
+            if not w or not w <= title_ws:
+                break
+            i -= 1
+        return " ".join(words[i:])
 
     # -- orchestrator --------------------------------------------------------
     def resolve(self, raw_name: str, want=(), ctx: set = None, path=None,

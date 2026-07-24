@@ -28,3 +28,7 @@ class Xref:
     target_article_id: int | None = None
     target_section: str | None = None
     status: str = "unresolved"
+    # The exact name-cut the resolver bound (== the full name for an ordinary
+    # link; a suffix of a producer-stamped prose window).  The bake shortens a
+    # window-stamp's display to these words; None until resolution / unbound.
+    matched_cut: str | None = None

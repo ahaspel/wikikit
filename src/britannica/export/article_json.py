@@ -506,11 +506,15 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
                 prose=prose_window(body, m["surface_text"]))
             section = None
         else:
-            fn, section = resolver.resolve_xref(
+            fn, section, cut = resolver.resolve_xref(
                 m["normalized_target"], display,
                 prose=prose_window(body, m["surface_text"]) if trusted else "",
                 self_fn=self_fn, trusted=trusted,
-                embedded=m["xref_type"] == "link")
+                embedded=m["xref_type"] == "link",
+                window=m.get("window", False))
+            # The name-cut that bound — the bake shortens a window-stamp's
+            # display to exactly these words (a full-length cut is a no-op).
+            xr.matched_cut = cut
         xr.target_article_id = fn_to_id.get(fn) if fn else None
         xr.target_section = section
         xr.status = ("resolved" if xr.target_article_id is not None
@@ -550,13 +554,16 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     export_articles_to_json: resolve the 2-part «LN»/«EB9» PRODUCER markers
     to 3-part filename links FIRST, then wrap resolved qv/see prose in place.
     Order matters — see the comment on the resolve pass below."""
-    link_targets: dict[str, str] = {}  # normalized_target → filename
+    # normalized_target → (filename, matched_cut) — the cut rides along so a
+    # window-stamp's bake can shorten the display to the words that bound.
+    link_targets: dict[str, tuple] = {}
     for xref in xrefs:
         if xref.target_article_id is not None and xref.normalized_target:
             target = session.get(Article, xref.target_article_id)
             if target:
-                link_targets[xref.normalized_target.lower()] = _safe_filename(
-                    target, target.title
+                link_targets[xref.normalized_target.lower()] = (
+                    _safe_filename(target, target.title),
+                    getattr(xref, "matched_cut", None),
                 )
 
     # Resolve the 2-part producer markers («LN:target|display», «EB9:…») BEFORE any
@@ -569,13 +576,31 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # can't work — a legit 2-part display can hold a `|` from an inline `{{IMG:…|…}}`.)
     def _resolve_link(m: re.Match) -> str:
         from britannica.xrefs.normalizer import normalize_xref_target
-        target_text, display = m.group(1), m.group(2)
+        kind, target_text, display = m.group(1), m.group(2), m.group(3)
         # Normalize before the lookup so a `#section` target collapses to the same
         # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
         # target would otherwise miss (the key is normalized, the raw target isn't).
-        fn = link_targets.get(normalize_xref_target(target_text).lower())
-        if fn:
+        hit = link_targets.get(normalize_xref_target(target_text).lower())
+        if hit:
+            fn, cut = hit
+            if kind == "w" and cut:
+                # A window-stamp: the resolver bound a suffix CUT of the window
+                # — link exactly those words and return the unchosen prefix to
+                # prose.  (Token-count split: the cut is a word-suffix of the
+                # display by construction — target and display are the same
+                # stamped window.)
+                toks = list(re.finditer(r"\S+", display))
+                k = len(cut.split())
+                at = (toks[len(toks) - k].start()
+                      if toks and 0 < k <= len(toks) else 0)
+                return (display[:at]
+                        + f"«LN:{fn}|{cut}|{display[at:]}«/LN»")
             return f"«LN:{fn}|{target_text}|{display}«/LN»"   # internal — the link target
+        if kind == "w":
+            # An unresolved window-stamp strips WHOLE, never the WS fallback:
+            # the window is OUR guess at a reference, not the author's page
+            # name — an external link on it would assert something nobody said.
+            return display
         # Internal miss → external fallback: link out to Wikisource IFF the page really
         # exists (verified against the all-titles dump), else strip to plain display.
         # Interwiki (w:/wikt:/d:) aren't WS pages → strip.  «XL» never reaches the panel
@@ -587,11 +612,11 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                    + target_text.strip().replace(" ", "_"))
             return f"«XL:{url}|{display}«/XL»"
         return display  # unresolvable — strip the markup, keep the text
-    # The optional `[kind]` slot (a producer-stamped reference kind, `«LN[qv]:`)
-    # is consumed HERE — the bake resolves by kind and writes the plain 3-part
-    # form, so no `[kind]` survives into a post-bake body.
+    # The `[kind]` slot is consumed HERE — the bake resolves and writes the
+    # plain 3-part form (or strips), so no `[kind]` survives into a post-bake
+    # body.  `w` = a producer-stamped (q.v.) window (unasserted extent).
     body = re.sub(
-        r"«LN(?:\[[a-z_]*\])?:([^|]*)\|([^«]*)«/LN»",
+        r"«LN(?:\[([a-z_]*)\])?:([^|]*)\|([^«]*)«/LN»",
         _resolve_link, body,
     )
 
@@ -614,9 +639,9 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     def _resolve_author(m: re.Match) -> str:
         from britannica.xrefs.normalizer import normalize_xref_target
         target_text, display = m.group(1), m.group(2)
-        fn = link_targets.get(normalize_xref_target(target_text).lower())
-        if fn:
-            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+        hit = link_targets.get(normalize_xref_target(target_text).lower())
+        if hit:
+            return f"«LN:{hit[0]}|{target_text}|{display}«/LN»"
         return display
     # DOTALL + non-greedy display: an author signature's display carries nested
     # markers (`«SC»r. v. h.«/SC»`), so a `[^«]*` display slot stops at the first
