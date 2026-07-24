@@ -232,6 +232,7 @@ class LinkResolver:
         except Exception:
             build_cache()
             _emb = LeadEmbeddings.load()
+        self._emb = _emb          # also the see-tier cosine backstop's substrate
         self.fisher = Fisher(_emb, self._opening)
 
     def _overlay_aliases(self):
@@ -501,6 +502,18 @@ class LinkResolver:
         else:
             match = [c for c in bag
                      if (self._topics_of(c[0]) or set()) & src_cats]
+            if not match and tight:
+                # FISHER-COSINE BACKSTOP (single-word tight, topic-disjoint —
+                # the GIBBON/CICERO class).  The kind-gate probe failed on
+                # data (prose near a see-cue states no kind; nearest-noun
+                # derivation is noise), but the source-lead vs candidate-lead
+                # embedding separates cleanly: at τ=0.65 + 0.05 margin the
+                # probe's ~60 binds were uniformly good (CICERO from seven
+                # rhetoric articles, PLUTARCH, QUINTILIAN, EDDIUS) and the
+                # junk class ("see Plate" = a figure plate; CODE, HALL) sits
+                # ≤0.62.  Uniqueness posture kept: ONE candidate must clear
+                # the bar AND the runner-up by the margin, else abstain.
+                match = self._cosine_pick(bag, self_fn)
         if any(c[0] == self_fn for c in match):
             # `see ABIGAIL` inside ABIGAIL: the cue names THIS article — there
             # is nothing to point at, and a runner-up would bind a different
@@ -514,6 +527,33 @@ class LinkResolver:
             if fn:
                 return fn
         return None
+
+    _SEE_COS_TAU = 0.65       # adjudicated 2026-07-24: junk class sits ≤0.62
+    _SEE_COS_MARGIN = 0.05
+
+    def _cosine_pick(self, bag, self_fn):
+        """The see-tier cosine backstop: the ONE candidate whose lead embedding
+        clears τ against the SOURCE article's lead, with the runner-up beaten
+        by the margin.  Returns a 0- or 1-element candidate list (the caller's
+        self-check then applies — a self-match cosines at 1.0 and must land in
+        the match list so the terminal-self rule sees it)."""
+        sv = self._emb.vector_of(self_fn) if self_fn else None
+        if sv is None:
+            return []
+        scored = []
+        for c in bag:
+            cv = self._emb.vector_of(c[0])
+            if cv is not None:
+                scored.append((float(sv @ cv), c))
+        if not scored:
+            return []
+        scored.sort(key=lambda s: -s[0])
+        top, cand = scored[0]
+        if top < self._SEE_COS_TAU:
+            return []
+        if len(scored) > 1 and top - scored[1][0] < self._SEE_COS_MARGIN:
+            return []
+        return [cand]
 
     def resolve_see(self, target: str, display: str = None, *,
                     self_fn: str = None, window: bool = False):
