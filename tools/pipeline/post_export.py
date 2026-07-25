@@ -40,7 +40,7 @@ from britannica.export.article_json import register_stable_id_dedup
 from britannica.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
 
 from annotate_math_markers import annotate_payloads
-from annotate_table_markers import annotate_payloads as annotate_tables
+from annotate_table_markers import CACHE as TABLE_WIDTHS_CACHE, annotate_body
 from resolve_contributors_post import bind_contributors
 from resolve_xrefs_post import resolve_and_render
 
@@ -63,8 +63,6 @@ def main() -> None:
 
         changed, with_math = annotate_payloads(payloads)
         tick(f"math markers: {changed} re-hinted / {with_math} with math")
-        n_tables = annotate_tables(payloads)
-        tick(f"table wide-hints stamped ({n_tables} articles)")
 
         wrote = bind_contributors(session, payloads)
         tick("contributors bound")
@@ -72,8 +70,16 @@ def main() -> None:
             print("  [post-export] dry run — no JSONs written")
             return
 
-        resolve_and_render(session, payloads)
-        tick("xrefs resolved + rendered")
+        # Table wide-hints decorate the FINAL baked body inside the resolve →
+        # render loop: the width cache is keyed on span bytes, and a span with
+        # unresolved «LN» targets hashes differently — annotating any earlier
+        # silently misses every linky table (see resolve_and_render's doc).
+        import json as _json
+        widths = (_json.loads(TABLE_WIDTHS_CACHE.read_text(encoding="utf-8"))
+                  if TABLE_WIDTHS_CACHE.exists() else {})
+        resolve_and_render(session, payloads,
+                           decorate=lambda body: annotate_body(body, widths))
+        tick("xrefs resolved + tables hinted + rendered")
 
         n = write_corpus(payloads)
         tick(f"wrote {n} articles")

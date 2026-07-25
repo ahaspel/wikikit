@@ -28,6 +28,12 @@ import re
 
 _SECTION_BEGIN_RE = re.compile(
     r'<section\s+begin\s*=\s*"([^"]+)"\s*/?>', re.IGNORECASE)
+# Commons plate images follow "1911 Britannica - <Article> - <caption>.ext";
+# the embedded article name is more specific than the running head, which is
+# page furniture (the AURORA plates' head says "Aurora" — five same-page
+# articles carry that title — while every image names AURORA POLARIS).
+_IMG_ARTICLE_RE = re.compile(
+    r'\[\[File:1911 Britannica - ([^\[\]|]+?) - ', re.IGNORECASE)
 _RH_RE = re.compile(
     r'\{\{(?:rh|RunningHeader|EB1911\s+Page\s+Heading)\|', re.IGNORECASE)
 _C_XLARGER_RE = re.compile(
@@ -121,10 +127,12 @@ def _parse_rh_middle(wikitext: str) -> str | None:
 
 def extract_signals(wikitext: str) -> list[str]:
     """Return ordered candidate parent-article names from a plate's
-    raw wikitext.  Ordered ``c`` → ``section`` → ``rh`` (``c`` is
-    most consistently the parent article name across the corpus;
+    raw wikitext.  Ordered ``c`` → ``section`` → image-name → ``rh``
+    (``c`` is most consistently the parent article name across the
+    corpus; the Commons image names carry the article name verbatim;
     ``rh`` sometimes carries a section/topic label instead, as in the
-    AEGEAN CIVILIZATION plates)."""
+    AEGEAN CIVILIZATION plates — and for homonym pages only the page
+    WORD, as in AURORA)."""
     candidates: list[str] = []
 
     m = _C_XLARGER_RE.search(wikitext)
@@ -137,6 +145,11 @@ def extract_signals(wikitext: str) -> list[str]:
     if m:
         v = m.group(1).strip().upper()
         if v and not _PLACEHOLDER_RE.match(v):
+            candidates.append(v)
+
+    for m in _IMG_ARTICLE_RE.finditer(wikitext):
+        v = m.group(1).strip().upper()
+        if v and not _PLACEHOLDER_RE.match(v) and v not in candidates:
             candidates.append(v)
 
     rh = _parse_rh_middle(wikitext)

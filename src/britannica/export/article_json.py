@@ -44,10 +44,11 @@ _TITLE_PREFIXES = re.compile(
 def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     """Add bio_article_filename to contributors with biographical articles."""
     # Build title -> filename lookup from all articles in DB
-    all_articles = session.query(Article).all()
+    # Deterministic first-wins per title (heap order must not pick homonyms).
+    all_articles = sorted(session.query(Article).all(), key=article_sort_key)
     title_map: dict[str, str] = {}
     for a in all_articles:
-        title_map[a.title.upper()] = _safe_filename(a, a.title)
+        title_map.setdefault(a.title.upper(), _safe_filename(a, a.title))
 
     for entry in contrib_map.values():
         desc_raw = entry.get("description") or ""
@@ -253,6 +254,19 @@ def _folded_base_stable_id(article) -> str:
     return f"{article.volume:02d}-{article.page_start:04d}-{h}"
 
 
+def article_sort_key(article) -> tuple:
+    """Total, content-derived order for ANY article collection whose consumer
+    picks or tie-breaks by position (homonym resolution, plate binding, title
+    maps, the export loop that writes index.json).  DB heap order changes with
+    every parallel rebuild and row ids are sequence-assigned per rebuild —
+    neither may leak into output (the 2026-07-24 rebuild adjudication caught
+    xref targets, plate parents and bylines flipping between identical-code
+    rebuilds).  The section slug is the stable_id's own hash source, so it
+    separates same-titled same-page homonyms the way their URLs do."""
+    return (article.volume, article.page_start, article.page_end or 0,
+            article.title or "", _section_slug_for(article))
+
+
 def register_stable_id_dedup(articles) -> int:
     """Make every article's stable_id UNIQUE across collisions.  A collision
     LOSER is re-slugged on its accent-fold (a real, forwarder-routable hash);
@@ -271,8 +285,10 @@ def register_stable_id_dedup(articles) -> int:
         if len(arts) <= 1:
             continue
         counter = 2
-        # Deterministic: sort by (title, id).  First keeps the bare id.
-        for a in sorted(arts, key=lambda x: ((x.title or ""), x.id))[1:]:
+        # Deterministic on CONTENT: (title, slug) — ids are per-rebuild
+        # sequence values and must not decide who keeps the bare id.
+        for a in sorted(arts, key=lambda x: ((x.title or ""),
+                                             _section_slug_for(x), x.id))[1:]:
             alt = _folded_base_stable_id(a)
             if alt != _base and alt not in used:
                 _STABLE_ID_OVERRIDE[a.id] = alt   # accent-fold: forwarder-routable
@@ -592,18 +608,21 @@ def export_articles_to_json(
     session = SessionLocal()
 
     try:
-        articles = (
-            session.query(Article)
-            .filter(Article.volume == volume)
-            .order_by(Article.page_start, Article.page_end, Article.title)
-            .all()
+        # article_sort_key, not the SQL ORDER BY alone: same-titled same-page
+        # homonyms tie on every SQL key and would fall to heap order — which
+        # this loop then bakes into index.json (and every LinkResolver
+        # candidate list downstream inherits it).
+        articles = sorted(
+            session.query(Article).filter(Article.volume == volume).all(),
+            key=article_sort_key,
         )
 
         # Global title → filename map for cross-volume soft-link
         # resolution (e.g. {{EB9link|Atom}} on a vol-17 article wants
-        # to link to ATOM in vol 2).  Built once per export run.
+        # to link to ATOM in vol 2).  Built once per export run;
+        # deterministic first-wins (earliest article by content order).
         global_title_to_filename: dict[str, str] = {}
-        for a in session.query(Article).all():
+        for a in sorted(session.query(Article).all(), key=article_sort_key):
             if a.article_type == "plate":
                 continue
             global_title_to_filename.setdefault(
