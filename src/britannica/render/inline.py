@@ -39,12 +39,12 @@ def _article_url(filename, bundled=None):
     ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title is not
     in the key); the viewer canonicalises a readable slug into the address bar after load.
     One form everywhere: the local server speaks production's URL space (tools/serve.py).
-    ``bundled`` (a set of in-book stems) selects the EPUB policy (in-book → relative
-    `{stem}.xhtml`, else the absolute live-site URL)."""
+    ``bundled`` (the EPUB link policy, ``epub.pack.LINK_TOKENS``) emits a canonical
+    ``epublink:`` token instead — the packer alone knows chunk assignment and
+    materializes the real href (in-book chunk#anchor, else the live-site URL)."""
     stem = re.sub(r"\.json$", "", str(filename or ""))
     if bundled is not None:
-        return (f"{stem}.xhtml" if stem in bundled
-                else "https://britannica11.org" + _article_url(filename))
+        return bundled.url_for(stem)
     return "/article/" + stem
 
 
@@ -200,7 +200,12 @@ _MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»")
 # heading — promote «SEC:slug|…»«CTR»«SC»X«/SC»«/CTR» to a real <h3> carrying the anchor id.
 # The «SEC» requirement is what distinguishes it from an identically-marked figure label
 # ("Fig. 3." is also a pure centered small-caps, but has no «SEC» before it).
-_EPUB_SEC_HEAD_RE = re.compile(r"«SEC:([^|»]*)\|[^»]*»\s*«CTR»«SC»([\s\S]*?)«/SC»«/CTR»")
+# The name capture is TEMPERED (never crosses a «P» or the next «SEC») — a heading whose
+# «/SC»«/CTR» close is malformed in source must FAIL the h3 promotion and fall through to
+# the generic anchor + styler decode, not swallow the following paragraphs into the <h3>
+# (CONTINUED FRACTIONS: whole sections rendered heading-styled, p-in-h3 invalid XHTML5).
+_EPUB_SEC_HEAD_RE = re.compile(
+    r"«SEC:([^|»]*)\|[^»]*»\s*«CTR»«SC»((?:(?!«P»|«SEC:)[\s\S])*?)«/SC»«/CTR»")
 _SAFE_HTML_RE = re.compile(r"&lt;(/?(?:sub|sup|small|big|br)\s*/?)&gt;", re.I)
 # The INLINE verse form — `{{IVERSE:…}IVERSE}`, stamped by the producer when the poem sits
 # inside a TABLE/REF.  It decodes to a `cell-verse` span (its «BR» line breaks decode to <br>
@@ -533,7 +538,7 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)
 
-    if getattr(ctx, "target", "site") == "epub":
+    if getattr(ctx, "target", "site") in ("epub", "kindle"):
         # main-section heading: «SEC:slug|…»«CTR»«SC»name«/SC»«/CTR» → <h3> carrying the anchor
         # id (\1=slug) with the name (\2) as text, BEFORE «SC»/«CTR» decode (afterwards the
         # pattern is already <span>/<div>).  Inner markers in the name still decode below.
@@ -658,7 +663,7 @@ def render_fn_marker(name, content, ctx):
         ctx.collected_footnotes.append({"num": num, "text": content})
         ref_id = f"fnref-{num}"
         popup_id = f"fnpop-{num}"
-    if getattr(ctx, "target", "site") == "epub":
+    if getattr(ctx, "target", "site") in ("epub", "kindle"):
         # Native EPUB footnote: a noteref to the collected <aside epub:type="footnote">
         # (render_article emits the notes section) — the reader pops it up, no JS.  Both
         # epub:type and the ARIA role, since readers vary on which they key.

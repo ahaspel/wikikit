@@ -309,6 +309,12 @@ def fold_cell_attrs(
     ``table_level`` carries the one cell-vs-table distinction MediaWiki makes: a
     TABLE's ``align=`` centres/floats the whole table (``margin:auto``/``float``),
     a CELL's is ``text-align``."""
+    def _nonempty_decl(d):
+        # `width=` / `style="width:"` — an empty value carries nothing; emitting
+        # `width:;` is an invalid declaration everywhere (browsers drop it
+        # silently, XHTML validators reject it).
+        d = d.strip()
+        return bool(d) and (":" not in d or bool(d.split(":", 1)[1].strip()))
     from britannica.pipeline.stages.elements._tables import _parse_ts_codes
     rules: list[str] = []
     attrs: dict[str, str] = {}
@@ -320,7 +326,7 @@ def fold_cell_attrs(
         k = m.group(1).lower()
         v = m.group(2) if m.group(2) is not None else m.group(3)
         if k == "style":
-            rules += [d.strip() for d in v.split(";") if d.strip()]
+            rules += [d.strip() for d in v.split(";") if _nonempty_decl(d)]
         elif k == "align":
             a = "center" if v.startswith("cent") else v
             if table_level:                       # a TABLE's align centres/floats it
@@ -329,6 +335,8 @@ def fold_cell_attrs(
             else:
                 rules.append(f"text-align:{a}")
         elif k in _ATTR_CSS:
+            if not v.strip():
+                continue                          # an empty attr (`width=`) carries nothing
             if k in ("width", "height") and re.fullmatch(r"\d+", v.strip()):
                 v = v.strip() + "px"              # bare integer ⇒ px (HTML default)
             rules.append(f"{_ATTR_CSS[k]}:{v}")
@@ -339,7 +347,7 @@ def fold_cell_attrs(
         rules.append("white-space:nowrap")        # bare HTML boolean attr
     for frag in slot.split(";"):                  # leftover bare CSS (width:50%)
         frag = frag.strip()
-        if ":" in frag and not frag.startswith(("|", "{")):
+        if ":" in frag and not frag.startswith(("|", "{")) and _nonempty_decl(frag):
             rules.append(frag.rstrip(";").strip())
     seen: dict[str, int] = {}                      # dedupe CSS, later wins
     out: list[str] = []

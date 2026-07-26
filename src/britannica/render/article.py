@@ -104,7 +104,7 @@ class RenderContext:
         self.scan_url = scan_url
         self.unproofed_pages = unproofed_pages
         self.target = target            # "site" (byte-identical to the viewer) | "epub"
-        self.epub_bundled = epub_bundled  # None on site; a set of in-book stems → the EPUB link policy
+        self.epub_bundled = epub_bundled  # None on site; the token link policy (epub.pack.LINK_TOKENS) on EPUB
         self.footnote_counter = 0
         self.named_fn_numbers = {}
         self.fn_anchor_instance = 0
@@ -399,23 +399,29 @@ def _render_body(article, ctx):
 
 def _build_xref_href(xref, bundled=None):
     if xref.get("target_filename"):
-        base = _article_url(xref["target_filename"], bundled)
+        filename = xref["target_filename"]
     elif xref.get("normalized_target"):
-        base = _article_url(str(xref["normalized_target"]).strip().lower() + ".json", bundled)
+        filename = str(xref["normalized_target"]).strip().lower() + ".json"
     else:
         return "#"
-    if xref.get("target_section"):
-        slug = _section_slug(xref["target_section"])
-        if slug:
-            base = base + "#section-" + slug
+    slug = _section_slug(xref["target_section"]) if xref.get("target_section") else ""
+    if bundled is not None:
+        # EPUB: the section rides INSIDE the token (a chunked book can't append a
+        # fragment to a URL that already carries the article's anchor).
+        stem = re.sub(r"\.json$", "", str(filename))
+        return bundled.url_for(stem, slug or None)
+    base = _article_url(filename)
+    if slug:
+        base = base + "#section-" + slug
     return base
 
 
 def render_article(article, *, target="site", epub_bundled=None):
     """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
     (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor
-    links → appendix, scans dropped, …).  ``epub_bundled`` — a set of in-book stems —
-    selects the EPUB link policy (see ``_article_url``); leave None for site."""
+    links → appendix, scans dropped, …).  ``epub_bundled`` — the EPUB link policy object
+    (``epub.pack.LINK_TOKENS``) — makes links emit packer-resolved tokens (see
+    ``_article_url``); leave None for site."""
     ctx = RenderContext(
         volume=article.get("volume", "?"),
         scan_url="scans.html",   # bare anchor; fixScanHrefs rebuilds the real URL at runtime
@@ -491,8 +497,9 @@ def render_article(article, *, target="site", epub_bundled=None):
     if contributors:
         def _contrib_link(c):
             name = c.get("full_name", "")
-            # EPUB: link to the in-book contributors appendix anchor; site: the search page.
-            href = ("contributors.xhtml#contrib-" + _section_slug(name) if epub_bundled is not None
+            # EPUB: a contrib token the packer resolves to the appendix chunk; site: the
+            # search page.
+            href = (epub_bundled.contrib_url(_section_slug(name)) if epub_bundled is not None
                     else "/contributors.html?q=" + _enc(name))
             return (f'<a href="{href}" style="color: var(--muted);">{escape_html(name)}</a> '
                     f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>')
@@ -529,7 +536,7 @@ def render_article(article, *, target="site", epub_bundled=None):
     body_section = _render_body(article, ctx)
     footnotes_html = ""
     if ctx.collected_footnotes:
-        if ctx.target == "epub":
+        if ctx.target in ("epub", "kindle"):
             # Popup footnotes: the reader hides these asides and pops each up from its noteref.
             # No visible "Notes" section — the reader hides the aside content, so a heading over
             # them just renders empty.  The asides live at the end of the body as popup targets.

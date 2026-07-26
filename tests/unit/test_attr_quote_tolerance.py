@@ -48,3 +48,13 @@ def test_unterminated_title_span_carries_and_never_crashes():
         ctx())
     assert "Vive le son" in two and "Dansons la Carmagnole" in two
     assert "Let's dance the Carmagnole" in two     # second span intact
+
+
+def test_empty_attr_value_emits_no_declaration():
+    # `width=` / `style="width:"` — an empty value carries nothing; `width:;` is an
+    # invalid declaration everywhere (ALGEBRA's baked `«TD[style:width:;…]»`).
+    assert fold_cell_attrs('width=') == ([], {})
+    css, _ = fold_cell_attrs('style="width:;text-align:left"')
+    assert css == ["text-align:left"]
+    css, _ = fold_cell_attrs('style="width:" valign=top')
+    assert css == ["vertical-align:top"]
