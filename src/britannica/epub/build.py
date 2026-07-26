@@ -472,7 +472,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     open(os.path.join(oebps, "index.xhtml"), "w", encoding="utf-8").write(
         xhtml_doc("A–Z Index", index_body))
 
-    # ── nav (two-level: volumes; fine-grain lives in the A–Z index + reader search) ──
+    # ── nav: volume → nested ~100-article range entries (the reader's TOC panel
+    # renders the second level as an expandable tree — the site's volume-browse
+    # model IN the Contents sidebar; ~400 entries total, not 37k) ────────────
     def _vol_label(v):
         first = _title_text(meta[first_stem_of_vol[v]]["title"]).split()
         last_stem = max((s for s in spine_stems if meta[s]["volume"] == v),
@@ -481,9 +483,24 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         rng = f" · {first[0]} – {last[0]}" if first and last else ""
         return f"Volume {v}{rng}"
 
+    vol_stems = {}
+    for s in spine_stems:                      # spine order = the volume's page order
+        vol_stems.setdefault(meta[s]["volume"], []).append(s)
+
+    def _r3(stem):
+        return _title_text(meta[stem]["title"])[:3].upper()
+
+    def _range_li(run):
+        label = _r3(run[0]) if _r3(run[0]) == _r3(run[-1]) else f"{_r3(run[0])}–{_r3(run[-1])}"
+        a = pack.article_anchor(run[0])
+        return f'<li><a href="{anchor_map[a]}#{a}">{_html.escape(label)}</a></li>'
+
     vol_lis = "".join(
         f'<li><a href="{first_chunk_of_vol[v]}#{pack.article_anchor(first_stem_of_vol[v])}">'
-        f"{_html.escape(_vol_label(v))}</a></li>"
+        f"{_html.escape(_vol_label(v))}</a><ol>"
+        + "".join(_range_li(vol_stems[v][i:i + INDEX_PAGE_SIZE])
+                  for i in range(0, len(vol_stems[v]), INDEX_PAGE_SIZE))
+        + "</ol></li>"
         for v in sorted(first_chunk_of_vol))
     nav_extra = '<li><a href="index.xhtml">A–Z Index</a></li>'
     if contrib_files:
