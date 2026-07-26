@@ -80,13 +80,18 @@ def _render_title_markers(value, ctx):
 def _render_title_h1(marker, ctx):
     """The head-of-body «TITLE:…«/TITLE» element → an <h1> with a drop-cap first character.
     The one block form the shell renders directly (it sits above the body, not in the «P» flow),
-    so it stays here rather than in the body's mechanical decode."""
+    so it stays here rather than in the body's mechanical decode.
+
+    EPUB targets skip the drop-cap: the wrapping span SPLITS the title's text node
+    ("D" + "YNAMICS"), and a reader's text search — the book's only search — can't
+    match across the element boundary, so titles were unfindable by title."""
     inner = marker[len(TITLE_OPEN):len(marker) - len(TITLE_CLOSE)]
     h = decode_inline(escape_html(inner), ctx=ctx)
-    dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
-    if dc:
-        h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
-             f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
+    if getattr(ctx, "target", "site") == "site":
+        dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
+        if dc:
+            h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
+                 f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
     return f"<h1>{h}</h1>"
 
 

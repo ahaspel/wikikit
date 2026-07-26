@@ -19,6 +19,7 @@ ids per file · every internal href resolves to a real file#id · per-chunk text
 preservation against the staged articles.
 """
 import argparse
+import hashlib
 import html as _html
 import json
 import os
@@ -34,6 +35,7 @@ from xml.etree import ElementTree as ET
 
 import html5lib
 
+from britannica.epub import images as IMG
 from britannica.epub import pack
 from britannica.epub import math_assets as MA
 from britannica.markers import markers_to_text
@@ -177,24 +179,32 @@ MISSING_IMG = "_missing.png"
 _EXT_JUNK_RE = re.compile(r"(\.(?:png|jpe?g|gif|svg))[^.]*$", re.I)
 
 
-def bundle_images(body, dst_dir, seen, missing):
+def bundle_images(body, dst_dir, seen, missing, diet=True):
     """Copy every referenced image into the EPUB and rewrite its src to a relative path.
     ``seen`` maps disk name → the percent-encoded href of its BUNDLED name — the
     manifest MUST reference images in that same form (a raw ``&`` in a disk name is a
     fatal XML error in the OPF).  The bundled name drops trailing junk after the real
     extension (`….jpg_‎`, a U+200E-suffixed disk name, defeats ext-keyed reader
-    checks); a file absent from the image store points at the shared placeholder and
-    is RECORDED — the build log surfaces every one."""
+    checks); with ``diet`` (the default) the bundled bytes are the display-resolution
+    re-encode (epub.images), whose extension may differ from the source's.  A file
+    absent from the image store points at the shared placeholder and is RECORDED —
+    the build log surfaces every one."""
     def repl(m):
         enc = m.group(1)
         name = unquote(enc)                      # commons_url percent-encoded the disk name
         src = os.path.join(IMAGES_SRC, name)
         if os.path.exists(src):
             if name not in seen:
-                dest = _EXT_JUNK_RE.sub(r"\1", name)
+                clean = _EXT_JUNK_RE.sub(r"\1", name)
+                if diet:
+                    data, ext = IMG.diet_image(src)
+                    dest = os.path.splitext(clean)[0] + ext
+                else:
+                    data, dest = open(src, "rb").read(), clean
                 if dest != name and any(unquote(e) == dest for e in seen.values()):
-                    dest = name                  # cleaned name already claimed → keep raw
-                shutil.copyfile(src, os.path.join(dst_dir, dest))
+                    stem_, ext_ = os.path.splitext(dest)
+                    dest = f"{stem_}-{hashlib.sha1(name.encode()).hexdigest()[:6]}{ext_}"
+                open(os.path.join(dst_dir, dest), "wb").write(data)
                 seen[name] = quote(dest, safe="!*'()")   # encodeURIComponent, the body's form
             return f'src="images/{seen[name]}"'
         missing.append(name)
@@ -263,7 +273,7 @@ def list_stems(volumes=None):
 
 def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                title="Encyclopædia Britannica, Eleventh Edition",
-               ident="urn:britannica11:complete", keep_stage=False, log=_log):
+               ident="urn:britannica11:complete", images="diet", keep_stage=False, log=_log):
     """Build a chunk-packed EPUB from the given corpus stems.  Returns a stats dict."""
     def load(stem):
         return json.load(open(os.path.join(articles_dir, stem + ".json"), encoding="utf-8"))
@@ -321,7 +331,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         html = render_article(a, target=target, epub_bundled=pack.LINK_TOKENS)
         html = pack.lift_markers_out_of_tags(html)
         html = pack.namespace_ids(html, stem)
-        html = bundle_images(html, imgdir, seen_imgs, missing_imgs)
+        html = bundle_images(html, imgdir, seen_imgs, missing_imgs, diet=(images == "diet"))
         if target == "kindle":
             bundle_math_png(html, mathdir, seen_math)
         xhtml = pack.xhtml5_sanitize(to_xhtml_body(html))
@@ -519,7 +529,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         spine.append(f'<itemref idref="{iid}"/>')
     for n, name in enumerate(sorted(seen_imgs)):
         manifest.append(f'<item id="img-{n}" href="images/{_html.escape(seen_imgs[name])}" '
-                        f'media-type="{_media_type(name)}"/>')
+                        f'media-type="{_media_type(unquote(seen_imgs[name]))}"/>')
     for n, name in enumerate(sorted(seen_math)):
         manifest.append(f'<item id="mpng-{n}" href="math/{name}" media-type="image/png"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
@@ -621,6 +631,8 @@ def main(argv=None):
     g.add_argument("--volume", type=int, action="append", help="volume(s) to include")
     g.add_argument("--all", action="store_true", help="the whole edition")
     ap.add_argument("--target", choices=("epub", "kindle"), default="epub")
+    ap.add_argument("--images", choices=("diet", "full"), default="diet",
+                    help="diet = display-resolution re-encodes (default); full = source bytes")
     ap.add_argument("--out", default=None)
     ap.add_argument("--keep-stage", action="store_true")
     args = ap.parse_args(argv)
@@ -636,7 +648,7 @@ def main(argv=None):
     suffix = "-kindle" if args.target == "kindle" else ""
     out = args.out or os.path.join(ROOT, f"{name}{suffix}.epub")
     build_epub(stems, out, target=args.target, title=title, ident=ident,
-               keep_stage=args.keep_stage)
+               images=args.images, keep_stage=args.keep_stage)
 
 
 if __name__ == "__main__":
