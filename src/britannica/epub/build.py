@@ -74,7 +74,11 @@ def epub_css():
     return base + ("\n/* math */\n"
                    "svg.math-display, img.math-display { display:block; margin:1.1em auto;"
                    " max-width:100%; height:auto; }\n"
-                   "svg.math-inline, img.math-inline { max-width:100%; }\n")
+                   "svg.math-inline, img.math-inline { max-width:100%; }\n"
+                   "/* A–Z index */\n"
+                   ".index-ranges { line-height: 2; }\n"
+                   ".index-ranges a { margin-right: 0.7em; white-space: nowrap; }\n"
+                   ".index-range { font-weight: normal; font-size: 0.7em; color: inherit; }\n")
 
 
 _XML_ATTR_NAME_RE = re.compile(r"[A-Za-z_][-.\w]*$")
@@ -425,22 +429,46 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             cur_size += len(h)
         flush()
 
-    # ── A–Z letter index ─────────────────────────────────────────────────
+    # ── A–Z index: letter → ~100-article range pages (the site's browse model:
+    # PAGE_SIZE=100, range labels = first-3-chars of first/last titles) ─────
+    INDEX_PAGE_SIZE = 100
     by_letter = {}
     for stem in spine_stems:
         by_letter.setdefault(_letter_of(meta[stem]["title"]), []).append(stem)
-    letter_files = []
+    letter_files = []           # every range page, for manifest/spine
+    index_parts = []
+
+    def _fold_title(t):
+        # The index sorts ALPHABETICALLY, not by spine position — print quirks (plates
+        # bound at volume ends, out-of-sequence articles, Ö collation) put e.g.
+        # FRANCE, PLATE III after FYZABAD in reading order.
+        t = unicodedata.normalize("NFKD", _title_text(t))
+        return "".join(c for c in t if not unicodedata.combining(c)).upper()
+
     for letter in sorted(by_letter):
-        fname = f"index-{'num' if letter == '#' else letter.lower()}.xhtml"
-        lis = "".join(
-            f'<li><a href="{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}">'
-            f'{_html.escape(_title_text(meta[s]["title"]))}</a></li>'
-            for s in by_letter[letter])
-        open(os.path.join(oebps, fname), "w", encoding="utf-8").write(xhtml_doc(
-            f"Index — {letter}", f"<h1>{_html.escape(letter)}</h1><ul>{lis}</ul>"))
-        letter_files.append((letter, fname))
-    index_body = "<h1>A–Z Index</h1><p class=\"index-letters\">" + " ".join(
-        f'<a href="{f}">{_html.escape(letter)}</a>' for letter, f in letter_files) + "</p>"
+        stems_l = sorted(by_letter[letter],
+                         key=lambda s: (_fold_title(meta[s]["title"]), s))
+        lkey = "num" if letter == "#" else letter.lower()
+        links = []
+        for p in range(0, len(stems_l), INDEX_PAGE_SIZE):
+            run = stems_l[p:p + INDEX_PAGE_SIZE]
+            fname = f"index-{lkey}-{p // INDEX_PAGE_SIZE + 1:02d}.xhtml"
+            first = _title_text(meta[run[0]]["title"])[:3].upper()
+            last = _title_text(meta[run[-1]]["title"])[:3].upper()
+            label = _html.escape(first if first == last else f"{first}–{last}")
+            lis = "".join(
+                f'<li><a href="{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}">'
+                f'{_html.escape(_title_text(meta[s]["title"]))}</a></li>'
+                for s in run)
+            open(os.path.join(oebps, fname), "w", encoding="utf-8").write(xhtml_doc(
+                f"Index — {_html.escape(letter)} · {label}",
+                f"<h1>{_html.escape(letter)} <span class=\"index-range\">{label}</span></h1>"
+                f"<ul>{lis}</ul>"))
+            letter_files.append((letter, fname))
+            links.append(f'<a href="{fname}">{label}</a>')
+        index_parts.append(f"<h2>{_html.escape(letter)}</h2>"
+                           f'<p class="index-ranges">{" ".join(links)}</p>')
+    index_body = "<h1>A–Z Index</h1>" + "".join(index_parts)
     open(os.path.join(oebps, "index.xhtml"), "w", encoding="utf-8").write(
         xhtml_doc("A–Z Index", index_body))
 
