@@ -269,6 +269,35 @@ def xhtml5_sanitize(xhtml):
     return _STYLE_ATTR_RE.sub(_style, xhtml)
 
 
+# Kindle forbids CSS transforms outright (blocking publish errors).  The corpus
+# bakes two transform families: {{brace2}} row/column-spanning brace glyphs
+# (scaleY/scaleX with integer N — approximate with a capped font-size: a tall
+# glyph without a transform) and condensed-type stylers (fractional scaleX —
+# drop; the nuance has no Kindle equivalent).  transform-origin rides along.
+_TRANSFORM_DECL_RE = re.compile(r"^(?:-webkit-)?transform\s*:\s*scale[XY]\((\d+(?:\.\d+)?)\)$")
+
+
+def kindle_style_transforms(xhtml):
+    def _style(m):
+        if "transform" not in m.group(1):
+            return m.group(0)
+        out, scale = [], None
+        for d in (x.strip() for x in _DECL_SPLIT_RE.split(m.group(1))):
+            t = _TRANSFORM_DECL_RE.match(d)
+            if t:
+                scale = float(t.group(1))
+                continue
+            if d.startswith(("transform", "-webkit-transform")):
+                continue
+            if d:
+                out.append(d)
+        if scale is not None and scale >= 1.5:
+            out += [f"font-size:{min(scale, 6):g}em", "line-height:1",
+                    "vertical-align:middle"]
+        return 'style="' + ";".join(out) + '"'
+    return _STYLE_ATTR_RE.sub(_style, xhtml)
+
+
 # A page boundary baked INSIDE a table tag's attr slot decodes its marker span into
 # the middle of the open tag (`<tr style="" <span class="page-marker"…></span> …>`),
 # which html5lib mangles into junk attributes (`page-marker"=""` — a fatal XML entity

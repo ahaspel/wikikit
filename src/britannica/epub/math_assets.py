@@ -157,22 +157,42 @@ def generate(requests, *, svg=True, png=True, log=print) -> int:
             pg = ctx.new_page()
             pg.set_content(_KATEX_HTML)
             pg.wait_for_function("typeof katex !== 'undefined'")
+            failed = []
             for k in todo_png:
                 la, d = uniq[k]
-                dims = pg.evaluate("""([tex,disp])=>{
-                    const host=document.getElementById('host'), bl=document.getElementById('bl');
-                    host.innerHTML='';
-                    katex.render(tex, host, {throwOnError:false, displayMode:disp});
-                    const el=host.querySelector(disp?'.katex-display':'.katex')||host;
-                    const r=el.getBoundingClientRect(), br=bl.getBoundingClientRect();
-                    return {w:r.width, h:r.height, depth:Math.max(0, r.bottom-br.bottom)};
-                }""", [_process_latex(la), d])
-                el = pg.query_selector(".katex-display" if d else ".katex")
-                if el:
+                # Per-equation isolation: one degenerate render (zero-size element,
+                # screenshot timeout) must SURFACE in the log and skip — never kill a
+                # multi-hour corpus build.  The render's «MATHPH» stub marks the gap.
+                try:
+                    dims = pg.evaluate("""([tex,disp])=>{
+                        const host=document.getElementById('host'), bl=document.getElementById('bl');
+                        host.innerHTML='';
+                        katex.render(tex, host, {throwOnError:false, displayMode:disp});
+                        const el=host.querySelector(disp?'.katex-display':'.katex')||host;
+                        const r=el.getBoundingClientRect(), br=bl.getBoundingClientRect();
+                        return {w:r.width, h:r.height, depth:Math.max(0, r.bottom-br.bottom)};
+                    }""", [_process_latex(la), d])
+                    el = pg.query_selector(".katex-display" if d else ".katex")
+                    if el is None or dims["w"] <= 0 or dims["h"] <= 0:
+                        raise ValueError(f"degenerate render ({dims['w']}x{dims['h']})")
                     (PNG_DIR / f"{k}.png").write_bytes(el.screenshot())  # opaque white bg
                     meta_c[k] = {"w_em": dims["w"] / FONT_PX,
                                  "h_em": dims["h"] / FONT_PX,
                                  "depth_em": dims["depth"] / FONT_PX}
+                except Exception as e:
+                    failed.append(k)
+                    log(f"math assets: PNG FAILED {k}: {str(e)[:120]}  latex={la[:80]!r}")
+                    try:                       # recover the page for the next equation
+                        pg.set_content(_KATEX_HTML)
+                        pg.wait_for_function("typeof katex !== 'undefined'")
+                    except Exception:
+                        pg.close()
+                        pg = ctx.new_page()
+                        pg.set_content(_KATEX_HTML)
+                        pg.wait_for_function("typeof katex !== 'undefined'")
+            if failed:
+                log(f"math assets: {len(failed)} PNG render(s) FAILED — «MATHPH» "
+                    f"placeholders in the book: {failed[:10]}")
             pg.close()
         b.close()
 

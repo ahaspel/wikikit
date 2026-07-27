@@ -30,7 +30,7 @@ import unicodedata
 import zipfile
 import zlib
 from collections import Counter
-from urllib.parse import quote, unquote
+from urllib.parse import unquote
 from xml.etree import ElementTree as ET
 
 import html5lib
@@ -74,9 +74,17 @@ def _log(*args):
     print(*args, flush=True)      # a redirected long build must stay tailable
 
 
-def epub_css():
-    """The EPUB stylesheet — content typography only, single-column, reader-controlled width."""
+def epub_css(target="epub"):
+    """The EPUB stylesheet — content typography only, single-column, reader-controlled width.
+    Kindle drops the ONE stylesheet transform (.mirror-h scaleX(-1), ALPHABET's mirrored
+    letterforms): Amazon's ET pipeline rasterizes every transformed node and its
+    rasterizer dies on bare mirrored text (E00192 → the whole book "Not Supported");
+    the letterforms render unmirrored there — ET cannot draw them any other way."""
     base = open(os.path.join(os.path.dirname(__file__), "epub.css"), encoding="utf-8").read()
+    if target == "kindle":
+        base = base.replace(".mirror-h { display: inline-block; transform: scaleX(-1); }",
+                            ".mirror-h { display: inline-block; }")
+        assert "transform" not in base, "kindle css must carry no transforms"
     return base + ("\n/* math */\n"
                    "svg.math-display, img.math-display { display:block; margin:1.1em auto;"
                    " max-width:100%; height:auto; }\n"
@@ -179,6 +187,39 @@ def to_xhtml_body(html_str):
     return result
 
 
+_IMG_TAG_RE = re.compile(r'<img\b[^>]*>')
+_IMG_LOCAL_SRC_RE = re.compile(r'src="((?:images|math)/[^"]+)"')
+
+
+def stamp_img_dims(xhtml, oebps, dim_cache):
+    """Inject explicit width/height attributes on every bundled <img> (real pixel
+    dims, read once per file).  Kindle's Enhanced Typesetting rasterizes complex
+    content, and a to-raster node whose image carries no computed dimensions kills
+    the whole conversion (E00192 → "Not Supported"/"internal error"); explicit
+    attrs also spare every reader a reflow when images load."""
+    def tag(m):
+        t = m.group(0)
+        if " width=" in t or " height=" in t:
+            return t
+        sm = _IMG_LOCAL_SRC_RE.search(t)
+        if not sm:
+            return t
+        rel = unquote(sm.group(1))
+        if rel not in dim_cache:
+            try:
+                from PIL import Image
+                with Image.open(os.path.join(oebps, rel)) as im:
+                    dim_cache[rel] = im.size
+            except Exception:
+                dim_cache[rel] = None
+        dims = dim_cache[rel]
+        if not dims:
+            return t
+        return t[:-2] + f' width="{dims[0]}" height="{dims[1]}"/>' if t.endswith("/>") \
+            else t[:-1] + f' width="{dims[0]}" height="{dims[1]}">'
+    return _IMG_TAG_RE.sub(tag, xhtml)
+
+
 def _placeholder_png():
     """A 1×1 transparent PNG, generated deterministically — the in-book stand-in for an
     image the corpus references but the image store lacks (the site shows the same
@@ -214,17 +255,23 @@ def bundle_images(body, dst_dir, seen, missing, diet=True):
         src = os.path.join(IMAGES_SRC, name)
         if os.path.exists(src):
             if name not in seen:
-                clean = _EXT_JUNK_RE.sub(r"\1", name)
+                # Bundled names are strict ASCII [A-Za-z0-9._-]: an escapable char
+                # anywhere (apostrophe, &, unicode dash/LRM) means the manifest href
+                # must XML-escape it — legal, but Amazon's converter resolves the
+                # href WITHOUT decoding the entity (looks for `…&#x27;s…` literally)
+                # and its KFX stage dies on the "missing" media.  One byte-identical
+                # string in body, manifest, and zip beats three encodings agreeing.
+                clean = re.sub(r"[^A-Za-z0-9._-]", "_", _EXT_JUNK_RE.sub(r"\1", name))
                 if diet:
                     data, ext = IMG.diet_image(src)
                     dest = os.path.splitext(clean)[0] + ext
                 else:
                     data, dest = open(src, "rb").read(), clean
-                if dest != name and any(unquote(e) == dest for e in seen.values()):
+                if dest != name and dest in seen.values():
                     stem_, ext_ = os.path.splitext(dest)
                     dest = f"{stem_}-{hashlib.sha1(name.encode()).hexdigest()[:6]}{ext_}"
                 open(os.path.join(dst_dir, dest), "wb").write(data)
-                seen[name] = quote(dest, safe="!*'()")   # encodeURIComponent, the body's form
+                seen[name] = dest                        # ASCII-safe: needs no encoding
             return f'src="images/{seen[name]}"'
         missing.append(name)
         return f'src="images/{MISSING_IMG}"'
@@ -346,21 +393,27 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     log("pass 1: render + stage")
     seen_imgs, seen_math = {}, set()      # name -> body href form; math names are hex-safe
     missing_imgs = []
+    img_dim_cache = {}
+    # The absent-image placeholder ships unconditionally (written up front so the
+    # dimension stamper can size references to it during the loop).
+    open(os.path.join(imgdir, MISSING_IMG), "wb").write(_placeholder_png())
+    seen_imgs[MISSING_IMG] = MISSING_IMG
     for i, stem in enumerate(spine_stems):
         a = load(stem)
         html = render_article(a, target=target, epub_bundled=pack.LINK_TOKENS)
         html = pack.lift_markers_out_of_tags(html)
+        if target == "kindle":
+            html = pack.kindle_style_transforms(html)
         html = pack.namespace_ids(html, stem)
         html = bundle_images(html, imgdir, seen_imgs, missing_imgs, diet=(images == "diet"))
         if target == "kindle":
             bundle_math_png(html, mathdir, seen_math)
         xhtml = pack.xhtml5_sanitize(to_xhtml_body(html))
+        xhtml = stamp_img_dims(xhtml, oebps, img_dim_cache)
         open(os.path.join(render_dir, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml)
         if (i + 1) % 2000 == 0:
             log(f"  staged {i + 1}/{len(spine_stems)}")
     if missing_imgs:
-        open(os.path.join(imgdir, MISSING_IMG), "wb").write(_placeholder_png())
-        seen_imgs[MISSING_IMG] = MISSING_IMG
         log(f"  {len(missing_imgs)} referenced image(s) absent from the image store "
             f"(placeholder bundled): {sorted(set(missing_imgs))[:10]}")
 
@@ -403,7 +456,18 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # ── contributors appendix, packed like the articles ──────────────────
     contrib_map, contrib_files, contrib_groups = {}, [], []
     if contribs:
-        order = sorted(contribs, key=lambda s: contribs[s]["name"].lower())
+        # The appendix is a surname-first KEY (the print convention; user: given-name
+        # order is unusable).  display_name ("Abbe, Cleveland") lives in the roster
+        # export — the per-article entries carry only full_name.
+        disp_of = {}
+        roster_path = os.path.join(articles_dir, "contributors.json")
+        if os.path.exists(roster_path):
+            for r in json.load(open(roster_path, encoding="utf-8")):
+                if r.get("full_name") and r.get("display_name"):
+                    disp_of[r["full_name"]] = r["display_name"]
+        for e in contribs.values():
+            e["display"] = disp_of.get(e["name"], e["name"])
+        order = sorted(contribs, key=lambda s: (contribs[s]["display"].lower(), s))
         secs = []
         for slug in order:
             e = contribs[slug]
@@ -418,7 +482,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                 for st in e["articles"])
             secs.append((slug,
                          f'<section id="contrib-{slug}" class="contrib">'
-                         f'<h2>{_html.escape(e["name"])}{(" " + m) if m else ""}</h2>{desc}'
+                         f'<h2>{_html.escape(e["display"])}{(" " + m) if m else ""}</h2>{desc}'
                          f'<p class="contrib-articles-label">Articles</p><ul>{arts_li}</ul></section>'))
         preamble = ('<h1>Contributors</h1>\n'
                     '<p>The 1911 edition credited its authors only by initials. This edition '
@@ -431,7 +495,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                 return
             fname = f"contributors-{fi:02d}.xhtml"
             contrib_groups.append(
-                (fname, contribs[cur[0][0]]["name"], contribs[cur[-1][0]]["name"]))
+                (fname, contribs[cur[0][0]]["display"], contribs[cur[-1][0]]["display"]))
             body = (preamble if fi == 1 else "<h1>Contributors (continued)</h1>\n") \
                 + "".join(h for _, h in cur)
             open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
@@ -497,9 +561,14 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # one ordering spec), so title lookup is instant and Meilisearch-ordered.  Full-
     # text ranked search stays the site's job.  Script-stripping readers (Kindle)
     # see the fallback pointing at the A–Z index. ────────────────────────────
+    # Kindle: NO scripted page at all — Enhanced Typesetting rejects the whole book
+    # ("Not Supported" → the GUI's "internal error") when a scripted content doc is
+    # present, Kindle strips JS anyway, and its conversion-built index already gives
+    # fast native search.  The nav's lookup branch points at the A–Z index instead.
+    with_search = target != "kindle"
     rows = [[_title_text(meta[s]["title"]),
              f"{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}"]
-            for s in spine_stems]
+            for s in spine_stems] if with_search else []
     data_js = json.dumps(rows, ensure_ascii=False).replace("]]>", "]]\\u003e")
     search_script = (
         "\n//<![CDATA[\n"
@@ -553,18 +622,19 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         'document.getElementById("fallback").style.display="none";\n'
         'document.getElementById("box").style.display="block";\n'
         "//]]>\n")
-    open(os.path.join(oebps, "search.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
-        "Title Search",
-        '<h1>Title Search</h1>'
-        '<p id="fallback">This page needs a reader that runs scripts (Thorium, most '
-        'desktop readers).  Without scripts, use the <a href="index.xhtml">A–Z Index'
-        '</a> to find articles by title.</p>'
-        '<div id="box" style="display:none">'
-        '<p><input type="text" id="q" placeholder="Type or tap letters below…" '
-        'style="width:100%;font-size:1.1em;padding:0.3em"/></p>'
-        '<p id="keys" class="keyrow"></p>'
-        '<ul id="results"></ul></div>'
-        f'<script>{search_script}</script>'))
+    if with_search:
+        open(os.path.join(oebps, "search.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
+            "Title Search",
+            '<h1>Title Search</h1>'
+            '<p id="fallback">This page needs a reader that runs scripts (Thorium, most '
+            'desktop readers).  Without scripts, use the <a href="index.xhtml">A–Z Index'
+            '</a> to find articles by title.</p>'
+            '<div id="box" style="display:none">'
+            '<p><input type="text" id="q" placeholder="Type or tap letters below…" '
+            'style="width:100%;font-size:1.1em;padding:0.3em"/></p>'
+            '<p id="keys" class="keyrow"></p>'
+            '<ul id="results"></ul></div>'
+            f'<script>{search_script}</script>'))
 
     # ── Topics: the classified TOC (vol-29) as nested hub pages, arbitrary depth.
     # One page per node in DFS preorder (nav targets stay monotone in spine order);
@@ -717,8 +787,10 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     vols_branch = f"<li><span>Volumes</span><ol>{vol_lis}</ol></li>"
     topics_branch = (f'<li><a href="topics.xhtml">Topics</a><ol>{topics_nav}</ol></li>'
                      if topic_files else "")
-    search_branch = ('<li><a href="search.xhtml">Title Search</a>'
-                     '<ol><li><a href="index.xhtml">A–Z Index</a></li></ol></li>')
+    search_branch = (('<li><a href="search.xhtml">Title Search</a>'
+                      '<ol><li><a href="index.xhtml">A–Z Index</a></li></ol></li>')
+                     if with_search else
+                     '<li><a href="index.xhtml">A–Z Index</a></li>')
     contrib_branch = ""
     if contrib_files:
         def _cg_label(a, b):
@@ -727,10 +799,11 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                        for f, a, b in contrib_groups)
         contrib_branch = (f'<li><a href="{contrib_files[0]}">Contributors</a>'
                           + (f"<ol>{subs}</ol>" if len(contrib_groups) > 1 else "") + "</li>")
+    # Title Search leads (user: the most important tool by far — it was buried).
     if nav_articles:
         nav_top = search_branch + topics_branch + vols_branch + contrib_branch
     else:
-        nav_top = vols_branch + topics_branch + search_branch + contrib_branch
+        nav_top = search_branch + vols_branch + topics_branch + contrib_branch
     nav = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
@@ -740,14 +813,23 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         '</body>\n</html>\n')
     open(os.path.join(oebps, "nav.xhtml"), "w", encoding="utf-8").write(nav)
 
+    # The tools ride on the FIRST page every reader sees (user: the Contents-panel
+    # entries alone were too easy to miss).
+    tool_links = ['<a href="search.xhtml">Title Search</a>'] if with_search else []
+    if topic_files:
+        tool_links.append('<a href="topics.xhtml">Topics</a>')
+    tool_links.append('<a href="index.xhtml">A–Z Index</a>')
+    if contrib_files:
+        tool_links.append(f'<a href="{contrib_files[0]}">Contributors</a>')
     open(os.path.join(oebps, "titlepage.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
         title,
         f'<div class="titlepage"><h1>{_html.escape(title)}</h1>'
         '<p>A Dictionary of Arts, Sciences, Literature and General Information</p>'
         f'<p>{len(spine_stems):,} articles · 28 volumes (1910–1911)</p>'
+        f'<p class="titlepage-tools">{" · ".join(tool_links)}</p>'
         '<p><a href="https://britannica11.org">britannica11.org</a></p></div>'))
 
-    open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css())
+    open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css(target))
 
     # ── pass 3: emit chunks (same staged bytes → same pieces), resolve at close ──
     log("pass 3: emit chunks")
@@ -804,7 +886,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     browse_items = [("bro-" + f[7:-6], f, "") for f in browse_files]
     topic_items = (([("topics", "topics.xhtml", "")]
                     + [("top-" + f[6:-6], f, "") for f in topic_files]) if topic_files else [])
-    search_items = [("searchpage", "search.xhtml", ' properties="scripted"')]
+    search_items = ([("searchpage", "search.xhtml", ' properties="scripted"')]
+                    if with_search else [])
     index_items = ([("azindex", "index.xhtml", "")]
                    + [("idx-" + f[6:-6], f, "") for _l, f in letter_files])
     contrib_items = [("ctb-" + f[13:-6], f, "") for f in contrib_files]
@@ -814,13 +897,13 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         for grp in (browse_items, contrib_items):
             _mspine(spine_back, grp)
     else:
-        for grp in (browse_items, topic_items, search_items, index_items):
+        for grp in (search_items, index_items, browse_items, topic_items):
             _mspine(spine_front, grp)
         _mspine(spine_back, contrib_items)
     spine = [spine[0]] + spine_front + spine[1:] + spine_back
     for n, name in enumerate(sorted(seen_imgs)):
         manifest.append(f'<item id="img-{n}" href="images/{_html.escape(seen_imgs[name])}" '
-                        f'media-type="{_media_type(unquote(seen_imgs[name]))}"/>')
+                        f'media-type="{_media_type(seen_imgs[name])}"/>')
     for n, name in enumerate(sorted(seen_math)):
         manifest.append(f'<item id="mpng-{n}" href="math/{name}" media-type="image/png"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
@@ -928,10 +1011,18 @@ def main(argv=None):
                     help="diet = display-resolution re-encodes (default); full = source bytes")
     ap.add_argument("--nav-articles", action="store_true",
                     help="third nav level: every article (reader TOC-panel search matches titles)")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="probe builds: only the first N stems (converter bisection)")
+    ap.add_argument("--exclude", action="append", default=[],
+                    help="probe builds: drop specific stem(s)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--keep-stage", action="store_true")
     args = ap.parse_args(argv)
     stems = list_stems(None if args.all else args.volume)
+    if args.limit:
+        stems = stems[:args.limit]
+    if args.exclude:
+        stems = [s for s in stems if s not in set(args.exclude)]
     if args.all:
         name, ident = "eb1911", "urn:britannica11:complete"
         title = "Encyclopædia Britannica, Eleventh Edition"
