@@ -45,7 +45,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.a
 ARTICLES_DIR = os.path.join(ROOT, "data", "derived", "articles")
 IMAGES_SRC = os.path.join(ROOT, "data", "images")
 MATH_PNG_SRC = os.path.join(ROOT, "data", "derived", "math_png")
-_MODIFIED = "2026-07-07T00:00:00Z"        # fixed for reproducible builds
+# dcterms:modified is the BUILD time, not a fixed constant: readers key library
+# identity on (dc:identifier, dcterms:modified) — a fixed value made every revision
+# look like the same publication, so re-imports silently kept showing an OLD copy
+# (the user's missing-topics/search report; the missing-glyph report earlier).
+# Byte-reproducibility of the container yields to revision identity.
+import datetime as _dt
+_MODIFIED = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 _IMG_SRC_RE = re.compile(r'src="/data/images/([^"]+)"')
 _REMOTE_IMG_RE = re.compile(r'src="(https?://[^"]+)"')
 _MATH_SRC_RE = re.compile(r'src="math/([0-9a-f]+\.png)"')
@@ -78,7 +84,16 @@ def epub_css():
                    "/* A–Z index */\n"
                    ".index-ranges { line-height: 2; }\n"
                    ".index-ranges a { margin-right: 0.7em; white-space: nowrap; }\n"
-                   ".index-range { font-weight: normal; font-size: 0.7em; color: inherit; }\n")
+                   ".index-range { font-weight: normal; font-size: 0.7em; color: inherit; }\n"
+                   "/* topics */\n"
+                   ".topic-crumb { font-size: 0.85em; opacity: 0.7; margin-bottom: 0.2em; }\n"
+                   ".topic-children { margin-bottom: 1em; }\n"
+                   "/* search key row */\n"
+                   ".keyrow { line-height: 2.4; }\n"
+                   ".key { display: inline-block; min-width: 1.6em; text-align: center;"
+                   " border: 1px solid currentColor; border-radius: 4px; margin: 0 0.15em;"
+                   " padding: 0.15em 0.25em; text-decoration: none; cursor: pointer; }\n"
+                   ".key-ctl { min-width: 2.2em; }\n")
 
 
 _XML_ATTR_NAME_RE = re.compile(r"[A-Za-z_][-.\w]*$")
@@ -277,7 +292,8 @@ def list_stems(volumes=None):
 
 def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                title="Encyclopædia Britannica, Eleventh Edition",
-               ident="urn:britannica11:complete", images="diet", keep_stage=False, log=_log):
+               ident="urn:britannica11:complete", images="diet", nav_articles=False,
+               keep_stage=False, log=_log):
     """Build a chunk-packed EPUB from the given corpus stems.  Returns a stats dict."""
     def load(stem):
         return json.load(open(os.path.join(articles_dir, stem + ".json"), encoding="utf-8"))
@@ -385,7 +401,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     log(f"  {n_chunks} chunks, {n_pieces_total - len(spine_stems)} split pieces beyond 1:1")
 
     # ── contributors appendix, packed like the articles ──────────────────
-    contrib_map, contrib_files = {}, []
+    contrib_map, contrib_files, contrib_groups = {}, [], []
     if contribs:
         order = sorted(contribs, key=lambda s: contribs[s]["name"].lower())
         secs = []
@@ -414,6 +430,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             if not cur:
                 return
             fname = f"contributors-{fi:02d}.xhtml"
+            contrib_groups.append(
+                (fname, contribs[cur[0][0]]["name"], contribs[cur[-1][0]]["name"]))
             body = (preamble if fi == 1 else "<h1>Contributors (continued)</h1>\n") \
                 + "".join(h for _, h in cur)
             open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
@@ -472,6 +490,166 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     open(os.path.join(oebps, "index.xhtml"), "w", encoding="utf-8").write(
         xhtml_doc("A–Z Index", index_body))
 
+    # ── Search: a SCRIPTED title-search page (EPUB3 scripted content; Thorium runs
+    # it).  The reader's own search linearly scans ~500MB of body text — the format
+    # has no index.  Titles DO fit in-book: the embedded [title, href] table (~1.7MB)
+    # ranks with the site's exact fold + titleRank tiers (ported from search-api.js,
+    # one ordering spec), so title lookup is instant and Meilisearch-ordered.  Full-
+    # text ranked search stays the site's job.  Script-stripping readers (Kindle)
+    # see the fallback pointing at the A–Z index. ────────────────────────────
+    rows = [[_title_text(meta[s]["title"]),
+             f"{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}"]
+            for s in spine_stems]
+    data_js = json.dumps(rows, ensure_ascii=False).replace("]]>", "]]\\u003e")
+    search_script = (
+        "\n//<![CDATA[\n"
+        f"var DATA={data_js};\n"
+        'function fold(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"");}\n'
+        "var F=DATA.map(function(r){return fold(r[0]);});\n"
+        "var W=F.map(function(t){return t.split(/[\\s,.'\\u2019()\\-]+/).filter(Boolean);});\n"
+        "function rank(t,w,q){if(t===q)return 0;if(w[0]===q)return 1;"
+        "if(w.indexOf(q)!==-1)return 2;if(t.indexOf(q)===0)return 3;"
+        "if(t.indexOf(q)!==-1)return 4;return 5;}\n"
+        'function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}\n'
+        "function run(){\n"
+        ' var q=fold(document.getElementById("q").value.trim());\n'
+        ' var out=document.getElementById("results");\n'
+        ' if(!q){out.innerHTML="";return;}\n'
+        " var hits=[];\n"
+        " for(var i=0;i<DATA.length;i++){var r=rank(F[i],W[i],q);"
+        "if(r<5)hits.push([r,DATA[i][0],DATA[i][1]]);}\n"
+        " hits.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:a[1]>b[1]?1:0);});\n"
+        ' var html="";\n'
+        " for(var j=0;j<Math.min(hits.length,100);j++)"
+        "html+='<li><a href=\"'+hits[j][2]+'\">'+esc(hits[j][1])+'</a></li>';\n"
+        " if(hits.length>100)html+='<li>\\u2026 '+(hits.length-100)+' more \\u2014 keep typing</li>';\n"
+        " out.innerHTML=html;\n"
+        "}\n"
+        'document.getElementById("q").addEventListener("input",run);\n'
+        "// Click-driven query building: some readers (Thorium) capture keyboard input\n"
+        "// for app shortcuts, so typing into content forms fails — buttons always work.\n"
+        "function press(ch){\n"
+        ' var el=document.getElementById("q");\n'
+        ' if(ch==="BK")el.value=el.value.slice(0,-1);\n'
+        ' else if(ch==="CLR")el.value="";\n'
+        ' else el.value+=ch;\n'
+        " run();\n"
+        "}\n"
+        'var row=document.getElementById("keys");\n'
+        'var chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat([" "]);\n'
+        "for(var k=0;k<chars.length;k++){(function(ch){\n"
+        ' var b=document.createElement("a");\n'
+        ' b.textContent=(ch===" "?"\\u2423":ch);\n'
+        ' b.className="key";\n'
+        " b.addEventListener(\"click\",function(e){e.preventDefault();press(ch);});\n"
+        " row.appendChild(b);\n"
+        "})(chars[k]);}\n"
+        "[[\"BK\",\"\\u232b\"],[\"CLR\",\"\\u2715\"]].forEach(function(p){\n"
+        ' var b=document.createElement("a");\n'
+        " b.textContent=p[1];b.className=\"key key-ctl\";\n"
+        " b.addEventListener(\"click\",function(e){e.preventDefault();press(p[0]);});\n"
+        " row.appendChild(b);\n"
+        "});\n"
+        'document.getElementById("fallback").style.display="none";\n'
+        'document.getElementById("box").style.display="block";\n'
+        "//]]>\n")
+    open(os.path.join(oebps, "search.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
+        "Title Search",
+        '<h1>Title Search</h1>'
+        '<p id="fallback">This page needs a reader that runs scripts (Thorium, most '
+        'desktop readers).  Without scripts, use the <a href="index.xhtml">A–Z Index'
+        '</a> to find articles by title.</p>'
+        '<div id="box" style="display:none">'
+        '<p><input type="text" id="q" placeholder="Type or tap letters below…" '
+        'style="width:100%;font-size:1.1em;padding:0.3em"/></p>'
+        '<p id="keys" class="keyrow"></p>'
+        '<ul id="results"></ul></div>'
+        f'<script>{search_script}</script>'))
+
+    # ── Topics: the classified TOC (vol-29) as nested hub pages, arbitrary depth.
+    # One page per node in DFS preorder (nav targets stay monotone in spine order);
+    # each page = breadcrumb + notes + child links + the node's article links.  A
+    # note's cross-link names another NODE (`anchor`) — resolved via a first-wins
+    # name→page map, the title-map discipline. ──────────────────────────────
+    topic_files, topics_nav = [], ""
+    ct_path = os.path.join(ROOT, "data", "derived", "classified_toc.json")
+    if os.path.exists(ct_path):
+        ct = json.load(open(ct_path, encoding="utf-8"))
+
+        def _tkids(n):
+            return (n.get("subsections") or []) + (n.get("children") or [])
+
+        fname_of, name_to_file = {}, {}
+        def _assign(n):
+            fname = f"topic-{len(topic_files) + 1:03d}.xhtml"
+            topic_files.append(fname)
+            fname_of[id(n)] = fname
+            name_to_file.setdefault(n.get("name") or "", fname)
+            for c in _tkids(n):
+                _assign(c)
+        for c in ct["categories"]:
+            _assign(c)
+
+        def _art_li(a):
+            disp = _html.escape(a.get("display") or a.get("target") or "")
+            if a.get("emphasized") in (True, "True", "true"):
+                disp = f"<b>{disp}</b>"
+            fn = a.get("filename")
+            if not fn:
+                return f"<li>{disp}</li>"          # unresolved index entry: faithful, unlinked
+            stem = re.sub(r"\.json$", "", fn)
+            anch = pack.article_anchor(stem)
+            href = (f"{anchor_map[anch]}#{anch}" if anch in anchor_map
+                    else f"{pack.SITE_BASE}/article/{stem}")
+            return f'<li><a href="{href}">{disp}</a></li>'
+
+        def _note_html(note):
+            txt = note.get("text") or ""
+            out, pos = [], 0
+            for l in sorted(note.get("links") or [], key=lambda x: x["start"]):
+                out.append(_html.escape(txt[pos:l["start"]]))
+                dsp = _html.escape(txt[l["start"]:l["end"]])
+                tgt = name_to_file.get(l.get("anchor") or "")
+                out.append(f'<a href="{tgt}">{dsp}</a>' if tgt else dsp)
+                pos = l["end"]
+            out.append(_html.escape(txt[pos:]))
+            return f'<p class="topic-note"><i>{"".join(out)}</i></p>'
+
+        def _emit_topic(n, crumb):
+            name = n.get("name") or "?"
+            body = []
+            if crumb:
+                body.append(f'<p class="topic-crumb">{_html.escape(" › ".join(crumb))}</p>')
+            body.append(f"<h1>{_html.escape(name)}</h1>")
+            for note in n.get("notes") or []:
+                body.append(_note_html(note))
+            ch = _tkids(n)
+            if ch:
+                body.append("<ul class=\"topic-children\">" + "".join(
+                    f'<li><a href="{fname_of[id(c)]}">{_html.escape(c.get("name") or "?")}</a></li>'
+                    for c in ch) + "</ul>")
+            arts = n.get("articles") or []
+            if arts:
+                body.append("<ul>" + "".join(_art_li(a) for a in arts) + "</ul>")
+            open(os.path.join(oebps, fname_of[id(n)]), "w", encoding="utf-8").write(
+                xhtml_doc(" › ".join(crumb + [name]) if crumb else name, "".join(body)))
+            for c in ch:
+                _emit_topic(c, crumb + [name])
+
+        for c in ct["categories"]:
+            _emit_topic(c, [])
+        open(os.path.join(oebps, "topics.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
+            "Topics", "<h1>Topics</h1><ul>" + "".join(
+                f'<li><a href="{fname_of[id(c)]}">{_html.escape(c.get("name") or "?")}</a></li>'
+                for c in ct["categories"]) + "</ul>"))
+
+        def _nav_topic(n):
+            subs = "".join(_nav_topic(c) for c in _tkids(n))
+            label = _html.escape(n.get("name") or "?")
+            return (f'<li><a href="{fname_of[id(n)]}">{label}</a>'
+                    + (f"<ol>{subs}</ol>" if subs else "") + "</li>")
+        topics_nav = "".join(_nav_topic(c) for c in ct["categories"])
+
     # ── nav: volume → nested ~100-article range entries (the reader's TOC panel
     # renders the second level as an expandable tree — the site's volume-browse
     # model IN the Contents sidebar; ~400 entries total, not 37k) ────────────
@@ -490,27 +668,75 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     def _r3(stem):
         return _title_text(meta[stem]["title"])[:3].upper()
 
-    def _range_li(run):
+    # Each range is a HUB PAGE listing its ~100 article links — the site model: a
+    # sub-volume click shows the TITLE LIST, never a reading position (a range entry
+    # that jumps into the text leaves ~100 articles of page-turning to the target).
+    browse_files = []
+    def _range_li(v, n, run):
         label = _r3(run[0]) if _r3(run[0]) == _r3(run[-1]) else f"{_r3(run[0])}–{_r3(run[-1])}"
-        a = pack.article_anchor(run[0])
-        return f'<li><a href="{anchor_map[a]}#{a}">{_html.escape(label)}</a></li>'
+        fname = f"browse-{v:02d}-{n:02d}.xhtml"
+        lis = "".join(
+            f'<li><a href="{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}">'
+            f'{_html.escape(_title_text(meta[s]["title"]))}</a></li>'
+            for s in run)
+        open(os.path.join(oebps, fname), "w", encoding="utf-8").write(xhtml_doc(
+            f"Volume {v} · {label}",
+            f'<h1>Volume {v} <span class="index-range">{_html.escape(label)}</span></h1><ul>{lis}</ul>'))
+        browse_files.append(fname)
+        if nav_articles:
+            # third nav level: every article — the reader's own TOC-panel search then
+            # matches titles natively.  Targets must be chunk anchors (spine-ordered),
+            # not the late-spine hub pages (NAV-011).
+            a0 = pack.article_anchor(run[0])
+            return (f'<li><a href="{anchor_map[a0]}#{a0}">{_html.escape(label)}</a>'
+                    f"<ol>{lis}</ol></li>")
+        return f'<li><a href="{fname}">{_html.escape(label)}</a></li>'
+
+    # The volume link opens its FIRST RANGE HUB, not a reading position — the site
+    # model, and it keeps every nav target inside the spine-ordered browse/topic/
+    # index block (NAV-011: toc targets must be in reading order; a nav that mixes
+    # chunk positions with back-matter hubs regresses).
+    def _vol_href(v):
+        if nav_articles:
+            a = pack.article_anchor(first_stem_of_vol[v])
+            return f"{anchor_map[a]}#{a}"
+        return f"browse-{v:02d}-01.xhtml"
 
     vol_lis = "".join(
-        f'<li><a href="{first_chunk_of_vol[v]}#{pack.article_anchor(first_stem_of_vol[v])}">'
-        f"{_html.escape(_vol_label(v))}</a><ol>"
-        + "".join(_range_li(vol_stems[v][i:i + INDEX_PAGE_SIZE])
+        f'<li><a href="{_vol_href(v)}">{_html.escape(_vol_label(v))}</a><ol>'
+        + "".join(_range_li(v, i // INDEX_PAGE_SIZE + 1, vol_stems[v][i:i + INDEX_PAGE_SIZE])
                   for i in range(0, len(vol_stems[v]), INDEX_PAGE_SIZE))
         + "</ol></li>"
         for v in sorted(first_chunk_of_vol))
-    nav_extra = '<li><a href="index.xhtml">A–Z Index</a></li>'
+    # FOUR top-level branches (user's spec): Volumes · Topics · Title Search ·
+    # Contributors.  "Volumes" is a span group header (nav li may be a span when it
+    # nests an ol); the A–Z Index rides under Title Search as its no-script twin.
+    # Branch order follows spine order (NAV-011 monotone): the fullnav variant's
+    # volume links target CHUNK anchors, so its Volumes branch comes after the
+    # front-matter branches instead of first.
+    vols_branch = f"<li><span>Volumes</span><ol>{vol_lis}</ol></li>"
+    topics_branch = (f'<li><a href="topics.xhtml">Topics</a><ol>{topics_nav}</ol></li>'
+                     if topic_files else "")
+    search_branch = ('<li><a href="search.xhtml">Title Search</a>'
+                     '<ol><li><a href="index.xhtml">A–Z Index</a></li></ol></li>')
+    contrib_branch = ""
     if contrib_files:
-        nav_extra += f'<li><a href="{contrib_files[0]}">Contributors</a></li>'
+        def _cg_label(a, b):
+            return a[:1].upper() if a[:1].upper() == b[:1].upper() else f"{a[:1].upper()}–{b[:1].upper()}"
+        subs = "".join(f'<li><a href="{f}">{_html.escape(_cg_label(a, b))}</a></li>'
+                       for f, a, b in contrib_groups)
+        contrib_branch = (f'<li><a href="{contrib_files[0]}">Contributors</a>'
+                          + (f"<ol>{subs}</ol>" if len(contrib_groups) > 1 else "") + "</li>")
+    if nav_articles:
+        nav_top = search_branch + topics_branch + vols_branch + contrib_branch
+    else:
+        nav_top = vols_branch + topics_branch + search_branch + contrib_branch
     nav = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
         '<head><meta charset="utf-8"/><title>Contents</title>'
         '<link rel="stylesheet" type="text/css" href="style.css"/></head>\n<body>\n'
-        f'<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>{vol_lis}{nav_extra}</ol></nav>\n'
+        f'<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>{nav_top}</ol></nav>\n'
         '</body>\n</html>\n')
     open(os.path.join(oebps, "nav.xhtml"), "w", encoding="utf-8").write(nav)
 
@@ -538,7 +764,11 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         for piece, ci in zip(pieces, assignment[stem]):
             buffers.setdefault(ci, []).append(piece)
 
-    manifest, spine = [], []
+    # Spine assembles in FOUR runs: head (titlepage) · front matter (the lookup
+    # surfaces — search/topics/A–Z — FIRST, like a print encyclopedia's guide, and
+    # so their nav entries can precede the volumes under NAV-011's monotone rule) ·
+    # the article chunks · back matter (volume browse hubs, contributors).
+    manifest, spine, spine_front, spine_back = [], [], [], []
     manifest.append('<item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>')
     spine.append('<itemref idref="titlepage"/>')
     manifest.append('<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>')
@@ -562,16 +792,32 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                         f'media-type="application/xhtml+xml"{props}/>')
         spine.append(f'<itemref idref="id-{cname[:-6]}"/>')
 
-    manifest.append('<item id="azindex" href="index.xhtml" media-type="application/xhtml+xml"/>')
-    spine.append('<itemref idref="azindex"/>')
-    for letter, fname in letter_files:
-        iid = "idx-" + fname[6:-6]
-        manifest.append(f'<item id="{iid}" href="{fname}" media-type="application/xhtml+xml"/>')
-        spine.append(f'<itemref idref="{iid}"/>')
-    for fname in contrib_files:
-        iid = "ctb-" + fname[13:-6]
-        manifest.append(f'<item id="{iid}" href="{fname}" media-type="application/xhtml+xml"/>')
-        spine.append(f'<itemref idref="{iid}"/>')
+    # Hub/ancillary pages ride in the nav's branch order (NAV-011): standard =
+    # browse hubs, topics, search, A–Z before the chunks; contributors after.  The
+    # fullnav variant's volume links target chunks, so its browse hubs move to the
+    # back and search/topics/A–Z lead.
+    def _mspine(lst, items):
+        for iid, fname, extra in items:
+            manifest.append(f'<item id="{iid}" href="{fname}" media-type="application/xhtml+xml"{extra}/>')
+            lst.append(f'<itemref idref="{iid}"/>')
+
+    browse_items = [("bro-" + f[7:-6], f, "") for f in browse_files]
+    topic_items = (([("topics", "topics.xhtml", "")]
+                    + [("top-" + f[6:-6], f, "") for f in topic_files]) if topic_files else [])
+    search_items = [("searchpage", "search.xhtml", ' properties="scripted"')]
+    index_items = ([("azindex", "index.xhtml", "")]
+                   + [("idx-" + f[6:-6], f, "") for _l, f in letter_files])
+    contrib_items = [("ctb-" + f[13:-6], f, "") for f in contrib_files]
+    if nav_articles:
+        for grp in (search_items, index_items, topic_items):
+            _mspine(spine_front, grp)
+        for grp in (browse_items, contrib_items):
+            _mspine(spine_back, grp)
+    else:
+        for grp in (browse_items, topic_items, search_items, index_items):
+            _mspine(spine_front, grp)
+        _mspine(spine_back, contrib_items)
+    spine = [spine[0]] + spine_front + spine[1:] + spine_back
     for n, name in enumerate(sorted(seen_imgs)):
         manifest.append(f'<item id="img-{n}" href="images/{_html.escape(seen_imgs[name])}" '
                         f'media-type="{_media_type(unquote(seen_imgs[name]))}"/>')
@@ -601,11 +847,13 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
 
     # ── integrity gates over the WRITTEN container (measure the artifact) ──
     log("gates: id census + href resolution")
+    _SCRIPT_RE = re.compile(r"<script>.*?</script>", re.S)
     ids_by_file = {}
     for f in sorted(os.listdir(oebps)):
         if not f.endswith(".xhtml"):
             continue
-        content = open(os.path.join(oebps, f), encoding="utf-8").read()
+        # script bodies (the search page's JS builds href= strings) are not markup
+        content = _SCRIPT_RE.sub("", open(os.path.join(oebps, f), encoding="utf-8").read())
         found = pack._ID_RE.findall(content)
         dupes = [i for i, n in Counter(found).items() if n > 1]
         if dupes:
@@ -621,7 +869,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     href_re = re.compile(r'href="([^"]+)"')
     bad_hrefs = 0
     for f, _ids in ids_by_file.items():
-        content = open(os.path.join(oebps, f), encoding="utf-8").read()
+        content = _SCRIPT_RE.sub("", open(os.path.join(oebps, f), encoding="utf-8").read())
         for h in href_re.findall(content):
             if h.startswith(("http://", "https://", "mailto:")):
                 continue
@@ -678,6 +926,8 @@ def main(argv=None):
     ap.add_argument("--target", choices=("epub", "kindle"), default="epub")
     ap.add_argument("--images", choices=("diet", "full"), default="diet",
                     help="diet = display-resolution re-encodes (default); full = source bytes")
+    ap.add_argument("--nav-articles", action="store_true",
+                    help="third nav level: every article (reader TOC-panel search matches titles)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--keep-stage", action="store_true")
     args = ap.parse_args(argv)
@@ -690,10 +940,14 @@ def main(argv=None):
         name = f"eb1911-vol{vols}"
         ident = f"urn:britannica11:vol-{vols}"
         title = f"Encyclopædia Britannica, Eleventh Edition — Volume {', '.join(map(str, sorted(args.volume)))}"
-    suffix = "-kindle" if args.target == "kindle" else ""
+    if args.nav_articles:
+        ident += ":fullnav"
+    suffix = ("-kindle" if args.target == "kindle" else "") + \
+        ("-fullnav" if args.nav_articles else "")
     out = args.out or os.path.join(ROOT, f"{name}{suffix}.epub")
     build_epub(stems, out, target=args.target, title=title, ident=ident,
-               images=args.images, keep_stage=args.keep_stage)
+               images=args.images, nav_articles=args.nav_articles,
+               keep_stage=args.keep_stage)
 
 
 if __name__ == "__main__":
