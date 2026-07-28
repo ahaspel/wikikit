@@ -168,23 +168,179 @@ def _fix_phrasing_blocks(root):
                     changed = True
 
 
-def to_xhtml_body(html_str):
+def _fix_overlapping_cells(root):
+    """Clamp a cell whose colspan extends into a slot an earlier rowspan still owns —
+    Enhanced Typesetting rejects the whole book over one overlap ("Table with
+    overlapping cells… not supported"); browsers effectively render the clamped
+    layout anyway.  Ten articles corpus-wide (source rowspan/colspan collisions)."""
+    for table in root.iter("table"):
+        pending = {}
+        for tr in table.iter("tr"):
+            pending = {k: v - 1 for k, v in pending.items() if v > 1}
+            col = 0
+            for cell in tr:
+                if cell.tag not in ("td", "th"):
+                    continue
+                while col in pending:
+                    col += 1
+                try:
+                    rs = max(1, int(cell.get("rowspan", "1")))
+                    cs = max(1, int(cell.get("colspan", "1")))
+                except ValueError:
+                    rs, cs = 1, 1
+                free = 1
+                while free < cs and (col + free) not in pending:
+                    free += 1
+                if free < cs:
+                    cell.set("colspan", str(free))
+                    cs = free
+                if rs > 1:
+                    for cc in range(col, col + cs):
+                        pending[cc] = rs
+                col += cs
+
+
+def _split_giant_tables(root, limit=18000):
+    """Split a table whose serialized form exceeds ET's ~20k-character ceiling into
+    consecutive sibling tables at ROW boundaries ("Tables with more than 20,000
+    characters are not currently supported") — same rows, same order, text stays
+    text (the faithful alternative to Amazon rasterizing it).  32 tables corpus-wide."""
+    parents = {c: p for p in root.iter() for c in p}
+    for table in list(root.iter("table")):
+        raw = ET.tostring(table, encoding="unicode", method="xml")
+        if len(raw) <= limit:
+            continue
+        body = next((c for c in table if c.tag == "tbody"), None)
+        rows = list(body) if body is not None else [c for c in table if c.tag == "tr"]
+        if len(rows) < 2:
+            continue
+        groups, cur, acc = [], [], 0
+        for r in rows:
+            sz = len(ET.tostring(r, encoding="unicode", method="xml"))
+            if cur and acc + sz > limit * 0.8:
+                groups.append(cur)
+                cur, acc = [], 0
+            cur.append(r)
+            acc += sz
+        if cur:
+            groups.append(cur)
+        if len(groups) < 2:
+            continue
+        parent = parents.get(table)
+        if parent is None:
+            continue
+        idx = list(parent).index(table)
+        tail = table.tail
+        parent.remove(table)
+        for gi, g in enumerate(groups):
+            t = ET.Element("table", dict(table.attrib))
+            holder = t
+            if body is not None:
+                holder = ET.SubElement(t, "tbody", dict(body.attrib))
+            for r in g:
+                holder.append(r)
+            t.tail = "\n" if gi < len(groups) - 1 else tail
+            parent.insert(idx + gi, t)
+
+
+def to_xhtml_body(html_str, target="epub"):
     """HTML5 render → XML-well-formed XHTML fragment (void elements self-closed, entities
     as chars).  Inline math SVG is ALREADY valid XML (MathJax, with its own xmlns), but
     ElementTree mangles foreign-content namespaces on round-trip, so each ``<svg>`` is
-    lifted out before the html5lib+ET pass and spliced back verbatim after."""
+    lifted out before the html5lib+ET pass and spliced back verbatim after.  The kindle
+    target additionally repairs the two table classes Enhanced Typesetting hard-rejects."""
     protected, svgs = pack.protect_svgs(html_str)
     frag = html5lib.parseFragment(protected, treebuilder="etree", namespaceHTMLElements=False)
     out = [_html.escape(frag.text, quote=False)] if frag.text else []
     for child in frag:
-        _drop_invalid_attrs(child)
-        _fix_nested_lists(child)
-        _fix_phrasing_blocks(child)
-        out.append(ET.tostring(child, encoding="unicode", method="xml"))
+        # a wrapper root gives every element a parent (a top-level table can split)
+        w = ET.Element("w")
+        w.append(child)
+        _drop_invalid_attrs(w)
+        _fix_nested_lists(w)
+        _fix_phrasing_blocks(w)
+        if target == "kindle":
+            _fix_overlapping_cells(w)
+            _split_giant_tables(w)
+        for piece in w:
+            out.append(ET.tostring(piece, encoding="unicode", method="xml"))
     result = "".join(out)
     for i, svg in enumerate(svgs):
         result = result.replace(f"MJSVGSLOT{i}ENDSLOT", svg)
     return result
+
+
+# ── cover (the site mark's language: cream field, dark double-rule frame, Georgia) ──
+_COVER_BG = (245, 241, 235)      # sampled from britannica11-logo.png
+_COVER_INK = (44, 36, 22)
+_COVER_W, _COVER_H = 1600, 2560
+
+
+def _cover_font(size, bold=False, italic=False):
+    from PIL import ImageFont
+    name = "georgia" + ("z" if bold and italic else "b" if bold else "i" if italic else "")
+    try:
+        return ImageFont.truetype(os.path.join(os.environ.get("WINDIR", r"C:\Windows"),
+                                               "Fonts", name + ".ttf"), size)
+    except Exception:
+        return ImageFont.load_default()
+
+
+def _draw_tracked(draw, cx, y, text, font, tracking=0, fill=_COVER_INK):
+    """Centered text with letter-tracking (PIL has none built in)."""
+    widths = [draw.textlength(ch, font=font) for ch in text]
+    total = sum(widths) + tracking * (len(text) - 1)
+    x = cx - total / 2
+    for ch, w in zip(text, widths):
+        draw.text((x, y), ch, font=font, fill=fill)
+        x += w + tracking
+
+
+def make_cover(path, subtitle=None):
+    """Draw the cover: the site mark's double-rule frame and EB medallion over the
+    full title block.  Deterministic (no timestamps), regenerated per build."""
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (_COVER_W, _COVER_H), _COVER_BG)
+    d = ImageDraw.Draw(im)
+    # double-rule frame, as the logo draws it
+    d.rectangle([56, 56, _COVER_W - 56, _COVER_H - 56], outline=_COVER_INK, width=10)
+    d.rectangle([92, 92, _COVER_W - 92, _COVER_H - 92], outline=_COVER_INK, width=4)
+    # EB medallion
+    cx = _COVER_W // 2
+    ms = 430
+    top = 330
+    d.rectangle([cx - ms // 2, top, cx + ms // 2, top + ms], outline=_COVER_INK, width=8)
+    d.rectangle([cx - ms // 2 + 26, top + 26, cx + ms // 2 - 26, top + ms - 26],
+                outline=_COVER_INK, width=3)
+    f_eb = _cover_font(240, bold=False)
+    bb = d.textbbox((0, 0), "EB", font=f_eb)
+    d.text((cx - (bb[2] - bb[0]) / 2 - bb[0], top + ms / 2 - (bb[3] - bb[1]) / 2 - bb[1]),
+           "EB", font=f_eb, fill=_COVER_INK)
+    # title block — the big lines auto-fit inside the frame
+    def _fit(text, size, tracking, max_w=1240):
+        while size > 40:
+            f = _cover_font(size, bold=True)
+            w = sum(d.textlength(ch, font=f) for ch in text) + tracking * (len(text) - 1)
+            if w <= max_w:
+                return f
+            size -= 4
+        return _cover_font(size, bold=True)
+
+    _draw_tracked(d, cx, 1120, "THE", _cover_font(60), tracking=26)
+    _draw_tracked(d, cx, 1235, "ENCYCLOPÆDIA", _fit("ENCYCLOPÆDIA", 150, 10), tracking=10)
+    _draw_tracked(d, cx, 1425, "BRITANNICA", _fit("BRITANNICA", 150, 26), tracking=26)
+    d.line([cx - 260, 1670, cx - 40, 1670], fill=_COVER_INK, width=3)
+    d.line([cx + 40, 1670, cx + 260, 1670], fill=_COVER_INK, width=3)
+    d.polygon([(cx, 1660), (cx + 12, 1670), (cx, 1680), (cx - 12, 1670)], fill=_COVER_INK)
+    _draw_tracked(d, cx, 1730, "ELEVENTH EDITION", _cover_font(72), tracking=22)
+    f_dict = _cover_font(44, italic=True)
+    _draw_tracked(d, cx, 1890, "A Dictionary of Arts, Sciences, Literature", f_dict, tracking=1)
+    _draw_tracked(d, cx, 1955, "and General Information", f_dict, tracking=1)
+    _draw_tracked(d, cx, 2090, "1910–1911", _cover_font(56), tracking=8)
+    if subtitle:
+        _draw_tracked(d, cx, 2210, subtitle.upper(), _cover_font(58, bold=True), tracking=14)
+    _draw_tracked(d, cx, 2380, "BRITANNICA11.ORG", _cover_font(38), tracking=16)
+    im.save(path, "JPEG", quality=90, optimize=True)
 
 
 _IMG_TAG_RE = re.compile(r'<img\b[^>]*>')
@@ -340,7 +496,7 @@ def list_stems(volumes=None):
 def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                title="Encyclopædia Britannica, Eleventh Edition",
                ident="urn:britannica11:complete", images="diet", nav_articles=False,
-               keep_stage=False, log=_log):
+               cover_subtitle=None, keep_stage=False, log=_log):
     """Build a chunk-packed EPUB from the given corpus stems.  Returns a stats dict."""
     def load(stem):
         return json.load(open(os.path.join(articles_dir, stem + ".json"), encoding="utf-8"))
@@ -408,7 +564,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         html = bundle_images(html, imgdir, seen_imgs, missing_imgs, diet=(images == "diet"))
         if target == "kindle":
             bundle_math_png(html, mathdir, seen_math)
-        xhtml = pack.xhtml5_sanitize(to_xhtml_body(html))
+        xhtml = pack.xhtml5_sanitize(to_xhtml_body(html, target))
         xhtml = stamp_img_dims(xhtml, oebps, img_dim_cache)
         open(os.path.join(render_dir, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml)
         if (i + 1) % 2000 == 0:
@@ -831,6 +987,19 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
 
     open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css(target))
 
+    # Cover: the site mark's language at 1600×2560; cover-image manifest property
+    # (EPUB3) + the legacy meta (Kindle keys its thumbnails on it).  KINDLE gets the
+    # IMAGE ONLY — Amazon generates its own cover page, and shipping an HTML cover
+    # page silently disqualifies Enhanced Typesetting (vol-1 regressed "Supported" →
+    # "Not Supported" on exactly this delta, with zero logged errors).
+    make_cover(os.path.join(oebps, "cover.jpg"), subtitle=cover_subtitle)
+    if target != "kindle":
+        open(os.path.join(oebps, "cover.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
+            title,
+            '<div style="text-align:center;margin:0;padding:0">'
+            f'<img src="cover.jpg" alt="{_html.escape(title)}" width="{_COVER_W}" height="{_COVER_H}" '
+            'style="max-width:100%;height:auto"/></div>'))
+
     # ── pass 3: emit chunks (same staged bytes → same pieces), resolve at close ──
     log("pass 3: emit chunks")
     gate_errors = []
@@ -851,6 +1020,10 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # so their nav entries can precede the volumes under NAV-011's monotone rule) ·
     # the article chunks · back matter (volume browse hubs, contributors).
     manifest, spine, spine_front, spine_back = [], [], [], []
+    manifest.append('<item id="cover-image" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>')
+    if target != "kindle":
+        manifest.append('<item id="coverpage" href="cover.xhtml" media-type="application/xhtml+xml"/>')
+        spine.append('<itemref idref="coverpage"/>')
     manifest.append('<item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>')
     spine.append('<itemref idref="titlepage"/>')
     manifest.append('<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>')
@@ -900,7 +1073,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         for grp in (search_items, index_items, browse_items, topic_items):
             _mspine(spine_front, grp)
         _mspine(spine_back, contrib_items)
-    spine = [spine[0]] + spine_front + spine[1:] + spine_back
+    head_n = 1 if target == "kindle" else 2      # kindle: no cover page (titlepage only)
+    spine = spine[:head_n] + spine_front + spine[head_n:] + spine_back
     for n, name in enumerate(sorted(seen_imgs)):
         manifest.append(f'<item id="img-{n}" href="images/{_html.escape(seen_imgs[name])}" '
                         f'media-type="{_media_type(seen_imgs[name])}"/>')
@@ -917,7 +1091,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         '    <dc:language>en</dc:language>\n'
         '    <dc:source>https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica</dc:source>\n'
         f'    <meta property="dcterms:modified">{_MODIFIED}</meta>\n'
-        '  </metadata>\n'
+        + ('    <meta name="cover" content="cover-image"/>\n' if target == "kindle" else "")
+        + '  </metadata>\n'
         '  <manifest>\n    ' + "\n    ".join(manifest) + '\n  </manifest>\n'
         '  <spine>\n    ' + "\n    ".join(spine) + '\n  </spine>\n'
         '</package>\n')
@@ -1036,9 +1211,11 @@ def main(argv=None):
     suffix = ("-kindle" if args.target == "kindle" else "") + \
         ("-fullnav" if args.nav_articles else "")
     out = args.out or os.path.join(ROOT, f"{name}{suffix}.epub")
+    cover_sub = (None if args.all
+                 else "Volume " + ", ".join(map(str, sorted(args.volume))))
     build_epub(stems, out, target=args.target, title=title, ident=ident,
                images=args.images, nav_articles=args.nav_articles,
-               keep_stage=args.keep_stage)
+               cover_subtitle=cover_sub, keep_stage=args.keep_stage)
 
 
 if __name__ == "__main__":
