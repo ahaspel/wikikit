@@ -214,16 +214,46 @@ def _split_giant_tables(root, limit=18000):
         rows = list(body) if body is not None else [c for c in table if c.tag == "tr"]
         if len(rows) < 2:
             continue
-        groups, cur, acc = [], [], 0
+        # cut ONLY where no rowspan is in flight — a span crossing the cut leaves a
+        # dangling rowspan pointing past its table's end (a malformed table ET
+        # silently rejects; three of them cost a probe round)
+        groups, cur, acc, pending = [], [], 0, {}
         for r in rows:
             sz = len(ET.tostring(r, encoding="unicode", method="xml"))
-            if cur and acc + sz > limit * 0.8:
+            if cur and acc + sz > limit * 0.8 and not pending:
                 groups.append(cur)
                 cur, acc = [], 0
+            pending = {k: v - 1 for k, v in pending.items() if v > 1}
+            col = 0
+            for cell in r:
+                if cell.tag not in ("td", "th"):
+                    continue
+                while col in pending:
+                    col += 1
+                try:
+                    rs = max(1, int(cell.get("rowspan", "1")))
+                    cs = max(1, int(cell.get("colspan", "1")))
+                except ValueError:
+                    rs, cs = 1, 1
+                if rs > 1:
+                    for cc in range(col, col + cs):
+                        pending[cc] = rs
+                col += cs
             cur.append(r)
             acc += sz
         if cur:
             groups.append(cur)
+        # belt: clamp any rowspan still exceeding its part's remaining rows
+        for g in groups:
+            for ri, r in enumerate(g):
+                for cell in r:
+                    if cell.tag in ("td", "th"):
+                        try:
+                            rs = int(cell.get("rowspan", "1") or "1")
+                        except ValueError:
+                            continue
+                        if ri + rs > len(g):
+                            cell.set("rowspan", str(len(g) - ri))
         if len(groups) < 2:
             continue
         parent = parents.get(table)
@@ -451,13 +481,21 @@ def bundle_math_png(body, dst_dir, seen):
     return body
 
 
+_NUDGE = 0     # set per build via build_epub(nudge=); shifts every chunk's byte offsets
+
+
 def xhtml_doc(title, body):
+    # The nudge comment exists to dislodge a POSITIONAL Amazon-converter bug: a
+    # byte-offset-dependent silent ET rejection (CASTANETS — the identical span
+    # passed when shifted).  Undetectable locally; any global offset shift clears
+    # a strike, so silent-fail → rebuild with nudge+1 → reconvert.
+    pad = f"<!-- {'n' * _NUDGE} -->\n" if _NUDGE else ""
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
         f"<head>\n<meta charset=\"utf-8\"/>\n<title>{_html.escape(title)}</title>\n"
         '<link rel="stylesheet" type="text/css" href="style.css"/>\n</head>\n'
-        f"<body>\n{body}\n</body>\n</html>\n"
+        f"<body>\n{pad}{body}\n</body>\n</html>\n"
     )
 
 
@@ -496,7 +534,9 @@ def list_stems(volumes=None):
 def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                title="Encyclopædia Britannica, Eleventh Edition",
                ident="urn:britannica11:complete", images="diet", nav_articles=False,
-               cover_subtitle=None, keep_stage=False, log=_log):
+               cover_subtitle=None, nudge=0, keep_stage=False, log=_log):
+    global _NUDGE
+    _NUDGE = nudge
     """Build a chunk-packed EPUB from the given corpus stems.  Returns a stats dict."""
     def load(stem):
         return json.load(open(os.path.join(articles_dir, stem + ".json"), encoding="utf-8"))
@@ -1188,11 +1228,19 @@ def main(argv=None):
                     help="third nav level: every article (reader TOC-panel search matches titles)")
     ap.add_argument("--limit", type=int, default=None,
                     help="probe builds: only the first N stems (converter bisection)")
+    ap.add_argument("--nudge", type=int, default=0,
+                    help="shift every chunk's byte offsets (dislodges Amazon's positional ET bug)")
     ap.add_argument("--exclude", action="append", default=[],
                     help="probe builds: drop specific stem(s)")
+    ap.add_argument("--chunk-target", type=int, default=None,
+                    help="soft chunk budget in bytes (default pack.TARGET_CHUNK; "
+                         "hard split scales 1.5x)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--keep-stage", action="store_true")
     args = ap.parse_args(argv)
+    if args.chunk_target:
+        pack.TARGET_CHUNK = args.chunk_target
+        pack.HARD_SPLIT = int(args.chunk_target * 1.5)
     stems = list_stems(None if args.all else args.volume)
     if args.limit:
         stems = stems[:args.limit]
@@ -1215,7 +1263,7 @@ def main(argv=None):
                  else "Volume " + ", ".join(map(str, sorted(args.volume))))
     build_epub(stems, out, target=args.target, title=title, ident=ident,
                images=args.images, nav_articles=args.nav_articles,
-               cover_subtitle=cover_sub, keep_stage=args.keep_stage)
+               cover_subtitle=cover_sub, nudge=args.nudge, keep_stage=args.keep_stage)
 
 
 if __name__ == "__main__":

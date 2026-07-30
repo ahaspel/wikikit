@@ -121,13 +121,17 @@ def _is_sec_head(el):
     return el.tag == "h3" and "section-head" in (el.get("class") or "")
 
 
-def split_article(xhtml, target=TARGET_CHUNK, hard=HARD_SPLIT):
+def split_article(xhtml, target=None, hard=None):
     """Split a staged (namespaced, XML-well-formed) article into pieces at section
     boundaries.  A pure function of the input bytes — the plan and emit passes call it
     on the same staged file and get identical pieces.  Piece 1 keeps the head matter
     and the article anchor; each footnote aside travels with the piece holding its
     noteref; the xref card rides last.  Returns [xhtml] unchanged when small enough
     or structurally unexpected (the size gate reports oversized chunks)."""
+    if target is None:
+        target = TARGET_CHUNK
+    if hard is None:
+        hard = HARD_SPLIT
     if len(xhtml) <= hard:
         return [xhtml]
     protected, svgs = protect_svgs(xhtml)
