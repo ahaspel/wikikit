@@ -35,8 +35,10 @@ from xml.etree import ElementTree as ET
 
 import html5lib
 
+from britannica.epub import front_matter as FM
 from britannica.epub import images as IMG
 from britannica.epub import pack
+from britannica.epub import readers_guide as RG
 from britannica.epub import math_assets as MA
 from britannica.markers import markers_to_text
 from britannica.render.article import render_article, _section_slug
@@ -909,23 +911,72 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                 f'<li><a href="{fname_of[id(c)]}">{_html.escape(c.get("name") or "?")}</a></li>'
                 for c in ct["categories"]) + "</ul>"))
 
-        def _nav_topic(n):
-            subs = "".join(_nav_topic(c) for c in _tkids(n))
-            label = _html.escape(n.get("name") or "?")
-            return (f'<li><a href="{fname_of[id(n)]}">{label}</a>'
-                    + (f"<ol>{subs}</ol>" if subs else "") + "</li>")
-        topics_nav = "".join(_nav_topic(c) for c in ct["categories"])
+        # TOC shows the top categories ONLY (user spec); the deeper tree lives on
+        # the topic pages themselves, one click in.
+        topics_nav = "".join(
+            f'<li><a href="{fname_of[id(c)]}">{_html.escape(c.get("name") or "?")}</a></li>'
+            for c in ct["categories"])
 
-    # ── nav: volume → nested ~100-article range entries (the reader's TOC panel
-    # renders the second level as an expandable tree — the site's volume-browse
-    # model IN the Contents sidebar; ~400 entries total, not 37k) ────────────
+    # ── Reader's Guide (back matter): hub → 6 parts → 71 chapters, extracted from
+    # the static site pages; article citations resolve presence-aware against the
+    # anchor map (absent stem keeps its site URL — the packer's standing policy) ──
+    _GUIDE_ART_RE = re.compile(
+        r'href="' + re.escape(pack.SITE_BASE) + r'/article/([0-9a-z-]+)"')
+
+    def _guide_art_href(m):
+        anch = pack.article_anchor(m.group(1))
+        if anch in anchor_map:
+            return f'href="{anchor_map[anch]}#{anch}"'
+        return m.group(0)
+
+    guide_pages, guide_imgs = RG.pages()
+    if FM.DROPPED_HREFS:
+        log(f"front-matter/guide: dropped {len(FM.DROPPED_HREFS)} malformed source href(s) "
+            "(site-side generator bug, queued)")
+    for b, src_path in sorted(guide_imgs.items()):
+        shutil.copyfile(src_path, os.path.join(imgdir, b))
+    for fname, g_title, g_body, _part in guide_pages:
+        g_body = _GUIDE_ART_RE.sub(_guide_art_href, g_body)
+        open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
+            xhtml_doc(g_title, '<div class="frontmatter">'
+                      + to_xhtml_body(g_body, target) + "</div>"))
+    guide_by_part = {}
+    for fname, g_title, _b, part in guide_pages:
+        guide_by_part.setdefault(part, []).append((fname, g_title))
+    guide_branch = ""
+    if guide_pages:
+        # TOC: the six parts only — chapters live on the part pages, one click in.
+        part_lis = [f'<li><a href="{guide_by_part[n][0][0]}">'
+                    f"{_html.escape(guide_by_part[n][0][1])}</a></li>"
+                    for n in range(1, 7)]
+        stray = [(f, t) for f, t in guide_by_part.get(None, []) if f != "guide.xhtml"]
+        if stray:
+            log(f"readers-guide: {len(stray)} chapter(s) not listed on any part page")
+        guide_branch = ('<li><a href="guide.xhtml">Reader’s Guide</a><ol>'
+                        + "".join(part_lis) + "</ol></li>")
+
+    # ── nav: TOP-LEVELS ONLY (user spec) — 28 flat volume entries; each opens a
+    # VOLUME HUB page listing the ~100-article ranges (detail lives behind the
+    # click, never in the TOC panel) ─────────────────────────────────────────
     def _vol_label(v):
-        first = _title_text(meta[first_stem_of_vol[v]]["title"]).split()
-        last_stem = max((s for s in spine_stems if meta[s]["volume"] == v),
-                        key=lambda s: (meta[s]["page_start"], meta[s]["page_end"], s))
-        last = _title_text(meta[last_stem]["title"]).split()
-        rng = f" · {first[0]} – {last[0]}" if first and last else ""
-        return f"Volume {v}{rng}"
+        # The printed-spine range: alphabetically first/last FIRST WORDS on the
+        # accent-folded order (vol 1 = "A – ANDROPHAGI"; the page-order last stem
+        # gave ANDRONICUS, which is wrong — encyclopedia page order is not fully
+        # alphabetical at the tail).
+        # Junk-wrapped titles ('''X''', “X”) must not win min/max on their quote
+        # chars — compare on the alphanumeric core of the folded first word.  Plate
+        # captions ("PLATE II", "PLATE (VOL. 1, P. 357)") are not headwords and
+        # must not define the printed range; the bare headword PLATE (vol 21) is.
+        firsts = []
+        for s in vol_stems[v]:
+            ws = _fold_title(meta[s]["title"]).split()
+            if not ws:
+                continue
+            t = re.sub(r"[^A-Z0-9]", "",
+                       ws[0].replace("Æ", "AE").replace("Œ", "OE"))
+            if t and not (t == "PLATE" and len(ws) > 1):
+                firsts.append(t)
+        return f"Volume {v} · {min(firsts)} – {max(firsts)}" if firsts else f"Volume {v}"
 
     vol_stems = {}
     for s in spine_stems:                      # spine order = the volume's page order
@@ -958,22 +1009,34 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                     f"<ol>{lis}</ol></li>")
         return f'<li><a href="{fname}">{_html.escape(label)}</a></li>'
 
-    # The volume link opens its FIRST RANGE HUB, not a reading position — the site
-    # model, and it keeps every nav target inside the spine-ordered browse/topic/
-    # index block (NAV-011: toc targets must be in reading order; a nav that mixes
-    # chunk positions with back-matter hubs regresses).
+    # The volume link opens a VOLUME HUB listing the volume's range hubs — the
+    # site model both levels down: volume → ranges → title list, detail always
+    # behind a click, the TOC itself stays 28 flat lines.
     def _vol_href(v):
         if nav_articles:
             a = pack.article_anchor(first_stem_of_vol[v])
             return f"{anchor_map[a]}#{a}"
-        return f"browse-{v:02d}-01.xhtml"
+        return f"volume-{v:02d}.xhtml"
 
-    vol_lis = "".join(
-        f'<li><a href="{_vol_href(v)}">{_html.escape(_vol_label(v))}</a><ol>'
-        + "".join(_range_li(v, i // INDEX_PAGE_SIZE + 1, vol_stems[v][i:i + INDEX_PAGE_SIZE])
-                  for i in range(0, len(vol_stems[v]), INDEX_PAGE_SIZE))
-        + "</ol></li>"
-        for v in sorted(first_chunk_of_vol))
+    vol_lis_parts = []
+    for v in sorted(first_chunk_of_vol):
+        range_lis = "".join(
+            _range_li(v, i // INDEX_PAGE_SIZE + 1, vol_stems[v][i:i + INDEX_PAGE_SIZE])
+            for i in range(0, len(vol_stems[v]), INDEX_PAGE_SIZE))
+        if nav_articles:
+            vol_lis_parts.append(
+                f'<li><a href="{_vol_href(v)}">{_html.escape(_vol_label(v))}</a>'
+                f"<ol>{range_lis}</ol></li>")
+            continue
+        hub = f"volume-{v:02d}.xhtml"
+        open(os.path.join(oebps, hub), "w", encoding="utf-8").write(xhtml_doc(
+            _vol_label(v),
+            f"<h1>{_html.escape(_vol_label(v))}</h1><ul>{range_lis}</ul>"))
+        n_ranges = (len(vol_stems[v]) + INDEX_PAGE_SIZE - 1) // INDEX_PAGE_SIZE
+        browse_files.insert(len(browse_files) - n_ranges, hub)   # hub precedes its ranges
+        vol_lis_parts.append(
+            f'<li><a href="{hub}">{_html.escape(_vol_label(v))}</a></li>')
+    vol_lis = "".join(vol_lis_parts)
     # FOUR top-level branches (user's spec): Volumes · Topics · Title Search ·
     # Contributors.  "Volumes" is a span group header (nav li may be a span when it
     # nests an ol); the A–Z Index rides under Title Search as its no-script twin.
@@ -983,8 +1046,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     vols_branch = f"<li><span>Volumes</span><ol>{vol_lis}</ol></li>"
     topics_branch = (f'<li><a href="topics.xhtml">Topics</a><ol>{topics_nav}</ol></li>'
                      if topic_files else "")
-    search_branch = (('<li><a href="search.xhtml">Title Search</a>'
-                      '<ol><li><a href="index.xhtml">A–Z Index</a></li></ol></li>')
+    # A–Z stays reachable from the title page and the search page's no-script
+    # fallback; the TOC keeps only the one entry (top-levels only).
+    search_branch = ('<li><a href="search.xhtml">Title Search</a></li>'
                      if with_search else
                      '<li><a href="index.xhtml">A–Z Index</a></li>')
     contrib_branch = ""
@@ -995,11 +1059,23 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                        for f, a, b in contrib_groups)
         contrib_branch = (f'<li><a href="{contrib_files[0]}">Contributors</a>'
                           + (f"<ol>{subs}</ol>" if len(contrib_groups) > 1 else "") + "</li>")
-    # Title Search leads (user: the most important tool by far — it was buried).
+    # Front matter (introduction when written · the 1910 Editorial Preface · the
+    # Index Preface) rides directly after the title page; ONE compact nav group so
+    # Title Search keeps its visual top slot while nav stays spine-monotone.
+    fm_pages = FM.pages()
+    for fname, fm_title, fm_body in fm_pages:
+        open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
+            xhtml_doc(fm_title, '<div class="frontmatter">'
+                      + to_xhtml_body(fm_body, target) + "</div>"))
+    # Plain top-level entries, directly after Title Search (user spec — no group).
+    fm_branch = "".join(f'<li><a href="{f}">{_html.escape(t)}</a></li>'
+                        for f, t, _ in fm_pages)
+    # Title Search leads (user: the most important tool by far — it was buried);
+    # the prefaces follow it directly, the Reader's Guide closes the book (user spec).
     if nav_articles:
-        nav_top = search_branch + topics_branch + vols_branch + contrib_branch
+        nav_top = search_branch + fm_branch + topics_branch + vols_branch + contrib_branch + guide_branch
     else:
-        nav_top = search_branch + vols_branch + topics_branch + contrib_branch
+        nav_top = search_branch + fm_branch + vols_branch + topics_branch + contrib_branch + guide_branch
     nav = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
@@ -1017,13 +1093,18 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     tool_links.append('<a href="index.xhtml">A–Z Index</a>')
     if contrib_files:
         tool_links.append(f'<a href="{contrib_files[0]}">Contributors</a>')
+    if guide_pages:
+        tool_links.append('<a href="guide.xhtml">Reader’s Guide</a>')
     open(os.path.join(oebps, "titlepage.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
         title,
         f'<div class="titlepage"><h1>{_html.escape(title)}</h1>'
         '<p>A Dictionary of Arts, Sciences, Literature and General Information</p>'
         f'<p>{len(spine_stems):,} articles · 28 volumes (1910–1911)</p>'
         f'<p class="titlepage-tools">{" · ".join(tool_links)}</p>'
-        '<p><a href="https://britannica11.org">britannica11.org</a></p></div>'))
+        + (('<p class="titlepage-tools">' + " · ".join(
+            f'<a href="{f}">{_html.escape(t)}</a>' for f, t, _ in fm_pages) + "</p>")
+           if fm_pages else "")
+        + '<p><a href="https://britannica11.org">britannica11.org</a></p></div>'))
 
     open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css(target))
 
@@ -1104,20 +1185,27 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     index_items = ([("azindex", "index.xhtml", "")]
                    + [("idx-" + f[6:-6], f, "") for _l, f in letter_files])
     contrib_items = [("ctb-" + f[13:-6], f, "") for f in contrib_files]
+    fm_items = [(f"fm-{i}", fname, "") for i, (fname, _t, _b) in enumerate(fm_pages)]
+    guide_items = [(f"gd-{i}", fname, "")
+                   for i, (fname, _t, _b, _p) in enumerate(guide_pages)]
     if nav_articles:
-        for grp in (search_items, index_items, topic_items):
+        for grp in (search_items, index_items, fm_items, topic_items):
             _mspine(spine_front, grp)
-        for grp in (browse_items, contrib_items):
+        for grp in (browse_items, contrib_items, guide_items):
             _mspine(spine_back, grp)
     else:
-        for grp in (search_items, index_items, browse_items, topic_items):
+        for grp in (search_items, index_items, fm_items, browse_items, topic_items):
             _mspine(spine_front, grp)
-        _mspine(spine_back, contrib_items)
+        for grp in (contrib_items, guide_items):
+            _mspine(spine_back, grp)
     head_n = 1 if target == "kindle" else 2      # kindle: no cover page (titlepage only)
     spine = spine[:head_n] + spine_front + spine[head_n:] + spine_back
     for n, name in enumerate(sorted(seen_imgs)):
         manifest.append(f'<item id="img-{n}" href="images/{_html.escape(seen_imgs[name])}" '
                         f'media-type="{_media_type(seen_imgs[name])}"/>')
+    for n, name in enumerate(sorted(guide_imgs)):
+        manifest.append(f'<item id="gimg-{n}" href="images/{_html.escape(name)}" '
+                        f'media-type="{_media_type(name)}"/>')
     for n, name in enumerate(sorted(seen_math)):
         manifest.append(f'<item id="mpng-{n}" href="math/{name}" media-type="image/png"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')

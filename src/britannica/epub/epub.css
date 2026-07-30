@@ -98,3 +98,22 @@ blockquote.verse { margin: 1em 1.5em; font-style: italic; }
 
 /* interactive-only chrome that may leak from the site render */
 .expand-table-btn, .math-popout-link { display: none; }
+
+/* ── front matter (introduction · prefaces) ── */
+.frontmatter { margin: 0.5em 0; }
+.frontmatter .fm-meta { text-align: center; margin: 0 0 1.2em; }
+.frontmatter .drop-cap { font-size: 1.4em; font-weight: bold; }
+.frontmatter .shoulder { font-style: italic; font-weight: bold; margin: 0.8em 0 0.2em; }
+.frontmatter .footnotes { border-top: 1px solid #999; margin-top: 2em; font-size: 0.9em; }
+.frontmatter .footnotes h3 { font-variant: small-caps; font-size: 0.95em; }
+
+/* ── Reader's Guide ── */
+.frontmatter .chap-num, .frontmatter .part-num { display: block; font-size: 0.75em;
+  font-variant: small-caps; letter-spacing: 0.08em; color: #6b5e4f; }
+.frontmatter .part { margin: 1em 0; }
+.frontmatter .part .meta { font-size: 0.85em; color: #6b5e4f; font-style: italic; }
+.frontmatter .intro { font-style: italic; margin: 0.8em 0; }
+.frontmatter .footer { font-size: 0.85em; color: #6b5e4f; margin-top: 2em;
+  border-top: 1px solid #999; padding-top: 0.5em; }
+.frontmatter .header-divider { text-align: center; color: #8b7355; margin: 0.8em 0; }
+.frontmatter .sc { font-variant: small-caps; }
