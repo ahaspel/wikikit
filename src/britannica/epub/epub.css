@@ -117,3 +117,8 @@ blockquote.verse { margin: 1em 1.5em; font-style: italic; }
   border-top: 1px solid #999; padding-top: 0.5em; }
 .frontmatter .header-divider { text-align: center; color: #8b7355; margin: 0.8em 0; }
 .frontmatter .sc { font-variant: small-caps; }
+
+/* ── per-article topic references (the site's "In: …" overlay, baked) ── */
+.topic-refs { border-top: 1px solid #d4cab8; margin-top: 1.2em; padding-top: 0.4em;
+  font-size: 0.85em; color: #6b5e4f; }
+.topic-refs p { margin: 0.15em 0; }

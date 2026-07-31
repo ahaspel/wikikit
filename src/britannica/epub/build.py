@@ -597,6 +597,32 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         meta[s]["volume"], meta[s]["page_start"], meta[s]["page_end"],
         meta[s]["title"], s))
 
+    # ── topics precompute: page names + per-article memberships.  The site's
+    # "In: Category › Sub" line is a client-side viewer overlay; the BOOK bakes
+    # it into each staged article, so topic page names must exist before pass 1.
+    topic_files, fname_of_topic, topic_name_to_file = [], {}, {}
+    topics_of = {}                     # stem -> [path of nodes, root → holder]
+    ct_path = os.path.join(ROOT, "data", "derived", "classified_toc.json")
+    ct = json.load(open(ct_path, encoding="utf-8")) if os.path.exists(ct_path) else None
+    if ct:
+        def _tkids(n):
+            return (n.get("subsections") or []) + (n.get("children") or [])
+
+        def _assign_topic(n, path):
+            fname = f"topic-{len(topic_files) + 1:03d}.xhtml"
+            topic_files.append(fname)
+            fname_of_topic[id(n)] = fname
+            topic_name_to_file.setdefault(n.get("name") or "", fname)
+            here = path + [n]
+            for a in n.get("articles") or []:
+                fn = a.get("filename") if isinstance(a, dict) else None
+                if fn:
+                    topics_of.setdefault(re.sub(r"\.json$", "", fn), []).append(here)
+            for c in _tkids(n):
+                _assign_topic(c, here)
+        for c in ct["categories"]:
+            _assign_topic(c, [])
+
     # ── stage layout ─────────────────────────────────────────────────────
     stage = out_path + ".stage"
     if os.path.exists(stage):
@@ -630,6 +656,17 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             bundle_math_png(html, mathdir, seen_math)
         xhtml = pack.xhtml5_sanitize(to_xhtml_body(html, target))
         xhtml = stamp_img_dims(xhtml, oebps, img_dim_cache)
+        paths = topics_of.get(stem)
+        if paths:
+            # The article's topic memberships, each path element linked to its
+            # topic page — the book's form of the site's "In: …" overlay.
+            ps = "".join(
+                "<p>In: " + " › ".join(
+                    f'<a href="{fname_of_topic[id(n)]}">'
+                    f'{_html.escape(n.get("name") or "?")}</a>'
+                    for n in path) + "</p>"
+                for path in paths)
+            xhtml += f'<section class="topic-refs">{ps}</section>'
         open(os.path.join(render_dir, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml)
         if (i + 1) % 2000 == 0:
             log(f"  staged {i + 1}/{len(spine_stems)}")
@@ -968,24 +1005,11 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # each page = breadcrumb + notes + child links + the node's article links.  A
     # note's cross-link names another NODE (`anchor`) — resolved via a first-wins
     # name→page map, the title-map discipline. ──────────────────────────────
-    topic_files, topics_nav = [], ""
-    ct_path = os.path.join(ROOT, "data", "derived", "classified_toc.json")
-    if os.path.exists(ct_path):
-        ct = json.load(open(ct_path, encoding="utf-8"))
-
-        def _tkids(n):
-            return (n.get("subsections") or []) + (n.get("children") or [])
-
-        fname_of, name_to_file = {}, {}
-        def _assign(n):
-            fname = f"topic-{len(topic_files) + 1:03d}.xhtml"
-            topic_files.append(fname)
-            fname_of[id(n)] = fname
-            name_to_file.setdefault(n.get("name") or "", fname)
-            for c in _tkids(n):
-                _assign(c)
-        for c in ct["categories"]:
-            _assign(c)
+    topics_nav = ""
+    if ct:
+        # Page names + name map precomputed before pass 1 (the staged articles
+        # link into them); this section only WRITES the pages.
+        fname_of, name_to_file = fname_of_topic, topic_name_to_file
 
         def _art_li(a):
             disp = _html.escape(a.get("display") or a.get("target") or "")
