@@ -37,6 +37,7 @@ from xml.etree import ElementTree as ET
 import html5lib
 
 from britannica.epub import front_matter as FM
+from britannica.epub import fts as FTS
 from britannica.epub import images as IMG
 from britannica.epub import pack
 from britannica.epub import readers_guide as RG
@@ -785,9 +786,12 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # present, Kindle strips JS anyway, and its conversion-built index already gives
     # fast native search.  The nav's lookup branch points at the A–Z index instead.
     with_search = target != "kindle"
+    # Plain articles only (user: plate pages OUT of search — a "plate" query
+    # was a wall of captions); plates stay reachable from their articles.
     rows = [[_title_text(meta[s]["title"]),
              f"{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}"]
-            for s in spine_stems] if with_search else []
+            for s in spine_stems
+            if meta[s]["article_type"] == "article"] if with_search else []
     data_js = json.dumps(rows, ensure_ascii=False).replace("]]>", "]]\\u003e")
     search_script = (
         "\n//<![CDATA[\n"
@@ -795,7 +799,20 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         'function fold(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"");}\n'
         "var F=DATA.map(function(r){return fold(r[0]);});\n"
         "var W=F.map(function(t){return t.split(/[\\s,.'\\u2019()\\-]+/).filter(Boolean);});\n"
-        "function rank(t,w,q){if(t===q)return 0;if(w[0]===q)return 1;"
+        # Single-token queries keep the site's exact tiers; multi-token queries go
+        # token-set: every query word must match a title word (whole-word, else
+        # prefix), ANY ORDER — so "henry james" finds "JAMES, HENRY" (the print
+        # convention inverts names; readers type them straight).
+        "function rank(t,w,q,qt){if(t===q)return 0;\n"
+        "if(qt.length>1){if(t.indexOf(q)===0)return 1;\n"
+        " var all=true,allp=true;\n"
+        " for(var k=0;k<qt.length;k++){\n"
+        "  if(w.indexOf(qt[k])===-1)all=false;\n"
+        "  var p=false;for(var m=0;m<w.length;m++)if(w[m].indexOf(qt[k])===0){p=true;break;}\n"
+        "  if(!p){allp=false;break;}}\n"
+        " if(all)return 2;if(allp)return 3;\n"
+        " if(t.indexOf(q)!==-1)return 4;return 5;}\n"
+        "if(w[0]===q)return 1;"
         "if(w.indexOf(q)!==-1)return 2;if(t.indexOf(q)===0)return 3;"
         "if(t.indexOf(q)!==-1)return 4;return 5;}\n"
         'function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}\n'
@@ -803,10 +820,12 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         ' var q=fold(document.getElementById("q").value.trim());\n'
         ' var out=document.getElementById("results");\n'
         ' if(!q){out.innerHTML="";return;}\n'
+        " var qt=q.split(/[\\s,.'\\u2019()\\-]+/).filter(Boolean);\n"
         " var hits=[];\n"
-        " for(var i=0;i<DATA.length;i++){var r=rank(F[i],W[i],q);"
+        " for(var i=0;i<DATA.length;i++){var r=rank(F[i],W[i],q,qt);"
         "if(r<5)hits.push([r,DATA[i][0],DATA[i][1]]);}\n"
-        " hits.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:a[1]>b[1]?1:0);});\n"
+        " hits.sort(function(a,b){return a[0]-b[0]||a[1].length-b[1].length"
+        "||(a[1]<b[1]?-1:a[1]>b[1]?1:0);});\n"
         ' var html="";\n'
         " for(var j=0;j<Math.min(hits.length,100);j++)"
         "html+='<li><a href=\"'+hits[j][2]+'\">'+esc(hits[j][1])+'</a></li>';\n"
@@ -852,8 +871,97 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             '<p><input type="text" id="q" placeholder="Type or tap letters below…" '
             'style="width:100%;font-size:1.1em;padding:0.3em"/></p>'
             '<p id="keys" class="keyrow"></p>'
+            '<p><a href="fulltext.xhtml">Full-Text Search →</a></p>'
             '<ul id="results"></ul></div>'
             f'<script>{search_script}</script>'))
+
+    # ── Full-Text Search: the whole corpus as an embedded inverted index
+    # (epub/fts.py — AND-of-words, article granularity, no phrases/snippets).
+    # Its own page so Title Search stays instant; only opening this page pays
+    # the ~30MB asset load.  Kindle: absent with the rest of the scripted UI. ──
+    if with_search:
+        coll = FTS.Collector()
+        fts_docs = [s for s in spine_stems if meta[s]["article_type"] == "article"]
+        for s in fts_docs:
+            coll.add(_title_text(meta[s]["title"]),
+                     f"{anchor_map[pack.article_anchor(s)]}#{pack.article_anchor(s)}",
+                     load(s).get("body") or "")
+        asset = coll.asset_js()
+        open(os.path.join(oebps, "fts-data.js"), "w", encoding="utf-8").write(asset)
+        log(f"fts: {len(fts_docs)} docs, {len(coll.by_term):,} terms, "
+            f"asset {len(asset)/1e6:.1f}MB")
+        ft_script = (
+            "\n//<![CDATA[\n" + FTS.DECODER_JS +
+            'function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}\n'
+            "function run(){\n"
+            ' var q=document.getElementById("q").value.trim();\n'
+            ' var out=document.getElementById("results");\n'
+            ' var note=document.getElementById("note");\n'
+            ' if(!q){out.innerHTML="";note.textContent="";return;}\n'
+            " var r=ftsQuery(q);\n"
+            ' var msg=[];\n'
+            ' if(r.ignored&&r.ignored.length)msg.push("ignored (too common): "+r.ignored.join(", "));\n'
+            ' if(r.miss)msg.push("no article contains \\u201c"+r.miss+"\\u201d");\n'
+            " if(r.docs.length)msg.push(r.docs.length+\" article\"+(r.docs.length===1?\"\":\"s\"));\n"
+            ' note.textContent=msg.join(" \\u00b7 ");\n'
+            # title-boosted order: articles whose title carries a query token first
+            " var hits=[];\n"
+            " for(var i=0;i<r.docs.length;i++){\n"
+            "  var d=FTS_DOCS[r.docs[i]];\n"
+            "  var tf=ftsFold(d[0]);var boost=0;\n"
+            "  for(var k=0;k<(r.terms||[]).length;k++)if(tf.indexOf(r.terms[k])!==-1){boost=1;break;}\n"
+            "  hits.push([boost?0:1,d[0],d[1]]);\n"
+            " }\n"
+            " hits.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:a[1]>b[1]?1:0);});\n"
+            ' var html="";\n'
+            " for(var j=0;j<Math.min(hits.length,200);j++)"
+            "html+='<li><a href=\"'+hits[j][2]+'\">'+esc(hits[j][1])+'</a></li>';\n"
+            " if(hits.length>200)html+='<li>\\u2026 '+(hits.length-200)+' more \\u2014 add a word</li>';\n"
+            " out.innerHTML=html;\n"
+            "}\n"
+            'document.getElementById("q").addEventListener("input",run);\n'
+            'document.getElementById("go").addEventListener("click",function(e){e.preventDefault();run();});\n'
+            "function press(ch){\n"
+            ' var el=document.getElementById("q");\n'
+            ' if(ch==="BK")el.value=el.value.slice(0,-1);\n'
+            ' else if(ch==="CLR")el.value="";\n'
+            ' else el.value+=ch;\n'
+            " run();\n"
+            "}\n"
+            'var row=document.getElementById("keys");\n'
+            'var chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat([" "]);\n'
+            "for(var k=0;k<chars.length;k++){(function(ch){\n"
+            ' var b=document.createElement("a");\n'
+            ' b.textContent=(ch===" "?"\\u2423":ch);\n'
+            ' b.className="key";\n'
+            " b.addEventListener(\"click\",function(e){e.preventDefault();press(ch);});\n"
+            " row.appendChild(b);\n"
+            "})(chars[k]);}\n"
+            "[[\"BK\",\"\\u232b\"],[\"CLR\",\"\\u2715\"]].forEach(function(p){\n"
+            ' var b=document.createElement("a");\n'
+            " b.textContent=p[1];b.className=\"key key-ctl\";\n"
+            " b.addEventListener(\"click\",function(e){e.preventDefault();press(p[0]);});\n"
+            " row.appendChild(b);\n"
+            "});\n"
+            'document.getElementById("fallback").style.display="none";\n'
+            'document.getElementById("box").style.display="block";\n'
+            "//]]>\n")
+        open(os.path.join(oebps, "fulltext.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
+            "Full-Text Search",
+            '<h1>Full-Text Search</h1>'
+            '<p id="fallback">This page needs a reader that runs scripts (Thorium, most '
+            'desktop readers).  Without scripts, use your reader\u2019s built-in search.</p>'
+            '<div id="box" style="display:none">'
+            '<p>Every article containing <i>all</i> of the words you type '
+            '(word order and phrases are not considered).</p>'
+            '<p><input type="text" id="q" placeholder="e.g. waterloo cavalry" '
+            'style="width:80%;font-size:1.1em;padding:0.3em"/> '
+            '<a href="#" id="go" class="key key-ctl">Search</a></p>'
+            '<p id="keys" class="keyrow"></p>'
+            '<p id="note" style="color:#6b5e4f"></p>'
+            '<ul id="results"></ul></div>'
+            '<script src="fts-data.js"></script>'
+            f'<script>{ft_script}</script>'))
 
     # ── Topics: the classified TOC (vol-29) as nested hub pages, arbitrary depth.
     # One page per node in DFS preorder (nav targets stay monotone in spine order);
@@ -1080,8 +1188,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     topics_branch = (f'<li><a href="topics.xhtml">Topics</a><ol>{topics_nav}</ol></li>'
                      if topic_files else "")
     # A–Z stays reachable from the title page and the search page's no-script
-    # fallback; the TOC keeps only the one entry (top-levels only).
+    # fallback; the TOC keeps only the top-level entries.
     search_branch = ('<li><a href="search.xhtml">Title Search</a></li>'
+                     '<li><a href="fulltext.xhtml">Full-Text Search</a></li>'
                      if with_search else
                      '<li><a href="index.xhtml">A–Z Index</a></li>')
     contrib_branch = ""
@@ -1121,7 +1230,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
 
     # The tools ride on the FIRST page every reader sees (user: the Contents-panel
     # entries alone were too easy to miss).
-    tool_links = ['<a href="search.xhtml">Title Search</a>'] if with_search else []
+    tool_links = (['<a href="search.xhtml">Title Search</a>',
+                   '<a href="fulltext.xhtml">Full-Text Search</a>']
+                  if with_search else [])
     if topic_files:
         tool_links.append('<a href="topics.xhtml">Topics</a>')
     tool_links.append('<a href="index.xhtml">A–Z Index</a>')
@@ -1214,7 +1325,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     browse_items = [("bro-" + f[7:-6], f, "") for f in browse_files]
     topic_items = (([("topics", "topics.xhtml", "")]
                     + [("top-" + f[6:-6], f, "") for f in topic_files]) if topic_files else [])
-    search_items = ([("searchpage", "search.xhtml", ' properties="scripted"')]
+    search_items = ([("searchpage", "search.xhtml", ' properties="scripted"'),
+                     ("fulltextpage", "fulltext.xhtml", ' properties="scripted"')]
                     if with_search else [])
     index_items = ([("azindex", "index.xhtml", "")]
                    + [("idx-" + f[6:-6], f, "") for _l, f in letter_files])
@@ -1242,6 +1354,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                         f'media-type="{_media_type(name)}"/>')
     for n, name in enumerate(sorted(seen_math)):
         manifest.append(f'<item id="mpng-{n}" href="math/{name}" media-type="image/png"/>')
+    if with_search:
+        manifest.append('<item id="fts-data" href="fts-data.js" '
+                        'media-type="application/javascript"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
 
     opf = (
