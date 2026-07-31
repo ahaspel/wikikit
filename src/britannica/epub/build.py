@@ -25,6 +25,7 @@ import json
 import os
 import re
 import shutil
+from urllib.parse import unquote_plus
 import struct
 import unicodedata
 import zipfile
@@ -328,10 +329,27 @@ def _draw_tracked(draw, cx, y, text, font, tracking=0, fill=_COVER_INK):
         x += w + tracking
 
 
+_TITLE_PAGE_SCAN = os.path.join(ROOT, "tools", "viewer", "title_page.jpg")
+# The flat printed page inside the site's title-page photograph (crop excludes
+# the book's leaf edges and the grey backdrop; fractions of the source frame).
+_TITLE_PAGE_CROP = (0.106, 0.051, 0.900, 0.957)
+
+
 def make_cover(path, subtitle=None):
-    """Draw the cover: the site mark's double-rule frame and EB medallion over the
-    full title block.  Deterministic (no timestamps), regenerated per build."""
+    """The cover.  Complete edition: the site's Volume I title-page photograph,
+    cropped to the flat printed page (user spec: the page, minus the book edges),
+    scaled to the 1600×2560 language.  Volume builds (and a missing scan): the
+    drawn site mark.  Deterministic (no timestamps), regenerated per build."""
     from PIL import Image, ImageDraw
+    if subtitle is None and os.path.exists(_TITLE_PAGE_SCAN):
+        im = Image.open(_TITLE_PAGE_SCAN)
+        w, h = im.size
+        l, t, r, b = _TITLE_PAGE_CROP
+        page = im.crop((int(w * l), int(h * t), int(w * r), int(h * b)))
+        cover = page.resize((int(page.width * _COVER_H / page.height), _COVER_H),
+                            Image.LANCZOS)
+        cover.save(path, quality=88)
+        return
     im = Image.new("RGB", (_COVER_W, _COVER_H), _COVER_BG)
     d = ImageDraw.Draw(im)
     # double-rule frame, as the logo draws it
@@ -551,7 +569,10 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     for stem in stems:
         a = load(stem)
         meta[stem] = {"volume": a.get("volume", 0), "page_start": a.get("page_start", 0),
-                      "page_end": a.get("page_end") or 0, "title": a.get("title") or stem}
+                      "page_end": a.get("page_end") or 0, "title": a.get("title") or stem,
+                      "article_type": a.get("article_type") or "article",
+                      "ws_page_start": a.get("ws_page_start") or a.get("page_start", 0),
+                      "ws_page_end": a.get("ws_page_end") or a.get("page_end") or 0}
         body = a.get("body") or ""
         if "«MATH" in body or "«EQN" in body:
             render_article(a, target=target)      # collect mode records (latex, display)
@@ -922,12 +943,30 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # anchor map (absent stem keeps its site URL — the packer's standing policy) ──
     _GUIDE_ART_RE = re.compile(
         r'href="' + re.escape(pack.SITE_BASE) + r'/article/([0-9a-z-]+)"')
+    _SITE_CONTRIB_RE = re.compile(
+        r'href="' + re.escape(pack.SITE_BASE) + r'/contributors\.html\?q=([^"]+)"')
+    _name_to_slug = {e["name"]: s for s, e in contribs.items()}
 
     def _guide_art_href(m):
         anch = pack.article_anchor(m.group(1))
         if anch in anchor_map:
             return f'href="{anchor_map[anch]}#{anch}"'
         return m.group(0)
+
+    def _site_contrib_href(m):
+        # The q= value is the resolver's CANONICAL name — exact-match against the
+        # appendix roster only (zero false positives); a miss keeps the site link.
+        name = unquote_plus(m.group(1))
+        slug = _name_to_slug.get(name)
+        if slug is None and _section_slug(name) in contrib_map:
+            slug = _section_slug(name)
+        if slug and slug in contrib_map:
+            return f'href="{contrib_map[slug]}#contrib-{slug}"'
+        return m.group(0)
+
+    def _internalize_site_links(body):
+        return _SITE_CONTRIB_RE.sub(_site_contrib_href,
+                                    _GUIDE_ART_RE.sub(_guide_art_href, body))
 
     guide_pages, guide_imgs = RG.pages()
     if FM.DROPPED_HREFS:
@@ -936,7 +975,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     for b, src_path in sorted(guide_imgs.items()):
         shutil.copyfile(src_path, os.path.join(imgdir, b))
     for fname, g_title, g_body, _part in guide_pages:
-        g_body = _GUIDE_ART_RE.sub(_guide_art_href, g_body)
+        g_body = _internalize_site_links(g_body)
         open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
             xhtml_doc(g_title, '<div class="frontmatter">'
                       + to_xhtml_body(g_body, target) + "</div>"))
@@ -959,24 +998,18 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     # VOLUME HUB page listing the ~100-article ranges (detail lives behind the
     # click, never in the TOC panel) ─────────────────────────────────────────
     def _vol_label(v):
-        # The printed-spine range: alphabetically first/last FIRST WORDS on the
-        # accent-folded order (vol 1 = "A – ANDROPHAGI"; the page-order last stem
-        # gave ANDRONICUS, which is wrong — encyclopedia page order is not fully
-        # alphabetical at the tail).
-        # Junk-wrapped titles ('''X''', “X”) must not win min/max on their quote
-        # chars — compare on the alphanumeric core of the folded first word.  Plate
-        # captions ("PLATE II", "PLATE (VOL. 1, P. 357)") are not headwords and
-        # must not define the printed range; the bare headword PLATE (vol 21) is.
-        firsts = []
-        for s in vol_stems[v]:
-            ws = _fold_title(meta[s]["title"]).split()
-            if not ws:
-                continue
-            t = re.sub(r"[^A-Z0-9]", "",
-                       ws[0].replace("Æ", "AE").replace("Œ", "OE"))
-            if t and not (t == "PLATE" and len(ws) > 1):
-                firsts.append(t)
-        return f"Volume {v} · {min(firsts)} – {max(firsts)}" if firsts else f"Volume {v}"
+        # MIRROR THE SITE (index.html volArticles/volRangeWords — user: 100%
+        # correct): plain articles only (no plates), ordered ws_page_start with
+        # ws_page_end tiebreak, label = first word of the FIRST and LAST titles
+        # (comma-clipped).  No folding, no min/max — the site's rule verbatim.
+        arts = sorted(
+            (s for s in vol_stems[v] if meta[s]["article_type"] == "article"),
+            key=lambda s: (meta[s]["ws_page_start"], meta[s]["ws_page_end"]))
+        if not arts:
+            return f"Volume {v}"
+        def word(s):
+            return _title_text(meta[s]["title"]).split(",")[0].split(" ")[0]
+        return f"Volume {v} · {word(arts[0])} – {word(arts[-1])}"
 
     vol_stems = {}
     for s in spine_stems:                      # spine order = the volume's page order
@@ -1066,7 +1099,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     for fname, fm_title, fm_body in fm_pages:
         open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
             xhtml_doc(fm_title, '<div class="frontmatter">'
-                      + to_xhtml_body(fm_body, target) + "</div>"))
+                      + to_xhtml_body(_internalize_site_links(fm_body), target)
+                      + "</div>"))
     # Plain top-level entries, directly after Title Search (user spec — no group).
     fm_branch = "".join(f'<li><a href="{f}">{_html.escape(t)}</a></li>'
                         for f, t, _ in fm_pages)

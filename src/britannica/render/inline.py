@@ -323,7 +323,7 @@ def _brace2(m):
     return f'<span class="brace2 brace2-{side}">{_BRACE2_GLYPH[side]}</span>'
 
 
-def _ln_open_factory(article_url):
+def _ln_open_factory(article_url, book=False):
     def _ln_open(m):
         # «LN:filename|target|» (3-part, resolved) or «LN:target|» (2-part, unresolved).  A second
         # capture => the 3-part form: g1=filename, g2=target; else g1=target and there is no file.
@@ -331,7 +331,16 @@ def _ln_open_factory(article_url):
         has_file = g2 is not None
         filename = g1 if has_file else None
         target = g2 if has_file else g1
-        href = article_url(filename) if filename else "/search.html?q=" + _encode_uri_component(target)
+        if filename:
+            href = article_url(filename)
+        elif book:
+            # A book must not lean on the site's search box for an unresolved
+            # xref (Kindle has no search page — the link is a dead end dressed
+            # as a link).  href-less <a> renders as plain text; «/LN» still
+            # closes it.
+            return f'<a class="article-link" title="{target}">'
+        else:
+            href = "/search.html?q=" + _encode_uri_component(target)
         return f'<a href="{href}" class="article-link" title="{target}">'
     return _ln_open
 
@@ -581,7 +590,10 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     h = _BRACE2_RE.sub(_brace2, h)
     h = _HIEROGLYPH_RE.sub(_render_hieroglyph, h)
 
-    h = _LN_OPEN_RE.sub(_ln_open_factory(article_url), h).replace("«/LN»", "</a>")
+    h = _LN_OPEN_RE.sub(
+        _ln_open_factory(article_url,
+                         book=getattr(ctx, "epub_bundled", None) is not None),
+        h).replace("«/LN»", "</a>")
     h = _XL_OPEN_RE.sub(_xl_open, h).replace("«/XL»", "</a>")
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
 
