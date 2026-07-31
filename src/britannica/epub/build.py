@@ -1187,10 +1187,12 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     vols_branch = f"<li><span>Volumes</span><ol>{vol_lis}</ol></li>"
     topics_branch = (f'<li><a href="topics.xhtml">Topics</a><ol>{topics_nav}</ol></li>'
                      if topic_files else "")
-    # A–Z stays reachable from the title page and the search page's no-script
-    # fallback; the TOC keeps only the top-level entries.
-    search_branch = ('<li><a href="search.xhtml">Title Search</a></li>'
-                     '<li><a href="fulltext.xhtml">Full-Text Search</a></li>'
+    # ONE "Search" group (user's TOC spec): Title · Full-Text.  A–Z stays
+    # reachable from the title page and the search page's no-script fallback.
+    search_branch = ('<li><span>Search</span><ol>'
+                     '<li><a href="search.xhtml">Title</a></li>'
+                     '<li><a href="fulltext.xhtml">Full-Text</a></li>'
+                     '</ol></li>'
                      if with_search else
                      '<li><a href="index.xhtml">A–Z Index</a></li>')
     contrib_branch = ""
@@ -1210,15 +1212,17 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             xhtml_doc(fm_title, '<div class="frontmatter">'
                       + to_xhtml_body(_internalize_site_links(fm_body), target)
                       + "</div>"))
-    # Plain top-level entries, directly after Title Search (user spec — no group).
-    fm_branch = "".join(f'<li><a href="{f}">{_html.escape(t)}</a></li>'
-                        for f, t, _ in fm_pages)
-    # Title Search leads (user: the most important tool by far — it was buried);
-    # the prefaces follow it directly, the Reader's Guide closes the book (user spec).
+    # ONE "Introduction" group (user's TOC spec): To This Edition · Editorial
+    # Preface · Historical Preface.
+    fm_branch = ("<li><span>Introduction</span><ol>" + "".join(
+        f'<li><a href="{f}">{_html.escape(t)}</a></li>' for f, t, _ in fm_pages)
+        + "</ol></li>") if fm_pages else ""
+    # TOC order (user's spec): Introduction group · Search group · Volumes ·
+    # Topics · Contributors · Reader's Guide.
     if nav_articles:
-        nav_top = search_branch + fm_branch + topics_branch + vols_branch + contrib_branch + guide_branch
+        nav_top = fm_branch + search_branch + topics_branch + vols_branch + contrib_branch + guide_branch
     else:
-        nav_top = search_branch + fm_branch + vols_branch + topics_branch + contrib_branch + guide_branch
+        nav_top = fm_branch + search_branch + vols_branch + topics_branch + contrib_branch + guide_branch
     nav = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en">\n'
@@ -1335,12 +1339,12 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     guide_items = [(f"gd-{i}", fname, "")
                    for i, (fname, _t, _b, _p) in enumerate(guide_pages)]
     if nav_articles:
-        for grp in (search_items, index_items, fm_items, topic_items):
+        for grp in (fm_items, search_items, index_items, topic_items):
             _mspine(spine_front, grp)
         for grp in (browse_items, contrib_items, guide_items):
             _mspine(spine_back, grp)
     else:
-        for grp in (search_items, index_items, fm_items, browse_items, topic_items):
+        for grp in (fm_items, search_items, index_items, browse_items, topic_items):
             _mspine(spine_front, grp)
         for grp in (contrib_items, guide_items):
             _mspine(spine_back, grp)

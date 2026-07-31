@@ -127,7 +127,7 @@ def introduction_html():
         return (f'<p><span class="shoulder-heading" id="intro-{slug}">'
                 f"{_h.escape(head)}</span> {_h.escape(p[m.end():])}</p>")
 
-    return "<h1>Introduction</h1>" + "".join(_para(p) for p in paras)
+    return "<h1>To This Edition</h1>" + "".join(_para(p) for p in paras)
 
 
 def preface_html():
@@ -138,18 +138,22 @@ def preface_html():
             + body)
 
 
-def index_preface_html():
+def historical_preface_html():
+    """The Prefatory Note — the 1910 history of the Britannica's editions."""
     body = _extract(os.path.join(ROOT, "tools", "viewer",
-                                 "ancillary-index-preface.html"), "body")
-    return "<h1>Preface to the Index</h1>" + body
+                                 "ancillary-prefatory-note.html"), "body")
+    return "<h1>Historical Preface</h1>" + body
 
 
 def pages():
-    """[(fname, nav title, body HTML)] in book order; introduction only when written."""
+    """[(fname, nav title, body HTML)] — the Introduction group's children, in
+    book order (user's TOC spec); the editor's own piece only when written.
+    The Index Preface is OUT (user: the book's own indices supersede it)."""
     out = []
     intro = introduction_html()
     if intro:
-        out.append(("introduction.xhtml", "Introduction", intro))
+        out.append(("introduction.xhtml", "To This Edition", intro))
     out.append(("preface.xhtml", "Editorial Preface", preface_html()))
-    out.append(("index-preface.xhtml", "Preface to the Index", index_preface_html()))
+    out.append(("historical-preface.xhtml", "Historical Preface",
+                historical_preface_html()))
     return out
