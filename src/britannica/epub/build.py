@@ -342,7 +342,9 @@ def make_cover(path, subtitle=None):
     scaled to the 1600×2560 language.  Volume builds (and a missing scan): the
     drawn site mark.  Deterministic (no timestamps), regenerated per build."""
     from PIL import Image, ImageDraw
-    if subtitle is None and os.path.exists(_TITLE_PAGE_SCAN):
+    # The scan IS the Volume I title page — right for the complete edition and
+    # for the vol-1 sampler alike; other volume builds keep the drawn mark.
+    if subtitle in (None, "Volume 1") and os.path.exists(_TITLE_PAGE_SCAN):
         im = Image.open(_TITLE_PAGE_SCAN)
         w, h = im.size
         l, t, r, b = _TITLE_PAGE_CROP
@@ -1268,16 +1270,28 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         tool_links.append(f'<a href="{contrib_files[0]}">Contributors</a>')
     if guide_pages:
         tool_links.append('<a href="guide.xhtml">Reader’s Guide</a>')
+    n_arts = sum(1 for s in spine_stems if meta[s]["article_type"] == "article")
+    vols_present = sorted({meta[s]["volume"] for s in spine_stems})
+    if len(vols_present) == 1:
+        # Single-volume book = the sampler form: honest count line + the
+        # try-before-you-buy pointer, traveling inside every copy.
+        count_line = f"{n_arts:,} articles · Volume {vols_present[0]} of 28 (1910–1911)"
+        closing = (f"<p>This is Volume {vols_present[0]} of 28.  The complete "
+                   "edition — every volume in one searchable book — at "
+                   '<a href="https://britannica11.org/download.html">britannica11.org</a>.</p>')
+    else:
+        count_line = f"{n_arts:,} articles · 28 volumes (1910–1911)"
+        closing = '<p><a href="https://britannica11.org">britannica11.org</a></p>'
     open(os.path.join(oebps, "titlepage.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
         title,
         f'<div class="titlepage"><h1>{_html.escape(title)}</h1>'
         '<p>A Dictionary of Arts, Sciences, Literature and General Information</p>'
-        f'<p>{len(spine_stems):,} articles · 28 volumes (1910–1911)</p>'
+        f'<p>{count_line}</p>'
         f'<p class="titlepage-tools">{" · ".join(tool_links)}</p>'
         + (('<p class="titlepage-tools">' + " · ".join(
             f'<a href="{f}">{_html.escape(t)}</a>' for f, t, _ in fm_pages) + "</p>")
            if fm_pages else "")
-        + '<p><a href="https://britannica11.org">britannica11.org</a></p></div>'))
+        + closing + "</div>"))
 
     open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css(target))
 
