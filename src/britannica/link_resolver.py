@@ -826,7 +826,31 @@ class LinkResolver:
             bag = [c for c in bag if c[0] != self_fn]
             if not bag:
                 return _SELF
+        qual = _qualifier_of(name)
         if len(bag) == 1:
+            # A single candidate is normally the answer.  But an ALIAS can match
+            # the whole parenthesised string exactly and still be the wrong
+            # article — `Boston (Massachusetts)` hit Boston, Lincolnshire — and
+            # this short-circuit returned it before the qualifier was consulted.
+            # So widen to the bare-name bag and let the picker look.
+            #
+            # FAILS CLOSED: the widened answer is taken ONLY when the source's
+            # own qualifier decided it.  An earlier version instead asked "does
+            # this candidate satisfy the qualifier?" and widened on a NO — but
+            # that test is lexical, so `Alexander I. (tsar)` (a lead reading
+            # "emperor of Russia") read as a contradiction and rebound to a
+            # Scottish king.  A failure to verify is not evidence of error.
+            if qual:
+                wide, _wt = self.candidates(
+                    _QUALIFIER_RE.sub("", name).strip(), superset=True)
+                if self_fn:
+                    wide = [c for c in wide if c[0] != self_fn]
+                if len(wide) > 1:
+                    pick, _t, method = self.fish(
+                        name, wide, prose=prose, qualifier=qual,
+                        want_kind=lead_kind(qual))
+                    if pick and method in ("qualifier", "qualifier-kind"):
+                        return pick, None
             return bag[0][0], None
         # The source's own disambiguator, carried to the picker.  A qualifier
         # naming a KIND ("(town)", "(statesman)") is a want_kind; any other
@@ -836,8 +860,7 @@ class LinkResolver:
         # the reference's prose, which for `Down (hill)` in a Dunkirk footnote
         # points at county Down.  `lead_kind` IS the qualifier->kind mapping
         # (it searches _LEAD_NOUNS in whatever text it is given), so there is
-        # no second vocabulary to keep in step.
-        qual = _qualifier_of(name)
+        # no second vocabulary to keep in step.  (`qual` is read once, above.)
         fn, _, _ = self.fish(name, bag, prose=prose, qualifier=qual,
                              want_kind=lead_kind(qual) if qual else None)
         return (fn, None) if fn else None
