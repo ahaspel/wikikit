@@ -20,9 +20,16 @@ The fisher ALWAYS picks — the answer is in the bag; a dead tie falls to salien
 """
 from __future__ import annotations
 
+import re
+
 from britannica.topic_geo import geo_filter
-from britannica.topic_subject import field_score, field_terms
+from britannica.topic_subject import field_hits, field_score, field_terms
 from britannica.xrefs.disambiguation import pick_by_kind
+
+# Content words of a source qualifier.  "(emperor of Romania)" discriminates on
+# `emperor`/`Romania`; the function words carry nothing and would match every lead.
+_QUAL_TERM_RE = re.compile(r"[A-Za-zÀ-ÿ]{3,}")
+_QUAL_STOP = {"the", "of", "and", "for", "with"}
 
 # Proximity weights for a bucket path taken leaf-first: the immediate parent
 # discriminates far better than the top category, so the near segments dominate.
@@ -86,11 +93,17 @@ class Fisher:
     def _tally(self, method):
         self.stats[method] = self.stats.get(method, 0) + 1
 
-    def fish(self, topic: str, cands, path, want_kind, prose=None, trusted=True):
+    def fish(self, topic: str, cands, path, want_kind, prose=None, trusted=True,
+             qualifier: str = None):
         """topic: raw name; cands: [(fn, title)]; path: [root, ..., leaf];
         want_kind: str|None.  Returns (fn, title, method) — or (None, None,
         "abstain") when ``trusted`` is False and the prose doesn't point at any
         candidate.
+
+        ``qualifier``: the source's OWN disambiguator, carried off a reference
+        target ("Alexandria (Egypt)", "Down (hill)").  Same class of fact as a
+        bucket — it NAMES the attribute and the lead STATES it — so it is
+        weighed with the bucket rungs, ahead of kind and embedding.
 
         The disambiguation context is a BUCKET PATH by default (topics).  Pass
         ``prose`` — the text surrounding a reference — instead, and the fisher keys
@@ -103,6 +116,43 @@ class Fisher:
             fn = cands[0][0]
             self._tally("unique")
             return fn, title_of[fn], "unique"
+
+        # 0a. the source's own qualifier — the most direct fact available: the
+        #     author wrote which sense was meant.  Test it the way the field rung
+        #     tests a bucket's profession words (field_hits, word-boundary, lead
+        #     HEAD only), and abstain on a tie or a miss so this can only ever
+        #     ADD a decision, never redirect one the other rungs would have made.
+        #     A qualifier naming a KIND ("(city)", "(statesman)") is tested by the
+        #     FIRST is-a, never by a whole-lead grep: ASSUR the god says "patron
+        #     deity of the CITY of Assur", so grepping `city` picks the god over
+        #     the city.  When the kind test can't separate them the rung ABSTAINS
+        #     — falling back to the grep we just rejected would reinstate the bug.
+        if qualifier:
+            if want_kind:
+                kp = pick_by_kind(cands, want_kind, self._opening)
+                if kp is not None:
+                    self._tally("qualifier-kind")
+                    return kp, title_of[kp], "qualifier-kind"
+            #     Kind abstained (or the qualifier names no kind): fall back to
+            #     "does exactly ONE lead state these words".  MAINE (state) needs
+            #     this — both candidates are kind `division`, and only the US
+            #     state's lead says "state".  Known residual: a qualifier that
+            #     appears incidentally in the wrong lead (ASSUR (city) — the god
+            #     is "patron deity of the city of Assur") still mis-picks; one
+            #     case in 22 adjudicated, and a miss here costs a link while a
+            #     wrong pick costs a wrong link, so this stays a pick.
+            terms = [w for w in _QUAL_TERM_RE.findall(qualifier.lower())
+                     if w not in _QUAL_STOP]
+            if terms:
+                hits = {fn: len(field_hits(self._opening(fn), terms))
+                        for fn, _ in cands}
+                best = max(hits.values())
+                if best:
+                    win = [ft for ft in cands if hits[ft[0]] == best]
+                    if len(win) == 1:
+                        fn = win[0][0]
+                        self._tally("qualifier")
+                        return fn, title_of[fn], "qualifier"
 
         # 0. bucket context — the bucket names the discriminating attribute and
         #    the lead states it: a DIRECT fact, so it precedes kind/embedding.

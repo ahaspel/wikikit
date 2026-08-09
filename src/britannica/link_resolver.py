@@ -186,6 +186,25 @@ def _topic_alternates(raw: str) -> list:
     return uniq
 
 
+# A TRAILING parenthetical on a reference target is the source's own
+# DISAMBIGUATOR — "Down (hill)", "Order (architecture)", "Alexandria (Egypt)".
+# Distinct from `_topic_alternates`, which reads a parenthetical as an alternate
+# SPELLING for recall ("Afars (Danakil)"): that answers "what else might this be
+# called", this answers "which of the same-named articles is meant".  Both are
+# true of parentheses, and conflating them would make one wrong.  TRAILING only —
+# a mid-string paren belongs to a path form ("Bible (King James)/1 John#3:12")
+# and names nothing.  Recognition only: the qualifier is CARRIED to the picker,
+# never used to trim the name the fill searches on (fill dumb, fish smart).
+_QUALIFIER_RE = re.compile(r"\s*\(([^)]*)\)\s*$")
+
+
+def _qualifier_of(name: str) -> str | None:
+    """The source-stated disambiguator on a reference name, or None."""
+    m = _QUALIFIER_RE.search(name or "")
+    q = m.group(1).strip() if m else ""
+    return q or None
+
+
 class LinkResolver:
     """Build once over the exported corpus; resolve many names."""
 
@@ -422,12 +441,13 @@ class LinkResolver:
 
     # -- 3. fish (pick one) --------------------------------------------------
     def fish(self, name, cands, *, path=None, prose=None, want_kind=None,
-             trusted=True):
-        """Pick one candidate from a bag — the bucket path (topics) or the reference
-        prose (xrefs) as context.  Returns (fn, title, method), or (None, None,
-        "abstain") for an untrusted cue whose prose clears no candidate."""
+             trusted=True, qualifier=None):
+        """Pick one candidate from a bag — the bucket path (topics), the reference
+        prose (xrefs), or the source's own qualifier, as context.  Returns
+        (fn, title, method), or (None, None, "abstain") for an untrusted cue whose
+        prose clears no candidate."""
         return self.fisher.fish(name, cands, path or [], want_kind, prose=prose,
-                                trusted=trusted)
+                                trusted=trusted, qualifier=qualifier)
 
     # -- editor-prose reference resolver (about page / Reader's Guide) -------
     def resolve_reference(self, name: str, *, prose: str = ""):
@@ -808,7 +828,18 @@ class LinkResolver:
                 return _SELF
         if len(bag) == 1:
             return bag[0][0], None
-        fn, _, _ = self.fish(name, bag, prose=prose)
+        # The source's own disambiguator, carried to the picker.  A qualifier
+        # naming a KIND ("(town)", "(statesman)") is a want_kind; any other
+        # ("(Egypt)", "(architecture)") is bucket context for the geo/field
+        # rungs.  Both rungs already exist and are simply dark on this path —
+        # xrefs never supplied them, so the fisher fell through to a cosine on
+        # the reference's prose, which for `Down (hill)` in a Dunkirk footnote
+        # points at county Down.  `lead_kind` IS the qualifier->kind mapping
+        # (it searches _LEAD_NOUNS in whatever text it is given), so there is
+        # no second vocabulary to keep in step.
+        qual = _qualifier_of(name)
+        fn, _, _ = self.fish(name, bag, prose=prose, qualifier=qual,
+                             want_kind=lead_kind(qual) if qual else None)
         return (fn, None) if fn else None
 
     @staticmethod
