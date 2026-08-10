@@ -19,6 +19,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
     SHAPE_PAIRED_WRAPPER,
+    SHAPE_GENEALOGY,
     SHAPES,
     strip_outer,
 )
@@ -31,9 +32,15 @@ class TestShapeVocabulary:
         #     SHAPE_BODY, owner-of-output principle says every span
         #     maps to one producer),
         #   PAIRED_WRAPPER (``{{NAME/s}}…{{NAME/e}}`` paired open/close span —
-        #     the merged former CENTER + CHART2: one STRUCTURE, two families the
-        #     classifier tells apart by NAME (chart2 → CHART2, else → CENTER);
-        #     the producers/labels are unchanged),
+        #     the CENTRING family ONLY, always composite, always CENTER),
+        #   GENEALOGY (``{{chart2|familytree|tree chart/start}}…/end`` — a LEAF;
+        #     the producer emits the pre-cropped image).  These two were once ONE
+        #     shape whose families the classifier told apart by NAME.  That merge
+        #     put a leaf and a composite under one shape and FORCED a name test,
+        #     which searched the whole span: a wrapper merely CONTAINING a chart
+        #     classified as one and the producer emitted the image alone —
+        #     PHYLLOXERA lost ~50% of its prose, SOLOMON ~24%.  Un-merged, so the
+        #     test (and its bug) is gone rather than corrected,
         #   (ORDERED_LIST, SECTION and MIRROR_GLYPH were collapsed back into
         #     their generic delimiter shapes — DOUBLE_BRACE, HTML_SELF_CLOSING
         #     and HTML_TAG respectively — with the type carve moved from the
@@ -59,11 +66,12 @@ class TestShapeVocabulary:
         # and INLINE_IMAGE dissolved into DOUBLE_BRACKET (the walker draws no
         # inline-vs-block image distinction — the raw never marks one) —
         # recognition by name/attribute is the classifier's job, not the walker's
-        # — leaving 10.
-        assert len(SHAPES) == 10
+        # — leaving 10, then +1 for un-merging GENEALOGY from PAIRED_WRAPPER.
+        assert len(SHAPES) == 11
         assert SHAPE_HTML_TAG in SHAPES
         assert SHAPE_DOUBLE_BRACE in SHAPES
         assert SHAPE_PAIRED_WRAPPER in SHAPES
+        assert SHAPE_GENEALOGY in SHAPES
 
     def test_all_shapes_are_strings(self):
         assert all(isinstance(s, str) for s in SHAPES)

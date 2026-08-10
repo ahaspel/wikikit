@@ -36,6 +36,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
+    SHAPE_GENEALOGY,
     SHAPE_PAGE,
     SHAPE_TITLE,
 )
@@ -610,7 +611,7 @@ def _walk_balanced_shapes(
         if matched is None:
             gm = _GENEALOGY_RE.match(text, opener_pos)
             if gm is not None:
-                matched = (gm.end(), SHAPE_PAIRED_WRAPPER, gm.group(0))
+                matched = (gm.end(), SHAPE_GENEALOGY, gm.group(0))
 
         # Block HTML element (`<table>`/`<ref>`/`<poem>`/`<math>`/`<score>`)
         # — bounded by the one balanced rule, so a nested construct can't

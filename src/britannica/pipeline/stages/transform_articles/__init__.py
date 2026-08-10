@@ -102,7 +102,20 @@ def preprocess_article(session, article) -> str:
     # The «PAGE» marker is already materialized into each segment at detection
     # (super_detect slaps the current leaf on as it cuts the page-fragment).  Just
     # concatenate — never re-stamp a leaf-fact at the article level.
-    joined = "".join(seg.segment_text or "" for seg, page_number in segments)
+    #
+    # The separator is a NEWLINE because that is what the source has: MediaWiki's
+    # `<pages>` transclusion joins page bodies with `\n`, and detection's
+    # `segment_text=(seg.text or "").strip()` drops it.  Restoring it here — the
+    # one place the pages are re-assembled — is faithfulness, not a transform.
+    # A `\n` is exactly the right token because it carries BOTH meanings the seam
+    # needs, and the body producer already resolves them: a single `\n` becomes a
+    # space in prose (so `with`|`his` stays two words) and `-\n` feeds
+    # `_dehyphenate` (so a hyphen-broken `coun-`|`try` finally rejoins), while a
+    # line-level mark (`:`) now reaches a line start instead of being welded to the
+    # previous page's last line and rendering as literal text.  `\n{2,}` cannot
+    # match across the seam — the sentinel sits between the two newlines — so no
+    # spurious paragraph is minted.
+    joined = "\n".join(seg.segment_text or "" for seg, page_number in segments)
     if not joined:
         return ""
 

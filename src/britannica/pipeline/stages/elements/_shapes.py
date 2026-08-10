@@ -30,8 +30,16 @@ SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
 SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 SHAPE_PAIRED_WRAPPER    = "PAIRED_WRAPPER"     # {{NAME/s}}…{{NAME/e}} paired open/close span
-                                               # (the former CENTER + CHART2 — one structure;
-                                               #  the classifier routes by name to CENTER / CHART2)
+                                               # — the centring family, ALWAYS composite, always
+                                               # CENTER.  It no longer shares a shape with the
+                                               # genealogy leaf (see SHAPE_GENEALOGY), so the
+                                               # classifier needs no name test to tell them apart.
+SHAPE_GENEALOGY         = "GENEALOGY"          # {{chart2|familytree|tree chart/start}}…/end — a
+                                               # LEAF: the producer emits the pre-cropped image.
+                                               # Sharing PAIRED_WRAPPER forced a name test to
+                                               # separate leaf from composite, and that test
+                                               # claimed whole wrappers (PHYLLOXERA lost ~50% of
+                                               # its prose, SOLOMON ~24%).
 SHAPE_PAGE              = "PAGE"               # page-break bookkeeping marker (\x01PAGE:N\x01)
 SHAPE_TITLE             = "TITLE"              # «TITLE»…«/TITLE» stamp (preprocess_article)
 
@@ -45,6 +53,7 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_OUTLINE,
     SHAPE_BODY,
     SHAPE_PAIRED_WRAPPER,
+    SHAPE_GENEALOGY,
     SHAPE_PAGE,
     SHAPE_TITLE,
 })
@@ -70,6 +79,7 @@ SHAPES: frozenset[str] = frozenset({
 LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_OUTLINE,
+    SHAPE_GENEALOGY,
     # The six STYLED-derived structures (STRIP / PARAM / SHOULDER / RUNNING_HEADER
     # = `{{…}}` template-form stylers/headings; SPAN_TITLE / HTML_STYLE = `<tag>`
     # styled wrappers) no longer have their own shapes: they ride the generic
@@ -133,6 +143,10 @@ def strip_outer(shape: str, raw: str) -> str:
         # significant whitespace at the boundary.
         return s.strip()
     if shape == SHAPE_HTML_SELF_CLOSING:
+        return ""
+    if shape == SHAPE_GENEALOGY:
+        # Leaf — chart-grammar tokens are not extractable wikitext.  The
+        # producer reads `raw` and emits the pre-cropped image.
         return ""
     if shape == SHAPE_PAGE:
         # Leaf — the whole `\x01PAGE:N\x01` token is the marker; the

@@ -24,6 +24,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
     SHAPE_PAIRED_WRAPPER,
+    SHAPE_GENEALOGY,
 )
 
 
@@ -119,14 +120,23 @@ class TestAtomicLabels:
         assert ce.inner_text == ""
         assert ce.inner_registry == {}
 
-    def test_paired_wrapper_chart2(self):
-        # The chart2 family of the merged PAIRED_WRAPPER shape — the classifier
-        # routes by name to CHART2 (a leaf: empty inner, no children).
-        ce = classify(SHAPE_PAIRED_WRAPPER,
-                       "{{chart2/start}}A{{chart2/end}}")
+    def test_genealogy_is_its_own_leaf_shape(self):
+        # The genealogy grid has its OWN shape now, not PAIRED_WRAPPER — so the
+        # label comes from the shape, with no name test to get wrong.
+        ce = classify(SHAPE_GENEALOGY, "{{chart2/start}}A{{chart2/end}}")
         assert ce.label == "CHART2"
         assert ce.inner_text == ""
         assert ce.inner_registry == {}
+
+    def test_wrapper_containing_a_chart_is_still_a_wrapper(self):
+        # The regression that cost PHYLLOXERA ~50% of its prose: a fine-print
+        # wrapper holding prose AND a chart used to classify wholly as CHART2,
+        # and the producer emitted the chart image alone.  It must stay CENTER
+        # and recurse, so the chart is one CHILD among its prose siblings.
+        ce = classify(SHAPE_PAIRED_WRAPPER,
+                      "{{c/s}}prose before {{chart2/start}}A{{chart2/end}}"
+                      " prose after{{c/e}}")
+        assert ce.label == "CENTER"
 
     def test_paired_wrapper_center(self):
         # The centring family of the merged PAIRED_WRAPPER shape — the classifier

@@ -49,6 +49,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
     SHAPE_PAIRED_WRAPPER,
+    SHAPE_GENEALOGY,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
@@ -112,8 +113,17 @@ def _db_name(raw: str) -> str:
 # optionally with a `{{center|…}}` / `{{EB1911 fine print/s}}` prefix, so the
 # opener isn't always the first token — match anywhere in the raw).  Everything
 # else PAIRED_WRAPPER is the `{{NAME/s}}…{{NAME/e}}` centring family → CENTER.
-_CHART2_FAMILY_RE = re.compile(
-    r"\{\{\s*(?:chart2|familytree|tree\s*chart)\s*/\s*start", re.IGNORECASE)
+#
+# DELETED: `_CHART2_FAMILY_RE`.  A chart is a LEAF — the producer emits a
+# pre-rendered `{{IMG:chart2_vol21_page0573.jpg|…}}` — so it never needed a
+# wrapper's shape.  Giving it SHAPE_PAIRED_WRAPPER merged a leaf with the
+# `{{NAME/s}}…{{NAME/e}}` composite family, which FORCED a name test to tell
+# them apart; the test searched "anywhere in the raw", so a wrapper that merely
+# CONTAINED a chart was classified as one, and the producer emitted the image
+# ALONE.  PHYLLOXERA lost ~50% of its prose (an 8,225-char block rendered to 52
+# chars), SOLOMON, PSALMS OF ~24%.  The walker now labels the genealogy span
+# SHAPE_GENEALOGY, so PAIRED_WRAPPER is unconditionally CENTER and the
+# discriminator — with the bug it carried — is gone rather than corrected.
 
 _HTML_TAG_NAME_RE = re.compile(r"^<\s*([A-Za-z][A-Za-z0-9]*)", re.IGNORECASE)
 _TEMPLATE_NAME_RE = re.compile(r"^\{\{\s*([^|{}<>\n\s]+)")
@@ -896,12 +906,13 @@ def _derive_label(
         return "PAGE"
     if shape == SHAPE_BODY:
         return "BODY"
+    if shape == SHAPE_GENEALOGY:
+        return "CHART2"
     if shape == SHAPE_PAIRED_WRAPPER:
-        # One paired open/close structure, two families distinguished by NAME:
-        # a chart2 / familytree / tree-chart grid macro → CHART2 (the genealogy
-        # producer); every other `{{NAME/s}}…{{NAME/e}}` centring wrapper → CENTER.
-        if _CHART2_FAMILY_RE.search(raw):
-            return "CHART2"
+        # ONE family now: `{{NAME/s}}…{{NAME/e}}` centring wrappers.  The
+        # genealogy leaf has its own shape, so there is no name test here to get
+        # wrong — a wrapper that merely CONTAINS a chart stays a wrapper and
+        # recurses, and the chart becomes one child among its prose siblings.
         return "CENTER"
     if shape == SHAPE_TITLE:
         return "TITLE"  # «TITLE»…«/TITLE» stamp (preprocess_article); producer recurses
@@ -1180,7 +1191,7 @@ def classify(
     # renders to a pre-cropped image, but its inner `<ref>` footnotes ARE content: classify JUST
     # those into REF nodes (`_classify_chart2_composite`), so the producer reads them as children
     # instead of re-`process_elements`-ing them.  Only CENTER paired wrappers decompose fully.
-    if shape == SHAPE_PAIRED_WRAPPER and _CHART2_FAMILY_RE.search(raw):
+    if shape == SHAPE_GENEALOGY:
         return _classify_chart2_composite(raw)
     if shape in LEAF_SHAPES or (
             shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
