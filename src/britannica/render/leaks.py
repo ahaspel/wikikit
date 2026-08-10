@@ -81,11 +81,36 @@ _ESC_TAG_RE = re.compile(
     r"(?:[^&<>]|&#?\w{1,8};){0,200}?&gt;", re.IGNORECASE)
 
 
+# A wiki INDENT mark (`:`/`::`/`:::`) surviving into visible text.  `:` is
+# MediaWiki's indent (`<dd>`), and where the outline recognizer declines a line —
+# it needs a `:`-anchored LINE, and at a page break the position sentinel occupies
+# the line start — the mark renders as literal text: BIRD p.978 shows `:::` above
+# "Sub-order 7. Pici".  This class was structurally invisible to every check
+# above: it is not a marker, a template, a wikilink, an attribute or a tag, so the
+# audit reported these articles CLEAN.
+#
+# ONE colon is the threshold, set by corpus measurement, not caution: 1+ finds 17
+# occurrences in 14 articles, 2+ finds only 5 — and all 12 it would hide are real
+# (GASTROPODA's `:Fam. 29.— Vermetidae`, FUNGI's `: Class II.—Zygomycetes`,
+# PATAGONIA's `:2. Patagonian Molasse`).  Requiring two would rebuild the very
+# blind spot this check exists to close.
+#
+# The discriminator is POSITION, not count: a prose colon is TRAILING ("as
+# follows:"), so it can never open a text node.  Anchoring to a block boundary —
+# the tag that ends or starts a block, or the `</a>` of a page marker — matches
+# only a colon that begins rendered content, and the `(?=[^\s:])` tail requires
+# real content after it, so a decorative `::` alone on a line is not claimed.
+_INDENT_RE = re.compile(
+    r"(?:</(?:p|div|li|ul|ol|td|th|tr|h[1-6]|blockquote)>"
+    r"|<(?:p|div|li|ul|ol|td|th|tr|h[1-6]|blockquote)\b[^>]*>"
+    r"|</a>)\s*:+(?=[^\s:])")
+
+
 def find_render_leaks(rendered_html):
     """Return a list of ``(category, snippet)`` for every raw survivor; empty = clean.
 
     Categories: ``marker`` / ``template`` / ``wikilink`` / ``attr`` / ``tag`` /
-    ``sentinel``.
+    ``indent`` / ``sentinel``.
     """
     rh = rendered_html or ""
     no_math = _TEXMATH_RE.sub("", rh)
@@ -97,6 +122,8 @@ def find_render_leaks(rendered_html):
         ("wikilink", _WIKILINK_RE, no_math),
         ("attr", _ATTR_RE, no_tags),
         ("tag", _ESC_TAG_RE, no_math),
+        # Runs on TAG-BEARING text: the block boundary IS the discriminator.
+        ("indent", _INDENT_RE, no_math),
         ("sentinel", _SENTINEL_RE, rh),
     ):
         for m in rx.finditer(text):
