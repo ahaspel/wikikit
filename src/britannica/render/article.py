@@ -30,7 +30,6 @@ from britannica.markers import markers_to_text
 # ── marker constants ──
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
 
-_PAGE_RE = re.compile("\x01PAGE:(\\d+)\x01")
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
 # A genuine single-«MATH» EQN row: the content group must NOT cross an internal «/MATH», so a
 # multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its close
@@ -222,31 +221,6 @@ def _render_display_math(latex, hint, ctx):
     return result
 
 
-def render_page_markers(s, ctx):
-    def repl(m):
-        page = m.group(1)
-        unproofed = page in ctx.unproofed_pages
-        cls = "page-marker unproofed" if unproofed else "page-marker"
-        # The page break IS a word separator; the marker floats to the margin (out
-        # of flow), so FLANK it with a space or 'an⟨p.121⟩oath' collapses to
-        # 'anoath'.  The 'vol:page' label lives in a `::after` pseudo-element
-        # (data-vol/data-page), NOT a text node — generated content is excluded from
-        # in-article/browser find and `textContent`, so the marker stays furniture
-        # and a search for 'an oath' matches.
-        if ctx.epub_bundled is not None:
-            # EPUB drops scans (can't bundle page images; readers don't want the viewer
-            # link).  Keep the printed-page boundary as a non-linked indicator — the
-            # bibliographic reference survives without the scan.
-            return f' <span class="{cls}" data-page="{page}" data-vol="{ctx.volume}"></span> '
-        title = (f"Volume {ctx.volume}, page {page} (unproofed source) — click to view scan"
-                 if unproofed else f"Volume {ctx.volume}, page {page} — click to view scan")
-        # Bare `scans.html` anchor: fixScanHrefs rebuilds the real URL at load and adds
-        # &pinit from data-page, so we bake neither the query string nor &pinit here.
-        return (f' <a class="{cls}" data-page="{page}" data-vol="{ctx.volume}" '
-                f'title="{title}" href="{ctx.scan_url}"></a> ')
-    return _PAGE_RE.sub(repl, s)
-
-
 def _render_sh(html):
     def repl(m):
         slug, content = m.group(1), m.group(2)
@@ -382,8 +356,11 @@ def _contain(fragment):
 def _render_body(article, ctx):
     body = article.get("body") or ""
     marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
-    if "\x01PAGE:" not in marked and article.get("page_start"):
-        marked = f"\x01PAGE:{article['page_start']}\x01" + marked
+    # No page token is synthesized here any more.  This used to prepend one when
+    # the body had none, because the marker had to BE in the stream for the
+    # renderer's regex to find it.  Page position is carried as keys now and
+    # injected below, after the HTML exists
+    # ([[project_page_position_out_of_band]]).
     # Paragraph structure is CARRIED, not re-inferred: prose breaks ride as «P» (→<p>, the
     # browser auto-closes at the next block) and each numbered equation is a self-delimiting «EQN».
     # A leading «P» opens the first paragraph — the body has no separator before its first prose
@@ -398,6 +375,14 @@ def _render_body(article, ctx):
     body_html = _SECTION_ID_RE.sub(
         lambda m: f'id="{dedupe_anchor_id(id_seen, m.group(1))}"', body_html)
     body_html = _contain(body_html)
+    # PAGE MARKERS — the second and last place page position is handled.  The
+    # keys ride the article payload; `inject` bridges their RAW offsets to
+    # positions in this finished HTML and inserts at TEXT positions only, so a
+    # marker can never land inside a tag.
+    from britannica.render.page_markers import inject as _inject_page_markers
+    body_html = _inject_page_markers(
+        body_html, article.get("page_keys") or [], ctx,
+        body_span=article.get("body_span") or 0)
     toc_html = _build_toc(ctx.collected_sections)
     return toc_html + f'<div class="body-text">{body_html}</div>'
 

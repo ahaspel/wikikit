@@ -24,6 +24,7 @@ are not cuts.
 """
 from __future__ import annotations
 
+import bisect
 import re
 from dataclasses import dataclass
 
@@ -31,7 +32,7 @@ from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal
 from britannica.pipeline.stages.detect_boundaries import _split_out_plates
 from britannica.pipeline.stages.elements._title import _letter_from_dropcap
-from britannica.pipeline.stages.preprocess import make_stream, preprocess
+from britannica.pipeline.stages.preprocess import stream_with_keys
 from britannica.volumes import article_ws_range
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
@@ -39,11 +40,16 @@ _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # Inner italic spans are tolerated; the closer is «/B».  `\s*` after the link
 # pipe: the «B» can sit on the NEXT line (`[[Author:…|\n«B»STAWELL…«/B»]]`).
 _HEADING = re.compile(r"(?:\[\[[^\]|]*\|\s*)?«B»((?:[^«]|«/?I»)*?)«/B»")
-_PAGE = re.compile(r"\x01PAGE:(\d+)\x01")
-
-# Block starts inside a section, after the open: a blank line, a page break, or
-# a closed wikitable / HTML table (the previous article's trailing figure).
-_BLOCK_BOUNDARY = re.compile(r"\n\n|\x01PAGE:\d+\x01|(?:\|\}|</table>)[ \t]*\n")
+# Block starts inside a section, after the open: a blank line, or a closed
+# wikitable / HTML table (the previous article's trailing figure).
+#
+# A PAGE BREAK is also a block start — an article heading often sits at the top
+# of a page with no blank line before it, and the seam is a single `\n`, so
+# without it those articles are never detected at all.  It used to be the third
+# alternative here (`\x01PAGE:\d+\x01`); the token is gone from the stream, so
+# `super_walk` folds the page-key offsets into `starts` instead.  Same
+# boundaries, taken from data rather than from a marker sitting in the text.
+_BLOCK_BOUNDARY = re.compile(r"\n\n|(?:\|\}|</table>)[ \t]*\n")
 # Leading whitespace / table-remnant pipes / nbsp to skip.
 _WS = re.compile(r"(?:\s|&nbsp;|\xa0|\|)+")
 # Lead layout that may sit before a heading — the article's own opening
@@ -187,12 +193,19 @@ def _heading_at(body: str, pos: int):
     return _HEADING.match(body, pos)
 
 
-def _page_before(stream: str, pos: int) -> int:
-    mk = stream.rfind("\x01PAGE:", 0, pos)
-    if mk < 0:
+def _page_before(page_keys: list[tuple[int, int]], pos: int) -> int:
+    """The page `pos` sits on — the last key at or before it.
+
+    Was a backwards scan for the nearest `\\x01PAGE:` token.  The token is gone
+    from the stream (page position is carried as KEYS now,
+    [[project_page_position_out_of_band]]), so this is a bisect over data that is
+    already computed — same answer, and it cannot be fooled by a token that a
+    producer moved or ate.
+    """
+    if not page_keys:
         return 0
-    pm = _PAGE.match(stream, mk)
-    return int(pm.group(1)) if pm else 0
+    i = bisect.bisect_right(page_keys, (pos, float("inf"))) - 1
+    return page_keys[i][1] if i >= 0 else 0
 
 
 def _volume_pages(session, volume: int) -> list:
@@ -209,17 +222,22 @@ def _volume_pages(session, volume: int) -> list:
     return q.order_by(SourcePage.page_number).all()
 
 
-def volume_stream(volume: int) -> str:
-    """The clean, frozen continuous stream for ``volume`` — the single input
+def volume_stream(
+    volume: int,
+) -> tuple[str, list[tuple[int, int]], list[tuple[int, str]]]:
+    """The clean, frozen stream for ``volume`` plus its KEYS — the single input
     to boundary detection AND the element walker.
 
-    Plate-free pages are assembled (``make_stream``) and run through the
-    whole-volume ``preprocess`` (source cleaning on the continuous stream), so
-    every boundary and every article body is sliced from clean source with a
-    cross-page table kept intact across the seam.  (Page-split words are NOT
-    rejoined here — they reconstruct downstream in the split-word producer.)  Section
-    tags survive (detect consumes ``<section begin>``); the ``\\x01PAGE:N\\x01``
-    markers survive as page-number bookkeeping.
+    Returns ``(stream, page_keys, section_keys)``.  The stream carries NO
+    positional chrome: no ``\\x01PAGE:N\\x01`` markers and no ``<section …>``
+    tags.  Both were only ever annotations about WHERE things are, and both are
+    now keys — ``[(offset, page_number)]`` and ``[(offset, section_name)]``
+    ([[project_page_position_out_of_band]]).
+
+    That makes the stream FINAL: nothing downstream edits it, so every offset
+    stays valid, and no recognizer can trip over a marker that isn't content.
+    Page-split words are still NOT rejoined here — they reconstruct downstream in
+    the split-word producer.
     """
     session = SessionLocal()
     try:
@@ -228,7 +246,7 @@ def volume_stream(volume: int) -> str:
         # pages.  Front matter never reaches here — `_volume_pages` constrained
         # the gather to the article-leaf range.
         _plates, pages = _split_out_plates(all_pages)
-        return preprocess(make_stream(pages), volume)
+        return stream_with_keys(pages, volume)
     finally:
         session.close()
 
@@ -240,13 +258,14 @@ def super_walk(volume: int) -> list[WalkedArticle]:
     each blank line, each table close) for a title heading; each is an article.
     Plus the single-letter drop-cap case.  Continuations (no opening heading)
     and subsection headings (rejected by `_is_title`) fall out for free."""
-    stream = volume_stream(volume)
-    tags = list(_SECTION_BEGIN.finditer(stream))
+    stream, page_keys, section_keys = volume_stream(volume)
     out: list[WalkedArticle] = []
-    for i, tag in enumerate(tags):
-        sec_id = (tag.group(1) or "").strip() or "s1"
-        seg_start = tag.end()
-        seg_end = tags[i + 1].start() if i + 1 < len(tags) else len(stream)
+    for i, (sec_off, sec_name) in enumerate(section_keys):
+        sec_id = sec_name or "s1"
+        # The tag itself is no longer in the stream — its position IS the key, so
+        # the section runs from this key to the next.
+        seg_start = sec_off
+        seg_end = section_keys[i + 1][0] if i + 1 < len(section_keys) else len(stream)
         body = stream[seg_start:seg_end]
 
         seen: set[int] = set()
@@ -257,9 +276,14 @@ def super_walk(volume: int) -> list[WalkedArticle]:
         if letter:
             seen.add(0)
             out.append(WalkedArticle(
-                tag.start(), _page_before(stream, tag.start()), letter))
+                seg_start, _page_before(page_keys, seg_start), letter))
 
-        starts = [0] + [m.end() for m in _BLOCK_BOUNDARY.finditer(body)]
+        # Block starts: the section open, each blank line / table close, AND each
+        # page break inside this section (see `_BLOCK_BOUNDARY`).
+        starts = sorted({0}
+                        | {m.end() for m in _BLOCK_BOUNDARY.finditer(body)}
+                        | {off - seg_start for off, _pg in page_keys
+                           if seg_start <= off < seg_end})
         for pos in starts:
             m = _heading_at(body, pos)
             if m is None or m.start() in seen or not _is_title(m.group(1)):
@@ -267,7 +291,7 @@ def super_walk(volume: int) -> list[WalkedArticle]:
             seen.add(m.start())
             gpos = seg_start + m.start()
             out.append(WalkedArticle(
-                gpos, _page_before(stream, gpos), m.group(1)))
+                gpos, _page_before(page_keys, gpos), m.group(1)))
 
     out.sort(key=lambda a: a.start)
     # A boundary SET has no duplicates: a heading can fall under two overlapping

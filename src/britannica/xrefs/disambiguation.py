@@ -17,17 +17,15 @@ from __future__ import annotations
 
 import re
 
-from britannica.markers import PAGE_MARKER_RE as _PAGE_MARKER_RE
 
 _INNER_MARKER_RE = re.compile(r"«/?[A-Z]+(?::[^«»]*)?»")
 
 
 def body_opening(body: str, chars: int = 300) -> str:
-    """First chunk of body with PAGE / marker scaffolding stripped."""
+    """First chunk of body with marker scaffolding stripped."""
     if not body:
         return ""
-    b = _PAGE_MARKER_RE.sub("", body)
-    b = _INNER_MARKER_RE.sub("", b)
+    b = _INNER_MARKER_RE.sub("", body)
     return b[:chars]
 
 

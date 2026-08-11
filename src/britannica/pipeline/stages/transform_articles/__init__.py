@@ -91,31 +91,19 @@ def preprocess_article(session, article) -> str:
     (never dropping it — it carries the page number), and uses ``section_name``
     to recover a fuller title when the bold run was a partial capture.
     """
-    segments = (
-        session.query(ArticleSegment)
-        .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
-        .filter(ArticleSegment.article_id == article.id)
-        .order_by(ArticleSegment.sequence_in_article)
-        .add_columns(SourcePage.page_number)
-        .all()
-    )
-    # The «PAGE» marker is already materialized into each segment at detection
-    # (super_detect slaps the current leaf on as it cuts the page-fragment).  Just
-    # concatenate — never re-stamp a leaf-fact at the article level.
+    # THE ARTICLE IS ITS BODY.  No query, no join, no reassembly: `Article.body`
+    # holds the article exactly as sliced from the clean volume stream at
+    # detection, and nothing has edited it since.
     #
-    # The separator is a NEWLINE because that is what the source has: MediaWiki's
-    # `<pages>` transclusion joins page bodies with `\n`, and detection's
-    # `segment_text=(seg.text or "").strip()` drops it.  Restoring it here — the
-    # one place the pages are re-assembled — is faithfulness, not a transform.
-    # A `\n` is exactly the right token because it carries BOTH meanings the seam
-    # needs, and the body producer already resolves them: a single `\n` becomes a
-    # space in prose (so `with`|`his` stays two words) and `-\n` feeds
-    # `_dehyphenate` (so a hyphen-broken `coun-`|`try` finally rejoins), while a
-    # line-level mark (`:`) now reaches a line start instead of being welded to the
-    # previous page's last line and rendering as literal text.  `\n{2,}` cannot
-    # match across the seam — the sentinel sits between the two newlines — so no
-    # spurious paragraph is minted.
-    joined = "\n".join(seg.segment_text or "" for seg, page_number in segments)
+    # This used to fetch the per-page segments and glue them back together — and
+    # the glue was the bug.  It joined with `""`, which welded the last line of
+    # one page to the first line of the next: that is what leaked `:` into BIRD's
+    # taxonomy, blocked `_HYPHEN_RE` at every seam, and let `_WIKI_ROW_SEP_RE`
+    # swallow ROOFS' page marker.  Three other call sites glued differently
+    # (`"\n"`, `"\n\n"`, `" "`-unless-image), because the cut destroyed the
+    # information needed to invert it.  Nothing is cut now
+    # ([[project_page_position_out_of_band]]).
+    joined = article.body or ""
     if not joined:
         return ""
 

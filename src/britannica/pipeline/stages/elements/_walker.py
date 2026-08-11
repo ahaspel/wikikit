@@ -37,7 +37,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
     SHAPE_GENEALOGY,
-    SHAPE_PAGE,
     SHAPE_TITLE,
 )
 # (The `_figure` helpers and the `_tables` styler/heading openers are no longer
@@ -60,7 +59,10 @@ from britannica.pipeline.stages.elements._shapes import (
 # trailing `<poem>` OCR-garbage and `{{EB1911 fine print/e}}`).  Most-specific
 # opener — the `…/start` of the three families is fully unambiguous.
 _GENEALOGY_RE = re.compile(
-    r"(?:\{\{missing table\}\}\s*(?:\x01PAGE:\d+\x01)?\s*)?"
+    # (No page-token tolerance here any more: a `\x01PAGE:N\x01` could once fall
+    #  between `{{missing table}}` and the chart's `/start`, so the prefix had to
+    #  admit one.  Page position never enters the stream now.)
+    r"(?:\{\{missing table\}\}\s*)?"
     r"(?:\{\{center\|[^}]*\}\}\s*)?"
     r"(?:\{\{EB1911 fine print/s\}\}\s*)?"
     r"\{\{(?:chart2|familytree|tree\s*chart)/start[^}]*\}\}.*?"
@@ -168,11 +170,11 @@ _SPAN_TITLE_OPEN_RE = re.compile(
     re.IGNORECASE)
 
 
-# PAGE — the injected page-break marker (\x01PAGE:N\x01), recognized as a leaf
-# so it rides the tree as a child element instead of a raw sentinel the outline
-# scanner has to reach around; the producer re-emits the raw marker, and the
-# export reads it off the tree.
-_PAGE_RE = re.compile(r"\x01PAGE:\d+\x01")
+# PAGE is GONE.  The walker used to recognize `\x01PAGE:N\x01` as a leaf shape so
+# it would ride the tree as an element rather than as a raw sentinel the outline
+# scanner had to reach around.  Page position never enters the stream now — it is
+# carried as keys and injected at render — so there is nothing here to recognize
+# ([[project_page_position_out_of_band]]).
 
 # TITLE — the «TITLE»…«/TITLE» stamp injected by `preprocess_article` around the carved
 # title span, so the title rides the ONE walk (recursed into the title node) instead of
@@ -213,7 +215,6 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
     #  `[[Author:…|BUDÉ [Budaeus]]]` failed to match and orphaned to body-text.
     #  The classifier names the kind — IMAGE / AUTHOR_LINK / EB1911_SELFREF /
     #  FRAGMENT_LINK / WIKILINK — from the raw `[[…]]` by prefix.)
-    (SHAPE_PAGE,              _PAGE_RE),
     (SHAPE_TITLE,             _TITLE_RE),
 ]
 
@@ -225,8 +226,7 @@ _REGEX_RECOGNIZERS: list[tuple[str, re.Pattern]] = [
 # hinted position.  Order doesn't affect correctness (any match
 # triggers dispatch); the order below is just readable grouping.
 _OPENER_HINT_RE = re.compile(
-    r"\x01PAGE:"                    # PAGE break bookkeeping marker
-    r"|«TITLE"                      # TITLE stamp (preprocess_article)
+    r"«TITLE"                       # TITLE stamp (preprocess_article)
     r"|\{\{"                        # ANY `{{…}}` — the ONE generic DOUBLE_BRACE
                                     #   recognizer (and the PAIRED_WRAPPER / chart2
                                     #   recognizers ahead of it) own every double-brace

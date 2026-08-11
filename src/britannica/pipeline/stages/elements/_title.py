@@ -302,13 +302,13 @@ def produce_title(opening: str, section_name: str = "") -> tuple[str, str]:
     construct; "" only in the rare body-opens-at-prose fallback, where there is
     nothing to carve.  The plain field is decoded from the WALKED node in
     ``walk_article``, never re-parsed here."""
-    # The opening carries the leading «PAGE» leaf marker (super_detect stamps it
-    # on segment 0, AHEAD of the heading), which blocks the bold-heading match.
-    # Step over it for the title search, but KEEP it — it carries the page number
-    # the body needs — by re-prepending it to whatever body we return.
-    pm = re.match("\x01PAGE:[0-9]+\x01", opening)
-    page = pm.group(0) if pm else ""
-    opening = _LEAD_CHROME.sub("", opening[len(page):])
+    # No page-marker step-over here any more.  `super_detect` used to stamp a
+    # `\x01PAGE:N\x01` onto segment 0 AHEAD of the heading, which blocked the
+    # bold-heading match — so this had to skip it for the search and then
+    # re-prepend it so the page number survived.  Page position never enters the
+    # stream now ([[project_page_position_out_of_band]]), so the heading is simply
+    # the first thing here.
+    opening = _LEAD_CHROME.sub("", opening)
     span, rest = _title_span(opening)
     if span:
         # The plain field is decoded from the WALKED «TITLE» marker in
@@ -331,16 +331,16 @@ def produce_title(opening: str, section_name: str = "") -> tuple[str, str]:
         if om:
             span = span[om.end():]
             rest = _ORPHAN_CLOSE.sub("", rest, count=1)
-        return page + rest.lstrip(" \t,."), span
+        return rest.lstrip(" \t,."), span
     # Letter articles open with a drop-cap, not a bold heading.  Carve the
     # drop-cap construct as the title span (all six documented shapes) so the
     # letter rides the «TITLE» node exactly like a bold heading — one decider.
     lc = _letter_title_span(opening)
     if lc is not None:
         lspan, lrest = lc
-        return page + lrest.lstrip(), lspan
+        return lrest.lstrip(), lspan
     # No bold heading and no drop-cap.  The body opens at content (CHESS "once
     # known as …"), so there is NOTHING here to extract: the first line is prose,
     # not a title.  Return no span and let the caller keep the authoritative
     # detected title — produce_title must never fabricate a title from body text.
-    return page + opening, ""
+    return opening, ""

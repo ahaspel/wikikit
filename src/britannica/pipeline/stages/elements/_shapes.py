@@ -40,7 +40,9 @@ SHAPE_GENEALOGY         = "GENEALOGY"          # {{chart2|familytree|tree chart/
                                                # separate leaf from composite, and that test
                                                # claimed whole wrappers (PHYLLOXERA lost ~50% of
                                                # its prose, SOLOMON ~24%).
-SHAPE_PAGE              = "PAGE"               # page-break bookkeeping marker (\x01PAGE:N\x01)
+# SHAPE_PAGE is GONE — page position never enters the stream, so there is no
+# page-break marker for the walker to recognize as a shape
+# ([[project_page_position_out_of_band]]).
 SHAPE_TITLE             = "TITLE"              # «TITLE»…«/TITLE» stamp (preprocess_article)
 
 
@@ -54,7 +56,6 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_BODY,
     SHAPE_PAIRED_WRAPPER,
     SHAPE_GENEALOGY,
-    SHAPE_PAGE,
     SHAPE_TITLE,
 })
 
@@ -109,10 +110,6 @@ LEAF_SHAPES: frozenset[str] = frozenset({
     # producers a placeholder with no pipes → empty link).  The label derives from
     # `raw`, so no child registry is needed.
     SHAPE_DOUBLE_BRACE,
-    # PAGE — the `\x01PAGE:N\x01` page-break marker; a leaf, the producer
-    # re-emits the raw.  Folding it in retires the page-marker strip the
-    # outline recognizer used to need.
-    SHAPE_PAGE,
 })
 
 
@@ -147,10 +144,6 @@ def strip_outer(shape: str, raw: str) -> str:
     if shape == SHAPE_GENEALOGY:
         # Leaf — chart-grammar tokens are not extractable wikitext.  The
         # producer reads `raw` and emits the pre-cropped image.
-        return ""
-    if shape == SHAPE_PAGE:
-        # Leaf — the whole `\x01PAGE:N\x01` token is the marker; the
-        # producer re-emits `raw`.
         return ""
     if shape == SHAPE_DOUBLE_BRACKET:
         s = re.sub(r"^\[\[", "", raw)

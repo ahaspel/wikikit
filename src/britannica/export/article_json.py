@@ -566,6 +566,54 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     return body
 
 
+
+def printed_page_keys(session, article) -> list[dict]:
+    """The article's page keys — ``[{page, offset, sig}]``, ordinary article data.
+
+    Each key carries its own SIGNATURE: the opening letters of that page as they
+    will render.  Computing it here, once, where the raw body already is, is what
+    keeps the raw body out of the render payload — and that matters, because a
+    render input has to be handed to whoever calls `render_article`, and one of
+    those is the xref resolver, which has no business knowing anything about
+    pages.  With the signature travelling in the key, the payload is self-
+    sufficient and every caller just passes a dict along, as it already does for
+    `sections` and `xrefs`.
+
+    The ws→printed rewrite used to run over the body's page tokens.  The body has
+    none now, so the mapping lives on the KEYS — page numbers are handled here and
+    at injection, nowhere else ([[project_page_position_out_of_band]]).
+
+    The drop rule is unchanged and still deliberate: a ws page with no entry in
+    printed_pages.json is a plate, with no printed number, so it gets NO key and
+    therefore no marker — rather than walking back to the previous page and
+    printing "p. 980" twice with plate content in between.
+
+    Shared by the direct export and the DEFERRED render in
+    ``tools/pipeline/resolve_xrefs_post.py``, which renders from the JSON on disk
+    and so must rebuild these from the database rather than read them back.
+    """
+    from britannica.render.page_markers import signature
+    pp = _get_printed_pages().get(str(article.volume), {})
+    body = article.body or ""
+    rows = (session.query(ArticleSegment.offset, SourcePage.page_number)
+            .join(SourcePage, SourcePage.id == ArticleSegment.source_page_id)
+            .filter(ArticleSegment.article_id == article.id)
+            .order_by(ArticleSegment.sequence_in_article).all())
+    keys: list[dict] = []
+    for i, (off, ws) in enumerate(sorted(rows, key=lambda r: r[0])):
+        direct = pp.get(str(ws))
+        if direct is None:
+            continue
+        keys.append({
+            "page": int(direct),
+            "offset": int(off),
+            # The FIRST key is the page the article opens on — placed at the
+            # body's start structurally, so it needs no signature to be found.
+            "sig": "" if i == 0 else signature(body, int(off), article.volume),
+        })
+    return keys
+
+
 def export_articles_to_json(
     volume: int,
     out_dir: str | Path,
@@ -641,15 +689,14 @@ def export_articles_to_json(
         def _plate_wikitext(plate):
             if plate.id in plate_wikitext_cache:
                 return plate_wikitext_cache[plate.id]
-            segs = (session.query(ArticleSegment)
-                    .filter(ArticleSegment.article_id == plate.id)
-                    .order_by(ArticleSegment.sequence_in_article).all())
-            parts = []
-            for seg in segs:
-                pg = session.get(SourcePage, seg.source_page_id)
-                if pg and pg.wikitext:
-                    parts.append(pg.wikitext)
-            wt = "\n".join(parts)
+            # A plate IS a single page, so its source wikitext is that page's —
+            # reached from the plate's own page number rather than by hopping
+            # through a segment row ([[project_page_position_out_of_band]]).
+            pg = (session.query(SourcePage)
+                  .filter(SourcePage.volume == plate.volume,
+                          SourcePage.page_number == plate.page_start)
+                  .first())
+            wt = (pg.wikitext or "") if pg else ""
             plate_wikitext_cache[plate.id] = wt
             return wt
 
@@ -773,15 +820,6 @@ def export_articles_to_json(
             # entirely rather than walking back to the previous page
             # (which creates misleading duplicates like "p. 980" twice
             # with plate content between them).
-            pp = _get_printed_pages().get(str(article.volume), {})
-            def _replace_page_marker(m):
-                ws = int(m.group(1))
-                direct = pp.get(str(ws))
-                if direct is None:
-                    return ""
-                return f"\x01PAGE:{direct}\x01"
-
-            body = re.sub(r"\x01PAGE:(\d+)\x01", _replace_page_marker, body)
 
             # Caption back-fill from ArticleImage (the `_patch_img`
             # sweeper) was deleted 2026-05-27.  The figure-family
@@ -827,6 +865,13 @@ def export_articles_to_json(
                 "word_count": len(cleaned_body.split()),
                 "parent_article": parent_article_info,
                 "body": cleaned_body,
+                # Page keys — ordinary article data, like `sections`.  Each
+                # carries its own signature, so `render_article` needs nothing
+                # but this payload and no caller has to hand it a render input.
+                "page_keys": printed_page_keys(session, article),
+                # Raw body LENGTH (not the body): lets the injector turn a key's
+                # offset into a proportional prior without carrying the text.
+                "body_span": len(article.body or ""),
                 "sections": detect_sections(cleaned_body),
                 # Panel = the article's resolved INTERNAL cross-references only.
                 # Unresolved entries and external «XL» links never enter it — the EB11

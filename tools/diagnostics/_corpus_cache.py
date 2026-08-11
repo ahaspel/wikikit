@@ -24,39 +24,30 @@ CACHE = ROOT / "tools" / "_scratch" / "corpus_raw.pkl"
 
 
 def _build() -> list[tuple[int, int, int, str]]:
-    """One bulk query → [(article_id, volume, page0, raw), …] in article order."""
+    """One bulk query → [(article_id, volume, page0, raw), …] in article order.
+
+    Reads `Article.body` — the article whole, exactly as sliced from the clean
+    volume stream.  This used to fetch the per-page segments and glue them with
+    `""`, which was the FIFTH different reassembly in the codebase (`""`, `"
+"`,
+    `"
+
+"`, `" "`-unless-image, and this one) — five answers because the cut
+    destroyed the information needed to invert it.  Nothing is cut now
+    ([[project_page_position_out_of_band]]).
+    """
     sys.path.insert(0, str(ROOT / "src"))
     from britannica.db.session import SessionLocal
-    from britannica.db.models import Article, ArticleSegment, SourcePage
+    from britannica.db.models import Article
     s = SessionLocal()
     rows = (
-        s.query(
-            ArticleSegment.article_id,
-            ArticleSegment.segment_text,
-            SourcePage.page_number,
-            Article.volume,
-        )
-        .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
-        .join(Article, ArticleSegment.article_id == Article.id)
+        s.query(Article.id, Article.volume, Article.page_start, Article.body)
         .filter(Article.article_type != "plate")
-        .order_by(ArticleSegment.article_id, ArticleSegment.sequence_in_article)
+        .order_by(Article.id)
         .all()
     )
     s.close()
-    # Group consecutive rows by article_id (already ordered), assemble raw.
-    out: list[tuple[int, int, int, str]] = []
-    cur_id = None
-    vol = page0 = None
-    parts: list[str] = []
-    for aid, seg_text, pg, v in rows:
-        if aid != cur_id:
-            if cur_id is not None:
-                out.append((cur_id, vol, page0, "".join(parts)))
-            cur_id, vol, page0, parts = aid, v, pg, []
-        parts.append(seg_text or "")
-    if cur_id is not None:
-        out.append((cur_id, vol, page0, "".join(parts)))
-    return out
+    return [(aid, vol, pg0, body or "") for aid, vol, pg0, body in rows]
 
 
 def load_corpus(contains=None, refresh: bool = False):

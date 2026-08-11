@@ -2,30 +2,22 @@
 
 The article ``body`` is a stream of ``«…»`` / ``{{X:…}}`` markers that the
 producers emit and the viewer decodes.  This module holds the small set of
-shared helpers that read that stream from the Python side: the page-marker
-and title-marker strip utilities, the ``{{IMG:…}}`` grammar (mirrored in
-viewer.html), the single marker→plain-text converter used by the search
-index and previews, and the canonical lists of rendered marker names.
+shared helpers that read that stream from the Python side: the title-marker
+strip utility, the ``{{IMG:…}}`` grammar (mirrored in viewer.html), the single
+marker→plain-text converter used by the search index and previews, and the
+canonical lists of rendered marker names.
+
+The page-marker helpers (``PAGE_MARKER_RE`` / ``strip_page_markers``) are GONE.
+Page position never enters the marker stream now — it is lifted to keys in
+``preprocess.stream_with_keys`` and re-inserted in ``render.page_markers``, the
+only two places that know about it ([[project_page_position_out_of_band]]).  The
+strips were verified to be no-ops first: 0 occurrences of the token across 37,226
+article bodies and 37,228 exported JSONs.
 """
 
 # ── Shared compiled regexes and helpers ─────────────────────────────────────
 
 import re as _re
-
-# Page marker — emitted between source pages during article assembly.
-# Lives at the boundary between source pages so downstream stages can still
-# locate the original page when needed. Form: \x01PAGE:N\x01
-PAGE_MARKER_RE = _re.compile(r"\x01PAGE:\d+\x01")
-PAGE_MARKER_CAPTURE_RE = _re.compile(r"\x01PAGE:(\d+)\x01")
-
-
-def strip_page_markers(text: str, replacement: str = "") -> str:
-    """Remove all `\\x01PAGE:N\\x01` markers from ``text``.
-
-    Pass ``replacement=" "`` for search-index contexts where adjacent words
-    must remain distinct after the marker is removed.
-    """
-    return PAGE_MARKER_RE.sub(replacement, text)
 
 
 # Title-formatting markers: bold (`«B»…«/B»`), italic (`«I»…«/I»`),
@@ -206,7 +198,6 @@ def markers_to_text(text: str, *, sep: str = " ") -> str:
     caption line); use ``" ".join(markers_to_text(b).split())`` for a flat
     string.
     """
-    text = strip_page_markers(text, replacement=sep)
     text = _DROP_MARKER_RE.sub(sep, text)
     text = _LINK_RE.sub(_link_display, text)
     text = _INLINE_MARKER_RE.sub("", text)

@@ -259,7 +259,7 @@ def build_section_alias_map() -> dict[str, str]:
     """
     from collections import defaultdict
 
-    from britannica.db.models import Article, ArticleSegment, SourcePage
+    from britannica.db.models import Article, SourcePage
     from britannica.db.session import SessionLocal
 
     # `section_name → set of article_titles` — we'll keep only the
@@ -274,11 +274,16 @@ def build_section_alias_map() -> dict[str, str]:
 
     session = SessionLocal()
     try:
-        # Join articles → segments → source pages to get raw wikitext.
+        # Articles → their source pages, by page RANGE.  This used to hop through
+        # ArticleSegment, which existed only as a per-page bridge to SourcePage;
+        # the article's own (volume, page_start..page_end) reaches the same pages
+        # directly ([[project_page_position_out_of_band]]).
         rows = (
             session.query(Article.title, SourcePage.wikitext)
-            .join(ArticleSegment, ArticleSegment.article_id == Article.id)
-            .join(SourcePage, ArticleSegment.source_page_id == SourcePage.id)
+            .join(SourcePage,
+                  (SourcePage.volume == Article.volume)
+                  & (SourcePage.page_number >= Article.page_start)
+                  & (SourcePage.page_number <= Article.page_end))
             .filter(Article.article_type == "article")
             .all()
         )

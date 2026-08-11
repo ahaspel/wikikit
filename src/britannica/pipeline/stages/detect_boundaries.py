@@ -96,11 +96,15 @@ def _title_plaintext(text: str) -> str:
 
 @dataclass
 class SegmentInfo:
-    """A text segment belonging to an article, with its source page."""
+    """Where a source page BEGINS inside its article's body — a page key.
+
+    No text.  The article's body is one slice of the clean volume stream, held
+    whole on `DetectedArticle.body`; this records only which page starts where.
+    """
     source_page_id: int
     page_number: int
     sequence: int
-    text: str
+    offset: int          # into DetectedArticle.body
 
 
 @dataclass
@@ -111,25 +115,19 @@ class DetectedArticle:
     page_start: int
     page_end: int
     article_type: str  # "article" or "plate"
-    segments: list[SegmentInfo] = field(default_factory=list)
+    # The article's text: ONE slice of the clean volume stream, stored as sliced
+    # and never edited.  It used to be a @property that rebuilt the body from
+    # per-page segments, joining them with `" "` — or `"\n\n"` when the next
+    # piece happened to start with a File link.  That heuristic existed only
+    # because the cut threw away the separator it was guessing at; three other
+    # call sites guessed differently (`""`, `"\n"`, `"\n\n"`).  Nothing is cut
+    # now, so nothing has to be guessed.
+    body: str = ""
+    segments: list[SegmentInfo] = field(default_factory=list)   # page KEYS
     # Wikisource <section begin="X"> name from the article's first page.
     # Used as a tiebreaker in stable IDs when multiple articles share a
     # (volume, page_start).
     section_name: str = ""
-
-    @property
-    def body(self) -> str:
-        """Reconstruct full body from segments."""
-        parts = []
-        for seg in sorted(self.segments, key=lambda s: s.sequence):
-            text = (seg.text or "").strip()
-            if not text:
-                continue
-            if parts:
-                joiner = "\n\n" if re.match(r"\[\[(?:File|Image):", text, re.IGNORECASE) else " "
-                parts.append(joiner)
-            parts.append(text)
-        return "".join(parts).strip()
 
 
 # ── Per-page parsing helpers ───────────────────────────────────────────
@@ -479,7 +477,7 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
     The plate's RENDERED body, by contrast, IS preprocessed (as a one-leaf
     stream: corrections + quote-runs + entity-decode), so a plate follows the
     exact same content path as an article — only its recognition is separate."""
-    from britannica.pipeline.stages.preprocess import make_stream, preprocess
+    from britannica.pipeline.stages.preprocess import stream_with_keys
     plates: list[DetectedArticle] = []
     rest: list = []
     for page in pages:
@@ -489,17 +487,23 @@ def _split_out_plates(pages: list) -> tuple[list[DetectedArticle], list]:
         if not _is_plate(raw):
             rest.append(page)
             continue
+        # A plate IS a page, so its body is that page's clean text and it has
+        # exactly one key, at offset 0.  `stream_with_keys` on the single page
+        # gives both — and gives them with no page token in the text, same as
+        # every article body.
+        body, _pkeys, _skeys = stream_with_keys([page], page.volume)
         plates.append(DetectedArticle(
             title=_compose_plate_title(raw, page.volume, page.page_number),
             volume=page.volume,
             page_start=page.page_number,
             page_end=page.page_number,
             article_type="plate",
+            body=body,
             segments=[SegmentInfo(
                 source_page_id=page.id,
                 page_number=page.page_number,
-                sequence=1,
-                text=preprocess(make_stream([page]), page.volume),
+                sequence=0,
+                offset=0,
             )],
         ))
     return plates, rest
@@ -564,12 +568,17 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
             session.add(article)
             session.flush()
 
+            # Page KEYS, not text.  `Article.body` above holds the article whole,
+            # exactly as sliced from the clean volume stream; these say only which
+            # page starts where inside it.  The `.strip()` that used to be applied
+            # to each piece here is gone with them — it was destroying the seam
+            # newline that `make_stream` had deliberately put in.
             for seg in det.segments:
                 session.add(ArticleSegment(
                     article_id=article.id,
                     source_page_id=seg.source_page_id,
                     sequence_in_article=seg.sequence,
-                    segment_text=(seg.text or "").strip(),
+                    offset=seg.offset,
                 ))
 
         session.commit()

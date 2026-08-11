@@ -1,45 +1,61 @@
 {
-  "id": 6689557,
-  "stable_id": "01-0127-s3",
-  "title": "ACACIA",
-  "article_type": "article",
-  "volume": 1,
-  "page_start": 96,
-  "page_end": 97,
-  "ws_page_start": 127,
-  "ws_page_end": 128,
-  "leaf_start": 134,
-  "leaf_end": 135,
-  "source_quality": {
-    "page_levels": {
-      "4": 2
-    },
-    "lowest_level": 4,
-    "note": null,
-    "unproofed_pages": {}
+ "id": 7629641,
+ "stable_id": "01-0127-dd33a0",
+ "title": "ACACIA",
+ "article_type": "article",
+ "volume": 1,
+ "page_start": 96,
+ "page_end": 97,
+ "ws_page_start": 127,
+ "ws_page_end": 128,
+ "leaf_start": 134,
+ "leaf_end": 135,
+ "source_quality": {
+  "page_levels": {
+   "4": 2
   },
-  "word_count": 535,
-  "parent_article": null,
-  "body": "«TITLE:«B»ACACIA«/B»«/TITLE»\u0001PAGE:96\u0001a genus of shrubs and trees belonging to the family Leguminosae and the sub-family Mimoseae. The small flowers are arranged in rounded or elongated clusters. The leaves are compound pinnate in general (see fig.). In some instances, however, more especially in the Australian species, the leaflets are suppressed and the leaf-stalks become vertically flattened, and serve the purpose of leaves. The vertical position protects the structure from the intense sunlight, as with their edges towards the sky and earth they do not intercept light so fully as ordinary horizontally placed leaves. There are about 450 species of acacia widely scattered over the warmer regions of the globe. They abound in Australia and Africa. Various species yield gum. True gum-arabic is the product of «I»Acacia Senegal«/I», abundant in both east and west tropical Africa. «I»Acacia arabica«/I» is the gum-arabic tree of India, but yields a gum inferior to the true gum-arabic. An astringent medicine, called «LN:05-0526-catechu-CATECHU.json|catechu|catechu«/LN» («I»q.v.«/I») or cutch, is procured from several species, but more especially from «I»Acacia catechu«/I», by boiling down the wood and evaporating the solution so as to get an extract. The bark of «I»Acacia arabica«/I», under the name of «I»babul«/I» or «I»babool«/I», is used in Scinde for tanning. The bark of various Australian species, known as wattles, is also very rich in tannin and forms an important article of export. Such are «I»Acacia pycnantha«/I», golden wattle, «I»A. decurrens«/I», tan wattle, and «I»A. dealbata«/I», silver wattle. «TABLE[cols:1|style:text-align:center;margin-right:auto;margin-left:auto]»«TR»«TD»{{IMG:Britannica Acacia - Acacia Senegal.jpg|width=310}}«/TD»«/TR»«TR»«TD»«DIV[style:font-size:83%]»«I»Acacia Senegal«/I», flowering branch, natural size (after A. Meyer«BR»and Schumann).«/DIV»«/TD»«/TR»«TR[style:font-size:85%;line-height:100%]»«TD»From Strasburger’s «I»Lehrbuch der Botanik«/I».«/TD»«/TR»«/TABLE» The pods of «I»Acacia nilotica«/I», under the name of neb-neb, and of other African species are also rich in tannin and used by tanners. The seeds of «I»Acacia niopo«/I» are roasted and used as snuff in South America. Some species afford valuable timber; such are «I»Acacia melanoxylon«/I», black wood of Australia, which attains a great size; its wood is used for furniture, and takes a high polish; and «I»Acacia homalophylla«/I» (also Australian), myall wood, which yields a fragrant timber, used for ornamental purposes. «I»Acacia formosa«/I» supplies the valuable Cuba timber called sabicu. «I»Acacia seyal«/I» is supposed to be the shittah tree of the Bible, which supplied shittim-wood. «I»Acacia heterophylla«/I», from Mauritius and Bourbon, and «I»Acacia koa«/I» from the Sandwich Islands are also good timber trees. The plants often bear spines, especially those growing in arid districts in Australia or tropical and South Africa. These sometimes represent branches which have become short, hard and pungent, or sometimes leaf-stipules. «I»Acacia armata«/I» is the kangaroo-thorn of Australia, «I»A. giraffae«/I», the African camel-thorn. In the Central American «I»Acacia sphaerocephala«/I» (bull-thorn acacia) and «I»A. spadicigera«/I», the large thorn-like stipules are hollow and afford shelter for ants, which feed on a secretion of honey on the leaf-stalk and curious food-bodies at the tips of the leaflets; in return they protect the plant against leaf-cutting insects. In common language the term Acacia is often applied to species of the genus «LN:23-0443-s3-ROBINIA.json|Robinia|Robinia«/LN» («I»q.v.«/I») which belongs also to the\u0001PAGE:97\u0001Leguminous family, but is placed in a different section. «I»Robinia Pseudacacia«/I», or false acacia, is cultivated in the milder parts of Britain, and forms a large tree, with beautiful pea-like blossoms. The tree is sometimes called the locust tree.",
-  "sections": [],
-  "xrefs": [
-    {
-      "surface_text": "«LN:catechu|catechu«/LN»",
-      "normalized_target": "CATECHU",
-      "xref_type": "link",
-      "status": "resolved",
-      "target_article_id": 6696659,
-      "target_filename": "05-0526-catechu-CATECHU.json"
-    },
-    {
-      "surface_text": "«LN:Robinia|Robinia«/LN»",
-      "normalized_target": "ROBINIA",
-      "xref_type": "link",
-      "status": "resolved",
-      "target_article_id": 6719034,
-      "target_filename": "23-0443-s3-ROBINIA.json"
-    }
-  ],
-  "plates": [],
-  "contributors": []
+  "lowest_level": 4,
+  "note": null,
+  "unproofed_pages": {}
+ },
+ "word_count": 536,
+ "parent_article": null,
+ "body": "«TITLE:«B»ACACIA«/B»«/TITLE»a genus of shrubs and trees belonging to the family Leguminosae and the sub-family Mimoseae. The small flowers are arranged in rounded or elongated clusters. The leaves are compound pinnate in general (see fig.). In some instances, however, more especially in the Australian species, the leaflets are suppressed and the leaf-stalks become vertically flattened, and serve the purpose of leaves. The vertical position protects the structure from the intense sunlight, as with their edges towards the sky and earth they do not intercept light so fully as ordinary horizontally placed leaves. There are about 450 species of acacia widely scattered over the warmer regions of the globe. They abound in Australia and Africa. Various species yield gum. True gum-arabic is the product of «I»Acacia Senegal«/I», abundant in both east and west tropical Africa. «I»Acacia arabica«/I» is the gum-arabic tree of India, but yields a gum inferior to the true gum-arabic. An astringent medicine, called «LN:05-0526-885fd5.json|catechu|catechu«/LN» («I»q.v.«/I») or cutch, is procured from several species, but more especially from «I»Acacia catechu«/I», by boiling down the wood and evaporating the solution so as to get an extract. The bark of «I»Acacia arabica«/I», under the name of «I»babul«/I» or «I»babool«/I», is used in Scinde for tanning. The bark of various Australian species, known as wattles, is also very rich in tannin and forms an important article of export. Such are «I»Acacia pycnantha«/I», golden wattle, «I»A. decurrens«/I», tan wattle, and «I»A. dealbata«/I», silver wattle. «TABLE[cols:1|style:text-align:center;margin-right:auto;margin-left:auto]»«TR»«TD»{{IMG:Britannica Acacia - Acacia Senegal.jpg|width=310}}«/TD»«/TR»«TR»«TD»«DIV[style:font-size:83%]»«I»Acacia Senegal«/I», flowering branch, natural size (after A. Meyer«BR»and Schumann).«/DIV»«/TD»«/TR»«TR[style:font-size:85%;line-height:100%]»«TD»From Strasburger’s «I»Lehrbuch der Botanik«/I».«/TD»«/TR»«/TABLE» The pods of «I»Acacia nilotica«/I», under the name of neb-neb, and of other African species are also rich in tannin and used by tanners. The seeds of «I»Acacia niopo«/I» are roasted and used as snuff in South America. Some species afford valuable timber; such are «I»Acacia melanoxylon«/I», black wood of Australia, which attains a great size; its wood is used for furniture, and takes a high polish; and «I»Acacia homalophylla«/I» (also Australian), myall wood, which yields a fragrant timber, used for ornamental purposes. «I»Acacia formosa«/I» supplies the valuable Cuba timber called sabicu. «I»Acacia seyal«/I» is supposed to be the shittah tree of the Bible, which supplied shittim-wood. «I»Acacia heterophylla«/I», from Mauritius and Bourbon, and «I»Acacia koa«/I» from the Sandwich Islands are also good timber trees. The plants often bear spines, especially those growing in arid districts in Australia or tropical and South Africa. These sometimes represent branches which have become short, hard and pungent, or sometimes leaf-stipules. «I»Acacia armata«/I» is the kangaroo-thorn of Australia, «I»A. giraffae«/I», the African camel-thorn. In the Central American «I»Acacia sphaerocephala«/I» (bull-thorn acacia) and «I»A. spadicigera«/I», the large thorn-like stipules are hollow and afford shelter for ants, which feed on a secretion of honey on the leaf-stalk and curious food-bodies at the tips of the leaflets; in return they protect the plant against leaf-cutting insects. In common language the term Acacia is often applied to species of the genus «LN:23-0443-dd33a0.json|Robinia|Robinia«/LN» («I»q.v.«/I») which belongs also to the Leguminous family, but is placed in a different section. «I»Robinia Pseudacacia«/I», or false acacia, is cultivated in the milder parts of Britain, and forms a large tree, with beautiful pea-like blossoms. The tree is sometimes called the locust tree.«P»",
+ "page_keys": [
+  {
+   "page": 96,
+   "offset": 0,
+   "sig": ""
+  },
+  {
+   "page": 97,
+   "offset": 3453,
+   "sig": "leguminousfamilybutispla"
+  }
+ ],
+ "body_span": 3707,
+ "sections": [],
+ "xrefs": [
+  {
+   "surface_text": "«LN:catechu|catechu«/LN»",
+   "normalized_target": "CATECHU",
+   "xref_type": "link",
+   "status": "resolved",
+   "target_article_id": 7631513,
+   "target_filename": "05-0526-885fd5.json",
+   "target_title": "CATECHU"
+  },
+  {
+   "surface_text": "«LN:Robinia|Robinia«/LN»",
+   "normalized_target": "ROBINIA",
+   "xref_type": "link",
+   "status": "resolved",
+   "target_article_id": 7657005,
+   "target_filename": "23-0443-dd33a0.json",
+   "target_title": "ROBINIA"
+  }
+ ],
+ "plates": [],
+ "contributors": [],
+ "rendered_html": "\n        <div class=\"card\">\n          <h1><b><span style=\"font-size:1.6em; line-height:1; vertical-align:baseline;\">A</span>CACIA</b></h1>\n          <div style=\"font-size: 0.85rem; color: #6b5e4f; font-style: italic; margin-bottom: 6px;\">\n            <a href=\"scans.html\" style=\"color: #6b5e4f;\">vol. 1, pp. 96–97</a>\n            &middot; 536 words\n          </div>\n          \n          \n          \n          \n          \n          <div class=\"body-text\"><a class=\"page-marker\" data-page=\"96\" data-vol=\"1\" title=\"Volume 1, page 96 — click to view scan\" href=\"scans.html\"></a><p>a genus of shrubs and trees belonging to the family Leguminosae and the sub-family Mimoseae. The small flowers are arranged in rounded or elongated clusters. The leaves are compound pinnate in general (see fig.). In some instances, however, more especially in the Australian species, the leaflets are suppressed and the leaf-stalks become vertically flattened, and serve the purpose of leaves. The vertical position protects the structure from the intense sunlight, as with their edges towards the sky and earth they do not intercept light so fully as ordinary horizontally placed leaves. There are about 450 species of acacia widely scattered over the warmer regions of the globe. They abound in Australia and Africa. Various species yield gum. True gum-arabic is the product of <i>Acacia Senegal</i>, abundant in both east and west tropical Africa. <i>Acacia arabica</i> is the gum-arabic tree of India, but yields a gum inferior to the true gum-arabic. An astringent medicine, called <a href=\"/article/05-0526-885fd5\" class=\"article-link\" title=\"catechu\">catechu</a> (<i>q.v.</i>) or cutch, is procured from several species, but more especially from <i>Acacia catechu</i>, by boiling down the wood and evaporating the solution so as to get an extract. The bark of <i>Acacia arabica</i>, under the name of <i>babul</i> or <i>babool</i>, is used in Scinde for tanning. The bark of various Australian species, known as wattles, is also very rich in tannin and forms an important article of export. Such are <i>Acacia pycnantha</i>, golden wattle, <i>A. decurrens</i>, tan wattle, and <i>A. dealbata</i>, silver wattle. <table style=\"text-align:center;margin-right:auto;margin-left:auto\"><tr><td><img src=\"/data/images/Britannica_Acacia_-_Acacia_Senegal.jpg\" alt=\"Britannica Acacia - Acacia Senegal.jpg\" loading=\"lazy\" style=\"max-width:100%;height:auto;vertical-align:middle;width:310px;\" /></td></tr><tr><td><div style=\"font-size:83%\"><i>Acacia Senegal</i>, flowering branch, natural size (after A. Meyer<br>and Schumann).</div></td></tr><tr style=\"font-size:85%;line-height:100%\"><td>From Strasburger’s <i>Lehrbuch der Botanik</i>.</td></tr></table> The pods of <i>Acacia nilotica</i>, under the name of neb-neb, and of other African species are also rich in tannin and used by tanners. The seeds of <i>Acacia niopo</i> are roasted and used as snuff in South America. Some species afford valuable timber; such are <i>Acacia melanoxylon</i>, black wood of Australia, which attains a great size; its wood is used for furniture, and takes a high polish; and <i>Acacia homalophylla</i> (also Australian), myall wood, which yields a fragrant timber, used for ornamental purposes. <i>Acacia formosa</i> supplies the valuable Cuba timber called sabicu. <i>Acacia seyal</i> is supposed to be the shittah tree of the Bible, which supplied shittim-wood. <i>Acacia heterophylla</i>, from Mauritius and Bourbon, and <i>Acacia koa</i> from the Sandwich Islands are also good timber trees. The plants often bear spines, especially those growing in arid districts in Australia or tropical and South Africa. These sometimes represent branches which have become short, hard and pungent, or sometimes leaf-stipules. <i>Acacia armata</i> is the kangaroo-thorn of Australia, <i>A. giraffae</i>, the African camel-thorn. In the Central American <i>Acacia sphaerocephala</i> (bull-thorn acacia) and <i>A. spadicigera</i>, the large thorn-like stipules are hollow and afford shelter for ants, which feed on a secretion of honey on the leaf-stalk and curious food-bodies at the tips of the leaflets; in return they protect the plant against leaf-cutting insects. In common language the term Acacia is often applied to species of the genus <a href=\"/article/23-0443-dd33a0\" class=\"article-link\" title=\"Robinia\">Robinia</a> (<i>q.v.</i>) which belongs also to the <a class=\"page-marker\" data-page=\"97\" data-vol=\"1\" title=\"Volume 1, page 97 — click to view scan\" href=\"scans.html\"></a>Leguminous family, but is placed in a different section. <i>Robinia Pseudacacia</i>, or false acacia, is cultivated in the milder parts of Britain, and forms a large tree, with beautiful pea-like blossoms. The tree is sometimes called the locust tree.<p></div>\n          \n        </div>\n\n        <div class=\"card\">\n          <h2>Cross-references</h2>\n          \n          <ul class=\"xref-list\">\n            \n                <li class=\"xref-item resolved\">\n                  <a href=\"/article/05-0526-885fd5\">CATECHU</a>\n                </li>\n                <li class=\"xref-item resolved\">\n                  <a href=\"/article/23-0443-dd33a0\">ROBINIA</a>\n                </li>\n          </ul>\n        </div>\n\n      "
 }

@@ -55,7 +55,6 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
     SHAPE_OUTLINE,
-    SHAPE_PAGE,
     SHAPE_TITLE,
     strip_outer,
 )
@@ -902,8 +901,6 @@ def _derive_label(
         return _derive_double_brace_label(raw, inner_text)
     if shape == SHAPE_OUTLINE:
         return "OUTLINE"
-    if shape == SHAPE_PAGE:
-        return "PAGE"
     if shape == SHAPE_BODY:
         return "BODY"
     if shape == SHAPE_GENEALOGY:

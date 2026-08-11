@@ -145,17 +145,25 @@ def load_topic_map() -> dict[str, set]:
             _walk(cat, ch)
 
     for cat in d.get("categories", []):
+        # The category is itself a bucket: an undivided one carries its articles
+        # directly ("Sports and Pastimes" — 264 articles, 0 subsections).
+        # Entering only through `subsections` left all of them out of the topic
+        # map, so every see/cf reference in them abstained for want of a category
+        # they in fact have.
+        _walk(cat["name"], cat)
         for sub in cat.get("subsections", []):
             _walk(cat["name"], sub)
     return tm
 
 
 def _clean_prose(t: str) -> str:
-    """Marker stream -> plain prose: links to their display, markers/page
-    stamps out, whitespace collapsed.  What the fisher should embed."""
+    """Marker stream -> plain prose: links to their display, markers out,
+    whitespace collapsed.  What the fisher should embed.
+
+    A `\\x01PAGE:N\\x01` strip lived here too; page position no longer enters the
+    stream, so it swept nothing ([[project_page_position_out_of_band]])."""
     t = re.sub(r"«LN(?:\[[a-z_]*\])?:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
     t = re.sub(r"«[^»]*»", "", t)
-    t = re.sub(r"\x01PAGE:\d+\x01", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
 

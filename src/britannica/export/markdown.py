@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import re
 
-from britannica.markers import strip_page_markers
 
 # ── phase 1: split / block markers (they nest a «, so they go first) ──────────
 
@@ -220,7 +219,7 @@ def body_to_markdown(body: str) -> str:
         footnotes.append(_inline(inner).strip())
         return f"[^{n}]"
 
-    text = strip_page_markers(body, replacement="")
+    text = body
     text = _TITLE_RE.sub("", text)
     # block markers first (they nest a «)
     text = re.compile(r"«FN(?:\[([^\]]*)\])?:([\s\S]*?)«/FN»").sub(_fn, text)

@@ -503,11 +503,17 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
         h = escape_html(h)
 
     if body_blocks:
-        # BODY-only block forms.  Page markers + shoulder headings go first: «SH» derives its
-        # display text by STRIPPING its inner markers, so it must consume the span before the
-        # footnote / styler passes decode those same markers.
-        from britannica.render.article import render_page_markers, _render_sh
-        h = render_page_markers(h, ctx)
+        # BODY-only block forms.  Shoulder headings go first: «SH» derives its
+        # display text by STRIPPING its inner markers, so it must consume the span
+        # before the footnote / styler passes decode those same markers.
+        #
+        # A `render_page_markers` pass ran here until page position left the
+        # stream.  It substituted `\x01PAGE:N\x01`, a token that no longer reaches
+        # render — 0 occurrences across 37,226 bodies and 37,228 exported JSONs —
+        # so it was a no-op sweep on every article.  Markers are INSERTED now, by
+        # `page_markers.inject`, after this returns
+        # ([[project_page_position_out_of_band]]).
+        from britannica.render.article import _render_sh
         h = _render_sh(h)
 
     # Footnotes decode the same in every context (title, prose, cell) — numbered and

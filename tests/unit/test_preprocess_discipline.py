@@ -8,7 +8,7 @@ function in it must be pure cruft removal.
 
 Two independent layers ([[feedback_audit_code_discipline]]):
 
-1. FROZEN ALLOWLIST — the exact ordered chain in `_clean_and_heal`, read from its
+1. FROZEN ALLOWLIST — the exact ordered chain in `_source_clean`, read from its
    AST.  Adding, removing, or reordering a step changes the extracted list and
    fails this test, forcing the change to the surface as a reviewable edit of the
    frozen tuple.  Each junk removal in docs/sweeper_removal.md SHRINKS this tuple,
@@ -120,7 +120,7 @@ def test_every_prewalker_step_is_classified():
     breaks it."""
     assert _VETTED.isdisjoint(_JUNK) and _VETTED.isdisjoint(_UNDECIDED) \
         and _JUNK.isdisjoint(_UNDECIDED), "a step is classified two ways"
-    chain = set(_extract_chain(P._clean_and_heal))
+    chain = set(_extract_chain(P._source_clean))
     classified = _VETTED | _JUNK | _UNDECIDED
     unclassified = chain - classified
     stale = classified - chain
@@ -136,9 +136,9 @@ def test_campaign_progress_is_visible():
     """The junk ledger only shrinks; when JUNK ∪ UNDECIDED is empty the chain is
     exactly VETTED — the positive cleanliness claim the campaign is driving toward.
     This test documents the remaining count; it does not fail on non-empty JUNK."""
-    remaining = (_JUNK | _UNDECIDED) & set(_extract_chain(P._clean_and_heal))
+    remaining = (_JUNK | _UNDECIDED) & set(_extract_chain(P._source_clean))
     if not remaining:
-        assert set(_extract_chain(P._clean_and_heal)) == _VETTED, \
+        assert set(_extract_chain(P._source_clean)) == _VETTED, \
             "campaign complete but chain != VETTED — reconcile the sets"
 
 
@@ -195,3 +195,114 @@ def test_the_invariant_would_catch_a_conversion():
     src = '<bdo dir="rtl">x</bdo>'
     new = set(_WORD.findall(fake_conversion(src))) - set(_WORD.findall(src))
     assert new, "word-preservation invariant failed to flag a bdo→span conversion"
+
+
+# ── Page seams: a page break is EXACTLY ONE line break ───────────────────────
+#
+# `make_stream` says this already — it `.strip()`s each page and joins with "\n"
+# — but it runs while the `<noinclude>` wrapper is still attached, so it cannot
+# strip whitespace the noinclude removal later EXPOSES.  Both directions were
+# broken ([[project_page_position_out_of_band]]):
+#
+#   * `_SECTION_TAG_RE` ends `[ \t]*\n?`, so a page ending
+#     `…difference<section end="Pollination" />` lost the join newline and ran
+#     "difference" into the next page's "between" — 10,385 of 26,931 seams.
+#   * A page whose wikitext reads `<noinclude>…</noinclude>\ntext` kept that
+#     leading newline, making the seam "\n\n" — a paragraph break mid-sentence
+#     ("Prester John, and various ¶ expeditions had been sent"), 284 of 2,949
+#     seams in vols 1/8/22.  Its neighbours in the SAME article are written
+#     without the newline, so it is transcription style, not content.
+#
+# Both were invisible while the body was cut into per-page segments and glued
+# back with `" "` — the reassembly normalised the seam by accident.  Storing the
+# body whole removed the accident, so the rule is asserted here instead.
+#
+# A paragraph that genuinely breaks across a page is carried by `{{nop}}`, which
+# is what Wikisource writes for it precisely because a page transition swallows a
+# lone newline.  It is not whitespace, so the rule never touches it.
+
+class _Pg:
+    def __init__(self, page_number, wikitext):
+        self.page_number = page_number
+        self.wikitext = wikitext
+
+
+_SEAM_CASES = {
+    # POLLINATION ws 16/17 verbatim: the section tag is flush against the last
+    # word, so its `\n?` reaches past the page's own end.
+    "section_tag_flush_with_last_word": [
+        _Pg(16, 'no difference<section end="Pollination" /><noinclude></noinclude>'),
+        _Pg(17, '<noinclude>{{rh||x|3}}</noinclude>between the effects'),
+    ],
+    # The tag on its own line: dropping it takes the line's newline, and the
+    # page's own trailing newline is what remains — nothing to supply.
+    "section_tag_on_its_own_line": [
+        _Pg(16, 'no difference\n<section end="X" />'),
+        _Pg(17, 'between the effects'),
+    ],
+    # No chrome at all — the plain join, which was always correct.
+    "no_chrome": [
+        _Pg(16, 'no difference'),
+        _Pg(17, 'between the effects'),
+    ],
+    # ABYSSINIA ws 120/121: the incoming page's own text starts with a newline
+    # the `<noinclude>` hid from `make_stream`'s `.strip()`.
+    "incoming_page_starts_with_a_newline": [
+        _Pg(16, 'known as Prester John, and various'),
+        _Pg(17, '<noinclude>{{rh|90|ABYSSINIA||x}}</noinclude>\n'
+                'expeditions had been sent in quest of it'),
+    ],
+    # Whitespace exposed on BOTH sides at once.
+    "whitespace_on_both_sides": [
+        _Pg(16, 'end of the line\n\n<section end="X" />'),
+        _Pg(17, '<noinclude>{{rh|1|X|2}}</noinclude>\n\ncontinues here'),
+    ],
+}
+
+
+@pytest.mark.parametrize("name", list(_SEAM_CASES))
+def test_page_break_is_exactly_one_newline(name):
+    stream, page_keys, _sections = P.stream_with_keys(_SEAM_CASES[name])
+    assert [pg for _off, pg in page_keys] == [16, 17]
+    for off, pg in page_keys:
+        if off == 0:                      # the stream's first page: no seam
+            continue
+        i = off
+        while i > 0 and stream[i - 1] in " \t\n":
+            i -= 1
+        j = off
+        while j < len(stream) and stream[j] in " \t\n":
+            j += 1
+        assert stream[i:j] == "\n", (
+            f"page {pg}'s seam is {stream[i:j]!r}, not a single newline: "
+            f"...{stream[max(0, i - 20):i]!r} ⟨key⟩ {stream[j:j + 20]!r}...")
+
+
+def test_seam_never_glues_two_words():
+    stream, _keys, _sections = P.stream_with_keys(
+        _SEAM_CASES["section_tag_flush_with_last_word"])
+    assert "differencebetween" not in stream
+    assert "difference\nbetween" in stream
+
+
+def test_seam_never_invents_a_paragraph_break():
+    """The ABYSSINIA shape: a lone newline in the incoming page's wikitext is
+    transcription style — its neighbours in the same article are written without
+    one — so carrying it through would break a sentence into two paragraphs."""
+    stream, _keys, _sections = P.stream_with_keys(
+        _SEAM_CASES["incoming_page_starts_with_a_newline"])
+    assert "\n\n" not in stream, f"invented a paragraph break: {stream!r}"
+    assert "and various\nexpeditions" in stream
+
+
+def test_nop_survives_the_seam_rule():
+    """`{{nop}}` is how Wikisource carries a paragraph that genuinely breaks
+    across a page — precisely because a page transition swallows a lone newline.
+    It is not whitespace, so the seam rule must leave it alone."""
+    stream, page_keys, _sections = P.stream_with_keys([
+        _Pg(16, 'the paragraph ends here.\n{{nop}}'),
+        _Pg(17, 'A new paragraph starts.'),
+    ])
+    assert "{{nop}}" in stream, f"the seam rule ate {{nop}}: {stream!r}"
+    off = page_keys[1][0]
+    assert stream[:off].rstrip("\n").endswith("{{nop}}")

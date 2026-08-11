@@ -66,8 +66,9 @@ class TestShapeVocabulary:
         # and INLINE_IMAGE dissolved into DOUBLE_BRACKET (the walker draws no
         # inline-vs-block image distinction — the raw never marks one) —
         # recognition by name/attribute is the classifier's job, not the walker's
-        # — leaving 10, then +1 for un-merging GENEALOGY from PAIRED_WRAPPER.
-        assert len(SHAPES) == 11
+        # — leaving 10, then +1 un-merging GENEALOGY from PAIRED_WRAPPER and
+        # -1 retiring PAGE.
+        assert len(SHAPES) == 10
         assert SHAPE_HTML_TAG in SHAPES
         assert SHAPE_DOUBLE_BRACE in SHAPES
         assert SHAPE_PAIRED_WRAPPER in SHAPES

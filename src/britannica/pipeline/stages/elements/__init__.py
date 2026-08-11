@@ -1265,7 +1265,6 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # fold their already-produced markers.  OUTLINE (`«OUTLINE»…«/OUTLINE»`) is a `_MARKER_WRAP`
     # row; OUTLINE_ITEM stays hand-written — its opener embeds the item's `raw` depth.
     "OUTLINE_ITEM": lambda raw, inner, ctx, reg: f"«OLI:{raw}»{inner}«/OLI»",
-    "PAGE": lambda raw, inner, ctx, reg: raw,  # leaf — re-emit the page marker
     # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  A COMPOSITE:
     # `_classify_title_composite` decomposed the joint-stripped heading into child nodes;
     # the producer substitutes their markers (no produce-time re-walk).  The viewer renders
