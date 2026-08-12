@@ -21,6 +21,8 @@ through build.to_xhtml_body for XHTML conformance like every other baked body.
 """
 import os
 import re
+
+from britannica.util.strings import section_slug
 import xml.etree.ElementTree as ET
 
 import html5lib
@@ -123,7 +125,7 @@ def introduction_html():
         if not m:
             return f"<p>{_h.escape(p)}</p>"
         head = m.group(1).strip()
-        slug = re.sub(r"[^a-z0-9]+", "-", head.lower()).strip("-")
+        slug = section_slug(head)
         return (f'<p><span class="shoulder-heading" id="intro-{slug}">'
                 f"{_h.escape(head)}</span> {_h.escape(p[m.end():])}</p>")
 

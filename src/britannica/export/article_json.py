@@ -20,7 +20,8 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
-from britannica.markers import markers_to_text, strip_title_markers
+from britannica.markers import (markers_to_text, strip_marker_tokens,
+                                strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
 from britannica.render.article import render_article
 
@@ -365,7 +366,6 @@ def _safe_filename(article_id, title: str = "") -> str:
 # author signature) is captured whole rather than truncated at the first «.
 _LN_DISPLAY_RE = re.compile(
     r"«(?:LN|AL)(?:\[[a-z_]*\])?:[^|]*\|(.*?)«/(?:LN|AL)»", re.DOTALL)
-_INLINE_MARK_RE = re.compile(r"«[^«»]*»")
 
 
 def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
@@ -400,7 +400,7 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
         # Strip nested inline markers from the display — the resolver wants the
         # plain name (`r. v. h.`), not `«SC»r. v. h.«/SC»`, whose stray tokens
         # would mistokenize as name parts.
-        display = _INLINE_MARK_RE.sub("", dm.group(1)).strip() if dm else None
+        display = strip_marker_tokens(dm.group(1), "").strip() if dm else None
         ruled = resolver.adjudicated(m["normalized_target"])
         if ruled is not None:
             # A hand ruling wins over every tier — but the self-reference rule

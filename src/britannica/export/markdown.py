@@ -52,7 +52,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.render.leaks import strip_markers
+from britannica.markers import strip_marker_tokens as strip_markers
 
 
 # ── the balanced scan — the ONE way this module crosses a marker span ─────────
@@ -147,8 +147,11 @@ _BRACE2_RE = re.compile(r"«BRACE2\[[^\]]*\]»")
 # open/close tokens for the SHED family and the styled DIV/SPAN (carry an [attr]).
 # `MIRROR` also has a SPLIT form (`«MIRROR:…«/MIRROR»`, ALPHABET's reversed glyphs)
 # which the split-marker pass handles; this catches the bare wrapper form.
+# The attribute run excludes only the GUILLEMETS: a real `«SPAN[title:…]»` carries
+# nested brackets (`farm [tribute] of the county`), and `[^\]]*` left three articles
+# showing the raw marker.  Same correction as `render.inline._SPAN_TITLE_RE`.
 _SHED_RE = re.compile(
-    r"«/?(?:" + "|".join(_SHED) + r")»|«/?(?:DIV|SPAN)(?:\[[^\]]*\])?»")
+    r"«/?(?:" + "|".join(_SHED) + r")»|«/?(?:DIV|SPAN)(?:\[[^«»]*\])?»")
 _MIRROR_OPEN = re.compile(r"«MIRROR:")
 
 

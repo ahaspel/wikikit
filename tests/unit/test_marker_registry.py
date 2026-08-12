@@ -21,7 +21,7 @@ from collections import Counter
 from pathlib import Path
 
 from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES
-from britannica.render.leaks import marker_names
+from britannica.markers import marker_names
 
 SNAPS = Path(__file__).resolve().parents[1] / "snapshots" / "transform"
 _REGISTERED = frozenset(RENDERED_GUILLEMET_MARKER_NAMES)

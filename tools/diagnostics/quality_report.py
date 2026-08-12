@@ -26,7 +26,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
 from britannica.outputs import outputs_for  # noqa: E402
-from britannica.render.leaks import find_leaks, marker_names  # noqa: E402
+from britannica.markers import marker_names  # noqa: E402
+from britannica.render.leaks import find_leaks  # noqa: E402
 
 # Consumer → issue-key prefix.  `rendered_html` keeps the historical `render_leak_*`
 # keys: they are compared build-over-build, and renaming them would break that

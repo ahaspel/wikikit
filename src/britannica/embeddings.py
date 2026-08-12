@@ -23,6 +23,8 @@ from pathlib import Path
 
 import numpy as np
 
+from britannica.markers import strip_marker_tokens
+
 _MODEL_NAME = "BAAI/bge-small-en-v1.5"
 _CACHE = Path("data/derived/lead_embeddings.npz")
 _ARTS_DIR = Path("data/derived/articles")
@@ -31,11 +33,9 @@ _INDEX = _ARTS_DIR / "index.json"
 # Strip the producer's marker SYNTAX from a lead before embedding, keeping the
 # payload text: «TITLE:X»/«I:x» -> "X"/"x", bare « » dropped.  The kind rung reads
 # the raw lead (it parses the markers); embeddings want clean prose.
-_MARK_TAG = re.compile(r"«[^»]*?:")
-
-
 def _clean_lead(text: str) -> str:
-    return _MARK_TAG.sub(" ", text).replace("«", " ").replace("»", " ").strip()
+    """Lead text with marker SYNTAX removed, payload kept, for embedding."""
+    return strip_marker_tokens(text).strip()
 
 
 def _l2(mat: np.ndarray) -> np.ndarray:

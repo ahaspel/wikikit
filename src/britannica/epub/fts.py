@@ -16,13 +16,14 @@ no escaping inside a CDATA JS string.  Posting lists are concatenated in term
 order, "|"-separated, parallel to the space-separated sorted term string.
 """
 import re
+
+from britannica.markers import collapse_links, strip_marker_tokens
 import unicodedata
 
 DF_CAP_FRACTION = 0.27      # a term in >27% of docs is dropped (unsearchable noise;
                             # at full scale ≈ the measured 10k-doc knee)
 _ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+*"
 _TOK_RE = re.compile(r"[a-z0-9]+")
-_MARKER_RE = re.compile(r"«[^»]*»")
 
 
 def fold(s):
@@ -31,8 +32,19 @@ def fold(s):
 
 
 def tokens(body):
-    """Distinct folded search tokens of a raw article body (markers stripped)."""
-    return set(_TOK_RE.findall(fold(_MARKER_RE.sub(" ", body))))
+    """Distinct folded search tokens of a raw article body (markers stripped).
+
+    Markers come off BEFORE the fold: marker names are uppercase, and that is what
+    distinguishes them from a French quotation or an OCR `«ff»`.  Folding first
+    lowercases them away, which is why this used to need its own case-blind
+    `«[^»]*»` — a span that ran from one guillemet to the next and, on a split
+    marker (`«TITLE:Aardvark«/TITLE»`), ate the payload instead of the delimiter.
+
+    Links collapse to their DISPLAY first: a link's target and filename fields are
+    addresses, and stripping only the delimiter indexed `json` and every stable-id
+    fragment as a searchable word.
+    """
+    return set(_TOK_RE.findall(fold(strip_marker_tokens(collapse_links(body)))))
 
 
 def _varint(n, out):

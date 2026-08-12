@@ -18,6 +18,8 @@ BritannicaUrls); it is injected via ``article_url`` so an emitter supplies its o
 target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
+
+from britannica.markers import strip_marker_tokens
 from urllib.parse import quote
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
@@ -96,7 +98,7 @@ def parse_img_meta(meta_block):
 def render_img(filename, meta, caption):
     fn = unescape_html(filename)
     url = fn if fn.startswith("http") else commons_url(fn)
-    alt = re.sub(r"«[^»]*»", "", caption or fn)
+    alt = strip_marker_tokens(caption or fn, "")
     s = "max-width:100%;height:auto;vertical-align:middle;"
     if meta.get("width"):
         s += f"width:{meta['width']}px;"
@@ -214,7 +216,13 @@ _VERSE_RE = re.compile(r"\{\{IVERSE(?:\[style:[^\]]*\])?:([\s\S]*?)\}IVERSE\}")
 _BAR_RE = re.compile(r"«BAR(?:\[(\d+)\])?»")
 _DIV_RE = re.compile(r"«DIV\[style:([^\]]*)\]»")
 _SPAN_STYLE_RE = re.compile(r"«SPAN\[style:([^\]]*)\]»")
-_SPAN_TITLE_RE = re.compile(r"«SPAN\[title:([^\]]*)\]»")
+# The title run excludes only the GUILLEMETS, not `]`: a real title carries nested
+# brackets — ANATOMY's `«SPAN[title:farm [tribute] of the county]»`, THEORY OF
+# NUMBERS' `«SPAN[title:2＝[2,1＋√m]²]»`, SUIDAS' `«SPAN[title:Greek: outos [Ptol…]»`
+# — and `[^\]]*` stopped at the first one, leaving the marker undecoded and VISIBLE
+# in three articles' rendered HTML.  The leak oracle shared the same `[^\]]*` and so
+# could not report what it was blind to; both now use the corpus-true run.
+_SPAN_TITLE_RE = re.compile(r"«SPAN\[title:([^«»]*)\]»")
 _BRACE2_RE = re.compile(r"«BRACE2\[(\d+)\|([lrud])\]»")
 # «LN» decodes as INDEPENDENT open/close: the opener «LN:filename?|target|» → <a …>, «/LN» → </a>.
 # The display rides through and finishes decoding in the later passes (order-invariant), unlike the old

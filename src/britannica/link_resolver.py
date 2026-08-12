@@ -22,6 +22,8 @@ preserving (topic path byte-identical), with ``prose`` threaded into the fisher.
 """
 import json
 import re
+
+from britannica.markers import strip_marker_tokens
 import unicodedata
 from pathlib import Path
 
@@ -163,7 +165,7 @@ def _clean_prose(t: str) -> str:
     A `\\x01PAGE:N\\x01` strip lived here too; page position no longer enters the
     stream, so it swept nothing ([[project_page_position_out_of_band]])."""
     t = re.sub(r"«LN(?:\[[a-z_]*\])?:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
-    t = re.sub(r"«[^»]*»", "", t)
+    t = strip_marker_tokens(t, "")
     return re.sub(r"\s+", " ", t).strip()
 
 

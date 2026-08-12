@@ -20,6 +20,58 @@ article bodies and 37,228 exported JSONs.
 import re as _re
 
 
+# ── The marker LEXICON — what a marker token looks like, defined ONCE ────────
+#
+# Every consumer that needs to recognize or remove marker syntax imports from
+# here.  The alternative is what this codebase actually had: `«[^«»]*»` in five
+# modules, `«[^»]*»` in eight more — two spellings of one rule, behaving
+# differently the moment a marker nests, and no way for anyone to keep thirteen
+# sites in step because nothing said they were the same rule.
+#
+# These match the marker TOKEN, never a span between two guillemets.  The span
+# spelling is wrong on this corpus: unproofread OCR leaves stray `«`/`»` in
+# garbled Greek and math, so a span runs from one to the next and deletes the
+# prose between — 376,360 characters across 904 bodies, measured.
+#
+# Names are UPPERCASE, which is what separates a marker from a French quotation
+# or an OCR artefact (`«ff»`).  Three shapes, tried in this order:
+#   `«SEC:slug|name»`  a POINT marker — its payload is ARGUMENTS, not content, so
+#                      the whole thing goes.  Removing only the delimiter left
+#                      `santa-laura-mount-athos»` in the search text of 1,221
+#                      articles, which is how this was caught.
+#   `«TITLE:`          a SPLIT opener — its payload IS content and stays; there is
+#                      no `»` to close on, so the `:` alternative takes it.
+#   `«I»` / `«/I»`     a bare wrapper.
+# The payload run excludes `«»`, so a point marker can never swallow a following
+# marker, and a split opener can never be mistaken for one.
+# The attribute run is `[^«»]*`, NOT `[^\]]*`: a real attribute carries nested
+# brackets — `«SPAN[title:farm [tribute] of the county]»`, `«SPAN[title:2＝[2,1＋√m]²]»`
+# — and stopping at the first `]` leaves the whole marker unmatched and visible.
+# Excluding only the guillemets keeps the run inside one marker regardless.
+MARKER_TOKEN_RE = _re.compile(
+    r"«/?[A-Z][A-Za-z0-9_]*(?:\[[^«»]*\])?(?::[^«»]*»|:|»)")
+BRACE_MARKER_TOKEN_RE = _re.compile(
+    r"\{\{[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?:|\}[A-Z]+\}")
+_MARKER_NAME_RE = _re.compile(r"«/?([A-Za-z0-9_]+)")
+
+
+def marker_names(text: str) -> list[str]:
+    """Every marker NAME in ``text`` — the registry checks' shared extractor."""
+    return [_MARKER_NAME_RE.match(m.group(0)).group(1)
+            for m in MARKER_TOKEN_RE.finditer(text or "")]
+
+
+def strip_marker_tokens(text: str, repl: str = " ") -> str:
+    """``text`` with every marker DELIMITER removed, content left in place.
+
+    Not a converter: it drops syntax only.  For text a reader sees, use
+    :func:`markers_to_text`, which knows a link collapses to its display and a
+    footnote leaves the prose entirely.
+    """
+    return BRACE_MARKER_TOKEN_RE.sub(
+        repl, MARKER_TOKEN_RE.sub(repl, text or ""))
+
+
 # Title-formatting markers: bold (`«B»…«/B»`), italic (`«I»…«/I»`),
 # small-caps (`«SC»…«/SC»`).  Stored in `Article.title` so the viewer
 # can render multi-bold / small-caps titles like
@@ -187,7 +239,11 @@ _DROP_MARKER_RE = _re.compile(
     r"|\{\{VERSE:[\s\S]*?\}VERSE\}"
     r"|\{\{LEGEND:[\s\S]*?\}LEGEND\}"
 )
-_INLINE_MARKER_RE = _re.compile(r"«[^«»]*»")
+# A link display can carry nested markers; strip them by the LEXICON above, not
+# by a span.  The span spelling deleted real prose from the search text of
+# three articles whose unproofread OCR leaves stray guillemets — it ran from
+# one to the next and took the clause between.
+_INLINE_MARKER_RE = MARKER_TOKEN_RE
 # «AL» is the DEFERRED author-link marker (walk → 6b4 resolves it against the
 # finished roster); it never survives into the render/search path, but degrade a
 # stray one to its display (the initials) like any other link, not to residue.
@@ -210,6 +266,18 @@ def _link_display(m: "_re.Match") -> str:
     return _INLINE_MARKER_RE.sub("", disp)
 
 
+def collapse_links(text: str) -> str:
+    """Every link → its DISPLAY text, dropping target and filename fields.
+
+    A link's fields are addresses, not prose: `«LN:14-0147-abc.json|HYDROMEDUSAE|
+    the medusae«/LN»` reads as "the medusae".  Stripping only the delimiter leaves
+    the filename behind, which put `json`, `dd33a0` and every stable-id fragment
+    into the EPUB search index as searchable words.  Any consumer producing text
+    for a READER or an INDEX wants this before `strip_marker_tokens`.
+    """
+    return _LINK_RE.sub(_link_display, text)
+
+
 def markers_to_text(text: str, *, sep: str = " ") -> str:
     """Convert a marker-stream ``body`` into plain text (search / previews).
 
@@ -222,7 +290,7 @@ def markers_to_text(text: str, *, sep: str = " ") -> str:
     string.
     """
     text = _DROP_MARKER_RE.sub(sep, text)
-    text = _LINK_RE.sub(_link_display, text)
+    text = collapse_links(text)
     text = _INLINE_MARKER_RE.sub("", text)
     text = _RAW_BR_RE.sub(sep, text)          # <br> line break → word separator
     text = _RAW_HTML_RE.sub("", text)         # <sub>/<sup>/<small>/<big> → keep content, drop tag

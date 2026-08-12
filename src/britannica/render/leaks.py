@@ -25,15 +25,10 @@ tags to anchor stay off the outputs that have none; nothing else varies.
 """
 import re
 
-# Markers are UPPERCASE-named (FN, MATH, SPAN, I, B…); this avoids matching a
-# lowercase French « » quotation that is legitimate content.
-_MARKER_RE = re.compile(r"«/?[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?[:»]")
-_NAME_RE = re.compile(r"«/?([A-Za-z0-9_]+)")
-# The BRACE marker family (`{{IMG:…}}`, `{{TABLE:…}TABLE}`) — the same lexical
-# question as `_MARKER_RE`, so it is answered in the same place.  Anything that
-# needs "what does a marker token look like" imports from here rather than
-# retyping it; a second copy is how a pattern drifts from the thing it describes.
-_BRACE_MARKER_RE = re.compile(r"\{\{[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?:|\}[A-Z]+\}")
+# The marker lexicon lives in `britannica.markers` — the module that owns the
+# marker vocabulary.  Imported, never retyped: this file's whole argument is that
+# a second copy of a rule drifts from the rule.
+from britannica.markers import MARKER_TOKEN_RE as _MARKER_RE  # noqa: E402
 # A template's `{{` open OR a `}}` close surviving into visible text — both are
 # brace-delimiter residue.  Checked on MATH-stripped text, so a TeX `}}` group
 # (`{{1 \over 2}}`, exempt via `_TEXMATH_RE`) can't false-match; only a real
@@ -152,37 +147,6 @@ _CHECKS = (
     ("indent", _INDENT_RE, "no_math", frozenset(("html",))),
     ("sentinel", _SENTINEL_RE, "raw", _ALL),
 )
-
-
-def marker_names(text):
-    """Every marker NAME in ``text``, by the SAME pattern the leak check uses.
-
-    The one extractor for both registry checks — the fast one over the transform
-    snapshots and the corpus-wide ``unregistered_marker`` — so "what a marker looks
-    like" has a single definition and the two tiers cannot diverge on it.
-
-    The `[:»]` terminator ``_MARKER_RE`` demands is what keeps OCR mojibake out
-    (`Â«ff`, `«this`, `«Tm` — 29 occurrences of garbled Greek and math across the
-    corpus): garbled text carries no terminator, so it needs no exemption list.
-    """
-    return [_NAME_RE.match(m.group(0)).group(1)
-            for m in _MARKER_RE.finditer(text or "")]
-
-
-def strip_markers(text, repl=" "):
-    """``text`` with every marker TOKEN removed, content left in place.
-
-    Both families, one definition.  The tempting spelling — `«[^«»]*»` — is a SPAN,
-    and on unproofread OCR (SURVEYING carries stray `«`/`»` in garbled math) it
-    matched 7,000 characters of prose and deleted them.  Anything measuring content
-    with that pattern reports the prose it swallowed as loss
-    ([[feedback_verify_the_counter]]).
-
-    This removes DELIMITERS only; it is not a converter.  For text a reader sees,
-    use `markers.markers_to_text`, which knows that a link collapses to its display
-    and a footnote drops entirely.
-    """
-    return _BRACE_MARKER_RE.sub(repl, _MARKER_RE.sub(repl, text or ""))
 
 
 def find_leaks(output, fmt="html"):

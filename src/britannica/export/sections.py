@@ -63,8 +63,12 @@ def section_key(text: str) -> str:
     """The section-title match key: lowercase, alphanumerics only, so
     'History of Astronomy' matches 'historyofastronomy'.  The single Python
     owner ([[project_resolver_consolidation]]) for what was forked across the
-    Reader's Guide (`_normalize_for_match`) and the topic index; the viewer's
-    `sectionKey` mirrors it across the JS runtime boundary."""
+    Reader's Guide (`_normalize_for_match`) and the topic index.
+
+    (This used to claim "the viewer's `sectionKey` mirrors it across the JS
+    runtime boundary".  There is no `sectionKey` anywhere in the viewer — the
+    mirror was asserted, not built.  The rule that IS mirrored is the SLUG, and
+    `tests/unit/test_viewer_parity.py` binds that one by running both.)"""
     return re.sub(r"[^a-z0-9]+", "", (text or "").lower())
 
 

@@ -2,6 +2,8 @@
 
 import re
 
+from britannica.markers import strip_marker_tokens
+
 
 def section_slug(name: str) -> str:
     """URL-safe slug from a wikisource section name (or any string).
@@ -14,17 +16,21 @@ def section_slug(name: str) -> str:
     return name.strip("-")
 
 
-_MARKER_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
-
-
 def strip_markers(s: str) -> str:
     """Drop `«…»`-style markers, leaving the plain display text.
 
     Shared by the shoulder producer (to mint a slug from a heading's text)
-    and export (to read a heading's title) so both see the same plain text —
-    one regex, not a copy per caller.
+    and export (to read a heading's title) so both see the same plain text.
+
+    This USED to carry its own `«/?[A-Za-z]+(?:\\[[^\\]]*\\])?»` while claiming
+    "one regex, not a copy per caller" — true within this module, and a second
+    definition of the marker lexicon across the codebase.  It differed from the
+    real one in both directions: allowing lowercase names, it ate OCR mojibake
+    like `«ff»` as though it were a marker; requiring a closing `»`, it could not
+    see the SPLIT form, so `«LN:Iron|Iron.` minted the slug `ln-iron-iron`.
+    Three section anchors carried a literal `ln-` because of it.
     """
-    return _MARKER_RE.sub("", s)
+    return strip_marker_tokens(s, "")
 
 
 # After the primary headword, a heading carries the rest of a person's name, a

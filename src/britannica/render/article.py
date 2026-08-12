@@ -94,10 +94,11 @@ def _render_title_h1(marker, ctx):
     return f"<h1>{h}</h1>"
 
 
-def _section_slug(name):
-    s = name.strip().lower()
-    s = re.sub(r"[^a-z0-9]+", "-", s)
-    return re.sub(r"^-|-$", "", s)
+# The slug rule has ONE owner.  This was a byte-equivalent reimplementation —
+# verified identical across all 21,343 section titles — and equivalence today is
+# not the point: the render's anchors and the export's TOC links must move
+# together, which two copies cannot guarantee.
+from britannica.util.strings import section_slug as _section_slug
 
 
 class RenderContext:

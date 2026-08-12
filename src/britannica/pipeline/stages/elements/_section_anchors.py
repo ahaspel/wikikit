@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.markers import strip_marker_tokens
+
 from britannica.util.strings import section_slug
 
 # A heading is a «CTR» whose FIRST LINE is entirely small-caps: peel the styled runs
@@ -50,7 +52,6 @@ _ROMAN_PREFIX = re.compile(r"^\s*(?:[IVXLCDM]+|[A-Z]|\d+)\s*[.—\-]+\s*")
 # Whitespace + transparent block markers that may sit between a heading and a
 # table it titles (stepped over for the "leads-a-table" test).
 _LEAD_SKIP = re.compile(r"^(?:\s|«/?P»|«/?BR»)*")
-_ANY_MARKER = re.compile(r"«[^»]*»")
 # A footnote span inside a heading («SC»History of Anatomy«FN:…note…«/FN»«/SC») —
 # strip the WHOLE «FN:…«/FN» (marker + body) so the note never bleeds into the name.
 _FN_SPAN = re.compile(r"«FN(?:\[[^\]]*\])?:.*?«/FN»", re.DOTALL)
@@ -92,7 +93,7 @@ def _name(content: str) -> str:
     """The heading's display text: drop every marker, normalize spaces.  The body
     is already produced (no `{{…}}` templates), so marker-strip IS the visible
     text.  INERT by contract — strip stray braces, escape the `|` delimiter."""
-    txt = re.sub(r"\s+", " ", _ANY_MARKER.sub("", _FN_SPAN.sub("", content))).replace(" ", " ")
+    txt = re.sub(r"\s+", " ", strip_marker_tokens(_FN_SPAN.sub("", content), "")).replace(" ", " ")
     txt = re.sub(r"[{}]", "", txt).replace("|", "/")
     return txt.strip()
 
@@ -113,7 +114,7 @@ def _heading_name(ctr_content: str) -> str | None:
         if reduced == bare:
             break
         bare = reduced
-    bare = _ROMAN_PREFIX.sub("", _ANY_MARKER.sub("", bare))
+    bare = _ROMAN_PREFIX.sub("", strip_marker_tokens(bare, ""))
     if _WORD.search(bare):
         return None  # plain words outside the small-caps → centered prose
     name = _name(line1)
