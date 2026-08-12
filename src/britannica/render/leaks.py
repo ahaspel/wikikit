@@ -29,6 +29,11 @@ import re
 # lowercase French « » quotation that is legitimate content.
 _MARKER_RE = re.compile(r"«/?[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?[:»]")
 _NAME_RE = re.compile(r"«/?([A-Za-z0-9_]+)")
+# The BRACE marker family (`{{IMG:…}}`, `{{TABLE:…}TABLE}`) — the same lexical
+# question as `_MARKER_RE`, so it is answered in the same place.  Anything that
+# needs "what does a marker token look like" imports from here rather than
+# retyping it; a second copy is how a pattern drifts from the thing it describes.
+_BRACE_MARKER_RE = re.compile(r"\{\{[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?:|\}[A-Z]+\}")
 # A template's `{{` open OR a `}}` close surviving into visible text — both are
 # brace-delimiter residue.  Checked on MATH-stripped text, so a TeX `}}` group
 # (`{{1 \over 2}}`, exempt via `_TEXMATH_RE`) can't false-match; only a real
@@ -164,6 +169,22 @@ def marker_names(text):
             for m in _MARKER_RE.finditer(text or "")]
 
 
+def strip_markers(text, repl=" "):
+    """``text`` with every marker TOKEN removed, content left in place.
+
+    Both families, one definition.  The tempting spelling — `«[^«»]*»` — is a SPAN,
+    and on unproofread OCR (SURVEYING carries stray `«`/`»` in garbled math) it
+    matched 7,000 characters of prose and deleted them.  Anything measuring content
+    with that pattern reports the prose it swallowed as loss
+    ([[feedback_verify_the_counter]]).
+
+    This removes DELIMITERS only; it is not a converter.  For text a reader sees,
+    use `markers.markers_to_text`, which knows that a link collapses to its display
+    and a footnote drops entirely.
+    """
+    return _BRACE_MARKER_RE.sub(repl, _MARKER_RE.sub(repl, text or ""))
+
+
 def find_leaks(output, fmt="html"):
     """Return a list of ``(category, snippet)`` for every raw survivor; empty = clean.
 
@@ -178,10 +199,13 @@ def find_leaks(output, fmt="html"):
     raw = output or ""
     mask = _MATH_MASK[fmt]
     no_math = mask.sub("", raw) if mask else raw
-    # The attribute check runs on TAG-STRIPPED text for HTML, where a real `<tag …>`
-    # legitimately carries `style=`.  No other output has legitimate tags to protect,
-    # so nothing is stripped there and a leaked attribute has nowhere to hide.
-    no_tags = _TAG_RE.sub(" ", no_math) if fmt == "html" else no_math
+    # The attribute check runs on TAG-STRIPPED text wherever real tags are legal,
+    # because an attribute INSIDE a tag is not visible text — only a dumped one is.
+    # GFM allows inline HTML and the Markdown emitter uses it deliberately (`<sub>`,
+    # and the nested-table fallback GFM has no syntax for), so Markdown strips too;
+    # PLAIN TEXT has no legitimate tag, so nothing is stripped there and a leaked
+    # attribute has nowhere to hide.
+    no_tags = _TAG_RE.sub(" ", no_math) if fmt in ("html", "markdown") else no_math
     src = {"raw": raw, "no_math": no_math, "no_tags": no_tags}
     leaks = []
     for cat, rx, which, formats in _CHECKS:

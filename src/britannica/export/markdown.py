@@ -1,17 +1,36 @@
 """Marker stream → GitHub-Flavored Markdown — the agent/download emitter.
 
-The article ``body`` is a marker stream (the viewer's HTML input).  This is its
-Markdown sibling of :func:`britannica.markers.markers_to_text`: where that STRIPS
-to plain text, this TRANSLATES to clean GFM — keeping the semantic structure an
-LLM/agent consumer wants (headings, emphasis, links, tables, math, footnotes) and
-shedding only presentation (sizes, small-caps, centering, floats, styled
-divs/spans), which to a model is pure token noise.
+The article ``body`` is a marker stream — a SERIALIZED TREE, in paired,
+uniquely-named delimiters that cannot be confused with content.  This reads that
+tree the way :mod:`britannica.render.inline` does for HTML, and for the same
+reason: the walk already did the recognition, so a consumer recovers the structure
+by scanning the delimiters, never by matching across them.
 
-Same three-phase shape as ``markers_to_text`` and driven off the same marker
-constants, so it is TOTAL by construction: every marker in
-``RENDERED_GUILLEMET_MARKER_NAMES`` / ``RENDERED_MARKER_OPENS`` has an explicit
-rule here.  A marker with no rule falls through the final inline sweep as bare
-text — visible, not silently dropped — the same discipline as the classifier.
+Two shapes, both honest, exactly as ``decode_inline`` uses them:
+
+  * where a marker's translation is CONTEXT-FREE (``«I»`` → ``*`` whatever its
+    depth or parent), an independent open→text / close→text substitution IS a tree
+    walk — position cannot change the answer, so position need not be known;
+  * where it is NOT (a link's target lives in the opener but Markdown needs it at
+    the close; a GFM table needs a separator row sized to the column count; a
+    footnote hoists out of position), ``_sub_balanced`` scans for the DEPTH-matched
+    close and recurses into the inner.
+
+What is outlawed here is the lazy span — ``«X:…«/X»`` with ``[\\s\\S]*?`` — which
+stops at the FIRST close rather than the matching one and fails silently.  This
+module was 14 of them, written two days before the Python inline decoder existed
+and modelled on ``markers_to_text``, a STRIPPER: for stripping, a mis-paired span
+loses a few words and nothing announces it; for TRANSLATING, the same mis-pair
+emits wrong text inside a wrong construct.  It shipped 8,140 raw markers across
+560 articles, including a ``_OUTLINE_RE`` written for ``«OUTLINE:`` — a form that
+has never existed — which therefore matched nothing for five weeks while 151
+articles shipped a raw ``«OUTLINE»`` in the download bundle.
+
+Totality is now grounded in the OUTPUT, not in a manifest: anything without a rule
+survives visibly and `tools/diagnostics/output_leaks.py` counts it
+([[project_leak_audit_reframe]]).  The old claim of being "TOTAL by construction"
+over ``RENDERED_GUILLEMET_MARKER_NAMES`` was true and worthless — that constant
+omitted the very names this file had no rule for.
 
 Policy per marker family:
   * headings   «SEC:slug|name» → ``## name``   ; «SH:slug»…«/SH» → ``### …``
@@ -22,6 +41,8 @@ Policy per marker family:
   * footnotes  «FN[name]?:body«/FN» → ``[^n]`` inline + a collected notes block
   * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN» → ``$$``
   * images     {{IMG:file|meta|caption}} → ``![caption](file)`` reference
+  * outlines   «OUTLINE»/«IOUTLINE» with «OLI:depth» items → a nested ``-`` list,
+                 sparse source depths densified exactly as `build_outline_ul` does
   * tables     «TABLE[…]»…«/TABLE»  →  a de-spanned GFM table (see _table_to_gfm)
   * structural drop (carried in the record's own fields, not the prose):
                  «TITLE» (the title field), «ANCHOR» (a bare nav target),
@@ -31,40 +52,88 @@ from __future__ import annotations
 
 import re
 
-
-# ── phase 1: split / block markers (they nest a «, so they go first) ──────────
-
-_MATH_RE = re.compile(r"«MATH(\[[^\]]*\])?:([\s\S]*?)«/MATH»")
-_EQN_RE = re.compile(r"«EQN:[^»]*»([\s\S]*?)«/EQN»")
-_IMG_RE = re.compile(r"\{\{IMG:([^|}]+)((?:\|[^{}]*?)*?)\}\}")
-_VERSE_RE = re.compile(r"\{\{VERSE(?:\[[^\]]*\])?:([\s\S]*?)\}VERSE\}")
-_LEGEND_RE = re.compile(r"\{\{LEGEND:([\s\S]*?)\}LEGEND\}")
-_TABLEBRACE_RE = re.compile(r"\{\{TABLEH?:([\s\S]*?)\}TABLE\}")
-_OUTLINE_RE = re.compile(r"«(?:OUTLINE|PLATE_OUTLINE):([\s\S]*?)«/(?:OUTLINE|PLATE_OUTLINE)»")
-_TITLE_RE = re.compile(r"«TITLE:[\s\S]*?«/TITLE»")
-
-# ── phase 2: links ───────────────────────────────────────────────────────────
-
-_LINK_RE = re.compile(r"«(?:LN|XL)(?:\[[a-z_]*\])?:([\s\S]*?)«/(?:LN|XL)»")
+from britannica.render.leaks import strip_markers
 
 
-def _link_md(m: re.Match) -> str:
-    # target is the first `|`-field, display the last (mirrors markers._link_display);
-    # a display carrying nested inline markers (`«I»…«/I»`) rides through and is
-    # translated by the emphasis pass that runs after this in _inline.
-    parts = m.group(1).split("|")
-    target = parts[0].strip()
-    display = (parts[-1] if len(parts) > 1 else parts[0]).strip()
-    return f"[{display}]({target})"
+# ── the balanced scan — the ONE way this module crosses a marker span ─────────
 
-# ── phase 3: inline (paired «X»…«/X» and point markers) ──────────────────────
+def _balanced_end(text: str, j: int, open_re: re.Pattern, close: str) -> int:
+    """Index just past the DEPTH-matched ``close`` for an opener ending at ``j``.
 
-# headings — «SEC» is a POINT marker carrying the name; the visible heading render
-# (a following «CTR»«SC»name«/SC»«/CTR») is a duplicate we swallow with it.
-_SEC_RE = re.compile(
-    r"«SEC:[^|»]*\|([^»]*)»(?:\s*«CTR»«SC»[\s\S]*?«/SC»«/CTR»)?")
-_SH_RE = re.compile(r"«SH:[^»]*»([\s\S]*?)«/SH»")
+    -1 when the span is unbalanced.  Callers leave unbalanced markers RAW rather
+    than guessing a close: a visible marker is a reported leak, a guessed close is
+    silently wrong text ([[feedback_honesty_surface_failures]]).
+    """
+    depth = 1
+    while depth:
+        nxt = open_re.search(text, j)
+        nc = text.find(close, j)
+        if nc < 0:
+            return -1
+        if nxt is not None and nxt.start() < nc:
+            depth, j = depth + 1, nxt.end()
+        else:
+            depth, j = depth - 1, nc + len(close)
+    return j
+
+
+def _sub_balanced(text: str, open_re: re.Pattern, close: str, render) -> str:
+    """Replace every balanced ``open_re``…``close`` span with ``render(m, inner)``."""
+    out, i = [], 0
+    while True:
+        m = open_re.search(text, i)
+        if m is None:
+            out.append(text[i:])
+            return "".join(out)
+        end = _balanced_end(text, m.end(), open_re, close)
+        if end < 0:                       # unbalanced — carry it out raw, visibly
+            out.append(text[i:m.end()])
+            i = m.end()
+            continue
+        out.append(text[i:m.start()])
+        out.append(render(m, text[m.end():end - len(close)]))
+        i = end
+
+
+# ── openers (an opener is matched; a close is a literal token) ────────────────
+
+_TITLE_OPEN = re.compile(r"«TITLE:")
+_FN_OPEN = re.compile(r"«FN(?:\[([^\]]*)\])?:")
+_MATH_OPEN = re.compile(r"«MATH(\[[^\]]*\])?:")
+_EQN_OPEN = re.compile(r"«EQN:[^»]*»")
+_SH_OPEN = re.compile(r"«SH:[^»]*»")
+# The link OPENER carries the fields; the display is the span's CONTENT and rides
+# through to the passes below.  `[^|«]*` stops each field at the first marker, which
+# is what makes the display's own markers (`«I»`, a nested «XL») someone else's job —
+# the same grammar `render.inline._LN_OPEN_RE` uses, and for the same reason its
+# comment gives: a display group that excluded « leaked whenever a link held a
+# marker decoded after this pass.  A trailing second field marks the 3-part
+# (resolved) form `«LN:filename|target|display«/LN»`.
+_LN_OPEN = re.compile(r"«LN(?:\[[a-z_]*\])?:([^|«]*)\|(?:([^|«]*)\|)?")
+_XL_OPEN = re.compile(r"«XL(?:\[[a-z_]*\])?:([^|«]*)(\|)?")
+_TABLE_OPEN = re.compile(r"«TABLE\[[^\]]*\]»")
+_TABLEBRACE_OPEN = re.compile(r"\{\{TABLEH?:")
+_VERSE_OPEN = re.compile(r"\{\{VERSE(?:\[[^\]]*\])?:")
+_IVERSE_OPEN = re.compile(r"\{\{IVERSE(?:\[[^\]]*\])?:")
+_LEGEND_OPEN = re.compile(r"\{\{LEGEND:")
+# The two outline forms — block and in-cell — differ only in where they may
+# appear; both carry the same «OLI:depth» items and render the same list.
+# NOT `PLATE_OUTLINE`: no producer emits it.  It survives only in two consumers'
+# patterns (the old `_OUTLINE_RE` here, and `markers._DROP_MARKER_RE`), both
+# spelling it with a colon that could never have matched anyway.  A form kept "just
+# in case" is how the dead `«OUTLINE:` pattern lived for five weeks; if one is ever
+# emitted the leak oracle reports it, which is the point of the oracle.
+_OUTLINE_FORMS = tuple(
+    (re.compile(f"«{n}»"), f"«/{n}»") for n in ("OUTLINE", "IOUTLINE")
+)
+_OLI_OPEN = re.compile(r"«OLI:(\d+)»")
+_CTR_SC_OPEN = re.compile(r"«CTR»\s*«SC»")
+_SC_OPEN = re.compile(r"«SC»")
+_CAPTION_OPEN = re.compile(r"«CAPTION»")
+
+_SEC_RE = re.compile(r"«SEC:[^|»]*\|([^»]*)»")
 _ANCHOR_RE = re.compile(r"«ANCHOR:[^»]*»")
+_IMG_RE = re.compile(r"\{\{IMG:([^|}]+)((?:\|[^{}]*?)*?)\}\}")
 
 # emphasis that maps to real Markdown
 _WRAP = {"I": ("*", "*"), "B": ("**", "**"), "STK": ("~~", "~~"),
@@ -73,11 +142,37 @@ _WRAP = {"I": ("*", "*"), "B": ("**", "**"), "STK": ("~~", "~~"),
 _SHED = ("SC", "CTR", "MIRROR", "FL", "FR",
          "SM", "LG", "XS", "XXS", "XXL", "FS", "LH")
 
-_RULE_RE = re.compile(r"«BAR(?:\[\d+\])?»|«DHR(?:\[[^\]]*\])?»")
+_RULE_RE = re.compile(r"«BAR(?:\[\d+\])?»|«DHR(?:\[[^\]]*\])?»|«DHRI(?:\[[^\]]*\])?»")
 _BRACE2_RE = re.compile(r"«BRACE2\[[^\]]*\]»")
-# open/close tokens for the SHED family and the styled DIV/SPAN (carry a [attr])
+# open/close tokens for the SHED family and the styled DIV/SPAN (carry an [attr]).
+# `MIRROR` also has a SPLIT form (`«MIRROR:…«/MIRROR»`, ALPHABET's reversed glyphs)
+# which the split-marker pass handles; this catches the bare wrapper form.
 _SHED_RE = re.compile(
     r"«/?(?:" + "|".join(_SHED) + r")»|«/?(?:DIV|SPAN)(?:\[[^\]]*\])?»")
+_MIRROR_OPEN = re.compile(r"«MIRROR:")
+
+
+_WS_RUN = re.compile(r"[ \t\r\n]+")
+
+
+def _flatten(s: str) -> str:
+    """Collapse LAYOUT whitespace to single spaces, leaving other spaces alone.
+
+    A bare ``" ".join(s.split())`` also eats U+00A0 and the thin/en spaces, which
+    are CONTENT here — `W. S. Jevons` carries a non-breaking space so the
+    initials don't split across a line, and 1911 typography uses the thin space
+    deliberately.  Dropping them is silent, irreversible loss
+    ([[feedback_when_in_doubt_carry]]).
+    """
+    return _WS_RUN.sub(" ", s).strip()
+
+
+class _Ctx:
+    """Per-article footnote state — numbering + the collected note bodies."""
+
+    def __init__(self):
+        self.notes: list[str] = []
+        self.named: dict[str, int] = {}
 
 
 def _img_to_md(m: re.Match) -> str:
@@ -92,163 +187,268 @@ def _img_to_md(m: re.Match) -> str:
     return f"![{alt}]({filename})"
 
 
-_TABLE_MARK_RE = re.compile(r"«(TABLE|TR|TD|TH)\[([^\]]*)\]»")
-_TR_MARK_RE = re.compile(r"«TR(?:\[[^\]]*\])?»([\s\S]*?)«/TR»")
-_CELL_MARK_RE = re.compile(r"«(T[DH])(?:\[([^\]]*)\])?»([\s\S]*?)«/\1»")
+def _link_md(target: str, display: str) -> str:
+    """``[display](target)``, with the display left for the later passes to finish.
+
+    Whitespace is collapsed because a newline inside `[...]` breaks the link
+    syntax; the display's MARKERS are deliberately untouched here — they decode in
+    the context-free passes after this one, which is what lets a link hold an
+    «I» or a nested «XL» without this pass having to know about them.
+    """
+    display = _flatten(display or "") or target.strip()
+    return f"[{display}]({target.strip()})"
 
 
-def _table_mark_to_tag(m: re.Match) -> str:
-    """`«TD[colspan:2|style:…]»` → `<td colspan="2" style="…">` — the nested-table
-    HTML fallback's opener decode; `cols` (metadata) drops."""
-    tag = m.group(1).lower()
-    attrs = ""
-    for field in m.group(2).split("|"):
-        k, _, v = field.partition(":")
-        if k == "cols":
-            continue
-        attrs += f' {k}="{v}"'
-    return f"<{tag}{attrs}>"
+def _outline_md(inner: str, ctx: _Ctx) -> str:
+    """An outline body → a nested Markdown list.
+
+    Items are the flat ``«OLI:depth»…«/OLI»`` run, and the SOURCE depths are sparse
+    (a document may use 0, 3, 7).  Densify them to consecutive levels exactly as
+    `render.inline.build_outline_ul` does — it is the one owner of this structure,
+    and the Markdown nesting must agree with the HTML nesting or the same article
+    reads as two different documents.
+    """
+    items: list[tuple[int, str]] = []
+    i = 0
+    while True:
+        m = _OLI_OPEN.search(inner, i)
+        if m is None:
+            break
+        end = _balanced_end(inner, m.end(), _OLI_OPEN, "«/OLI»")
+        if end < 0:
+            break
+        items.append((int(m.group(1)), inner[m.end():end - len("«/OLI»")]))
+        i = end
+    if not items:
+        # No items: hand the inner back so whatever is there stays VISIBLE.
+        return _convert(inner, ctx)
+    rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
+    lines = []
+    for depth, content in items:
+        body = _flatten(_convert(content, ctx))
+        lines.append("  " * rank[depth] + f"- {body}")
+    return "\n\n" + "\n".join(lines) + "\n\n"
 
 
-def _table_to_gfm(block: str) -> str:
+def _table_to_gfm(opener: str, inner: str, ctx: _Ctx) -> str:
     """A carried ``«TABLE[…]»…«/TABLE»`` → a de-spanned GFM table.
 
     Expand colspan/rowspan by REPEATING the value into every cell it covered, so
     each row is self-contained (the shape RAG wants); the merge itself is pure
-    presentation, shed.  Cells are recursively rendered to inline Markdown.  A
-    nested table (plate grids) can't be expressed in GFM, so it falls back to
-    HTML (which GFM allows and agents parse) — the table markers → tags, inline
-    markers decoded.
+    presentation, shed.  Cells are recursively converted.  A nested table (plate
+    grids) can't be expressed in GFM, so it falls back to HTML (which GFM allows
+    and agents parse).
     """
-    om = re.match(r"«TABLE\[[^\]]*\]»", block)
-    inner = block[om.end():-len("«/TABLE»")] if om else block
-    if "«TABLE[" in inner:
-        h = _TABLE_MARK_RE.sub(_table_mark_to_tag, block)
-        h = (h.replace("«TR»", "<tr>").replace("«/TR»", "</tr>")
-              .replace("«TD»", "<td>").replace("«/TD»", "</td>")
-              .replace("«TH»", "<th>").replace("«/TH»", "</th>")
-              .replace("«CAPTION»", "<caption>").replace("«/CAPTION»", "</caption>")
-              .replace("«/TABLE»", "</table>"))
-        return "\n\n" + _inline(h).strip() + "\n\n"
+    if _TABLE_OPEN.search(inner):
+        # The HTML fallback keeps «CAPTION» as <caption>; only the GFM path below
+        # has nowhere to put it.
+        return "\n\n" + _nested_table_html(opener, inner, ctx).strip() + "\n\n"
+    # GFM has no caption syntax, so the caption becomes an emphasized line ABOVE
+    # the table.  Dropping it would be silent loss — BABYLONIA's "Kings of Assyria"
+    # survived the old emitter only because its table parse failed and dumped the
+    # caption as raw text ([[feedback_preserve_trivial_content]]).
+    captions: list[str] = []
+
+    def _take_caption(_m: re.Match, body: str) -> str:
+        captions.append(_flatten(_convert(body, ctx)))
+        return ""
+
+    inner = _sub_balanced(inner, _CAPTION_OPEN, "«/CAPTION»", _take_caption)
+    # Emitted as its own line, NOT re-emphasized: 1911 captions carry their own
+    # «I», so wrapping again produced `**Kings of Assyria*.*` — malformed emphasis
+    # from decorating text that was already decorated.
+    lead = "".join(f"\n\n{c}" for c in captions if c)
     rows: list[list[str]] = []
-    spans: dict[tuple[int, int], str] = {}  # (row, col) → carried rowspan value
-    for r, tr in enumerate(_TR_MARK_RE.findall(inner)):
+    spans: dict[tuple[int, int], str] = {}   # (row, col) → carried rowspan value
+    for r, (_tr_open, tr) in enumerate(_spans_of(inner, _TR_OPEN, "«/TR»")):
         row: list[str] = []
         c = 0
-        for cell in _CELL_MARK_RE.finditer(tr):
-            while (r, c) in spans:              # a rowspan from above lands here
-                row.append(spans.pop((r, c))); c += 1
-            payload, content = cell.group(2) or "", cell.group(3)
-            text = _inline(content).replace("\n", " ").strip()
+        for cell_open, content in _spans_of(tr, _CELL_OPEN, None):
+            while (r, c) in spans:           # a rowspan from above lands here
+                row.append(spans.pop((r, c)))
+                c += 1
+            payload = cell_open.group(2) or ""
+            text = _flatten(_convert(content, ctx))
             cspan = int((re.search(r"colspan:(\d+)", payload) or [0, 1])[1])
             rspan = int((re.search(r"rowspan:(\d+)", payload) or [0, 1])[1])
             for _ in range(cspan):
                 row.append(text)
-                for rr in range(1, rspan):      # carry value down for rowspans
+                for rr in range(1, rspan):   # carry value down for rowspans
                     spans[(r + rr, c)] = text
                 c += 1
         rows.append(row)
     rows = [row for row in rows if row]
     if not rows:
-        return ""
+        # A caption with no rows still carries its text out.
+        return (lead + "\n\n") if lead else ""
     width = max(len(row) for row in rows)
-    for row in rows:                            # pad short rows (1-cell letter
-        row.extend([""] * (width - len(row)))   # dividers, etc.) to a clean grid
+    for row in rows:                         # pad short rows (1-cell letter
+        row.extend([""] * (width - len(row)))  # dividers, etc.) to a clean grid
     esc = lambda s: s.lstrip("|").replace("|", "\\|").strip()
     head = "| " + " | ".join(esc(x) for x in rows[0]) + " |"
     sep = "| " + " | ".join("---" for _ in range(width)) + " |"
     body = "\n".join("| " + " | ".join(esc(x) for x in row) + " |" for row in rows[1:])
-    return "\n\n" + "\n".join([head, sep, body]).rstrip() + "\n\n"
+    return lead + "\n\n" + "\n".join([head, sep, body]).rstrip() + "\n\n"
 
 
-def _inline(text: str) -> str:
-    """Phase-3 inline pass: links, headings, emphasis, shed-to-content, rules."""
-    text = _LINK_RE.sub(_link_md, text)
-    text = _SEC_RE.sub(lambda m: f"\n\n## {m.group(1).strip()}\n\n", text)
-    text = _SH_RE.sub(lambda m: f"\n\n### {m.group(1).strip()}\n\n", text)
-    text = _ANCHOR_RE.sub("", text)
-    for name, (o, c) in _WRAP.items():
-        text = text.replace(f"«{name}»", o).replace(f"«/{name}»", c)
-    text = _SHED_RE.sub("", text)               # presentation → its content
-    text = _RULE_RE.sub("\n\n---\n\n", text)
-    text = _BRACE2_RE.sub("", text)
-    text = text.replace("«P»", "\n\n").replace("«BR»", "  \n")
-    return text
+_TR_OPEN = re.compile(r"«TR(?:\[([^\]]*)\])?»")
+_CELL_OPEN = re.compile(r"«(T[DH])(?:\[([^\]]*)\])?»")
 
 
-_TABLE_MD_OPEN, _TABLE_MD_CLOSE = "«TABLE[", "«/TABLE»"
+def _spans_of(text: str, open_re: re.Pattern, close: str | None):
+    """Yield ``(open_match, inner)`` for each balanced span of ``open_re``.
+
+    ``close=None`` derives the close from the opener's own name (``«TD»`` → ``«/TD»``),
+    which is what a cell needs: TD and TH share one scan but not one closer.
+    """
+    i = 0
+    while True:
+        m = open_re.search(text, i)
+        if m is None:
+            return
+        tok = close or f"«/{m.group(1)}»"
+        end = _balanced_end(text, m.end(), open_re, tok)
+        if end < 0:
+            return
+        yield m, text[m.end():end - len(tok)]
+        i = end
 
 
-def _render_tables(text: str) -> str:
-    """Replace every balanced ``«TABLE[…]»…«/TABLE»`` with its GFM rendering —
-    DEPTH-aware, so a nested table (plate grids) is matched whole instead of
-    truncating at the inner close (which a non-greedy regex would).  The whole
-    block (opener included) rides to `_table_to_gfm`, which peels the opener."""
+def _nested_table_html(opener: str, inner: str, ctx: _Ctx) -> str:
+    """Nested tables → HTML (GFM has no nested-table syntax), markers → tags."""
+    def tag(m: re.Match) -> str:
+        name = (m.group(1) or "").lower()
+        attrs = ""
+        for field in (m.group(2) or "").split("|"):
+            if not field:
+                continue
+            k, _, v = field.partition(":")
+            if k == "cols":                  # metadata, not an attribute
+                continue
+            attrs += f' {k}="{v}"'
+        return f"<{name}{attrs}>"
+
+    h = opener + inner + "«/TABLE»"
+    h = re.sub(r"«(TABLE|TR|TD|TH)(?:\[([^\]]*)\])?»", tag, h)
+    for name in ("TABLE", "TR", "TD", "TH", "CAPTION"):
+        h = h.replace(f"«/{name}»", f"</{name.lower()}>")
+    h = h.replace("«CAPTION»", "<caption>")
+    return _convert(h, ctx)
+
+
+def _footnote_md(m: re.Match, inner: str, ctx: _Ctx) -> str:
+    """``«FN[name]?:body«/FN»`` → an inline ``[^n]``; the body joins the notes block."""
+    name = m.group(1)
+    if name and name in ctx.named:
+        return f"[^{ctx.named[name]}]"
+    n = len(ctx.notes) + 1
+    if name:
+        ctx.named[name] = n
+    ctx.notes.append("")                     # reserve the slot BEFORE recursing,
+    ctx.notes[n - 1] = _flatten(_convert(inner, ctx))
+    return f"[^{n}]"
+
+
+def _drop_heading_echo(text: str) -> str:
+    """Drop a ``«CTR»«SC»name«/SC»«/CTR»`` that merely re-shows the «SEC» heading.
+
+    «SEC» is a POINT marker carrying the name; the visible heading render follows
+    it as a centred small-caps run.  Emitting both would print the heading twice.
+    """
     out, i = [], 0
     while True:
-        s = text.find(_TABLE_MD_OPEN, i)
-        if s < 0:
-            out.append(text[i:]); break
-        out.append(text[i:s])
-        depth, j = 1, s + len(_TABLE_MD_OPEN)
-        while depth:
-            no, nc = text.find(_TABLE_MD_OPEN, j), text.find(_TABLE_MD_CLOSE, j)
-            if nc < 0:
-                j = len(text) + len(_TABLE_MD_CLOSE); break   # unbalanced: to end
-            if 0 <= no < nc:
-                depth += 1; j = no + len(_TABLE_MD_OPEN)
-            else:
-                depth -= 1; j = nc + len(_TABLE_MD_CLOSE)
-        out.append(_table_to_gfm(text[s:j]))
+        m = _SEC_RE.search(text, i)
+        if m is None:
+            out.append(text[i:])
+            return "".join(out)
+        out.append(text[i:m.start()])
+        out.append(f"\n\n## {m.group(1).strip()}\n\n")
+        j = m.end()
+        echo = _CTR_SC_OPEN.match(text, j + (len(text[j:]) - len(text[j:].lstrip())))
+        if echo is not None:
+            # The echo is EXACTLY `«CTR»«SC»…«/SC»«/CTR»`.  Requiring the «/CTR» to
+            # sit immediately after the balanced «/SC» is the whole discipline here:
+            # scanning to the balanced «/CTR» alone swallows whatever lies between —
+            # in VALVES that was two images and a heading, silently.  A shape that
+            # isn't this one is not an echo, so it stays.
+            sc_end = _balanced_end(text, echo.end(), _SC_OPEN, "«/SC»")
+            if sc_end > 0 and text.startswith("«/CTR»", sc_end):
+                j = sc_end + len("«/CTR»")
         i = j
-    return "".join(out)
+
+
+def _convert(text: str, ctx: _Ctx) -> str:
+    """Every balanced construct, then the context-free substitutions.
+
+    Recursive: a cell, a footnote body and an outline item all come back through
+    here, so a link inside a table cell is a link, not residue.
+    """
+    text = _sub_balanced(text, _TITLE_OPEN, "«/TITLE»", lambda m, s: "")
+    text = _sub_balanced(text, _FN_OPEN, "«/FN»",
+                         lambda m, s: _footnote_md(m, s, ctx))
+    text = _sub_balanced(text, _MATH_OPEN, "«/MATH»",
+                         lambda m, s: (f"\n\n$$\n{_strip_math(s, ctx)}\n$$\n\n"
+                                       if m.group(1) else f"${_strip_math(s, ctx)}$"))
+    text = _sub_balanced(text, _EQN_OPEN, "«/EQN»",
+                         lambda m, s: f"\n\n$$\n{_strip_math(s, ctx)}\n$$\n\n")
+    # images BEFORE tables — so a cell's {{IMG:…|width=N}} becomes ![…](file)
+    # (no pipe) before the table's cell-escaper would mangle its `|`.
+    text = _IMG_RE.sub(_img_to_md, text)
+    text = _sub_balanced(text, _TABLE_OPEN, "«/TABLE»",
+                         lambda m, s: _table_to_gfm(m.group(0), s, ctx))
+    text = _sub_balanced(text, _TABLEBRACE_OPEN, "}TABLE}",
+                         lambda m, s: _table_to_gfm("«TABLE[]»", s, ctx))
+    for opener, close in _OUTLINE_FORMS:
+        text = _sub_balanced(text, opener, close,
+                             lambda m, s: _outline_md(s, ctx))
+    for opener, close in ((_VERSE_OPEN, "}VERSE}"), (_IVERSE_OPEN, "}IVERSE}")):
+        text = _sub_balanced(
+            text, opener, close,
+            lambda m, s: "\n\n" + _convert(s, ctx).strip().replace("\n", "  \n") + "\n\n")
+    text = _sub_balanced(text, _LEGEND_OPEN, "}LEGEND}",
+                         lambda m, s: "\n\n*" + _convert(s, ctx).strip() + "*\n\n")
+    text = _sub_balanced(text, _SH_OPEN, "«/SH»",
+                         lambda m, s: f"\n\n### {_convert(s, ctx).strip()}\n\n")
+    # LN target = the FIRST field: the article filename on a resolved 3-part link,
+    # the raw target on an unresolved 2-part one — the same identifier the bundle's
+    # xref edges use.  XL with no pipe has no display, so the url is the text.
+    text = _sub_balanced(text, _LN_OPEN, "«/LN»",
+                         lambda m, s: _link_md(m.group(1), s))
+    text = _sub_balanced(text, _XL_OPEN, "«/XL»",
+                         lambda m, s: _link_md(m.group(1),
+                                               s if m.group(2) else m.group(1)))
+    # «MIRROR:…«/MIRROR» — the SPLIT form (reversed glyphs); shed to its content,
+    # like the bare wrapper.  Both flat converters wrote their rule for `«MIRROR»`
+    # alone and left 19 raw markers in one article.
+    text = _sub_balanced(text, _MIRROR_OPEN, "«/MIRROR»",
+                         lambda m, s: _convert(s, ctx))
+    text = _drop_heading_echo(text)
+    text = _ANCHOR_RE.sub("", text)
+    # ── context-free from here: an independent open/close substitution IS the
+    #    tree walk for a marker whose translation cannot depend on its position.
+    for name, (o, c) in _WRAP.items():
+        text = text.replace(f"«{name}»", o).replace(f"«/{name}»", c)
+    text = _SHED_RE.sub("", text)                # presentation → its content
+    text = _RULE_RE.sub("\n\n---\n\n", text)
+    text = _BRACE2_RE.sub("", text)
+    return text.replace("«P»", "\n\n").replace("«BR»", "  \n")
+
+
+def _strip_math(s: str, ctx: _Ctx) -> str:
+    """A math/EQN inner → its LaTeX body (nested «MATH» wrappers peeled)."""
+    s = _sub_balanced(s, _MATH_OPEN, "«/MATH»", lambda m, inner: inner)
+    # `strip_markers`, not a local `«[^«»]*»`: this runs on MATH inner, which is
+    # exactly where the unproofread OCR keeps its stray guillemets, and a span
+    # there eats LaTeX ([[feedback_verify_the_counter]]).
+    return strip_markers(s, "").strip()
 
 
 def body_to_markdown(body: str) -> str:
     """Render a marker-stream ``body`` to GitHub-Flavored Markdown."""
-    footnotes: list[str] = []
-    named: dict[str, int] = {}
-
-    def _fn(m: re.Match) -> str:
-        name, inner = m.group(1), m.group(2)
-        if name and name in named:
-            return f"[^{named[name]}]"
-        n = len(footnotes) + 1
-        if name:
-            named[name] = n
-        footnotes.append(_inline(inner).strip())
-        return f"[^{n}]"
-
-    text = body
-    text = _TITLE_RE.sub("", text)
-    # block markers first (they nest a «)
-    text = re.compile(r"«FN(?:\[([^\]]*)\])?:([\s\S]*?)«/FN»").sub(_fn, text)
-    text = _MATH_RE.sub(
-        lambda m: (f"\n\n$$\n{m.group(2).strip()}\n$$\n\n" if m.group(1)
-                   else f"${m.group(2).strip()}$"), text)
-    text = _EQN_RE.sub(lambda m: f"\n\n$$\n{_strip_math(m.group(1))}\n$$\n\n", text)
-    # images BEFORE tables — so a cell's {{IMG:…|width=N}} becomes ![…](file)
-    # (no pipe) before the table's cell-escaper would mangle its `|`.
-    text = _IMG_RE.sub(_img_to_md, text)
-    text = _render_tables(text)                 # depth-aware «TABLE[…]»…«/TABLE»
-    text = _TABLEBRACE_RE.sub(lambda m: _table_to_gfm(m.group(1)), text)
-    text = _VERSE_RE.sub(
-        lambda m: "\n\n" + m.group(1).strip().replace("\n", "  \n") + "\n\n", text)
-    text = _LEGEND_RE.sub(lambda m: "\n\n*" + _inline(m.group(1)).strip() + "*\n\n", text)
-    text = _OUTLINE_RE.sub(
-        lambda m: "\n\n" + "\n".join(
-            f"- {_inline(ln).strip()}" for ln in m.group(1).split("\n") if ln.strip())
-        + "\n\n", text)
-    # inline pass
-    text = _inline(text)
-    # collapse 3+ blank lines, tidy edges
+    ctx = _Ctx()
+    text = _convert(body, ctx)
     text = re.compile(r"\n{3,}").sub("\n\n", text).strip()
-    if footnotes:
-        text += "\n\n" + "\n".join(f"[^{i+1}]: {b}" for i, b in enumerate(footnotes))
+    if ctx.notes:
+        text += "\n\n" + "\n".join(f"[^{i + 1}]: {b}"
+                                   for i, b in enumerate(ctx.notes))
     return text
-
-
-def _strip_math(s: str) -> str:
-    """EQN inner → the LaTeX body (drop any nested «MATH» wrappers)."""
-    s = _MATH_RE.sub(lambda m: m.group(2), s)
-    return re.compile(r"«[^«»]*»").sub("", s).strip()
