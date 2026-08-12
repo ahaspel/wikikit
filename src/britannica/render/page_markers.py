@@ -32,6 +32,7 @@ never touched.
 from __future__ import annotations
 
 import re
+from britannica.util.strings import HTML_TAG_RE
 
 SIG_LEN = 24
 PREFIX = 600
@@ -39,7 +40,7 @@ PREFIX_MAX = 3000
 MIN_SIG = 8
 MAX_OCC = 32
 
-_TAG_RE = re.compile(r"<[^>]*>")
+_TAG_RE = HTML_TAG_RE
 _ENTITY_RE = re.compile(r"&(?:[a-z]+|#\d+);", re.IGNORECASE)
 
 _OPENERS = {"{{": "}}", "[[": "]]", "{|": "|}"}

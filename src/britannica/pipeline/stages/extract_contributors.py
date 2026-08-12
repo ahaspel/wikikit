@@ -1,4 +1,5 @@
 import re
+from britannica.util.strings import strip_html_tags
 
 # Matches the START of: {{EB1911 footer initials|Full Name|Initials|name2=…|initials2=…}}
 #   or:                  {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
@@ -169,7 +170,7 @@ def _normalize_initials(initials: str) -> str:
     # any remaining template residue and HTML tags.
     s = _unwrap_templates(initials)
     s = re.sub(r"\{\{[^{}]*", "", s)
-    s = re.sub(r"<[^>]+>", "", s)
+    s = strip_html_tags(s)
     s = re.sub(r"\}\}", "", s)
     # Decode HTML-entity spaces used in some wikitext entries
     # (notably vol 6's `J.&thinsp;D.&thinsp;v.&thinsp;d.&thinsp;W.`

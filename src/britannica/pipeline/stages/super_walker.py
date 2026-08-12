@@ -34,6 +34,7 @@ from britannica.pipeline.stages.detect_boundaries import _split_out_plates
 from britannica.pipeline.stages.elements._title import _letter_from_dropcap
 from britannica.pipeline.stages.preprocess import stream_with_keys
 from britannica.volumes import article_ws_range
+from britannica.util.strings import HTML_TAG_RE
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
@@ -135,7 +136,7 @@ _HCAPS = re.compile(r"\{\{\s*(?:uc|sc|asc|small[\s-]?caps?)\s*\|([^{}|]*)\}\}", 
 _HTMPL3 = re.compile(r"\{\{[^{}|]+\|[^{}]*\|([^{}|]*)\}\}")
 _HTMPL2 = re.compile(r"\{\{[^{}|]+\|([^{}|]*)\}\}")
 _HTMPL0 = re.compile(r"\{\{[^{}]*\}\}")
-_HTAG = re.compile(r"<[^>]+>")
+_HTAG = HTML_TAG_RE
 _HPAREN = re.compile(r"\s*\([^)]*\)")
 
 

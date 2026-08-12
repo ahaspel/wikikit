@@ -151,8 +151,8 @@ def main():
                          "(required in a rebuild — the pickle is otherwise stale)")
     args = ap.parse_args()
 
-    from _corpus_cache import load_corpus
-    rows = list(load_corpus(refresh=args.refresh))
+    from _corpus_cache import iter_raw_articles
+    rows = list(iter_raw_articles(refresh=args.refresh))
     print(f"scanning {len(rows)} articles …", flush=True)
 
     kinds = Counter()

@@ -1,4 +1,10 @@
-"""Fast corpus access for repeated audits.
+"""Fast RAW-SOURCE access for repeated audits.
+
+NOT `britannica.export.corpus.load_corpus`, which loads EXPORTED payloads.
+This yields raw wikitext rows from a pickle of the DB.  The two were both
+called `load_corpus`, and at a call site `from _corpus_cache import
+load_corpus` and `from britannica.export.corpus import load_corpus` are
+indistinguishable while returning different things about different data.
 
 The naive pattern (one segment query + one Article.get PER article) costs ~73k
 round-trips over 36k articles — minutes per run.  Source is static
@@ -7,8 +13,8 @@ a single bulk query and pickle it.  Subsequent runs load the pickle (seconds)
 and optionally pre-filter to articles whose raw contains a token of interest —
 e.g. a Ts audit only needs the few hundred Ts-bearing articles, not all 36k.
 
-    from _corpus_cache import load_corpus
-    for aid, vol, pg0, raw in load_corpus(contains="{{Ts"):
+    from _corpus_cache import iter_raw_articles
+    for aid, vol, pg0, raw in iter_raw_articles(contains="{{Ts"):
         ...
 
 `contains` is case-insensitive substring pre-filter (str or tuple-of-str → any).
@@ -50,7 +56,7 @@ def _build() -> list[tuple[int, int, int, str]]:
     return [(aid, vol, pg0, body or "") for aid, vol, pg0, body in rows]
 
 
-def load_corpus(contains=None, refresh: bool = False):
+def iter_raw_articles(contains=None, refresh: bool = False):
     """Yield (article_id, volume, page0, raw) for every non-plate article,
     optionally only those whose raw contains `contains` (str or tuple → any),
     case-insensitive.  Uses the on-disk pickle unless `refresh`."""

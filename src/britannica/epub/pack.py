@@ -19,6 +19,7 @@ by construction.
 import html as _html
 import re
 from xml.etree import ElementTree as ET
+from britannica.util.strings import HTML_TAG_RE
 
 ET.register_namespace("epub", "http://www.idpf.org/2007/ops")
 _EPUB_NS = "{http://www.idpf.org/2007/ops}"
@@ -383,7 +384,7 @@ def resolve_chunk(xhtml, own_ids, anchor_map, contrib_map):
 
 # ── the text-preservation strip (the bank gate) ───────────────────────────
 
-_TAG_RE = re.compile(r"<[^>]*>")
+_TAG_RE = HTML_TAG_RE
 
 
 def text_of(xhtml):

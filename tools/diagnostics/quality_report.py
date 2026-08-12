@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
 from britannica.outputs import outputs_for  # noqa: E402
+from britannica.export.corpus import NON_ARTICLE  # noqa: E402
 from britannica.markers import marker_names  # noqa: E402
 from britannica.render.leaks import find_leaks  # noqa: E402
 
@@ -63,7 +64,7 @@ def run_db_checks() -> dict:
         _recs = [
             json.loads(open(_f, encoding="utf-8").read())
             for _f in glob.glob("data/derived/articles/*.json")
-            if not _f.endswith(("index.json", "contributors.json"))
+            if os.path.basename(_f) not in NON_ARTICLE
         ]
         bodies = {r["id"]: (r.get("body") or "") for r in _recs}
         # Xref totals come from the export's index.json aggregate fields:
@@ -209,7 +210,7 @@ def run_file_checks() -> dict:
     """
     files = sorted(
         f for f in glob.glob("data/derived/articles/*.json")
-        if "index.json" not in f and "contributors.json" not in f
+        if os.path.basename(f) not in NON_ARTICLE
     )
 
     results = {"files_scanned": len(files)}

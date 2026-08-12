@@ -12,6 +12,7 @@ in ``super_walker._heading_text``.)
 from __future__ import annotations
 
 import re
+from britannica.util.strings import HTML_TAG_RE
 
 # Shared with `_is_connective_gap` (the title-run extender, below): small-caps →
 # caps and the inline-marker strip, to read a heading gap's plain text.
@@ -109,7 +110,7 @@ _UPPER_SPAN = re.compile(
 _SC_MARK = re.compile(r"«SC»(.*?)«/SC»", re.DOTALL)
 _SPAN_MARK = re.compile(r"«/?SPAN(?:\[[^\]]*\])?»")
 _STYLE_MARK = re.compile(r"«/?(?:B|I|SC|U|SUP|SUB)»")
-_HTML_TAG = re.compile(r"<[^>]+>")
+_HTML_TAG = HTML_TAG_RE
 
 
 def decode_title(marker: str) -> str:

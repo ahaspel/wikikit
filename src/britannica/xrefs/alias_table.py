@@ -12,6 +12,7 @@ import re
 import glob
 from collections import defaultdict
 from pathlib import Path
+from britannica.util.strings import strip_html_tags
 
 
 RAW_DIRS = [Path("data/raw/wikisource")]
@@ -122,7 +123,7 @@ def _strip_vol29_wikitext(text: str) -> str:
     text = re.sub(r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", text)
     text = re.sub(r"\[\[([^\]]+)\]\]", r"\1", text)
     # Strip HTML tags
-    text = re.sub(r"<[^>]+>", "", text)
+    text = strip_html_tags(text)
     # Collapse whitespace
     text = re.sub(r"&nbsp;|&emsp;|&thinsp;", " ", text)
     text = re.sub(r"''", "", text)  # drop italic markers

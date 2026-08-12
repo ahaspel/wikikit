@@ -16,6 +16,29 @@ def section_slug(name: str) -> str:
     return name.strip("-")
 
 
+HTML_TAG_RE = re.compile(r"<[^>]*>")
+
+
+def strip_html_tags(text: str, repl: str = "") -> str:
+    """Drop HTML/XHTML tags, leaving their text.
+
+    ``repl=" "`` where the tag was a WORD BOUNDARY (`a<br>b` must read "a b", not
+    "ab") — that difference is real, and it is the only variation the twenty
+    hand-rolled copies of this actually carried, besides `+` vs `*`.
+
+    DOMAIN: exact on RENDERED html, where every `<` opens a tag.  On raw source a
+    bare `<` can be content — math (`a<e`), OCR debris, PLINY's prose
+    `<Secundus>` — and this run would swallow to the next `>`.  Measured over the
+    inputs the callers actually pass (37,226 titles, 24,645 contributor fields,
+    5,172 front-matter descriptions): ZERO cases where it removes more than a
+    name-keyed strip would.  It is NOT safe on a whole article body — 75 bodies,
+    950,168 characters — so if a caller ever starts passing one, key on the tag
+    NAME set instead (see `render.leaks._ESC_TAG_RE`, which does exactly that for
+    the escaped form and explains why).
+    """
+    return HTML_TAG_RE.sub(repl, text or "")
+
+
 def strip_markers(s: str) -> str:
     """Drop `«…»`-style markers, leaving the plain display text.
 

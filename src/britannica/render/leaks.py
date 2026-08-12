@@ -29,6 +29,7 @@ import re
 # marker vocabulary.  Imported, never retyped: this file's whole argument is that
 # a second copy of a rule drifts from the rule.
 from britannica.markers import MARKER_TOKEN_RE as _MARKER_RE  # noqa: E402
+from britannica.util.strings import HTML_TAG_RE
 # A template's `{{` open OR a `}}` close surviving into visible text — both are
 # brace-delimiter residue.  Checked on MATH-stripped text, so a TeX `}}` group
 # (`{{1 \over 2}}`, exempt via `_TEXMATH_RE`) can't false-match; only a real
@@ -75,7 +76,7 @@ _MATH_MASK = {
 # Checked against TAG-STRIPPED text: a valid attribute lives inside a real `<tag …>`
 # (removed here); only leaked residue survives.  This is the class the marker /
 # template / wikilink checks were structurally blind to.
-_TAG_RE = re.compile(r"<[^>]+>")
+_TAG_RE = HTML_TAG_RE
 _ATTR_RE = re.compile(
     r"\b(?:style|align|valign|colspan|rowspan|bgcolor|scope|cellpadding|cellspacing"
     r"|width|height)=")
