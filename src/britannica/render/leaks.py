@@ -1,24 +1,34 @@
-"""Render-leak detection — the honest oracle.
+"""Output-leak detection — the honest oracle.
 
-It reads the ACTUAL rendered HTML and reports everything that survived into it
-raw: guillemet markers, `{{templates}}`, `[[wikilinks]]`, leaked HTML/wikitable
-attribute residue (`style=`/`align=`/`colspan=`… in visible text), control
-sentinels.  It
+It reads a marker-stream consumer's ACTUAL output and reports everything that
+survived into it raw: guillemet markers, `{{templates}}`, `[[wikilinks]]`, leaked
+HTML/wikitable attribute residue (`style=`/`align=`/`colspan=`… in visible text),
+control sentinels.  It
 consults **no** "known marker" manifest — a known marker in the output is a
 recursion failure, not an exemption.  This is the deliberate replacement for the
 body-level `unhandled_marker_in_htmltable` shadow, which trusted the
 handled-marker list and thereby went blind to exactly the markers that leak
 (`«FN»`/`«MATH»`/`«I»` — all "known", all leaking).
 
-The rule is one line: if it came out of the renderer looking like markup, it's a
+The rule is one line: if it came out of a converter looking like markup, it's a
 leak.  The question stops being "is this marker handled?" and becomes "did it come
 out clean?"
+
+EVERY consumer, not just the render.  The body is one marker stream with several
+converters over it (HTML, Markdown, search text, titles), and the rule above is
+indifferent to which one ran: a `«` in Markdown is a recursion failure by the same
+definition as a `«` in HTML.  Scanning only `rendered_html` is what let
+`markdown.py`'s `_OUTLINE_RE` match nothing for five weeks while 151 records
+shipped a raw `«OUTLINE»` — the same blindness as the handled-marker list, one
+output over.  ``fmt`` names the output's format so the checks that need rendered
+tags to anchor stay off the outputs that have none; nothing else varies.
 """
 import re
 
 # Markers are UPPERCASE-named (FN, MATH, SPAN, I, B…); this avoids matching a
 # lowercase French « » quotation that is legitimate content.
 _MARKER_RE = re.compile(r"«/?[A-Z][A-Za-z0-9_]*(?:\[[^\]]*\])?[:»]")
+_NAME_RE = re.compile(r"«/?([A-Za-z0-9_]+)")
 # A template's `{{` open OR a `}}` close surviving into visible text — both are
 # brace-delimiter residue.  Checked on MATH-stripped text, so a TeX `}}` group
 # (`{{1 \over 2}}`, exempt via `_TEXMATH_RE`) can't false-match; only a real
@@ -45,6 +55,17 @@ _SENTINEL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 # enclosing group), not a template.  Both are carriers of LaTeX, not of markup.
 _TEXMATH_RE = re.compile(
     r'<span class="tex-math"[^>]*>.*?</span>|data-latex="[^"]*"', re.DOTALL)
+
+# Each output carries its math in its own wrapper, so each masks it its own way.
+# A format whose converter DROPS math whole (plain text) masks nothing — and a raw
+# «MATH» surviving there is a leak the marker check must still see.  An unknown
+# format KeyErrors rather than defaulting: a new output has to say how its math is
+# carried before it can be scanned.
+_MATH_MASK = {
+    "html": _TEXMATH_RE,
+    "markdown": re.compile(r"\$\$.*?\$\$|\$[^$\n]*\$", re.DOTALL),
+    "text": None,
+}
 
 # Raw HTML/wikitable ATTRIBUTE residue surviving into VISIBLE text — a producer
 # consumed a template/table but dumped its `style=`/`align=`/`colspan=`… arg as
@@ -106,26 +127,67 @@ _INDENT_RE = re.compile(
     r"|</a>)\s*:+(?=[^\s:])")
 
 
-def find_render_leaks(rendered_html):
+_ALL = frozenset(("html", "markdown", "text"))
+
+# (category, pattern, which text it scans, formats it holds for).  Applicability
+# lives HERE, beside the pattern, so a new check cannot be added without stating
+# where it holds — the omission that lets a manifest go stale has nowhere to
+# happen.  `tag` and `indent` are HTML-only for the same reason: both need a
+# rendered tag to anchor on.  `tag` matches an ESCAPED tag (`&lt;span&gt;`) and the
+# escaping happens inside decode_inline, so no other output can carry one; `indent`
+# needs a block boundary to tell a leaked `:` from prose punctuation.  Their
+# non-HTML equivalents (a RAW `<span>` in Markdown, a line-initial `:` in text) are
+# real classes with no check yet — absent, not exempt.
+_CHECKS = (
+    ("marker", _MARKER_RE, "raw", _ALL),
+    ("template", _TEMPLATE_RE, "no_math", _ALL),
+    ("wikilink", _WIKILINK_RE, "no_math", _ALL),
+    ("attr", _ATTR_RE, "no_tags", _ALL),
+    ("tag", _ESC_TAG_RE, "no_math", frozenset(("html",))),
+    ("indent", _INDENT_RE, "no_math", frozenset(("html",))),
+    ("sentinel", _SENTINEL_RE, "raw", _ALL),
+)
+
+
+def marker_names(text):
+    """Every marker NAME in ``text``, by the SAME pattern the leak check uses.
+
+    The one extractor for both registry checks — the fast one over the transform
+    snapshots and the corpus-wide ``unregistered_marker`` — so "what a marker looks
+    like" has a single definition and the two tiers cannot diverge on it.
+
+    The `[:»]` terminator ``_MARKER_RE`` demands is what keeps OCR mojibake out
+    (`Â«ff`, `«this`, `«Tm` — 29 occurrences of garbled Greek and math across the
+    corpus): garbled text carries no terminator, so it needs no exemption list.
+    """
+    return [_NAME_RE.match(m.group(0)).group(1)
+            for m in _MARKER_RE.finditer(text or "")]
+
+
+def find_leaks(output, fmt="html"):
     """Return a list of ``(category, snippet)`` for every raw survivor; empty = clean.
 
-    Categories: ``marker`` / ``template`` / ``wikilink`` / ``attr`` / ``tag`` /
-    ``indent`` / ``sentinel``.
+    ``output`` is ONE consumer's finished text; ``fmt`` names its format
+    (``html`` / ``markdown`` / ``text``), which selects the checks that can fire
+    without false positives and how its math is masked.  Which converter produced
+    the text changes nothing else — the oracle is the same for all of them.
+
+    Categories: ``marker`` / ``template`` / ``wikilink`` / ``attr`` / ``sentinel``
+    on every format; ``tag`` / ``indent`` on HTML only (see ``_CHECKS``).
     """
-    rh = rendered_html or ""
-    no_math = _TEXMATH_RE.sub("", rh)
-    no_tags = _TAG_RE.sub(" ", no_math)      # attribute-residue check: real tags gone
+    raw = output or ""
+    mask = _MATH_MASK[fmt]
+    no_math = mask.sub("", raw) if mask else raw
+    # The attribute check runs on TAG-STRIPPED text for HTML, where a real `<tag …>`
+    # legitimately carries `style=`.  No other output has legitimate tags to protect,
+    # so nothing is stripped there and a leaked attribute has nowhere to hide.
+    no_tags = _TAG_RE.sub(" ", no_math) if fmt == "html" else no_math
+    src = {"raw": raw, "no_math": no_math, "no_tags": no_tags}
     leaks = []
-    for cat, rx, text in (
-        ("marker", _MARKER_RE, rh),
-        ("template", _TEMPLATE_RE, no_math),
-        ("wikilink", _WIKILINK_RE, no_math),
-        ("attr", _ATTR_RE, no_tags),
-        ("tag", _ESC_TAG_RE, no_math),
-        # Runs on TAG-BEARING text: the block boundary IS the discriminator.
-        ("indent", _INDENT_RE, no_math),
-        ("sentinel", _SENTINEL_RE, rh),
-    ):
+    for cat, rx, which, formats in _CHECKS:
+        if fmt not in formats:
+            continue
+        text = src[which]
         for m in rx.finditer(text):
             i = m.start()
             leaks.append((cat, text[max(0, i - 20):i + 30]))

@@ -104,31 +104,54 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
 )
 
 
-# Guillemet («…») marker NAMES the viewer decodes — the companion to
+# Every guillemet («…») marker NAME a producer EMITS — the companion to
 # RENDERED_MARKER_OPENS for the `«NAME…»` family (RENDERED_MARKER_OPENS
-# covers only the `{{X:…}}` braces).  Single source of truth, mirrored
-# verbatim in viewer.html's `decodeInlineMarkers` + `applySizeMarkers` +
-# `formatCell` (and the block-level EQN/SEC/SH/TABLE handlers).
-# The quality report references this to tell a legitimate rendered marker
-# from stray residue: a `«NAME…»` whose NAME is here renders; anything
-# else is a leak.  Add a new entry here AND mirror it in the viewer
-# whenever you introduce a new `«…»` marker — keeping the two in lockstep
-# is exactly what this constant exists to enforce (see the IMG-INLINE
-# stray_close_braces drift note on RENDERED_MARKER_OPENS above).  NAME
-# only — no delimiters, no `[attr]` payload (`DIV`/`SPAN`/sizes carry one).
+# covers only the `{{X:…}}` braces).  NAME only — no delimiters, no
+# `[attr]` payload (`DIV`/`SPAN`/sizes carry one).
+#
+# "Emitted", NOT "decoded by the viewer" — that was this comment's old claim and
+# it was wrong in a way that cost real output.  A name absent because it never
+# reaches the viewer is still a shape the OTHER consumers must handle: `AL` is
+# resolved away before export, yet it is emitted, and a converter grounded in this
+# list needs to know it exists.  `export/markdown.py` grounds its "TOTAL by
+# construction" claim here, so
+# what this list omits is exactly what that file has no rule for — the five weeks
+# of raw `«OUTLINE»` in the download bundle came from this omission, not from a
+# bug in the emitter.
+#
+# It is now ENFORCED rather than asserted: `tests/unit/test_marker_registry.py`
+# fails on any name the producers emit into the transform snapshots and this list
+# doesn't carry, and the quality report counts the same thing corpus-wide as
+# `unregistered_marker`.  Add a new entry here AND mirror it in the viewer
+# whenever you introduce a new `«…»` marker (see the IMG-INLINE
+# stray_close_braces drift note on RENDERED_MARKER_OPENS above).
 RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     # inline styling / typography (decodeInlineMarkers + applySizeMarkers)
     "B", "I", "SC", "SS", "SR", "U", "STK", "MIRROR", "CTR", "FR", "FL",
     "DIV", "SPAN", "BR", "BAR", "DHR", "BRACE2",
     "XXL", "XL", "LG", "XXS", "XS", "SM", "FS", "LH",
-    # links
-    "LN",
+    # links.  AL (the author link) never reaches the viewer — it resolves to LN
+    # before export — but it IS emitted, so a consumer grounded in this list has to
+    # carry a rule for it.
+    #
+    # There is no BIOLINK.  A contributor bio's `{{EB1911 article link|…}}` is an
+    # ORDINARY article link and produces «LN» from the same producer as every
+    # other one; the private marker that used to exist here was a second
+    # recogniser for the same template, and it disagreed with the real one about
+    # which argument was the target.
+    "LN", "AL",
     # cell- and block-level content; SEC is the major-section anchor point marker
     # «SEC:slug|name» (stamp_section_anchors); SH the shoulder heading; ANCHOR the
     # «ANCHOR:slug|name» link target (kind="anchor" downstream, kept out of the TOC)
     "FN", "MATH", "EQN", "SEC", "SH", "ANCHOR",
     # recursive table structure (decodeInlineMarkers) — chem is a TABLE too now
     "TABLE", "TR", "TD", "TH", "CAPTION",
+    # block structure.  P is the paragraph (199,411 in the corpus — the single most
+    # common marker of all, and unlisted until the registry was enforced); TITLE the
+    # in-stream H1; DHRI a proportional rule.
+    "P", "TITLE", "DHRI",
+    # outlines: the block form, its in-cell sibling, and the item.
+    "OUTLINE", "IOUTLINE", "OLI",
 )
 
 

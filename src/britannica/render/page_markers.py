@@ -40,16 +40,11 @@ MIN_SIG = 8
 MAX_OCC = 32
 
 _TAG_RE = re.compile(r"<[^>]*>")
-_MARKER_RE = re.compile(r"«[^«»]*»")
-_PLACEHOLDER_RE = re.compile(r"\x03ELEM:\d+\x03")
 _ENTITY_RE = re.compile(r"&(?:[a-z]+|#\d+);", re.IGNORECASE)
 
 _OPENERS = {"{{": "}}", "[[": "]]", "{|": "|}"}
 _CLOSERS = {"}}", "]]", "|}"}
 
-
-def _letters(text: str) -> str:
-    return re.sub(r"[^a-z]", "", text.lower())
 
 
 def letter_map(html: str) -> tuple[str, list[int]]:

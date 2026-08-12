@@ -4,8 +4,10 @@
 Runs both DB-level and file-level quality checks, saves results to
 data/derived/quality_reports/, and diffs against the previous run.
 
-The leak signal is ONE honest number: `find_render_leaks` over each article's
-`rendered_html` (`render_leak_*`).  The old body-level `stray_*` heuristics were
+The leak signal is ONE honest oracle, `find_leaks`, run over EVERY output the
+marker stream has (`britannica.outputs`): the render (`render_leak_*`), the
+Markdown (`markdown_leak_*`), the search text and the titles.  The old body-level
+`stray_*` heuristics were
 retired — they read the pre-render marker stream, so they conflated legit content
 with leaks (prime `a'''` as italic, math `}}` as a stray brace, `<sub>` chem as a
 tag) AND missed what the render actually emits.  Alongside the oracle, a few
@@ -22,7 +24,17 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.render.leaks import find_render_leaks  # noqa: E402
+from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
+from britannica.outputs import outputs_for  # noqa: E402
+from britannica.render.leaks import find_leaks, marker_names  # noqa: E402
+
+# Consumer → issue-key prefix.  `rendered_html` keeps the historical `render_leak_*`
+# keys: they are compared build-over-build, and renaming them would break that
+# comparison to buy nothing.
+_LEAK_PREFIX = {"rendered_html": "render", "markdown": "markdown",
+                "search_text": "search_text", "title": "title",
+                "contributor_bio": "contributor_bio"}
+_REGISTERED = frozenset(RENDERED_GUILLEMET_MARKER_NAMES)
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -185,13 +197,14 @@ def run_file_checks() -> dict:
     """File-level quality checks on exported articles.
 
     Two families:
-      * ``render_leak_*`` — the HONEST leak oracle, `find_render_leaks` over the
-        actual `rendered_html`.  This is the single leak number; it replaces the
-        retired body-level `stray_*` heuristics (see the module docstring).
+      * ``*_leak_*`` — the HONEST leak oracle, `find_leaks` over each converter's
+        actual output (`britannica.outputs`): `render_leak_*`, `markdown_leak_*`,
+        `search_text_leak_*`, `title_leak_*`.  This is the leak number; it replaces
+        the retired body-level `stray_*` heuristics (see the module docstring).
       * structural integrity — an unbalanced `«FN»`/`«TABLE»` marker, a dropped
-        (tiny) body, a stray control char, wikitable rows escaped from `«TABLE»`.
-        These are producer bugs that need NOT surface as visible output residue,
-        so the render-leak oracle can't see them.
+        (tiny) body, a stray control char, wikitable rows escaped from `«TABLE»`,
+        a marker name the registry doesn't list.  These are producer bugs that need
+        NOT surface as visible output residue, so the leak oracle can't see them.
     """
     files = sorted(
         f for f in glob.glob("data/derived/articles/*.json")
@@ -233,9 +246,32 @@ def run_file_checks() -> dict:
                if re.match(r"\s*\|{1,2}\s*\S", ln) or "figure|" in ln) > 3:
             issues["pipe_leak"] += 1
 
-        # ── The leak signal: the HONEST oracle over the ACTUAL rendered output. ──
-        for _cat in {_c for _c, _ in find_render_leaks(a.get("rendered_html", ""))}:
-            issues[f"render_leak_{_cat}"] += 1
+        # ── The leak signal: the HONEST oracle over EVERY consumer's ACTUAL output. ──
+        # One stream, several converters (britannica.outputs), all scanned the same
+        # way — scanning `rendered_html` alone is the handled-marker blindness one
+        # level up, and it is what hid `markdown.py`'s leaks for five weeks.
+        # Counted per ARTICLE, not per output entry: an article carries one body but
+        # SEVERAL contributor bios, and every other key in this report means "articles
+        # with", so a three-bio article must not read as three dirty ones.
+        _art_cats = {}
+        for _consumer, _fmt, _text in outputs_for(a):
+            _cats = {_c for _c, _ in find_leaks(_text, _fmt)}
+            if _cats:
+                _art_cats.setdefault(_LEAK_PREFIX[_consumer], set()).update(_cats)
+        for _prefix, _cats in _art_cats.items():
+            for _cat in _cats:
+                issues[f"{_prefix}_leak_{_cat}"] += 1
+
+        # ── Registry truth: a marker NAME the registry doesn't list. ──
+        # RENDERED_GUILLEMET_MARKER_NAMES says of itself that keeping it in lockstep
+        # "is exactly what this constant exists to enforce" — with no consumer that
+        # fails when it isn't, that was a claim, not an enforcement, and the names it
+        # omits are precisely the ones markdown.py has no rule for.  The oracle's own
+        # pattern is the discriminator: it requires a `:`/`»` terminator, so OCR
+        # mojibake (`Â«ff`, `«this` — 29 occurrences of garbled Greek and math) can't
+        # match and needs no exemption list.
+        if any(_n not in _REGISTERED for _n in marker_names(body)):
+            issues["unregistered_marker"] += 1
 
     results["issues"] = dict(issues.most_common())
     return results
@@ -278,10 +314,10 @@ def format_report(db: dict, files: dict) -> str:
     # Split the file-level issues: the render-leak oracle (the leak signal) first,
     # then structural-integrity checks — no noisy body-level heuristics remain.
     all_issues = files.get("issues", {})
-    leaks = {k: v for k, v in all_issues.items() if k.startswith("render_leak_")}
-    structural = {k: v for k, v in all_issues.items() if not k.startswith("render_leak_")}
+    leaks = {k: v for k, v in all_issues.items() if "_leak_" in k}
+    structural = {k: v for k, v in all_issues.items() if "_leak_" not in k}
 
-    lines.append("=== Render Leaks (honest oracle — articles with ANY residue in rendered_html) ===")
+    lines.append("=== Output Leaks (honest oracle — articles with ANY residue, per consumer) ===")
     if leaks:
         for issue, count in sorted(leaks.items(), key=lambda kv: -kv[1]):
             lines.append(f"  {issue:30s} {count:6d}")

@@ -41,6 +41,23 @@ _TITLE_PREFIXES = re.compile(
 )
 
 
+# The «LN» OPENER only — its close is found by scan, never by a span pattern.
+_LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:")
+
+
+def _description_text(raw: str | None) -> str:
+    """A stored contributor description → display text.
+
+    The ONE conversion for both export routes.  A description is a marker stream
+    like any other field, so it goes through `markers_to_text` — the sole
+    marker→text converter — rather than a private strip.  The bespoke
+    `«BIOLINK:…«/BIOLINK»` regex this replaces lived on ONE of the two routes,
+    which is why the roster read clean while the per-article payload (and the
+    download bundle built from it) shipped the raw marker.
+    """
+    return " ".join(markers_to_text(raw or "").split()).rstrip(".")
+
+
 def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     """Add bio_article_filename to contributors with biographical articles."""
     # Build title -> filename lookup from all articles in DB
@@ -57,18 +74,33 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
             continue
 
         # If the source description contained an explicit
-        # ``{{EB1911 article link|target|display}}`` template, we
-        # preserved it as a ``«BIOLINK:target|display«/BIOLINK»``
-        # marker in `_clean_description`.  Use the display text
-        # (full article title as written in the source) as the
-        # primary lookup key — bypasses the surname-inversion path
-        # for peerage cases like St. Cyres → Iddesleigh.
-        bio_m = re.search(
-            r"«BIOLINK:([^|«]*)\|([^«]*)«/BIOLINK»", desc_raw,
-        )
-        if bio_m:
-            link_target, link_display = (
-                bio_m.group(1).strip(), bio_m.group(2).strip()
+        # ``{{EB1911 article link|display|target}}`` template, the walker
+        # produced an ordinary ``«LN:target|display«/LN»`` — the SAME marker the
+        # article body carries, from the SAME producer.  Use the display text as
+        # the primary lookup key — it bypasses the surname-inversion path for
+        # peerage cases like St. Cyres → Iddesleigh.
+        #
+        # This read a private `«BIOLINK»` until the fork was removed, and it read
+        # the arguments the wrong way round: BIOLINK was emitted display-first and
+        # parsed target-first.  The corpus settles the template's order — for
+        # `{{…|Luchaire, Denis J. Achille|Luchaire, Denis Jean Achille}}` only the
+        # SECOND is an article title — so `«LN»`'s target-first form makes the
+        # names below correct rather than merely lucky.  (The bug was invisible
+        # because the loop tries both candidates.)
+        # Read by SCAN, not by a span pattern.  A display can carry nested markers
+        # — Kropotkin's is `«SC»Kropotkin«/SC», Prince P. A.` — and any
+        # `([^«]*)«/LN»` stops dead at the first one, which is exactly how the
+        # BIOLINK regex this replaces went blind.  Find the opener, find its close,
+        # split on the FIRST pipe (the target is a title and has none; a nested
+        # `«SPAN[a:1|b:2]»` in the display does), and read the display out through
+        # the ONE converter so nested markers become text rather than residue.
+        bio_m = _LN_OPEN_RE.search(desc_raw)
+        bio_end = desc_raw.find("«/LN»", bio_m.end()) if bio_m else -1
+        if bio_end != -1:
+            _target, _, _disp = desc_raw[bio_m.end():bio_end].partition("|")
+            link_target = _target.strip()
+            link_display = (
+                " ".join(markers_to_text(_disp).split()).strip() or link_target
             )
             # Try display first (matches the article title verbatim
             # in the canonical "SURNAME, FIRSTNAMES, ..." form).
@@ -157,17 +189,9 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
         if fn:
             entry["bio_article_filename"] = fn
 
-    # Strip BIOLINK markers from all descriptions: the viewer hides the
-    # "See the biographical article…" sentence anyway, but if any case
-    # leaks past the regex strip we don't want the raw marker visible.
-    # `«BIOLINK:target|display«/BIOLINK»` → `display`.
-    for entry in contrib_map.values():
-        desc = entry.get("description") or ""
-        if "«BIOLINK:" in desc:
-            entry["description"] = re.sub(
-                r"«BIOLINK:[^|«]*\|([^«]*)«/BIOLINK»",
-                r"\1", desc,
-            )
+    # (The BIOLINK strip that used to sit here is gone: descriptions are converted
+    # by `_description_text` at emit, on BOTH routes.  A strip here reached only
+    # the roster.)
 
 
 def _source_quality(session, article: Article) -> dict:
@@ -894,7 +918,7 @@ def export_articles_to_json(
                         )[0],
                         "full_name": contrib.full_name,
                         "credentials": contrib.credentials,
-                        "description": contrib.description,
+                        "description": _description_text(contrib.description),
                     }
                     for contrib in (
                         session.query(Contributor)
@@ -1074,8 +1098,18 @@ def export_articles_to_json(
         for entry in contrib_map.values():
             entry["display_name"] = _display_name(entry["full_name"])
 
-        # Resolve biographical article links for contributors
+        # Resolve biographical article links for contributors.  Reads the RAW
+        # description — the link marker is its input — so it must run BEFORE the
+        # description is converted to text ([[feedback_accrete_first_canonicalize_last]]).
         _resolve_bio_articles(session, contrib_map)
+
+        # Canonicalize at emit, once, for the roster route.  The per-article route
+        # (the `contributors` payload above) runs the SAME converter, so a
+        # description cannot come out different depending on which door it left by
+        # — which is exactly what shipped 219 raw markers to the download bundle
+        # while the roster looked clean.
+        for entry in contrib_map.values():
+            entry["description"] = _description_text(entry["description"])
 
         contrib_list = sorted(contrib_map.values(), key=_sort_name)
         contrib_path.write_text(
