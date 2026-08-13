@@ -23,6 +23,7 @@ from britannica.export.pages import (
 from britannica.markers import (markers_to_text, strip_marker_tokens,
                                 strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
+from britannica.pipeline.stages.elements._link import ln_marker
 from britannica.render.article import render_article
 
 
@@ -511,6 +512,45 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         # Normalize before the lookup so a `#section` target collapses to the same
         # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
         # target would otherwise miss (the key is normalized, the raw target isn't).
+        # The source's two-positional link templates are NOT consistently ordered:
+        # `{{EB1911 article link|A|B}}` files the article second 2,725 times and
+        # first 2,291; `{{1911link|A|B}}` second 661 and first 463.  Each producer
+        # wrap guesses one order, so each is wrong whenever the source used the
+        # other — and the reader gets the FILED TITLE in running prose
+        # ("according to Munzinger, Werner" where the author wrote "Werner
+        # Munzinger").  Both strings survive in the marker, so the order is
+        # recoverable HERE, where the title index exists.
+        #
+        # Swap only when the display is an exact article title, the target is not,
+        # AND the display is the LONGER string.  The length direction is the whole
+        # discriminator: `«LN:Spain#History|Spain»`, `«LN:Victor Cousin|Cousin»`
+        # and `«LN:Exodus, The|Exodus»` all satisfy the first two conditions and
+        # are already CORRECT — prose is terser than a filed title, so a display
+        # SHORTER than its target is prose doing its job.  1,601 such links are
+        # left alone; 514 across 309 articles are corrected.
+        # BOTH sides a real title, pointing at DIFFERENT articles: the producer's
+        # positional convention decides, and `{{1911link}}` is written both ways in
+        # the source (50 follow its target-first rule, 21 invert it).  Where one
+        # title EXTENDS the other, the extending one is the reference — `Mark` vs
+        # `Mark, Gospel of St`, `Bismarck` vs `Bismarck, Otto Eduard Leopold von` —
+        # so a citation of the Gospel stops landing on the evangelist.  15 links.
+        # Where neither extends the other (`Dragon` vs `Draco`, `dress` vs
+        # `Costume`) nothing in the data adjudicates, and this abstains rather than
+        # guess: the producer's convention already gets most of those right.
+        if kind not in _WINDOW_KINDS:
+            fn_t = global_title_to_filename.get(target_text.strip().upper())
+            fn_d = global_title_to_filename.get(display.strip().upper())
+            if fn_t and fn_d and fn_t != fn_d:
+                t_up, d_up = target_text.strip().upper(), display.strip().upper()
+                if d_up.startswith(t_up) and not t_up.startswith(d_up):
+                    return ln_marker(display, target_text, fn_d)
+
+        if kind not in _WINDOW_KINDS and len(display) > len(target_text):
+            fn_disp = global_title_to_filename.get(display.strip().upper())
+            if fn_disp and not global_title_to_filename.get(
+                    target_text.strip().upper()):
+                return ln_marker(display, target_text, fn_disp)
+
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
             fn, cut = hit
@@ -522,10 +562,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                 if span:
                     a, b = span
                     return (display[:a]
-                            + f"«LN:{fn}|{cut}|{display[a:b]}«/LN»"
+                            + ln_marker(cut, display[a:b], fn)
                             + display[b:])
-                return f"«LN:{fn}|{cut}|{display}«/LN»"
-            return f"«LN:{fn}|{target_text}|{display}«/LN»"   # internal — the link target
+                return ln_marker(cut, display, fn)
+            return ln_marker(target_text, display, fn)   # internal — the link target
         if kind in _WINDOW_KINDS:
             # An unresolved window-stamp strips WHOLE, never the WS fallback:
             # the window is OUR guess at a reference, not the author's page
@@ -554,7 +594,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         target_text, display = m.group(1), m.group(2)
         fn = global_title_to_filename.get(target_text.strip().upper())
         if fn:
-            return f"«LN:{fn}|{target_text}|{display}«/LN»"
+            return ln_marker(target_text, display, fn)
         return display
     body = re.sub(
         r"«EB9:([^|]*)\|([^«]*)«/EB9»",
@@ -571,7 +611,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         target_text, display = m.group(1), m.group(2)
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
-            return f"«LN:{hit[0]}|{target_text}|{display}«/LN»"
+            return ln_marker(target_text, display, hit[0])
         return display
     # DOTALL + non-greedy display: an author signature's display carries nested
     # markers (`«SC»r. v. h.«/SC»`), so a `[^«]*` display slot stops at the first

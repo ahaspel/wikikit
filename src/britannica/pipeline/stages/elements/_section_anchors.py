@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.markers import strip_marker_tokens
+from britannica.markers import collapse_links, strip_marker_tokens
 
 from britannica.util.strings import section_slug
 
@@ -42,6 +42,12 @@ from britannica.util.strings import section_slug
 _CTR_SPAN = re.compile(r"«CTR»((?:(?!«/?CTR»)[\s\S])*?)«/CTR»")
 _SC_SPAN = re.compile(r"«SC»(?:(?!«/SC»)[\s\S])*?«/SC»")
 _SPAN_SPAN = re.compile(r"«SPAN[^»]*»(?:(?!«/SPAN»)[\s\S])*?«/SPAN»")
+# A heading may be LINK + small-caps — SOMALILAND's `«LN:…|British|…«/LN» «SC»Somaliland«/SC»`
+# is "British Somaliland".  The link's display is heading material, not "plain words
+# outside the small-caps", so it peels with the rest for the heading TEST.  (The old
+# `«[^»]*»` strip swallowed the link AND its display, which is why this read as a
+# heading before — and why its name came out as bare "Somaliland", losing "British".)
+_LN_SPAN = re.compile(r"«(LN|XL)(?:\[[a-z_]*\])?:(?:(?!«/\1»)[\s\S])*?«/\1»")
 _BR = re.compile(r"«/?BR»")
 _WORD = re.compile(r"[^\W\d]{2,}")  # 2+ letters (any script), no digits
 # Caption look-alikes: the heading's OWN text says it isn't a section.
@@ -93,7 +99,10 @@ def _name(content: str) -> str:
     """The heading's display text: drop every marker, normalize spaces.  The body
     is already produced (no `{{…}}` templates), so marker-strip IS the visible
     text.  INERT by contract — strip stray braces, escape the `|` delimiter."""
-    txt = re.sub(r"\s+", " ", strip_marker_tokens(_FN_SPAN.sub("", content), "")).replace(" ", " ")
+    # Links collapse to their DISPLAY first: a link is an address, so stripping
+    # only its delimiter would put the target filename into the heading name.
+    txt = re.sub(r"\s+", " ", strip_marker_tokens(
+        collapse_links(_FN_SPAN.sub("", content)), "")).replace(" ", " ")
     txt = re.sub(r"[{}]", "", txt).replace("|", "/")
     return txt.strip()
 
@@ -110,11 +119,20 @@ def _heading_name(ctr_content: str) -> str | None:
         return None  # no small-caps, or a figure / image block
     bare = line1
     for _ in range(5):  # repeat to peel nested «SC»
-        reduced = _SPAN_SPAN.sub("", _SC_SPAN.sub("", bare))
+        reduced = _LN_SPAN.sub("", _SPAN_SPAN.sub("", _SC_SPAN.sub("", bare)))
         if reduced == bare:
             break
         bare = reduced
-    bare = _ROMAN_PREFIX.sub("", strip_marker_tokens(bare, ""))
+    # Drop the footnote SPAN before the word test, exactly as `_name` does below.
+    # A heading may carry one (`«SC»Relatives of the Prophet«/SC»«FN:* is prefixed
+    # to names…«/FN»`), and its prose is not "words outside the small-caps" — it is
+    # a note hanging off the heading.  This read correctly only by accident while
+    # the marker strip was `«[^»]*»`: that span ran from `«FN:` to the first `»`
+    # and ate the note's text along with the marker, so nothing was left to fail
+    # the test.  Stripping tokens properly exposed it — CERAMICS lost 2 sections,
+    # SOMALILAND 2, MACHINE-GUN and MAHOMET 1 each.
+    bare = _ROMAN_PREFIX.sub(
+        "", strip_marker_tokens(_FN_SPAN.sub("", bare), ""))
     if _WORD.search(bare):
         return None  # plain words outside the small-caps → centered prose
     name = _name(line1)

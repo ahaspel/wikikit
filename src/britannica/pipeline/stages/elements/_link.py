@@ -92,7 +92,59 @@ def _ln(target: str, disp: str, ctx) -> str:
         from britannica.pipeline.stages.elements import process_elements
         from britannica.markers import markers_to_text
         target = markers_to_text(process_elements(target, ctx)).strip()
-    return "«LN:" + target + "|" + disp + "«/LN»"
+    return ln_marker(target, disp)
+
+
+_SUBPAGE_ORDINAL = re.compile(r"^\d+[\s_]*")
+
+
+def subpage_target(target: str) -> str:
+    """A Wikisource subpage path → OUR ``ARTICLE#Section`` form.
+
+    Wikisource paginates a long article into numbered subpages —
+    ``Egypt/2_Ancient_Egypt``, ``Egypt/3_History#Mahommedan``, ``Japan/04 Art``.
+    The middle segment's NUMBER is their pagination, meaningless here; what
+    survives the crossing is the article and the section name.
+
+        /Egypt/3_History#Mahommedan  ->  Egypt#Mahommedan     (an explicit
+        Egypt/2_Ancient_Egypt        ->  Egypt#Ancient Egypt   fragment wins;
+        Rome/History                 ->  Rome#History          else the last
+        Japan/04 Art                 ->  Japan#Art             path segment)
+
+    `resolve_section` then does the rest, and its fallback is what makes this
+    safe: a section that exists is linked; one that doesn't degrades to the whole
+    article, so the reader never gets an anchor that lands nowhere.  Keeping the
+    raw path instead resolves to nothing at all — it is not an article, not a
+    slug, not anything in our namespace — while still LOOKING like a precise
+    reference.
+    """
+    t = (target or "").strip().lstrip("/")
+    path, _, frag = t.partition("#")
+    segs = [s for s in path.split("/") if s]
+    if not segs:
+        return t
+    article = segs[0].replace("_", " ").strip()
+    anchor = frag if frag else (segs[-1] if len(segs) > 1 else "")
+    anchor = _SUBPAGE_ORDINAL.sub("", anchor.replace("_", " ")).strip()
+    return f"{article}#{anchor}" if anchor else article
+
+
+def ln_marker(target: str, display: str, filename: str | None = None) -> str:
+    """THE `«LN»` emitter — the only place the marker's field order is written.
+
+    Two forms, one owner: the producer's 2-part `«LN:target|display«/LN»`, and the
+    export's 3-part `«LN:filename|target|display«/LN»` once resolution knows which
+    article the target is.
+
+    The 3-part form had NO owner: `export/article_json.py` spelled it out by hand in
+    five separate f-strings (`_resolve_link` ×3, `_resolve_eb9`, `_resolve_author`),
+    each independently deciding which value went in which slot — and a sixth was
+    added on 2026-08-13 before anyone noticed.  Six hand-written copies of one
+    grammar is how the target/display order drifts, and drift in THIS grammar is
+    what prints a filed catalogue title into running prose.
+    """
+    head = f"{filename}|{target}" if filename is not None else target
+    return f"«LN:{head}|{display}«/LN»"
 
 
 # ── The seven link wraps (rows in `_PR_WRAP`; `body` = the substituted display) ─────────────
@@ -111,7 +163,10 @@ def _wrap_article_link(raw, body, ctx):
     if "/" in target:
         if re.match(r"^[IVXLC]+\.", display):
             return disp
-        return _ln(display, disp, ctx)
+        # The subpage path becomes OUR section form; it used to be discarded
+        # entirely in favour of the display arg, which sent the reader to the top
+        # of a 110-page article when the source had named one of its sections.
+        return _ln(subpage_target(target), disp, ctx)
     return _ln(target, disp, ctx)
 
 
@@ -122,7 +177,15 @@ def _wrap_target_first(raw, body, ctx):
     positional = [p for p in parts[1:] if "=" not in p and p]
     if not positional:
         return ""
-    return _ln(positional[0], body.strip(), ctx)
+    target, disp = positional[0], body.strip()
+    if "/" in target:
+        # A no-display `{{lkpl|Egypt/3 History}}` falls back to the TARGET as its
+        # display, which printed the raw Wikisource path to the reader in 23
+        # places.  The piped form already shows the article name; match it.
+        if disp == target.strip():
+            disp = subpage_target(target).partition("#")[0]
+        target = subpage_target(target)
+    return _ln(target, disp, ctx)
 
 
 def _wrap_selfref(raw, body, ctx):
@@ -136,13 +199,14 @@ def _wrap_selfref(raw, body, ctx):
     rest = re.sub(r"^1911\s+[Ee]ncyclop[^/]*/", "", target_raw, flags=re.IGNORECASE)
     if rest == target_raw:                      # no `/Article` — a ref to the work itself
         return disp or target_raw
-    article, _hash, fragment = rest.partition("#")
-    article = article.strip()
-    fragment = fragment.strip()
+    # `rest` may still carry a Wikisource SUBPAGE — `Egypt/3 History#Mahommedan`.
+    # Fold it into our `ARTICLE#Section` form (see `subpage_target`); a plain
+    # `Article#Section` passes through unchanged.
+    target = subpage_target(rest) if "/" in rest else rest.strip()
+    article = target.partition("#")[0].strip()
     disp = disp or article
     if not article:
         return disp
-    target = f"{article}#{fragment}" if fragment else article
     return _ln(target, disp, ctx)
 
 
