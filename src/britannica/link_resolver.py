@@ -273,10 +273,28 @@ class LinkResolver:
         for m in (build_alias_map(), build_section_alias_map(),
                   build_vol29_index_aliases()):
             merged.update(m)
+        # Two aliases can share one normalized key while naming DIFFERENT
+        # articles — `Alfred Stevens` is both `STEVENS, ALFRED (PAINTER)` and
+        # `(SCULPTOR)`; `Pyrénées Orientales` reaches both `PYRÉNÉES-ORIENTALES`
+        # and `PYRENEES`.  `add_alias` is first-writer-wins, so whichever the
+        # merge happened to reach first would quietly own the name and the other
+        # would bind nothing.  An alias that names two articles names neither:
+        # abstain, and let the pickers work from the real titles.  9 keys.
+        bound: dict[str, tuple[str, str]] = {}
+        ambiguous: set[str] = set()
         for alias, canonical in merged.items():
             cands = self.idx.by_norm.get(normalize_xref_target(canonical))
-            if cands:
-                self.idx.add_alias(alias, cands[0][0])
+            if not cands:
+                continue
+            key = normalize_xref_target(alias)
+            prior = bound.get(key)
+            if prior is not None and prior[1] != cands[0][0]:
+                ambiguous.add(key)
+                continue
+            bound[key] = (alias, cands[0][0])
+        for key, (alias, fn) in bound.items():
+            if key not in ambiguous:
+                self.idx.add_alias(alias, fn)
 
     # -- small readers -------------------------------------------------------
     def _article_sections(self, fn: str) -> list:
