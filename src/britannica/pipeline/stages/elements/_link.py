@@ -6,6 +6,24 @@ DISPLAY is the recursed slot: `_link_display` peels it (the PEEL side of the mec
 classifier decomposes it to child nodes, and the wrap here parses the target from `raw` and wraps
 the substituted `body`. So the seven old producers are seven `_PR_WRAP` rows on one shared peel —
 no bespoke producer functions, no `_classify_link_composite`.
+
+The seven rows share ONE wrap, `_link_wrap`, and differ only in a `_LinkForm`:
+
+    slots     which characters of the raw are the target and the display
+    resolve   the target's own transform, and what to show when the source
+              named no display
+    emit      `«LN»` for six of them, `«AL»` for author links
+
+There are exactly TWO ways to read the slots — a `{{template|…}}`'s positionals
+and a `[[bracket|…]]`'s pipe — and before this they were written out three and
+four times, plus a third copy inside `_link_display` that had to be kept in step
+by hand ("mirrors each wrap's own display parse").  The copies drifted where it
+mattered: `subpage_target` was called from three rows under three different
+surrounding rules, the display-first and target-first rows disagreed about which
+positional is the target (so the export has to un-guess it in `swapped_link`),
+and an argument-less template returned the empty string from the three template
+rows — discarding the recursed display — where the four bracket rows returned it
+as prose.  One skeleton means one answer to each of those.
 """
 
 from __future__ import annotations
@@ -46,27 +64,67 @@ def _link_args(raw: str) -> str:
     return re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
 
 
-_LINK_LABELS = frozenset({
-    "EB1911_ARTICLE_LINK", "TARGET_FIRST_LINK", "EB1911_SELFREF",
-    "AUTHOR_LINK", "FRAGMENT_LINK", "INTRA_ARTICLE_LINK", "WIKILINK",
-})
+def _positionals(raw: str) -> list[str]:
+    """A `{{…link…}}`'s positional args — the name dropped, `key=value` dropped."""
+    parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
+    return [p for p in parts[1:] if "=" not in p and p]
+
+
+def _slots_bracket(raw: str) -> tuple[str, str | None]:
+    """`[[Target|Display]]` — display is None when the source piped none."""
+    body = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
+    target, _sep, display = body.partition("|")
+    return target.strip(), (display.strip() or None)
+
+
+_MARKUP_SLOT = re.compile(r"\{\{|«")
+
+
+def _slots_target_first(raw: str) -> tuple[str, str | None]:
+    """`{{lkpl|Target|Display}}` — target is the first positional.
+
+    Unless that slot carries MARKUP, in which case the two are written
+    backwards.  A Wikisource page name is plain text and cannot hold `{{sc}}` or
+    italics, so a marked-up slot is what the PAGE PRINTS:
+    `{{1911link|«I»organi trum«/I»|Organi trum}}` sets its cross-reference in
+    italics and files the article as `Organi trum`.  Reading it the template's
+    usual way shows the reader the page name, capital and all, and drops the
+    italics on the floor — the markup goes into the target, which is flattened.
+    21 links, and NO link anywhere in the corpus carries markup in the other
+    slot, so the tell is unambiguous.
+    """
+    pos = _positionals(raw)
+    if not pos:
+        return "", None
+    if len(pos) == 1:
+        return pos[0], None
+    if _MARKUP_SLOT.search(pos[0]) and not _MARKUP_SLOT.search(pos[1]):
+        return pos[1], pos[0]
+    return pos[0], pos[1]
+
+
+def _slots_display_first(raw: str) -> tuple[str, str | None]:
+    """`{{EB1911 article link|Display|Target}}` — the other convention.  A lone
+    positional is BOTH: the source named one string and meant it to be shown and
+    followed."""
+    pos = _positionals(raw)
+    if not pos:
+        return "", None
+    if len(pos) == 1:
+        return pos[0], pos[0]
+    return pos[1], pos[0]
 
 
 def _link_display(raw: str, label: str) -> str:
     """The DISPLAY slot for `label`'s link form — the one arg the mechanism recurses (the PEEL
-    side).  Mirrors each wrap's own display parse so the classified display matches what the wrap
-    emits: `[[…|Display]]` forms take the post-pipe slot; the `{{…}}` forms take the display-first
-    (ARTICLE) or display-second (TARGET_FIRST / INTRA) positional."""
-    if raw.startswith("[["):
-        body = raw[2:-2] if raw.endswith("]]") else raw
-        return body.partition("|")[2].strip()
-    pos = [p.strip() for p in _split_top_pipes(_link_args(raw))]
-    pos = [p for p in pos[1:] if "=" not in p and p]
-    if not pos:
-        return ""
-    if label == "EB1911_ARTICLE_LINK":
-        return pos[0]
-    return pos[1] if len(pos) > 1 else pos[0]
+    side).  Reads the SAME slots the wrap reads, so the classified display cannot drift from
+    what the wrap emits; where the source named no display, a template form falls back to the
+    target (that string is both) and a bracket form to nothing."""
+    form = _LINK_FORMS[label]
+    target, display = form.slots(raw)
+    if display is not None:
+        return display
+    return target if form.peel_target_when_bare else ""
 
 
 def _strip_link_prefix(t: str) -> str:
@@ -168,112 +226,142 @@ def ln_marker(target: str, display: str, filename: str | None = None) -> str:
 
 
 # ── The seven link wraps (rows in `_PR_WRAP`; `body` = the substituted display) ─────────────
-def _wrap_article_link(raw, body, ctx):
-    """`{{EB1911 article link|Display|Target}}` → «LN:Target|display».  Name + target from raw; a
-    subpage target (`Article/Section`) with a roman-numeral display is a plain section label."""
-    parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
-    positional = [p for p in parts[1:] if "=" not in p and p]
-    if len(positional) >= 2:
-        display, target = positional[0], positional[1]
-    elif len(positional) == 1:
-        display = target = positional[0]
-    else:
-        return ""
-    disp = body.strip()
+_ROMAN_LABEL = re.compile(r"^[IVXLC]+\.")
+_WORK_PREFIX = re.compile(r"^1911\s+[Ee]ncyclop[^/]*/", re.IGNORECASE)
+_AUTHOR_PREFIX = re.compile(r"^\s*Author:\s*", re.IGNORECASE)
+
+
+# Each resolver answers the two questions the skeleton cannot: what the target
+# becomes, and what to show when the source named no display.  Returning an
+# empty target means "this is not a link" — the skeleton emits the display as
+# prose, which is the only sane thing to do with a reference to nowhere.
+def _resolve_article(target, display, body):
+    """A subpage target whose display is a roman numeral is a SECTION LABEL —
+    `IV. History` names a part of the page it sits on, not another article."""
     if "/" in target:
-        if re.match(r"^[IVXLC]+\.", display):
-            return disp
+        if display and _ROMAN_LABEL.match(display):
+            return "", body
         # The subpage path becomes OUR section form; it used to be discarded
         # entirely in favour of the display arg, which sent the reader to the top
         # of a 110-page article when the source had named one of its sections.
-        return _ln(subpage_target(target), disp, ctx)
-    return _ln(target, disp, ctx)
+        return subpage_target(target), body
+    return target, body
 
 
-def _wrap_target_first(raw, body, ctx):
-    """`{{lkpl|Target|Display}}` / `{{1911link|…}}` / `{{EB1911 link|…}}` — target-first: target
-    is the first positional (after the name)."""
-    parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
-    positional = [p for p in parts[1:] if "=" not in p and p]
-    if not positional:
-        return ""
-    target, disp = positional[0], body.strip()
-    if "/" in target:
-        # A no-display `{{lkpl|Egypt/3 History}}` falls back to the TARGET as its
-        # display, which printed the raw Wikisource path to the reader in 23
-        # places.  The piped form already shows the article name; match it.
-        if disp == target.strip():
-            disp = subpage_target(target).partition("#")[0]
-        target = subpage_target(target)
-    return _ln(target, disp, ctx)
+def _resolve_target_first(target, display, body):
+    """A no-display `{{lkpl|Egypt/3 History}}` printed the raw Wikisource path to
+    the reader in 23 places.  The piped form already shows the article name;
+    match it."""
+    if "/" not in target:
+        return target, body
+    folded = subpage_target(target)
+    return folded, (body if display is not None else folded.partition("#")[0])
 
 
-def _wrap_selfref(raw, body, ctx):
-    """`[[1911 Encyclopædia Britannica/Article#Section|Display]]` → «LN:Article#Section|display».
-    Strip the `1911 Encyclopædia Britannica/` prefix, KEEP the `#Section` fragment.  A bare ref
-    to the work (no `/Article`) has no target → emit the display as prose."""
-    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target_raw, _sep, display = b.partition("|")
-    target_raw = target_raw.strip()
-    disp = body.strip() if display.strip() else ""
-    rest = re.sub(r"^1911\s+[Ee]ncyclop[^/]*/", "", target_raw, flags=re.IGNORECASE)
-    if rest == target_raw:                      # no `/Article` — a ref to the work itself
-        return disp or target_raw
+def _resolve_intra(target, display, body):
+    return ("#" + target if target else ""), body
+
+
+def _resolve_selfref(target, display, body):
+    """Strip the `1911 Encyclopædia Britannica/` prefix, KEEP the `#Section`
+    fragment.  A bare ref to the work (no `/Article`) points at no article."""
+    shown = body if display is not None else ""
+    rest = _WORK_PREFIX.sub("", target)
+    if rest == target:                      # a reference to the work itself
+        return "", (shown or target)
     # `rest` may still carry a Wikisource SUBPAGE — `Egypt/3 History#Mahommedan`.
-    # Fold it into our `ARTICLE#Section` form (see `subpage_target`); a plain
-    # `Article#Section` passes through unchanged.
-    target = subpage_target(rest) if "/" in rest else rest.strip()
-    article = target.partition("#")[0].strip()
-    disp = disp or article
+    # Fold it into our `ARTICLE#Section` form; a plain `Article#Section` passes
+    # through unchanged.
+    folded = subpage_target(rest) if "/" in rest else rest.strip()
+    article = folded.partition("#")[0].strip()
     if not article:
-        return disp
-    return _ln(target, disp, ctx)
+        return "", shown
+    return folded, (shown or article)
 
 
-def _wrap_author_link(raw, body, ctx):
-    """`[[Author:Name|Display]]` — carried through the walk NEUTRALLY as
-    `«AL:name|display»`.  The signature-vs-reference decision is DEFERRED to 6b4,
-    where the finished roster resolves it ([[project_roster_from_author_links]]):
-    a display that is a known contributor's initials becomes the bare-initials
-    signoff, otherwise an `«LN»` xref.  The walk no longer needs a roster, and
-    render + binding become one roster-driven decision.  Output uses `body`."""
-    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target_raw, _s, _disp = b.partition("|")               # target from raw
-    target = re.sub(r"^\s*Author:\s*", "", target_raw, flags=re.IGNORECASE).strip()
-    disp_out = body.strip() or target
-    return f"«AL:{target}|{disp_out}«/AL»"
+def _resolve_author(target, display, body):
+    """Carried through the walk NEUTRALLY as `«AL:name|display»`.  The
+    signature-vs-reference decision is DEFERRED to 6b4, where the finished roster
+    resolves it ([[project_roster_from_author_links]]): a display that is a known
+    contributor's initials becomes the bare-initials signoff, otherwise an `«LN»`
+    xref.  The walk no longer needs a roster, and render + binding become one
+    roster-driven decision."""
+    name = _AUTHOR_PREFIX.sub("", target).strip()
+    return name, (body or name)
 
 
-def _wrap_fragment_link(raw, body, ctx):
-    """`[[#Section]]` / `[[#Section|Display]]` → «LN:#Section|display» (display defaults to the
-    section name)."""
-    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target, _sep, display = b.partition("|")
-    section = target.strip().lstrip("#").strip()
-    disp = body.strip() if display.strip() else section
-    if not section:
-        return disp
-    return _ln("#" + section, disp, ctx)
+def _resolve_fragment(target, display, body):
+    section = target.lstrip("#").strip()
+    return ("#" + section if section else ""), (body if display is not None
+                                                else section)
 
 
-def _wrap_intra_link(raw, body, ctx):
-    """`{{EB1911 intra-article link|Section[|Display]}}` → «LN:#Section|display» — the template
-    twin of `[[#Section]]`; the section is the first positional."""
-    parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
-    positional = [p for p in parts[1:] if "=" not in p and p]
-    if not positional:
-        return ""
-    return _ln("#" + positional[0], body.strip(), ctx)
+def _resolve_wikilink(target, display, body):
+    """With no display, show the bare name (`w:`/`Portal:` prefix stripped as
+    noise); the target keeps its prefix for the resolver."""
+    return target, (body if display is not None else _strip_link_prefix(target))
 
 
-def _wrap_wikilink(raw, body, ctx):
-    """`[[Target]]` / `[[Target|Display]]` → «LN:Target|display».  With no display, show the bare
-    name (w:/Portal: prefix stripped as noise); the target keeps its prefix for the resolver."""
-    b = raw[2:-2] if raw.startswith("[[") and raw.endswith("]]") else raw
-    target, _sep, display = b.partition("|")
-    target = target.strip()
-    display = display.strip()
-    disp = body.strip() if display else _strip_link_prefix(target)
-    if not target:
-        return disp
-    return _ln(target, disp, ctx)
+def _al(target: str, disp: str, ctx) -> str:
+    return f"«AL:{target}|{disp}«/AL»"
+
+
+class _LinkForm:
+    """One link form: where its slots are, what its target becomes, how it emits.
+
+    `peel_target_when_bare` is the PEEL side of the same fact — a template form
+    with one positional means that string as both target and display, so the
+    display slot to recurse is the target; a bracket form with no pipe has no
+    display slot at all.
+    """
+
+    __slots__ = ("slots", "resolve", "emit", "peel_target_when_bare")
+
+    def __init__(self, slots, resolve, emit=None, peel_target_when_bare=False):
+        self.slots = slots
+        self.resolve = resolve
+        self.emit = emit or _ln
+        self.peel_target_when_bare = peel_target_when_bare
+
+
+_LINK_FORMS = {
+    "EB1911_ARTICLE_LINK": _LinkForm(_slots_display_first, _resolve_article,
+                                     peel_target_when_bare=True),
+    "TARGET_FIRST_LINK":   _LinkForm(_slots_target_first, _resolve_target_first,
+                                     peel_target_when_bare=True),
+    "INTRA_ARTICLE_LINK":  _LinkForm(_slots_target_first, _resolve_intra,
+                                     peel_target_when_bare=True),
+    "EB1911_SELFREF":      _LinkForm(_slots_bracket, _resolve_selfref),
+    "AUTHOR_LINK":         _LinkForm(_slots_bracket, _resolve_author, _al),
+    "FRAGMENT_LINK":       _LinkForm(_slots_bracket, _resolve_fragment),
+    "WIKILINK":            _LinkForm(_slots_bracket, _resolve_wikilink),
+}
+
+
+def _link_wrap(label: str):
+    """THE link wrap.  `body` is the substituted (already recursed) display."""
+    form = _LINK_FORMS[label]
+
+    def wrap(raw, body, ctx):
+        target_raw, display_raw = form.slots(raw)
+        target, disp = form.resolve(target_raw, display_raw, body.strip())
+        if not target:
+            return disp
+        return form.emit(target, disp, ctx)
+
+    wrap.__name__ = f"_wrap_{label.lower()}"
+    return wrap
+
+
+# The classifier's set of link labels IS the set of forms — one list, so a form
+# cannot be added without the classifier routing it.
+_LINK_LABELS = frozenset(_LINK_FORMS)
+
+
+_wrap_article_link = _link_wrap("EB1911_ARTICLE_LINK")
+_wrap_target_first = _link_wrap("TARGET_FIRST_LINK")
+_wrap_selfref = _link_wrap("EB1911_SELFREF")
+_wrap_author_link = _link_wrap("AUTHOR_LINK")
+_wrap_fragment_link = _link_wrap("FRAGMENT_LINK")
+_wrap_intra_link = _link_wrap("INTRA_ARTICLE_LINK")
+_wrap_wikilink = _link_wrap("WIKILINK")

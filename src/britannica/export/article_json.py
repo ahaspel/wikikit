@@ -47,6 +47,45 @@ _TITLE_PREFIXES = re.compile(
 _LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:")
 
 
+_LN_OPEN_KIND_RE = re.compile(r"«LN(?:\[([a-z_]*)\])?:")
+
+
+class _LnFields:
+    """The three groups `_resolve_link` reads, from a scan instead of a match."""
+
+    __slots__ = ("_kind", "_target", "_display")
+
+    def __init__(self, kind, target, display):
+        self._kind, self._target, self._display = kind, target, display
+
+    def group(self, n):
+        return (None, self._kind, self._target, self._display)[n]
+
+
+def _resolve_ln_markers(text: str, resolve) -> str:
+    """Rewrite every 2-part `«LN[kind]:target|display«/LN»` through ``resolve``.
+
+    The display runs to the marker's own close, so it may contain markers of its
+    own; the target may not, and is read to the first `|`.  A marker with no
+    close is left exactly as it stands — this is a resolver, and inventing a
+    close would hide the producer bug that failed to write one.
+    """
+    out, i = [], 0
+    while True:
+        m = _LN_OPEN_KIND_RE.search(text, i)
+        if m is None:
+            out.append(text[i:])
+            return "".join(out)
+        close = text.find("«/LN»", m.end())
+        if close < 0:
+            out.append(text[i:])
+            return "".join(out)
+        target, _sep, display = text[m.end():close].partition("|")
+        out.append(text[i:m.start()])
+        out.append(resolve(_LnFields(m.group(1), target, display)))
+        i = close + len("«/LN»")
+
+
 def _fold_name(t: str) -> str:
     """Letters and digits only, case-folded — two spellings of ONE name fold
     alike.  `Oyster-catcher`, `Oystercatcher` and `oystercatcher` all fold to
@@ -637,10 +676,15 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # The `[kind]` slot is consumed HERE — the bake resolves and writes the
     # plain 3-part form (or strips), so no `[kind]` survives into a post-bake
     # body.  `w` = a producer-stamped (q.v.) window (unasserted extent).
-    body = re.sub(
-        r"«LN(?:\[([a-z_]*)\])?:([^|]*)\|([^«]*)«/LN»",
-        _resolve_link, body,
-    )
+    #
+    # Found by SCAN, not by a span pattern.  The display slot is the RECURSED
+    # one, so it can legitimately carry markers — `{{1911link|«I»organi
+    # trum«/I»|Organi trum}}` prints its cross-reference in italics — and a
+    # `([^«]*)` display simply fails to match those, leaving the link unresolved
+    # and the marker to leak.  Scanning also retires the ordering hazard the
+    # pattern needed guarding against: fields are counted, so a 3-part marker
+    # cannot be re-read as a 2-part one with `target|display` as its display.
+    body = _resolve_ln_markers(body, _resolve_link)
 
     def _resolve_eb9(m: re.Match) -> str:
         target_text, display = m.group(1), m.group(2)
