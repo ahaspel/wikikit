@@ -82,7 +82,7 @@ def diet_image(src_path, log=None):
         rgb = im.convert("RGB")
         probe = rgb.resize((32, 32))
         gray = all(abs(r - g) < _GRAY_TOL and abs(g - b) < _GRAY_TOL
-                   for r, g, b in probe.getdata())
+                   for r, g, b in probe.get_flattened_data())
         jbuf = io.BytesIO()
         (im.convert("L") if gray else rgb).save(jbuf, "JPEG", quality=DIET_JPEG_Q, optimize=True)
         try:

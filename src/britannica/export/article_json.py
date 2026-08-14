@@ -47,6 +47,76 @@ _TITLE_PREFIXES = re.compile(
 _LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:")
 
 
+def _fold_name(t: str) -> str:
+    """Letters and digits only, case-folded — two spellings of ONE name fold
+    alike.  `Oyster-catcher`, `Oystercatcher` and `oystercatcher` all fold to
+    `oystercatcher`."""
+    return re.sub(r"[\W_]+", "", t or "", flags=re.UNICODE).casefold()
+
+
+def swapped_link(target_text: str, display: str, title_to_filename: dict):
+    """`(target, shown, filename)` when the source filed this link BACKWARDS,
+    else None — the caller keeps its own order.
+
+    The source's two-positional link templates are NOT consistently ordered:
+    `{{EB1911 article link|A|B}}` files the article second 2,725 times and first
+    2,291; `{{1911link|A|B}}` second 661 and first 463.  Each producer wrap
+    guesses one order, so each is wrong whenever the source used the other — and
+    the reader gets the FILED TITLE in running prose ("according to Munzinger,
+    Werner" where the author wrote "Werner Munzinger").  Both strings survive in
+    the marker, so the order is recoverable HERE, where the title index exists.
+
+    BOTH sides a real title, pointing at DIFFERENT articles: the producer's
+    positional convention decides, and `{{1911link}}` is written both ways in the
+    source (50 follow its target-first rule, 21 invert it).  Where one title
+    EXTENDS the other, the extending one is the reference — `Mark` vs `Mark,
+    Gospel of St`, `Bismarck` vs `Bismarck, Otto Eduard Leopold von` — so a
+    citation of the Gospel stops landing on the evangelist.  15 links.  Where
+    neither extends the other (`Dragon` vs `Draco`, `dress` vs `Costume`) nothing
+    in the data adjudicates, and this abstains rather than guess: the producer's
+    convention already gets most of those right.
+
+    Otherwise swap only when the display is an exact article title, the target is
+    not, AND the display is the LONGER string.  The length direction is the whole
+    discriminator: `«LN:Spain#History|Spain»`, `«LN:Victor Cousin|Cousin»` and
+    `«LN:Exodus, The|Exodus»` all satisfy the first two conditions and are already
+    CORRECT — prose is terser than a filed title, so a display SHORTER than its
+    target is prose doing its job.  1,601 such links are left alone; 514 across
+    309 articles are corrected.
+
+    When the two strings FOLD ALIKE there is no reference to recover — they spell
+    one name two ways — and showing the target would print the WIKISOURCE page
+    name over the words EB1911 set in type.  STILT's
+    `{{1911link|Oystercatcher|Oyster-catcher}}` is the shape: arg1 is the wiki
+    page, arg2 the printed spelling, and OUR titles come from EB1911, so the side
+    that matches a filed title IS the printed side (`OYSTER-CATCHER`, vol 20
+    p 462).  Length cannot discriminate here — the hyphen alone makes the printed
+    spelling one character "longer".  So take the swap's TARGET, which is what
+    makes the link resolve, and still show the filed spelling: 40 links across 28
+    pairs, all EB1911 compounds (`Bag-pipe`, `Tread-mill`, `Ear-ring`) that were
+    rendering as modern closed-up forms.
+    """
+    t_up, d_up = target_text.strip().upper(), display.strip().upper()
+    fn_t, fn_d = title_to_filename.get(t_up), title_to_filename.get(d_up)
+
+    if fn_t and fn_d and fn_t != fn_d:
+        if d_up.startswith(t_up) and not t_up.startswith(d_up):
+            return display, _shown_text(target_text, display), fn_d
+        return None
+
+    if fn_d and not fn_t and len(display) > len(target_text):
+        return display, _shown_text(target_text, display), fn_d
+    return None
+
+
+def _shown_text(target_text: str, display: str) -> str:
+    """What the reader sees once the link is swapped: the target's own words,
+    unless the two are one name spelled two ways — then EB1911's spelling."""
+    if _fold_name(display) == _fold_name(target_text):
+        return display
+    return target_text
+
+
 def _description_text(raw: str | None) -> str:
     """A stored contributor description → display text.
 
@@ -491,11 +561,8 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         case-folded, punctuation-tolerant (the cut is the NORMALIZED form).
         None when the tokens can't be located."""
         dtoks = list(re.finditer(r"\S+", display))
-
-        def _fold(t):
-            return re.sub(r"[\W_]+", "", t, flags=re.UNICODE).casefold()
-        cw = [f for f in (_fold(w) for w in cut.split()) if f]
-        dw = [_fold(t.group(0)) for t in dtoks]
+        cw = [f for f in (_fold_name(w) for w in cut.split()) if f]
+        dw = [_fold_name(t.group(0)) for t in dtoks]
         k = len(cw)
         if not cw or k > len(dw):
             return None
@@ -512,44 +579,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         # Normalize before the lookup so a `#section` target collapses to the same
         # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
         # target would otherwise miss (the key is normalized, the raw target isn't).
-        # The source's two-positional link templates are NOT consistently ordered:
-        # `{{EB1911 article link|A|B}}` files the article second 2,725 times and
-        # first 2,291; `{{1911link|A|B}}` second 661 and first 463.  Each producer
-        # wrap guesses one order, so each is wrong whenever the source used the
-        # other — and the reader gets the FILED TITLE in running prose
-        # ("according to Munzinger, Werner" where the author wrote "Werner
-        # Munzinger").  Both strings survive in the marker, so the order is
-        # recoverable HERE, where the title index exists.
-        #
-        # Swap only when the display is an exact article title, the target is not,
-        # AND the display is the LONGER string.  The length direction is the whole
-        # discriminator: `«LN:Spain#History|Spain»`, `«LN:Victor Cousin|Cousin»`
-        # and `«LN:Exodus, The|Exodus»` all satisfy the first two conditions and
-        # are already CORRECT — prose is terser than a filed title, so a display
-        # SHORTER than its target is prose doing its job.  1,601 such links are
-        # left alone; 514 across 309 articles are corrected.
-        # BOTH sides a real title, pointing at DIFFERENT articles: the producer's
-        # positional convention decides, and `{{1911link}}` is written both ways in
-        # the source (50 follow its target-first rule, 21 invert it).  Where one
-        # title EXTENDS the other, the extending one is the reference — `Mark` vs
-        # `Mark, Gospel of St`, `Bismarck` vs `Bismarck, Otto Eduard Leopold von` —
-        # so a citation of the Gospel stops landing on the evangelist.  15 links.
-        # Where neither extends the other (`Dragon` vs `Draco`, `dress` vs
-        # `Costume`) nothing in the data adjudicates, and this abstains rather than
-        # guess: the producer's convention already gets most of those right.
         if kind not in _WINDOW_KINDS:
-            fn_t = global_title_to_filename.get(target_text.strip().upper())
-            fn_d = global_title_to_filename.get(display.strip().upper())
-            if fn_t and fn_d and fn_t != fn_d:
-                t_up, d_up = target_text.strip().upper(), display.strip().upper()
-                if d_up.startswith(t_up) and not t_up.startswith(d_up):
-                    return ln_marker(display, target_text, fn_d)
-
-        if kind not in _WINDOW_KINDS and len(display) > len(target_text):
-            fn_disp = global_title_to_filename.get(display.strip().upper())
-            if fn_disp and not global_title_to_filename.get(
-                    target_text.strip().upper()):
-                return ln_marker(display, target_text, fn_disp)
+            swap = swapped_link(target_text, display, global_title_to_filename)
+            if swap:
+                return ln_marker(*swap)
 
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
@@ -949,25 +982,16 @@ def export_articles_to_json(
                     }
                     for plate_info in plate_map.get(article.id, [])
                 ],
-                "contributors": [
-                    {
-                        "initials": (
-                            session.query(ContributorInitials.initials)
-                            .filter(ContributorInitials.contributor_id == contrib.id)
-                            .first() or ("",)
-                        )[0],
-                        "full_name": contrib.full_name,
-                        "credentials": contrib.credentials,
-                        "description": _description_text(contrib.description),
-                    }
-                    for contrib in (
-                        session.query(Contributor)
-                        .join(ArticleContributor, ArticleContributor.contributor_id == Contributor.id)
-                        .filter(ArticleContributor.article_id == article.id)
-                        .order_by(ArticleContributor.sequence)
-                        .all()
-                    )
-                ],
+                # EMPTY by contract — Phase 6b4 (`resolve_contributors_post`) is the
+                # sole writer of this field, and it patches all 37,226 articles.  This
+                # used to populate it with a per-article ContributorInitials query
+                # whose result was overwritten in every case: the resolver
+                # consolidation moved binding out of the export and left the dead
+                # population behind.  It cost 37,226 needless queries and, worse,
+                # presented as a second writer — the description conversion was added
+                # HERE and never reached the shipped payload, taking contributor_bio
+                # leaks from 1,363 to 6,588 ([[feedback_dont_grow_catchalls]]).
+                "contributors": [],
             }
 
             # The viewer is a thin shell now: Python owns marker→HTML, the client just
@@ -1063,99 +1087,14 @@ def export_articles_to_json(
             encoding="utf-8",
         )
 
-        # Build contributor index
-        contrib_map: dict[str, dict] = {}
-        for article in articles:
-            contribs = (
-                session.query(Contributor)
-                .join(ArticleContributor, ArticleContributor.contributor_id == Contributor.id)
-                .filter(ArticleContributor.article_id == article.id)
-                .order_by(ArticleContributor.sequence)
-                .all()
-            )
-            for c in contribs:
-                if c.full_name not in contrib_map:
-                    all_initials = [
-                        ci.initials for ci in
-                        session.query(ContributorInitials)
-                        .filter(ContributorInitials.contributor_id == c.id)
-                        .all()
-                    ]
-                    contrib_map[c.full_name] = {
-                        "full_name": c.full_name,
-                        "initials": ", ".join(all_initials),
-                        "credentials": c.credentials or "",
-                        "description": c.description or "",
-                        "articles": [],
-                    }
-                contrib_map[c.full_name]["articles"].append({
-                    "id": article.id,
-                    "stable_id": stable_id(article),
-                    "title": article.title,
-                    "filename": _safe_filename(article, article.title),
-                })
-
-        # Merge with existing contributors (from other volumes)
-        contrib_path = out_path / "contributors.json"
-        if contrib_path.exists():
-            existing_contribs = json.loads(contrib_path.read_text(encoding="utf-8"))
-            for ec in existing_contribs:
-                name = ec["full_name"]
-                if name in contrib_map:
-                    # Merge article lists, avoiding duplicates
-                    existing_fns = {a["filename"] for a in contrib_map[name]["articles"]}
-                    for a in ec["articles"]:
-                        if a["filename"] not in existing_fns:
-                            contrib_map[name]["articles"].append(a)
-                else:
-                    contrib_map[name] = ec
-
-        def _split_name_suffix(full_name: str) -> tuple[str, str]:
-            """Strip parenthetical dates and split a contributor's full
-            name into (head, suffix).  Suffix is anything after the
-            first comma — degrees ('Ph.D', 'Lic. Theol', 'Litt.D'),
-            titles ('Bart', 'Jr', 'Captain'), or any post-name
-            qualifier.  The head is the part to apply Last-First
-            rearrangement to; the suffix is re-appended afterwards."""
-            import re as _re
-            name = _re.sub(r"\s*\([^)]*\)", "", full_name).strip()
-            name = name.rstrip(",").strip()
-            head, _, tail = name.partition(",")
-            return head.strip(), tail.strip()
-
-        def _sort_name(c: dict) -> str:
-            head, _ = _split_name_suffix(c["full_name"])
-            return head.rsplit(None, 1)[-1].lower() if head else ""
-
-        def _display_name(full_name: str) -> str:
-            """Convert 'First Middle Last, Degree' to
-            'Last, First Middle, Degree'."""
-            head, suffix = _split_name_suffix(full_name)
-            parts = head.rsplit(None, 1)
-            rearranged = f"{parts[1]}, {parts[0]}" if len(parts) == 2 else head
-            return f"{rearranged}, {suffix}" if suffix else rearranged
-
-        for entry in contrib_map.values():
-            entry["display_name"] = _display_name(entry["full_name"])
-
-        # Resolve biographical article links for contributors.  Reads the RAW
-        # description — the link marker is its input — so it must run BEFORE the
-        # description is converted to text ([[feedback_accrete_first_canonicalize_last]]).
-        _resolve_bio_articles(session, contrib_map)
-
-        # Canonicalize at emit, once, for the roster route.  The per-article route
-        # (the `contributors` payload above) runs the SAME converter, so a
-        # description cannot come out different depending on which door it left by
-        # — which is exactly what shipped 219 raw markers to the download bundle
-        # while the roster looked clean.
-        for entry in contrib_map.values():
-            entry["description"] = _description_text(entry["description"])
-
-        contrib_list = sorted(contrib_map.values(), key=_sort_name)
-        contrib_path.write_text(
-            json.dumps(contrib_list, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        # The contributor ROSTER is NOT built here.  Phase 6b4
+        # (`resolve_contributors_post`) rebuilds `contributors.json` from the
+        # final DB state — it resolves the bio articles and writes the file — so
+        # everything that used to stand here was overwritten wholesale on every
+        # run: a per-article Contributor/ContributorInitials query, a merge with
+        # the previous volume's file, a second `_resolve_bio_articles`, and a
+        # second description conversion.  Two writers of one output is how the
+        # conversion came to be applied on the dead path only.
 
         return exported
 

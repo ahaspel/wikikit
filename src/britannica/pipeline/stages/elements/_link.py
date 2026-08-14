@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.markers import MARKER_TOKEN_RE
+
 
 def _split_top_pipes(s: str) -> list[str]:
     """Split on `|` at bracket depth 0 — so a nested `{{sc|X}}`'s inner pipe does not
@@ -117,16 +119,34 @@ def subpage_target(target: str) -> str:
     raw path instead resolves to nothing at all — it is not an article, not a
     slug, not anything in our namespace — while still LOOKING like a precise
     reference.
+
+    A target can carry MARKUP — SUDAN's `{{11link|{{sc|Dongola}}: «I»Mudiria«/I»|
+    Dongola (province)}}` reaches here with the italics already marked — and a
+    CLOSE marker's slash is not a path separator.  Splitting the raw string turned
+    `«/I»` into `«#I»`, which then failed the 3-part «LN» opener grammar (its
+    fields are `[^|«]*`), collapsed the marker to its 2-part reading, and put the
+    filename in the href with a raw pipe in the anchor text.  So the path work
+    happens on a string whose markers are held aside.
     """
     t = (target or "").strip().lstrip("/")
+    held: list[str] = []
+
+    def _hold(m: re.Match) -> str:
+        held.append(m.group(0))
+        return f"\x00{len(held) - 1}\x01"
+
+    def _release(s: str) -> str:
+        return re.sub(r"\x00(\d+)\x01", lambda m: held[int(m.group(1))], s)
+
+    t = MARKER_TOKEN_RE.sub(_hold, t)
     path, _, frag = t.partition("#")
     segs = [s for s in path.split("/") if s]
     if not segs:
-        return t
+        return _release(t)
     article = segs[0].replace("_", " ").strip()
     anchor = frag if frag else (segs[-1] if len(segs) > 1 else "")
     anchor = _SUBPAGE_ORDINAL.sub("", anchor.replace("_", " ")).strip()
-    return f"{article}#{anchor}" if anchor else article
+    return _release(f"{article}#{anchor}" if anchor else article)
 
 
 def ln_marker(target: str, display: str, filename: str | None = None) -> str:
