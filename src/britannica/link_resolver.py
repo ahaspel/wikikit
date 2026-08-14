@@ -23,7 +23,7 @@ preserving (topic path byte-identical), with ``prose`` threaded into the fisher.
 import json
 import re
 
-from britannica.markers import strip_marker_tokens
+from britannica.markers import collapse_links, strip_marker_tokens
 import unicodedata
 from pathlib import Path
 
@@ -164,7 +164,11 @@ def _clean_prose(t: str) -> str:
 
     A `\\x01PAGE:N\\x01` strip lived here too; page position no longer enters the
     stream, so it swept nothing ([[project_page_position_out_of_band]])."""
-    t = re.sub(r"«LN(?:\[[a-z_]*\])?:(?:[^|]*\|)*([^«]*)«/LN»", r"\1", t)
+    # Links collapse through the shared `collapse_links`, not a local regex —
+    # the `([^«]*)` spelling this had failed on any marked-up display and left
+    # the whole marker in the fisher's prose (and an «XL»'s URL leaked through
+    # the token strip as bare text).
+    t = collapse_links(t)
     t = strip_marker_tokens(t, "")
     return re.sub(r"\s+", " ", t).strip()
 

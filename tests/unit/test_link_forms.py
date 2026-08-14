@@ -77,8 +77,8 @@ def test_resolution_scans_so_a_display_may_carry_markers():
     marker = "«LN:Africa#Ethnology|«SC»Africa«/SC»: «I»Ethnology«/I»«/LN»"
     seen = []
 
-    def resolve(m):
-        seen.append((m.group(1), m.group(2), m.group(3)))
+    def resolve(kind, target, display):
+        seen.append((kind, target, display))
         return "OK"
 
     assert _resolve_ln_markers(marker, resolve) == "OK"
@@ -89,7 +89,7 @@ def test_resolution_scans_so_a_display_may_carry_markers():
 def test_resolution_reads_the_kind_slot():
     seen = []
     _resolve_ln_markers("«LN[see]:Rome|Rome«/LN»",
-                        lambda m: seen.append(m.group(1)) or "")
+                        lambda kind, target, display: seen.append(kind) or "")
     assert seen == ["see"]
 
 
@@ -97,4 +97,4 @@ def test_an_unclosed_marker_is_left_alone():
     """A resolver that invented a close would hide the producer bug that failed
     to write one."""
     text = "before «LN:Rome|Rome after"
-    assert _resolve_ln_markers(text, lambda m: "X") == text
+    assert _resolve_ln_markers(text, lambda kind, target, display: "X") == text

@@ -20,8 +20,8 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
-from britannica.markers import (markers_to_text, strip_marker_tokens,
-                                strip_title_markers)
+from britannica.markers import (iter_ln_markers, markers_to_text,
+                                strip_marker_tokens, strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
 from britannica.pipeline.stages.elements._link import ln_marker
 from britannica.render.article import render_article
@@ -45,47 +45,21 @@ _TITLE_PREFIXES = re.compile(
 )
 
 
-# The «LN» OPENER only — its close is found by scan, never by a span pattern.
-_LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:")
-
-
-_LN_OPEN_KIND_RE = re.compile(r"«LN(?:\[([a-z_]*)\])?:")
-
-
-class _LnFields:
-    """The three groups `_resolve_link` reads, from a scan instead of a match."""
-
-    __slots__ = ("_kind", "_target", "_display")
-
-    def __init__(self, kind, target, display):
-        self._kind, self._target, self._display = kind, target, display
-
-    def group(self, n):
-        return (None, self._kind, self._target, self._display)[n]
-
-
 def _resolve_ln_markers(text: str, resolve) -> str:
     """Rewrite every 2-part `«LN[kind]:target|display«/LN»` through ``resolve``.
 
-    The display runs to the marker's own close, so it may contain markers of its
-    own; the target may not, and is read to the first `|`.  A marker with no
-    close is left exactly as it stands — this is a resolver, and inventing a
-    close would hide the producer bug that failed to write one.
+    ``resolve(kind, target, display) -> str`` supplies the replacement.  The
+    marker is read through THE one reader (`markers.iter_ln_markers`); a marker
+    with no close is left exactly as it stands — this is a resolver, and
+    inventing a close would hide the producer bug that failed to write one.
     """
     out, i = [], 0
-    while True:
-        m = _LN_OPEN_KIND_RE.search(text, i)
-        if m is None:
-            out.append(text[i:])
-            return "".join(out)
-        close = text.find("«/LN»", m.end())
-        if close < 0:
-            out.append(text[i:])
-            return "".join(out)
-        target, _sep, display = text[m.end():close].partition("|")
-        out.append(text[i:m.start()])
-        out.append(resolve(_LnFields(m.group(1), target, display)))
-        i = close + len("«/LN»")
+    for m in iter_ln_markers(text):
+        out.append(text[i:m.start])
+        out.append(resolve(m.kind, m.target, m.display))
+        i = m.end
+    out.append(text[i:])
+    return "".join(out)
 
 
 def _fold_name(t: str) -> str:
@@ -241,20 +215,17 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
         # SECOND is an article title — so `«LN»`'s target-first form makes the
         # names below correct rather than merely lucky.  (The bug was invisible
         # because the loop tries both candidates.)
-        # Read by SCAN, not by a span pattern.  A display can carry nested markers
+        # Read through THE «LN» reader.  A display can carry nested markers
         # — Kropotkin's is `«SC»Kropotkin«/SC», Prince P. A.` — and any
         # `([^«]*)«/LN»` stops dead at the first one, which is exactly how the
-        # BIOLINK regex this replaces went blind.  Find the opener, find its close,
-        # split on the FIRST pipe (the target is a title and has none; a nested
-        # `«SPAN[a:1|b:2]»` in the display does), and read the display out through
-        # the ONE converter so nested markers become text rather than residue.
-        bio_m = _LN_OPEN_RE.search(desc_raw)
-        bio_end = desc_raw.find("«/LN»", bio_m.end()) if bio_m else -1
-        if bio_end != -1:
-            _target, _, _disp = desc_raw[bio_m.end():bio_end].partition("|")
-            link_target = _target.strip()
+        # BIOLINK regex this replaces went blind.  The display is read out
+        # through the ONE converter so nested markers become text, not residue.
+        bio_m = next(iter_ln_markers(desc_raw), None)
+        if bio_m is not None:
+            link_target = bio_m.target.strip()
             link_display = (
-                " ".join(markers_to_text(_disp).split()).strip() or link_target
+                " ".join(markers_to_text(bio_m.display).split()).strip()
+                or link_target
             )
             # Try display first (matches the article title verbatim
             # in the canonical "SURNAME, FIRSTNAMES, ..." form).
@@ -515,12 +486,6 @@ def _safe_filename(article_id, title: str = "") -> str:
     return f"{stable}.json"
 
 
-# Non-greedy display so a nested marker in the display (`«SC»r. v. h.«/SC»`, an
-# author signature) is captured whole rather than truncated at the first «.
-_LN_DISPLAY_RE = re.compile(
-    r"«(?:LN|AL)(?:\[[a-z_]*\])?:[^|]*\|(.*?)«/(?:LN|AL)»", re.DOTALL)
-
-
 def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     """The candidate-source half of the xref decorator: extract every
     reference from the body and resolve it through the shared ``LinkResolver``
@@ -549,11 +514,11 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
             xref_type=m["xref_type"],
         )
         trusted = m["xref_type"] in ("link", "qv")
-        dm = _LN_DISPLAY_RE.search(m["surface_text"])
-        # Strip nested inline markers from the display — the resolver wants the
-        # plain name (`r. v. h.`), not `«SC»r. v. h.«/SC»`, whose stray tokens
-        # would mistokenize as name parts.
-        display = strip_marker_tokens(dm.group(1), "").strip() if dm else None
+        # The extractor already read the marker's display — no second parse of
+        # the surface text.  Strip nested inline markers from it: the resolver
+        # wants the plain name (`r. v. h.`), not `«SC»r. v. h.«/SC»`, whose
+        # stray tokens would mistokenize as name parts.
+        display = strip_marker_tokens(m.get("display", ""), "").strip() or None
         ruled = resolver.adjudicated(m["normalized_target"])
         if ruled is not None:
             # A hand ruling wins over every tier — but the self-reference rule
@@ -655,8 +620,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
 
     _WINDOW_KINDS = ("w", "see", "see_also")
 
-    def _resolve_link(m: re.Match) -> str:
-        kind, target_text, display = m.group(1), m.group(2), m.group(3)
+    def _resolve_link(kind, target_text, display) -> str:
         # Normalize before the lookup so a `#section` target collapses to the same
         # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
         # target would otherwise miss (the key is normalized, the raw target isn't).

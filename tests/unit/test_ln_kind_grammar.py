@@ -39,16 +39,26 @@ def test_resolver_prose_strip_handles_kinded():
     assert "«LN" not in w
 
 
-def test_bake_regex_matches_both_forms():
-    """The 6b5 2-part bake pattern — where `[kind]` is consumed and dropped."""
-    import re
-    pat = re.compile(r"«LN(?:\[[a-z_]*\])?:([^|]*)\|([^«]*)«/LN»")
-    for body in (PLAIN, KINDED):
-        m = pat.search(body)
-        assert m and m.group(1) == "Geber" and m.group(2) == "Geber"
+def test_the_one_reader_handles_both_forms():
+    """`markers.iter_ln_markers` — THE «LN» reader every pre-bake consumer
+    (extractor, bake, bio scan) iterates — reads the kinded form like the
+    plain one."""
+    from britannica.markers import iter_ln_markers
+    for body, want_kind in ((PLAIN, None), (KINDED, "qv")):
+        (m,) = iter_ln_markers(body)
+        assert (m.kind, m.target, m.display) == (want_kind, "Geber", "Geber")
+        assert body[m.start:m.end].endswith("«/LN»")
 
 
-def test_display_extraction_handles_kinded():
-    from britannica.export.article_json import _LN_DISPLAY_RE
-    for body in (PLAIN, KINDED):
-        assert _LN_DISPLAY_RE.search(body).group(1) == "Geber"
+def test_extractor_reads_a_marked_up_display():
+    """A display carrying markers (`«SC»Parasitic Diseases«/SC»`, a printed
+    cross-reference in small caps) MUST still extract — the old `([^«]*)`
+    display group matched none of these, so no xref was filed, nothing bound
+    a target, and the bake silently stripped the link to plain text."""
+    from britannica.xrefs.extractor import extract_xrefs
+    body = ("see «LN:Parasitic Diseases|«SC»Parasitic "
+            "Diseases«/SC»«/LN» for details")
+    (rec,) = extract_xrefs(body)
+    assert rec["xref_type"] == "link"
+    assert rec["normalized_target"] == "PARASITIC DISEASES"
+    assert rec["display"] == "«SC»Parasitic Diseases«/SC»"

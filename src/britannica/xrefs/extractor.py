@@ -1,5 +1,6 @@
 import re
 
+from britannica.markers import iter_ln_markers
 from britannica.xrefs.normalizer import normalize_xref_target
 
 
@@ -67,7 +68,7 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
                                                  # whose target already
                                                  # appeared as a link xref.
 
-    def _add(surface: str, target: str, xref_type: str,
+    def _add(surface: str, target: str, xref_type: str, display: str,
              window: bool = False) -> None:
         normalized = normalize_xref_target(target)
         if not normalized:
@@ -84,27 +85,33 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
             "surface_text": surface.strip(),
             "normalized_target": normalized,
             "xref_type": xref_type,
+            "display": display,
         }
         if window:
             rec["window"] = True
         results.append(rec)
 
-    # Link markers are implicit cross-references.  The optional [kind] slot:
-    # `w` marks a producer-stamped (q.v.) WINDOW — an UNASSERTED extent the
-    # resolver cuts against the title index (same trusted link policy).
-    for m in re.finditer(r"\u00abLN(?:\[([a-z_]*)\])?:([^|]*)\|([^«]*)\u00ab/LN\u00bb", text):
-        target = m.group(2).strip()
-        kind = m.group(1)
-        if kind == "w":
+    # Link markers are implicit cross-references, read through THE «LN» reader
+    # (`markers.iter_ln_markers`).  The display is the RECURSED slot, so the
+    # `([^«]*)` display group that used to live here silently dropped every
+    # marked-up cross-reference (`«SC»Parasitic Diseases«/SC»`): no xref, so
+    # nothing bound a target, so the bake stripped the link to plain text.
+    # The optional [kind] slot: `w` marks a producer-stamped (q.v.) WINDOW —
+    # an UNASSERTED extent the resolver cuts against the title index (same
+    # trusted link policy).
+    for m in iter_ln_markers(text):
+        target = m.target.strip()
+        surface = text[m.start:m.end]
+        if m.kind == "w":
             # A window bypasses the plausibility armor: it is DELIBERATELY a
             # raw clause span ("and Plato"); junk windows are filtered by the
             # resolver's index cuts, not by extraction heuristics.
-            _add(m.group(0), target, "link", window=True)
-        elif kind in ("see", "see_also"):
+            _add(surface, target, "link", m.display, window=True)
+        elif m.kind in ("see", "see_also"):
             # A see-window: same bypass, untrusted policy (abstain-default).
-            _add(m.group(0), target, kind, window=True)
+            _add(surface, target, m.kind, m.display, window=True)
         elif _is_plausible_target(target):
-            _add(m.group(0), target, "link")
+            _add(surface, target, "link", m.display)
 
     # «AL» is the surviving [[Author:…]] marker — 6b4 resolves the contributor
     # SIGNOFFS and leaves the rest for us.  Its target names a PERSON, not an
@@ -113,6 +120,6 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
     for m in re.finditer("«AL:([^|»]*)\\|(.*?)«/AL»", text, re.DOTALL):
         target = m.group(1).strip()
         if _is_plausible_target(target):
-            _add(m.group(0), target, "author")
+            _add(m.group(0), target, "author", m.group(2))
 
     return results

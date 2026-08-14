@@ -18,6 +18,7 @@ article bodies and 37,228 exported JSONs.
 # ── Shared compiled regexes and helpers ─────────────────────────────────────
 
 import re as _re
+from typing import Iterator as _Iterator, NamedTuple as _NamedTuple
 
 
 # ── The marker LEXICON — what a marker token looks like, defined ONCE ────────
@@ -106,6 +107,61 @@ def strip_marker_tokens(text: str, repl: str = " ") -> str:
     """
     return BRACE_MARKER_TOKEN_RE.sub(
         repl, MARKER_TOKEN_RE.sub(repl, text or ""))
+
+
+# ── The «LN» reader — the link marker's grammar, written ONCE ────────────────
+#
+# The producer's 2-part form is `«LN[kind]:target|display«/LN»` (the emitter is
+# `_link.ln_marker`, the only place the field order is WRITTEN).  The display is
+# the RECURSED slot, so it legitimately carries markers of its own — a printed
+# cross-reference set in small caps is `«SC»Parasitic Diseases«/SC»` — and any
+# `([^«]*)` display group simply fails to match those.  That spelling, repeated
+# per consumer, is how the extractor went blind to every marked-up reference
+# while the bake had already been fixed: the grammar lived in three places and
+# only one was right.  So the reader is written ONCE, here, as a SCAN:
+#   * the opener is a pattern (`«LN:` with an optional `[kind]` slot, consumed
+#     at bake like `«MATH[fs=N]`),
+#   * the close is found by literal scan — never by a span pattern,
+#   * the target reads to the FIRST `|` (a title has none; a nested
+#     `«SPAN[a:1|b:2]»` in the display does),
+#   * the display is everything else, markers included,
+#   * an opener with no close ends the scan — inventing a close would hide the
+#     producer bug that failed to write one.
+# This reads the PRE-bake form.  The baked 3-part `«LN:filename|target|display»`
+# is decoded by the independent open/close substitutions in render/inline.py,
+# export/markdown.py and the viewer — decoders, not readers of this grammar —
+# and the bake itself runs strictly before any 3-part marker exists.
+_LN_OPEN_KIND_RE = _re.compile(r"«LN(?:\[([a-z_]*)\])?:")
+_LN_CLOSE = "«/LN»"
+
+
+class LnMarker(_NamedTuple):
+    kind: "str | None"      # the `[kind]` slot, None when absent
+    target: str             # to the first `|` — never carries markers
+    display: str            # to the marker's own close — may carry markers
+    start: int              # offset of `«LN` in the text
+    end: int                # offset just past `«/LN»`
+
+
+def iter_ln_markers(text: str) -> "_Iterator[LnMarker]":
+    """Every well-formed 2-part `«LN[kind]:target|display«/LN»` in ``text``.
+
+    THE «LN» reader — every consumer that needs the marker's fields iterates
+    this instead of spelling the grammar again (see the comment above for why
+    a per-consumer regex is how references get silently dropped).
+    ``text[m.start:m.end]`` is the marker's full surface text.
+    """
+    i = 0
+    while True:
+        m = _LN_OPEN_KIND_RE.search(text, i)
+        if m is None:
+            return
+        close = text.find(_LN_CLOSE, m.end())
+        if close < 0:
+            return
+        target, _sep, display = text[m.end():close].partition("|")
+        i = close + len(_LN_CLOSE)
+        yield LnMarker(m.group(1), target, display, m.start(), i)
 
 
 # Title-formatting markers: bold (`«B»…«/B»`), italic (`«I»…«/I»`),
