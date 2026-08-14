@@ -61,6 +61,42 @@ def marker_names(text: str) -> list[str]:
             for m in MARKER_TOKEN_RE.finditer(text or "")]
 
 
+def unaccounted_guillemets(text: str, context: int = 45
+                           ) -> list[tuple[str, str]]:
+    """``(signature, context)`` for every ``«`` no marker token accounts for.
+
+    A guillemet is our marker DELIMITER, so one standing outside a well-formed
+    token is either a marker we MANGLED or a guillemet the source itself had.
+    This function only finds them; only the raw source can say which — see
+    ``tools/diagnostics/mangled_markers.py``, which asks that question.
+
+    The oracle in :mod:`britannica.render.leaks` cannot: its ``marker`` check
+    matches well-formed tokens, and a mangled one is by definition not one.
+    ``subpage_target`` split a link target on ``/`` and turned ``«/I»`` into
+    ``«#I»`` — invisible to every check we had, and it broke 17 links.
+
+    The SIGNATURE is the next three NON-WHITESPACE characters, which is what
+    identifies one: `#I»` and `BR)` are ours, `wan` and `-ar` are the source's
+    Greek OCR.  Whitespace is excluded because it is the one thing the pipeline
+    legitimately rewrites — the source's `«w\\nand` is the output's `«w and` and
+    the HTML's `«w<p>and`, all the same guillemet.  (Pass tag-stripped text; a
+    tag is not whitespace but renders in place of it.)
+
+    Comparing signatures rather than COUNTS is what makes the comparison survive
+    legitimate repetition — a footnote renders both inline and in the Notes
+    list, so its guillemets appear twice in ``rendered_html`` and once in the
+    source without anything being wrong.
+    """
+    if not text or "«" not in text:
+        return []
+    rest = MARKER_TOKEN_RE.sub(" ", text)
+    out = []
+    for m in _re.finditer("«", rest):
+        tail = _re.sub(r"\s+", "", rest[m.end():m.end() + 40])[:3]
+        out.append((tail, rest[max(0, m.start() - context):m.start() + context]))
+    return out
+
+
 def strip_marker_tokens(text: str, repl: str = " ") -> str:
     """``text`` with every marker DELIMITER removed, content left in place.
 

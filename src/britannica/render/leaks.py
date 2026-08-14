@@ -68,6 +68,17 @@ _MATH_MASK = {
     "text": None,
 }
 
+
+def mask_math(text: str, fmt: str) -> str:
+    """``text`` with its math carrier removed, per that format's wrapper.
+
+    Public so a second scanner cannot grow a second idea of where math lives:
+    ``tools/diagnostics/mangled_markers.py`` compares a guillemet's neighbours
+    across formats, and rendered math rewrites those neighbours wholesale.
+    """
+    mask = _MATH_MASK[fmt]
+    return mask.sub("", text or "") if mask else (text or "")
+
 # Raw HTML/wikitable ATTRIBUTE residue surviving into VISIBLE text — a producer
 # consumed a template/table but dumped its `style=`/`align=`/`colspan=`… arg as
 # text (ALGEBRAIC FORMS' `{{dual line|A|B|style=…}}` leaked 446 of these), or an
@@ -162,8 +173,7 @@ def find_leaks(output, fmt="html"):
     on every format; ``tag`` / ``indent`` on HTML only (see ``_CHECKS``).
     """
     raw = output or ""
-    mask = _MATH_MASK[fmt]
-    no_math = mask.sub("", raw) if mask else raw
+    no_math = mask_math(raw, fmt)
     # The attribute check runs on TAG-STRIPPED text wherever real tags are legal,
     # because an attribute INSIDE a tag is not visible text — only a dumped one is.
     # GFM allows inline HTML and the Markdown emitter uses it deliberately (`<sub>`,

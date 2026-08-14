@@ -34,7 +34,33 @@ from britannica.pipeline.stages.elements._dual_line import (
 # ── Labeled-equation family (equation / MathForm1 / ne) ──────────────
 
 
+# The FIRST parenthesised group is the number, and what trails it is the
+# sentence's own punctuation: ORDNANCE and INTERPOLATION file their numbers as
+# `(6).` and `(9),`, so anchoring the match to the end of the label would keep
+# the parens the renderer is about to add again.
 _PAREN_LABEL_RE = re.compile(r"\(([^()]+)\)")
+
+
+def _eqn_label_text(label: str) -> str:
+    """The `«EQN:LABEL»` slot's contract, enforced where the marker is built.
+
+    The slot is `»`-DELIMITED, so a marker inside it truncates the label at the
+    marker's own `»`: HYDRAULICS' number arrives as `<br>(15)` and reached the
+    renderer as `«EQN:«BR»(15)»`, which read back as the label `«BR` — the
+    equation number lost, a mangled `«BR` shipped in its place, and every leak
+    check silent because a mangled marker is not a marker.  The viewer escapes
+    this text and cannot show markup in the margin anyway.
+
+    The parentheses belong to the RENDERER, which wraps the label in its own
+    (`({label})`).  `_eqn_strip_paren_label` takes them off the recurse-slot,
+    but only when they lead the raw string — a label behind layout markup keeps
+    them and renders as `((15))`, as two of the corpus's 1,047 do.  Stripping
+    here instead covers every arg convention, because every «EQN» is emitted
+    from this one producer.
+    """
+    from britannica.markers import strip_marker_tokens
+    label = strip_marker_tokens(label, " ").strip()
+    return _eqn_strip_paren_label(label)
 
 
 def _eqn_strip_paren_label(raw_label: str) -> str:
@@ -122,7 +148,7 @@ def _process_math_equation(raw, inner, context, inner_registry) -> str:
     if not content_slot:
         return ""
     label_marker, content = (_cell_markers(inner_registry) + ["", ""])[:2]
-    label = decode_title(label_marker) if label_slot else ""
+    label = _eqn_label_text(decode_title(label_marker)) if label_slot else ""
     # `[ \t]+` is ASCII-only and leaves \xa0 alone: a non-breaking space is carried content,
     # not equation layout, so it rides through intact rather than flattened to a collapsible
     # space.  (ORDNANCE eqn (14)'s `{{sfrac|…}}  + {{sfrac|…}}` double space collapses here.)
