@@ -21,7 +21,7 @@ from britannica.db.models import Article
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import (
     _link_xrefs_in_body, _safe_filename, _xrefs_from_body,
-    register_stable_id_dedup, xref_panel_entries,
+    build_title_index, register_stable_id_dedup, xref_panel_entries,
 )
 from britannica.link_resolver import LinkResolver
 from britannica.render.article import render_article
@@ -57,11 +57,10 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
     resolver = LinkResolver(aliases=True)
     fn_to_id = {_safe_filename(a, a.title): a.id for a in all_articles
                 if a.article_type != "plate"}
-    # Deterministic first-wins per title (mirrors global_title_to_filename in
-    # the export) — a dict comprehension was LAST-wins in heap order.
-    g2f: dict = {}
-    for a in all_articles:
-        g2f.setdefault(a.title.upper(), _safe_filename(a, a.title))
+    # The export's own builder, not a mirror of it: the mirror kept plates and
+    # skipped article_sort_key, so the two indexes disagreed about which article
+    # owns a title.
+    g2f = build_title_index(all_articles)
 
     xref_rows: list = []
     n = 0

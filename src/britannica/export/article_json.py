@@ -95,7 +95,24 @@ def _fold_name(t: str) -> str:
     return re.sub(r"[\W_]+", "", t or "", flags=re.UNICODE).casefold()
 
 
-def swapped_link(target_text: str, display: str, title_to_filename: dict):
+def build_title_index(articles) -> NormalizedIndex:
+    """THE title → filename index.  One builder, so there is one index.
+
+    The export built this and the post-export xref pass built its own "mirror"
+    of it, kept in step by a comment — and they had already drifted: the mirror
+    kept plates and skipped `article_sort_key`, so the two disagreed about which
+    article owns a title wherever a plate shared one or the heap order differed.
+    Both now call this.
+    """
+    index = NormalizedIndex()
+    for a in sorted(articles, key=article_sort_key):
+        if a.article_type == "plate":
+            continue
+        index.add(a.title, _safe_filename(a, a.title))
+    return index
+
+
+def swapped_link(target_text: str, display: str, title_to_filename):
     """`(target, shown, filename)` when the source filed this link BACKWARDS,
     else None — the caller keeps its own order.
 
@@ -834,11 +851,7 @@ def export_articles_to_json(
         # resolution (e.g. {{EB9link|Atom}} on a vol-17 article wants
         # to link to ATOM in vol 2).  Built once per export run;
         # deterministic first-wins (earliest article by content order).
-        global_title_to_filename = NormalizedIndex()
-        for a in sorted(session.query(Article).all(), key=article_sort_key):
-            if a.article_type == "plate":
-                continue
-            global_title_to_filename.add(a.title, _safe_filename(a, a.title))
+        global_title_to_filename = build_title_index(session.query(Article).all())
 
         # Build plate → parent map.
         plate_map = {}  # parent_article_id → [plate_info, ...]
