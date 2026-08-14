@@ -56,3 +56,31 @@ def test_a_section_key_keeps_its_colon():
     """`ARTICLE: SECTION` is the shape `extract_xrefs` files; folding commas and
     hyphens must not disturb the separator that carries the section."""
     assert N("Egypt#Ancient Egypt") == "EGYPT: ANCIENT EGYPT"
+
+
+def test_the_index_answers_two_different_questions():
+    """Recall for where a link POINTS, precision for what it SAYS.
+
+    `Menelek II.` denotes the article filed `MENELEK II`, so `get` finds it —
+    but it is not that title AS WRITTEN, and treating it as one let the swap
+    show `Menelek`, dropping a regnal number the page printed.
+    """
+    from britannica.xrefs.normalizer import NormalizedIndex
+    idx = NormalizedIndex([("MENELEK II", "18-0147.json"),
+                           ("QUEEN ANNE’S BOUNTY", "22-0001.json")])
+
+    assert idx.get("Menelek II.") == "18-0147.json"
+    assert idx.get_as_written("Menelek II.") is None
+    assert idx.get_as_written("Menelek II") == "18-0147.json"
+
+    # The fold is what makes a straight apostrophe find a curly one.
+    assert idx.get("Queen Anne's Bounty") == "22-0001.json"
+    assert idx.get_as_written("Queen Anne's Bounty") is None
+
+
+def test_a_raw_lookup_is_not_expressible():
+    """The index normalizes on both add and get, so a caller cannot half-do it."""
+    from britannica.xrefs.normalizer import NormalizedIndex
+    idx = NormalizedIndex([("Sea-Power", "x.json")])
+    assert idx.get("sea power") == "x.json"
+    assert "SEA POWER" in idx

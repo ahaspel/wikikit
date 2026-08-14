@@ -9,9 +9,12 @@ EB1911 set in type.
 import pytest
 
 from britannica.export.article_json import swapped_link
+from britannica.xrefs.normalizer import NormalizedIndex
 
 # Filed titles come from EB1911 itself, so a title IS a printed spelling.
-TITLES = {
+# A NormalizedIndex, not a dict: the lookup key is the normalized form on both
+# sides, so a caller cannot ask with a raw string and quietly miss.
+_TITLES = {
     "OYSTER-CATCHER": "20-0462-oystercatcher.json",
     "BAG-PIPE": "04-0001-bagpipe.json",
     "MARK, GOSPEL OF ST": "17-0001-mark-gospel.json",
@@ -20,6 +23,7 @@ TITLES = {
     "SPAIN": "25-0001-spain.json",
     "EXODUS, THE": "10-0001-exodus.json",
 }
+TITLES = NormalizedIndex(_TITLES.items())
 
 
 def test_leaves_prose_alone():
@@ -33,7 +37,7 @@ def test_recovers_a_filed_title_standing_in_prose():
     target, shown, fn = swapped_link("Cope", "Cope, Edward Drinker", TITLES)
     assert target == "Cope, Edward Drinker"          # what we point at
     assert shown == "Cope"                           # what the reader sees
-    assert fn == TITLES["COPE, EDWARD DRINKER"]
+    assert fn == _TITLES["COPE, EDWARD DRINKER"]
 
 
 def test_extending_title_is_the_reference():
@@ -41,11 +45,11 @@ def test_extending_title_is_the_reference():
     target, shown, fn = swapped_link("Mark", "Mark, Gospel of St", TITLES)
     assert target == "Mark, Gospel of St"
     assert shown == "Mark"
-    assert fn == TITLES["MARK, GOSPEL OF ST"]
+    assert fn == _TITLES["MARK, GOSPEL OF ST"]
 
 
 def test_abstains_when_neither_title_extends_the_other():
-    titles = {"DRAGON": "a.json", "DRACO": "b.json"}
+    titles = NormalizedIndex([("DRAGON", "a.json"), ("DRACO", "b.json")])
     assert swapped_link("Dragon", "Draco", titles) is None
 
 
@@ -83,7 +87,7 @@ def test_display_first_templates_reach_it_the_other_way_round(target, display):
 def test_a_longer_display_is_prose_and_is_left_alone(target, display):
     """The modern page name CLOSES UP what EB1911 hyphenates, so it is always
     shorter.  A display that is LONGER is the page's own words."""
-    titles = dict(TITLES, **{target.upper(): "x.json"})
+    titles = NormalizedIndex(list(_TITLES.items()) + [(target, "x.json")])
     assert swapped_link(target, display, titles) is None
 
 

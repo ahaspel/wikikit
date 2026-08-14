@@ -25,6 +25,8 @@ from britannica.markers import (markers_to_text, strip_marker_tokens,
 from britannica.export.plate_parent import find_parent_by_signal
 from britannica.pipeline.stages.elements._link import ln_marker
 from britannica.render.article import render_article
+from britannica.xrefs.normalizer import (NormalizedIndex,
+                                        normalize_xref_target)
 
 
 _QUALITY_NOTES = {
@@ -135,8 +137,13 @@ def swapped_link(target_text: str, display: str, title_to_filename: dict):
     pairs, all EB1911 compounds (`Bag-pipe`, `Tread-mill`, `Ear-ring`) that were
     rendering as modern closed-up forms.
     """
+    # AS WRITTEN, not folded.  This decides whether to replace what the READER
+    # SEES, so it is the precision question, not the recall one: under the fold
+    # `Menelek II.` and `Justinian I.` match the filed `MENELEK II` / `JUSTINIAN
+    # I`, the swap fires, and the regnal number the page printed disappears.
     t_up, d_up = target_text.strip().upper(), display.strip().upper()
-    fn_t, fn_d = title_to_filename.get(t_up), title_to_filename.get(d_up)
+    fn_t = title_to_filename.get_as_written(target_text)
+    fn_d = title_to_filename.get_as_written(display)
 
     if fn_t and fn_d and fn_t != fn_d:
         if d_up.startswith(t_up) and not t_up.startswith(d_up):
@@ -632,7 +639,6 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     _WINDOW_KINDS = ("w", "see", "see_also")
 
     def _resolve_link(m: re.Match) -> str:
-        from britannica.xrefs.normalizer import normalize_xref_target
         kind, target_text, display = m.group(1), m.group(2), m.group(3)
         # Normalize before the lookup so a `#section` target collapses to the same
         # `ARTICLE: SECTION` key extract_xrefs stored in link_targets — a `#`-bearing
@@ -688,7 +694,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
 
     def _resolve_eb9(m: re.Match) -> str:
         target_text, display = m.group(1), m.group(2)
-        fn = global_title_to_filename.get(target_text.strip().upper())
+        fn = global_title_to_filename.get(target_text)
         if fn:
             return ln_marker(target_text, display, fn)
         return display
@@ -703,7 +709,6 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # `_resolve_link` for the same reason `_resolve_eb9` does: it writes 3-part
     # markers that the 2-part regex above must never re-scan.
     def _resolve_author(m: re.Match) -> str:
-        from britannica.xrefs.normalizer import normalize_xref_target
         target_text, display = m.group(1), m.group(2)
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
@@ -829,13 +834,11 @@ def export_articles_to_json(
         # resolution (e.g. {{EB9link|Atom}} on a vol-17 article wants
         # to link to ATOM in vol 2).  Built once per export run;
         # deterministic first-wins (earliest article by content order).
-        global_title_to_filename: dict[str, str] = {}
+        global_title_to_filename = NormalizedIndex()
         for a in sorted(session.query(Article).all(), key=article_sort_key):
             if a.article_type == "plate":
                 continue
-            global_title_to_filename.setdefault(
-                a.title.upper(), _safe_filename(a, a.title)
-            )
+            global_title_to_filename.add(a.title, _safe_filename(a, a.title))
 
         # Build plate → parent map.
         plate_map = {}  # parent_article_id → [plate_info, ...]

@@ -38,6 +38,58 @@ _DASHES_RE = re.compile(r"[-‐‑‒–—]")
 _TRAILING_DOTS_RE = re.compile(r"\.+\s*$")
 
 
+class NormalizedIndex:
+    """A title index whose key IS the normalized form, on BOTH sides.
+
+    Normalizing at the call site is a rule every lookup has to remember, and the
+    export's title map did not: it was keyed by `title.upper()` while the xref
+    map beside it was keyed by `normalize_xref_target`, so the same string was a
+    filed title to one and unknown to the other.  `{{EB9link|Napoleon I.}}` found
+    nothing, and `swapped_link` could not recognise `Queen Anne's Bounty` as a
+    title, so neither the argument-order recovery nor the spelling fix ever ran
+    on a typographic variant.
+
+    Keeping the normalization INSIDE means a raw lookup is not expressible.
+
+    Two questions are asked of this index and they want different answers, so
+    both are named here rather than left to each caller's `.upper()`:
+
+    ``get`` — "what does this reference DENOTE?"  Recall: the typography fold
+    applies, so `Napoleon I.` finds `NAPOLEON I`.
+
+    ``get_as_written`` — "is this string, AS PRINTED, a filed title?"  Precision:
+    no fold, because the answer decides whether to replace what the reader sees.
+    Under the fold it says yes to `Menelek II.` and `Justinian I.`, and the swap
+    then shows `Menelek` and `Justinian` — dropping a regnal number the page set
+    in type.  A resolver may guess widely about where a link POINTS; nothing may
+    guess about what it SAYS.
+    """
+
+    __slots__ = ("_by_key", "_by_exact")
+
+    def __init__(self, pairs=()):
+        self._by_key, self._by_exact = {}, {}
+        for key, value in pairs:
+            self.add(key, value)
+
+    def add(self, key: str, value) -> None:
+        """First writer wins — callers order their input to make that stable."""
+        self._by_key.setdefault(normalize_xref_target(key), value)
+        self._by_exact.setdefault(key.strip().upper(), value)
+
+    def get(self, key: str, default=None):
+        return self._by_key.get(normalize_xref_target(key), default)
+
+    def get_as_written(self, key: str, default=None):
+        return self._by_exact.get((key or "").strip().upper(), default)
+
+    def __contains__(self, key: str) -> bool:
+        return normalize_xref_target(key) in self._by_key
+
+    def __len__(self) -> int:
+        return len(self._by_key)
+
+
 def _fold_typography(key: str) -> str:
     key = key.translate(_APOSTROPHES)
     key = _QUOTES_RE.sub("", key)
