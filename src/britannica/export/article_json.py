@@ -106,6 +106,25 @@ def swapped_link(target_text: str, display: str, title_to_filename: dict):
 
     if fn_d and not fn_t and len(display) > len(target_text):
         return display, _shown_text(target_text, display), fn_d
+
+    # Same name, two spellings, arriving the OTHER way round.  The swap above
+    # only fires when the producer put the filed title in the DISPLAY, which is
+    # what the target-first templates do (`{{1911link|Oystercatcher|
+    # Oyster-catcher}}`).  The display-first ones hand the wiki page name
+    # straight to the display and the filed title to the target
+    # (`{{EB1911 article link|Bagpipe|Bag-pipe}}`), so nothing needs swapping and
+    # the reader still gets `Bagpipe` where the page prints `Bag-pipe`.  Whoever
+    # matches a filed title is EB1911's own spelling, whichever slot it landed
+    # in — 28 links across 21 pairs reach it by this route.
+    # Length is the discriminator here as it is above, and it is what keeps this
+    # to the class actually in evidence: the modern page name CLOSES UP a
+    # compound EB1911 sets with a hyphen, so it is always the shorter string.
+    # Without it the rule also rewrites 203 links that merely differ in an
+    # apostrophe or a comma (`Seven Years' War` / `Seven Years’ War`), where
+    # nothing shows which spelling is the page's and no defect was ever found.
+    if (fn_t and not fn_d and len(display) < len(target_text)
+            and _fold_name(target_text) == _fold_name(display)):
+        return target_text, target_text, fn_t
     return None
 
 

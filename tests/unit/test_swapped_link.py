@@ -63,6 +63,30 @@ def test_one_name_two_spellings_shows_the_printed_one(target, display, printed):
     assert shown == printed, "but print the spelling EB1911 used"
 
 
+@pytest.mark.parametrize("target,display", [
+    ("Bag-pipe", "Bagpipe"),        # {{EB1911 article link|Bagpipe|Bag-pipe}}
+    ("Oyster-catcher", "oystercatcher"),
+])
+def test_display_first_templates_reach_it_the_other_way_round(target, display):
+    """Nothing needs SWAPPING here — the producer already put the filed title in
+    the target — but the reader still gets the wiki page name.  Whichever slot
+    the filed title landed in, it is EB1911's spelling."""
+    got = swapped_link(target, display, TITLES)
+    assert got is not None
+    assert got[0] == target and got[1] == target
+
+
+@pytest.mark.parametrize("target,display", [
+    ("Monsoon", "“monsoon”"),       # the source's prose, quoted
+    ("Helm Wind", "helm-wind"),
+])
+def test_a_longer_display_is_prose_and_is_left_alone(target, display):
+    """The modern page name CLOSES UP what EB1911 hyphenates, so it is always
+    shorter.  A display that is LONGER is the page's own words."""
+    titles = dict(TITLES, **{target.upper(): "x.json"})
+    assert swapped_link(target, display, titles) is None
+
+
 def test_case_only_difference_is_not_a_reference_either():
     """`oystercatcher` vs `Oyster-catcher` folds alike — same name, one spelling."""
     swap = swapped_link("oystercatcher", "Oyster-catcher", TITLES)
