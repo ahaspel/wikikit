@@ -495,7 +495,7 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     ``resolver`` resolves in filename space; ``fn_to_id`` maps its picks back
     to DB ids and ``self_fn`` is THIS article's filename (the see-tier topic
     filter + the same-article `#section` form key on it).  Only the post-export
-    resolve phase (6b5) constructs the resolver; ``resolver is None`` — a
+    resolve phase (5.4) constructs the resolver; ``resolver is None`` — a
     single-article look-render or a deferring export — means nothing to resolve
     against, so return no xrefs; the body's «LN» markers then strip to their
     display text downstream."""
@@ -698,7 +698,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # DOTALL + non-greedy display: an author signature's display carries nested
     # markers (`«SC»r. v. h.«/SC»`), so a `[^«]*` display slot stops at the first
     # nested `«` and leaves the «AL» unbaked — it then leaks through render,
-    # which has no «AL» open/close substitution (unlike «LN»).  Mirrors 6b4's
+    # which has no «AL» open/close substitution (unlike «LN»).  Mirrors 5.4's
     # `_AL_RE`, the shape that already spans these.
     body = re.sub(
         r"«AL:([^|»]*)\|(.*?)«/AL»",
@@ -908,7 +908,7 @@ def export_articles_to_json(
                     and article.id != only_article_id):
                 continue
             # defer_xrefs (Phase-F): the whole xref+render tail moves to the
-            # post-export resolve phase (6b4), which can see the kind index.
+            # post-export resolve phase (5.4), which can see the kind index.
             # Here the body is written with its raw producer markers.
             xrefs = ([] if defer_xrefs else _xrefs_from_body(
                 _body_for(article), article.id, link_index))
@@ -1019,7 +1019,7 @@ def export_articles_to_json(
                     }
                     for plate_info in plate_map.get(article.id, [])
                 ],
-                # EMPTY by contract — Phase 6b4 (`resolve_contributors_post`) is the
+                # EMPTY by contract — Phase 5.4 (`resolve_contributors_post`) is the
                 # sole writer of this field, and it patches all 37,226 articles.  This
                 # used to populate it with a per-article ContributorInitials query
                 # whose result was overwritten in every case: the resolver
@@ -1037,7 +1037,7 @@ def export_articles_to_json(
             # as a bare `scans.html` anchor that fixScanHrefs rebuilds at load (the back
             # param is location.href — runtime-only, never bakeable).
             # Rendered HTML is a pure function of the RESOLVED payload (decorated
-            # body + panel), so under defer_xrefs the render moves to 6b4 too --
+            # body + panel), so under defer_xrefs the render moves to 5.4 too --
             # rendered exactly once, after resolution.
             if not defer_xrefs:
                 payload["rendered_html"] = render_article(payload, target="site")
@@ -1121,7 +1121,7 @@ def export_articles_to_json(
             encoding="utf-8",
         )
 
-        # The contributor ROSTER is NOT built here.  Phase 6b4
+        # The contributor ROSTER is NOT built here.  Phase 5.4
         # (`resolve_contributors_post`) rebuilds `contributors.json` from the
         # final DB state — it resolves the bio articles and writes the file — so
         # everything that used to stand here was overwritten wholesale on every

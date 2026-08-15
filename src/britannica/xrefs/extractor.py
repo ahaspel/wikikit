@@ -113,7 +113,7 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         elif _is_plausible_target(target):
             _add(surface, target, "link", m.display)
 
-    # «AL» is the surviving [[Author:…]] marker — 6b4 resolves the contributor
+    # «AL» is the surviving [[Author:…]] marker — 5.4 resolves the contributor
     # SIGNOFFS and leaves the rest for us.  Its target names a PERSON, not an
     # article title, so it is its own kind: the resolver matches a surname
     # against EB's surname-first titles instead of running the article ladder.

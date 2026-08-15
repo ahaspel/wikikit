@@ -281,7 +281,7 @@ def _resolve_selfref(target, display, body):
 
 def _resolve_author(target, display, body):
     """Carried through the walk NEUTRALLY as `«AL:name|display»`.  The
-    signature-vs-reference decision is DEFERRED to 6b4, where the finished roster
+    signature-vs-reference decision is DEFERRED to 5.4, where the finished roster
     resolves it ([[project_roster_from_author_links]]): a display that is a known
     contributor's initials becomes the bare-initials signoff, otherwise an `«LN»`
     xref.  The walk no longer needs a roster, and render + binding become one

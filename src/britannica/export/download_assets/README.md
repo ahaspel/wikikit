@@ -27,6 +27,8 @@ the three exist in the source text; they were rebuilt from the printed classifie
 the contributor tables, and they are the reason this is more than a text dump.
 
 Rendered from [britannica11.org](https://www.britannica11.org).
+**Corpus build: {{GENERATED}}** — the site and this dataset are published from the
+same build; exact counts and per-file SHA-256 checksums are in `manifest.json`.
 
 ## What's in the bundle
 

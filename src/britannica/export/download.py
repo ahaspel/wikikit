@@ -183,12 +183,22 @@ def build_download(articles_dir: str = "data/derived/articles",
         raise RuntimeError(f"articles.jsonl has {seen} lines, expected {n_arts}")
 
     # Self-describing docs + a manifest with SHA-256 over the FINAL files.
+    # The README is the HuggingFace dataset card — the ONE page a reader sees —
+    # and HF surfaces update times only in the commit list, so the card itself
+    # carries the build date: the {{GENERATED}} placeholder is filled with the
+    # same instant the manifest records.
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for name in ("README.md", "LICENSE", "schema.json"):
         shutil.copyfile(_ASSETS / name, out / name)
+    readme = out / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            "{{GENERATED}}", generated[:10]),
+        encoding="utf-8")
     manifest = {
         "name": "encyclopaedia-britannica-11th-edition",
         "version": version,
-        "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated": generated,
         "license": "CC-BY-SA-4.0",
         "source": _SITE,
         "counts": {"articles": n_arts, "xref_edges": n_edges,

@@ -1,5 +1,5 @@
 """The sole link resolver: a NAME → EB article.  Shared by the classified-TOC
-topic population AND the inline-xref resolution (Phase 6b4) — one resolver, no
+topic population AND the inline-xref resolution (Phase 5.4) — one resolver, no
 forks (docs/xref_resolution_strategy.md, [[project_resolver_consolidation]]).
 
 It does three separable things, each its own method so a caller can use some or
@@ -512,7 +512,7 @@ class LinkResolver:
         fn, title, _ = self.fish(name, bag, prose=prose)
         return (fn, title) if fn else None
 
-    # -- article-xref orchestrator (Phase 6b5) -------------------------------
+    # -- article-xref orchestrator (Phase 5.4) -------------------------------
     def _topics_of(self, fn):
         if self._topic_map is None:
             self._topic_map = load_topic_map()

@@ -34,7 +34,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ROOTS = [ROOT / "src" / "britannica", ROOT / "tools"]
 SKIP_DIRS = {"__pycache__", "_scratch", "node_modules"}
-# Hand-written viewer sources only; the rest of tools/viewer is generated (Phase 6d).
+# Hand-written viewer sources only; the rest of tools/viewer is generated (Phase 6.2).
 VIEWER_KEEP = {"viewer.html", "index.html", "contributors.html", "maps.html",
                "scans.html"}
 BASELINE = Path(__file__).with_name("dup_constants_baseline.json")

@@ -12,7 +12,7 @@ uses these).  printed_page_start/printed_page_end are the corresponding
 human-readable printed page numbers from data/derived/printed_pages.json;
 they're what readers see in the book and what we cite in bug reports.
 
-Both sorted deterministically.  Run in the rebuild script (Phase 3d
+Both sorted deterministically.  Run in the rebuild script (Phase 3.2
 and Phase 3e) after the article + xref pipeline stages finish, so
 we always have a record of "what came out of this rebuild".
 

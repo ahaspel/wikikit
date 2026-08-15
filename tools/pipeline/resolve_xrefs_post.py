@@ -1,4 +1,4 @@
-"""Phase 6b5: resolve inline xrefs POST-EXPORT.
+"""Phase 5.4: resolve inline xrefs POST-EXPORT.
 
 With ``defer_xrefs`` the export writes each article's body with its raw producer
 markers (``«LN:target|display»`` / ``«EB9»``) and no ``rendered_html``.  This

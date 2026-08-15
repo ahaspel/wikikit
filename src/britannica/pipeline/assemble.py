@@ -34,8 +34,8 @@ def assemble_corpus(session):
     total = len(all_articles)
     print(f"  [assemble] walking {total} articles…", flush=True)
     # ALL contributor binding moved OUT of the walk into one post-export phase
-    # (Phase 6b5, tools/pipeline/resolve_contributors_post.py) that runs after the
-    # kind index (6b3) and so can use each contributor's kind FOOTPRINT to
+    # (Phase 5.4, tools/pipeline/resolve_contributors_post.py) that runs after the
+    # kind index (5.3) and so can use each contributor's kind FOOTPRINT to
     # disambiguate vol-29 credits.  The walk keeps only what it uniquely owns —
     # the body and the article_type bit.  [[project_resolver_consolidation]]
     corpus: dict[int, str] = {}
@@ -83,9 +83,9 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
         n_dedup = register_stable_id_dedup(all_articles)
         print(f"  [assemble] stable_id dedup: {n_dedup} collision suffix(es)", flush=True)
         # Contributor binding (signatures + front-matter + vol-29) moved to the
-        # post-export Phase 6b4 (resolve_contributors_post.py) — it runs after the
-        # kind index (6b3), so it can footprint-disambiguate vol-29 credits.  The
-        # export writes empty `contributors`; 6b4 fills them.
+        # post-export Phase 5.4 (resolve_contributors_post.py) — it runs after the
+        # kind index (5.3), so it can footprint-disambiguate vol-29 credits.  The
+        # export writes empty `contributors`; 5.4 fills them.
         volumes = ([only_volume] if only_volume is not None
                    else sorted({a.volume for a in all_articles}))
         print(f"  [export] exporting {len(volumes)} volume(s)…", flush=True)
@@ -96,7 +96,7 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
                 body_override=corpus,
                 # Phase F: defer xref resolution + baking + render to the
                 # post-export resolve phase (tools/pipeline/resolve_xrefs_post.py,
-                # rebuild phase 6b5), which resolves through the shared
+                # rebuild phase 5.4), which resolves through the shared
                 # LinkResolver and is the sole writer of xref_resolution.jsonl.
                 # [[project_resolver_consolidation]]
                 defer_xrefs=True,

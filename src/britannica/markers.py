@@ -336,11 +336,11 @@ _DROP_MARKER_RE = _re.compile(
 # three articles whose unproofread OCR leaves stray guillemets — it ran from
 # one to the next and took the clause between.
 _INLINE_MARKER_RE = MARKER_TOKEN_RE
-# «AL» is the DEFERRED author-link marker (walk → 6b4 resolves it against the
+# «AL» is the DEFERRED author-link marker (walk → 5.4 resolves it against the
 # finished roster); it never survives into the render/search path, but degrade a
 # stray one to its display (the initials) like any other link, not to residue.
 # `«LN` takes an optional `[kind]` param (`«LN[qv]:…»` — the reference KIND a
-# producer stamped for the 6b5 resolve; dropped at bake, so only PRE-bake bodies
+# producer stamped for the 5.4 resolve; dropped at bake, so only PRE-bake bodies
 # carry it).  The slot is tolerated wherever «LN is parsed, like «MATH[fs=N].
 _LINK_RE = _re.compile(r"«(?:LN|XL|AL)(?:\[[a-z_]*\])?:([\s\S]*?)«/(?:LN|XL|AL)»")
 # Carried presentational HTML — the SAFE-HTML set decode_inline un-escapes for the render

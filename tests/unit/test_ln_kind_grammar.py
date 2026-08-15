@@ -1,9 +1,9 @@
 """The «LN» kind parameter — `«LN[qv]:target|display«/LN»` (J7 slice 0).
 
-A reference's KIND (link / qv / see …) governs its 6b5 resolution policy
+A reference's KIND (link / qv / see …) governs its 5.4 resolution policy
 (2026-07-20: collapsing kinds caused the JOHN VENN→McADAM false-positive
 class).  Kind is an ATTRIBUTE of the one reference element, not a new tag —
-the `«MATH[fs=N]` pattern — and it is consumed AT BAKE: 6b5 resolves by kind
+the `«MATH[fs=N]` pattern — and it is consumed AT BAKE: 5.4 resolves by kind
 and writes the plain 3-part form, so no `[kind]` survives into a post-bake
 body.  Every PRE-bake «LN» consumer must therefore treat the parameterized
 form exactly like the plain one.  This test drives both forms through each.

@@ -2,9 +2,9 @@
 
 The export writes each article's body with its raw producer markers and no
 ``rendered_html``; everything that needs corpus-wide knowledge then happens here,
-AFTER the classified TOC (6b) and the kind index (6b3) exist.
+AFTER the classified TOC (5.1) and the kind index (5.3) exist.
 
-This used to be three phases — 4c math annotation, 6b4 contributors, 6b5 xrefs +
+This used to be three phases — math annotation, contributors, xrefs +
 render — each of which globbed all ~37k article JSONs, parsed them, and wrote
 them all back.  Three full read+write cycles for one logical pass, with the
 contributor phase's output re-read by the xref phase moments later, and three

@@ -4,7 +4,7 @@ Loads two JSON tables at first use:
 - ``data/derived/printed_pages.json``: ws-page → printed page number, per volume.
 - ``data/derived/scan_map.json``: ws-page → physical scan leaf, per volume.
 
-Both are produced earlier in the rebuild (Phase 3c / scan map build).
+Both are produced earlier in the rebuild (Phase 3.1 / scan map build).
 A fallback offset table covers volumes whose scan_map lacks an entry.
 """
 

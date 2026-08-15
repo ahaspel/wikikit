@@ -253,7 +253,7 @@ def _produce_body(raw, inner, context, inner_registry):
 # A `(q.v.)` site: EB's own cue that the preceding words name an EB article.
 # The producer stamps the TOTAL prose window back to the nearest boundary —
 # a marker, an element placeholder, clause punctuation, a pipe — as an
-# UNASSERTED-extent reference `«LN[w]:window|window«/LN»`; the 6b5 resolver
+# UNASSERTED-extent reference `«LN[w]:window|window«/LN»`; the 5.4 resolver
 # picks the extent against the title index (suffix cuts, tier-major) and the
 # bake splits the display there.  Recognition is DUMB and local: find the
 # literal token, grab the span.  No capitalization walk, no stop-word list —
