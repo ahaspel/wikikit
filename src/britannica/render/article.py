@@ -87,7 +87,12 @@ def _render_title_h1(marker, ctx):
     inner = marker[len(TITLE_OPEN):len(marker) - len(TITLE_CLOSE)]
     h = decode_inline(escape_html(inner), ctx=ctx)
     if getattr(ctx, "target", "site") == "site":
-        dc = re.match(r"^((?:<[^>]+>)*)([\s\S])([\s\S]*)$", h, re.S)
+        # The drop-cap unit is one RENDERED glyph, and `h` is escaped HTML —
+        # a title the edition prints in quotation marks ("SURVILLE, CLOTILDE
+        # DE," — the persona is apocryphal and the quotes say so) starts with
+        # the entity `&quot;`, and taking one CHARACTER split it: <span>&</span>
+        # quot;… rendered a big ampersand and the literal text `quot;`.
+        dc = re.match(r"^((?:<[^>]+>)*)(&#?\w+;|[\s\S])([\s\S]*)$", h, re.S)
         if dc:
             h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
                  f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
