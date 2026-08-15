@@ -67,23 +67,24 @@ def run_db_checks() -> dict:
             if os.path.basename(_f) not in NON_ARTICLE
         ]
         bodies = {r["id"]: (r.get("body") or "") for r in _recs}
-        # Xref totals come from the export's index.json aggregate fields:
-        # `xref_count` (total found in the body) and `resolved_count`.  The
-        # per-article files carry ONLY the resolved entries (key "xrefs",
-        # filtered to status=="resolved" in article_json.py) — unresolved is
-        # recoverable only as (total − resolved) from the index.  The old
-        # `r.get("xref_list", …)` read a field that never existed in the
-        # export, so both counts silently sat at zero.
+        # Xref totals come from data/derived/xref_resolution.jsonl — the
+        # resolve phase's own record of every xref it saw and how it fared.
+        # It is the ONE place both resolved and unresolved exist: the
+        # per-article files carry only the resolved panel entries, and the
+        # index.json aggregate fields this used to read were stamped (0, 0)
+        # at export once defer_xrefs moved resolution to the post-export
+        # phase — a consumer reading a field its producer had stopped
+        # filling, sitting silently at zero for every article.
         _xr_resolved = 0
         _xr_unresolved = 0
-        _index_path = "data/derived/articles/index.json"
-        if os.path.exists(_index_path):
-            _index = json.loads(open(_index_path, encoding="utf-8").read())
-            for _e in _index:
-                _total = _e.get("xref_count", 0)
-                _res = _e.get("resolved_count", 0)
-                _xr_resolved += _res
-                _xr_unresolved += max(0, _total - _res)
+        _xr_path = "data/derived/xref_resolution.jsonl"
+        if os.path.exists(_xr_path):
+            with open(_xr_path, encoding="utf-8") as _fh:
+                for _line in _fh:
+                    if json.loads(_line).get("status") == "resolved":
+                        _xr_resolved += 1
+                    else:
+                        _xr_unresolved += 1
 
         results = {}
 

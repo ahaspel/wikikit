@@ -181,9 +181,23 @@ def main():
     for k in sorted(set(d_open) | set(d_close),
                     key=lambda k: -(d_open[k] + d_close[k]))[:25]:
         print(f"    open {d_open[k]:5}   close {d_close[k]:5}   {k}")
-    print(f"\n  worst articles (crossings, aid, vol):")
-    for n, aid, vol, sample in sorted(dirty, reverse=True)[:args.examples]:
-        print(f"    {n:5}  aid={aid} v{vol}")
+    # A DB autoincrement id does not survive a reimport, so an `aid=` line in
+    # one build's log points at a DIFFERENT article in the next build's DB —
+    # the examples were un-followable the moment the log scrolled.  Titles are
+    # as durable as the source; resolve just the printed few.
+    worst = sorted(dirty, reverse=True)[:args.examples]
+    sys.path.insert(0, str(ROOT / "src"))
+    from britannica.db.session import SessionLocal
+    from britannica.db.models import Article
+    s = SessionLocal()
+    titles = dict(
+        s.query(Article.id, Article.title)
+        .filter(Article.id.in_([aid for _n, aid, _v, _s in worst]))
+        .all())
+    s.close()
+    print(f"\n  worst articles (crossings, title, vol):")
+    for n, aid, vol, sample in worst:
+        print(f"    {n:5}  {titles.get(aid, '?')} v{vol}")
         for ka, kb, snip in sample:
             print(f"           {ka} × {kb}  ⟨{snip}⟩")
     return 0

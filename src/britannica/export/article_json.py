@@ -902,7 +902,6 @@ def export_articles_to_json(
                 })
 
         exported = 0
-        xref_counts: dict[int, tuple[int, int]] = {}
 
         for article in articles:
             if (only_article_id is not None
@@ -915,11 +914,6 @@ def export_articles_to_json(
                 _body_for(article), article.id, link_index))
 
             xref_list = xref_panel_entries(xrefs, session)
-
-            xref_counts[article.id] = (
-                len(xref_list),
-                sum(1 for e in xref_list if e["status"] == "resolved"),
-            )
 
             if xref_sink is not None:
                 src = stable_id(article)
@@ -1063,7 +1057,6 @@ def export_articles_to_json(
         # Write index file for the viewer
         index = []
         for article in articles:
-            xref_count, resolved_count = xref_counts[article.id]
             body = _body_for(article)
             # First ~10 words of the body for disambiguation in the index.
             # The body is a marker stream; markers_to_text is the ONE converter
@@ -1113,8 +1106,6 @@ def export_articles_to_json(
                 "leaf_end": _leaf_for_ws(article.volume, article.page_end),
                 "body_length": len(body.split()),
                 "body_start": body_start,
-                "xref_count": xref_count,
-                "resolved_count": resolved_count,
             })
 
         # Merge with existing index (from other volumes)
