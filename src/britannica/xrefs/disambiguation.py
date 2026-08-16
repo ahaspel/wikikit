@@ -17,16 +17,20 @@ from __future__ import annotations
 
 import re
 
-
-_INNER_MARKER_RE = re.compile(r"«/?[A-Z]+(?::[^«»]*)?»")
+from britannica.markers import markers_to_text
 
 
 def body_opening(body: str, chars: int = 300) -> str:
-    """First chunk of body with marker scaffolding stripped."""
+    """First chunk of body with marker scaffolding stripped.
+
+    Through `markers_to_text` — the ONE marker→text converter — not a private
+    token regex: the token shape mishandles payload-bearing markers (a
+    `«TITLE:…«/TITLE»` head loses its close and strands the open, and a
+    link's `target|display` payload leaks whole), so the private strip fed
+    the kind reader scaffolding residue as prose."""
     if not body:
         return ""
-    b = _INNER_MARKER_RE.sub("", body)
-    return b[:chars]
+    return markers_to_text(body)[:chars]
 
 
 # ── The article's OWN kind, read off its lead (first is-a) ────────────────
