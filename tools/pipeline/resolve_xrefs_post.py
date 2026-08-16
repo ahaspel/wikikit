@@ -38,12 +38,14 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
     Writes ``xref_resolution.jsonl`` (it is the sole writer of that snapshot).
     Returns the number of articles processed.
 
-    ``decorate`` (optional) is applied to the FINAL baked body just before the
-    render.  Body decorations keyed on body content (the table wide-hints hash
-    each table span) MUST see the post-resolution form — annotating before the
-    «LN» targets bake changes the span bytes and every cache lookup silently
-    misses (the 13-article wide-hint gap found adjudicating the 2026-07-24
-    rebuild).
+    ``decorate(body, payload)`` (optional) is applied to the FINAL baked body
+    just before the render; the payload rides along so a decoration can key
+    on ARTICLE facts (the table wide-hints skip plates — a plate's tables
+    are layout, not content).  Body decorations keyed on body content (the
+    wide-hints hash each table span) MUST see the post-resolution form —
+    annotating before the «LN» targets bake changes the span bytes and every
+    cache lookup silently misses (the 13-article wide-hint gap found
+    adjudicating the 2026-07-24 rebuild).
 
     NOTE the caller must have replayed ``register_stable_id_dedup`` before any
     ``_safe_filename`` call — otherwise a BOG/BOGÓ-type pair drops its -N suffix
@@ -84,7 +86,7 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
             })
         body = _link_xrefs_in_body(body, xrefs, src, session, g2f)
         if decorate is not None:
-            body = decorate(body)
+            body = decorate(body, d)
         d["body"] = body
         d["word_count"] = len(body.split())
         d["xrefs"] = [e for e in xref_list if e["status"] == "resolved"]

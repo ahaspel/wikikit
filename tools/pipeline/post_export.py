@@ -77,8 +77,10 @@ def main() -> None:
         import json as _json
         widths = (_json.loads(TABLE_WIDTHS_CACHE.read_text(encoding="utf-8"))
                   if TABLE_WIDTHS_CACHE.exists() else {})
-        resolve_and_render(session, payloads,
-                           decorate=lambda body: annotate_body(body, widths))
+        resolve_and_render(
+            session, payloads,
+            decorate=lambda body, d: annotate_body(
+                body, widths, plate=d.get("article_type") == "plate"))
         tick("xrefs resolved + tables hinted + rendered")
 
         n = write_corpus(payloads)

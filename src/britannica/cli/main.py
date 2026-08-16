@@ -11,7 +11,6 @@ from britannica.pipeline.stages.detect_boundaries import (
 from britannica.pipeline.stages.super_detect import detect_boundaries
 from britannica.export.article_json import export_articles_to_json
 from britannica.pipeline.assemble import assemble_and_export
-from britannica.pipeline.stages.extract_contributor_bios import extract_contributor_bios
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -102,12 +101,6 @@ def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
     detected = detect_boundaries(volume)
     count = persist_articles(detected)
     print(f"Detected and created {count} articles for volume {volume}.")
-
-
-@app.command("extract-contributor-bios")
-def extract_contributor_bios_cmd() -> None:
-    count = extract_contributor_bios()
-    print(f"Updated {count} contributors with biographical data.")
 
 
 @app.command("export-articles")
