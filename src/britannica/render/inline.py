@@ -9,7 +9,7 @@ opener.  Regression-snapshotted against tests/snapshots/inline/inline_ref.json (
 the viewer's decodeInlineMarkers output; now this decoder's own golden).
 
 Deferred to later bricks (frame-dependent / need helpers the block+shell layers own):
-IMG (renderImg), FN (footnote numbering), MATH (KaTeX / display-mode), hieroglyph
+IMG, FN (footnote numbering), MATH (KaTeX / display-mode), hieroglyph
 (Gardiner tables).  The prose path passes ``skip_math`` and leaves «MATH» for the block
 layer, exactly as the viewer does.
 

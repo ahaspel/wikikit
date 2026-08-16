@@ -1,6 +1,6 @@
 import re
 
-from britannica.markers import iter_ln_markers
+from britannica.markers import iter_al_markers, iter_ln_markers
 from britannica.xrefs.normalizer import normalize_xref_target
 
 
@@ -117,9 +117,9 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
     # SIGNOFFS and leaves the rest for us.  Its target names a PERSON, not an
     # article title, so it is its own kind: the resolver matches a surname
     # against EB's surname-first titles instead of running the article ladder.
-    for m in re.finditer("«AL:([^|»]*)\\|(.*?)«/AL»", text, re.DOTALL):
-        target = m.group(1).strip()
+    for m in iter_al_markers(text):
+        target = m.target.strip()
         if _is_plausible_target(target):
-            _add(m.group(0), target, "author", m.group(2))
+            _add(text[m.start:m.end], target, "author", m.display)
 
     return results

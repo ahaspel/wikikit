@@ -183,16 +183,32 @@ def _hyphen_map():
     return _HYPHEN_MAP
 
 
-# A hyphenated word reaches the body producer as `X-<sep>Y`, where <sep> is
-# anything OR nothing — a space, a collapsed `<br>`, a raw newline, or the split
-# written solid in the source (`Differenti-ation`).  The separator is irrelevant:
-# the WORD is the only question.  The corpus map votes: drop the hyphen (the
-# corpus prefers `XY` solid — a wrap artifact), keep it (real compound), or —
-# absent — leave the split alone (suspended hyphen / non-word).
-_HYPHEN_RE = re.compile(r"([A-Za-z]{2,})-\s*([A-Za-z]{2,})")
+# A word broken across a LINE/COLUMN WRAP reaches the body producer as
+# `X-<sep>Y` where <sep> is real whitespace (a raw newline, a collapsed
+# `<br>`).  Only there is the hyphen ambiguous — artifact of the wrap or a
+# real compound — and only there does the corpus map vote: drop (the corpus
+# prefers `XY` solid), keep (real compound), or — absent — leave the split
+# alone (suspended hyphen / non-word).
+# A CONTIGUOUS hyphen is not voted on AT ALL: it is what the transcription
+# prints mid-line, and the print is its own authority — the edition sets
+# `Süd-arabische Chrestomathie` on one page and `Südarabische` on another
+# (user-verified against the scan), and the break-agnostic `\s*` was
+# rewriting 10,540 printed hyphens (`table-land`, `small-pox`) to the
+# corpus-majority spelling across 4,971 articles.
+# `strings.LETTER`, not `[A-Za-z]`: the ASCII class fragmented accented words
+# and applied ANOTHER pair's vote (`arrière-pensée` read as `re-pens` → drop).
+from britannica.util.strings import LETTER as _LETTER
+_HYPHEN_RE = re.compile(rf"({_LETTER}{{2,}})-\s+({_LETTER}{{2,}})")
+# The contiguous form exists for ONE caller: a shoulder heading.  A shoulder
+# is a print INSERT with a very narrow measure, so nearly every hyphen in one
+# is the insert's own wrap — and the transcriber often joins the lines while
+# keeping the hyphen, leaving it contiguous ("Differenti-ation").  The site
+# gives shoulders the whole right margin, so there the vote applies with or
+# without a separator (user ruling, 2026-08-16).
+_HYPHEN_CONTIG_RE = re.compile(rf"({_LETTER}{{2,}})-\s*({_LETTER}{{2,}})")
 
 
-def _dehyphenate(text):
+def _dehyphenate(text, contiguous=False):
     mp = _hyphen_map()
 
     def _repl(m):
@@ -209,7 +225,7 @@ def _dehyphenate(text):
             return x + "-" + y
         return m.group(0)                              # absent → leave
 
-    return _HYPHEN_RE.sub(_repl, text)
+    return (_HYPHEN_CONTIG_RE if contiguous else _HYPHEN_RE).sub(_repl, text)
 
 
 def _produce_body(raw, inner, context, inner_registry):
@@ -648,6 +664,11 @@ def process_shoulder(raw, inner, context, inner_registry):
             if not changed:
                 break
     content = content.strip()
+    # The insert's narrow measure wraps words the site's full margin doesn't:
+    # a contiguous hyphen here is the insert's own line break, transcribed
+    # joined ("Differenti-ation"), so the corpus vote applies contiguously —
+    # BEFORE the slug is minted, so the anchor reads "differentiation-…".
+    content = _dehyphenate(content, contiguous=True)
     slug = section_slug(strip_markers(content))
     return f"«SH:{slug}»{content}«/SH»"
 

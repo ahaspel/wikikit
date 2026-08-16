@@ -21,6 +21,7 @@ from britannica.export.pages import (
     _printed_page,
 )
 from britannica.markers import (iter_ln_markers, markers_to_text,
+                                sub_al_markers, sub_ln_markers,
                                 strip_marker_tokens, strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
 from britannica.pipeline.stages.elements._link import ln_marker
@@ -49,17 +50,12 @@ def _resolve_ln_markers(text: str, resolve) -> str:
     """Rewrite every 2-part `«LN[kind]:target|display«/LN»` through ``resolve``.
 
     ``resolve(kind, target, display) -> str`` supplies the replacement.  The
-    marker is read through THE one reader (`markers.iter_ln_markers`); a marker
-    with no close is left exactly as it stands — this is a resolver, and
-    inventing a close would hide the producer bug that failed to write one.
+    marker is read through THE one reader and spliced by THE one rewriter
+    (`markers.sub_ln_markers`); a marker with no close is left exactly as it
+    stands — this is a resolver, and inventing a close would hide the
+    producer bug that failed to write one.
     """
-    out, i = [], 0
-    for m in iter_ln_markers(text):
-        out.append(text[i:m.start])
-        out.append(resolve(m.kind, m.target, m.display))
-        i = m.end
-    out.append(text[i:])
-    return "".join(out)
+    return sub_ln_markers(text, lambda m: resolve(m.kind, m.target, m.display))
 
 
 def _fold_name(t: str) -> str:
@@ -689,21 +685,16 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     # the person has no EB article, which is the common case.  Runs AFTER
     # `_resolve_link` for the same reason `_resolve_eb9` does: it writes 3-part
     # markers that the 2-part regex above must never re-scan.
-    def _resolve_author(m: re.Match) -> str:
-        target_text, display = m.group(1), m.group(2)
-        hit = link_targets.get(normalize_xref_target(target_text).lower())
+    def _resolve_author(m) -> str:
+        hit = link_targets.get(normalize_xref_target(m.target).lower())
         if hit:
-            return ln_marker(target_text, display, hit[0])
-        return display
-    # DOTALL + non-greedy display: an author signature's display carries nested
-    # markers (`«SC»r. v. h.«/SC»`), so a `[^«]*` display slot stops at the first
-    # nested `«` and leaves the «AL» unbaked — it then leaks through render,
-    # which has no «AL» open/close substitution (unlike «LN»).  Mirrors 5.4's
-    # `_AL_RE`, the shape that already spans these.
-    body = re.sub(
-        r"«AL:([^|»]*)\|(.*?)«/AL»",
-        _resolve_author, body, flags=re.DOTALL,
-    )
+            return ln_marker(m.target, m.display, hit[0])
+        return m.display
+    # Read through THE «AL» reader (`markers.iter_al_markers`): the display is
+    # the RECURSED slot (a signature prints as `«SC»r. v. h.«/SC»`), and a
+    # per-consumer regex whose display can't span markers is exactly how the
+    # «LN» fork silently unlinked marked-up references.
+    body = sub_al_markers(body, _resolve_author)
 
     # (The prose-scan wrap that ran LAST here is DELETED — J7 slice 3: every
     # qv/see reference is producer-stamped at its site, so its marker is baked

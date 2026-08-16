@@ -18,6 +18,17 @@ def section_slug(name: str) -> str:
 
 HTML_TAG_RE = re.compile(r"<[^>]*>")
 
+# A word LETTER for hyphenation work — any Unicode letter, not `[A-Za-z]`.
+# The ONE alphabet shared by the dehyphenator (`elements._HYPHEN_RE`) and the
+# corpus-map builder (`tools/build_hyphen_map.py`): with an ASCII class the
+# runtime regex FRAGMENTED accented words and applied another pair's corpus
+# vote to them — `arrière-pensée` matched as `re-pens` (a "drop" pair), so the
+# French phrase lost its hyphen; `Saint-Germain-des-Prés` matched as `des-Pr`
+# and joined to `desPrés`.  A whole word keys the map honestly, and an
+# accented pair the ASCII-built map has never voted on is simply absent → the
+# hyphen is left alone, the carry-by-default direction.
+LETTER = r"[^\W\d_]"
+
 
 def strip_html_tags(text: str, repl: str = "") -> str:
     """Drop HTML/XHTML tags, leaving their text.

@@ -164,6 +164,70 @@ def iter_ln_markers(text: str) -> "_Iterator[LnMarker]":
         yield LnMarker(m.group(1), target, display, m.start(), i)
 
 
+_AL_OPEN = "«AL:"
+_AL_CLOSE = "«/AL»"
+
+
+class AlMarker(_NamedTuple):
+    target: str
+    display: str
+    start: int
+    end: int
+
+
+def iter_al_markers(text: str) -> "_Iterator[AlMarker]":
+    """Every well-formed `«AL:target|display«/AL»` in ``text``.
+
+    THE «AL» reader, for the same reason `iter_ln_markers` is the «LN» one:
+    the grammar was already spelled twice (the xref extractor and the 5.4
+    bake, each with its own regex), and a third spelling is how the «LN»
+    display fork happened — a reader whose display slot can't carry markers
+    silently drops the reference.  The display is the RECURSED slot (an
+    author signature prints as `«SC»r. v. h.«/SC»`); the target reads to the
+    first `|`.  A marker with no close is not yielded — the caller leaves it
+    visible rather than inventing a close.
+    """
+    i = 0
+    while True:
+        start = text.find(_AL_OPEN, i)
+        if start < 0:
+            return
+        close = text.find(_AL_CLOSE, start + len(_AL_OPEN))
+        if close < 0:
+            return
+        target, _sep, display = text[start + len(_AL_OPEN):close].partition("|")
+        i = close + len(_AL_CLOSE)
+        if not _sep:
+            continue      # pipe-less = malformed; left visible, like every reader before
+        yield AlMarker(target, display, start, i)
+
+
+def sub_al_markers(text: str, repl) -> str:
+    """Rewrite every well-formed «AL» through ``repl(AlMarker) -> str`` —
+    the mechanical iterate-and-splice every «AL» rewriter shares, so a
+    consumer supplies only its policy, never the grammar."""
+    out, i = [], 0
+    for m in iter_al_markers(text):
+        out.append(text[i:m.start])
+        out.append(repl(m))
+        i = m.end
+    out.append(text[i:])
+    return "".join(out)
+
+
+def sub_ln_markers(text: str, repl) -> str:
+    """Rewrite every well-formed 2-part «LN» through ``repl(LnMarker) -> str``
+    — the «LN» twin of ``sub_al_markers``; ``text[m.start:m.end]`` is the
+    marker's own surface for a repl that leaves some markers standing."""
+    out, i = [], 0
+    for m in iter_ln_markers(text):
+        out.append(text[i:m.start])
+        out.append(repl(m))
+        i = m.end
+    out.append(text[i:])
+    return "".join(out)
+
+
 # Title-formatting markers: bold (`«B»…«/B»`), italic (`«I»…«/I»`),
 # small-caps (`«SC»…«/SC»`).  Stored in `Article.title` so the viewer
 # can render multi-bold / small-caps titles like
