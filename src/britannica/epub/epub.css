@@ -46,8 +46,13 @@ figure { margin: 1em 0; text-align: center; }
 .figure-legend { font-size: 0.85em; margin: 0.5em 0; text-align: left; }
 .legend-subhead { font-weight: bold; }
 
-/* ── tables ── (wide ones scroll rather than force the page wide) ── */
+/* ── tables ── */
 table { border-collapse: collapse; margin: 1em auto; font-size: 0.9em; max-width: 100%; }
+/* A MEASURED-wide table (the site's browser measurement, carried as the
+   `wide-table-wrap` figure every target shares): a reflowable reader has no
+   Expand and does not scroll overflow — it clips — so the one lever left is
+   type size.  Step the wide ones down; everything else keeps 0.9em. */
+.wide-table-inline table { font-size: 0.75em; }
 td, th { padding: 0.15em 0.5em; vertical-align: top; text-align: left; }
 .data-table td, .data-table th { border: 1px solid #ccc; }
 .chem-grid td { border: 0; text-align: center; }
@@ -91,6 +96,11 @@ blockquote.verse { margin: 1em 1.5em; font-style: italic; }
 /* ── math ── */
 .math-fallback { font-family: monospace; }
 .math-system { text-align: center; margin: 1em 0; }
+/* Display math is an inline SVG sized in ex (the widest cached equation is
+   ~100ex — two phone screens); without a clamp a narrow reader CLIPS it.
+   max-width + height:auto = shrink-to-fit with aspect kept via the viewBox —
+   the same guarantee the kindle PNGs already get from the img rule. */
+svg.math-display { max-width: 100%; height: auto; }
 
 /* ── cross-references ── */
 .xref-list { list-style: none; padding: 0; }
