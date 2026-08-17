@@ -2,11 +2,13 @@
 
 The constant says of itself that keeping it in lockstep "is exactly what this
 constant exists to enforce".  Nothing ever failed when it wasn't, so it drifted:
-`P`, `TITLE`, `OLI`, `OUTLINE`, `IOUTLINE` and `DHRI` ship in every build and none
-of them is listed.  That is not cosmetic — ``export/markdown.py`` grounds its
+`P`, `TITLE`, `OLI`, `OUTLINE`, `IOUTLINE` and `DHRI` shipped in every build and
+none was listed.  That is not cosmetic — ``export/markdown.py`` grounds its
 "TOTAL by construction" claim in this constant, so the names the registry omits are
-exactly the ones it has no rule for, and 151 articles ship a raw `«OUTLINE»` in the
-download bundle as the direct consequence.
+exactly the ones it has no rule for, and 151 articles shipped a raw `«OUTLINE»` in
+the download bundle as the direct consequence.  (The OUTLINE family is gone now —
+`:` is an INDENT and a list is a LIST, [[project_outline_arc]] — so the registry
+lists `OL`/`UL`/`LI`; the lesson is the drift, not the particular names.)
 
 This is the consumer that fails when the registry isn't true.  The transform
 snapshots are PRODUCED marker streams, so they sample what the producers actually

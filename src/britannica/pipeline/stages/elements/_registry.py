@@ -16,6 +16,7 @@ the same ``_placeholder_counter``.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 
@@ -31,6 +32,52 @@ def _next_placeholder_id() -> int:
     global _placeholder_counter
     _placeholder_counter += 1
     return _placeholder_counter
+
+
+def new_placeholder() -> str:
+    """A fresh placeholder key, unique across every registry in a run.
+
+    THE mint.  Three sites minted this token — this registry, the walker, and
+    the classifier's synthetic ROW/CELL/CAPTION keys — and four more matched it,
+    two of them writing the `\\x03` delimiter as a literal instead of asking for
+    `_PH`.  Nothing here fails loudly if those spellings part company: the
+    walker would substitute against a pattern the classifier no longer mints,
+    and the placeholder ships as raw bytes in an article body (AFRICA's
+    territorial table did exactly that).  One mint, one matcher, one counter.
+    """
+    return f"{_PH}ELEM:{_next_placeholder_id()}{_PH}"
+
+
+# THE matcher for a whole placeholder token.  Deliberately unanchored — callers
+# that need `^…$` or a `.match(s, pos)` scan compose their own anchoring around
+# this pattern rather than respelling the token.
+PLACEHOLDER_RE = re.compile(rf"{re.escape(_PH)}ELEM:\d+{re.escape(_PH)}")
+
+_SUBSTITUTION_PASSES = 5
+
+
+def substitute_children(body: str, registry) -> str:
+    """Replace every child placeholder in ``body`` with the marker its producer
+    emitted; ``''`` for a child that produced nothing.
+
+    Iterated to a fixed point because a substituted marker can itself carry a
+    grandchild placeholder, and capped so a cycle cannot hang the walk.
+
+    Seven producers in this package write this loop out inline.  This is the one
+    copy; the others are a separate pass with its own corpus proof, so a diff
+    here stays about the shape being changed.
+    """
+    if registry is None:
+        return body
+    for _ in range(_SUBSTITUTION_PASSES):
+        changed = False
+        for ph in list(registry.elements):
+            if ph in body:
+                body = body.replace(ph, registry.markers.get(ph, ""))
+                changed = True
+        if not changed:
+            break
+    return body
 
 
 @dataclass
@@ -69,8 +116,7 @@ class ElementRegistry:
 
     def add(self, element_type: str, raw: str) -> str:
         """Add an element to the registry, return its placeholder."""
-        counter = _next_placeholder_id()
-        key = f"{_PH}ELEM:{counter}{_PH}"
+        key = new_placeholder()
         self.elements[key] = (element_type, raw)
         return key
 

@@ -56,20 +56,8 @@ def process_hanging_indent(raw, inner, context, inner_registry) -> str:
     the CHESS tournament rolls).  A COMPOSITE: `_classify_hanging_composite` decomposed the
     content into child nodes; we substitute their markers, re-derive the width from raw
     (`_hanging_peel`), and wrap.  Empty content renders to nothing."""
+    from britannica.pipeline.stages.elements._indent import indent_block
+    from britannica.pipeline.stages.elements._registry import substitute_children
     width, _content = _hanging_peel(raw)
-    body = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in body:
-                    body = body.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
-    body = body.strip()
-    if not body:
-        return ""
-    return (f"«DIV[style:padding-left:{width}; text-indent:-{width}]»"
-            f"{body}«/DIV»")
+    return indent_block(substitute_children(inner, inner_registry).strip(),
+                        width, hanging=True)

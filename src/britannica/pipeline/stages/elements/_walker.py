@@ -24,8 +24,9 @@ from __future__ import annotations
 
 import re
 
+from britannica.wikitext import paired_half_pattern
 from britannica.pipeline.stages.elements._registry import (
-    ElementRegistry, _PH, _next_placeholder_id,
+    ElementRegistry, PLACEHOLDER_RE, new_placeholder,
 )
 from britannica.pipeline.stages.elements._shapes import (
     SHAPE_BODY,
@@ -35,7 +36,8 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
+    SHAPE_LIST,
     SHAPE_GENEALOGY,
     SHAPE_TITLE,
 )
@@ -443,10 +445,6 @@ def _scan_balanced(
     return None
 
 
-def _new_placeholder() -> str:
-    return f"{_PH}ELEM:{_next_placeholder_id()}{_PH}"
-
-
 # Paired-wrapper spans `{{NAME/s}}…{{NAME/e}}` (centring / small-type block
 # wrappers).  Recognized as the CENTER shape — ONE balanced node whose inner
 # is recursively classified — so a figure/table/math/nested-pair inside
@@ -466,10 +464,13 @@ _CENTER_PAIRED_NAMES: tuple[str, ...] = (
     # is classified to placeholders first, so a nested figure/table is a preserved
     # CHILD (was preprocess-stripped before, which dropped the styling).
     "fine block", "eb1911 fine print", "smaller block",
+    # Block indent — its opener carries a WIDTH (`{{left margin/s|3.2em}}`), so
+    # the patterns below allow an argument on either half.
+    "left margin",
 )
+_PAIRED_NAMES_RE = "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
 _PAIRED_OPENER_RE = re.compile(
-    r"\{\{\s*(" + "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
-    + r")\s*/s\s*\}\}", re.IGNORECASE)
+    paired_half_pattern(_PAIRED_NAMES_RE, "s"), re.IGNORECASE)
 
 
 # The CLOSING half of the paired-wrapper family.  A well-formed `{{NAME/e}}` is
@@ -477,8 +478,7 @@ _PAIRED_OPENER_RE = re.compile(
 # `/e` REACHED by the scan is by construction unpaired — the same argument that
 # makes a `</div>` at scan level an orphan.
 _PAIRED_CLOSER_RE = re.compile(
-    r"\{\{\s*(" + "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
-    + r")\s*/e\s*\}\}", re.IGNORECASE)
+    paired_half_pattern(_PAIRED_NAMES_RE, "e"), re.IGNORECASE)
 
 
 def _paired_wrapper_end(text: str, pos: int) -> int | None:
@@ -488,11 +488,10 @@ def _paired_wrapper_end(text: str, pos: int) -> int | None:
     m = _PAIRED_OPENER_RE.match(text, pos)
     if m is None:
         return None
-    esc = re.escape(m.group(1))
-    tok = re.compile(r"\{\{\s*" + esc + r"\s*/([se])\s*\}\}", re.IGNORECASE)
+    tok = re.compile(paired_half_pattern(re.escape(m.group(1))), re.IGNORECASE)
     depth = 0
     for tm in tok.finditer(text, pos):
-        depth += 1 if tm.group(1).lower() == "s" else -1
+        depth += 1 if tm.group(2).lower() == "s" else -1
         if depth == 0:
             return tm.end()
     return None
@@ -531,20 +530,20 @@ def _walk_balanced_shapes(
         if not run:
             return
         if _allow_outline:
-            run, outline_extracts = _walk_outline(run)
-            extracts.extend(outline_extracts)
+            run, indent_extracts = _walk_indents(run)
+            extracts.extend(indent_extracts)
         last = 0
-        for m in _PLACEHOLDER_RE.finditer(run):
+        for m in PLACEHOLDER_RE.finditer(run):
             prose = run[last:m.start()]
             if prose:
-                bph = _new_placeholder()
+                bph = new_placeholder()
                 output.append(bph)
                 extracts.append((bph, SHAPE_BODY, prose))
             output.append(m.group(0))
             last = m.end()
         tail = run[last:]
         if tail:
-            bph = _new_placeholder()
+            bph = new_placeholder()
             output.append(bph)
             extracts.append((bph, SHAPE_BODY, tail))
 
@@ -767,7 +766,7 @@ def _walk_balanced_shapes(
 
         end_pos, shape, raw = matched
         _flush_body()  # the body element before this construct is complete
-        ph = _new_placeholder()
+        ph = new_placeholder()
         output.append(ph)
         extracts.append((ph, shape, raw))
         pos = end_pos
@@ -776,31 +775,32 @@ def _walk_balanced_shapes(
     return "".join(output), extracts
 
 
-def _walk_outline(
+def _walk_indents(
     text: str,
 ) -> tuple[str, list[tuple[str, str, str]]]:
-    """Run the OUTLINE line-pattern scanner over `text` (already
-    placeholderized for balanced shapes).  Returns the further-
-    placeholderized text and the new outline extracts.
+    """Run the `:`-indent line scanner over `text`.  Returns the
+    placeholderized text and the new indent extracts.
 
-    OUTLINE is the one shape that isn't position-keyed delimiter-
-    balanced — it operates on indentation profile across lines —
-    so it runs as a separate phase rather than as a recognizer in
-    the linear scan.
+    INDENT is the one shape that isn't position-keyed delimiter-balanced — the
+    mark sits at a LINE start rather than around a span — so it runs as its own
+    phase rather than as a recognizer in the linear scan.
     """
-    from britannica.pipeline.stages.elements._outline import _extract_outlines
-    # `_extract_outlines` registers into an `ElementRegistry`; we
-    # convert its output to the shape-tagged tuple form afterwards.
+    from britannica.pipeline.stages.elements._indent import extract_indents
+    from britannica.pipeline.stages.elements._list import extract_hash_lists
+    # Both register into an `ElementRegistry`; we convert their output to the
+    # shape-tagged tuple form afterwards.  `#` runs first: a `#`-marked line is a
+    # LIST whatever else it contains, and neither scan can claim the other's mark.
     bucket = ElementRegistry()
-    text = _extract_outlines(text, bucket)
-    outline_extracts = [
-        (ph, SHAPE_OUTLINE, raw)
+    text = extract_hash_lists(text, bucket)
+    list_phs = set(bucket.elements)
+    text = extract_indents(text, bucket)
+    extracts = [
+        (ph, SHAPE_LIST if ph in list_phs else SHAPE_INDENT, raw)
         for ph, (_name, raw) in bucket.elements.items()
     ]
-    return text, outline_extracts
+    return text, extracts
 
 
-_PLACEHOLDER_RE = re.compile(rf"{re.escape(_PH)}ELEM:\d+{re.escape(_PH)}")
 
 
 def walk(
@@ -815,14 +815,14 @@ def walk(
     body-wrap, no flag.  ``_allow_outline=False`` when the parent is OUTLINE so
     the outline recognizer doesn't re-trigger on its own bytes.
     """
-    # OUTLINE runs as a PRE-PASS on the raw text (construct-aware via `_skip`), so a
-    # `:`-block is bounded WHOLE — including a `:<math>…` line's raw math — BEFORE the
-    # balanced walk extracts any construct.  It used to run per-body-run inside
+    # INDENT runs as a PRE-PASS on the raw text (construct-aware via `_skip`), so a
+    # `:`-paragraph is bounded WHOLE — including a `:<math>…` line's raw math — BEFORE
+    # the balanced walk extracts any construct.  It used to run per-body-run inside
     # `_flush_body`, AFTER extraction, which stranded a `:<math>` line's math as a
-    # sibling and left the item empty.  The balanced walk then runs with outline off.
+    # sibling and left the item empty.  The balanced walk then runs with indent off.
     outline_extracts: list[tuple[str, str, str]] = []
     if _allow_outline:
-        text, outline_extracts = _walk_outline(text)
+        text, outline_extracts = _walk_indents(text)
     ph_text, extracts = _walk_balanced_shapes(
         text, _allow_outline=False)
     return ph_text, outline_extracts + extracts

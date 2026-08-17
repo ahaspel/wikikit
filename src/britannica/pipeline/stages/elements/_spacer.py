@@ -51,7 +51,7 @@ _SPACER_NAMES: frozenset[str] = frozenset({
     "fine block/s", "fine block/e", "smaller block/s", "smaller block/e",
     "eb1911 fine print/s", "eb1911 fine print/e",
     "fs85/s", "fs85/e", "fs90/s", "fs90/e",
-    "ti/s", "ti/e", "outdent/s", "outdent/e", "left margin/s", "left margin/e",
+    "ti/s", "ti/e", "outdent/s", "outdent/e",
     "bold block/s", "bold block/e", "dent/s", "dent/e",
     "flex wrap centre/s", "flex wrap centre/e",
     "familytree/start", "familytree/end", "tree chart/start", "tree chart/end",

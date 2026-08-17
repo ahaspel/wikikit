@@ -78,11 +78,22 @@ def main() -> None:
         import json as _json
         widths = (_json.loads(TABLE_WIDTHS_CACHE.read_text(encoding="utf-8"))
                   if TABLE_WIDTHS_CACHE.exists() else {})
+        wide_stats: dict = {}
         resolve_and_render(
             session, payloads,
             decorate=lambda body, d: annotate_body(
-                body, widths, plate=d.get("article_type") == "plate"))
+                body, widths, stats=wide_stats,
+                plate=d.get("article_type") == "plate"))
         tick("xrefs resolved + tables hinted + rendered")
+        if wide_stats.get("unmeasured"):
+            # A span whose bytes moved since the last measurement keeps its
+            # existing hint rather than losing it silently — but the REBUILD
+            # must still be told, or the corpus quietly drifts out of
+            # measurement ([[project_wide_table_threshold]]).
+            print(f"  [post-export] WARNING: {wide_stats['unmeasured']} table "
+                  f"span(s) have no width measurement and kept their existing "
+                  f"hint — run tools/diagnostics/measure_table_widths.py, then "
+                  f"tools/pipeline/annotate_table_markers.py", flush=True)
 
         n = write_corpus(payloads)
         tick(f"wrote {n} articles")

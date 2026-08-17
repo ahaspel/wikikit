@@ -51,16 +51,13 @@ from britannica.pipeline.stages.elements._leaf import (
 from britannica.pipeline.stages.elements._registry import (
     ElementRegistry,
     IMAGE_LABELS,
+    PLACEHOLDER_RE,
     TABLE_LABELS,
-    _PH,
 )
-from britannica.pipeline.stages.elements._outline import (
-    _OUTLINE_RANGE_HEADER_RE,
-    _extract_outlines,
-    _outline_indent_depth,
-    _outline_is_bare_emphasis,
-    _outline_is_list_shaped,
-)
+from britannica.pipeline.stages.elements._indent import (
+    process_indent, process_indent_block)
+from britannica.pipeline.stages.elements._list import (
+    extract_hash_lists, process_list, process_list_item)
 from britannica.pipeline.stages.elements._section import (
     _process_section,
 )
@@ -334,7 +331,9 @@ def _stamp_see_windows(text: str) -> str:
     return _SEE_STAMP_RE.sub(_stamp, text)
 
 
-_CTR_PURE_PH_RE = re.compile(r"^\s*\x03ELEM:\d+\x03\s*$")
+# A paragraph that is nothing but one placeholder.  The anchoring is this
+# caller's business; the TOKEN is the registry's.
+_CTR_PURE_PH_RE = re.compile(rf"^\s*{PLACEHOLDER_RE.pattern}\s*$")
 
 
 def _center_wrap(text: str) -> str:
@@ -374,8 +373,13 @@ def _process_center(raw, inner, context, inner_registry):
     and a heading inside a centered block is a real node in the one tree."""
     from britannica.pipeline.stages.elements._tables import (
         _TEMPLATE_STYLE_WRAPPERS, style_block)
-    m = re.match(r"^\s*\{\{\s*([^{}/]*?)\s*/s\s*\}\}", raw, re.IGNORECASE)
+    # The opener may carry an ARGUMENT — `{{left margin/s|3.2em}}` states the
+    # width of the indent it opens — so the name run stops at `/` or `|` and the
+    # arg is captured rather than blocking the match.
+    m = re.match(r"^\s*\{\{\s*([^{}/|]*?)\s*/s\s*(?:\|([^{}]*))?\}\}",
+                 raw, re.IGNORECASE)
     name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
+    arg = (m.group(2) or "").strip() if m else ""
     spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
     if spec and spec.get("css") and not spec.get("ctr"):
         return style_block(inner.strip(), css=spec["css"], tag=spec.get("tag", "DIV"))
@@ -1255,6 +1259,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # HANGING_INDENT — `{{hi|W|text}}` / `{{hanging indent|W|text}}` / `{{outdent|text}}`:
     # render the block at the source's own indent width (default 2em), recurse the text.
     "HANGING_INDENT": process_hanging_indent,
+    # INDENT — a `:`-marked paragraph: render the indent the source states (1.6em per
+    # colon), recurse the text.  Its sibling above by shape and by carry; what the
+    # source marks is an indent, so an indent is what we emit — no inferred ladder.
+    "INDENT": process_indent,
+    # INDENT_BLOCK — `{{left margin/s|W}}…{{left margin/e}}`: the same
+    # sentence one syntax up, a whole block indented by a stated width.
+    "INDENT_BLOCK": process_indent_block,
     # BRACE — `{{brace2|N|dir}}`: render a row-spanning curly brace glyph, not the
     # leaked `N|dir` arguments (and not nothing).
     "BRACE": lambda raw, inner, ctx, reg: process_brace(raw),
@@ -1282,10 +1293,13 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     # lang/sic/dropinitial/fqm unwrap to the display arg.
     # POEM / HIEROGLYPH — generated from `_MARKER_WRAP` below (wrap the recursed inner in a marker).
     "PPOEM": _process_ppoem,
-    # OUTLINE is a composite: the classifier built nested OUTLINE_ITEM children; the producers
-    # fold their already-produced markers.  OUTLINE (`«OUTLINE»…«/OUTLINE»`) is a `_MARKER_WRAP`
-    # row; OUTLINE_ITEM stays hand-written — its opener embeds the item's `raw` depth.
-    "OUTLINE_ITEM": lambda raw, inner, ctx, reg: f"«OLI:{raw}»{inner}«/OLI»",
+    # LIST / LIST_ITEM — what the source marks as a list, carried as one: the
+    # nesting is the source's (a sublist sits inside its parent «LI») and the
+    # numbering is the source's (`type` on the open tag, the browser numbering
+    # the items).  No depth ladder and no minted "I. "/"A. " labels: that was the
+    # OUTLINE taxonomy this replaces ([[project_outline_arc]]).
+    "LIST": process_list,
+    "LIST_ITEM": process_list_item,
     # TITLE — the «TITLE»…«/TITLE» stamp from preprocess_article.  A COMPOSITE:
     # `_classify_title_composite` decomposed the joint-stripped heading into child nodes;
     # the producer substitutes their markers (no produce-time re-walk).  The viewer renders
@@ -1351,12 +1365,12 @@ for _mw_label in _MARKER_WRAP:
 # a BLOCK (blockquote / <p>-wrapped <li> items); the SAME construct inside a TABLE/REF is INLINE
 # (a `cell-verse` span / plain <li>), because that container is decoded wholesale by
 # decode_inline.  The producer stamps the distinction into the marker; the render decodes each
-# variant mechanically, with no context re-inference.  (OUTLINE's nested OUTLINE_ITEM ladder and
-# POEM's «BR» line breaks ride through `inner` either way — only the wrapper differs.)
+# variant mechanically, with no context re-inference.  (POEM's «BR» line breaks ride through
+# `inner` either way — only the wrapper differs.  A LIST needs no such variant: `<ol><li>` is
+# the same construct in a cell as at top level.)
 _BLOCK_INLINE_WRAP = {
     #           BLOCK (opener, closer)         INLINE (opener, closer)
     "POEM":    (("{{VERSE:", "}VERSE}"),       ("{{IVERSE:", "}IVERSE}")),
-    "OUTLINE": (("«OUTLINE»", "«/OUTLINE»"),   ("«IOUTLINE»", "«/IOUTLINE»")),
 }
 
 

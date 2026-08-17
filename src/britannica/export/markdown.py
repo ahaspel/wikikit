@@ -41,8 +41,8 @@ Policy per marker family:
   * footnotes  «FN[name]?:body«/FN» → ``[^n]`` inline + a collected notes block
   * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN» → ``$$``
   * images     {{IMG:file|meta|caption}} → ``![caption](file)`` reference
-  * outlines   «OUTLINE»/«IOUTLINE» with «OLI:depth» items → a nested ``-`` list,
-                 sparse source depths densified exactly as `build_outline_ul` does
+  * lists      «OL[type:…]»/«UL» with nested «LI» items → a Markdown list
+                 (`1.` / `-`), keeping the source's own nesting
   * tables     «TABLE[…]»…«/TABLE»  →  a de-spanned GFM table (see _table_to_gfm)
   * structural drop (carried in the record's own fields, not the prose):
                  «TITLE» (the title field), «ANCHOR» (a bare nav target),
@@ -123,10 +123,9 @@ _LEGEND_OPEN = re.compile(r"\{\{LEGEND:")
 # spelling it with a colon that could never have matched anyway.  A form kept "just
 # in case" is how the dead `«OUTLINE:` pattern lived for five weeks; if one is ever
 # emitted the leak oracle reports it, which is the point of the oracle.
-_OUTLINE_FORMS = tuple(
-    (re.compile(f"«{n}»"), f"«/{n}»") for n in ("OUTLINE", "IOUTLINE")
-)
-_OLI_OPEN = re.compile(r"«OLI:(\d+)»")
+_LIST_FORMS = ((re.compile(r"«OL(?:\[type:[\w-]+\])?»"), "«/OL»", True),
+               (re.compile(r"«UL»"), "«/UL»", False))
+_LI_OPEN = re.compile(r"«LI»")
 _CTR_SC_OPEN = re.compile(r"«CTR»\s*«SC»")
 _SC_OPEN = re.compile(r"«SC»")
 _CAPTION_OPEN = re.compile(r"«CAPTION»")
@@ -202,35 +201,50 @@ def _link_md(target: str, display: str) -> str:
     return f"[{display}]({target.strip()})"
 
 
-def _outline_md(inner: str, ctx: _Ctx) -> str:
-    """An outline body → a nested Markdown list.
+def _list_md(inner: str, ctx: _Ctx, ordered: bool, level: int = 0) -> str:
+    """A list body → a Markdown list, keeping the SOURCE's own nesting.
 
-    Items are the flat ``«OLI:depth»…«/OLI»`` run, and the SOURCE depths are sparse
-    (a document may use 0, 3, 7).  Densify them to consecutive levels exactly as
-    `render.inline.build_outline_ul` does — it is the one owner of this structure,
-    and the Markdown nesting must agree with the HTML nesting or the same article
-    reads as two different documents.
+    A sublist rides inside its parent ``«LI»``, so this recurses into the item
+    rather than densifying a depth ladder — which is what the outline it replaces
+    had to do, its depths being inferred rather than stated.  An ordered list
+    numbers with ``1.`` and Markdown renumbers it, exactly as the browser does
+    from the list's own ``type``.
     """
-    items: list[tuple[int, str]] = []
+    items: list[str] = []
     i = 0
     while True:
-        m = _OLI_OPEN.search(inner, i)
+        m = _LI_OPEN.search(inner, i)
         if m is None:
             break
-        end = _balanced_end(inner, m.end(), _OLI_OPEN, "«/OLI»")
+        end = _balanced_end(inner, m.end(), _LI_OPEN, "«/LI»")
         if end < 0:
             break
-        items.append((int(m.group(1)), inner[m.end():end - len("«/OLI»")]))
+        items.append(inner[m.end():end - len("«/LI»")])
         i = end
     if not items:
         # No items: hand the inner back so whatever is there stays VISIBLE.
         return _convert(inner, ctx)
-    rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
-    lines = []
-    for depth, content in items:
-        body = _flatten(_convert(content, ctx))
-        lines.append("  " * rank[depth] + f"- {body}")
-    return "\n\n" + "\n".join(lines) + "\n\n"
+    pad = "  " * level
+    lines: list[str] = []
+    for n, item in enumerate(items, 1):
+        sub = ""
+        for opener, close, sub_ordered in _LIST_FORMS:
+            mo = opener.search(item)
+            if mo is None:
+                continue
+            sub_end = _balanced_end(item, mo.end(), opener, close)
+            if sub_end < 0:
+                continue
+            sub = _list_md(item[mo.end():sub_end - len(close)],
+                           ctx, sub_ordered, level + 1)
+            item = item[:mo.start()] + item[sub_end:]
+            break
+        body = _flatten(_convert(item, ctx))
+        lines.append(f"{pad}{n}. {body}" if ordered else f"{pad}- {body}")
+        if sub:
+            lines.append(sub)
+    joined = "\n".join(lines)
+    return joined if level else "\n\n" + joined + "\n\n"
 
 
 def _table_to_gfm(opener: str, inner: str, ctx: _Ctx) -> str:
@@ -401,9 +415,9 @@ def _convert(text: str, ctx: _Ctx) -> str:
                          lambda m, s: _table_to_gfm(m.group(0), s, ctx))
     text = _sub_balanced(text, _TABLEBRACE_OPEN, "}TABLE}",
                          lambda m, s: _table_to_gfm("«TABLE[]»", s, ctx))
-    for opener, close in _OUTLINE_FORMS:
+    for opener, close, ordered in _LIST_FORMS:
         text = _sub_balanced(text, opener, close,
-                             lambda m, s: _outline_md(s, ctx))
+                             lambda m, s, o=ordered: _list_md(s, ctx, o))
     for opener, close in ((_VERSE_OPEN, "}VERSE}"), (_IVERSE_OPEN, "}IVERSE}")):
         text = _sub_balanced(
             text, opener, close,

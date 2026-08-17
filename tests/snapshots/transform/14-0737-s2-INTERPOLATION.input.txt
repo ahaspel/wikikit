@@ -1,4 +1,4 @@
-PAGE:737(from Lat. «I»interpolare«/I», to alter, or insert
+«B»INTERPOLATION«/B» (from Lat. «I»interpolare«/I», to alter, or insert
 something fresh, connected with «I»polire«/I», a polish), in mathematics,
 the process of obtaining intermediate terms of a series
 of which particular terms only are given. The cubes, for instance,
@@ -15,11 +15,11 @@ article deals only with interpolation.
 <table align=center {{Ts|sm92|lh13|ba|bc}} rules=cols>
 <tr align=center><td {{Ts|pl.5|pr.5|ba}}>Number.</td> <td {{Ts|pl.5|pr.5|ba}}>Cube of Number.</td></tr>
 
-<tr align=center><td>0</td> <td>&emsp;0</td></tr>
-<tr align=center><td>1</td> <td>&emsp;1</td></tr>
-<tr align=center><td>2</td> <td>&emsp;8</td></tr>
-<tr align=center><td>3</td> <td>&ensp;27</td></tr>
-<tr align=center><td>4</td> <td>&ensp;64</td></tr>
+<tr align=center><td>0</td> <td> 0</td></tr>
+<tr align=center><td>1</td> <td> 1</td></tr>
+<tr align=center><td>2</td> <td> 8</td></tr>
+<tr align=center><td>3</td> <td> 27</td></tr>
+<tr align=center><td>4</td> <td> 64</td></tr>
 <tr align=center><td>5</td> <td>125</td></tr>
 <tr align=center><td>6</td> <td>216</td></tr>
 <tr align=center><td>.</td> <td>.</td></tr>
@@ -54,7 +54,7 @@ methods employed can be extended to cases in which the value
 of «I»u«/I» depends on the values of two or more independent quantities
 «I»x«/I», «I»y«/I»,...
 
-
+{{EB1911 fine print/s}}
 In the ordinary case we may regard the values of «I»x«/I» as measured
 along a straight line OX from a fixed point O, so that to any value
 of «I»x«/I» there corresponds a point on the line. If we represent the
@@ -136,20 +136,20 @@ those in which the first difference in «I»u«/I» is constant, or nearly so.
 {{nowrap|For example:—}}
 
 <table align=center {{Ts|sm92|lh13|bc}}>
-<tr rules="cols"><td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 1.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td> <td>&emsp;&emsp;</td> <td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 2.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td></tr>
+<tr rules="cols"><td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 1.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td> <td>  </td> <td {{Ts|pl.5|pr.5|ac}} colspan="3">«I»Example«/I» 2.—(«I»u«/I» = log <sub>10</sub>«I»x«/I»).</td></tr>
 
-<tr align=center><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|vtp|ac|ba}}>1st Diff.</td> <td>&emsp;&emsp;&emsp;</td> <td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>1st Diff.</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|vtp|ac|ba}}>1st Diff.</td> <td>   </td> <td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>1st Diff.</td></tr>
 
-<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}><big>+</big></td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}><big>+</big></td></tr>
-<tr align=center><td {{Ts|bl|br}}>&thinsp;4.341&thinsp;</td> <td {{Ts|br}}>&thinsp;.6375898&thinsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.40</td> <td {{Ts|br}}>.86923</td> <td {{Ts|br}}>&nbsp;</td></tr>
-<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>59</td></tr>
-<tr align=center><td {{Ts|bl|br}}>4.342</td> <td {{Ts|br}}>.6376898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.41</td> <td {{Ts|br}}>.86982</td> <td {{Ts|br}}>&nbsp;</td></tr>
-<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>58</td></tr>
-<tr align=center><td {{Ts|bl|br}}>4.343</td> <td {{Ts|br}}>.6377898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.42</td> <td {{Ts|br}}>.87040</td> <td {{Ts|br}}>&nbsp;</td></tr>
-<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>59</td></tr>
-<tr align=center><td {{Ts|bl|br}}>4.344</td> <td {{Ts|br}}>.6378898</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&emsp;&emsp;</td> <td {{Ts|br}}>7.43</td> <td {{Ts|br}}>.87099</td> <td {{Ts|br}}>&nbsp;</td></tr>
-<tr align=center><td {{Ts|bl|br}}>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>58</td></tr>
-<tr align=center><td {{Ts|bl|br|bb}}>4.345</td> <td {{Ts|br|bb}}>.6379898</td> <td {{Ts|br|bb}}>&nbsp;</td> <td {{Ts|br}}>&emsp;&emsp;</td> <td {{Ts|br|bb}}>7.44</td> <td {{Ts|br|bb}}>.87157</td> <td {{Ts|br|bb}}>&nbsp;</td></tr>
+<tr align=center><td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|bl|br}}><big>+</big></td> <td {{Ts|br}}>  </td> <td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}><big>+</big></td></tr>
+<tr align=center><td {{Ts|bl|br}}> 4.341 </td> <td {{Ts|br}}> .6375898 </td> <td> </td> <td {{Ts|bl|br}}>  </td> <td {{Ts|br}}>7.40</td> <td {{Ts|br}}>.86923</td> <td {{Ts|br}}> </td></tr>
+<tr align=center><td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>  </td> <td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>59</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.342</td> <td {{Ts|br}}>.6376898</td> <td> </td> <td {{Ts|bl|br}}>  </td> <td {{Ts|br}}>7.41</td> <td {{Ts|br}}>.86982</td> <td {{Ts|br}}> </td></tr>
+<tr align=center><td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>  </td> <td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>58</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.343</td> <td {{Ts|br}}>.6377898</td> <td> </td> <td {{Ts|bl|br}}>  </td> <td {{Ts|br}}>7.42</td> <td {{Ts|br}}>.87040</td> <td {{Ts|br}}> </td></tr>
+<tr align=center><td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>  </td> <td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>59</td></tr>
+<tr align=center><td {{Ts|bl|br}}>4.344</td> <td {{Ts|br}}>.6378898</td> <td> </td> <td {{Ts|bl|br}}>  </td> <td {{Ts|br}}>7.43</td> <td {{Ts|br}}>.87099</td> <td {{Ts|br}}> </td></tr>
+<tr align=center><td {{Ts|bl|br}}> </td> <td> </td> <td {{Ts|bl|br}}>1000</td> <td {{Ts|br}}>  </td> <td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>58</td></tr>
+<tr align=center><td {{Ts|bl|br|bb}}>4.345</td> <td {{Ts|br|bb}}>.6379898</td> <td {{Ts|br|bb}}> </td> <td {{Ts|br}}>  </td> <td {{Ts|br|bb}}>7.44</td> <td {{Ts|br|bb}}>.87157</td> <td {{Ts|br|bb}}> </td></tr>
 </table>
 In Example 1 the first difference of «I»u«/I» corresponding to a difference
 of «I»h«/I» ≡ .001 in «I»x«/I» is .0001000; but, since we are working throughout
@@ -163,7 +163,8 @@ so that «I»u«/I» is .6376898 + .0000945 = .6377843. For «I»x«/I» = 4.342
 the difference in «I»u«/I» would be 944.82, so that the value of «I»u«/I» would
 apparently be .6376898 + .000094482 = .637784282. This, however,
 would be incorrect. It must be remembered that the values of
-«I»u«/I» are only given “correct to seven places of decimals,” «I»i.e.«/I» eachPAGE:738tabulated value differs from the corresponding true value by a «I»tabular«/I»
+«I»u«/I» are only given “correct to seven places of decimals,” «I»i.e.«/I» each
+tabulated value differs from the corresponding true value by a «I»tabular«/I»
 «I»error«/I» which may have any value up to ± {{EB1911 tfrac|1|2}} of .0000001; and we
 cannot therefore by interpolation obtain a result which is correct
 to nine places. If the interpolated value of «I»u«/I» has to be used in
@@ -195,19 +196,19 @@ of the next order of differences. For {{nowrap|example:—}}
 {{center|«I»Example«/I» 3.—(«I»u«/I» {{=}} log <sub>10</sub>«I»x«/I»).}}
 
 <table align=center style="border: 1px solid; border-collapse: collapse;">
-<tr><td {{Ts|ac|ba}}>«I»x«/I».</td> <td {{Ts|ac|ba}}>«I»u«/I».</td> <td {{Ts|ac|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ac|ba}}>&ensp;2nd Diff.&ensp;</td></tr>
+<tr><td {{Ts|ac|ba}}>«I»x«/I».</td> <td {{Ts|ac|ba}}>«I»u«/I».</td> <td {{Ts|ac|ba}}> 1st Diff. </td> <td {{Ts|ac|ba}}> 2nd Diff. </td></tr>
 
-<tr  align=center><td>&emsp;6.0&emsp;</td> <td {{Ts|bl|br}}>&ensp;.77815&ensp;</td> <td {{Ts|br}}>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td> </td> <td {{Ts|bl|br}}>+718</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>6.1</td> <td {{Ts|br}}>.78533</td> <td {{Ts|br}}>&nbsp;</td> <td>−12</td></tr>
-<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+706</td> <td> </td></tr>
-<tr  align=center><td {{Ts|br}}>6.2</td> <td {{Ts|br}}>.79239</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
-<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+695</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>6.3</td> <td {{Ts|br}}>.79934</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
-<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+684</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>6.4</td> <td {{Ts|br}}>.80618</td> <td {{Ts|br}}>&nbsp;</td> <td>−11</td></tr>
-<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+673</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>6.5</td> <td {{Ts|br}}>.81291</td> <td {{Ts|br}}>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr  align=center><td> 6.0 </td> <td {{Ts|bl|br}}> .77815 </td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td> </td> <td {{Ts|bl|br}}>+718</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.1</td> <td {{Ts|br}}>.78533</td> <td {{Ts|br}}> </td> <td>−12</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>+706</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.2</td> <td {{Ts|br}}>.79239</td> <td {{Ts|br}}> </td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>+695</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.3</td> <td {{Ts|br}}>.79934</td> <td {{Ts|br}}> </td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>+684</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.4</td> <td {{Ts|br}}>.80618</td> <td {{Ts|br}}> </td> <td>−11</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>+673</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>6.5</td> <td {{Ts|br}}>.81291</td> <td {{Ts|br}}> </td> <td> </td></tr>
 </table>
 
 In such a case the «I»advancing-difference«/I» formula is generally used.
@@ -288,12 +289,12 @@ are given by
 «I»c«/I»<sub>4</sub> = {{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|6}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>0</sub> + {{EB1911 tfrac|7|240}}{{Polytonic|δ}}<sup>8</sup>«I»u«/I»<sub>0</sub> − {{...}}
 «I»c«/I»<sub>5</sub> = {{Polytonic|μδ}}<sup>5</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|3}}{{Polytonic|μδ}}<sup>7</sup>«I»u«/I»<sub>0</sub> + {{...}}
 «I»c«/I»<sub>6</sub> = {{Polytonic|δ}}<sup>6</sup>«I»u«/I»<sub>0</sub> − {{EB1911 tfrac|1|4}}{{Polytonic|δ}}<sup>8</sup>«I»u«/I»<sub>0</sub> + {{...}}
-&ensp;. &emsp;&emsp; .
-&ensp;. &emsp;&emsp; .
-&ensp;. &emsp;&emsp; .
+ .    .
+ .    .
+ .    .
 </poem> </td><td align=left>{{brace2|10|r}}</td></tr></table>
 |-
-|width=5%|(4).&ensp;
+|width=5%|(4). 
 |}
 
 If a calculating machine is used, the formula (2) is most conveniently
@@ -304,12 +305,12 @@ written
 |<table><tr><td><poem>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = «I»u«/I»<sub>0</sub> + P<sub>1</sub>{{Polytonic|θ}}
 P<sub>1</sub>       = «I»c«/I»<sub>1</sub> + {{EB1911 tfrac|1|2}}P<sub>2</sub>{{Polytonic|θ}}
 P<sub>2</sub>       = «I»c«/I»<sub>2</sub> + {{EB1911 tfrac|1|3}}P<sub>3</sub>{{Polytonic|θ}}
-&ensp;. &emsp; .
-&ensp;. &emsp; .
-&ensp;. &emsp; .
+ .   .
+ .   .
+ .   .
 </poem> </td><td align=left>{{brace2|7|r}}</td></tr></table>
 |-
-|width=5%|(5).&ensp;
+|width=5%|(5). 
 |}
 Using {{Polytonic|θ}} as the multiplicand in each case, the successive expressions
 ... P<sub>3</sub>, P<sub>2</sub>, P<sub>1</sub>, «I»u«/I»<sub>{{Polytonic|θ}}</sub> are easily calculated.
@@ -321,14 +322,14 @@ the following is part of the {{nowrap|table:—}}
 {{center|«I»Example«/I» 4.—(«I»u«/I» {{=}} tan «I»x«/I»).}}
 
 <table align=center style="border: 1px solid; border-collapse: collapse;">
-<tr  align=center><td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;3rd Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;4th Diff.&ensp;</td></tr>
+<tr  align=center><td {{Ts|ba}}>«I»x«/I».</td> <td {{Ts|ba}}>«I»u«/I».</td> <td {{Ts|ba}}> 1st Diff. </td> <td {{Ts|ba}}> 2nd Diff. </td> <td {{Ts|ba}}> 3rd Diff. </td> <td {{Ts|ba}}> 4th Diff. </td></tr>
 
-<tr  align=center><td>&nbsp;</td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>+</td> <td>+</td> <td {{Ts|bl|br}}>+</td> <td>+</td></tr>
-<tr  align=center><td {{Ts|br}}>&emsp;65°&emsp;</td> <td {{Ts|br}}>&ensp;2.14451&ensp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>732</td> <td {{Ts|br}}>&nbsp;</td> <td>16</td></tr>
-<tr  align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>10153</td> <td> </td> <td {{Ts|bl|br}}>96</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>66°</td> <td {{Ts|br}}>2.24604</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>828</td> <td {{Ts|br}}>&nbsp;</td> <td>19</td></tr>
-<tr  align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>10981</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>115</td> <td>&nbsp;</td></tr>
-<tr  align=center><td {{Ts|br}}>67°</td> <td {{Ts|br}}>2.35585</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>943</td> <td {{Ts|br}}>&nbsp;</td> <td>18</td></tr>
+<tr  align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>+</td> <td>+</td> <td {{Ts|bl|br}}>+</td> <td>+</td></tr>
+<tr  align=center><td {{Ts|br}}> 65° </td> <td {{Ts|br}}> 2.14451 </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>732</td> <td {{Ts|br}}> </td> <td>16</td></tr>
+<tr  align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>10153</td> <td> </td> <td {{Ts|bl|br}}>96</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>66°</td> <td {{Ts|br}}>2.24604</td> <td {{Ts|br}}> </td> <td {{Ts|br}}>828</td> <td {{Ts|br}}> </td> <td>19</td></tr>
+<tr  align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>10981</td> <td {{Ts|br}}> </td> <td {{Ts|br}}>115</td> <td> </td></tr>
+<tr  align=center><td {{Ts|br}}>67°</td> <td {{Ts|br}}>2.35585</td> <td {{Ts|br}}> </td> <td {{Ts|br}}>943</td> <td {{Ts|br}}> </td> <td>18</td></tr>
 </table>
 
 To find «I»u«/I» for «I»x«/I» = 66° 23′, we have {{Polytonic|θ}} = 23/60 = .3833333. The following
@@ -337,14 +338,14 @@ The operations commence on the right-hand side. It will be noticed
 that two extra figures are retained throughout.
 
 <table align=center>
-<tr><td {{Ts|ar|pb1}}>«I»u«/I»<sub>0</sub>.&emsp;</td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}«I»u«/I»<sub>0</sub>.&emsp;</td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub>.</td></tr>
-<tr><td {{Ts|ar}}>2.24604&ensp;</td> <td {{Ts|ar}}>+10567<sup>00</sup></td> <td {{Ts|ar}}>+828<sup>00</sup></td> <td {{Ts|ar}}>+105<sup>50</sup></td> <td {{Ts|ar}}>+19<sup>00</sup></td></tr>
-<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>− &emsp; 17<sup>58</sup></td> <td {{Ts|ar}}>− &ensp; 1<sup>58</sup></td> <td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>&nbsp;</td></tr>
-<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td></tr>
-<tr><td {{Ts|ar}}>&nbsp;</td> <td {{Ts|ar}}>«I»c«/I»<sub>1</sub> = +10549<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>2</sub> = +826<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>3</sub> = +105<sup>50</sup></td> <td {{Ts|ar}}>&emsp; «I»c«/I»<sub>4</sub> = +19<sup>00</sup></td></tr>
-<tr align=right><td>P<sub>1</sub>{{Polytonic|θ}} =  +4105<sup>67</sup></td> <td>&emsp;{{EB1911 tfrac|1|2}}P<sub>2</sub>{{Polytonic|θ}} = +{{em|1.1}}161<sup>02</sup></td> <td>&emsp;{{EB1911 tfrac|1|3}}P<sub>3</sub>{{Polytonic|θ}} = +&ensp;13<sup>71</sup></td> <td>&emsp;{{EB1911 tfrac|1|8}} «I»c«/I»<sub>4</sub>{{Polytonic|θ}} = + &ensp; 1<sup>82</sup></td> <td> </td></tr>
-<tr align=right><td>———</td> <td>———&ensp;</td> <td>———</td> <td>———</td> <td> </td></tr>
-<tr><td {{Ts|ar}}>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = 2.28710&ensp;</td> <td {{Ts|ar}}>P<sub>1</sub> = +10710<sup>44</sup></td> <td {{Ts|ar}}>P<sub>2</sub> = +840<sup>13</sup></td> <td {{Ts|ar}}>P<sub>3</sub> = +107<sup>32</sup></td> <td {{Ts|ar}}>&nbsp;</td></tr>
+<tr><td {{Ts|ar|pb1}}>«I»u«/I»<sub>0</sub>. </td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}«I»u«/I»<sub>0</sub>. </td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|μδ}}<sup>3</sup>«I»u«/I»<sub>0</sub>.</td> <td {{Ts|ar|pb1}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub>.</td></tr>
+<tr><td {{Ts|ar}}>2.24604 </td> <td {{Ts|ar}}>+10567<sup>00</sup></td> <td {{Ts|ar}}>+828<sup>00</sup></td> <td {{Ts|ar}}>+105<sup>50</sup></td> <td {{Ts|ar}}>+19<sup>00</sup></td></tr>
+<tr><td {{Ts|ar}}> </td> <td {{Ts|ar}}>−   17<sup>58</sup></td> <td {{Ts|ar}}>−   1<sup>58</sup></td> <td {{Ts|ar}}> </td> <td {{Ts|ar}}> </td></tr>
+<tr><td {{Ts|ar}}> </td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td> <td {{Ts|ar}}>———</td></tr>
+<tr><td {{Ts|ar}}> </td> <td {{Ts|ar}}>«I»c«/I»<sub>1</sub> = +10549<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>2</sub> = +826<sup>42</sup></td> <td {{Ts|ar}}>«I»c«/I»<sub>3</sub> = +105<sup>50</sup></td> <td {{Ts|ar}}>  «I»c«/I»<sub>4</sub> = +19<sup>00</sup></td></tr>
+<tr align=right><td>P<sub>1</sub>{{Polytonic|θ}} =  +4105<sup>67</sup></td> <td> {{EB1911 tfrac|1|2}}P<sub>2</sub>{{Polytonic|θ}} = +{{em|1.1}}161<sup>02</sup></td> <td> {{EB1911 tfrac|1|3}}P<sub>3</sub>{{Polytonic|θ}} = + 13<sup>71</sup></td> <td> {{EB1911 tfrac|1|8}} «I»c«/I»<sub>4</sub>{{Polytonic|θ}} = +   1<sup>82</sup></td> <td> </td></tr>
+<tr align=right><td>———</td> <td>——— </td> <td>———</td> <td>———</td> <td> </td></tr>
+<tr><td {{Ts|ar}}>«I»u«/I»<sub>{{Polytonic|θ}}</sub> = 2.28710 </td> <td {{Ts|ar}}>P<sub>1</sub> = +10710<sup>44</sup></td> <td {{Ts|ar}}>P<sub>2</sub> = +840<sup>13</sup></td> <td {{Ts|ar}}>P<sub>3</sub> = +107<sup>32</sup></td> <td {{Ts|ar}}> </td></tr>
 </table>
 
 The value 2.2870967, obtained by retaining the extra figures, is
@@ -392,7 +393,8 @@ gives
 <td rowspan="2">+ {{...}})</td></tr>
 <tr><td {{Ts|bt|ac}}>2!</td></tr></table>
 
-{{ne|| {{=}} («I»u«/I»<sub>{{Polytonic|θ}}</sub> − «I»u«/I»<sub>0</sub>) ÷ P<sub>1</sub>&emsp;|&ensp;(6).}}PAGE:739We first find an approximate value for {{Polytonic|θ}}: then calculate P<sub>1</sub>, and
+{{ne|| {{=}} («I»u«/I»<sub>{{Polytonic|θ}}</sub> − «I»u«/I»<sub>0</sub>) ÷ P<sub>1</sub> | (6).}}
+We first find an approximate value for {{Polytonic|θ}}: then calculate P<sub>1</sub>, and
 find by (6) a more accurate value of {{Polytonic|θ}}; then, if necessary, recalculate
 P<sub>1</sub>, and thence {{Polytonic|θ}}, and so on.
 
@@ -405,11 +407,11 @@ in which the differences of «I»x«/I» are «I»h«/I»/«I»n«/I», where «
 If «I»n«/I» is even it may be advisable to form an intermediate table in
 which the intervals are {{EB1911 tfrac|1|2}}«I»h«/I». For this purpose we have
 
-{{ne||«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> {{=}} {{EB1911 tfrac|1|2}} (U<sub>0</sub> + U<sub>1</sub>)|&ensp;(7)}}
+{{ne||«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> {{=}} {{EB1911 tfrac|1|2}} (U<sub>0</sub> + U<sub>1</sub>)| (7)}}
 
 where
 
-{{ne||U {{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}{{Polytonic|δ}}<sup>2</sup>«I»u«/I» + {{EB1911 tfrac|3|128}}{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|1024}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I» + {{...}}&ensp;<br />&ensp;{{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}[{{Polytonic|δ}}<sup>2</sup>«I»u«/I» − {{EB1911 tfrac|3|16}} {{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|24}} ({{Polytonic|δ}}<sup>6</sup>«I»u«/I» − {{...}}) } ]|&ensp;(8)}}
+{{ne||U {{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}{{Polytonic|δ}}<sup>2</sup>«I»u«/I» + {{EB1911 tfrac|3|128}}{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|1024}}{{Polytonic|δ}}<sup>6</sup>«I»u«/I» + {{...}} <br /> {{=}} «I»u«/I» − {{EB1911 tfrac|1|8}}[{{Polytonic|δ}}<sup>2</sup>«I»u«/I» − {{EB1911 tfrac|3|16}} {{{Polytonic|δ}}<sup>4</sup>«I»u«/I» − {{EB1911 tfrac|5|24}} ({{Polytonic|δ}}<sup>6</sup>«I»u«/I» − {{...}}) } ]| (8)}}
 
 The following is an example; the data are the values of tan «I»x«/I» to
 five places of decimals, the interval in «I»x«/I» being 1°. The differences
@@ -418,18 +420,18 @@ of odd order are omitted for convenience of printing.
 {{center|«I»Example«/I» 5.}}
 
 <table align=center style="border: 1px solid; border-collapse: collapse;">
-<tr align=center><td {{Ts|pl.5|pr.5|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» &equiv; tan «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td> <td {{Ts|ba}}>U.</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» = mean of<br />values of U.</td> <td {{Ts|ba}}>«I»x«/I».</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» ≡ tan «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ba}}>{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td> <td {{Ts|ba}}>U.</td> <td {{Ts|pl.5|pr.5|ba}}>«I»u«/I» = mean of<br />values of U.</td> <td {{Ts|ba}}>«I»x«/I».</td></tr>
 
-<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°</td> <td {{Ts|pl.5|pr.5|br}}>3.27085</td> <td {{Ts|pl.5|pr.5|br}}>2339</td> <td {{Ts|pl.5|pr.5|br}}>100</td> <td {{Ts|pl.5|pr.5|br}}>5</td> <td {{Ts|pl.5|pr.5|br}}>3.26794 95</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
-<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.37594</td> <td {{Ts|pl.5|pr.5|br}}>73{{EB1911 tfrac|1|2}}°</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°</td> <td {{Ts|pl.5|pr.5|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|br}}>2808</td> <td {{Ts|pl.5|pr.5|br}}>132</td> <td {{Ts|pl.5|pr.5|br}}>23</td> <td {{Ts|pl.5|pr.5|br}}>3.48392 98</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
-<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td {{Ts|pl.5|pr.5|br}}>74{{EB1911 tfrac|1|2}}°</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>75°</td> <td {{Ts|pl.5|pr.5|br}}>3.73205</td> <td {{Ts|pl.5|pr.5|br}}>3409</td> <td {{Ts|pl.5|pr.5|br}}>187</td> <td {{Ts|pl.5|pr.5|br}}>18</td> <td {{Ts|pl.5|pr.5|br}}>3.72783 17</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
-<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>3.86671</td> <td {{Ts|pl.5|pr.5|br}}>75{{EB1911 tfrac|1|2}}°</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>76°</td> <td {{Ts|pl.5|pr.5|br}}>4.01078</td> <td {{Ts|pl.5|pr.5|br}}>4197</td> <td {{Ts|pl.5|pr.5|br}}>260</td> <td {{Ts|pl.5|pr.5|br}}>51</td> <td {{Ts|pl.5|pr.5|br}}>4.00559 22</td> <td {{Ts|br}}>&emsp;</td> <td>&emsp;</td></tr>
-<tr align=center><td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>4.16530</td> <td {{Ts|pl.5|pr.5|br}}>76{{EB1911 tfrac|1|2}}°</td></tr>
-<tr><td {{Ts|pl.5|pr.5|bl|br}}>77°</td> <td {{Ts|pl.5|pr.5|br}}>4.33148</td> <td {{Ts|pl.5|pr.5|br}}>5245</td> <td {{Ts|pl.5|pr.5|br}}>384</td> <td {{Ts|pl.5|pr.5|br}}>64</td> <td {{Ts|pl.5|pr.5|br}}>4.32501 07</td> <td {{Ts|pl.5|pr.5|br}}>&emsp;</td> <td {{Ts|pl.5|pr.5|br}}>&emsp;</td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|pl.5|pr.5|br}}>+</td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>73°</td> <td {{Ts|pl.5|pr.5|br}}>3.27085</td> <td {{Ts|pl.5|pr.5|br}}>2339</td> <td {{Ts|pl.5|pr.5|br}}>100</td> <td {{Ts|pl.5|pr.5|br}}>5</td> <td {{Ts|pl.5|pr.5|br}}>3.26794 95</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>3.37594</td> <td {{Ts|pl.5|pr.5|br}}>73{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°</td> <td {{Ts|pl.5|pr.5|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|br}}>2808</td> <td {{Ts|pl.5|pr.5|br}}>132</td> <td {{Ts|pl.5|pr.5|br}}>23</td> <td {{Ts|pl.5|pr.5|br}}>3.48392 98</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td {{Ts|pl.5|pr.5|br}}>74{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>75°</td> <td {{Ts|pl.5|pr.5|br}}>3.73205</td> <td {{Ts|pl.5|pr.5|br}}>3409</td> <td {{Ts|pl.5|pr.5|br}}>187</td> <td {{Ts|pl.5|pr.5|br}}>18</td> <td {{Ts|pl.5|pr.5|br}}>3.72783 17</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>3.86671</td> <td {{Ts|pl.5|pr.5|br}}>75{{EB1911 tfrac|1|2}}°</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>76°</td> <td {{Ts|pl.5|pr.5|br}}>4.01078</td> <td {{Ts|pl.5|pr.5|br}}>4197</td> <td {{Ts|pl.5|pr.5|br}}>260</td> <td {{Ts|pl.5|pr.5|br}}>51</td> <td {{Ts|pl.5|pr.5|br}}>4.00559 22</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>4.16530</td> <td {{Ts|pl.5|pr.5|br}}>76{{EB1911 tfrac|1|2}}°</td></tr>
+<tr><td {{Ts|pl.5|pr.5|bl|br}}>77°</td> <td {{Ts|pl.5|pr.5|br}}>4.33148</td> <td {{Ts|pl.5|pr.5|br}}>5245</td> <td {{Ts|pl.5|pr.5|br}}>384</td> <td {{Ts|pl.5|pr.5|br}}>64</td> <td {{Ts|pl.5|pr.5|br}}>4.32501 07</td> <td {{Ts|pl.5|pr.5|br}}> </td> <td {{Ts|pl.5|pr.5|br}}> </td></tr>
 </table>
 
 If a new table is formed from these values, the intervals being {{EB1911 tfrac|1|2}}°,
@@ -454,7 +456,7 @@ write {{Polytonic|φ}} = 1 − {{Polytonic|θ}}, Everett’s formula is, in its 
 <td rowspan="2">{{Polytonic|δ}}<sup>4</sup>«I»u«/I»<sub>0</sub> + {{...}}</td></tr>
 <tr><td {{Ts|bt|ac|pl.5|pr.5}}>3!</td> <td {{Ts|bt|ac|pl.5|pr.5}}>5!</td></tr></table>
 |-
-|width=5%|&ensp; (9).
+|width=5%|  (9).
 |}
 
 For actual calculations a less symmetrical form may be used.
@@ -476,7 +478,7 @@ the successive values of {{Polytonic|θ}} being 1/«I»n«/I» , 2/«I»n«/I» 
 interpolation between «I»u«/I»<sub>1</sub> and «I»u«/I»<sub>2</sub> we have, with the same succession
 of values of {{Polytonic|θ}},
 
-<div align=center>«I»u«/I»<sub>1+{{Polytonic|θ}}</sub> = «I»u«/I»<sub>1</sub> + <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>, &emsp; V<sub>2</sub> + <sub>1−{{Polytonic|θ}}</sub>V<sub>1</sub></div>
+<div align=center>«I»u«/I»<sub>1+{{Polytonic|θ}}</sub> = «I»u«/I»<sub>1</sub> + <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>,   V<sub>2</sub> + <sub>1−{{Polytonic|θ}}</sub>V<sub>1</sub></div>
 <div style="text-align: right; margin-top: -1em; margin-right: 1.3em;">(12).</div>
 
 The values of <sub>1−{{Polytonic|θ}}</sub>V<sub>1</sub> in (12) are exactly the same as those of <sub>{{Polytonic|θ}}</sub>V<sub>1</sub>
@@ -500,12 +502,12 @@ for convenience of calculation.
 <table align=center style="border: 1px solid; border-collapse: collapse;">
 <tr><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I» = tan «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}u.</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>3</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td></tr>
 
-<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td></tr>
-<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>11147</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>62</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td></tr>
-<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>74°.0</td> <td {{Ts|pl.5|pr.5|ac|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>700</td> <td {{Ts|pl.5|pr.5|ac|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|ac|br}}>8</td></tr>
-<tr align=center><td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>11847</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl|br}}>70</td> <td>&nbsp;</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.5</td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl|br}}>770</td> <td>&nbsp;</td> <td {{Ts|pl.5|pr.5|bl}}>9</td></tr>
-<tr align=center><td>&nbsp;</td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|br}}>12617</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>79</td> <td>&nbsp;</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td> <td {{Ts|pl.5|pr.5|ac|br}}>+</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}>11147</td> <td {{Ts|pl.5|pr.5|ac|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}>62</td> <td {{Ts|pl.5|pr.5|ac|br}}> </td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>74°.0</td> <td {{Ts|pl.5|pr.5|ac|br}}>3.48741</td> <td {{Ts|pl.5|pr.5|ac|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}>700</td> <td {{Ts|pl.5|pr.5|ac|br}}> </td> <td {{Ts|pl.5|pr.5|ac|br}}>8</td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>11847</td> <td> </td> <td {{Ts|pl.5|pr.5|bl|br}}>70</td> <td> </td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>74°.5</td> <td {{Ts|pl.5|pr.5|br}}>3.60588</td> <td> </td> <td {{Ts|pl.5|pr.5|bl|br}}>770</td> <td> </td> <td {{Ts|pl.5|pr.5|bl}}>9</td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|br}}>12617</td> <td {{Ts|br}}> </td> <td {{Ts|br}}>79</td> <td> </td></tr>
 </table>
 
 
@@ -537,9 +539,9 @@ corrected in the last figure.
 <tr><td {{Ts|pl.5|pr.5|ac|ba}}>co. «I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>co. {{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
 <tr align=center><td {{Ts|br}}>+</td> <td>−</td> <td {{Ts|bl|br}}>+</td> <td>−</td></tr>
 <tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.2</td> <td {{Ts|pl.5|pr.5|ac|br}}>.032</td> <td {{Ts|pl.5|pr.5|ac|br}}>.006336</td> <td {{Ts|pl.5|pr.5|al|br}}>.00135168 = 1/740 approx.</td></tr>
-<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.4</td> <td {{Ts|pl.5|pr.5|ac|br}}>.056</td> <td {{Ts|pl.5|pr.5|ac|br}}>.010752</td> <td {{Ts|pl.5|br}}>.00226304 = 1/442 &emsp;”</td></tr>
-<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.6</td> <td {{Ts|pl.5|pr.5|ac|br}}>.064</td> <td {{Ts|pl.5|pr.5|ac|br}}>.011648</td> <td {{Ts|pl.5|br}}>.00239616 = 1/417 &emsp;”</td></tr>
-<tr><td {{Ts|ac|br}}>.8</td> <td {{Ts|ac|br}}>.048</td> <td {{Ts|ac|br}}>.008064</td> <td {{Ts|pl.5}}>.00160512 = 1/623 &emsp;”</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.4</td> <td {{Ts|pl.5|pr.5|ac|br}}>.056</td> <td {{Ts|pl.5|pr.5|ac|br}}>.010752</td> <td {{Ts|pl.5|br}}>.00226304 = 1/442  ”</td></tr>
+<tr><td {{Ts|pl.5|pr.5|ac|bl|br}}>.6</td> <td {{Ts|pl.5|pr.5|ac|br}}>.064</td> <td {{Ts|pl.5|pr.5|ac|br}}>.011648</td> <td {{Ts|pl.5|br}}>.00239616 = 1/417  ”</td></tr>
+<tr><td {{Ts|ac|br}}>.8</td> <td {{Ts|ac|br}}>.048</td> <td {{Ts|ac|br}}>.008064</td> <td {{Ts|pl.5}}>.00160512 = 1/623  ”</td></tr>
 </table>
 
 
@@ -611,19 +613,21 @@ formula
 <td rowspan="2">{{Polytonic|δ}}<sup>4</sup> «I»u«/I»<sub>0</sub> + {{...}}</td></tr>
 <tr><td {{Ts|bt|ac|pl.5|pr.5}}>2!</td> <td {{Ts|bt|ac|pl.5|pr.5}}>3!</td>
 <td {{Ts|bt|ac|pl.5|pr.5}}>4!</td></tr></table>
-<div style="text-align: right; margin-top: -2em; margin-right: 1.3em;">(15),</div>PAGE:740which may similarly be regarded as an extension of the theorem
+<div style="text-align: right; margin-top: -2em; margin-right: 1.3em;">(15),</div>
+{{nop}}
+which may similarly be regarded as an extension of the theorem
 that, if «I»n«/I» is a positive integer,
 
-{{ne||«I»u«/I»<sub>«I»n«/I»</sub> {{=}} «I»u«/I»<sub>0</sub> + n{{Polytonic|δ}}«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> +{{sfrac|font-size=100%|«I»n«/I» («I»n«/I» − 1)|2!}}{{Polytonic|δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> +{{sfrac|font-size=100%|(«I»n«/I» + 1)«I»n«/I»(«I»n«/I» − 1)|3!}}{{Polytonic|δ}}<sup>3</sup> «I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> + {{...}}|&ensp;(16).}}
+{{ne||«I»u«/I»<sub>«I»n«/I»</sub> {{=}} «I»u«/I»<sub>0</sub> + n{{Polytonic|δ}}«I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> +{{sfrac|font-size=100%|«I»n«/I» («I»n«/I» − 1)|2!}}{{Polytonic|δ}}<sup>2</sup> «I»u«/I»<sub>0</sub> +{{sfrac|font-size=100%|(«I»n«/I» + 1)«I»n«/I»(«I»n«/I» − 1)|3!}}{{Polytonic|δ}}<sup>3</sup> «I»u«/I»<sub>{{EB1911 tfrac|1|2}}</sub> + {{...}}| (16).}}
 
 There are other central-difference formulae besides those mentioned
 above; the general symbolical expression is
 
-{{ne||«I»u«/I»<sub>{{Polytonic|θ}}</sub> {{=}} (cosh {{Polytonic|θ}}«I»h«/I»D + sinh {{Polytonic|θ}}«I»h«/I»D) «I»u«/I»<sub>0</sub>|&ensp;(17).}}
+{{ne||«I»u«/I»<sub>{{Polytonic|θ}}</sub> {{=}} (cosh {{Polytonic|θ}}«I»h«/I»D + sinh {{Polytonic|θ}}«I»h«/I»D) «I»u«/I»<sub>0</sub>| (17).}}
 
 where
 
-{{ne||cosh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{Polytonic|μ}}, sinh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{EB1911 tfrac|1|2}}{{Polytonic|δ}}|&ensp;(18).}}
+{{ne||cosh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{Polytonic|μ}}, sinh {{EB1911 tfrac|1|2}}«I»h«/I»D {{=}} {{EB1911 tfrac|1|2}}{{Polytonic|δ}}| (18).}}
 
 8. «I»Comparative Accuracy.«/I»—Central-difference formulae are usually
 more accurate than advancing-difference formulae, whether we
@@ -637,7 +641,7 @@ the tabulated values of «I»u«/I», then the ratio of the limit of error of «
 as calculated from the first «I»r«/I» terms of the series in (1), to {{EB1911 tfrac|1|2}}{{Polytonic|ρ}} is the
 sum of the first «I»r«/I» terms of the series
 
-<div align=center>1 + 0 + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) + {{EB1911 tfrac|7|12}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) +<br />&emsp;&emsp; {{EB1911 tfrac|1|4}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) (4 − {{Polytonic|θ}}) + {{EB1911 tfrac|31|360}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) {{...}} (5 − {{Polytonic|θ}}) + {{...}},</div>
+<div align=center>1 + 0 + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) + {{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) + {{EB1911 tfrac|7|12}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) +<br />   {{EB1911 tfrac|1|4}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) (2 − {{Polytonic|θ}}) (3 − {{Polytonic|θ}}) (4 − {{Polytonic|θ}}) + {{EB1911 tfrac|31|360}}{{Polytonic|θ}} (1 − {{Polytonic|θ}}) {{...}} (5 − {{Polytonic|θ}}) + {{...}},</div>
 
 while the corresponding ratio for the use of differences up to {{Polytonic|δ}}<sup>2«I»p«/I»</sup>«I»u«/I»<sub>0</sub>
 inclusive in (4) or up to {{Polytonic|δ}}<sup>2«I»p«/I»</sup> «I»u«/I»<sub>1</sub> and «I»o«/I»<sup>2«I»p«/I»</sup> «I»u«/I»<sub>0</sub> in (9) («I»i.e.«/I» in effect, up to
@@ -660,20 +664,20 @@ throughout.
 {{center|{{sc|Table 4.}}}}
 
 <table align=center style="border: 1px solid; border-collapse: collapse; line-height:105%" cellpadding=4>
-<tr align=center><td rowspan="2" colspan="2" style="border: 1px solid;">&nbsp;</td> <td style="border: 1px solid;" colspan="7">&nbsp;Error due to use of Differences up to and&nbsp;<br />including</td></tr>
+<tr align=center><td rowspan="2" colspan="2" style="border: 1px solid;"> </td> <td style="border: 1px solid;" colspan="7"> Error due to use of Differences up to and <br />including</td></tr>
 
 <tr align=center><td style="border: 1px solid;">1st.</td> <td style="border: 1px solid;">2nd.</td> <td style="border: 1px solid;">3rd.</td> <td style="border: 1px solid;">4th.</td> <td style="border: 1px solid;">5th.</td> <td style="border: 1px solid;">6th.</td> <td style="border: 1px solid;">7th.</td></tr>
 
-<tr align=right><td align=center rowspan="2">&ensp;.5<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.813</td> <td style="border-right: 1px solid;">1.086</td> <td style="border-right: 1px solid;">1.497</td> <td style="border-right: 1px solid;">2.132</td> <td>3.147</td></tr>
-<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.745</td> <td>.745</td></tr>
-<tr align=right><td align=center rowspan="2">.2<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.724</td> <td style="border-right: 1px solid;">.960</td> <td style="border-right: 1px solid;">1.343</td> <td style="border-right: 1px solid;">1.976</td> <td>3.042</td></tr>
-<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
-<tr align=right><td align=center rowspan="2">.4<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.812</td> <td style="border-right: 1px solid;">1.104</td> <td style="border-right: 1px solid;">1.553</td> <td style="border-right: 1px solid;">2.265</td> <td>3.422</td></tr>
-<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
-<tr align=right><td align=center rowspan="2">.6<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.788</td> <td style="border-right: 1px solid;">1.024</td> <td style="border-right: 1px solid;">1.366</td> <td style="border-right: 1px solid;">1.886</td> <td>2.700</td></tr>
-<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
-<tr align=right><td align=center rowspan="2">.8<math>\Big\{</math></td> <td style="border-right: 1px solid;">I.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.676</td> <td style="border-right: 1px solid;">.800</td> <td style="border-right: 1px solid;">.969</td> <td style="border-right: 1px solid;">1.213</td> <td>1.582</td></tr>
-<tr align=right><td style="border-right: 1px solid;">II.&emsp;.&emsp;.&emsp;</td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
+<tr align=right><td align=center rowspan="2"> .5<math>\Big\{</math></td> <td style="border-right: 1px solid;">I. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.813</td> <td style="border-right: 1px solid;">1.086</td> <td style="border-right: 1px solid;">1.497</td> <td style="border-right: 1px solid;">2.132</td> <td>3.147</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.625</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.696</td> <td style="border-right: 1px solid;">.745</td> <td>.745</td></tr>
+<tr align=right><td align=center rowspan="2">.2<math>\Big\{</math></td> <td style="border-right: 1px solid;">I. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.724</td> <td style="border-right: 1px solid;">.960</td> <td style="border-right: 1px solid;">1.343</td> <td style="border-right: 1px solid;">1.976</td> <td>3.042</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
+<tr align=right><td align=center rowspan="2">.4<math>\Big\{</math></td> <td style="border-right: 1px solid;">I. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.812</td> <td style="border-right: 1px solid;">1.104</td> <td style="border-right: 1px solid;">1.553</td> <td style="border-right: 1px solid;">2.265</td> <td>3.422</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
+<tr align=right><td align=center rowspan="2">.6<math>\Big\{</math></td> <td style="border-right: 1px solid;">I. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.788</td> <td style="border-right: 1px solid;">1.024</td> <td style="border-right: 1px solid;">1.366</td> <td style="border-right: 1px solid;">1.886</td> <td>2.700</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.620</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.688</td> <td style="border-right: 1px solid;">.734</td> <td>.734</td></tr>
+<tr align=right><td align=center rowspan="2">.8<math>\Big\{</math></td> <td style="border-right: 1px solid;">I. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.676</td> <td style="border-right: 1px solid;">.800</td> <td style="border-right: 1px solid;">.969</td> <td style="border-right: 1px solid;">1.213</td> <td>1.582</td></tr>
+<tr align=right><td style="border-right: 1px solid;">II. . . </td> <td style="border-right: 1px solid;">.500</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.580</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.624</td> <td style="border-right: 1px solid;">.653</td> <td>.653</td></tr>
 </table>
 
 In some cases the differences tabulated are not the tabular differences,
@@ -709,34 +713,34 @@ differences by making the entries shown in italics below.
 {{center|«I»Example«/I» 7.}}
 
 <table align=center style="border: 1px solid; border-collapse: collapse;" rules=cols>
-<tr align=center><td style="border: 1px solid;">«I»x«/I».</td> <td style="border: 1px solid;">&thinsp;«I»u«/I» = tan «I»x«/I».&thinsp;</td> <td style="border: 1px solid;">{{Polytonic|δ}}«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>3</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>5</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
+<tr align=center><td style="border: 1px solid;">«I»x«/I».</td> <td style="border: 1px solid;"> «I»u«/I» = tan «I»x«/I». </td> <td style="border: 1px solid;">{{Polytonic|δ}}«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>2</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>3</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>4</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>5</sup>«I»u«/I».</td> <td style="border: 1px solid;">{{Polytonic|δ}}<sup>6</sup>«I»u«/I».</td></tr>
 
 <tr align=center><td> </td> <td> </td> <td>+</td> <td>+</td> <td>+</td> <td>+</td> <td>+</td> <td>+</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»6775«/I»</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»34«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>&emsp;60°&emsp;</td> <td>1.73205</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»425«/I»</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>7200</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»43«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>61°</td> <td>1.80405</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>468</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>7668</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>52</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>62°</td> <td>1.88073</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>520</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>9</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>8188</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>61</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>63°</td> <td>1.96261</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>581</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>10</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>8769</td> <td>&nbsp;</td> <td {{Ts|ar|pr.5}}>71</td> <td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
-<tr align=center><td>64°</td> <td>2.05030</td> <td>.</td> <td {{Ts|ar|pr.5}}>652</td> <td>.</td> <td {{Ts|ar|pr.5}}>9</td> <td>&nbsp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td> </td> <td> </td> <td {{Ts|ar|pr.5}}>«I»6775«/I»</td> <td> </td> <td {{Ts|ar|pr.5}}>«I»34«/I»</td> <td> </td> <td> </td> <td> </td></tr>
+<tr align=center><td> 60° </td> <td>1.73205</td> <td> </td> <td {{Ts|ar|pr.5}}>«I»425«/I»</td> <td> </td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td> </td> <td> </td></tr>
+<tr align=center><td> </td> <td> </td> <td {{Ts|ar|pr.5}}>7200</td> <td> </td> <td {{Ts|ar|pr.5}}>«I»43«/I»</td> <td> </td> <td> </td> <td> </td></tr>
+<tr align=center><td>61°</td> <td>1.80405</td> <td> </td> <td {{Ts|ar|pr.5}}>468</td> <td> </td> <td {{Ts|ar|pr.5}}>«I»9«/I»</td> <td> </td> <td> </td></tr>
+<tr align=center><td> </td> <td> </td> <td {{Ts|ar|pr.5}}>7668</td> <td> </td> <td {{Ts|ar|pr.5}}>52</td> <td> </td> <td> </td> <td> </td></tr>
+<tr align=center><td>62°</td> <td>1.88073</td> <td> </td> <td {{Ts|ar|pr.5}}>520</td> <td> </td> <td {{Ts|ar|pr.5}}>9</td> <td> </td> <td> </td></tr>
+<tr align=center><td> </td> <td> </td> <td {{Ts|ar|pr.5}}>8188</td> <td> </td> <td {{Ts|ar|pr.5}}>61</td> <td> </td> <td> </td> <td> </td></tr>
+<tr align=center><td>63°</td> <td>1.96261</td> <td> </td> <td {{Ts|ar|pr.5}}>581</td> <td> </td> <td {{Ts|ar|pr.5}}>10</td> <td> </td> <td> </td></tr>
+<tr align=center><td> </td> <td> </td> <td {{Ts|ar|pr.5}}>8769</td> <td> </td> <td {{Ts|ar|pr.5}}>71</td> <td> </td> <td> </td> <td> </td></tr>
+<tr align=center><td>64°</td> <td>2.05030</td> <td>.</td> <td {{Ts|ar|pr.5}}>652</td> <td>.</td> <td {{Ts|ar|pr.5}}>9</td> <td> </td> <td> </td></tr>
 <tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
 <tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
 <tr align=center><td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td> <td>.</td></tr>
 <tr align=center><td>75°</td> <td>3.73205</td> <td>.</td> <td>3409</td> <td>.</td> <td>187</td> <td>.</td> <td>18</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>27873</td> <td>&nbsp;</td> <td>788</td> <td>&nbsp;</td> <td>73</td> <td>&nbsp;</td></tr>
-<tr align=center><td>76°</td> <td>4.01078</td> <td>&nbsp;</td> <td>4197</td> <td>&nbsp;</td> <td>260</td> <td>&nbsp;</td> <td>51</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>32070</td> <td>&nbsp;</td> <td>1048</td> <td>&nbsp;</td> <td>124</td> <td>&nbsp;</td></tr>
-<tr align=center><td>77°</td> <td>4.33148</td> <td>&nbsp;</td> <td>5245</td> <td>&nbsp;</td> <td>384</td> <td>&nbsp;</td> <td>64</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>37315</td> <td>&nbsp;</td> <td>1432</td> <td>&nbsp;</td> <td>188</td> <td>&nbsp;</td></tr>
-<tr align=center><td>78°</td> <td>4.70463</td> <td>&nbsp;</td> <td>6677</td> <td>&nbsp;</td> <td>572</td> <td>&nbsp;</td> <td>«I»64«/I»</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>43992</td> <td>&nbsp;</td> <td>2004</td> <td>&nbsp;</td> <td>«I»252«/I»</td> <td>&nbsp;</td></tr>
-<tr align=center><td>79°</td> <td>5.14455</td> <td>&nbsp;</td> <td>8681</td> <td>&nbsp;</td> <td>«I»824«/I»</td> <td>&nbsp;</td> <td>«I»64«/I»</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>52673</td> <td>&nbsp;</td> <td>«I»2828«/I»</td> <td>&nbsp;</td> <td>«I»316«/I»</td> <td>&nbsp;</td></tr>
-<tr align=center><td>80°</td> <td>5.67128</td> <td>&nbsp;</td> <td>&ensp;«I»11509«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp;«I»1140«/I»&ensp;</td> <td>&nbsp;</td> <td>&emsp;«I»64«/I»&emsp;</td></tr>
-<tr align=center><td {{Ts|ac|bb}}>&nbsp;</td> <td {{Ts|ac|bb}}>&nbsp;</td> <td>&ensp;«I»64182«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp;«I»3968«/I»&ensp;</td> <td>&nbsp;</td> <td>&ensp; «I»380«/I» &ensp;</td> <td>&nbsp;</td></tr>
+<tr align=center><td> </td> <td> </td> <td>27873</td> <td> </td> <td>788</td> <td> </td> <td>73</td> <td> </td></tr>
+<tr align=center><td>76°</td> <td>4.01078</td> <td> </td> <td>4197</td> <td> </td> <td>260</td> <td> </td> <td>51</td></tr>
+<tr align=center><td> </td> <td> </td> <td>32070</td> <td> </td> <td>1048</td> <td> </td> <td>124</td> <td> </td></tr>
+<tr align=center><td>77°</td> <td>4.33148</td> <td> </td> <td>5245</td> <td> </td> <td>384</td> <td> </td> <td>64</td></tr>
+<tr align=center><td> </td> <td> </td> <td>37315</td> <td> </td> <td>1432</td> <td> </td> <td>188</td> <td> </td></tr>
+<tr align=center><td>78°</td> <td>4.70463</td> <td> </td> <td>6677</td> <td> </td> <td>572</td> <td> </td> <td>«I»64«/I»</td></tr>
+<tr align=center><td> </td> <td> </td> <td>43992</td> <td> </td> <td>2004</td> <td> </td> <td>«I»252«/I»</td> <td> </td></tr>
+<tr align=center><td>79°</td> <td>5.14455</td> <td> </td> <td>8681</td> <td> </td> <td>«I»824«/I»</td> <td> </td> <td>«I»64«/I»</td></tr>
+<tr align=center><td> </td> <td> </td> <td>52673</td> <td> </td> <td>«I»2828«/I»</td> <td> </td> <td>«I»316«/I»</td> <td> </td></tr>
+<tr align=center><td>80°</td> <td>5.67128</td> <td> </td> <td> «I»11509«/I» </td> <td> </td> <td> «I»1140«/I» </td> <td> </td> <td> «I»64«/I» </td></tr>
+<tr align=center><td {{Ts|ac|bb}}> </td> <td {{Ts|ac|bb}}> </td> <td> «I»64182«/I» </td> <td> </td> <td> «I»3968«/I» </td> <td> </td> <td>  «I»380«/I»  </td> <td> </td></tr>
 </table>
 
 For interpolating between «I»x«/I» = 60° and «I»x«/I» = 61° we should obtain the
@@ -777,28 +781,29 @@ value of «I»x«/I».
 
 {{center|«I»Extensions.«/I»}}
 
-12. «I»Construction of Formulae.«/I»—Any difference of «I»u«/I» of the «I»r«/I»&#8202;th
+12. «I»Construction of Formulae.«/I»—Any difference of «I»u«/I» of the «I»r«/I» th
 order involves «I»r«/I» + 1 consecutive values of «I»u«/I», and it might be expressed
 by the suffixes which indicate these values. Thus we might
 write the table of differences
 
 <table align=center style="border: 1px solid; border-collapse: collapse;" rules=cols>
-<tr align=center><td style="border: 1px solid;">&emsp;«I»x«/I».&emsp;</td> <td style="border: 1px solid;">&emsp;«I»u«/I».&emsp;</td> <td style="border: 1px solid;">&ensp;1st Diff.&ensp;</td> <td style="border: 1px solid;">&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>3rd Diff.</td> <td style="border: 1px solid;">4th Diff.</td></tr>
+<tr align=center><td style="border: 1px solid;"> «I»x«/I». </td> <td style="border: 1px solid;"> «I»u«/I». </td> <td style="border: 1px solid;"> 1st Diff. </td> <td style="border: 1px solid;> 2nd Diff. </td> <td {{Ts|ba}}>3rd Diff.</td> <td style="border: 1px solid;>4th Diff.</td></tr>
 
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
-<tr align=center><td>·</td> <td>·</td> <td>(−1, 0)</td> <td>·</td> <td>&thinsp;(−2, −1, 0, 1)&thinsp;</td> <td>·</td></tr>
-<tr align=center><td>«I»x«/I»<sub>0</sub></td> <td>«I»u«/I»<sub>0</sub></td> <td>&nbsp;</td> <td>(−1, 0, 1)</td> <td>&nbsp;</td> <td>&thinsp;(−2, −1, 0, 1, 2)&thinsp;</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>(0, 1)</td> <td>&nbsp;</td> <td>(−1, 0, 1, 2)</td> <td>&nbsp;</td></tr>
-<tr align=center><td>«I»x«/I»<sub>1</sub></td> <td>«I»u«/I»<sub>1</sub></td> <td>&nbsp;</td> <td>(0, 1, 2)</td> <td>&nbsp;</td> <td>(−1, 0, 1, 2, 3)</td></tr>
-<tr align=center><td>&nbsp;</td> <td>&nbsp;</td> <td>(1, 2)</td> <td>&nbsp;</td> <td>(0, 1, 2, 3)</td> <td>&nbsp;</td></tr>
-<tr align=center><td>«I»x«/I»<sub>2</sub></td> <td>«I»u«/I»<sub>2</sub></td> <td>&nbsp;</td> <td>(1, 2, 3)</td> <td>&nbsp;</td> <td>(0, 1, 2, 3, 4)</td></tr>
+<tr align=center><td>·</td> <td>·</td> <td>(−1, 0)</td> <td>·</td> <td> (−2, −1, 0, 1) </td> <td>·</td></tr>
+<tr align=center><td>«I»x«/I»<sub>0</sub></td> <td>«I»u«/I»<sub>0</sub></td> <td> </td> <td>(−1, 0, 1)</td> <td> </td> <td> (−2, −1, 0, 1, 2) </td></tr>
+<tr align=center><td> </td> <td> </td> <td>(0, 1)</td> <td> </td> <td>(−1, 0, 1, 2)</td> <td> </td></tr>
+<tr align=center><td>«I»x«/I»<sub>1</sub></td> <td>«I»u«/I»<sub>1</sub></td> <td> </td> <td>(0, 1, 2)</td> <td> </td> <td>(−1, 0, 1, 2, 3)</td></tr>
+<tr align=center><td> </td> <td> </td> <td>(1, 2)</td> <td> </td> <td>(0, 1, 2, 3)</td> <td> </td></tr>
+<tr align=center><td>«I»x«/I»<sub>2</sub></td> <td>«I»u«/I»<sub>2</sub></td> <td> </td> <td>(1, 2, 3)</td> <td> </td> <td>(0, 1, 2, 3, 4)</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>(2, 3)</td> <td>·</td> <td>(1, 2, 3, 4)</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
 <tr align=center><td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td> <td>·</td></tr>
-</table>PAGE:741The formulae (1) and (15) might then be written
+</table>
+The formulae (1) and (15) might then be written
 
 <table align=center>
 <tr><td rowspan="2">«I»u«/I» = «I»u«/I»<sub>0</sub> +</td> <td>«I»x«/I» − «I»x«/I»<sub>0</sub></td>
@@ -855,15 +860,15 @@ values of «I»x«/I» for which «I»u«/I» is tabulated be «I»a«/I» = «I
 {{Polytonic|γ}}«I»h«/I», {{...}} Then the table becomes
 
 <table align=center style="border: 1px solid black; border-collapse: collapse;">
-<tr align=center><td {{Ts|ba}} rowspan="2">«I»x«/I».</td> <td {{Ts|ba}} rowspan="2"> &emsp; «I»u«/I». &emsp; </td> <td {{Ts|ba}} colspan="3">Adjusted Differences.</td></tr>
-<tr><td {{Ts|ba}}>&ensp;1st Diff.&ensp;</td> <td {{Ts|ba}}>&ensp;2nd Diff.&ensp;</td> <td {{Ts|ba}}>&emsp; &emsp;&c.&emsp; &emsp;</td></tr>
+<tr align=center><td {{Ts|ba}} rowspan="2">«I»x«/I».</td> <td {{Ts|ba}} rowspan="2">   «I»u«/I».   </td> <td {{Ts|ba}} colspan="3">Adjusted Differences.</td></tr>
+<tr><td {{Ts|ba}}> 1st Diff. </td> <td {{Ts|ba}}> 2nd Diff. </td> <td {{Ts|ba}}>   &c.   </td></tr>
 <tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
 <tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
 <tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
 <tr align=center><td {{Ts|pl.5|pr.5|br}}>«I»a«/I» = «I»x«/I»<sub>{{Polytonic|α}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>«I»u«/I»<sub>{{Polytonic|α}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td {{Ts|pl.5|pr.5|br}}>·</td> <td> </td></tr>
-<tr align=center><td> </td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β}})</td> <td {{Ts|br}}>&nbsp;</td> <td></td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|bl|br}}>«I»b«/I» = «I»x«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>«I»u«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β, γ}})</td> <td> </td></tr>
-<tr align=center><td> </td> <td {{Ts|bl|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|β, γ}})</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β}})</td> <td {{Ts|br}}> </td> <td></td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|bl|br}}>«I»b«/I» = «I»x«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|pl.5|pr.5|br}}>«I»u«/I»<sub>{{Polytonic|β}}</sub></td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|α, β, γ}})</td> <td> </td></tr>
+<tr align=center><td> </td> <td {{Ts|bl|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>({{Polytonic|β, γ}})</td> <td {{Ts|br}}> </td> <td> </td></tr>
 <tr align=center><td>«I»c«/I» = «I»x«/I»<sub>{{Polytonic|γ}}</sub></td> <td {{Ts|bl|br}}>«I»u«/I»<sub>{{Polytonic|γ}}</sub></td> <td {{Ts|br}}>·</td> <td {{Ts|br}}>·</td> <td> </td></tr>
 <tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
 <tr align=center><td>·</td> <td {{Ts|bl|br}}>·</td> <td>·</td> <td {{Ts|bl|br}}>·</td> <td> </td></tr>
@@ -907,20 +912,20 @@ to be 1°:—
 <table align=center style="border: 1px solid black; border-collapse: collapse;">
 <tr><td {{Ts|pl.5|pr.5|ac|ba}}>«I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>«I»u«/I» = sin «I»x«/I».</td> <td {{Ts|pl.5|pr.5|ac|ba}}>1st Diff.<br />(adjusted).</td> <td {{Ts|pl.5|pr.5|ac|ba}}>2nd Diff.<br />(adjusted).</td> <td {{Ts|pl.5|pr.5|ac|ba}}>3rd Diff.<br />(adjusted).</td></tr>
 
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>+</td> <td {{Ts|br}}>−</td> <td>−</td></tr>
-<tr align=center><td {{Ts|pl.5|pr.5|br}}>20°</td> <td {{Ts|pl.5|pr.5|br}}>.3420201</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>162932 50</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>22°</td> <td {{Ts|pl.5|pr.5|br}}>.3746066</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1125 00</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>161245 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>48 75</td></tr>
-<tr align=center><td {{Ts|br}}>23°</td> <td {{Ts|pl.5|pr.5|br}}>.3907311</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1222 50</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>158800 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>48 30</td></tr>
-<tr align=center><td {{Ts|br}}>26°</td> <td {{Ts|pl.5|pr.5|br}}>.4383711</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1303 00</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>156194 00</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>47 49</td></tr>
-<tr align=center><td {{Ts|br}}>27°</td> <td {{Ts|pl.5|pr.5|br}}>.4539905</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1445 47</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>151857 60</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5}}>46 00</td></tr>
-<tr align=center><td {{Ts|br}}>32°</td> <td {{Ts|pl.5|pr.5|br}}>.5299193</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>1583 48</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|pl.5|pr.5|br}}>145523 67</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
-<tr align=center><td {{Ts|br}}>35°</td> <td {{Ts|pl.5|pr.5|br}}>.5735764</td> <td {{Ts|br}}>&nbsp;</td> <td {{Ts|br}}>&nbsp;</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|br}}>+</td> <td {{Ts|br}}>−</td> <td>−</td></tr>
+<tr align=center><td {{Ts|pl.5|pr.5|br}}>20°</td> <td {{Ts|pl.5|pr.5|br}}>.3420201</td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>162932 50</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>22°</td> <td {{Ts|pl.5|pr.5|br}}>.3746066</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>1125 00</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>161245 00</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5}}>48 75</td></tr>
+<tr align=center><td {{Ts|br}}>23°</td> <td {{Ts|pl.5|pr.5|br}}>.3907311</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>1222 50</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>158800 00</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5}}>48 30</td></tr>
+<tr align=center><td {{Ts|br}}>26°</td> <td {{Ts|pl.5|pr.5|br}}>.4383711</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>1303 00</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>156194 00</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5}}>47 49</td></tr>
+<tr align=center><td {{Ts|br}}>27°</td> <td {{Ts|pl.5|pr.5|br}}>.4539905</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>1445 47</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>151857 60</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5}}>46 00</td></tr>
+<tr align=center><td {{Ts|br}}>32°</td> <td {{Ts|pl.5|pr.5|br}}>.5299193</td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>1583 48</td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td {{Ts|pl.5|pr.5|br}}>145523 67</td> <td {{Ts|br}}> </td> <td> </td></tr>
+<tr align=center><td {{Ts|br}}>35°</td> <td {{Ts|pl.5|pr.5|br}}>.5735764</td> <td {{Ts|br}}> </td> <td {{Ts|br}}> </td> <td> </td></tr>
 </table>
 
 To find «I»u«/I» for «I»x«/I» = 31°, we use the values for 26°, 27°, 32° and 35°,
@@ -987,3 +992,5 @@ vol. xxxv. (1901), p. 452. As to relative accuracy of different
 formulae, see «I»Proc. Lon. Math. Soc.«/I» (2) vol. iv. p. 320. Examples
 of interpolation by means of auxiliary curves will be found in
 «I»Jour. Royal Stat. Soc.«/I» vol. lxiii. pp. 433, 637. See also {{EB1911 article link|Differences, Calculus of}}. {{Fs|108%|{{EB1911 footer initials|William Fleetwood Sheppard|W. F. Sh.}}}}
+{{EB1911 fine print/e}}
+

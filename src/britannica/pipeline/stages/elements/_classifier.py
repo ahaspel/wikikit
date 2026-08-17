@@ -41,8 +41,7 @@ from britannica.pipeline.stages.elements._registry import (
     ClassifiedElement,
     ElementRegistry,
     TABLE_LABELS,
-    _PH,
-    _next_placeholder_id,
+    new_placeholder,
 )
 from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
@@ -54,7 +53,8 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
+    SHAPE_LIST,
     SHAPE_TITLE,
     strip_outer,
 )
@@ -684,12 +684,6 @@ def _classify_html_table(
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
-def _mint_ph() -> str:
-    """A fresh placeholder key off the shared module counter, so a synthetic
-    ROW/CELL/CAPTION key never collides with a walker-minted one."""
-    return f"{_PH}ELEM:{_next_placeholder_id()}{_PH}"
-
-
 def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
     """Decompose a `TABLE`-labelled grid into a TABLE node whose children are ROW
     nodes (each holding TD/TH cell nodes) plus, if present, a CAPTION node.  Each
@@ -703,7 +697,7 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
     children: dict[str, ClassifiedElement] = {}
     if caption_raw:
         cap_body, cap_reg = classify_article(caption_raw)
-        children[_mint_ph()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
+        children[new_placeholder()] = ClassifiedElement("CAPTION", "", cap_body, cap_reg)
     row_phs: list[str] = []
     for row_attr, cells in rows:
         if not cells:
@@ -712,11 +706,11 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cell_children: dict[str, ClassifiedElement] = {}
         for sep, cell_attr, content in cells:
             cell_body, cell_reg = classify_article(content)
-            ph = _mint_ph()
+            ph = new_placeholder()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
             cell_phs.append(ph)
-        rph = _mint_ph()
+        rph = new_placeholder()
         children[rph] = ClassifiedElement(
             "ROW", row_attr, "".join(cell_phs), cell_children)
         row_phs.append(rph)
@@ -726,43 +720,50 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
     return ClassifiedElement("TABLE", raw, "".join(row_phs), children)
 
 
-def _classify_outline_composite(raw: str, block: str) -> ClassifiedElement:
-    """The OUTLINE decomposer — twin of `_classify_table_composite`.  ONE outline
-    whose items nest: split the block into leveled items (`recognize_outline`),
-    and let each item own the deeper items that follow it directly as its own
-    item-children — not a tree of wrapper outlines.  Each item's own content
-    recurses back through `classify_article`, so a `:<math>…` item's math becomes
-    a real MATH child, exactly as a table cell's content does."""
-    from britannica.pipeline.stages.elements._outline import recognize_outline
-    phs, reg = _outline_items(recognize_outline(block))
-    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+def _classify_indent_composite(raw: str) -> ClassifiedElement:
+    """An INDENT paragraph is a COMPOSITE — the same shape as HANGING_INDENT.
+
+    Peel the `:` mark and recurse the CONTENT, so a link / math / footnote inside
+    an indented paragraph is a real child; the producer re-derives the depth from
+    `raw`.  There is no item ladder any more: the source marks an indent, not a
+    hierarchy ([[project_outline_arc]])."""
+    from britannica.pipeline.stages.elements._indent import indent_peel
+    _depth, content = indent_peel(raw)
+    placeholderized, tree = classify_article(content)
+    return ClassifiedElement(
+        label="INDENT", raw=raw, inner_text=placeholderized,
+        inner_registry={ph: tree[ph]
+                        for ph in sorted(tree, key=placeholderized.find)},
+    )
 
 
 def _classify_html_list_composite(raw: str) -> ClassifiedElement:
-    """`<ol>…<li>…</li>…</ol>` is a degenerate OUTLINE — the HTML twin of
-    `{{ordered list}}`.  `_walk_html_list` parses the `<li>` items (reading
-    `list-style-type` for the numbering, recursing a nested `<ol>` at depth+1) into the
-    same `(depth, content)` rows a `:`-block yields; run them through the ONE outline
-    decomposer so an HTML list produces `«OUTLINE»«OLI»` and renders through
-    `build_outline_ul` like any other outline — no separate producer, no marker format."""
+    """`<ol>…<li>…</li>…</ol>` — a LIST the source states in HTML syntax.
+
+    `_walk_html_list` parses the `<li>` items and the root's `list-style-type`;
+    the nesting and the numbering are both the source's, so both are carried."""
+    from britannica.pipeline.stages.elements._list import ListRow
     from britannica.pipeline.stages.elements._ordered_list import _walk_html_list
-    rows: list[tuple[int, str]] = []
-    _walk_html_list(raw, 0, rows)
-    phs, reg = _outline_items(rows)
-    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+    rows: list[ListRow] = []
+    _walk_html_list(raw, 1, rows)
+    return _classify_list(rows)
 
 
 def _classify_ordered_list_composite(raw: str) -> ClassifiedElement:
-    """`{{ordered list|…}}` is a degenerate OUTLINE — the same nested-item structure,
-    recognized by an explicit `{{…}}` delimiter (like a table's `{|`) instead of by
-    `:`-indent, its items pre-labelled (I./a./1.).  `_walk` parses the template into the
-    same `(depth, content)` rows a `:`-block yields; run them through the ONE outline
-    decomposer so an ordered list produces `«OUTLINE»«OLI»` and renders like any other."""
+    """`{{ordered list|…}}` — the same LIST in template syntax (GEOGRAPHY's
+    Richthofen classification, four levels deep with a stated `type=` at each)."""
+    from britannica.pipeline.stages.elements._list import ListRow
     from britannica.pipeline.stages.elements._ordered_list import _walk
-    rows: list[tuple[int, str]] = []
-    _walk(raw, 0, rows)
-    phs, reg = _outline_items(rows)
-    return ClassifiedElement("OUTLINE", raw, "".join(phs), reg)
+    rows: list[ListRow] = []
+    _walk(raw, 1, rows)
+    return _classify_list(rows)
+
+
+def _classify_hash_list_composite(raw: str) -> ClassifiedElement:
+    """A run of `#`-marked lines — the wikitext ordered list.  Depth is the mark
+    count, so `##` is a sublist of the `#` above it."""
+    from britannica.pipeline.stages.elements._list import hash_items
+    return _classify_list(hash_items(raw))
 
 
 _COLUMNS_RE = re.compile(r"\{\{\s*columns\b", re.IGNORECASE)
@@ -804,29 +805,67 @@ def _classify_columns_as_table(raw: str) -> ClassifiedElement:
     cell_phs: list[str] = []
     for content in cols:
         cell_body, cell_reg = classify_article(content)
-        ph = _mint_ph()
+        ph = new_placeholder()
         cell_children[ph] = ClassifiedElement("TD", "", cell_body, cell_reg)
         cell_phs.append(ph)
-    rph = _mint_ph()
+    rph = new_placeholder()
     return ClassifiedElement(
         "TABLE", raw, rph,
         {rph: ClassifiedElement("ROW", "", "".join(cell_phs), cell_children)})
 
 
-def _outline_items(items: "list[tuple[int, str]]"):
-    """`(ordered placeholders, registry)` — one flat depth-tagged OUTLINE_ITEM per
-    source item.  Nesting is NOT this producer's job: the render's one owner,
-    `build_outline_ul`, densifies the sparse depths into nested `<ul>`s.  Each item's
-    own content recurses through `classify_article`, so a `:<math>…` item's math
-    becomes a real MATH child, exactly as a table cell's content does."""
+def _list_node(items: "list[ListRow]", start: int = 0,
+               depth: "int | None" = None) -> "tuple[ClassifiedElement, int]":
+    """`(LIST node, index one past what it consumed)` from `ListRow`s.
+
+    The nesting is the SOURCE's — mark count for `#`, real `<ol>` nesting for the
+    HTML and template forms — so rebuilding it from the depths is lossless.  A
+    sublist becomes a child of the item it belongs to, which is where HTML puts
+    it (`<li>text<ol>…</ol></li>`) and where the render needs it.  Each item's
+    own content recurses through `classify_article`, so an item's `«I»`/math/link
+    stays a real child, exactly as a table cell's content does.
+
+    EVERY level takes its kind and `type` from its OWN rows, not the root's:
+    GEOGRAPHY states a numbering at each of its four levels (upper-roman →
+    lower-alpha → decimal → lower-roman), and inheriting the root's would print
+    `1.` where the source says `a.`
+    """
+    if depth is None:
+        depth = items[start].depth if start < len(items) else 1
+    kind = items[start].kind if start < len(items) else "ol"
+    ltype = items[start].ltype if start < len(items) else ""
     phs: list[str] = []
     reg: dict[str, ClassifiedElement] = {}
-    for depth, content in items:
-        item_body, item_reg = classify_article(content)
-        iph = _mint_ph()
-        reg[iph] = ClassifiedElement("OUTLINE_ITEM", str(depth), item_body, item_reg)
+    i = start
+    while i < len(items):
+        row = items[i]
+        if row.depth < depth:             # belongs to an ancestor list
+            break
+        if row.depth > depth:             # a sublist with no item of its own
+            child, i = _list_node(items, i, row.depth)
+            cph = new_placeholder()
+            iph = new_placeholder()
+            reg[iph] = ClassifiedElement("LIST_ITEM", "", cph, {cph: child})
+            phs.append(iph)
+            continue
+        i += 1
+        item_body, item_reg = classify_article(row.text)
+        if i < len(items) and items[i].depth > depth:   # its sublist
+            child, i = _list_node(items, i, items[i].depth)
+            cph = new_placeholder()
+            item_body += cph
+            item_reg = {**item_reg, cph: child}
+        iph = new_placeholder()
+        reg[iph] = ClassifiedElement("LIST_ITEM", "", item_body, item_reg)
         phs.append(iph)
-    return phs, reg
+    return ClassifiedElement(
+        "LIST", f"{kind}:{ltype}" if ltype else kind, "".join(phs), reg), i
+
+
+def _classify_list(items: "list[ListRow]") -> ClassifiedElement:
+    """The one entry point for every list source — `#`, `<ol>`, `{{ordered list}}`."""
+    node, _ = _list_node(items)
+    return node
 
 
 def _is_table_html_tag(raw: str) -> bool:
@@ -899,16 +938,29 @@ def _derive_label(
         return _derive_double_bracket_label(raw)
     if shape == SHAPE_DOUBLE_BRACE:
         return _derive_double_brace_label(raw, inner_text)
-    if shape == SHAPE_OUTLINE:
-        return "OUTLINE"
+    if shape == SHAPE_INDENT:
+        return "INDENT"
+    if shape == SHAPE_LIST:
+        return "LIST"
     if shape == SHAPE_BODY:
         return "BODY"
     if shape == SHAPE_GENEALOGY:
         return "CHART2"
     if shape == SHAPE_PAIRED_WRAPPER:
-        # ONE family now: `{{NAME/s}}…{{NAME/e}}` centring wrappers.  The
-        # genealogy leaf has its own shape, so there is no name test here to get
-        # wrong — a wrapper that merely CONTAINS a chart stays a wrapper and
+        # `{{NAME/s}}…{{NAME/e}}` — dispatched by NAME through the same styler
+        # registry the producers read.  A block the source INDENTS by a stated
+        # width (`{{left margin/s|3.2em}}`) is not a centring wrapper and does
+        # not borrow the centring producer to say so: it goes to the producer
+        # that owns "indent this by W", the one a `:`-line and a `{{hi|W}}` use.
+        from britannica.pipeline.stages.elements._tables import (
+            _TEMPLATE_STYLE_WRAPPERS)
+        from britannica.wikitext import parse_paired_half
+        half = parse_paired_half(raw)
+        spec = _TEMPLATE_STYLE_WRAPPERS.get(half[0]) if half else None
+        if spec and spec.get("indent"):
+            return "INDENT_BLOCK"
+        # The genealogy leaf has its own shape, so there is no name test here to
+        # get wrong — a wrapper that merely CONTAINS a chart stays a wrapper and
         # recurses, and the chart becomes one child among its prose siblings.
         return "CENTER"
     if shape == SHAPE_TITLE:
@@ -1079,7 +1131,7 @@ def _decompose_cells(label: str, raw: str, slots: "list[str]") -> ClassifiedElem
     phs: list[str] = []
     for slot in slots:
         body, reg = classify_article(slot)
-        ph = _mint_ph()
+        ph = new_placeholder()
         cells[ph] = ClassifiedElement("CELL", slot, body, reg)
         phs.append(ph)
     return ClassifiedElement(
@@ -1134,14 +1186,16 @@ def classify(
     if shape == SHAPE_BRACE_PIPE or (
             shape == SHAPE_HTML_TAG and _is_table_html_tag(raw)):
         return _classify_table_element(shape, raw)
-    # An OUTLINE is a COMPOSITE too: its indented block decomposes into a single
-    # outline of nested OUTLINE_ITEM nodes (each item's content recursed), exactly
-    # as a table's grid decomposes into rows/cells.  Intercept before the leaf path
-    # below — which would hand the raw block to the old flattening producer.
-    if shape == SHAPE_OUTLINE:
-        return _classify_outline_composite(raw, raw)
-    # `{{ordered list|…}}` is that same OUTLINE with an explicit delimiter instead of
-    # `:`-indent — decompose it through the one outline path, not a separate leaf.
+    # An INDENT paragraph is a COMPOSITE too: its content recurses, exactly as a
+    # table cell's does.  Intercept before the leaf path below.
+    if shape == SHAPE_INDENT:
+        return _classify_indent_composite(raw)
+    # A `#`-run is a LIST the source states outright — the mark count is the
+    # nesting, so there is nothing to infer.
+    if shape == SHAPE_LIST:
+        return _classify_hash_list_composite(raw)
+    # `{{ordered list|…}}` is a LIST the source states outright — it keeps the
+    # nested-item structure (and the OUTLINE machinery) that `:` no longer earns.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
     # `<ol>…<li>…</ol>` is that same OUTLINE in HTML syntax (GEOLOGY / ALBUMIN) —
@@ -1205,7 +1259,8 @@ def classify(
         # `_allow_outline=False` on the next descent if we're inside
         # an OUTLINE — prevents the outline extractor from
         # re-triggering on its own bytes (today's `recurse_safe`).
-        next_allow_outline = _allow_outline and shape != SHAPE_OUTLINE
+        next_allow_outline = (_allow_outline
+                              and shape not in (SHAPE_INDENT, SHAPE_LIST))
         # Figures are body-level only — never recognize one inside an
         # already-extracted element (incl. the FIGURE producer's own
         # re-processing of its span, which would recurse forever).

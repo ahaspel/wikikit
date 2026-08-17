@@ -293,6 +293,41 @@ def parse_img_meta(meta_block: str) -> dict:
     return out
 
 
+# List markers — `«OL[type:X]»`/`«UL»` … `«LI»`…`«/LI»` … `«/OL»`/`«/UL»`.
+#
+# A LIST is what the source states outright: `#` (wikitext ordered list),
+# `<ol>`/`<ul>`, `{{ordered list|type=…}}`.  Compare `:`, which states an INDENT
+# and is carried as one (`_indent.py`) — "if the raw source marks a list, we
+# treat it as a list; if it marks indents, we treat them as indents" (user,
+# 2026-08-17, [[project_outline_arc]]).
+#
+# The NESTING is the source's own: a sublist rides INSIDE its parent `«LI»`,
+# exactly as `<ol><li>text<ol>…</ol></li></ol>` writes it.  No depth ladder, no
+# sparse→dense remap — those belonged to the inferred outline this replaces.
+#
+# The NUMBERING is the source's too, carried as the `type` param
+# (`upper-roman`, `upper-alpha`, `lower-alpha`, `lower-roman`, decimal default)
+# and rendered by the browser's own list numbering.  The outline machinery used
+# to MINT the numeral into the item text ("I. ", "A. ") and then render the list
+# with `list-style-type:none` — which made the numeral indistinguishable from
+# prose to the search index, the markdown export and any restyling.  Verified
+# against the scans (user, 2026-08-17): GEOLOGY p658 and ALBUMIN p553 both print
+# their numerals, so the numbering is the source's fact, not our decoration.
+OL_OPEN_RE = _re.compile(r"«OL(?:\[type:([\w-]+)\])?»")
+LIST_MARKERS: tuple[str, ...] = ("«OL", "«UL»", "«LI»", "«/OL»", "«/UL»", "«/LI»")
+
+
+def ol_open(list_type: str = "") -> str:
+    """The open tag for an ordered list, carrying its stated numbering type."""
+    return f"«OL[type:{list_type}]»" if list_type else "«OL»"
+
+
+def list_type(open_tag: str) -> str:
+    """The `type` a list's open tag states; `""` when it states none (decimal)."""
+    m = OL_OPEN_RE.match(open_tag)
+    return (m.group(1) or "") if m else ""
+
+
 # Table markers — the `«TABLE[cols:N|wide]` … `«/TABLE»` block.
 #
 # Grammar (the producer emits it; the render is the sole decoder):
@@ -464,8 +499,10 @@ RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     # common marker of all, and unlisted until the registry was enforced); TITLE the
     # in-stream H1; DHRI a proportional rule.
     "P", "TITLE", "DHRI",
-    # outlines: the block form, its in-cell sibling, and the item.
-    "OUTLINE", "IOUTLINE", "OLI",
+    # lists: the ordered/unordered forms and the item.  (The OUTLINE family that
+    # stood here is gone — `:` is an INDENT, carried as «DIV[padding-left]», and
+    # what the source marks as a list is a list, [[project_outline_arc]].)
+    "OL", "UL", "LI",
 )
 
 
@@ -495,7 +532,6 @@ _DROP_MARKER_RE = _re.compile(
     r"|«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»"
     r"|«TABLE\[[\s\S]*?«/TABLE»"
     r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
-    r"|«(?:OUTLINE|PLATE_OUTLINE):[\s\S]*?«/(?:OUTLINE|PLATE_OUTLINE)»"
     r"|\{\{IMG:[^}]*\}\}"
     r"|\{\{TABLEH?:[\s\S]*?\}TABLE\}"
     r"|\{\{VERSE:[\s\S]*?\}VERSE\}"

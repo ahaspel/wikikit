@@ -375,6 +375,13 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     # the size (`«DIV[style:font-size:83%]»`) — the value the TS `smaller`/`sm`/
     # `Fine` codes already resolve to — rather than dropping the styling to
     # bare content.
+    # Left-margin block — `{{left margin/s|W}}…{{left margin/e}}`: the source
+    # states an indent for a whole BLOCK, with the width as an ARGUMENT on the
+    # opening half.  Carried like any other stated indent (`{{hi}}`, a `:`-line)
+    # rather than dropped: BIRD wraps its Order-14 taxonomy in `3.2em` and the
+    # items rendered flush at the margin without it.  `css_arg` builds the rule
+    # per instance, which is what a static registry entry cannot do.
+    "left margin":       {"indent": True, "arg_default": "2em"},
     "fine block":        {"css": "font-size:83%"},
     "eb1911 fine print": {"css": "font-size:83%"},
     "smaller block":     {"css": "font-size:83%"},

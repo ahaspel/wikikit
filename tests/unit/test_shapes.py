@@ -17,7 +17,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
     SHAPE_PAIRED_WRAPPER,
     SHAPE_GENEALOGY,
     SHAPES,
@@ -67,8 +67,10 @@ class TestShapeVocabulary:
         # inline-vs-block image distinction — the raw never marks one) —
         # recognition by name/attribute is the classifier's job, not the walker's
         # — leaving 10, then +1 un-merging GENEALOGY from PAIRED_WRAPPER and
-        # -1 retiring PAGE.
-        assert len(SHAPES) == 10
+        # -1 retiring PAGE, then +1 splitting the old OUTLINE shape in two: what
+        # the source marks with `:` is an INDENT and what it marks with `#` is a
+        # LIST, and neither is an outline ([[project_outline_arc]]).
+        assert len(SHAPES) == 11
         assert SHAPE_HTML_TAG in SHAPES
         assert SHAPE_DOUBLE_BRACE in SHAPES
         assert SHAPE_PAIRED_WRAPPER in SHAPES
@@ -140,10 +142,11 @@ class TestStripOuter:
         raw = "{{hieroglyph|A1-B2}}"
         assert strip_outer(SHAPE_DOUBLE_BRACE, raw) == "hieroglyph|A1-B2"
 
-    def test_outline_passthrough(self):
-        raw = "; head : desc\n; head2 : desc2"
-        # OUTLINE has no delimiters — the bytes ARE the content.
-        assert strip_outer(SHAPE_OUTLINE, raw) == raw
+    def test_indent_passthrough(self):
+        raw = ":indented line\ncontinuing it"
+        # INDENT has no delimiters — the bytes ARE the content, colons included;
+        # the classifier peels the mark, not the shape layer.
+        assert strip_outer(SHAPE_INDENT, raw) == raw
 
     def test_paired_wrapper_chart2_strips_to_empty(self):
         # PAIRED_WRAPPER's chart2 family isn't walked — its inner is

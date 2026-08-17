@@ -1,4 +1,4 @@
-PAGE:684(from mod. Lat. «I»molecula«/I», the diminutive of
+«B»MOLECULE«/B» (from mod. Lat. «I»molecula«/I», the diminutive of
 «I»moles«/I», a mass), in chemistry and physics, the minutest particle
 of matter capable of separate existence. The word appears to
 have been invented during the 17th century, and remained
@@ -21,7 +21,7 @@ The leading historical stages in the evolution of the modern
 conception of the molecular structure of matter are treated in
 the following passage from James Clerk Maxwell’s article {{EB9 article link|Atom}}
 in the 9th edition of the «I»Ency. Brit.«/I»
-
+{{EB1911 fine print/s}}
 “Atom<ref name=654f1/> (<span title=átomos>{{Greek|ἄτομος}}</span>) is a body which cannot be cut in two. The
 atomic theory is a theory of the constitution of bodies which asserts
 that they are made up of atoms. The opposite theory is that of the
@@ -111,7 +111,8 @@ Principium quoniam cedendi nulla daret res.’
 “The opposite school maintained then, as they have always done,<ref follow=654f1>
 It will be noted that Clerk Maxwell’s “atom” and “atomic
 theory” have the significance which we now attach to “molecule”
-and “molecular theory.”</ref>PAGE:685that there is no vacuum—that every part of space is full of matter,
+and “molecular theory.”</ref>
+that there is no vacuum—that every part of space is full of matter,
 that there is a universal plenum, and that all motion is like that of a
 fish in the water, which yields in front of the fish because the fish
 leaves room for it behind.
@@ -126,14 +127,14 @@ matter to be extended in length, breadth and thickness, so it is of
 the essence of extension to be occupied by matter, for extension
 cannot be an extension of nothing.
 
-“&thinsp;‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
+“ ‘Ac proinde si quaeratur quid fiet, si Deus auferat omne corpus
 quod in aliquo vase continetur, et nullum aliud in ablati locum
 venire permittat? respondendum est, vasis latera sibi invicem hoc
 ipso fore contigua. Cum enim inter duo corpora nihil interjacet,
 necesse est ut se mutuo tangant, ac manifeste repugnat ut distent,
 sive ut inter ipsa sit distantia, et tamen ut ista distantia sit nihil;
 quia omnis distantia est modus extensionis, et ideo sine substantia
-extensa esse non potest.’—«I»Principia«/I», ii.&nbsp;18.
+extensa esse non potest.’—«I»Principia«/I», ii. 18.
 
 “This identification of extension with substance runs through the
 whole of Descartes’s works, and it forms one of the ultimate foundations
@@ -279,7 +280,7 @@ hydrodynamical discovery of Helmholtz that a vortex in a perfect
 liquid possesses certain permanent characteristics has been applied
 by Sir W. Thomson (Lord Kelvin) to form a theory of vortex atoms
 in a homogeneous, incompressible and frictionless liquid.”
-
+{{EB1911 fine print/e}}
 {{csc|The Molecular Structure of Matter}}
 
 An enormous mass of experimental evidence now shows quite
@@ -296,7 +297,8 @@ molecules. In point of fact it is found that the properties which
 are most easily explained are those connected with the gaseous
 state; the explanation of these properties in terms of the molecular
 structure of matter is the aim of the “Kinetic Theory of
-Gases.” The results of this theory have placed the molecularPAGE:686conception of matter in an indisputable position, but even
+Gases.” The results of this theory have placed the molecular
+conception of matter in an indisputable position, but even
 without this theory there is such an accumulation of electrical
 and optical evidence in favour of the molecular conception of
 matter that the tenability of this conception could not be
@@ -308,32 +310,32 @@ occurs when it is found that certain physical phenomena change
 their whole nature as soon as we deal with matter of which the
 linear dimensions are less than a certain amount. As a single
 instance of this may be mentioned some experiments of Lord
-Rayleigh («I»Proc. Roy. Soc.«/I», 1890, 47, p.&nbsp;364), who found that
+Rayleigh («I»Proc. Roy. Soc.«/I», 1890, 47, p. 364), who found that
 a film of olive oil spread over the surface of water produced a
 perceptible effect on small floating pieces of camphor, at places
-at which the thickness of the film was 10·6×10<sup>−8</sup>&nbsp;cms., but
+at which the thickness of the film was 10·6×10<sup>−8</sup> cms., but
 produced no perceptible effect at all at places where the thickness
-of the film was 8·1×10<sup>−8</sup>&nbsp;cms. Thus a certain phenomenon,
+of the film was 8·1×10<sup>−8</sup> cms. Thus a certain phenomenon,
 of the nature of capillary action, is seen to depend for its existence
 on the linear dimensions of the film of oil; the physical properties
-of a film of thickness 10·6×10<sup>−8</sup>&nbsp;cms. are found to be in some
+of a film of thickness 10·6×10<sup>−8</sup> cms. are found to be in some
 way qualitatively different from those of a film of thickness
-8·1×10<sup>−8</sup>&nbsp;cms. Here is proof that the film of oil is not a continuous
+8·1×10<sup>−8</sup> cms. Here is proof that the film of oil is not a continuous
 homogeneous structure, and we are led to suspect that
 the scale on which the structure is formed has a unit of length
-comparable with 8×10<sup>−8</sup>&nbsp;cms. The probability of this conjecture
+comparable with 8×10<sup>−8</sup> cms. The probability of this conjecture
 is strengthened when it is discovered that in all phenomena
 of this type the critical length connected with the stage
 at which the phenomenon changes its nature is of the order of
-magnitude of 10<sup>−8</sup>&nbsp;cms.
+magnitude of 10<sup>−8</sup> cms.
 
-Lord Rayleigh («I»Phil. Mag.«/I» 1890 [5], 30, p.&nbsp;474) has pointed
+Lord Rayleigh («I»Phil. Mag.«/I» 1890 [5], 30, p. 474) has pointed
 out that the earliest known attempt to estimate the size of
 molecules, made by Thomas Young in 1805, was based upon the
 consideration of phenomena of the kind just mentioned. Discussing
 the theory of capillary attractions, Young<ref name=656f1/> found that
 at a rough estimate “the extent of the cohesive force must be
-limited to about the 250-millionth of an inch” (＝10<sup>−8</sup>&nbsp;cms.),
+limited to about the 250-millionth of an inch” (＝10<sup>−8</sup> cms.),
 and then argues that “within similar limits of uncertainty we
 may obtain something like a conjectural estimate of the mutual
 distance of the particles of vapours, and even of the actual
@@ -342,7 +344,7 @@ tolerably safe to conclude that, whatever errors may have
 affected the determination, the diameter or distance of the
 particles of water is between the two thousand and the ten
 thousand millionth of an inch” (＝between ·125×10<sup>−8</sup> and
-·025×10<sup>−8</sup>&nbsp;cms.).
+·025×10<sup>−8</sup> cms.).
 
 The best estimates which we now possess of the sizes of molecules
 are provided by calculations based upon the kinetic theory
@@ -354,11 +356,11 @@ kinetic theory.
 {|{{Ts|ma|ac|sm92|lh12}} class=_tablecolhdborder
 |rowspan=2|Gas||colspan=5|Diameter calculated by the kinetic theory of gases.
 |-{{Ts|ba|sm92}}
-|From devia-&nbsp;<br>tions from <br>Boyle’s law.||From co-<br> efficient of&ensp;<br>viscosity.|| From co-<br>efficient of<br>conduction of <br>heat.||From co-<br>efficient of<br>conduction of <br>diffusion. || Mean value.
+|From devia- <br>tions from <br>Boyle’s law.||From co-<br> efficient of <br>viscosity.|| From co-<br>efficient of<br>conduction of <br>heat.||From co-<br>efficient of<br>conduction of <br>diffusion. || Mean value.
 |-
 |{{Ts|al}}|Hydrogen|| 2·05×10<sup>−8</sup>|| 2·05×10<sup>−8</sup>|| 1·99×10<sup>−8</sup>|| 2·02×10<sup>−8</sup>|| 2·03×10<sup>−8</sup>
 |-
-|{{Ts|al}}|Carbon monoxide&nbsp;||— ||2·90×10<sup>−8</sup>|| 2·74×10<sup>−8</sup>|| 2·92×10<sup>−8</sup>|| 2·85×10<sup>−8</sup>
+|{{Ts|al}}|Carbon monoxide ||— ||2·90×10<sup>−8</sup>|| 2·74×10<sup>−8</sup>|| 2·92×10<sup>−8</sup>|| 2·85×10<sup>−8</sup>
 |-
 |{{Ts|al}}|Nitrogen|| 3·12×10<sup>−8</sup>|| 2·90×10<sup>−8</sup>|| 2·74×10<sup>−8</sup>|| —|| 2·92×10<sup>−8</sup>
 |-
@@ -448,7 +450,8 @@ on one another the molecules of which they are composed
 will be performing oscillations about their positions of
 equilibrium. The kinetic energy with which the moving mass
 originally impinged on that at rest is now represented by the
-energy, kinetic and, potential, of the small motions of thePAGE:687individual molecules. It is known, however, that when two
+energy, kinetic and, potential, of the small motions of the
+individual molecules. It is known, however, that when two
 bodies impinge, the kinetic energy which appears to be lost
 from the mass-motion of the bodies is in reality transformed
 into heat-energy. Thus the molecular theory of matter, as we
@@ -459,7 +462,7 @@ relatively to one another would be a body devoid of heat. This
 conception of the nature of heat leads at once to an absolute
 zero of temperature—a temperature of no heat-motion—which
 is identical, as will be seen later, with that reached in other
-ways, namely, about −273°&nbsp;C.
+ways, namely, about −273° C.
 
 The point of view which has now been gained enables us to
 interpret most of the thermal properties of solids in terms of
@@ -583,7 +586,7 @@ of configurations of any single gas, starting from definite initial
 conditions, but to search for features and properties common to
 all series of configurations, independently of the particular
 initial conditions from which the gas may have started.
-
+{{EB1911 fine print/s}}
 We begin with a general dynamical theorem, whose special application,
 when the dynamical system is identified with a gas, will
 appear later. Let «I»q«/I»<sub>1</sub>, «I»q«/I»<sub>2</sub>, {{...}} «I»q<sub>n</sub>«/I», . be the generalized co-ordinates
@@ -595,7 +598,7 @@ momenta can be found from the Hamiltonian equations
 
 {{ne||«I»q̇<sub>r</sub>«/I»＝{{sfrac|font-size=100%|∂E|∂«I»p<sub>r</sub>«/I»}}, «I»ṗ<sub>r</sub>«/I»＝−{{sfrac|font-size=100%|∂E|∂«I»q<sub>r</sub>«/I»}},| (1)}}
 
-where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I»&#8202;/«I»dt«/I», &c., and E is the total energy expressed as
+where «I»q̇<sub>r</sub>«/I» denotes «I»dq<sub>r</sub>«/I» /«I»dt«/I», &c., and E is the total energy expressed as
 function of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, {{...}} «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», . When the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub> {{...}}
 «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I», are given, the motion can be traced completely from these
 equations.
@@ -603,7 +606,8 @@ equations.
 Let us suppose that an infinite number of exactly similar systems
 start simultaneously from all possible values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, {{...}} «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I»,
 each moving solely under its own internal forces, and therefore in
-accordance with equations (1). Let us confine our attention to thosePAGE:688systems for which the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, {{...}} «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I» lie within
+accordance with equations (1). Let us confine our attention to those
+systems for which the initial values of «I»p«/I»<sub>1</sub>, «I»q«/I»<sub>1</sub>, {{...}} «I»p<sub>n</sub>«/I», «I»q<sub>n</sub>«/I» lie within
 a range such that
 
 {{center|«I»p«/I»<sub>1</sub> is between «I»p«/I»<sub>1</sub> and «I»p«/I»<sub>1</sub> +«I»dp«/I»<sub>1</sub>{{em|5}}
@@ -800,7 +804,8 @@ are so small in comparison with their distances
 apart that they may be treated as of infinitesimal size.
 Let a mixture of gases contain per unit volume «I»v«/I» molecules{{EB1911 Shoulder HeadingFine|width=9|Pressure of<br>a Gas.}}
 of the first kind, «I»v«/I»′ of the second kind, and so on. Let
-us fix our attention on a small area «I»d«/I»S of the boundary of thePAGE:689vessel, and let co-ordinate axes be taken such that the origin is in
+us fix our attention on a small area «I»d«/I»S of the boundary of the
+vessel, and let co-ordinate axes be taken such that the origin is in
 «I»d«/I»S, and the axis of «I»x«/I» is the normal at the origin into the gas. The
 number of molecules of the first kind of gas, whose components
 of velocity lie within the ranges between «I»u«/I» and «I»u«/I»+«I»du«/I», «I»v«/I» and «I»v«/I»+«I»dv«/I»,
@@ -811,11 +816,11 @@ of velocity lie within the ranges between «I»u«/I» and «I»u«/I»+«I»du�
 per unit volume. Construct a small cylinder inside the gas, having
 «I»d«/I»S as base and edges such that the projections of each on the coordinate
 axes are «I»udt«/I», «I»vdt«/I», «I»wdt«/I». Each of the molecules enumerated
-in expression&nbsp;(9) will move parallel to the edge of this cylinder, and
+in expression (9) will move parallel to the edge of this cylinder, and
 each will describe a length equal to its edge in time «I»dt«/I». Thus
 each of these molecules which is initially inside the cylinder, will
 impinge on the area «I»d«/I»S within an interval «I»dt«/I». The cylinder is of
-volume «I»u&nbsp;dt&nbsp;d«/I»S, so that the product of this and expression&nbsp;(9) must
+volume «I»u dt d«/I»S, so that the product of this and expression (9) must
 give the number of impacts between the area «I»d«/I»S and molecules of
 the kind under consideration within the interval «I»dt«/I». Each impinging
 molecule exerts an impulsive pressure equal to «I»mu«/I» on the boundary
@@ -859,13 +864,13 @@ molecules of the first kind in unit volume, thus
 On substituting from equations (7) and (8), this expression assumes
 the forms
 
-{{ne||«I»p«/I»＝(«I»v«/I»+«I»v«/I»&#8202;′+...)/2«I»h«/I»|(12)}}
+{{ne||«I»p«/I»＝(«I»v«/I»+«I»v«/I» ′+...)/2«I»h«/I»|(12)}}
 
-{{ne||&ensp;＝(«I»v«/I»+«I»v«/I»&#8202;′+...)RT|(13)}}
+{{ne|| ＝(«I»v«/I»+«I»v«/I» ′+...)RT|(13)}}
 
 The number of molecules per unit volume in a gas at normal temperature
 and pressure is known to be about 2·75 X 10<sup>19</sup>. If in formula
-(13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I»&#8202;′+ ...)2·75×10<sup>19</sup>
+(13) we put «I»p«/I»＝1·013×10<sup>6</sup>, («I»v«/I»+«I»v«/I» ′+ ...)2·75×10<sup>19</sup>
 T＝273, we obtain R＝1·35×10<sup>−16</sup> and this enables us
 to determine the mean velocities produced by heat{{EB1911 Shoulder HeadingFine|width=9|Molecular Velocities.}}
 motion in molecules of any given «I»mass«/I». For molecules of known
@@ -881,28 +886,28 @@ we can calculate C for different gases, and so obtain a knowledge
 of the magnitudes of the molecular velocities. For instance, it is
 found that
 {|{{Ts|ma}}
-|for hydrogen at ||&numsp;0° Cent. C＝183,900 cms. per sec.
+|for hydrogen at || 0° Cent. C＝183,900 cms. per sec.
 |-
-|for air{{em|3}} ,, ||15° Cent. C＝&numsp;49,800 cms. per sec.
+|for air{{em|3}} ,, ||15° Cent. C＝ 49,800 cms. per sec.
 |-
-|for mercury vapour at ||&numsp;0° Cent. C＝&numsp;18,500 cms. per sec.
+|for mercury vapour at || 0° Cent. C＝ 18,500 cms. per sec.
 |}
 and other velocities can readily be calculated.
 
 From the value R＝1·35×10<sup>−16</sup> it is readily calculated that a molecule,
 or aggregation of molecules, of mass 10<sup>−12</sup> grammes, ought to
-have a mean velocity of about 2&nbsp;millimetres a second at
-0°&nbsp;C. Such a velocity ought accordingly to be set up in a
+have a mean velocity of about 2 millimetres a second at
+0° C. Such a velocity ought accordingly to be set up in a
 particle of 10<sup>−12</sup> grammes mass immersed in air or liquid{{EB1911 Shoulder HeadingFine|width=9|“Brownian Movements.”}}
-at 0°&nbsp;C., by the continual jostling of the surrounding molecules or
+at 0° C., by the continual jostling of the surrounding molecules or
 particles. A particle of this mass is easily visible microscopically,
-and a velocity of 2&nbsp;mm. per second would of course be visible if
+and a velocity of 2 mm. per second would of course be visible if
 continued for a sufficient length of time. Each bombardment will,
 however, change the motion of the particle, so that changes are too
 frequent for the separate motions to be individually visible. But
 it can be shown that from the aggregation of these separate short
 motions the particle ought to have a resultant motion, described .
-with an average velocity which, although much smaller than 2&nbsp;mm.
+with an average velocity which, although much smaller than 2 mm.
 a second, ought still to be microscopically visible. It has been shown
 by R. von. S. Smoluchowski («I»Ann. d. Phys.«/I», 1906, 21, p. 756) that this
 theoretically predicted motion is simply that seen in the “Brownian
@@ -917,14 +922,14 @@ gas in the mixture. Hence we have Dalton’s law:
 «I»which would be exerted separately by the several«/I»{{EB1911 Shoulder HeadingFine|width=11.4|Pressure, Volume and<br>Temperature Relations.}}
 «I»constituents if each alone were present«/I».
 {{clear}}
-«I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I»&#8202;′+  . . .,
+«I»Avogadro’s Law«/I».—From formula (13) it appears that «I»v«/I»+«I»v«/I» ′+  . . .,
 the total number of molecules per unit volume, is determined when
 «I»p«/I», T and the constant R are given. Hence we have Avogadro’s law:
 «I»Different gases, at the same temperature and pressure, contain equal«/I»
 «I»numbers of molecules per unit volume«/I».
 
 «I»Boyle’s and Charles’ Laws«/I».—If «I»v«/I» is the volume of a homogeneous
-mass of gas, and N the total number of its molecules, N＝«I»v«/I»(«I»v«/I»+«I»v«/I»&#8202;′+
+mass of gas, and N the total number of its molecules, N＝«I»v«/I»(«I»v«/I»+«I»v«/I» ′+
 {{...}}), so that
 
 {{ne||«I»pv«/I»＝RNT.|(14)}}
@@ -944,7 +949,7 @@ are obeyed very approximately, but not with perfect accuracy, by
 all gases of which the density is not too great or the temperature too
 low. Van der Waals, in a famous monograph, «I»On the Continuity«/I»
 «I»of the Liquid and Gaseous States«/I» (Leiden, 1873), has shown that the
-imperfections of equation&nbsp;(14) may be traced to {{nowrap|two causes:—}}
+imperfections of equation (14) may be traced to {{nowrap|two causes:—}}
 
 (i.) The calculation has not allowed for the finite size of the
 molecules, and their consequent interference with one another’s
@@ -958,7 +963,7 @@ forces in addition to those originating in their impact with the
 boundary.
 
 To allow for the first of these two factors, Van der Waals finds that
-«I»v«/I» in equation&nbsp;(14) must be replaced by «I»v«/I»−«I»b«/I», where «I»b«/I» is four times
+«I»v«/I» in equation (14) must be replaced by «I»v«/I»−«I»b«/I», where «I»b«/I» is four times
 the aggregate space occupied by all the molecules, while to allow for
 the second factor, «I»p«/I» must be replaced by «I»p«/I»+«I»a«/I»/«I»v«/I»<sup>2</sup>. Thus the pressure
 is given by the equation
@@ -987,13 +992,13 @@ and temperature change. The equation of energy is
 
 expressing that the total energy «I»d«/I»Q is used partly in increasing
 the internal energy of the gas, and partly in expanding the gas
-against the pressure «I»p«/I». If we take «I»p«/I»＝RNT/«I»v«/I» from equation&nbsp;(14)
+against the pressure «I»p«/I». If we take «I»p«/I»＝RNT/«I»v«/I» from equation (14)
 and substitute for E from equation (16), this last equation becomes
 
 {{ne||«I»d«/I»Q＝{{EB1911 tfrac|1|2}} («I»n«/I»+3)RN«I»d«/I»T+RNT«I»dv«/I»/«I»v«/I»,|(18)}}
 
 which may be taken as the general equation of calorimetry, for a
-gas which accurately obeys equation&nbsp;(14).
+gas which accurately obeys equation (14).
 
 «I»Second Law of Thermodynamics«/I».—If we divide throughout by T,
 we obtain
@@ -1005,12 +1010,13 @@ that the second law of thermodynamics is obeyed, but enables us
 to identify T with the absolute thermodynamical temperature.
 
 If the volume of the gas is kept constant, we put «I»dv«/I»＝0 in
-equation&nbsp;(18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
+equation (18) and «I»d«/I»Q＝JC<sub>«I»v«/I»</sub>N«I»md«/I»T, where C<sub>«I»v«/I»</sub>, is the specific
 heat of the gas at constant volume and J is the mechanical equivalent of heat. We obtain{{EB1911 Shoulder HeadingFine|width=9|Specific Heats.}}
 
 {{ne||C<sub>«I»v«/I»</sub>＝{{EB1911 tfrac|2}}(«I»n«/I»+3)R/J«I»m«/I» |(19)}}
 
-On the other hand, if the pressure of the gas is kept constantPAGE:690throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
+On the other hand, if the pressure of the gas is kept constant
+throughout the motion, T/«I»v«/I» is constant and «I»d«/I»Q＝JC<sub>«I»p«/I»</sub>N«I»md«/I»T, whence
 {{ne||C<sub>«I»p«/I»</sub>＝{{EB1911 tfrac|2}}(«I»n«/I»+5) R/J«I»m«/I».|(20)}}
 
 By division of the values of C<sub>«I»p«/I»</sub> and C<sub>«I»v«/I»</sub>, , we find for {{Greek|γ}}, the ratio of the specific heats.
@@ -1025,7 +1031,7 @@ has so far had to encounter.
 On giving different values to «I»n«/I» in formula (21), we obtain the
 values for {{Greek|γ}}:
 {|{{Ts|ma|ac|width:300px}}
-|«I»n«/I» ＝ || 0,||1, ||2, ||3,|| 4,|| 5,|| 
+|«I»n«/I» ＝ || 0,||1, ||2, ||3,|| 4,|| 5,||
 |-
 |{{Greek|γ}} ＝ ||1·66, ||1·5, ||1·4, ||1·33, ||1·28, ||1·25,|| &c.
 |}
@@ -1046,7 +1052,7 @@ with some {{nowrap|accuracy:—}}
 |}
 It is clear that for the first four gases «I»n«/I»＝0, while for the remainder
 «I»n«/I»＝2. To examine what is meant by a zero value of «I»n«/I» we refer to
-formula&nbsp;(15). The value of «I»n«/I» is the number of terms in the energy
+formula (15). The value of «I»n«/I» is the number of terms in the energy
 of the molecule beyond that due to translation. Thus when «I»n«/I»＝0,
 the whole energy must be translational: there can be no energy of
 rotation or of internal motion. The molecules of gases for which
@@ -1099,7 +1105,7 @@ equipartition was proved, for in proving this law conservation of<ref follow=660
 Very significant confirmation of this conjecture is obtained
 from a study of the specific heats of the elements in the solid
 state. If a solid body is regarded as an aggregation of similar atoms
-each of mass «I»m«/I», its specific heat C is given, as in formula&nbsp;(19) by
+each of mass «I»m«/I», its specific heat C is given, as in formula (19) by
 C＝{{EB1911 tfrac|2}}(«I»n«/I»+3)R/J«I»m«/I». From Dulong and Petit’s law that C«I»m«/I» is the same
 for all elements, it follows that «I»n«/I»+3 must be the same for all atoms.
 Moreover, the value of C«I»m«/I» shows that «I»n«/I»+3 must be equal to six.
@@ -1127,5 +1133,7 @@ may be apparent rather than real. At the same time this difficulty
 is only one aspect of a wider difficulty which cannot be lightly
 passed over; Maxwell himself regarded it as the principal obstacle
 in the way of the full acceptance of the theory of which he was so
-largely the author. 
+largely the author.
 {{Fs|108%|{{EB1911 footer initials|James Hopwood Jeans|J. H. Je.}}}}
+{{EB1911 fine print/e}}
+

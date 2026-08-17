@@ -53,6 +53,46 @@ def template_end(text: str, start: int) -> "int | None":
     return None
 
 
+# ── The PAIRED WRAPPER — `{{NAME/s[|arg]}}` … `{{NAME/e[|arg]}}` ────────────
+#
+# A span the source opens and closes with template halves: the centring family
+# (`{{c/s}}`), the print-economy blocks (`{{EB1911 fine print/s}}`), and the
+# block indent, whose opener carries a WIDTH — `{{left margin/s|3.2em}}`.
+#
+# That argument is why this is written here.  Six sites spelled the half — the
+# walker's opener, its closer, its depth-counting token, `strip_outer`'s peel,
+# the CENTER producer's name read, the unpaired-half producer's — and each had
+# to learn independently that an argument may follow the name.  Five of them
+# had not, so a wrapper that stated its width failed to match, the opener
+# echoed into its own content as text and the closer shipped raw (BIRD's
+# taxonomy, ARISTOTLE).  One grammar, composed by the callers that need it
+# narrowed to a name or a half ([[feedback_dissolve_dont_fix]]).
+_HALF_ARG = r"\s*(?:\|([^{}]*))?\}\}"
+
+
+def paired_half_pattern(names: str = r"[^{}/|]*?", half: str = "[se]") -> str:
+    """Regex SOURCE for a paired half — groups: (name, half, arg-or-None).
+
+    ``names`` is a regex fragment (one escaped name, or an alternation of them);
+    ``half`` narrows to the opener (``"s"``) or the closer (``"e"``).
+    """
+    return r"\{\{\s*(" + names + r")\s*/(" + half + r")" + _HALF_ARG
+
+
+PAIRED_HALF_RE = _re.compile(paired_half_pattern(), _re.IGNORECASE)
+
+
+def parse_paired_half(raw: str) -> "tuple[str, str, str] | None":
+    """``(name, "s"|"e", arg)`` for a `{{NAME/s|arg}}` half; ``None`` if it is
+    not one.  The name is space-collapsed and lowercased — the form every
+    registry keys on."""
+    m = PAIRED_HALF_RE.match(raw.strip())
+    if m is None:
+        return None
+    return (_re.sub(r"\s+", " ", m.group(1).strip().lower()),
+            m.group(2).lower(), (m.group(3) or "").strip())
+
+
 def iter_template_bodies(text: str,
                          opening: "_re.Pattern") -> "_Iterator[tuple[int, str]]":
     """``(offset, body)`` for every template whose open matches ``opening``.

@@ -21,13 +21,16 @@ from __future__ import annotations
 
 import re
 
+from britannica.wikitext import paired_half_pattern
+
 
 SHAPE_BRACE_PIPE        = "BRACE_PIPE"        # {|...|}
 SHAPE_HTML_TAG          = "HTML_TAG"          # <NAME ...>...</NAME>
 SHAPE_HTML_SELF_CLOSING = "HTML_SELF_CLOSING" # <NAME ... />
 SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
 SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
-SHAPE_OUTLINE           = "OUTLINE"           # indented-list ladder (text-shaped)
+SHAPE_INDENT            = "INDENT"            # one `:`-marked paragraph (text-shaped)
+SHAPE_LIST              = "LIST"              # a run of `#`-marked lines (text-shaped)
 SHAPE_BODY              = "BODY"               # article-level prose run between other elements
 SHAPE_PAIRED_WRAPPER    = "PAIRED_WRAPPER"     # {{NAME/s}}…{{NAME/e}} paired open/close span
                                                # — the centring family, ALWAYS composite, always
@@ -52,7 +55,8 @@ SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_DOUBLE_BRACKET,
     SHAPE_DOUBLE_BRACE,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
+    SHAPE_LIST,
     SHAPE_BODY,
     SHAPE_PAIRED_WRAPPER,
     SHAPE_GENEALOGY,
@@ -79,7 +83,8 @@ SHAPES: frozenset[str] = frozenset({
 # raw — exactly as before.
 LEAF_SHAPES: frozenset[str] = frozenset({
     SHAPE_HTML_SELF_CLOSING,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
+    SHAPE_LIST,
     SHAPE_GENEALOGY,
     # The six STYLED-derived structures (STRIP / PARAM / SHOULDER / RUNNING_HEADER
     # = `{{…}}` template-form stylers/headings; SPAN_TITLE / HTML_STYLE = `<tag>`
@@ -153,8 +158,13 @@ def strip_outer(shape: str, raw: str) -> str:
         s = re.sub(r"^\{\{", "", raw)
         s = re.sub(r"\}\}\s*$", "", s)
         return s
-    if shape == SHAPE_OUTLINE:
-        # No delimiters — the raw bytes ARE the indented-line ladder.
+    if shape == SHAPE_INDENT:
+        # No delimiters — the raw bytes ARE the indented paragraph, colons and
+        # all; the classifier peels the mark and keeps the rest.
+        return raw
+    if shape == SHAPE_LIST:
+        # No delimiters either — the raw bytes ARE the `#`-marked lines; the
+        # classifier reads the mark count as the nesting depth.
         return raw
     if shape == SHAPE_BODY:
         # No delimiters — the raw bytes ARE the body prose; the producer
@@ -176,8 +186,14 @@ def strip_outer(shape: str, raw: str) -> str:
         #     for the producer's own recursive walk.
         if re.match(r"\{\{\s*chart2\s*/\s*start", raw, flags=re.IGNORECASE):
             return ""
-        s = re.sub(r"^\{\{\s*[^{}]*?/s\s*\}\}", "", raw, flags=re.IGNORECASE)
-        s = re.sub(r"\{\{\s*[^{}]*?/e\s*\}\}\s*$", "", s, flags=re.IGNORECASE)
+        # Both halves peel through the ONE paired-wrapper grammar, which knows
+        # a half may carry an argument (`{{left margin/s|3.2em}}` states the
+        # width of the indent it opens).  Spelling it here separately is how the
+        # opener came to echo into its own content as text.
+        s = re.sub("^" + paired_half_pattern(half="s"), "", raw,
+                   flags=re.IGNORECASE)
+        s = re.sub(paired_half_pattern(half="e") + r"\s*$", "", s,
+                   flags=re.IGNORECASE)
         return s
     if shape == SHAPE_TITLE:
         # Peel the «TITLE»…«/TITLE» stamp; the inner is the carved title span

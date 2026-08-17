@@ -19,8 +19,8 @@ target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
 
-from britannica.markers import (balanced_end, iter_table_spans, strip_marker_tokens,
-                                table_cols, table_is_wide)
+from britannica.markers import (OL_OPEN_RE, balanced_end, iter_table_spans,
+                                strip_marker_tokens, table_cols, table_is_wide)
 from urllib.parse import quote
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
@@ -242,87 +242,6 @@ def _verse(m):
     return '<span class="cell-verse">' + m.group(1) + "</span>"
 
 
-def build_outline_ul(items, plate, render_item):
-    """Nested ``<ul>`` from ``(depth, content)`` items — sparse source depths densified
-    to dense levels.  The ONE owner of the outline structure; ``render_item(content)``
-    styles each item body: a ``<p>``-wrap for the standalone BLOCK outline, identity for one
-    inside a table cell / verse / footnote (where ``decode_inline`` finishes the item's inline
-    markers in place — the wrap and the item markers alike decode in the passes below)."""
-    if not items:
-        return ""
-    rank = {d: i for i, d in enumerate(sorted({d for d, _ in items}))}
-    root = "outline plate-outline" if plate else "outline"
-    # Fully-indented outline — every item carries ≥1 level of indent, no margin-level
-    # heading — renders as an indented block, keeping the indentation the source states.
-    if min(d for d, _ in items) >= 1:
-        root += " outline-indent"
-    out = [f'<ul class="{root}">']
-    cur = 0
-    for depth, content in items:
-        lvl = rank[depth]
-        while cur < lvl:
-            out.append("<ul>")
-            cur += 1
-        while cur > lvl:
-            out.append("</ul>")
-            cur -= 1
-        out.append(f"<li>{render_item(content)}</li>")
-    while cur > 0:
-        out.append("</ul>")
-        cur -= 1
-    out.append("</ul>")
-    return "".join(out)
-
-
-def _outline_body(inner, open_m, close_m, render_item):
-    """One outline body → its nested <ul>: parse the flat «OLI:depth»…«/OLI» items and render.
-    ``render_item`` styles each item — identity for the INLINE form (item markers finish in
-    ``decode_inline``'s later passes), a `<p>`-wrap for the BLOCK form (top-level outline).  No
-    items ⇒ hand the raw span back unchanged."""
-    items, i = [], 0
-    while True:
-        a = inner.find("«OLI:", i)
-        if a == -1:
-            break
-        colon = inner.find("»", a)
-        end = inner.find("«/OLI»", colon)
-        items.append((int(inner[a + len("«OLI:"):colon]), inner[colon + 1:end]))
-        i = end + len("«/OLI»")
-    return build_outline_ul(items, None, render_item) if items else f"{open_m}{inner}{close_m}"
-
-
-def _render_outlines(h, open_m="«IOUTLINE»", close_m="«/IOUTLINE»", render_item=lambda c: c):
-    """Render each ``open_m``…``close_m`` outline in place, matching its close by DEPTH — a
-    balanced scan, not a span-match that would mis-pair on a nested outline.  Serves BOTH forms:
-    the INLINE «IOUTLINE» (in a cell / footnote — plain <li> items) and the BLOCK «OUTLINE»
-    (top-level — `<p>`-wrapped items), selected by the caller via ``open_m``/``render_item``."""
-    out, i = [], 0
-    while True:
-        a = h.find(open_m, i)
-        if a == -1:
-            out.append(h[i:])
-            break
-        out.append(h[i:a])
-        depth, j, close_end = 1, a + len(open_m), None
-        while depth:
-            no, nc = h.find(open_m, j), h.find(close_m, j)
-            if nc == -1:
-                break                                  # unbalanced (a non-case)
-            if no != -1 and no < nc:
-                depth, j = depth + 1, no + len(open_m)
-            else:
-                depth, j = depth - 1, nc + len(close_m)
-                if depth == 0:
-                    close_end = j
-        if close_end is None:                          # unbalanced: leave the marker raw, move on
-            out.append(open_m)
-            i = a + len(open_m)
-            continue
-        out.append(_outline_body(h[a + len(open_m):close_end - len(close_m)], open_m, close_m, render_item))
-        i = close_end
-    return "".join(out)
-
-
 def _span_title(m):
     return f'<span class="xlit" title="{m.group(1).replace(chr(34), "&quot;")}">'
 
@@ -528,11 +447,16 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     if body_blocks:
         # Top-level «VERSE» → blockquote (independent open/close subs; «BR» → <br> below).
         h = _VERSE_BLOCK_OPEN_RE.sub(_verse_block_open, h).replace("}VERSE}", "</blockquote>")
-    # An «IOUTLINE» in a cell/footnote — the item markers decode in the passes below (identity).
-    h = _render_outlines(h)
-    if body_blocks:
-        # Top-level «OUTLINE» → the same nested <ul>, its items <p>-wrapped (block-level).
-        h = _render_outlines(h, "«OUTLINE»", "«/OUTLINE»", lambda c: f"<p>{c}</p>")
+    # Lists — independent open/close, like every other marker that nests (the
+    # «P»/«CTR» rule): a sublist sits inside its parent «LI», so a span-matching
+    # regex would mis-pair on the first inner close.  The browser numbers the
+    # items from the list's own `type`; nothing is minted into the text.
+    h = OL_OPEN_RE.sub(
+        lambda m: (f'<ol style="list-style-type:{m.group(1)}">' if m.group(1)
+                   else "<ol>"), h)
+    h = (h.replace("«/OL»", "</ol>").replace("«UL»", "<ul>")
+          .replace("«/UL»", "</ul>")
+          .replace("«LI»", "<li>").replace("«/LI»", "</li>"))
 
     # Un-escape the fixed safe set of carried presentational HTML (CHEM/MATH signals).
     h = _SAFE_HTML_RE.sub(r"<\1>", h)

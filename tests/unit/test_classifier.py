@@ -22,7 +22,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_DOUBLE_BRACKET,
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
-    SHAPE_OUTLINE,
+    SHAPE_INDENT,
     SHAPE_PAIRED_WRAPPER,
     SHAPE_GENEALOGY,
 )
@@ -148,10 +148,9 @@ class TestAtomicLabels:
         assert ce.inner_text in ce.inner_registry
         assert ce.inner_registry[ce.inner_text].inner_text == "centred"
 
-    def test_outline(self):
-        raw = "; head : desc\n; head2 : desc2"
-        ce = classify(SHAPE_OUTLINE, raw)
-        assert ce.label == "OUTLINE"
+    def test_indent(self):
+        ce = classify(SHAPE_INDENT, "::indented paragraph")
+        assert ce.label == "INDENT"
 
 
 class TestBacklogFamilyRoutes:
