@@ -1,8 +1,61 @@
 """Shared string utilities."""
 
+import hashlib
 import re
+import unicodedata
 
 from britannica.markers import strip_marker_tokens
+
+
+def content_digest(text: str, n: int | None = 16) -> str:
+    """Content address for `text`: SHA-256 hex, first `n` chars (`None` = all).
+
+    THE identity function for every cache and fingerprint keyed on a string —
+    the measured math widths, the measured table widths, the EPUB math assets,
+    the export fingerprint, the corpus snapshot.  Each spelled the same
+    `sha256(s.encode("utf-8")).hexdigest()[:16]` inline, and two of them
+    (`math_widths` reading the cache, `measure_math_widths` writing it) had to
+    agree FOREVER or the reader would silently miss every entry it looked up.
+    The 16-char default is the shared decision; the table cache keys on the
+    full digest and says so.
+
+    WHAT GOES INTO THE KEY IS THE CALLER'S BUSINESS: the composition stays at
+    the call site (`math_key` prefixes display-mode and normalizes the LaTeX,
+    `span_key` strips the `wide` annotation first), so a caller can change what
+    it addresses without touching what addressing means.
+
+    No `or ""` guard on purpose.  Every caller here keys REAL content; a `None`
+    reaching this would key as the empty string and quietly collide with every
+    other `None` — a silent cache hit on the wrong entry, which is the exact
+    failure this consolidation exists to prevent.  A caller that genuinely
+    digests optional text coerces on its own side.
+    """
+    h = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return h if n is None else h[:n]
+
+
+def fold_accents(s: str) -> str:
+    """Drop diacritics: `Zürich` → `Zurich`, `Léon` → `Leon`.
+
+    THE accent fold.  Ten sites spelled this same NFKD-decompose-and-discard-
+    combining-marks rule inline — the resolver's name keys, the xref scorer,
+    the name index, the EPUB's search fold and its A–Z collation, the vol-29
+    linker and kind-matcher, the contributor vote — so a change to what counts
+    as "the same name" had ten places to reach and would have reached one.
+
+    CASE IS THE CALLER'S BUSINESS and deliberately not folded here: the sites
+    disagree on purpose (the resolver lowercases, the article normalizer
+    uppercases, the name index keeps case for a later `.upper()`), and each
+    applies it on its own side of the fold.  Nor is punctuation touched —
+    that is `section_key` / `section_slug`.
+
+    NOT a member of this family, though it looks like one: the render's
+    collation key (`render.article`) walks the decomposed stream character by
+    character to expand ligatures and build a secondary tiebreak, so skipping
+    combining marks is one step of a loop there, not a fold.
+    """
+    return "".join(c for c in unicodedata.normalize("NFKD", s or "")
+                   if not unicodedata.combining(c))
 
 
 def section_slug(name: str) -> str:

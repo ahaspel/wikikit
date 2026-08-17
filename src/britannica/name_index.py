@@ -12,18 +12,19 @@ stays byte-identical (the tokenizers and per-rung candidate logic are unchanged)
 See docs/xref_resolution_strategy.md.
 """
 import re
-import unicodedata
 
 from britannica.xrefs.normalizer import normalize_xref_target
 from britannica.xrefs.resolver import build_core_maps
 from britannica.xrefs.scoring import find_fuzzy_match
+from britannica.util.strings import fold_accents
 
 _TOK = re.compile(r"[^\W_]+", re.UNICODE)
 
 
 def fold(s: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", s)
-                   if not unicodedata.combining(c))
+    """THE accent fold, re-exported: `link_resolver` and this module's own
+    matchers import `fold` from here by long habit."""
+    return fold_accents(s)
 
 
 def wordset(s: str) -> frozenset:

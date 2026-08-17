@@ -293,6 +293,112 @@ def parse_img_meta(meta_block: str) -> dict:
     return out
 
 
+# Table markers — the `«TABLE[cols:N|wide]` … `«/TABLE»` block.
+#
+# Grammar (the producer emits it; the render is the sole decoder):
+#
+#     «TABLE[cols:N[|wide]]…»  …rows…  «/TABLE»
+#
+# `cols` is the column count the table producer counted.  `wide` is a MEASURED
+# fact, not a property of the source: `tools/diagnostics/measure_table_widths.py`
+# renders every span in a real browser against the fixed 590px body column and
+# `tools/pipeline/annotate_table_markers.py` stamps the ones that overflow, so
+# the render can wrap exactly those in the Expand figure.
+#
+# Table spans NEST, so the close is found by DEPTH — a lazy `«TABLE\[.*?«/TABLE»`
+# stops at the first inner close and tears the span in half.
+#
+# Four sites spelled this grammar independently: the render's Expand wrapper,
+# the annotator that stamps `wide`, the width cache's key (which strips `wide`,
+# so re-measuring an already-annotated corpus lands on the same key), and the
+# measurer's `cols` read — two of them carrying the same regex source verbatim.
+# Every one of those disagreements fails SILENTLY: a stamp the decoder cannot
+# parse simply stops producing Expand buttons, and a key that drifts from the
+# writer's misses the whole cache ([[feedback_dont_grow_catchalls]]).  One
+# grammar, one owner, four callers.
+TABLE_OPEN, TABLE_CLOSE = "«TABLE[", "«/TABLE»"
+_TABLE_PARAMS_RE = _re.compile(r"«TABLE\[cols:(\d+)(\|wide)?")
+
+
+def _table_open_tag(m: "_re.Match") -> str:
+    """The open tag rebuilt from a params match, minus the `wide` flag."""
+    return f"{TABLE_OPEN}cols:{m.group(1)}"
+
+
+def balanced_end(text: str, start: int, open_tok: str,
+                 close_tok: str) -> "int | None":
+    """Index just past the depth-balanced close of the marker opening at
+    ``start``; ``None`` if it never closes.
+
+    THE close-finder for the nesting markers («TABLE» inside «TD», «EQN»).
+    """
+    depth, j = 1, start + len(open_tok)
+    while depth:
+        no, nc = text.find(open_tok, j), text.find(close_tok, j)
+        if nc == -1:
+            return None
+        if no != -1 and no < nc:
+            depth, j = depth + 1, no + len(open_tok)
+        else:
+            depth, j = depth - 1, nc + len(close_tok)
+            if depth == 0:
+                return j
+
+
+def iter_table_spans(text: str) -> "_Iterator[tuple[int, str]]":
+    """``(offset, span)`` for every TOP-LEVEL «TABLE» span, in order.
+
+    An unterminated open is stepped over rather than ending the walk: it is a
+    producer bug that surfaces as raw marker text in the output either way, and
+    a well-formed table after it must still be seen.
+    """
+    i = 0
+    while True:
+        a = text.find(TABLE_OPEN, i)
+        if a == -1:
+            return
+        end = balanced_end(text, a, TABLE_OPEN, TABLE_CLOSE)
+        if end is None:
+            i = a + len(TABLE_OPEN)
+            continue
+        yield a, text[a:end]
+        i = end
+
+
+def table_cols(span: str) -> int:
+    """The `cols` param of a span's own open tag (0 if it has none)."""
+    m = _TABLE_PARAMS_RE.match(span)
+    return int(m.group(1)) if m else 0
+
+
+def table_is_wide(span: str) -> bool:
+    """Whether a span's own open tag carries the measured `wide` flag."""
+    m = _TABLE_PARAMS_RE.match(span)
+    return bool(m and m.group(2))
+
+
+def set_table_wide(span: str, wide: bool) -> str:
+    """The span with its OWN `wide` flag written or removed.
+
+    Stamp and strip are one edit with the flag flipped, which is what makes
+    re-annotating an annotated corpus idempotent.
+    """
+    return _TABLE_PARAMS_RE.sub(
+        lambda m: _table_open_tag(m) + ("|wide" if wide else ""),
+        span, count=1)
+
+
+def strip_table_wide(span: str) -> str:
+    """The span's IDENTITY form: every `wide` flag in it, at any depth, gone.
+
+    What the width cache keys on.  Scope is the whole subtree, not just the
+    outer tag (`set_table_wide`'s job), because the key has to be stable under
+    ANY annotation the span could pick up — otherwise measuring an annotated
+    corpus writes entries the next measure can never find.
+    """
+    return _TABLE_PARAMS_RE.sub(_table_open_tag, span)
+
+
 # Open-prefixes for the `{{X:…}}`-shape markers that survive cleaning
 # and reach the viewer.  Single source of truth — both the body-text
 # template-strip regex and the post-clean quality-report checks

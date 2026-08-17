@@ -16,8 +16,8 @@ signal — callers get None rather than a wrong match.
 from __future__ import annotations
 
 import re
-import unicodedata
 from collections import defaultdict
+from britannica.util.strings import fold_accents
 
 _TITLE_RE = re.compile(
     r"^(?:(?:Prof(?:essor)?\.?|Dr\.?|Mr\.?|Mrs\.?|Miss|Sir|Rev(?:erend)?\.?|The)\s+)+",
@@ -207,10 +207,7 @@ def _fold(s: str) -> str:
     variants across sources compare equal — a signer's footer 'McLachlan' matches
     the front matter's 'M'Lachlan'.  The ≥3-letter-root guard keeps short
     look-alikes intact (Mace, Macy, Mack are not prefixed names)."""
-    t = "".join(
-        c for c in unicodedata.normalize("NFKD", s or "")
-        if not unicodedata.combining(c)
-    ).lower()
+    t = fold_accents(s).lower()
     return re.sub(r"^m(?:['’‘]|ac|c)([a-z]{3,})", r"mc\1", t)
 
 

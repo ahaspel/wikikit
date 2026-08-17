@@ -1,8 +1,8 @@
 """Fuzzy matching strategies for cross-reference resolution."""
 
 import re
-import unicodedata
 from collections import defaultdict
+from britannica.util.strings import fold_accents
 
 
 def find_fuzzy_match(
@@ -155,8 +155,7 @@ def _try_ocr_levenshtein(target: str, title_map: dict[str, int]) -> int | None:
 
 
 def _fold(s: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", s)
-                   if not unicodedata.combining(c))
+    return fold_accents(s)
 
 
 def _try_or_split(target: str, title_map: dict[str, int]) -> int | None:

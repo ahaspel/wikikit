@@ -21,11 +21,23 @@ gracefully.  No coupling to the LaTeX itself.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
-_CACHE_PATH = Path("data/derived/math_widths.json")
+from britannica.util.strings import content_digest
+
+# The cache's identity — BOTH halves owned here, where the reader lives.
+# `measure_math_widths` imports them to write the file this module reads: key
+# and path have to agree forever, and a copy of either on the writer's side is
+# a silent total cache miss the day one of them moves.
+CACHE_PATH = Path("data/derived/math_widths.json")
+
+
+def cache_key(latex: str) -> str:
+    """Cache identity of a math expression: the raw LaTeX, addressed."""
+    return content_digest(latex)
+
+
 _LOOKUP: dict | None = None
 
 # Minimum readable in-column font-size.  KaTeX renders display math
@@ -38,17 +50,13 @@ _LOOKUP: dict | None = None
 _READABLE_FS_FLOOR = 80
 
 
-def _hash(latex: str) -> str:
-    return hashlib.sha256(latex.encode("utf-8")).hexdigest()[:16]
-
-
 def _load() -> dict:
     global _LOOKUP
     if _LOOKUP is not None:
         return _LOOKUP
-    if _CACHE_PATH.exists():
+    if CACHE_PATH.exists():
         try:
-            _LOOKUP = json.load(open(_CACHE_PATH, encoding="utf-8"))
+            _LOOKUP = json.load(open(CACHE_PATH, encoding="utf-8"))
         except Exception:
             _LOOKUP = {}
     else:
@@ -62,7 +70,7 @@ def scale_hint(latex: str) -> str | None:
     return None — display-candidate markers that haven't been measured
     yet just render at natural size."""
     table = _load()
-    entry = table.get(_hash(latex))
+    entry = table.get(cache_key(latex))
     if not entry:
         return None
     if entry.get("unscalable"):

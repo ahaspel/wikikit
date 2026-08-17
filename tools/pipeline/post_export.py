@@ -38,9 +38,10 @@ from britannica.db.models import Article
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import register_stable_id_dedup
 from britannica.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
+from britannica.table_widths import CACHE_PATH as TABLE_WIDTHS_CACHE
 
 from annotate_math_markers import annotate_payloads
-from annotate_table_markers import CACHE as TABLE_WIDTHS_CACHE, annotate_body
+from annotate_table_markers import annotate_body
 from resolve_contributors_post import bind_contributors
 from resolve_xrefs_post import resolve_and_render
 

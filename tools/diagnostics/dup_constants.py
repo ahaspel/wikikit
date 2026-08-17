@@ -63,6 +63,25 @@ def _docstring_ids(tree) -> set:
     return out
 
 
+def _annotation_ids(tree) -> set:
+    """String TYPE ANNOTATIONS (`-> "tuple[str, str]"`, `x: "Foo | None"`).
+
+    A quoted annotation is type syntax that happens to be a string, not a
+    rule-encoding constant: two functions both returning `"tuple[str, str]"`
+    share a type, not an implementation, and "give it one owner and import
+    it" is not advice anyone can act on.  Twice in one day these were the
+    ratchet's only complaint, which is the definition of noise."""
+    out = set()
+    for node in ast.walk(tree):
+        for field in ("returns", "annotation"):
+            ann = getattr(node, field, None)
+            if ann is not None:
+                for sub in ast.walk(ann):
+                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                        out.add(id(sub))
+    return out
+
+
 def _fstring_part_ids(tree) -> set:
     """Constant fragments INSIDE an f-string — counted via the skeleton, not alone."""
     out = set()
@@ -110,7 +129,7 @@ def collect() -> dict[str, list[str]]:
                 tree = ast.parse(p.read_text(encoding="utf-8"))
             except (SyntaxError, UnicodeDecodeError):
                 continue
-            skip = _docstring_ids(tree)
+            skip = _docstring_ids(tree) | _annotation_ids(tree)
             rel = p.relative_to(ROOT).as_posix()
             inner = _fstring_part_ids(tree)
             for node in ast.walk(tree):

@@ -61,7 +61,11 @@ OWNERS = {
         "title-node reader",
     # sanctioned decorators (own ONE marker param each)
     "tools/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
-    "tools/pipeline/annotate_table_markers.py": "«TABLE[wide]» owner",
+    # annotate_table_markers.py was here: the «TABLE[cols|wide]» grammar moved
+    # into the lexicon (`markers.iter_table_spans` / `set_table_wide`) once the
+    # render, the annotator, the width-cache key and the measurer turned out to
+    # be spelling it four separate ways.  The annotator now stamps through the
+    # lexicon and spells no marker of its own.
     # page-policy bake for the generated ancillary pages (through the lexicon
     # readers; its one compile is the masthead-title drop)
     "tools/viewer/ancillary_render.py": "ancillary page policy",

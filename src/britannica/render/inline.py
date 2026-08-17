@@ -19,7 +19,8 @@ target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
 
-from britannica.markers import strip_marker_tokens
+from britannica.markers import (balanced_end, iter_table_spans, strip_marker_tokens,
+                                table_cols, table_is_wide)
 from urllib.parse import quote
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
@@ -391,27 +392,11 @@ def _table_open(m):
 # The browser closes the open-only «P» — so there is no paragraph re-inference and no block
 # re-scan: every construct is one balanced marker decoded in place, exactly like the inline ones.
 _VERSE_BLOCK_OPEN_RE = re.compile(r"\{\{VERSE(?:\[style:([^\]]*)\])?:")
-_TABLE_COLS_RE = re.compile(r"«TABLE\[cols:(\d+)(\|wide)?")
 
 
 def _verse_block_open(m):
     style = f' style="{m.group(1).replace(chr(34), "&quot;")}"' if m.group(1) else ""
     return f'<blockquote class="verse"{style}>'
-
-
-def _balanced_end(h, a, open_m, close_m):
-    """Index just past the depth-balanced close of the marker opening at ``a`` (None if none)."""
-    depth, j = 1, a + len(open_m)
-    while depth:
-        no, nc = h.find(open_m, j), h.find(close_m, j)
-        if nc == -1:
-            return None
-        if no != -1 and no < nc:
-            depth, j = depth + 1, no + len(open_m)
-        else:
-            depth, j = depth - 1, nc + len(close_m)
-            if depth == 0:
-                return j
 
 
 def _render_eqn(h, ctx):
@@ -428,7 +413,7 @@ def _render_eqn(h, ctx):
         out.append(h[i:a])
         lbl_end = h.find("»", a + len(OPEN))
         label = h[a + len(OPEN):lbl_end]
-        close_end = _balanced_end(h, a, OPEN, CLOSE) if lbl_end != -1 else None
+        close_end = balanced_end(h, a, OPEN, CLOSE) if lbl_end != -1 else None
         if close_end is None:
             out.append(h[a:lbl_end + 1] if lbl_end != -1 else h[a:]); i = (lbl_end + 1) if lbl_end != -1 else len(h); continue
         content = h[lbl_end + 1:close_end - len(CLOSE)].strip()
@@ -449,28 +434,19 @@ def _wrap_wide_tables(h, ctx):
     columns fit fine) and under-fired (CONSTELLATION's 8-column table at 871px got
     nothing).  The corpus has NO wide table nested inside another table, so this
     left-to-right scan wraps exactly the top-level wide ones."""
-    OPEN, CLOSE = "«TABLE[", "«/TABLE»"
     out, i = [], 0
-    while True:
-        a = h.find(OPEN, i)
-        if a == -1:
-            out.append(h[i:]); break
+    for a, span in iter_table_spans(h):
         out.append(h[i:a])
-        close_end = _balanced_end(h, a, OPEN, CLOSE)
-        if close_end is None:
-            out.append(h[a:a + len(OPEN)]); i = a + len(OPEN); continue
-        span = h[a:close_end]
-        cm = _TABLE_COLS_RE.match(span)
-        cols = int(cm.group(1)) if cm else 0
-        if cm and cm.group(2):
+        if table_is_wide(span):
             ctx.wide_table_counter += 1
             out.append(f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
                        f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
-                       f'⤢ Expand ({cols} columns)</button>'
+                       f'⤢ Expand ({table_cols(span)} columns)</button>'
                        f'<div class="wide-table-inline">{span}</div></figure>')
         else:
             out.append(span)
-        i = close_end
+        i = a + len(span)
+    out.append(h[i:])
     return "".join(out)
 
 

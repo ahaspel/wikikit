@@ -55,6 +55,7 @@ MATH_PNG_SRC = os.path.join(ROOT, "data", "derived", "math_png")
 # (the user's missing-topics/search report; the missing-glyph report earlier).
 # Byte-reproducibility of the container yields to revision identity.
 import datetime as _dt
+from britannica.util.strings import fold_accents
 _MODIFIED = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 _IMG_SRC_RE = re.compile(r'src="/data/images/([^"]+)"')
 _REMOTE_IMG_RE = re.compile(r'src="(https?://[^"]+)"')
@@ -783,8 +784,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         # The index sorts ALPHABETICALLY, not by spine position — print quirks (plates
         # bound at volume ends, out-of-sequence articles, Ö collation) put e.g.
         # FRANCE, PLATE III after FYZABAD in reading order.
-        t = unicodedata.normalize("NFKD", _title_text(t))
-        return "".join(c for c in t if not unicodedata.combining(c)).upper()
+        return fold_accents(_title_text(t)).upper()
 
     for letter in sorted(by_letter):
         stems_l = sorted(by_letter[letter],

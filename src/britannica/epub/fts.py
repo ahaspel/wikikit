@@ -18,7 +18,7 @@ order, "|"-separated, parallel to the space-separated sorted term string.
 import re
 
 from britannica.markers import collapse_links, strip_marker_tokens
-import unicodedata
+from britannica.util.strings import fold_accents
 
 DF_CAP_FRACTION = 0.27      # a term in >27% of docs is dropped (unsearchable noise;
                             # at full scale ≈ the measured 10k-doc knee)
@@ -27,8 +27,7 @@ _TOK_RE = re.compile(r"[a-z0-9]+")
 
 
 def fold(s):
-    s = unicodedata.normalize("NFKD", s.lower())
-    return "".join(c for c in s if not unicodedata.combining(c))
+    return fold_accents(s.lower())
 
 
 def tokens(body):

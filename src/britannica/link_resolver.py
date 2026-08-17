@@ -24,7 +24,6 @@ import json
 import re
 
 from britannica.markers import collapse_links, strip_marker_tokens
-import unicodedata
 from pathlib import Path
 
 from britannica.export.sections import match_section
@@ -36,6 +35,7 @@ from britannica.embeddings import LeadEmbeddings, build_cache
 from britannica.topic_fisher import Fisher
 from britannica.name_index import (
     NameIndex, _FURNITURE, _TOK, content, fold, wordset_f)
+from britannica.util.strings import fold_accents
 
 # Nobiliary/patronymic particles: they ride with the SURNAME in a personal name
 # (`Charles de Rémusat` -> RÉMUSAT), so they are never a given-name token.  EB
@@ -94,8 +94,7 @@ _BIBLE_REF_RE = re.compile(r"^BIBLE\b.*?/([A-Z][A-Z\s]+?)(?:\s*[:#]|$)", re.IGNO
 
 
 def _art_norm(s: str) -> str:
-    s = unicodedata.normalize("NFKD", s.upper())
-    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = fold_accents(s.upper())
     s = re.sub(r"[^A-Z0-9 ]+", " ", s)
     return " ".join(s.split())
 

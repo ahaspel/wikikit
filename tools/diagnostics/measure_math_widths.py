@@ -21,7 +21,6 @@ Output schema:
 Foundation for the auto-scaling pipeline (Approach C from the math-quality session).
 Cached: hash-keyed, so subsequent runs only measure new LaTeX.
 """
-import hashlib
 import json
 import re
 import sys
@@ -29,12 +28,13 @@ from collections import defaultdict
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
+from britannica.math_widths import CACHE_PATH, cache_key
+
 sys.stdout.reconfigure(encoding="utf-8") if hasattr(sys.stdout, "reconfigure") else None
 
 TARGET_WIDTH = 520     # px; body-text column width minus breathing room
 MIN_FS = 50            # smallest font-size we'll try (50%)
 FS_STEPS = list(range(95, MIN_FS - 1, -5))  # 95, 90, 85, ..., 50
-CACHE_PATH = Path("data/derived/math_widths.json")
 MATH_RE = re.compile(r"«MATH:([^«]*)«/MATH»", re.DOTALL)
 
 KATEX_HTML = """<!DOCTYPE html>
@@ -50,10 +50,6 @@ KATEX_HTML = """<!DOCTYPE html>
 </head>
 <body><div id="host"></div></body></html>
 """
-
-
-def _hash(latex: str) -> str:
-    return hashlib.sha256(latex.encode("utf-8")).hexdigest()[:16]
 
 
 def _collect_latex() -> dict[str, list[str]]:
@@ -78,7 +74,7 @@ def _collect_latex() -> dict[str, list[str]]:
             latex = m.group(1)
             if len(latex) < 100 and "\\begin{" not in latex:
                 continue
-            h = _hash(latex)
+            h = cache_key(latex)
             if h not in by_hash:
                 by_hash[h] = {"latex": latex, "articles": []}
             if title not in by_hash[h]["articles"]:

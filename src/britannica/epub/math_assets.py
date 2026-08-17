@@ -19,9 +19,10 @@ Keyed by ``(latex, display)``.  Caches:
 """
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
+
+from britannica.util.strings import content_digest
 
 _DERIVED = Path("data/derived")
 SVG_CACHE = _DERIVED / "math_svg.json"
@@ -39,9 +40,7 @@ def math_key(latex: str, display: bool) -> str:
     invalidates every affected entry: the next build re-renders it instead of
     serving the stale (e.g. black-bar) asset under an unchanged raw-LaTeX key."""
     from britannica.render.article import _process_latex
-    return hashlib.sha256(
-        (("D:" if display else "I:")
-         + _process_latex(latex)).encode("utf-8")).hexdigest()[:16]
+    return content_digest(("D:" if display else "I:") + _process_latex(latex))
 
 
 # ── readers (used by the render — no Playwright) ─────────────────────────
