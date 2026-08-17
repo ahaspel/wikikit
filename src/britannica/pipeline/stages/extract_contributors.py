@@ -1,5 +1,6 @@
 import re
 from britannica.util.strings import strip_html_tags
+from britannica.wikitext import iter_template_bodies
 
 # Matches the START of: {{EB1911 footer initials|Full Name|Initials|name2=…|initials2=…}}
 #   or:                  {{EB1911 footer double initials|Name1|Init1|Name2|Init2}}
@@ -16,24 +17,10 @@ def _iter_footers(text: str):
     Balancing is load-bearing: the old ``([^}]+)`` capture stopped at the first
     ``}`` — which for a nested ``{{sc|Wi}}`` in the initials field lands INSIDE
     that template, truncating Pitcher's "C. {{sc|Wi}}." down to "C." and
-    colliding him with Crewe.  Count braces and stop at the footer's OWN closing
-    ``}}`` instead (same technique as the front-matter reader's _iter_entries)."""
-    for mo in _FOOTER_START.finditer(text):
-        depth, k, n = 1, mo.end(), len(text)
-        start = mo.end()
-        while k < n:
-            two = text[k:k + 2]
-            if two == "{{":
-                depth += 1
-                k += 2
-            elif two == "}}":
-                depth -= 1
-                if depth == 0:
-                    yield text[start:k]
-                    break
-                k += 2
-            else:
-                k += 1
+    colliding him with Crewe.  The walk itself is the lexicon's
+    (`wikitext.iter_template_bodies`); this only says which template to read."""
+    for _offset, body in iter_template_bodies(text, _FOOTER_START):
+        yield body
 
 
 def _first_footer(text: str):

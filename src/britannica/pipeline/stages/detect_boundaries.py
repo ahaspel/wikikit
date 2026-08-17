@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from britannica.db.models import Article, ArticleSegment
 from britannica.db.session import SessionLocal
+from britannica.wikitext import template_end
 import re
 
 # Raw wikitext section-begin tag.
@@ -24,35 +25,19 @@ _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
 
 
 def _extract_template_content(text: str, template_name: str) -> str | None:
-    """Return the first argument of a ``{{template_name|…}}`` invocation
-    in ``text``, walking brace depth so nested templates stay intact.
+    """Return the body of the first ``{{template_name|…}}`` in ``text``.
 
-    Returns None if the template isn't present.  A regex like
-    ``{{x-larger\\|([^}]+)\\}\\}`` truncates at the first inner ``}``,
-    which breaks for nested wrappers (``{{x-larger|{{uc|TITLE}}}}``).
+    ``None`` if the template isn't there or never closes.  The brace walk is the
+    lexicon's (`wikitext.template_end`) — a regex like
+    ``{{x-larger\\|([^}]+)\\}\\}`` truncates at the first inner ``}``, which
+    breaks for nested wrappers (``{{x-larger|{{uc|TITLE}}}}``).
     """
     needle = "{{" + template_name + "|"
     start = text.find(needle)
     if start < 0:
         return None
-    i = start + len(needle)
-    depth = 1  # we're already past the opening "{{"
-    out = []
-    while i < len(text):
-        if text[i] == "{" and i + 1 < len(text) and text[i + 1] == "{":
-            depth += 1
-            out.append("{{")
-            i += 2
-        elif text[i] == "}" and i + 1 < len(text) and text[i + 1] == "}":
-            depth -= 1
-            if depth == 0:
-                return "".join(out)
-            out.append("}}")
-            i += 2
-        else:
-            out.append(text[i])
-            i += 1
-    return None
+    end = template_end(text, start)
+    return None if end is None else text[start + len(needle):end - 2]
 
 
 def _title_plaintext(text: str) -> str:
