@@ -59,13 +59,11 @@ def run_db_checks() -> dict:
             .all()
         )
 
-        # Body + xrefs now live in the exported JSON, not the DB.
-        import glob
-        _recs = [
-            json.loads(open(_f, encoding="utf-8").read())
-            for _f in glob.glob("data/derived/articles/*.json")
-            if os.path.basename(_f) not in NON_ARTICLE
-        ]
+        # Body + xrefs now live in the exported JSON, not the DB.  Read through
+        # the corpus loader: it owns NON_ARTICLE and raises on an unreadable
+        # file, so this GATE cannot report on a corpus it only partly read.
+        from britannica.export.corpus import load_corpus
+        _recs = list(load_corpus()[0].values())
         bodies = {r["id"]: (r.get("body") or "") for r in _recs}
         # Xref totals come from data/derived/xref_resolution.jsonl — the
         # resolve phase's own record of every xref it saw and how it fared.
@@ -209,17 +207,14 @@ def run_file_checks() -> dict:
         a marker name the registry doesn't list.  These are producer bugs that need
         NOT surface as visible output residue, so the leak oracle can't see them.
     """
-    files = sorted(
-        f for f in glob.glob("data/derived/articles/*.json")
-        if os.path.basename(f) not in NON_ARTICLE
-    )
+    from britannica.export.corpus import load_corpus
+    _loaded = sorted(load_corpus()[0].items())
+    files = [str(p) for p, _ in _loaded]
 
     results = {"files_scanned": len(files)}
     issues = Counter()
 
-    for f in files:
-        with open(f, encoding="utf-8") as fh:
-            a = json.load(fh)
+    for f, a in ((str(p), d) for p, d in _loaded):
         title = a.get("title", "")
         body = a.get("body", "")
         if not title or not body:

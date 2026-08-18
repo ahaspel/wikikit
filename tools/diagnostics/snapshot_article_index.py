@@ -65,10 +65,9 @@ def main():
         import glob
         import json
         rows = []
-        for fp in sorted(glob.glob("data/derived/articles/*.json")):
-            if fp.endswith(("index.json", "contributors.json")):
-                continue
-            rec = json.loads(Path(fp).read_text(encoding="utf-8"))
+        # The loader owns both the exclusion list and the failure policy.
+        from britannica.export.corpus import load_corpus
+        for _fp, rec in sorted(load_corpus()[0].items()):
             for x in rec.get("xref_list", []):
                 rows.append((
                     rec.get("volume", ""), rec.get("title", ""),
