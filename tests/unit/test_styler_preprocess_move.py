@@ -46,10 +46,42 @@ def test_fine_block_preserves_nested_figure_child():
 
 
 def test_centring_paired_carries_content():
-    # With body text as a first-class element, the {{c/s}}…{{c/e}} paired
-    # centring template no longer emits a «CTR» wrapper; the centred prose is
-    # carried through losslessly as plain body text.
-    assert _run("{{c/s}}centered line{{c/e}}") == "centered line"
+    """`{{c/s}}…{{c/e}}` around prose emits «CTR» — the source said CENTRE.
+
+    This test used to assert the opposite, on the reasoning that "the centred
+    prose is carried through losslessly as plain body text".  The CONTENT was
+    lossless; the CENTRING was dropped, and a dropped attribute is a loss
+    ([[feedback_forks_are_dropped_attributes]]).  What made it look acceptable is
+    that BODY had just become a first-class element, so the wrapper's inner
+    collapsed to a single placeholder and `_center_wrap`'s
+    "a lone placeholder centres itself" exemption — written for TABLES — began
+    swallowing prose.
+
+    Corpus measurement: 108 of 483 centring wrappers emitted nothing at all.
+    ALGEBRA shipped two consecutive displayed equations, both wrapped in
+    `{{c/s}}…{{c/e}}`, one centred and the next flush left.
+    """
+    assert _run("{{c/s}}centered line{{c/e}}") == "«CTR»centered line«/CTR»"
+
+
+def test_centring_paired_leaves_a_self_placed_block_alone():
+    """The exemption that survives: a full-width box is not text-align-centred.
+
+    «CTR» renders as `text-align:center`, which on a `width:100%` table centres
+    its CELL TEXT rather than the box — so a paragraph that is exactly one
+    TABLE_LABELS child stays unwrapped.  Asserted directly on `_center_wrap`
+    because no corpus article reaches it: the newlines around a table become
+    BODY siblings, so its paragraph never holds a lone placeholder.
+    """
+    from britannica.pipeline.stages.elements import _center_wrap
+    from britannica.pipeline.stages.elements._registry import ElementRegistry
+
+    reg = ElementRegistry()
+    ph = reg.add("BRACE_PIPE", "{|\n| a\n|}")
+    reg.labels[ph] = "TABLE"
+    assert _center_wrap(ph, reg) == ph                      # self-placed → bare
+    reg.labels[ph] = "BODY"
+    assert _center_wrap(ph, reg) == f"«CTR»{ph}«/CTR»"      # prose → centred
 
 
 def test_del_still_stripped_in_preprocess():

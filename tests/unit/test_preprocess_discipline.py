@@ -57,6 +57,17 @@ _VETTED = frozenset({
     "_TRAILING_WS.sub",             # trailing whitespace
     "strip_noinclude_blocks",       # noinclude removal (the J1 rescue is GONE;
                                     #   plain wholesale strip)
+    # The EXACT COMPLEMENT of the line above, and vetted on the same grounds:
+    # `<includeonly>` is transclusion chrome, so MediaWiki keeps the content and
+    # drops the tags while `<noinclude>` drops both.  Deletion-shaped under
+    # word-preservation — it removes tags and introduces nothing.  THEATRE was
+    # shipping a visible `&lt;includeonly&gt;`.
+    #
+    # `<chem>` was briefly bundled into this step and was moved OUT by this very
+    # test: mhchem is EB1911 PRESENTATION, not Wikisource chrome, so removing it
+    # here would have been a construct decision wearing a cruft-removal shape.
+    # It is recognized in `quote_runs._INLINE_TAG_MARKERS` instead.
+    "strip_includeonly_tags",
     "strip_html_comments",          # comments
     "_strip_chrome_furniture",      # running head / pagenum / ambox
     "_EDITORIAL_DEL.sub",           # <del> correction

@@ -54,6 +54,33 @@ def strip_noinclude_blocks(text: str) -> str:
     return _NOINCLUDE_BLOCK_RE.sub("", text)
 
 
+# ── includeonly: the EXACT COMPLEMENT of noinclude ─────────────────
+# `<includeonly>` means "ONLY when transcluded", and the mainspace article IS
+# the transclusion — so MediaWiki keeps the CONTENT and drops the TAGS, the
+# mirror image of the strip above.  We kept neither rule and shipped the tags
+# themselves: THEATRE rendered a visible `&lt;includeonly&gt;` in its
+# bibliography and again before its section anchor.
+#
+# The tags are dropped independently rather than as a matched block, because a
+# pair legitimately spans pages here (THEATRE opens on ws 765 and closes ws 766)
+# and a block matcher would either miss it or swallow the page break with it.
+# Dropping each tag on its own is what MediaWiki does and cannot lose content.
+# 14 occurrences corpus-wide.
+_INCLUDEONLY_TAG_RE = re.compile(r"</?includeonly\b[^>]*>", re.IGNORECASE)
+
+def strip_includeonly_tags(text: str) -> str:
+    """Drop the `<includeonly>` TAGS, keeping everything between them.
+
+    Pure transclusion chrome, exactly like the noinclude strip above — which is
+    what makes it VETTED cruft removal rather than a transform.  `<chem>` was
+    briefly handled here too and does NOT belong: it is EB1911 PRESENTATION, not
+    Wikisource chrome ([[feedback_strip_only_editorial]]), so it is recognized in
+    `quote_runs._INLINE_TAG_MARKERS` instead — the map whose own docstring says
+    extending it is how a newly-surfaced inline tag gets carried.
+    """
+    return _INCLUDEONLY_TAG_RE.sub("", text)
+
+
 # (`close_unclosed_attr_quotes` — the global odd-quote tag repair — is deleted;
 # J2 of docs/sweeper_removal.md.  The tolerance lives with the attr READERS now:
 # `_KV_RE` (fold_cell_attrs) and `_SPAN_TITLE_OPEN_RE` accept an unterminated

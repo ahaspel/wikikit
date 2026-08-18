@@ -35,6 +35,7 @@ from britannica.pipeline.stages.elements._title import _letter_from_dropcap
 from britannica.pipeline.stages.preprocess import stream_with_keys
 from britannica.volumes import article_ws_range
 from britannica.util.strings import HTML_TAG_RE
+from britannica.wikitext import COMMENT_RE
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
@@ -61,7 +62,7 @@ _WS = re.compile(r"(?:\s|&nbsp;|\xa0|\|)+")
 _LEAD = [
     re.compile(r"<noinclude>.*?</noinclude>", re.DOTALL | re.I),  # page chrome
     re.compile(r"<section\s+(?:begin|end)\b[^>]*?/?>", re.I),     # transclusion tag
-    re.compile(r"<!--.*?-->", re.DOTALL),                       # HTML comment
+    COMMENT_RE,                                                 # HTML comment
     re.compile(r"<br\s*/?>", re.I),                            # line break
     re.compile(r"\{\|.*?\n\s*\|\}", re.DOTALL),                 # wikitable
     re.compile(r"\{\|.*?\|\}", re.DOTALL),                      # wikitable (inline close)

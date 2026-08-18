@@ -112,7 +112,15 @@ def extract_indents(text: str, registry: ElementRegistry) -> str:
     pos = 0
     while pos < n:
         le = _logical_line_end(text, pos)
-        if is_indent_line(text[pos:le]):
+        # AN INDENT MARK IS PRECEDED BY A NEWLINE — MediaWiki's `:` indent applies
+        # to the start of a LINE, and the start of a recursed SLICE is not one.
+        # ARITHMETIC's `|⁠: || : ⃝ : || :` is a row of vertical-ellipsis cells; each
+        # cell body begins with `:` but follows a `||`, so Wikisource shows `: :`
+        # and only we wrapped it in an indent div.  The rule is context-FREE — it
+        # asks the text, not the caller ([[feedback_stupid_walker]]) — and it is
+        # right for every slice: a `{{c/s}}:x{{c/e}}` inner is not line-initial in
+        # the source either, and MediaWiki does not indent it.
+        if pos > 0 and text[pos - 1] == "\n" and is_indent_line(text[pos:le]):
             end = _paragraph_end(text, le)
             out.append(registry.add("INDENT", text[pos:end]))
             pos = end
@@ -152,10 +160,19 @@ def process_indent_block(raw, inner, context, inner_registry) -> str:
     classifier recursed the inner and the framework substitutes the child
     markers into our output afterward, so we only wrap.
     """
+    from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_WRAPPERS
     from britannica.wikitext import parse_paired_half
     half = parse_paired_half(raw)
-    return indent_block(inner.strip(),
-                        (half[2] if half else "") or BLOCK_INDENT_DEFAULT)
+    spec = (_TEMPLATE_STYLE_WRAPPERS.get(half[0]) if half else None) or {}
+    # The width comes off the OPENING half; each wrapper states it its own way.
+    # `{{left margin/s|3.2em}}` gives a full CSS length, `{{outdent/s|2}}` a bare
+    # NUMBER meaning em — so the spec names the unit rather than every caller
+    # remembering which wrapper spells it which way.
+    width = (half[2] if half else "") or spec.get("arg_default") or BLOCK_INDENT_DEFAULT
+    unit = spec.get("arg_unit", "")
+    if unit and not width.rstrip().endswith(unit):
+        width = width.strip() + unit
+    return indent_block(inner.strip(), width, hanging=bool(spec.get("hanging")))
 
 
 def process_indent(raw, inner, context, inner_registry) -> str:

@@ -467,6 +467,13 @@ _CENTER_PAIRED_NAMES: tuple[str, ...] = (
     # Block indent — its opener carries a WIDTH (`{{left margin/s|3.2em}}`), so
     # the patterns below allow an argument on either half.
     "left margin",
+    # Registered late, after both halves were found LEAKING as visible text in
+    # ALGEBRAIC FORMS / EXCHEQUER / FORAMINIFERA.  A name absent from this tuple
+    # is never bounded as a span, so its halves fall through to the orphan-half
+    # path — where an unregistered name is carried raw.  Every one of these has a
+    # spec in `_TEMPLATE_STYLE_WRAPPERS` read off the Wikisource template.
+    "outdent", "dent", "ti", "bold block", "x-smaller block",
+    "flex wrap centre",
 )
 _PAIRED_NAMES_RE = "|".join(re.escape(n) for n in _CENTER_PAIRED_NAMES)
 _PAIRED_OPENER_RE = re.compile(

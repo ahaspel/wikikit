@@ -508,6 +508,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
 # classifier → producer, the natural direction.  (`_spacer` imports nothing from the
 # element package, so this back-import is cycle-free.)
 from britannica.pipeline.stages.elements._spacer import _SPACER_NAMES
+from britannica.wikitext import COMMENT_RE
 
 # Hanging indent — `{{hi}}` / `{{hanging indent}}` / `{{outdent}}` (synonyms: a
 # first-line outdent).  RENDERED, not dropped: the source states the indent width
@@ -681,7 +682,7 @@ def _classify_html_table(
 # the ordinary `classify_article` (a cell is prose in a box), and the
 # TR/TD/TH/TABLE producers reassemble bottom-up.  `classify_article` runs ONCE
 # per article; recognition + attr-fold are reused verbatim, so the emitted
-_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_COMMENT_RE = COMMENT_RE          # the source-side lexicon owns it
 
 
 def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:

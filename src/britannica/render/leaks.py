@@ -133,10 +133,31 @@ _ESC_TAG_RE = re.compile(
 # the tag that ends or starts a block, or the `</a>` of a page marker — matches
 # only a colon that begins rendered content, and the `(?=[^\s:])` tail requires
 # real content after it, so a decorative `::` alone on a line is not claimed.
+#
+# The anchor alternative is the PAGE MARKER specifically, not any `</a>`.  A bare
+# `</a>` also ends an article XREF, and EB writes those as `TOPIC: Subhead` —
+# `<a title="Germany">Germany</a>:<i>Literature</i>`, `…Ireland</a>:—`,
+# `…Esperanto</a>:` — so the loose form reported four ordinary cross-references as
+# leaked indent markup, in OPITZ VON BOBERFELD, TURENNE, UNITED KINGDOM and
+# UNIVERSAL LANGUAGES.  The page marker is distinguishable because it is EMPTY:
+# it carries the scan link and no text, which is exactly why a `:` can follow it
+# at a line start.  Matching the whole empty anchor keeps the case this
+# alternative exists for and drops the false ones.
+#
+# TABLE CELLS ARE NOT AN ANCHOR.  MediaWiki's `:` indent applies to the start of
+# a LINE, and a cell body follows a `||` — so a colon there is CONTENT, and the
+# producer now leaves it alone.  ARITHMETIC's `|⁠: || : ⃝ : || :` is a row of
+# vertical-ellipsis cells, and anchoring on `<td>` reported all three as leaked
+# markup once they started rendering correctly.
+#
+# The lookahead also excludes `<`: a leaked indent mark is followed by the
+# CONTENT it marks, whereas `>:</div>` is a block whose whole content is a colon —
+# MENSURATION's `:⃝:` ellipsis line, which is a faithful render of a
+# line-initial `:` and not a leak at all.
 _INDENT_RE = re.compile(
-    r"(?:</(?:p|div|li|ul|ol|td|th|tr|h[1-6]|blockquote)>"
-    r"|<(?:p|div|li|ul|ol|td|th|tr|h[1-6]|blockquote)\b[^>]*>"
-    r"|</a>)\s*:+(?=[^\s:])")
+    r"(?:</(?:p|div|li|ul|ol|h[1-6]|blockquote)>"
+    r"|<(?:p|div|li|ul|ol|h[1-6]|blockquote)\b[^>]*>"
+    r'|<a class="page-marker"[^>]*></a>)\s*:+(?=[^\s:<])')
 
 
 _ALL = frozenset(("html", "markdown", "text"))

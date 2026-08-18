@@ -385,6 +385,24 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
     "fine block":        {"css": "font-size:83%"},
     "eb1911 fine print": {"css": "font-size:83%"},
     "smaller block":     {"css": "font-size:83%"},
+    # ── Paired wrappers that used to LEAK both halves as visible text.  Each
+    # spec is read off the Wikisource template, not guessed:
+    #   {{outdent/s|N}}  -> <div style="text-indent:-{N|2}em; margin-left:{N|2}em">
+    #   {{ti/s|W}}       -> <div style="text-indent:{W|2em}">        (Template:Text-indent/s)
+    #   {{dent/s|A|B}}   -> <div style="margin-left:A; text-indent:B">
+    #   {{bold block/s}} -> <div class="wst-bold-body">              (font-weight:bold)
+    #   {{x-smaller block/s}} -> font-size:69%   (the same stylesheet gives
+    #                            `smaller` 83%, which corroborates the entry above)
+    #   {{flex wrap centre/s}} -> <div style="text-align:center; …">
+    # `outdent`'s argument is a bare NUMBER meaning em, unlike `left margin`'s
+    # full CSS length — hence `arg_unit`.
+    "outdent":           {"indent": True, "hanging": True,
+                          "arg_default": "2", "arg_unit": "em", "paired_only": True},
+    "ti":                {"css_args": ("text-indent",), "arg_default": "2em", "paired_only": True},
+    "dent":              {"css_args": ("margin-left", "text-indent"), "paired_only": True},
+    "bold block":        {"css": "font-weight:bold", "paired_only": True},
+    "x-smaller block":   {"css": "font-size:69%", "paired_only": True},
+    "flex wrap centre":  {"ctr": True, "paired_only": True},
     # ── Inline stylers — folded in now that the style producer is SOLE owner.
     # The flat body-text handler is gone, so there's no collision left (that
     # collision is what blocked `sc` before).  ANY styler routes here, period.
@@ -456,10 +474,20 @@ _TEMPLATE_STYLE_WRAPPERS: dict[str, dict] = {
 assert all(_TEMPLATE_STYLE_WRAPPERS.values()), (
     "empty-spec styler entries (strip-by-name) are forbidden: "
     + ", ".join(k for k, v in _TEMPLATE_STYLE_WRAPPERS.items() if not v))
-# Longest names first so `block center` wins over `center`/`c`.
+# The PIPE form `{{NAME|…}}`.  Longest names first so `block center` wins over
+# `center`/`c`.
+#
+# PAIRED-ONLY specs are excluded, because several of these names already have a
+# pipe-form home of their own and registering the paired spelling must not
+# hijack it: `{{ti|1em|text}}` is a PARAM, `{{outdent|text}}` a HANGING_INDENT,
+# `{{flex wrap centre|a|b}}` a TABLE.  One name, two spellings, two producers —
+# and this regex is what decides the pipe one ([[feedback_classification_is_the_work]]).
+_PAIRED_ONLY = frozenset(
+    n for n, spec in _TEMPLATE_STYLE_WRAPPERS.items() if spec.get("paired_only"))
 _TEMPLATE_STYLE_RE = re.compile(
     r"\{\{\s*(" + "|".join(re.escape(n) for n in sorted(
-        _TEMPLATE_STYLE_WRAPPERS, key=len, reverse=True)) + r")\s*\|",
+        set(_TEMPLATE_STYLE_WRAPPERS) - _PAIRED_ONLY, key=len, reverse=True))
+    + r")\s*\|",
     re.IGNORECASE)
 # Param-bearing style wrappers — `{{name|VALUE|content}}`: the CSS value rides in
 # arg-1, the content is arg-2+ (unlike the fixed-value registry above).  ONE

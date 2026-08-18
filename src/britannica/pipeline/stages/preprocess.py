@@ -39,6 +39,7 @@ from britannica.pipeline.stages.quote_runs import _convert_quote_runs
 from britannica.pipeline.stages.source_cleanup import (
     strip_html_comments,
     strip_noinclude_blocks,
+    strip_includeonly_tags,
 )
 
 # Page chrome inside ``<noinclude>`` (running headers, pagequality, smallrefs,
@@ -239,8 +240,22 @@ _EDITORIAL_INS = re.compile(r"</?ins\b[^>]*>", re.IGNORECASE)
 # `&lt;`/`&gt;` (incl. numeric/hex `<`/`>`) literal: decoding those would forge a tag.
 # `&amp;`/`&quot;`/`&apos;` DO decode — the viewer re-escapes a raw `&`/`"`/`'`
 # correctly, and that fixes their leak too.
+#
+# `&vert;` IS THE SAME HAZARD ONE DELIMITER OVER, and it took PURIN to notice.
+# A `|` inside a wikitable cell is a CELL SEPARATOR, so `&vert;` is exactly the
+# escape a Wikisource editor writes to put a literal bar in a cell — the pipe
+# analogue of `&lt;`.  Decoding it here, before the table is parsed, forges
+# separators out of content: PURIN's chemistry diagrams draw their bonds with
+# `&vert;`, and the decoded bars shattered the rows so `rowspan=3` and a column
+# of loose `|` came out as visible text.  (That is why PURIN and not FULMINIC
+# ACID: same table producer, only one of them draws bonds this way.)
+#
+# The pages are unproofread (ws679/680 are pagequality=1), but the tables there
+# are well-formed — `{|` and `|}` balance on every PURIN page — so this is not a
+# transcription defect ([[feedback_source_is_the_only_excuse]]).
 _KEEP_ENTITY = re.compile(
-    r"&(?:lt|gt|#0*(?:60|62)|#[xX]0*3[ce]);", re.IGNORECASE)
+    r"&(?:lt|gt|vert|verbar|VerticalLine|#0*(?:60|62|124)|#[xX]0*(?:3[ce]|7c));",
+    re.IGNORECASE)
 
 
 def _decode_entities(text: str) -> str:
@@ -333,6 +348,7 @@ def _source_clean(stream: str) -> str:
     # ── source cleaning — drop chrome but PRESERVE load-bearing table markers ──
     stream = _TRAILING_WS.sub("", stream)         # whitespace-only line -> clean blank line
     stream = strip_noinclude_blocks(stream)
+    stream = strip_includeonly_tags(stream)        # transclusion chrome, like noinclude
     stream = strip_html_comments(stream)
     stream = _strip_chrome_furniture(stream)               # running head / pagenum / ambox / hidden-text
     stream = _EDITORIAL_DEL.sub("", stream)                # <del> correction: drop error + tags

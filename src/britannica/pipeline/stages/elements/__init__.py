@@ -195,6 +195,7 @@ def _hyphen_map():
 # `strings.LETTER`, not `[A-Za-z]`: the ASCII class fragmented accented words
 # and applied ANOTHER pair's vote (`arrière-pensée` read as `re-pens` → drop).
 from britannica.util.strings import LETTER as _LETTER
+from britannica.wikitext import decode_pipe_entities
 _HYPHEN_RE = re.compile(rf"({_LETTER}{{2,}})-\s+({_LETTER}{{2,}})")
 # The contiguous form exists for ONE caller: a shoulder heading.  A shoulder
 # is a print INSERT with a very narrow measure, so nearly every hyphen in one
@@ -336,10 +337,40 @@ def _stamp_see_windows(text: str) -> str:
 _CTR_PURE_PH_RE = re.compile(rf"^\s*{PLACEHOLDER_RE.pattern}\s*$")
 
 
-def _center_wrap(text: str) -> str:
-    """Wrap each non-placeholder paragraph of centred content in «CTR».
-    Pure block-placeholder paragraphs stay unwrapped (the block centres
-    itself).  Mirrors the former body_text `_wrap_ctr`."""
+def _center_wrap(text: str, registry=None) -> str:
+    """Wrap each paragraph of centred content in «CTR».
+
+    A paragraph that is one SELF-PLACED block — a table or a figure, which the
+    viewer already gives `width:100%` — stays unwrapped, because «CTR» renders as
+    `text-align:center` and on a full-width box that centres its CELL TEXT rather
+    than the box.  That exemption is the reason this function exists.
+
+    IT USED TO EXEMPT ANY LONE PLACEHOLDER, which is a different set entirely.
+    Once CENTER became a composite, prose inside a wrapper collapses to a single
+    BODY placeholder too — and prose does not centre itself — so the exemption
+    swallowed the very case it was meant to serve.  Measured over the corpus by
+    processing each wrapper with and against its own content: **108 of 483
+    centring wrappers changed nothing at all** — 57 BODY, 13 STRIP, 12 nested
+    CENTER, 11 POEM, 10 IMAGE, 3 MATH, 2 HTML_STYLE — while not one TABLE or
+    FIGURE was among them, so the intended exemption was never firing and only
+    the unintended one was.  ALGEBRA shows two consecutive displayed equations,
+    both wrapped in `{{c/s}}…{{c/e}}`, one centred and the next flush left.
+
+    So the test is now the LABEL, which is what "centres itself" was always about
+    ([[feedback_classifier_returns_only_label]]).  `TABLE_LABELS` is that set and
+    the registry already owns it — note it is NOT `BLOCK_LABELS`, which adds
+    POEM: centred verse is the whole point of `{{center block/s}}<poem>`.
+
+    THE EXEMPTION CURRENTLY MATCHES NOTHING, and that is recorded here so nobody
+    reads it as load-bearing: measured over all 483 wrappers, the lone-placeholder
+    paragraphs are 57 BODY / 13 STRIP / 12 CENTER / 11 POEM / 10 IMAGE / 3 MATH /
+    2 HTML_STYLE and not one TABLE.  A table never qualifies because the newlines
+    around it become BODY siblings, so its paragraph holds three placeholders, not
+    one.  It stays because the rule it states is true about the render — a
+    `width:100%` box under `text-align:center` centres its cell text, not itself —
+    and a correctness guard is not dead merely because today's corpus never trips it.
+    """
+    from britannica.pipeline.stages.elements._registry import TABLE_LABELS
     content = text.strip()
     if not content:
         return ""
@@ -348,8 +379,24 @@ def _center_wrap(text: str) -> str:
         p = p.strip()
         if not p:
             continue
-        out.append(p if _CTR_PURE_PH_RE.match(p) else f"«CTR»{p}«/CTR»")
+        out.append(p if _is_self_placed(p, registry, TABLE_LABELS)
+                   else f"«CTR»{p}«/CTR»")
     return "\n\n".join(out)
+
+
+def _is_self_placed(par: str, registry, self_placed) -> bool:
+    """Is this paragraph exactly one child that already places its own box?
+
+    Without a registry there is no label to read, so nothing is exempt — the
+    honest default, since wrapping a box that centres itself is a smaller error
+    than dropping the centring the source asked for.
+    """
+    if not _CTR_PURE_PH_RE.match(par) or registry is None:
+        return False
+    labels = getattr(registry, "labels", None)
+    if not labels:
+        return False
+    return labels.get(par.strip(), "") in self_placed
 
 
 def _process_center(raw, inner, context, inner_registry):
@@ -381,9 +428,24 @@ def _process_center(raw, inner, context, inner_registry):
     name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
     arg = (m.group(2) or "").strip() if m else ""
     spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
+    if spec and spec.get("css_args"):
+        # The wrapper states its CSS through ARGUMENTS rather than a fixed rule:
+        # `{{ti/s|1em}}` is `text-indent:1em`, `{{dent/s|11em|0em}}` is
+        # `margin-left:11em; text-indent:0em`.  The spec names the properties in
+        # positional order; a missing argument simply drops its declaration, so a
+        # bare `{{dent/s}}` carries nothing rather than inventing a width.
+        vals = [v.strip() for v in arg.split("|")] if arg else []
+        rules = [f"{prop}:{vals[i]}" for i, prop in enumerate(spec["css_args"])
+                 if i < len(vals) and vals[i]]
+        if not rules and spec.get("arg_default"):
+            rules = [f"{spec['css_args'][0]}:{spec['arg_default']}"]
+        if rules:
+            return style_block(inner.strip(), css="; ".join(rules),
+                               tag=spec.get("tag", "DIV"))
+        return inner.strip()
     if spec and spec.get("css") and not spec.get("ctr"):
         return style_block(inner.strip(), css=spec["css"], tag=spec.get("tag", "DIV"))
-    return _center_wrap(inner)   # centring family
+    return _center_wrap(inner, inner_registry)   # centring family
 
 
 _WRAP_HALF_NAME_RE = re.compile(r"^\{\{\s*([^{}/|]*?)\s*/[se]\s*\}\}",
@@ -411,8 +473,20 @@ def _process_wrap_half(raw, opening):
     m = _WRAP_HALF_NAME_RE.match(raw)
     name = re.sub(r"\s+", " ", m.group(1).strip().lower()) if m else ""
     spec = _TEMPLATE_STYLE_WRAPPERS.get(name)
-    if not spec:                                  # not a registered styler — carry raw
-        return raw
+    if not spec:
+        # TWO LISTS USED TO DISAGREE HERE, and which one won depended on whether
+        # the half happened to carry an argument.  `_SPACER_NAMES` declares a set
+        # of halves content-less ("a bare `/s`/`/e` control marker with no
+        # content → nothing") — but the classifier's `_WRAP_HALF_RE` allows no
+        # argument, so `{{outdent/s|2}}` fell past it to SPACER and vanished
+        # while the argument-less `{{outdent/e}}` was claimed here and carried
+        # raw.  One pair, two answers.  Ask the SPACER vocabulary before leaking:
+        # a name IT owns renders to nothing on both halves.
+        from britannica.pipeline.stages.elements._spacer import _SPACER_NAMES
+        half = "s" if opening else "e"
+        if f"{name}/{half}" in _SPACER_NAMES:
+            return ""
+        return raw                                # genuinely unknown — carry raw
     if spec.get("ctr"):
         return "«CTR»" if opening else "«/CTR»"
     tag = spec.get("tag", "DIV")
@@ -806,6 +880,32 @@ def _wrap_param_default(raw, body, ctx):
 _NAMED_PARAM_RE = re.compile(r"^\s*([A-Za-z][\w -]*?)\s*=\s*([^|]*)\|")
 
 
+# The same params written at the END of the content instead of the start; only
+# the three MAPPABLE keys, so ordinary prose ending in `|word=value` is left
+# alone (see the tail loop in `_carry_named_params`).
+_TRAILING_PARAM_RE = re.compile(r"\|\s*(small|style|width)\s*=\s*([^|]*?)\s*$", re.IGNORECASE)
+
+
+def _param_css(key, val):
+    """A styler NAMED param -> the CSS declaration(s) it carries, or [].
+
+    ONE map, because the same params are written at the head of a styler's
+    content and at its tail, and two copies of a three-branch mapping is how the
+    head and tail come to disagree ([[feedback_tune_dont_fork]]).  An unmapped
+    key returns [] and the CALLER decides what that means -- dropped at the head
+    (it is unambiguously a param slot), left as content at the tail (it may be
+    prose).
+    """
+    key, val = key.strip().lower(), val.strip()
+    if key == "small" and val.lower() in ("yes", "y", "1", "true"):
+        return ["font-size:83%"]
+    if key == "style" and val:
+        return [val.rstrip(";")]
+    if key == "width" and val:
+        return ["width:" + val]
+    return []
+
+
 def _carry_named_params(inner_raw):
     """Pull leading `name=value|` NAMED params off a styler's content and map them
     to CSS — CARRY them (they're presentation: `{{Hebrew|small=yes|א}}` renders the
@@ -819,15 +919,29 @@ def _carry_named_params(inner_raw):
         m = _NAMED_PARAM_RE.match(inner_raw)
         if m is None:
             break
-        key, val = m.group(1).strip().lower(), m.group(2).strip()
-        if key == "small" and val.lower() in ("yes", "y", "1", "true"):
-            css.append("font-size:83%")
-        elif key == "style" and val:
-            css.append(val.rstrip(";"))
-        elif key == "width" and val:
-            css.append(f"width:{val}")
-        # else: unmappable 1-off param — drop (no CSS map to carry it as).
+        # An unmappable 1-off param yields nothing and is dropped — a leading
+        # `name=value|` is unambiguously a param slot, so there is no content to
+        # lose.
+        css += _param_css(m.group(1), m.group(2))
         inner_raw = inner_raw[m.end():]
+    # A styler may also put its named param LAST — `{{fine block|Fig. 8.—A ventral
+    # view…|style=line-height:112%}}` — and only the leading form was pulled, so
+    # the trailing one rode into the prose as visible `|style=line-height:112%`
+    # (METAMORPHOSIS, ROBES).  Same params, same CSS, same carry; only the
+    # position differs, so it is the same function and not a second one
+    # ([[feedback_tune_dont_fork]]).
+    #
+    # STRICTER at the tail than at the head on purpose: only a MAPPABLE key is
+    # taken.  The leading loop may drop an unmappable param because a leading
+    # `name=value|` is unambiguously a param slot, but content genuinely ending
+    # in `|word=value` is ordinary text, and dropping that would be content loss
+    # rather than presentation carry.
+    while True:
+        m = _TRAILING_PARAM_RE.search(inner_raw)
+        if m is None:
+            break
+        css += _param_css(m.group(1), m.group(2))
+        inner_raw = inner_raw[:m.start()]
     return inner_raw, css
 
 
@@ -1655,4 +1769,16 @@ def process_elements_tree(
     # Reassemble: substitute markers into the placeholder-only text — ordered
     # concatenation of element markers in walker source order.
     body = substitute_top_level_markers(placeholderized_text, tree)
+
+    # THE PIPE ESCAPE IS DECODED HERE, once, because here is where it stops being
+    # ambiguous.  `&vert;` is what a Wikisource editor writes for a literal `|`
+    # inside a wikitable, where a bare `|` would be a CELL SEPARATOR — the pipe's
+    # analogue of `&lt;`.  Decoding it in preprocess forged separators out of
+    # content and shattered PURIN's chemistry rows; keeping it forever would ship
+    # a visible `&vert;`, since the render escapes the `&`.  So it survives the
+    # walk and is decoded after all structural parsing is done — which is not a
+    # cleanup pass but the moment an escape is FOR
+    # ([[feedback_total_functions_not_cleanup_passes]]).  255 occurrences, 206 of
+    # them inside a wikitable.
+    body = decode_pipe_entities(body)
     return body, tree

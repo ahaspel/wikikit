@@ -13,7 +13,7 @@ import mwparserfromhell as _mwp
 
 
 _QUOTE_RUN_HINT = re.compile(
-    r"''|<(?:[biu]|em)[>\s/]|\{\{bold\|", re.IGNORECASE)
+    r"''|<(?:[biu]|em|chem)[>\s/]|\{\{bold\|", re.IGNORECASE)
 
 # The inline emphasis/decoration HTML tags this stage owns, each → its marker
 # pair.  `mwparserfromhell` does the STRUCTURAL work (it only yields a Tag for a
@@ -26,11 +26,37 @@ _QUOTE_RUN_HINT = re.compile(
 # the size/script render path already; `<div>`/`<span>` are the walker's styled-
 # wrapper job.  Extending this map is how a newly-surfaced inline styler is
 # carried — never a render-layer un-escape.
+
 _INLINE_TAG_MARKERS: dict[str, tuple[str, str]] = {
     "i": ("«I»", "«/I»"), "em": ("«I»", "«/I»"),
     "b": ("«B»", "«/B»"),
     "u": ("«SPAN[style:text-decoration:underline]»", "«/SPAN»"),
+    # `<chem>` is the mhchem extension tag — a FORMULA, which MediaWiki RENDERS
+    # rather than displays.  We have no chemistry renderer, so it maps to an
+    # EMPTY marker pair: recognized, tags consumed, formula kept as text.  UREA
+    # shipped a visible `&lt;chem&gt;K4Fe(NC)6-&gt;KCNO…&lt;/chem&gt;` and now
+    # shows `K4Fe(NC)6->KCNO->NH4CNO->CO(NH2)2`.
+    #
+    # STATED LOSS, not a silent one: the subscripts mhchem would set are not
+    # recovered — only the tag noise is removed.  It rides HERE rather than as a
+    # preprocess strip because it is EB1911 presentation, not Wikisource chrome,
+    # and the two-places rule puts presentation in recognition
+    # ([[feedback_transform_only_two_places]], [[feedback_strip_only_editorial]]).
+    # One pair corpus-wide, which is why it is a map entry and not a producer
+    # ([[feedback_smallest_producer_max_instances]]).
+    "chem": ("", ""),
 }
+
+
+# Stands in for a newline INSIDE an inline tag pair while the text is split
+# into lines for quote-run scoping, then restored verbatim before return — so
+# the stream the next stage sees is byte-identical apart from the markers this
+# function exists to emit.  Distinct from the table sentinels (0x02 _NLBLOCK,
+# 0x03 _PH, 0x04 _PIPE_ESCAPE, 0x05 _CELL_NL) and the page scaffold (0x01); a
+# stray one is caught by the leak oracle's control-sentinel check.
+_TAG_NL = "\x06"
+_MULTILINE_INLINE_TAG_RE = re.compile(
+    r"<(i|b|em|u)\b[^>]*>(?:(?!</?\1\b).)*?</\1\s*>", re.DOTALL | re.IGNORECASE)
 
 
 def _convert_quote_runs(text: str) -> str:
@@ -101,6 +127,29 @@ def _convert_quote_runs(text: str) -> str:
 
     masked = re.sub(r"<ref[^/>]*>[\s\S]*?</ref>", _mask, text)
 
+    # An HTML inline tag pair may SPAN A LINE BREAK, and line-scoping is the
+    # wrong rule for it.  Line-scoping mirrors MediaWiki's `doQuotes`, which
+    # really does split on `\n` — but `doQuotes` handles the APOSTROPHE runs.
+    # `<i>`/`<b>`/`<em>` go through the HTML sanitizer instead, which spans
+    # lines, so `<i>Metaphysical\nmaterialism</i>` is italic on Wikisource and
+    # arrived here as two unbalanced halves that converted to nothing and shipped
+    # as visible `&lt;i&gt;` (METAPHYSICS, PAINTING, TRIGONOMETRY, SCOTT).
+    #
+    # Masked the same way `<ref>` is, rather than by relaxing the matcher: the
+    # per-line pass finds tags STRUCTURALLY via mwparserfromhell, which yields a
+    # Tag only for a balanced pair — that is what keeps a lone `<Secundus>` from
+    # converting — and hiding the newline preserves that instead of trading it
+    # for a DOTALL regex.
+    _nl: list[str] = []
+
+    def _hold_newlines(m: re.Match) -> str:
+        if "\n" not in m.group(0):
+            return m.group(0)
+        _nl.append(m.group(0))
+        return m.group(0).replace("\n", _TAG_NL)
+
+    masked = _MULTILINE_INLINE_TAG_RE.sub(_hold_newlines, masked)
+
     out = []
     for line in masked.split("\n"):
         # Cheap optimization: most lines have no quote-runs.  Skip
@@ -110,6 +159,11 @@ def _convert_quote_runs(text: str) -> str:
             continue
         out.append(_convert_quote_runs_line(line))
     converted = "\n".join(out)
+
+    # Put the held newlines back — the stream must be byte-identical outside
+    # the markers this function exists to emit.
+    if _nl:
+        converted = converted.replace(_TAG_NL, "\n")
 
     # Restore the masked refs.
     if _refs:
