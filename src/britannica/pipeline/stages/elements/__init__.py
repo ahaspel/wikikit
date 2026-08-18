@@ -1458,8 +1458,8 @@ for _pr_label in _PR_WRAP:
 
 # Marker-wrap producers — a composite whose node marker IS its recursed inner, wrapped in a fixed
 # (opener, closer).  Each is a DATA ROW, not a function: the handler emits `opener + inner + closer`
-# and `produce_tree` substitutes the child markers into `inner` afterward.  (OUTLINE_ITEM embeds
-# `raw` in its opener and MIRROR_GLYPH strips `inner`, so those stay hand-written.)
+# and `produce_tree` substitutes the child markers into `inner` afterward.  (MIRROR_GLYPH strips
+# `inner`, so it stays hand-written.)
 _MARKER_WRAP = {
     "HIEROGLYPH": ("[hieroglyph: ", "]"),        # <hiero> → the Gardiner-code stub
 }

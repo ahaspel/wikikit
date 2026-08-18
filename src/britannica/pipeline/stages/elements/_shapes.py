@@ -69,11 +69,10 @@ SHAPES: frozenset[str] = frozenset({
 # internal parsing it needs.
 #
 # * HTML_SELF_CLOSING — no inner content.
-# * OUTLINE — line-pattern (indented `;head:desc` ladder); the producer
-#   walks it line-by-line itself.  Balanced shapes inside an outline
-#   body have already been placeholdered by the linear scanner before
-#   the OUTLINE phase runs, so there's nothing for the classifier to
-#   recurse into anyway.
+# (INDENT and LIST are line-pattern shapes but NOT leaves: each decomposes
+#   into child nodes like any other composite.  The OUTLINE leaf that stood
+#   here — the `;head:desc` ladder with its inferred hierarchy — is gone
+#   [[project_outline_arc]].)
 # NOTE: SHAPE_PAIRED_WRAPPER is NOT a leaf.  Its CENTER family is a composite —
 # the classifier recurses its inner into the tree via the generic non-leaf path
 # (`strip_outer` peels `{{NAME/s}}…{{NAME/e}}`), so a heading inside a centered

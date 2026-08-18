@@ -11,11 +11,10 @@ could match the same position, the one with the more specific opener
 (longer match) wins — same semantics any tokenizer uses.  Each
 recognizer is a pure function of `(text, position)`.
 
-After the linear scan, an OUTLINE pass runs over the
-placeholderized text.  OUTLINE is line-pattern based (indentation
-profile), not position-keyed delimiter-balanced, so it operates on
-a different alphabet — it runs as a separate phase, the one genuine
-exception to "every shape is a recognizer in the linear scan."
+The `:`-INDENT and `#`-LIST scanners run as their own phase rather than
+as recognizers in the linear scan: their mark sits at a LINE start, not
+around a balanced span, so they operate on a different alphabet — the one
+genuine exception to "every shape is a recognizer in the linear scan."
 
 Output: ``(text_with_placeholders, [(placeholder, shape, raw), ...])``.
 """
@@ -277,7 +276,7 @@ _TAG_START_RE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)\b")
 # per-tag non-greedy regexes are gone).  Inline markup (`<i>`,`<sup>`,…) is
 # NOT here — it stays in body-text.  Self-closing `<ref…/>` is routed to
 # SHAPE_HTML_SELF_CLOSING by the regex recognizers, not here.  `ol` (an HTML
-# ordered list → the classifier's OUTLINE composite, GEOLOGY/ALBUMIN) and
+# ordered list → the classifier's LIST composite, GEOLOGY/ALBUMIN) and
 # `blockquote` (a quoted block → transparent BLOCKQUOTE unwrap, SESTETT/SESTINA)
 # join the block set — the `<li>`/inner recursion is the classifier's, so the
 # walker just bounds the span.
@@ -505,7 +504,7 @@ def _paired_wrapper_end(text: str, pos: int) -> int | None:
 
 
 def _walk_balanced_shapes(
-    text: str, _allow_outline: bool = True,
+    text: str, _line_context: bool = True, _starts_at_line: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """Single linear walk over `text`, at one depth.
 
@@ -536,8 +535,8 @@ def _walk_balanced_shapes(
         body_buf.clear()
         if not run:
             return
-        if _allow_outline:
-            run, indent_extracts = _walk_indents(run)
+        if _line_context:
+            run, indent_extracts = _walk_indents(run, _starts_at_line)
             extracts.extend(indent_extracts)
         last = 0
         for m in PLACEHOLDER_RE.finditer(run):
@@ -784,6 +783,7 @@ def _walk_balanced_shapes(
 
 def _walk_indents(
     text: str,
+    starts_at_line: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """Run the `:`-indent line scanner over `text`.  Returns the
     placeholderized text and the new indent extracts.
@@ -800,7 +800,7 @@ def _walk_indents(
     bucket = ElementRegistry()
     text = extract_hash_lists(text, bucket)
     list_phs = set(bucket.elements)
-    text = extract_indents(text, bucket)
+    text = extract_indents(text, bucket, starts_at_line)
     extracts = [
         (ph, SHAPE_LIST if ph in list_phs else SHAPE_INDENT, raw)
         for ph, (_name, raw) in bucket.elements.items()
@@ -812,15 +812,18 @@ def _walk_indents(
 
 def walk(
     text: str,
-    _allow_outline: bool = True,
+    _line_context: bool = True,
+    _starts_at_line: bool = True,
 ) -> tuple[str, list[tuple[str, str, str]]]:
     """One-level walk: emit every element at this depth — brackets, outlines,
     AND the body-text runs between them — in a single scan.
 
     ``classify`` runs this at every depth, so body text is recognized
     everywhere by the same code: no article-level special case, no later
-    body-wrap, no flag.  ``_allow_outline=False`` when the parent is OUTLINE so
-    the outline recognizer doesn't re-trigger on its own bytes.
+    body-wrap, no flag.  ``_line_context=False`` says this text is NOT a run of
+    source LINES, so the `:`-indent and `#`-list scanners are off: inside an
+    INDENT's or LIST's own bytes, and inside a wikitable CELL, whose body follows
+    a `||` rather than a newline.
     """
     # INDENT runs as a PRE-PASS on the raw text (construct-aware via `_skip`), so a
     # `:`-paragraph is bounded WHOLE — including a `:<math>…` line's raw math — BEFORE
@@ -828,8 +831,8 @@ def walk(
     # `_flush_body`, AFTER extraction, which stranded a `:<math>` line's math as a
     # sibling and left the item empty.  The balanced walk then runs with indent off.
     outline_extracts: list[tuple[str, str, str]] = []
-    if _allow_outline:
-        text, outline_extracts = _walk_indents(text)
+    if _line_context:
+        text, outline_extracts = _walk_indents(text, _starts_at_line)
     ph_text, extracts = _walk_balanced_shapes(
-        text, _allow_outline=False)
+        text, _line_context=False)
     return ph_text, outline_extracts + extracts

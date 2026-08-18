@@ -274,7 +274,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "IMAGE"
     if re.match(r"\{\{\s*plain image with caption\b", raw, re.IGNORECASE):
         return "IMAGE"
-    # (`{{ordered list|…}}` is intercepted upstream as an OUTLINE composite — see
+    # (`{{ordered list|…}}` is intercepted upstream as a LIST composite — see
     # `_classify_ordered_list_composite` — so it never reaches this leaf-label path.)
     # `{{EB1911 article link|…}}` — cross-reference link; matched on the raw opener
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
@@ -706,7 +706,7 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cell_phs: list[str] = []
         cell_children: dict[str, ClassifiedElement] = {}
         for sep, cell_attr, content in cells:
-            cell_body, cell_reg = classify_article(content)
+            cell_body, cell_reg = classify_article(content, starts_at_line=False)
             ph = new_placeholder()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
@@ -805,7 +805,7 @@ def _classify_columns_as_table(raw: str) -> ClassifiedElement:
     cell_children: dict[str, ClassifiedElement] = {}
     cell_phs: list[str] = []
     for content in cols:
-        cell_body, cell_reg = classify_article(content)
+        cell_body, cell_reg = classify_article(content, starts_at_line=False)
         ph = new_placeholder()
         cell_children[ph] = ClassifiedElement("TD", "", cell_body, cell_reg)
         cell_phs.append(ph)
@@ -1003,7 +1003,7 @@ def _classify_shoulder_composite(raw: str) -> ClassifiedElement:
 
 def _classify_running_header_composite(raw: str) -> ClassifiedElement:
     """A running header `{{rh|left|centre|right}}` DECOMPOSES into three CELL nodes — one row of
-    cells, exactly like `{{columns}}`→TABLE and an indent ladder→OUTLINE.  Chop the pipe args
+    cells, exactly like `{{columns}}`→TABLE and a `:`-marked line→INDENT.  Chop the pipe args
     (`_running_header_cells`) and recurse each cell (its italic equation variables, small-caps
     plate numbers → real nodes); the producer reassembles the flex row from the three markers."""
     from britannica.pipeline.stages.elements import _running_header_cells
@@ -1170,7 +1170,7 @@ def _classify_equation_composite(raw: str) -> ClassifiedElement:
 
 
 def classify(
-    shape: str, raw: str, _allow_outline: bool = True
+    shape: str, raw: str, _line_context: bool = True
 ) -> ClassifiedElement:
     """Classify one element.
 
@@ -1196,10 +1196,10 @@ def classify(
     if shape == SHAPE_LIST:
         return _classify_hash_list_composite(raw)
     # `{{ordered list|…}}` is a LIST the source states outright — it keeps the
-    # nested-item structure (and the OUTLINE machinery) that `:` no longer earns.
+    # nested-item structure that a bare `:` no longer earns.
     if re.match(r"\{\{\s*ordered\s+list\b", raw, re.IGNORECASE):
         return _classify_ordered_list_composite(raw)
-    # `<ol>…<li>…</ol>` is that same OUTLINE in HTML syntax (GEOLOGY / ALBUMIN) —
+    # `<ol>…<li>…</ol>` is that same LIST in HTML syntax (GEOLOGY / ALBUMIN) —
     # the same decomposer, `list-style-type` supplying the numbering.
     if shape == SHAPE_HTML_TAG and re.match(r"<\s*ol\b", raw, re.IGNORECASE):
         return _classify_html_list_composite(raw)
@@ -1248,30 +1248,34 @@ def classify(
     if shape in LEAF_SHAPES or (
             shape == SHAPE_HTML_TAG and _is_leaf_html_tag(raw)):
         # Leaf shapes own their entire payload — the producer reads
-        # `raw` (CHART2, REF_SELF) or `inner_text` (OUTLINE) directly
-        # and does whatever internal parsing it needs.  We still call
-        # `strip_outer` so `inner_text` reflects each leaf's own
-        # contract: CHART2 / REF_SELF return "", OUTLINE returns the
-        # indented-line ladder unchanged.
+        # `raw` (CHART2, REF_SELF) directly and does whatever internal
+        # parsing it needs.  We still call `strip_outer` so `inner_text`
+        # reflects each leaf's own contract: CHART2 / REF_SELF return "".
+        # (INDENT and LIST are NOT leaves — they are composites whose
+        # content classifies into child nodes; the OUTLINE leaf that used
+        # to be named here is gone [[project_outline_arc]].)
         inner_text = strip_outer(shape, raw)
         inner_registry: dict[str, ClassifiedElement] = {}
     else:
         peeled = strip_outer(shape, raw)
-        # `_allow_outline=False` on the next descent if we're inside
-        # an OUTLINE — prevents the outline extractor from
-        # re-triggering on its own bytes (today's `recurse_safe`).
-        next_allow_outline = (_allow_outline
+        # An INDENT's or LIST's own bytes are not a fresh run of source lines,
+        # so the line scanners must not re-trigger inside one.  (This flag was
+        # `_allow_outline` until the outline taxonomy was dissolved; nothing
+        # named OUTLINE has existed since, and the name went on describing a
+        # producer that was gone while the flag gated the INDENT/LIST scanners
+        # — a dead name whispering a wrong answer [[feedback_dead_is_wrong]].)
+        next_line_context = (_line_context
                               and shape not in (SHAPE_INDENT, SHAPE_LIST))
         # Figures are body-level only — never recognize one inside an
         # already-extracted element (incl. the FIGURE producer's own
         # re-processing of its span, which would recurse forever).
         inner_text, extracts = walk(
-            peeled, _allow_outline=next_allow_outline)
+            peeled, _line_context=next_line_context)
         inner_registry = {}
         for ph, child_shape, child_raw in extracts:
             inner_registry[ph] = classify(
                 child_shape, child_raw,
-                _allow_outline=next_allow_outline,
+                _line_context=next_line_context,
             )
     label = _derive_label(shape, raw, inner_text, inner_registry)
 
@@ -1318,6 +1322,8 @@ def classify(
 
 def classify_article(
     text: str,
+    *,
+    starts_at_line: bool = True,
 ) -> tuple[str, dict[str, ClassifiedElement]]:
     """Top-level entry: classify every embedded element in an article
     body.
@@ -1331,8 +1337,18 @@ def classify_article(
     one — so after this call the placeholderized text contains only
     placeholders: every byte is owned by some classified element, body
     text included.
+
+    ``line_context=False`` says this slice is NOT a run of source LINES, so the
+    `:`-indent scanner must not run over it.  A wikitable CELL is the case: its
+    body follows a `||`, never a newline, so MediaWiki applies no indent there —
+    and in EB1911's chemistry tables a leading `:` is a BOND glyph (PURIN's
+    `N:CH`), which we were rendering as an indented paragraph.  The caller that
+    knows the slice is not a line says so, rather than the scanner guessing from
+    the byte before it ([[feedback_context_sensitive_is_producer]]): guessing
+    cost three articles a legitimate indent whose line merely happened to start
+    a slice (SCHLESWIG-HOLSTEIN QUESTION, TOOL, LAEVULINIC ACID).
     """
-    placeholderized_text, extracts = walk(text)
+    placeholderized_text, extracts = walk(text, _starts_at_line=starts_at_line)
     registry: dict[str, ClassifiedElement] = {}
     for ph, shape, raw in extracts:
         registry[ph] = classify(shape, raw)

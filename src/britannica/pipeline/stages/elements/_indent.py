@@ -104,23 +104,29 @@ def _paragraph_end(text: str, first_line_end: int) -> int:
     return end
 
 
-def extract_indents(text: str, registry: ElementRegistry) -> str:
+def extract_indents(text: str, registry: ElementRegistry,
+                    starts_at_line: bool = True) -> str:
     """Replace each `:`-marked paragraph with an INDENT placeholder, copying
-    every other byte of ``text`` VERBATIM."""
+    every other byte of ``text`` VERBATIM.
+
+    ``starts_at_line`` says whether offset 0 of ``text`` is a LINE start.  Every
+    later candidate is one by construction (the scan advances a whole line at a
+    time), so this is the only position in doubt — and it is in doubt because a
+    wikitable CELL body begins after a `||`, not after a newline.  MediaWiki
+    applies no indent there, and in EB1911's chemistry tables that leading `:` is
+    a BOND glyph (PURIN's `N:CH`, ARITHMETIC's vertical-ellipsis cells).
+
+    A `:` on a LATER line of the same cell is still an indent, which is why this
+    is a position rule and not "no indents inside tables": FLAGELLATA keeps its
+    68-line taxonomy ladder inside a layout table, and switching the scanner off
+    for cells erased all of it.
+    """
     out: list[str] = []
     n = len(text)
     pos = 0
     while pos < n:
         le = _logical_line_end(text, pos)
-        # AN INDENT MARK IS PRECEDED BY A NEWLINE — MediaWiki's `:` indent applies
-        # to the start of a LINE, and the start of a recursed SLICE is not one.
-        # ARITHMETIC's `|⁠: || : ⃝ : || :` is a row of vertical-ellipsis cells; each
-        # cell body begins with `:` but follows a `||`, so Wikisource shows `: :`
-        # and only we wrapped it in an indent div.  The rule is context-FREE — it
-        # asks the text, not the caller ([[feedback_stupid_walker]]) — and it is
-        # right for every slice: a `{{c/s}}:x{{c/e}}` inner is not line-initial in
-        # the source either, and MediaWiki does not indent it.
-        if pos > 0 and text[pos - 1] == "\n" and is_indent_line(text[pos:le]):
+        if (pos > 0 or starts_at_line) and is_indent_line(text[pos:le]):
             end = _paragraph_end(text, le)
             out.append(registry.add("INDENT", text[pos:end]))
             pos = end
