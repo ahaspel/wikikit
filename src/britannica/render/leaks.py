@@ -188,6 +188,10 @@ def find_leaks(output, fmt="html"):
             continue
         text = src[which]
         for m in rx.finditer(text):
-            i = m.start()
-            leaks.append((cat, text[max(0, i - 20):i + 30]))
+            # The window must CONTAIN the match.  Ending it 30 chars past the
+            # match START truncated any match longer than that — an `indent`
+            # hit on `<div style="padding-left:1.6em">:` reported a snippet that
+            # stopped before the leaked `:`, i.e. the evidence for the finding was
+            # cut out of the finding.  Anchor the tail on the match END.
+            leaks.append((cat, text[max(0, m.start() - 20):m.end() + 30]))
     return leaks

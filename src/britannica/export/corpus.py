@@ -19,21 +19,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from britannica.util.loading import PartialLoadError, unreadable
+
 ARTICLES_DIR = Path("data/derived/articles")
 # Sidecar files in the articles dir that are NOT articles.
 NON_ARTICLE = frozenset({"index.json", "contributors.json"})
 
 
-class CorpusLoadError(RuntimeError):
+class CorpusLoadError(PartialLoadError):
     """One or more article payloads could not be loaded."""
 
     def __init__(self, failures: list[tuple[Path, str]]):
-        self.failures = failures
-        listed = "\n".join(f"    {p.name}: {why}" for p, why in failures[:20])
-        more = "" if len(failures) <= 20 else f"\n    … and {len(failures) - 20} more"
-        super().__init__(
-            f"{len(failures)} article payload(s) failed to load — refusing to run a "
-            f"phase over a partial corpus:\n{listed}{more}")
+        super().__init__(failures, noun="article payload",
+                         refusing="run a phase over a partial corpus")
 
 
 def load_corpus(art_dir: Path | str = ARTICLES_DIR, *,
@@ -55,7 +53,7 @@ def load_corpus(art_dir: Path | str = ARTICLES_DIR, *,
         try:
             d = json.loads(fn.read_text(encoding="utf-8"))
         except Exception as e:
-            failures.append((fn, f"unreadable/unparseable: {e}"))
+            failures.append((fn, unreadable(e)))
             continue
         if not isinstance(d, dict):
             failures.append((fn, f"not a JSON object ({type(d).__name__})"))

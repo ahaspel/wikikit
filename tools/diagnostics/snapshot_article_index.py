@@ -62,8 +62,6 @@ def main():
         print(f"Wrote {len(articles)} articles → {out_articles}")
 
         # Xrefs live in the exported JSON now, not the DB.
-        import glob
-        import json
         rows = []
         # The loader owns both the exclusion list and the failure policy.
         from britannica.export.corpus import load_corpus

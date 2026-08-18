@@ -9,13 +9,11 @@ These are human-curated mappings placed by Wikisource editors.
 
 import json
 import re
-import glob
 from collections import defaultdict
 from pathlib import Path
+
+from britannica.source_pages import RAW_DIR, load_pages
 from britannica.util.strings import strip_html_tags
-
-
-RAW_DIRS = [Path("data/raw/wikisource")]
 
 
 def build_alias_map() -> dict[str, str]:
@@ -27,17 +25,11 @@ def build_alias_map() -> dict[str, str]:
     # Collect alias -> list of targets (may have multiple)
     raw_aliases: dict[str, list[str]] = defaultdict(list)
 
-    for raw_dir in RAW_DIRS:
-        if not raw_dir.exists():
-            continue
-        for subdir in sorted(raw_dir.iterdir()):
-            if not subdir.is_dir():
-                continue
-            for path in sorted(subdir.glob("*.json")):
-                with open(path, encoding="utf-8") as f:
-                    data = json.load(f)
-                raw = data.get("raw_text", "")
-                _extract_aliases_from_wikitext(raw, raw_aliases)
+    # One reader for the raw source ([[feedback_honesty_surface_failures]]): a page
+    # it cannot read RAISES rather than dropping the aliases on it, which would
+    # silently shrink the xref table and look like a corpus with fewer aliases.
+    for page in load_pages()[0]:
+        _extract_aliases_from_wikitext(page.text, raw_aliases)
 
     # Resolve to single target per alias (most frequent)
     alias_map: dict[str, str] = {}
@@ -95,7 +87,7 @@ def _extract_aliases_from_wikitext(
         aliases[display].append(target)
 
 
-_VOL29_DIR = Path("data/raw/wikisource/vol_29")
+_VOL29_DIR = RAW_DIR / "vol_29"
 _VOL29_OCR = Path("data/derived/vol29_ocr.json")
 
 
@@ -185,17 +177,12 @@ def build_vol29_index_aliases() -> dict[str, str]:
         except Exception:
             pass
 
-    for f in sorted(_VOL29_DIR.glob("vol29-page*.json")):
-        try:
-            d = json.loads(f.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        text = _strip_vol29_wikitext(d.get("raw_text", ""))
+    for page in load_pages(29)[0]:
+        text = _strip_vol29_wikitext(page.text)
         if not text.strip():
-            # Fall back to OCR if available.
-            ws_match = re.search(r"page(\d{4})", f.name)
-            if ws_match:
-                text = ocr_data.get(ws_match.group(1), "")
+            # Fall back to OCR for pages Wikisource has not transcribed.  This is
+            # an EMPTY page, not an unreadable one — the reader raises on those.
+            text = ocr_data.get("%04d" % page.page, "")
             if not text.strip():
                 continue
 
