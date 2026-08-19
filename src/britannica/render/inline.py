@@ -19,6 +19,7 @@ target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
 
+from britannica.image_assets import local_image_filename
 from britannica.markers import (OL_OPEN_RE, balanced_end,
                                 strip_marker_tokens)
 from urllib.parse import quote
@@ -75,12 +76,10 @@ _IMG_PARTS_RE = re.compile(
 
 
 def commons_url(filename):
-    if filename.startswith("http://") or filename.startswith("https://"):
-        return filename
-    name = filename.replace(" ", "_")             # Commons: spaces ↔ underscores
-    name = re.sub(r'["<>|?*]', "_", name)          # match download_images.py disk sanitization
-    if name.lower().endswith(".svg"):              # SVGs rasterized to .svg.png
-        name += ".png"
+    # ONE derivation, shared with the downloader that writes the file — see
+    # `image_assets.local_image_filename`.  These three lines used to live here
+    # AND (differently) there, and the difference cost 18 articles their figures.
+    name = local_image_filename(filename)
     # Images are location-agnostic: the files sit in data/images/ locally and deploy to the
     # same /data/images/ on S3, so one path serves both — no local-vs-web branch to bake in
     # (the imageless-local bug was this path frozen to the web form at export while the files
@@ -98,7 +97,9 @@ def parse_img_meta(meta_block):
 
 def render_img(filename, meta, caption):
     fn = unescape_html(filename)
-    url = fn if fn.startswith("http") else commons_url(fn)
+    # No http branch here: `commons_url` answers for a name and a URL alike, and
+    # a second opinion at the call site is how the fix below it stayed invisible.
+    url = commons_url(fn)
     alt = strip_marker_tokens(caption or fn, "")
     s = "max-width:100%;height:auto;vertical-align:middle;"
     if meta.get("width"):

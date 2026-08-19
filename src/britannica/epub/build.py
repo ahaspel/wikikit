@@ -58,7 +58,6 @@ import datetime as _dt
 from britannica.util.strings import fold_accents
 _MODIFIED = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 _IMG_SRC_RE = re.compile(r'src="/data/images/([^"]+)"')
-_REMOTE_IMG_RE = re.compile(r'src="(https?://[^"]+)"')
 _MATH_SRC_RE = re.compile(r'src="math/([0-9a-f]+\.png)"')
 _MEDIA = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
           "gif": "image/gif", "svg": "image/svg+xml"}
@@ -485,14 +484,12 @@ def bundle_images(body, dst_dir, seen, missing, diet=True):
             return f'src="images/{seen[name]}"'
         missing.append(name)
         return f'src="images/{MISSING_IMG}"'
-    body = _IMG_SRC_RE.sub(repl, body)
-    # Remote image srcs (Wikimedia score renders the corpus hotlinks) violate the
-    # EPUB no-remote-resources rule — placeholder + record until they're mirrored
-    # into the image store.
-    def remote(m):
-        missing.append(m.group(1))
-        return f'src="images/{MISSING_IMG}"'
-    return _REMOTE_IMG_RE.sub(remote, body)
+    # No remote-src branch: every image reference is local by construction, and
+    # the coverage gate fails the build if one ever isn't.  This used to swap in
+    # the missing-image placeholder "until they're mirrored into the image
+    # store" — they were mirrored, and the eleven musical-notation figures in
+    # BAG-PIPE, BINIOU and CITTERN shipped as placeholders anyway.
+    return _IMG_SRC_RE.sub(repl, body)
 
 
 def bundle_math_png(body, dst_dir, seen):

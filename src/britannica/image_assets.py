@@ -7,6 +7,7 @@ import eagerly from anywhere.
 from __future__ import annotations
 
 import re
+from urllib.parse import unquote
 
 
 def normalize_score_content(s: str) -> str:
@@ -104,3 +105,43 @@ GENEALOGY_IMAGES: dict[tuple[int, int], str] = {
     (7, 369): "familytree_vol07_page0369.jpg",
     (25, 382): "treechart_vol25_page0382.jpg",
 }
+
+# ── THE local filename of a Commons image — one derivation, two callers ────────
+#
+# `render.inline.commons_url` builds the `<img src>` the site requests;
+# `tools/pipeline/download_images.py` decides what to save the bytes AS.  Each
+# spelled its own rule, and the render's even carried the comment "match
+# download_images.py disk sanitization" while doing one thing more than it:
+# collapsing SPACES to underscores, which is Commons' own equivalence.  The
+# downloader is handed the MARKER name (`{{IMG:Albite Britannica.png}}`), so the
+# space survived onto disk while the site asked for `Albite_Britannica.png`.
+#
+# 68 references across 18 articles pointed at a file that was never going to be
+# there under that name — CARNIVORA lost every one of its seven figures — and
+# re-running the downloader could not fix it, because it was never blind to the
+# images: it fetched them under the other spelling.  Same shape as the
+# width-cache identity bug, one artifact over ([[feedback_tune_dont_fork]]).
+#
+# Lives HERE because this module is a leaf both sides can import.
+_ILLEGAL_IN_FILENAME = re.compile(r'["<>|?*]')
+
+
+def local_image_filename(name: str) -> str:
+    """An image name OR a full URL -> the filename it is stored under in `data/images/`.
+
+    Spaces become underscores (Commons treats them as the same character);
+    characters Windows forbids become `_`; an `.svg` gains `.png` because
+    Special:FilePath rasterises SVGs and that is what actually lands on disk.
+
+    A FULL URL is peeled to its last segment first, because "what is this
+    image stored as" has ONE answer whatever form the reference takes.  That
+    peel used to live only in the downloader, so the downloader saved the
+    eleven Wikimedia score renders as `ta4vp64m.png` while the render went on
+    hotlinking `upload.wikimedia.org` — the files were on disk and the site
+    asked the wiki for them anyway.  Exactly the split this function exists to
+    close, one image class over ([[feedback_tune_dont_fork]]).
+    """
+    if name.startswith("http://") or name.startswith("https://"):
+        name = unquote(name.rsplit("/", 1)[-1])
+    out = _ILLEGAL_IN_FILENAME.sub("_", name.replace(" ", "_"))
+    return out + ".png" if out.lower().endswith(".svg") else out
