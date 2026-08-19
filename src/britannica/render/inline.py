@@ -19,8 +19,8 @@ target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
 
-from britannica.markers import (OL_OPEN_RE, balanced_end, iter_table_spans,
-                                strip_marker_tokens, table_cols, table_is_wide)
+from britannica.markers import (OL_OPEN_RE, balanced_end,
+                                strip_marker_tokens)
 from urllib.parse import quote
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
@@ -345,30 +345,6 @@ def _render_eqn(h, ctx):
     return "".join(out)
 
 
-def _wrap_wide_tables(h, ctx):
-    """Wrap each MEASURED-wide «TABLE[…]…«/TABLE» in a `wide-table-wrap` figure + Expand
-    button (balanced close, so a nested table isn't torn).  Keys on the `|wide` param
-    stamped by annotate_table_markers from real browser measurement against the 590px
-    body column — replacing the cols≥10 proxy, which both over-fired (ten narrow
-    columns fit fine) and under-fired (CONSTELLATION's 8-column table at 871px got
-    nothing).  The corpus has NO wide table nested inside another table, so this
-    left-to-right scan wraps exactly the top-level wide ones."""
-    out, i = [], 0
-    for a, span in iter_table_spans(h):
-        out.append(h[i:a])
-        if table_is_wide(span):
-            ctx.wide_table_counter += 1
-            out.append(f'<figure class="wide-table-wrap"><button class="expand-table-btn" '
-                       f'data-wt="wt-{ctx.wide_table_counter}" title="Open full-width view">'
-                       f'⤢ Expand ({table_cols(span)} columns)</button>'
-                       f'<div class="wide-table-inline">{span}</div></figure>')
-        else:
-            out.append(span)
-        i = a + len(span)
-    out.append(h[i:])
-    return "".join(out)
-
-
 def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
                   body_blocks=False, ctx=None):
     """Decode an inline marker string to HTML, reproducing ``decodeInlineMarkers``.
@@ -511,12 +487,11 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     h = _XL_OPEN_RE.sub(_xl_open, h).replace("«/XL»", "</a>")
     h = _SEC_RE.sub(r'<span id="section-\1" class="section-anchor"></span>', h)
 
-    # Wide-table wrap (BODY only): a cols≥10 table gains its `wide-table-wrap` figure + Expand
-    # button BEFORE the markers decode, so the balanced «TABLE…«/TABLE» inside becomes the
-    # wrapped <table>.  (A cell / footnote leaves body_blocks False — no wrap, as before.)
-    if body_blocks:
-        h = _wrap_wide_tables(h, ctx)
-
+    # NO wide-table wrap here.  Whether a table overflows is a LAYOUT fact the
+    # browser owns, and the viewer decides it per element and per viewport
+    # (`wrapWideTables`).  Baking it meant a build-time measurement cached by span
+    # BYTES, which every producer change invalidated silently, and one answer for
+    # every screen width — wrong on a phone by construction.
     # Recursive table markers — «TABLE[…]»/«TR[…]»/«TD[…]»/«TH[…]»/«CAPTION».  The
     # producer carried the table AS markers (no HTML on the wire), so this is pure
     # independent token substitution: the cell text between the markers was escaped

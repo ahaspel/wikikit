@@ -406,33 +406,6 @@ def table_cols(span: str) -> int:
     return int(m.group(1)) if m else 0
 
 
-def table_is_wide(span: str) -> bool:
-    """Whether a span's own open tag carries the measured `wide` flag."""
-    m = _TABLE_PARAMS_RE.match(span)
-    return bool(m and m.group(2))
-
-
-def set_table_wide(span: str, wide: bool) -> str:
-    """The span with its OWN `wide` flag written or removed.
-
-    Stamp and strip are one edit with the flag flipped, which is what makes
-    re-annotating an annotated corpus idempotent.
-    """
-    return _TABLE_PARAMS_RE.sub(
-        lambda m: _table_open_tag(m) + ("|wide" if wide else ""),
-        span, count=1)
-
-
-def strip_table_wide(span: str) -> str:
-    """The span's IDENTITY form: every `wide` flag in it, at any depth, gone.
-
-    What the width cache keys on.  Scope is the whole subtree, not just the
-    outer tag (`set_table_wide`'s job), because the key has to be stable under
-    ANY annotation the span could pick up — otherwise measuring an annotated
-    corpus writes entries the next measure can never find.
-    """
-    return _TABLE_PARAMS_RE.sub(_table_open_tag, span)
-
 
 # Open-prefixes for the `{{X:…}}`-shape markers that survive cleaning
 # and reach the viewer.  Single source of truth — both the body-text
