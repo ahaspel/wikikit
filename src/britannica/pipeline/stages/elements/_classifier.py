@@ -706,7 +706,15 @@ def _classify_table_composite(raw: str, grid: str) -> ClassifiedElement:
         cell_phs: list[str] = []
         cell_children: dict[str, ClassifiedElement] = {}
         for sep, cell_attr, content in cells:
-            cell_body, cell_reg = classify_article(content, starts_at_line=False)
+            # A MULTI-LINE cell body has line structure; a single-line one does
+            # not.  `split_wiki_row` strips the cell, so a body written as
+            # `|`⏎`:a, Hood of finder.`⏎`:b, Ground glass screen.` arrives with its
+            # leading newline gone — and treating offset 0 as "not a line" then
+            # cost PHOTOGRAPHY's legend its FIRST item's indent while b–e kept
+            # theirs, which is a visibly ragged list.  Presence of a newline is
+            # the property that survives the strip and says the same thing.
+            cell_body, cell_reg = classify_article(
+                content, starts_at_line="\n" in content)
             ph = new_placeholder()
             cell_children[ph] = ClassifiedElement(
                 "TH" if sep == "!" else "TD", cell_attr, cell_body, cell_reg)
@@ -805,7 +813,9 @@ def _classify_columns_as_table(raw: str) -> ClassifiedElement:
     cell_children: dict[str, ClassifiedElement] = {}
     cell_phs: list[str] = []
     for content in cols:
-        cell_body, cell_reg = classify_article(content, starts_at_line=False)
+        # Same rule as the wikitable cell above.
+        cell_body, cell_reg = classify_article(
+            content, starts_at_line="\n" in content)
         ph = new_placeholder()
         cell_children[ph] = ClassifiedElement("TD", "", cell_body, cell_reg)
         cell_phs.append(ph)

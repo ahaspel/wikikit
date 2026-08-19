@@ -883,7 +883,14 @@ _NAMED_PARAM_RE = re.compile(r"^\s*([A-Za-z][\w -]*?)\s*=\s*([^|]*)\|")
 # The same params written at the END of the content instead of the start; only
 # the three MAPPABLE keys, so ordinary prose ending in `|word=value` is left
 # alone (see the tail loop in `_carry_named_params`).
-_TRAILING_PARAM_RE = re.compile(r"\|\s*(small|style|width)\s*=\s*([^|]*?)\s*$", re.IGNORECASE)
+# The value may not contain BRACES.  Anchored at `$`, a `[^|]*?` value ran
+# straight through the closing `}}` of a NESTED template: INDIGO's
+# `{{nowrap|…{{dual line|A|B|style=…;}}}}` had its inner `dual line` close
+# eaten and its style hoisted onto the nowrap, leaving `{{dual line|A|B`
+# unterminated and visible.  A CSS value never carries a brace, so excluding
+# them keeps the param at the top level of the content where it belongs.
+_TRAILING_PARAM_RE = re.compile(
+    r"\|\s*(small|style|width)\s*=\s*([^|{}]*?)\s*$", re.IGNORECASE)
 
 
 def _param_css(key, val):
