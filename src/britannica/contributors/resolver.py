@@ -17,16 +17,15 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from britannica.contributors.names import honorific_set, strip_honorifics
 from britannica.util.strings import fold_accents
 
-_TITLE_RE = re.compile(
-    r"^(?:(?:Prof(?:essor)?\.?|Dr\.?|Mr\.?|Mrs\.?|Miss|Sir|Rev(?:erend)?\.?|The)\s+)+",
-    re.IGNORECASE,
-)
-
-
-def _strip_title(name: str) -> str:
-    return _TITLE_RE.sub("", name).strip()
+# The honorific vocabulary is the contributors package's own
+# (`names.HONORIFIC_RE`), not a private list here.  This module's copy knew
+# Prof/Dr/Mr/Mrs/Miss/Sir/Rev and "The" but no rank and no peerage, so 73
+# contributors scored their FIRST NAME as `Colonel`, `Captain`, `Admiral` or
+# `Hon` — see names.py for the measurement.
+_strip_title = strip_honorifics
 
 
 def _strip_trailing_paren(name: str) -> str:
@@ -100,6 +99,16 @@ class ContributorResolver:
     def _first_token_matches(input_first: str, cand_first: str) -> int:
         return _score_first(input_first, cand_first)
 
+    @staticmethod
+    def _only_one_with_honorific(text: str, bucket: list) -> "str | None":
+        """The single candidate in ``bucket`` whose honorifics overlap ``text``'s,
+        or None when none or several do."""
+        wanted = honorific_set(text)
+        if not wanted:
+            return None
+        hits = [c for c in bucket if wanted & honorific_set(c)]
+        return hits[0] if len(hits) == 1 else None
+
     def resolve(self, text: str) -> str | None:
         """Return the canonical full name for `text`, or None."""
         if not text:
@@ -115,12 +124,25 @@ class ContributorResolver:
 
         parts = stripped.split(" ")
 
-        # Strategy 2: single-word input — rely on unique last-name match.
+        # Strategy 2: single-word input — a unique last-name match, or the one
+        # candidate the HONORIFIC picks out.
+        #
+        # "Colonel Church" is not ambiguous: three contributors are surnamed
+        # Church — Colonel George Earl Church, the Very Rev. R. W. Church, and
+        # Sir Arthur Herbert Church — and exactly one of them is a Colonel.  The
+        # rank is EVIDENCE about which man is meant, and stripping it to compare
+        # the names threw away the only thing that identified him
+        # ([[feedback_forks_are_dropped_attributes]]).
+        #
+        # It NARROWS and never widens: it is consulted only where the surname
+        # already agrees and the name alone left more than one candidate, so it
+        # can turn an abstention into a bind but can never move a bind from one
+        # person to another.
         if len(parts) == 1:
             bucket = self._by_last.get(parts[0].lower(), [])
             if len(bucket) == 1:
                 return bucket[0]
-            return None
+            return self._only_one_with_honorific(text, bucket)
 
         last = parts[-1].lower()
         bucket = self._by_last.get(last, [])

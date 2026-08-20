@@ -31,6 +31,13 @@ def _load_scan_map() -> dict:
 
 
 # Fallback ws → leaf offset when scan_map has no entry.
+#
+# COMPUTED FROM PAGE HEADINGS: a known WS page's printed page number is looked up
+# in the IA `page_numbers.json` to find its leaf.  That provenance was written
+# down only on the DUPLICATE of this table in `tools/diagnostics/extract_scan.py`
+# — the copy explained itself while the original, the one every article's
+# `leaf_start`/`leaf_end` is computed from, said nothing.  The tool now imports
+# `leaf_for_ws` from here and the note came with it ([[feedback_tune_dont_fork]]).
 _LEAF_OFFSET = {
     1: 7, 2: 7, 3: 9, 4: 9, 5: 12, 6: 12, 7: 7, 8: 7,
     9: 9, 10: 10, 11: 8, 12: 7, 13: 7, 14: 6, 15: 17, 16: 6,
@@ -57,13 +64,26 @@ def _get_scan_map() -> dict:
     return _SCAN_MAP
 
 
-def _leaf_for_ws(volume: int, ws_page: int) -> int:
-    """Translate a Wikisource page index to its physical scan leaf."""
+def leaf_for_ws(volume: int, ws_page: int) -> int:
+    """Translate a Wikisource page index to its physical scan leaf.
+
+    PUBLIC because it is THE answer to that question.  `extract_scan.py` asked it
+    too and answered it separately — its own `scan_map` loader, its own memoizer,
+    its own copy of `_LEAF_OFFSET`, and its own inline version of the two-step
+    below.  The tables happened to be identical, which is the dangerous state: a
+    duplicate that has not drifted YET, sitting between the leaf every article
+    JSON carries and the leaf a scan is extracted at, with nothing to keep them
+    equal.
+    """
     sm = _get_scan_map().get(str(volume), {})
     leaf = sm.get(str(ws_page))
     if leaf is not None:
         return int(leaf)
+    # An unknown volume falls back to offset 0, i.e. leaf == ws_page.  Kept as it
+    # was: all 29 volumes are in the table, so this cannot fire, and changing it
+    # to raise would be smuggling a behaviour change into a de-duplication.
     return ws_page + _LEAF_OFFSET.get(volume, 0)
+
 
 
 def _printed_page(volume: int, ws_page: int) -> int:
