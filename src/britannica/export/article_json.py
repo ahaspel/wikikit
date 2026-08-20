@@ -465,6 +465,14 @@ def stable_id(article) -> str:
     return _base_stable_id(article) + _STABLE_ID_SUFFIX.get(aid, "")
 
 
+def stable_id_from_filename(filename: str) -> str:
+    """`{stable_id}.json` -> the stable id.  The INVERSE of `_safe_filename`,
+    and it lives beside it so the two cannot disagree about the extension: the
+    download bundle and the homonym audit each had their own one-liner
+    (`_id`, `_stem`) ([[feedback_tune_dont_fork]])."""
+    return filename[:-5] if filename.endswith(".json") else filename
+
+
 def _safe_filename(article_id, title: str = "") -> str:
     """Article JSON filename = ``{stable_id}.json`` — TITLE-INDEPENDENT, so a title change
     (ALGEBRAB→ALGEBRA) or a title-formatting difference never moves the file or the URL; the

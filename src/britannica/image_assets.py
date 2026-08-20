@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from urllib.parse import unquote
+from britannica.util.strings import collapse_spaces
 
 
 def normalize_score_content(s: str) -> str:
@@ -19,7 +20,7 @@ def normalize_score_content(s: str) -> str:
     formatting differences between the SCORE_IMAGES keys and the tag
     contents the element extractor delivers.
     """
-    return re.sub(r"\s+", " ", s).strip()
+    return collapse_spaces(s)
 
 
 # ── <score> musical-notation tags → pre-rendered Wikimedia PNGs ─────────

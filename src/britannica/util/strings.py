@@ -187,3 +187,44 @@ def until_stable(text: str, transform) -> str:
             return changed          # not shrinking: finished, or would spin
         previous = len(changed)
         text = changed
+
+
+def collapse_spaces(s: str) -> str:
+    """Whitespace runs — spaces, tabs, newlines — folded to ONE space, ends trimmed.
+
+    The most-copied line in the codebase.  It existed as
+    `contributors.resolver._normalise_spaces`, as
+    `image_assets.normalize_score_content` (keying `<score>` tags to their
+    pre-rendered PNGs), and — with `.lower()` on the end — as `_norm` in BOTH
+    `topic_geo` and `topic_subject`.  Four names, one sentence.
+
+    Cheap to duplicate and therefore duplicated, which is exactly why it is worth
+    owning: `normalize_score_content` is a CONTENT-ADDRESSED KEY, so the day
+    someone "improves" one copy is the day score lookups silently miss
+    ([[feedback_tune_dont_fork]]).
+    """
+    return re.sub(r"\s+", " ", s or "").strip()
+
+
+def excerpt(text: str, idx: int, span: int = 60) -> str:
+    """``span`` characters either side of ``idx``, newlines flattened to spaces.
+
+    What a finding shows a human so they can see the site without opening the
+    file.  Two diagnostics wrote it out with different default widths (60 and
+    100) — the WIDTH is the caller's choice, the window is not
+    ([[feedback_tune_dont_fork]]).
+    """
+    start = max(0, idx - span)
+    end = min(len(text), idx + span)
+    return text[start:end].replace("\n", " ").replace("\r", "")
+
+
+def collapse_key(s: str) -> str:
+    """`collapse_spaces` lowercased — the LOOKUP-KEY form of a string.
+
+    `topic_geo` and `topic_subject` each kept a private `_norm` for this, and
+    after `collapse_spaces` was shared they were still two one-line wrappers
+    saying the same thing.  A darling half-killed is still a darling
+    ([[feedback_kill_all_darlings]]).
+    """
+    return collapse_spaces(s).lower()

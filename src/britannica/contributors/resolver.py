@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from britannica.contributors.names import honorific_set, strip_honorifics
-from britannica.util.strings import fold_accents
+from britannica.util.strings import collapse_spaces, fold_accents
 
 # The honorific vocabulary is the contributors package's own
 # (`names.HONORIFIC_RE`), not a private list here.  This module's copy knew
@@ -37,8 +37,7 @@ def _strip_trailing_paren(name: str) -> str:
     return re.sub(r"\s*\([^)]*\)\s*$", "", name).strip()
 
 
-def _normalise_spaces(s: str) -> str:
-    return re.sub(r"\s+", " ", s).strip()
+_normalise_spaces = collapse_spaces
 
 
 def _parts(name: str) -> list[str]:

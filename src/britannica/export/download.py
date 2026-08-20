@@ -26,14 +26,10 @@ from pathlib import Path
 
 from britannica.export.markdown import body_to_markdown
 from britannica.markers import IMG_PARTS_RE
+from britannica.export.article_json import stable_id_from_filename
 
 _SITE = "https://www.britannica11.org"
 _ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
-
-
-def _id(filename: str) -> str:
-    """Stable public id = the filename stem (vol-page-slug-TITLE)."""
-    return filename[:-5] if filename.endswith(".json") else filename
 
 
 def _sha256(path: Path) -> str:
@@ -72,7 +68,7 @@ def _topic_index(classified_toc: dict) -> tuple[list[dict], dict[str, list[str]]
             if fn:                        # a LEAF entry — file it under this category
                 if path:
                     nid = ensure(path)
-                    nodes[tuple(path)]["articles"].append(_id(fn))
+                    nodes[tuple(path)]["articles"].append(stable_id_from_filename(fn))
                     reverse.setdefault(fn, [])
                     if nid not in reverse[fn]:
                         reverse[fn].append(nid)
@@ -119,7 +115,7 @@ def build_download(articles_dir: str = "data/derived/articles",
         for fp, d in sorted(payloads.items()):
             if not d.get("body"):
                 continue
-            aid = _id(fp.name)
+            aid = stable_id_from_filename(fp.name)
             body = d["body"]
 
             contribs = [{"initials": c.get("initials"), "name": c.get("full_name")}
@@ -135,7 +131,7 @@ def build_download(articles_dir: str = "data/derived/articles",
             for x in d.get("xrefs") or []:
                 if x.get("status") != "resolved" or not x.get("target_filename"):
                     continue
-                to = _id(x["target_filename"])
+                to = stable_id_from_filename(x["target_filename"])
                 disp = (x.get("normalized_target") or "").title()
                 xrefs.append({"to": to, "display": disp})
                 ef.write(json.dumps({"from": aid, "to": to, "display": disp},

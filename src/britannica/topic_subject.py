@@ -14,6 +14,7 @@ scores a candidate lead against them.
 from __future__ import annotations
 
 import re
+from britannica.util.strings import collapse_key
 
 # Bucket category / subcategory  ->  profession words that appear in a lead.
 # Keyed by the lower-cased bucket segment (matched by substring, so "Painting"
@@ -66,15 +67,11 @@ _FIELD = {
 }
 
 
-def _norm(s: str) -> str:
-    return re.sub(r"\s+", " ", s.strip().lower())
-
-
 def field_terms(path) -> list[str]:
     """Profession words implied by the bucket's category/subcategory segments."""
     out: dict[str, None] = {}
     for seg in path:
-        low = _norm(seg)
+        low = collapse_key(seg)
         for key, words in _FIELD.items():
             if key in low:
                 for w in words:
@@ -88,11 +85,11 @@ def field_score(lead: str, terms: list[str]) -> float:
     nationality can't, e.g. three English Smiths split only by profession."""
     if not terms:
         return 0.0
-    low = " " + _norm(lead[:200]) + " "
+    low = " " + collapse_key(lead[:200]) + " "
     hit = any(re.search(r"(?<![a-z])" + re.escape(t) + r"(?![a-z])", low) for t in terms)
     return 1.5 if hit else 0.0
 
 
 def field_hits(lead: str, terms: list[str]):
-    low = " " + _norm(lead[:200]) + " "
+    low = " " + collapse_key(lead[:200]) + " "
     return [t for t in terms if re.search(r"(?<![a-z])" + re.escape(t) + r"(?![a-z])", low)]

@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 
 from britannica.topic_subject import _FIELD
+from britannica.util.strings import collapse_key
 
 # EB parenthetical abbreviations -> full place name (US states, AU/CA/UK regions).
 _ABBREV = {
@@ -98,12 +99,8 @@ _ADJ = {"spain": "spanish", "france": "french", "germany": "german", "italy": "i
         "england": "english", "india": "indian", "brazil": "brazilian", "peru": "peruvian"}
 
 
-def _norm(s: str) -> str:
-    return re.sub(r"\s+", " ", s.strip().lower())
-
-
 def _expand(term: str) -> list[str]:
-    t = _norm(term)
+    t = collapse_key(term)
     if t in _ABBREV:
         t = _ABBREV[t]
     out = _SYNONYMS.get(t, [t])
@@ -145,9 +142,9 @@ def location_terms(path, topic: str) -> list[tuple[str, float]]:
                 if e in _PLACES:
                     add_term(e, FINE)
     # bucket path — later (deeper) segments discriminate better than earlier ones
-    segs = [s for s in path if _norm(s) not in _GENERIC and not _FIELD_RE.search(_norm(s))]
+    segs = [s for s in path if collapse_key(s) not in _GENERIC and not _FIELD_RE.search(collapse_key(s))]
     for i, seg in enumerate(segs):
-        members = _CONTINENT_MEMBERS.get(_norm(seg))
+        members = _CONTINENT_MEMBERS.get(collapse_key(seg))
         if members:                       # a continent -> its member regions
             for m in members:
                 add_term(m, 0.9)
@@ -194,7 +191,7 @@ def geo_score(lead: str, terms: list[tuple[str, float]]) -> float:
     HEAD.  A place article states its own country in the opening clause ("a town
     of Spain"); incidental mentions ("largely settled by Germans") come later, so
     scoring only the head stops Berlin-in-Ontario matching a Germany bucket."""
-    low = " " + _norm(lead[:180]) + " "
+    low = " " + collapse_key(lead[:180]) + " "
     total = 0.0
     for term, w in terms:
         # word-ish boundary so 'york' doesn't fire inside 'yorkshire' spuriously,
