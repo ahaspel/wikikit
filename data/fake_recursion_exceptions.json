@@ -1,0 +1,7 @@
+{
+  "src/britannica/pipeline/stages/super_walker.py::d743ec38": "[[File:...]] with a nested-link level written out. Measured against the raw corpus: 10,222 File/Image links, 0 containing a nested [[ — the depth-2 branch has never once been reached, and the source is static. Converting it would change nothing; keeping it costs nothing. Its sibling on the next line (the template pattern) IS reached and is being converted.",
+  "src/britannica/pipeline/stages/elements/_title.py::b610e3b6": "The non-greedy runs between «B» and «/B», not between the brackets. Measured over the exported corpus: 41,311 «B» spans, 0 containing a nested «B» — bold does not nest in this corpus, so the first «/B» IS the right close.",
+  "src/britannica/pipeline/stages/elements/_title.py::21856822": "[[Author:...|display]] — the non-greedy captures the display text. Measured: 10,375 Author/Portal links in the raw corpus, 0 containing a nested [[.",
+  "tools/pipeline/download_djvu_crops.py::a8cee8f1": "{{Css image crop|...}} read with a non-greedy body. Measured: 218 instances in the raw corpus, 0 containing a nested {{ — no instance can truncate. Worth converting if this tool is touched for another reason; not worth a change on its own.",
+  "src/britannica/wikitext.py::49a40da6": "IS the owner. `split_top_pipes` is the brace walk everything else is supposed to call; it necessarily contains one. Permanent, not queued."
+}

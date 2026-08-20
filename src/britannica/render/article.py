@@ -93,7 +93,15 @@ def _render_title_h1(marker, ctx):
         # the entity `&quot;`, and taking one CHARACTER split it: <span>&</span>
         # quot;… rendered a big ampersand and the literal text `quot;`.
         dc = re.match(r"^((?:<[^>]+>)*)(&#?\w+;|[\s\S])([\s\S]*)$", h, re.S)
-        if dc:
+        # ONLY A LETTER TAKES THE DROP-CAP.  Sixteen titles open on a quotation
+        # or transliteration mark — `“CHALLENGER” EXPEDITION`, `’AḤAI`,
+        # `‘ALQAMA IBN ‘ABADA` — and each was setting that mark at 1.6em.  The
+        # glyph is unescaped for the test because it may be an entity: the mark
+        # arrives as `&quot;` or `&#8220;`, which no character test sees as
+        # punctuation while it is still spelled as an entity.  A title that does
+        # not open on a letter simply gets no drop-cap; promoting the SECOND
+        # character instead would break the words that begin with the mark.
+        if dc and _html.unescape(dc.group(2)).isalpha():
             h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
                  f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
     return f"<h1>{h}</h1>"

@@ -16,7 +16,7 @@ from britannica.util.strings import HTML_TAG_RE
 from britannica.wikitext import (TEMPLATE_CLOSE, TEMPLATE_OPEN,
                                  split_top_pipes, template_end)
 
-# Shared with `_is_connective_gap` (the title-run extender, below): small-caps →
+# Shared with `_run_continues` (the title-run extender, below): small-caps →
 # caps and the inline-marker strip, to read a heading gap's plain text.
 _SC = re.compile(r"\{\{(?:sc|asc|small[\s\-]?caps?)\|([^{}|]*)\}\}", re.I)
 _MARK = re.compile(r"«/?(?:B|I|SC)»")
@@ -182,12 +182,41 @@ def _letter_from_dropcap(opening: str) -> str | None:
     return arg.upper()
 
 
-def _is_connective_gap(gap: str) -> bool:
-    """True if the gap between two bold spans is heading CONNECTIVE (a
-    parenthetical alt-name / `,` / `and`·`or` / surname particle) rather than the
-    descriptive body.  Keeps the title run going across same-line forename/joint
-    bolds (BELLARMINE …, ROBERTO …; ABANA … and PHARPAR) but stops at the body."""
+def _caps_dominant(bold: str) -> bool:
+    """Is this bold span a HEADWORD rather than prose — uppercase-dominant?
+
+    The same signature `super_walker._first_word_caps` reads to decide whether a
+    bold run is a title at all, applied here to the run's continuation.
+    """
+    t = re.sub(r"«[^»]*»|\{\{[^{}]*\}\}", "", bold).strip(" ,.;:")
+    letters = [c for c in t if c.isalpha()]
+    return bool(letters) and sum(c.isupper() for c in letters) >= max(1, len(letters) * 0.8)
+
+
+def _run_continues(gap: str, next_bold: str) -> bool:
+    """Does the title RUN continue across ``gap`` into ``next_bold``?
+
+    Asked about the PAIR, not about the gap alone, because an EMPTY gap says
+    nothing on its own.  A printed headword sometimes wraps to a second line and
+    the transcriber bolds both halves —
+
+        '''ROBESPIERRE, MAXIMILIEN FRANÇOIS MARIE ISIDORE'''
+        '''DE''' (1758–1794), French revolutionist, …
+
+    — so the two bolds are separated by a newline and nothing else.  The old rule
+    required the gap to CONTAIN a connective (`,` `(` `and` `or` …), which meant
+    the most connective gap possible, one with nothing in it at all, was the one
+    that failed: `DE` went to the body and 15 articles lost the last element of
+    their headword (TISCHENDORF's `VON`, VILLIERS DE L'ISLE-ADAM's `MATHIAS`, ST
+    JOHN OF JERUSALEM's `THE HOSPITAL OF`).
+
+    Across an empty gap the successor decides, and it must look like a headword:
+    prose bolds do occur in bodies (ROME's Latin inscriptions, `Mines` + `and
+    Quarries:`), though none sit at an article opening where this runs.
+    """
     cleaned = _MARK.sub("", _SC.sub(r"\1", gap)).strip()
+    if not cleaned:                            # nothing between them: one heading
+        return _caps_dominant(next_bold)
     if len(cleaned) > 70:                      # a clause, not a connective
         return False
     if re.search(r"\(\s*[cbfl]?\.?\s*\d", gap):  # (1542– / (c. 1036 / (b. … = body date
@@ -210,7 +239,7 @@ def _title_span(opening: str) -> tuple[str, str]:
     end = m.end()
     while True:
         nb = _BOLD.search(s, end)
-        if not nb or not _is_connective_gap(s[end:nb.start()]):
+        if not nb or not _run_continues(s[end:nb.start()], nb.group(0)):
             break
         end = nb.end()
     # If the last title-bold sat inside an open parenthetical (AMYNTAS II.

@@ -26,6 +26,17 @@ _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
 # Generic Wikisource section IDs that are never real article titles.
 
 
+# WIKITEXT bold/italic, still in its RAW form here.  Boundary detection reads the
+# page's raw text, where emphasis is `'''…'''` and not yet the `«B»` markers the
+# quote-run conversion makes downstream — so stripping only the markers left the
+# quotes standing, and they reached the rendered title: vol 1 p944 shipped as
+# `'''AMPHITHEATRE''', PLATE I`.  Worse on its facing page, where the wrapper hid
+# the label from the "this field is a Plate number, skip it" test — `'''Plate
+# II.'''` does not match `^Plate\b` — so the LABEL became the title and the real
+# name, one slot over, was never read.  Two or more quotes are markup; a single
+# one is an apostrophe in a name (M'DOUALL) and is left alone.
+_WIKI_QUOTES = re.compile(r"'{2,}")
+
 # One unwrap pass over a title field: a styling template keeping its last slot.
 # Two patterns because the inner slot may or may not itself hold a pipe.
 _STYLER_1 = re.compile(r"\{\{[^{}|]*\|([^{}|]*)\}\}")
@@ -54,6 +65,7 @@ def _title_plaintext(text: str) -> str:
         "", text, flags=re.IGNORECASE,
     )
     text = re.sub(r"«/?[BI]»", "", text)
+    text = _WIKI_QUOTES.sub("", text)
     return text.strip()
 
 
@@ -207,7 +219,7 @@ def _extract_plate_number(raw: str) -> str | None:
         # `_plate_field` knows only the bare and `{{(smaller|larger)|…}}` forms.
         cleaned = re.sub(r"</?(?:big|small|sub|sup)\b[^>]*>",
                          "", f, flags=re.IGNORECASE)
-        cleaned = re.sub(r"«/?[BI]»", "", cleaned)
+        cleaned = _WIKI_QUOTES.sub("", re.sub(r"«/?[BI]»", "", cleaned))
         # "" for a bare `{{sc|Plate}}` (single-plate articles), so the gate
         # fires while the title-composer can still tell "PLATE I" from a
         # "PLATE" with no number; None when it is not a plate heading.
