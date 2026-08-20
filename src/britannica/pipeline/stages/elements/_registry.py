@@ -61,23 +61,58 @@ def substitute_children(body: str, registry) -> str:
     emitted; ``''`` for a child that produced nothing.
 
     Iterated to a fixed point because a substituted marker can itself carry a
-    grandchild placeholder, and capped so a cycle cannot hang the walk.
+    grandchild placeholder.
 
-    Seven producers in this package write this loop out inline.  This is the one
-    copy; the others are a separate pass with its own corpus proof, so a diff
-    here stays about the shape being changed.
+    THE BOUND COMES FROM THE DATA, not from a number someone picked.  This was
+    `range(5)`, which is a claim that no element tree is more than five deep —
+    nothing checks it, and a sixth level does not fail, it returns the
+    placeholder still sitting in the text.  The registry is a TREE, so a fixed
+    point is reached in at most one pass per entry; needing more than that means
+    a marker contains its own placeholder, which is a cycle and a real bug.  So
+    the loop runs until nothing changes and RAISES if it exceeds the tree's own
+    bound — a hang becomes a report instead of a silent truncation
+    ([[feedback_honesty_surface_failures]]).
     """
     if registry is None:
         return body
-    for _ in range(_SUBSTITUTION_PASSES):
+    return substitute_placeholders(
+        body, lambda: [(ph, registry.markers.get(ph, "")) for ph in registry.elements])
+
+
+def substitute_placeholders(text: str, pairs) -> str:
+    """Replace every placeholder in ``text`` with its marker, to a FIXED POINT.
+
+    ``pairs`` is a mapping of placeholder -> marker, or a CALLABLE returning fresh
+    pairs each pass — which is what a caller needs while the markers themselves
+    are still being produced and a snapshot would go stale.
+
+    THE ONE substitution loop.  It was written out at nine sites with three
+    different caps (3, 5, 5…), each a claim that no element tree is deeper than
+    that, none of them checked, and all failing the same silent way: past the
+    last pass the placeholder is still sitting in the text and ships as content —
+    the `\\x03ELEM:N\\x03` bytes this function's own history records leaking into
+    AFRICA's tables.  A tree reaches its fixed point in at most one pass per
+    entry, so that is the bound, and exceeding it means a marker contains its own
+    placeholder — a cycle, raised rather than truncated
+    ([[feedback_honesty_surface_failures]]).
+    """
+    fresh = pairs if callable(pairs) else (lambda: list(pairs.items()))
+    passes = 0
+    while True:
+        current = list(fresh())
         changed = False
-        for ph in list(registry.elements):
-            if ph in body:
-                body = body.replace(ph, registry.markers.get(ph, ""))
+        for ph, marker in current:
+            if ph in text:
+                text = text.replace(ph, marker)
                 changed = True
         if not changed:
-            break
-    return body
+            return text
+        passes += 1
+        if passes > len(current) + 1:
+            raise RuntimeError(
+                f"placeholder substitution did not converge in {passes} passes "
+                f"over {len(current)} element(s) — a marker carries its own "
+                f"placeholder (cycle)")
 
 
 @dataclass

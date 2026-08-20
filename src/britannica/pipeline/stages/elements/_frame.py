@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 
 def _main_other_content(raw: str) -> str:
@@ -26,7 +26,7 @@ def _main_other_content(raw: str) -> str:
     `_classify_main_other_composite` recurses the SAME copy the producer wraps."""
     inner = re.sub(r"^\{\{", "", raw)
     inner = re.sub(r"\}\}\s*$", "", inner)
-    parts = _split_top_pipes(inner)
+    parts = split_top_pipes(inner)
     return parts[1] if len(parts) > 1 else ""
 
 

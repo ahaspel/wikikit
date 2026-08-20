@@ -29,7 +29,7 @@ import re
 
 from britannica.markers import collapse_links, strip_marker_tokens
 
-from britannica.util.strings import section_slug
+from britannica.util.strings import section_slug, until_stable
 
 # A heading is a «CTR» whose FIRST LINE is entirely small-caps: peel the styled runs
 # (`«SC»…«/SC»`, `«SPAN…»…«/SPAN»`) and the numeral prefix, and only punctuation is
@@ -118,11 +118,8 @@ def _heading_name(ctr_content: str) -> str | None:
     if "«SC»" not in line1 or _NOT_HEADING.search(line1):
         return None  # no small-caps, or a figure / image block
     bare = line1
-    for _ in range(5):  # repeat to peel nested «SC»
-        reduced = _LN_SPAN.sub("", _SPAN_SPAN.sub("", _SC_SPAN.sub("", bare)))
-        if reduced == bare:
-            break
-        bare = reduced
+    bare = until_stable(                      # peel nested «SC» to the bottom
+        bare, lambda t: _LN_SPAN.sub("", _SPAN_SPAN.sub("", _SC_SPAN.sub("", t))))
     # Drop the footnote SPAN before the word test, exactly as `_name` does below.
     # A heading may carry one (`«SC»Relatives of the Prophet«/SC»«FN:* is prefixed
     # to names…«/FN»`), and its prose is not "words outside the small-caps" — it is

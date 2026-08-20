@@ -54,7 +54,18 @@ def blank_comments(text: str) -> str:
 
 
 _MATH_BODY_RE = _re.compile(r"<math\b.*?</math\s*>", _re.DOTALL | _re.IGNORECASE)
-_PARAM_RE = _re.compile(r"\{\{\{.*?\}\}\}", _re.DOTALL)
+
+# A template PARAMETER — `{{{name}}}` or `{{{name|default}}}`.  A parameter name
+# cannot contain braces, and saying so is what makes this total: the pattern here
+# was `\{\{\{.*?\}\}\}` with DOTALL, which took the next `}}}` ANYWHERE in the
+# page.  EB1911's mathematics opens plenty of literal braces immediately before a
+# template — `{{{Polytonic|γ}}/({{Polytonic|γ}} − 1)}` is a brace, then
+# `{{Polytonic|γ}}` — and 21 of the corpus's 42 triple-brace sites are that, not a
+# parameter.  Each one blanked a stretch of text up to some distant `}}}`,
+# swallowing REAL template braces on the way, and a brace counter reading the
+# masked text then saw closes with no opens — the masker manufacturing the very
+# unbalance its callers exist to detect.
+_PARAM_RE = _re.compile(r"\{\{\{[^{}]*\}\}\}")
 
 
 def mask_non_template(text: str) -> str:
@@ -157,6 +168,42 @@ def parse_paired_half(raw: str) -> "tuple[str, str, str] | None":
             m.group(2).lower(), (m.group(3) or "").strip())
 
 
+def first_template_body(text: str, name: str, pos: int = 0) -> "str | None":
+    """Body of the first `{{name|…}}` at or after ``pos``; ``None`` if there is
+    none or it never closes.
+
+    The brace walk is `template_end`'s, so the body comes back WHOLE at any
+    nesting depth — `{{x-larger|{{uc|TITLE}}}}` yields `{{uc|TITLE}}`, where a
+    `\\{\\{x-larger\\|([^}]+)\\}\\}` truncates at the first inner brace.  Two
+    modules wanted exactly this and each wrote its own: the boundary pass a
+    `find("{{name|")` helper, the plate-parent reader a nested regex that named
+    `c` and `x-larger` together and so knew only that one pairing.
+    """
+    opener = _re.compile(r"\{\{\s*" + _re.escape(name) + r"\s*\|", _re.IGNORECASE)
+    m = opener.search(text, pos)
+    if m is None:
+        return None
+    end = template_end(text, m.start())
+    return None if end is None else text[m.end():end - len(TEMPLATE_CLOSE)]
+
+
+# THE RUNNING HEAD — `{{rh|…}}` / `{{RunningHeader|…}}` / `{{running header|…}}`
+# / `{{EB1911 Page Heading|…}}`, the template every EB1911 page carries at its
+# top.  Its slots hold the folio and the article name, so three modules read it —
+# boundary detection, folio extraction, plate-parent extraction — and each
+# spelled the name set itself.  They did not agree: one knew `{{running header}}`
+# and the others did not, which is why vol 18's MEDAL plate lost its number.
+PAGE_HEAD_RE = _re.compile(
+    r"\{\{\s*(?:rh|running\s*header|eb1911\s+page\s+heading)\s*\|", _re.I)
+
+
+def page_head_fields(text: str) -> "list[str]":
+    """The argument slots of the first running head in ``text``, or ``[]``."""
+    for _off, body in iter_template_bodies(text, PAGE_HEAD_RE):
+        return split_top_pipes(body)
+    return []
+
+
 def iter_template_bodies(text: str,
                          opening: "_re.Pattern") -> "_Iterator[tuple[int, str]]":
     """``(offset, body)`` for every template whose open matches ``opening``.
@@ -170,6 +217,59 @@ def iter_template_bodies(text: str,
         end = template_end(text, m.start())
         if end is not None:
             yield m.start(), text[m.end():end - len(TEMPLATE_CLOSE)]
+
+_MATH_OPEN_RE = _re.compile(r"<math\b", _re.IGNORECASE)
+_MATH_CLOSE = "</math>"
+
+
+def split_top_pipes(s: str) -> "list[str]":
+    """Split ``s`` on `|` at NESTING DEPTH 0 — the one argument split.
+
+    A pipe inside `{{…}}`, `[[…]]`, or `<math>…</math>` is CONTENT, never an
+    argument boundary: a nested `{{sc|X}}`'s pipe must not shear the slot list,
+    a piped `[[target|display]]` link is one slot, and a LaTeX `\\left|…\\right|`
+    (an absolute value, a matrix column) is not a separator either.
+
+    THE OWNER.  This existed twice, and each copy was blind where the other
+    could see: `_link._split_top_pipes` tracked brackets but split LaTeX pipes,
+    `_dual_line._split_top_level_pipe` held math opaque but ignored brackets.
+    Fourteen modules imported one or the other, so which of the two blindnesses
+    a caller inherited depended on which import it happened to copy
+    ([[feedback_tune_dont_fork]]).  Neither was total; this is the union, and it
+    lives in the source-side lexicon so `parsers/` can reach it without
+    importing pipeline internals.
+    """
+    parts: list[str] = []
+    buf: list[str] = []
+    depth = i = 0
+    n = len(s)
+    while i < n:
+        if depth == 0 and s[i] == "<" and _MATH_OPEN_RE.match(s, i):
+            end = s.lower().find(_MATH_CLOSE, i)
+            if end != -1:
+                end += len(_MATH_CLOSE)
+                buf.append(s[i:end])        # the whole <math>…</math> rides through
+                i = end
+                continue
+        two = s[i:i + 2]
+        if two in ("{{", "[["):
+            depth += 1
+            buf.append(two)
+            i += 2
+        elif two in ("}}", "]]"):
+            depth = max(0, depth - 1)
+            buf.append(two)
+            i += 2
+        elif s[i] == "|" and depth == 0:
+            parts.append("".join(buf))
+            buf = []
+            i += 1
+        else:
+            buf.append(s[i])
+            i += 1
+    parts.append("".join(buf))
+    return parts
+
 
 # The PIPE ESCAPE, in every spelling the source uses.  A bare `|` inside a
 # wikitable is a CELL SEPARATOR, so `&vert;` is what an editor writes for a

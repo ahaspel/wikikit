@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 
 def _content_parse(raw: str) -> "tuple[str, str, str]":
@@ -28,7 +28,7 @@ def _content_parse(raw: str) -> "tuple[str, str, str]":
     (`_recurse_slot_content`) and the wrap.  A bare `{{fqm}}` defaults its display to a curly
     opening quote (recursed inertly to the same char)."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
-    parts = [p.strip() for p in _split_top_pipes(inner)]
+    parts = [p.strip() for p in split_top_pipes(inner)]
     name = parts[0].lower().replace(" ", "")
     args = parts[1:]
     if name in ("tooltip", "abbr"):        # display | hover-hint

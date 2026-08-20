@@ -41,6 +41,7 @@ from britannica.pipeline.stages.source_cleanup import (
     strip_noinclude_blocks,
     strip_includeonly_tags,
 )
+from britannica.wikitext import template_end
 
 # Page chrome inside ``<noinclude>`` (running headers, pagequality, smallrefs,
 # rules, AND any ``{|``/``|}`` table delimiters — a cross-page table's
@@ -291,26 +292,17 @@ def _strip_chrome_furniture(stream: str) -> str:
     """Remove each furniture template whole (balanced `{{…}}`, so a multi-line
     `{{Ambox|…}}` or a nested arg can't truncate the span)."""
     out: list[str] = []
-    i, n = 0, len(stream)
+    i = 0
     for m in _CHROME_FURNITURE.finditer(stream):
         if m.start() < i:                 # opener inside an already-removed template
             continue
+        end = template_end(stream, m.start())
+        if end is None:
+            # Never closes: keep it.  The walk this replaces ran to the end of
+            # the stream and removed everything after the opener.
+            continue
         out.append(stream[i:m.start()])
-        depth, j = 0, m.start()
-        while j < n - 1:
-            two = stream[j:j + 2]
-            if two == "{{":
-                depth += 1
-                j += 2
-                continue
-            if two == "}}":
-                depth -= 1
-                j += 2
-            else:
-                j += 1
-            if depth == 0:
-                break
-        i = j
+        i = end
     out.append(stream[i:])
     return "".join(out)
 

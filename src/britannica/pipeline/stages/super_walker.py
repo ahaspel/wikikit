@@ -34,8 +34,8 @@ from britannica.pipeline.stages.detect_boundaries import _split_out_plates
 from britannica.pipeline.stages.elements._title import _letter_from_dropcap
 from britannica.pipeline.stages.preprocess import stream_with_keys
 from britannica.volumes import article_ws_range
-from britannica.util.strings import HTML_TAG_RE
-from britannica.wikitext import COMMENT_RE
+from britannica.util.strings import HTML_TAG_RE, until_stable
+from britannica.wikitext import COMMENT_RE, TEMPLATE_OPEN, template_end
 
 _SECTION_BEGIN = re.compile(r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>')
 # An article heading: «B»…«/B», optionally wrapped in an [[Author:…|…]] link.
@@ -69,9 +69,35 @@ _LEAD = [
     re.compile(r"<table[^>]*>.*?</table>", re.DOTALL | re.I),   # HTML table
     re.compile(r"\[\[(?:File|Image):(?:[^\[\]]|\[\[[^\]]*\]\])*\]\]",
                re.I),                                          # image
-    re.compile(r"\{\{(?:[^{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})*\}\}"),
-                                                               # template (≤3 deep)
 ]
+
+# A TEMPLATE is skipped by walking its braces, not by a pattern that spells the
+# nesting out.  What stood here matched three levels and carried the cap in its
+# own comment (`# template (≤3 deep)`); 106 templates in the raw corpus nest
+# deeper, and they are overwhelmingly figure legends —
+# `{{center|{{lh|88%|{{smaller|{{sc|Fig.}} 1.}}}}}}` is four — because that is
+# where EB1911 stacks templates hardest.  Unskipped lead layout is not a cosmetic
+# miss here: this walk exists to REACH the heading, so a template it cannot step
+# over hides the heading behind it ([[feedback_walker_on_raw_source]]).
+#
+# `template_end` returns None for a template that never closes, and returning
+# None here means "not lead layout" — the walk stops rather than guessing a close
+# and swallowing the rest of the page ([[feedback_honesty_surface_failures]]).
+def _skip_template(body: str, pos: int) -> "int | None":
+    if not body.startswith(TEMPLATE_OPEN, pos):
+        return None
+    return template_end(body, pos)
+
+
+def _skip_pattern(pat: "re.Pattern"):
+    """Adapt a lead PATTERN to the same (body, pos) -> end | None contract."""
+    def skip(body: str, pos: int) -> "int | None":
+        m = pat.match(body, pos)
+        return m.end() if m else None
+    return skip
+
+
+_LEAD_SKIPS = [_skip_pattern(p) for p in _LEAD] + [_skip_template]
 
 # Strict Roman numeral, so real words made of Roman letters (CIVIL, DILL, VILL)
 # aren't mistaken for section numbers; only well-formed numerals (II, IV) match.
@@ -148,13 +174,8 @@ def _heading_text(raw_heading: str) -> str:
     t = _HLINK.sub(r"\1", t)
     t = _HABBR.sub(r"\1", t)
     t = _HCAPS.sub(lambda m: m.group(1).upper(), t)
-    for _ in range(8):
-        before = t
-        t = _HTMPL3.sub(r"\1", t)
-        t = _HTMPL2.sub(r"\1", t)
-        t = _HTMPL0.sub("", t)
-        if t == before:
-            break
+    t = until_stable(
+        t, lambda s: _HTMPL0.sub("", _HTMPL2.sub(r"\1", _HTMPL3.sub(r"\1", s))))
     t = _HTAG.sub("", t)
     t = _HPAREN.sub("", t)
     return re.sub(r"\s+", " ", t).strip(" ,.;:")
@@ -187,10 +208,10 @@ def _heading_at(body: str, pos: int):
         m = _WS.match(body, pos)
         if m:
             pos = m.end()
-        for pat in _LEAD:
-            m = pat.match(body, pos)
-            if m:
-                pos = m.end()
+        for skip in _LEAD_SKIPS:
+            end = skip(body, pos)
+            if end is not None:
+                pos = end
                 break
     return _HEADING.match(body, pos)
 

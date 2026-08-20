@@ -161,3 +161,29 @@ def primary_headword(heading: str) -> str:
     h = _SOBRIQUET_RE.split(h, maxsplit=1)[0]
     h = h.split(",")[0]
     return re.sub(r"\s+", " ", h).strip()
+
+
+def until_stable(text: str, transform) -> str:
+    """Apply ``transform`` until it stops changing ``text``.
+
+    THE FIXED POINT, bounded by the data instead of by a number.  Five call sites
+    wrote ``for _ in range(N)`` around an unwrap — 3, 5, 5, 6 and 8, each a claim
+    about how deep its input nests that nothing checked, and each failing the same
+    silent way: the N+1th level comes back still wrapped, as content.  Two of them
+    did not even break early, so they paid for every pass whether or not anything
+    changed ([[feedback_total_functions_not_cleanup_passes]]).
+
+    An unwrap SHRINKS its input, so the fixed point is reached in at most one pass
+    per construct.  That is the termination argument, and it is checked rather
+    than assumed: a transform that stops shrinking has either finished or is
+    oscillating, and both end the loop.  Nothing here caps depth.
+    """
+    previous = len(text)
+    while True:
+        changed = transform(text)
+        if changed == text:
+            return text
+        if len(changed) >= previous:
+            return changed          # not shrinking: finished, or would spin
+        previous = len(changed)
+        text = changed

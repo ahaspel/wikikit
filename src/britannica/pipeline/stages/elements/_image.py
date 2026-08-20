@@ -10,7 +10,7 @@ import re
 
 from britannica.image_assets import GENEALOGY_IMAGES
 from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
+from britannica.wikitext import split_top_pipes
 
 
 # `[[File:…]]` / `[[ Image : …]]` → inner.  Space-tolerant to match the classifier's

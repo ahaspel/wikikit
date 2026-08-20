@@ -2,8 +2,10 @@ from dataclasses import dataclass, field
 
 from britannica.db.models import Article, ArticleSegment
 from britannica.db.session import SessionLocal
-from britannica.wikitext import template_end
+from britannica.wikitext import (PAGE_HEAD_RE, first_template_body,
+                                 page_head_fields, template_end)
 import re
+from britannica.util.strings import until_stable
 
 # Raw wikitext section-begin tag.
 def _match_section_begin(text):
@@ -24,20 +26,14 @@ _SEC_MARKER = re.compile(r'<section\s+begin="([^"]+)"\s*/?>', re.IGNORECASE)
 # Generic Wikisource section IDs that are never real article titles.
 
 
-def _extract_template_content(text: str, template_name: str) -> str | None:
-    """Return the body of the first ``{{template_name|…}}`` in ``text``.
+# One unwrap pass over a title field: a styling template keeping its last slot.
+# Two patterns because the inner slot may or may not itself hold a pipe.
+_STYLER_1 = re.compile(r"\{\{[^{}|]*\|([^{}|]*)\}\}")
+_STYLER_N = re.compile(r"\{\{[^{}]*\|([^{}|]*)\}\}")
 
-    ``None`` if the template isn't there or never closes.  The brace walk is the
-    lexicon's (`wikitext.template_end`) — a regex like
-    ``{{x-larger\\|([^}]+)\\}\\}`` truncates at the first inner ``}``, which
-    breaks for nested wrappers (``{{x-larger|{{uc|TITLE}}}}``).
-    """
-    needle = "{{" + template_name + "|"
-    start = text.find(needle)
-    if start < 0:
-        return None
-    end = template_end(text, start)
-    return None if end is None else text[start + len(needle):end - 2]
+
+def _unwrap_styler(t: str) -> str:
+    return _STYLER_N.sub(r"\1", _STYLER_1.sub(r"\1", t))
 
 
 def _title_plaintext(text: str) -> str:
@@ -52,9 +48,7 @@ def _title_plaintext(text: str) -> str:
     content-destroying `{{…}}`→'' pass is gone, so a raw title-furniture template stays
     visible rather than vanishing.  (Honest title recursion via the TITLE element is a
     later step; this is the scoped field projection the boundary pass needs now.)"""
-    for _ in range(5):
-        text = re.sub(r"\{\{[^{}|]*\|([^{}|]*)\}\}", r"\1", text)
-        text = re.sub(r"\{\{[^{}]*\|([^{}|]*)\}\}", r"\1", text)
+    text = until_stable(text, _unwrap_styler)
     text = re.sub(
         r"</?(?:big|small|sub|sup|span|font)\b[^>]*>",
         "", text, flags=re.IGNORECASE,
@@ -123,23 +117,36 @@ class DetectedArticle:
 # headword for the is-title test, and `produce_title` produces the title itself.
 
 
-_PLATE_FIELD_RE = re.compile(
-    r"^\s*"
-    r"(?:\{\{(?:smaller|larger)\|)?"      # optional outer size wrapper
-    r"\{\{(?:sc|uc|small-caps)\|"          # {{sc| (or uc / small-caps)
-    r"Plate"                              # the word "Plate"
-    r"(?:"
-    r"\s+([IVX]+)\.?\}\}"                 #   …I.}}    (roman inside the sc)
-    r"|"
-    r"\s*\}\}\s*([IVX]+)\.?"              #   }} II.   (roman outside the sc)
-    r"|"
-    r"\s*\}\}"                            #   }} alone — single-plate article
-    r")",                                 #     (vol 2 ANTHROPOLOGY: no Roman)
-    re.IGNORECASE,
-)
+# A `Plate` heading, read by PEELING its wrappers instead of naming how many
+# there are.  The size wrapper used to be one optional level written into the
+# pattern (`(?:\{\{(?:smaller|larger)\|)?`), which is a cap of one: a heading
+# wrapped twice would not be a plate heading at all, and the plate would take an
+# ordinary article's title.  Nothing about "this line says Plate" depends on how
+# many size wrappers the transcriber stacked ([[feedback_recursion_is_recognition]]).
+_SIZE_WRAPPER_RE = re.compile(r"\{\{\s*(?:smaller|larger)\s*\|", re.IGNORECASE)
+_SMALLCAPS_OPEN_RE = re.compile(r"\{\{\s*(?:sc|uc|small-caps)\s*\|", re.IGNORECASE)
+# The tail is a genuine three-way choice, not a nesting: the Roman may sit inside
+# the small-caps, after it, or be absent (vol 2 ANTHROPOLOGY is a single plate).
+_PLATE_TAIL_RE = re.compile(
+    r"Plate(?:\s+([IVX]+)\.?\}\}|\s*\}\}\s*([IVX]+)\.?|\s*\}\})", re.IGNORECASE)
 
 
-# Non-anchored variant of ``_PLATE_FIELD_RE`` — matches a
+def _plate_field(text: str) -> "str | None":
+    """The plate's Roman numeral, `""` when it states none, `None` when this is
+    not a plate heading at all."""
+    pos = len(text) - len(text.lstrip())
+    while (w := _SIZE_WRAPPER_RE.match(text, pos)):
+        pos = w.end()
+    sc = _SMALLCAPS_OPEN_RE.match(text, pos)
+    if not sc:
+        return None
+    m = _PLATE_TAIL_RE.match(text, sc.end())
+    if not m:
+        return None
+    return (m.group(1) or m.group(2) or "").upper()
+
+
+# Non-anchored variant of ``_plate_field`` — matches a
 # ``{{sc|Plate …}}`` / ``{{uc|Plate …}}`` token *anywhere* on the page,
 # not just at the start of a heading-template field.  Used by
 # ``_plate_label_from_content`` for the title suffix of heuristic-
@@ -194,46 +201,19 @@ def _extract_plate_number(raw: str) -> str | None:
     the page-heading template lives inside the noinclude (DOG vol 8,
     SHAKESPEARE vol 24) or outside it (AEGEAN CIVILIZATION vol 1).
     """
-    for tmpl_name in ("rh", "EB1911 Page Heading"):
-        idx = raw.find("{{" + tmpl_name + "|")
-        if idx < 0:
-            continue
-        fields: list[str] = []
-        depth = 0
-        current = ""
-        for ch in raw[idx:]:
-            if ch == "{":
-                depth += 1
-                current += ch
-            elif ch == "}":
-                depth -= 1
-                if depth <= 0:
-                    break
-                current += ch
-            elif ch == "|" and depth <= 2:
-                fields.append(current)
-                current = ""
-            else:
-                current += ch
-        if current:
-            fields.append(current)
-        for f in fields[1:]:
-            # Strip cosmetic wrappers transcribers add around the
-            # plate-label field (vol 1 AMPHITHEATRE:
-            # `<small>'''{{sc|Plate}} I.'''</small>`); the regex below
-            # only knows the bare and `{{(smaller|larger)|…}}` forms.
-            cleaned = re.sub(r"</?(?:big|small|sub|sup)\b[^>]*>",
-                             "", f, flags=re.IGNORECASE)
-            cleaned = re.sub(r"«/?[BI]»", "", cleaned)
-            m = _PLATE_FIELD_RE.match(cleaned)
-            if m:
-                # group(1)/group(2) are the Roman numeral when the
-                # heading carries one; both are None for bare
-                # `{{sc|Plate}}` (single-plate articles).  Empty
-                # string in that case so the gate fires while the
-                # title-composer can distinguish "PLATE I" from
-                # "PLATE" with no number.
-                return (m.group(1) or m.group(2) or "").upper()
+    for f in page_head_fields(raw):
+        # Strip cosmetic wrappers transcribers add around the plate-label field
+        # (vol 1 AMPHITHEATRE: `<small>'''{{sc|Plate}} I.'''</small>`);
+        # `_plate_field` knows only the bare and `{{(smaller|larger)|…}}` forms.
+        cleaned = re.sub(r"</?(?:big|small|sub|sup)\b[^>]*>",
+                         "", f, flags=re.IGNORECASE)
+        cleaned = re.sub(r"«/?[BI]»", "", cleaned)
+        # "" for a bare `{{sc|Plate}}` (single-plate articles), so the gate
+        # fires while the title-composer can still tell "PLATE I" from a
+        # "PLATE" with no number; None when it is not a plate heading.
+        roman = _plate_field(cleaned)
+        if roman is not None:
+            return roman
     return None
 
 
@@ -264,54 +244,29 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
         # {{x-larger|TITLE}} / {{larger|TITLE}} — walk braces so a
         # nested {{uc|SHAKESPEARE}} inside {{x-larger|…}} doesn't
         # truncate the field at the inner `}`.
-        inner = _extract_template_content(hdr, "x-larger")
+        inner = first_template_body(hdr, "x-larger")
         if inner is None:
-            inner = _extract_template_content(hdr, "larger")
+            inner = first_template_body(hdr, "larger")
         if inner is not None:
             plate_title = _title_plaintext(inner).rstrip(",.")
         else:
             # {{rh|…|TITLE|…}} / {{EB1911 Page Heading|…|TITLE|…}} —
             # split on top-level pipes (brace-depth aware) for fields.
-            for tmpl_start in (hdr.find("{{rh|"),
-                               hdr.find("{{EB1911 Page Heading|")):
-                if tmpl_start < 0:
+            for f in page_head_fields(hdr):
+                clean = _title_plaintext(f)
+                # A field that did NOT project to plain text is not a
+                # headword — it is furniture the projection deliberately
+                # refuses to delete (`{{gap}}`, the running-header's empty
+                # left slot).  Rejecting it here moves on to the field that
+                # DOES carry the name (`{{fs|180%|BOOKBINDING}}`); stripping
+                # its braces instead manufactured the title `{{gap`.
+                if "{{" in clean or "}}" in clean:
                     continue
-                fields: list[str] = []
-                depth = 0
-                current = ""
-                for ch in hdr[tmpl_start:]:
-                    if ch == "{":
-                        depth += 1
-                        current += ch
-                    elif ch == "}":
-                        depth -= 1
-                        if depth <= 0:
-                            break
-                        current += ch
-                    elif ch == "|" and depth <= 2:
-                        fields.append(current)
-                        current = ""
-                    else:
-                        current += ch
-                if current:
-                    fields.append(current)
-                for f in fields[1:]:
-                    clean = _title_plaintext(f)
-                    # A field that did NOT project to plain text is not a
-                    # headword — it is furniture the projection deliberately
-                    # refuses to delete (`{{gap}}`, the running-header's empty
-                    # left slot).  Rejecting it here moves on to the field that
-                    # DOES carry the name (`{{fs|180%|BOOKBINDING}}`); stripping
-                    # its braces instead manufactured the title `{{gap`.
-                    if "{{" in clean or "}}" in clean:
-                        continue
-                    clean = clean.rstrip("}]")
-                    if (clean and len(clean) > 2 and not clean.isdigit()
-                            and not re.match(r"^Plate\b", clean)
-                            and re.search(r"[A-Za-z]{3,}", clean)):
-                        plate_title = clean
-                        break
-                if plate_title:
+                clean = clean.rstrip("}]")
+                if (clean and len(clean) > 2 and not clean.isdigit()
+                        and not re.match(r"^Plate\b", clean)
+                        and re.search(r"[A-Za-z]{3,}", clean)):
+                    plate_title = clean
                     break
     if not plate_title:
         secs = _match_section_begin(raw)
@@ -337,8 +292,6 @@ def _compose_plate_title(raw: str, volume: int, page_number: int) -> str:
 
 
 # Running-head templates that carry the printed folio (case/whitespace tolerant).
-_PAGEHEAD = re.compile(
-    r"\{\{\s*(?:rh|running\s*header|eb1911\s+page\s+heading)\s*\|", re.I)
 # Inside a side slot: {{em}}/{{gap}} are SPACING (strip); the rest are display
 # wrappers (reduce to their text); what's left is the folio.
 _PH_SPACING = re.compile(r"\{\{\s*(?:em|gap|nbsp)\b[^{}]*\}\}", re.I)
@@ -347,6 +300,8 @@ _PH_PLAIN = re.compile(
     r"\{\{\s*(?:x-larger|larger|smaller|x-smaller|xx-larger|uc|sc|asc|sm)"
     r"(?:\s+block)?\s*\|([^{}]*)\}\}", re.I)
 _PH_DIGITS = re.compile(r"(?<![\w.])\d+(?!\s*%)")
+# A slot that IS a folio, not one that merely mentions a number.
+_PH_BARE_FOLIO = re.compile(r"^\s*\d+\s*\.?\s*$")
 # A side slot that is PURELY a strict Roman numeral is a front-matter folio
 # (preface/index pp. viii, x, xii) — paginated, just not in Arabic.
 _PH_ROMAN = re.compile(
@@ -362,34 +317,18 @@ _FRONT_TITLE_TMPL = re.compile(
 _FRONT_BANNER = re.compile(r"ELEVENTH\s+EDITION", re.I)
 
 
-def _ph_slots(inner: str) -> list[str]:
-    """Split a template's inner on top-level pipes (brace/bracket-depth aware)."""
-    parts, depth, cur = [], 0, []
-    for ch in inner:
-        if ch in "{[":
-            depth += 1; cur.append(ch)
-        elif ch in "}]":
-            depth -= 1; cur.append(ch)
-        elif ch == "|" and depth == 0:
-            parts.append("".join(cur)); cur = []
-        else:
-            cur.append(ch)
-    parts.append("".join(cur))
-    return parts
+def _ph_reduce_once(slot: str) -> str:
+    """One reduction pass over a running-head side slot."""
+    slot = _PH_SPACING.sub(" ", slot)
+    slot = _PH_SPEC.sub(lambda m: m.group(1).split("|")[-1], slot)
+    return _PH_PLAIN.sub(lambda m: m.group(1).replace("|", " "), slot)
 
 
 def _ph_reduce(slot: str) -> str:
     """Collapse a side slot to its displayed text: strip spacing templates,
     reduce size/style wrappers to their content (``{{size|xl|125}}``→``125``,
     ``{{x-larger|544| }}``→``544``), so the bare folio is left."""
-    for _ in range(6):
-        before = slot
-        slot = _PH_SPACING.sub(" ", slot)
-        slot = _PH_SPEC.sub(lambda m: m.group(1).split("|")[-1], slot)
-        slot = _PH_PLAIN.sub(lambda m: m.group(1).replace("|", " "), slot)
-        if slot == before:
-            break
-    return slot
+    return until_stable(slot, _ph_reduce_once)
 
 
 def folio_of(raw: str) -> str | None:
@@ -403,24 +342,34 @@ def folio_of(raw: str) -> str | None:
     its left/right side slots hold the folio (the centre holds the article
     title), possibly inside size/style wrappers.  An unpaginated leaf — no such
     number — is a plate insert (or a blank)."""
-    m = _PAGEHEAD.search(raw)
+    m = PAGE_HEAD_RE.search(raw)
     if not m:
         return None
-    i, depth = m.start() + 2, 1
-    while i < len(raw) and depth:
-        if raw[i:i + 2] == "{{":
-            depth += 1; i += 2
-        elif raw[i:i + 2] == "}}":
-            depth -= 1; i += 2
-        else:
-            i += 1
-    args = _ph_slots(raw[m.start() + 2:i - 2])[1:]      # drop the template name
+    args = page_head_fields(raw)
     side = ([args[0]] if args else []) + args[2:]       # left + right; skip centre
-    for slot in side:
-        red = _ph_reduce(slot).strip()
+    reduced = [_ph_reduce(s).strip() for s in side]
+
+    # A DIGIT anywhere in the side slots beats a Roman numeral in any of them.
+    # The head is not always three slots: vol 5 p957 is
+    # `{{EB1911 Page Heading|{{x-smaller|FRANCE]}}|CHARLES VIII.|X.|921}}`, where
+    # `X.` is the VOLUME and 921 the folio — taking the first slot that looked
+    # folio-shaped returned "X.".  Arabic is the main matter's folio and Roman
+    # only the front matter's, so Arabic wins wherever both appear.
+    for red in reduced:
         d = _PH_DIGITS.search(red)
         if d:
             return d.group(0)
+    # Still nothing: the transcriber put the number in the CENTRE slot, which
+    # normally holds the title (vol 9 p643 centres `{{size|xl|{{em|8.3}}611}}`,
+    # vol 12 p226 `{{size|xl|209}}`).  The centre must reduce to a BARE number to
+    # be read as a folio — vol 29's index pages centre the instruction
+    # "…read the instructions given on Page 1.", and searching that for a digit
+    # returns 1 as the folio of every index page.
+    for slot in args[1:2]:
+        red = _ph_reduce(slot).strip()
+        if _PH_BARE_FOLIO.match(red):
+            return _PH_DIGITS.search(red).group(0)
+    for red in reduced:
         if _PH_ROMAN.match(red):
             return red
     return None

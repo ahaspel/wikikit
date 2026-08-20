@@ -31,31 +31,7 @@ from __future__ import annotations
 import re
 
 from britannica.markers import MARKER_TOKEN_RE
-
-
-def _split_top_pipes(s: str) -> list[str]:
-    """Split on `|` at bracket depth 0 — so a nested `{{sc|X}}`'s inner pipe does not
-    shear the slot list (the fraction/dual-line slot-split, shared shape)."""
-    parts: list[str] = []
-    depth = last = i = 0
-    n = len(s)
-    while i < n:
-        two = s[i:i + 2]
-        if two in ("{{", "[["):
-            depth += 1
-            i += 2
-            continue
-        if two in ("}}", "]]"):
-            if depth:
-                depth -= 1
-            i += 2
-            continue
-        if depth == 0 and s[i] == "|":
-            parts.append(s[last:i])
-            last = i + 1
-        i += 1
-    parts.append(s[last:])
-    return parts
+from britannica.wikitext import split_top_pipes
 
 
 def _link_args(raw: str) -> str:
@@ -66,7 +42,7 @@ def _link_args(raw: str) -> str:
 
 def _positionals(raw: str) -> list[str]:
     """A `{{…link…}}`'s positional args — the name dropped, `key=value` dropped."""
-    parts = [p.strip() for p in _split_top_pipes(_link_args(raw))]
+    parts = [p.strip() for p in split_top_pipes(_link_args(raw))]
     return [p for p in parts[1:] if "=" not in p and p]
 
 

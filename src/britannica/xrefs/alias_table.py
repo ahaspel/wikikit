@@ -13,7 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from britannica.source_pages import RAW_DIR, load_pages
-from britannica.util.strings import strip_html_tags
+from britannica.util.strings import strip_html_tags, until_stable
 
 
 def build_alias_map() -> dict[str, str]:
@@ -109,8 +109,7 @@ def _strip_vol29_wikitext(text: str) -> str:
     text = re.sub(r"\{\{11link\|([^|}]+)\|?[^}]*\}\}", r"\1", text, flags=re.IGNORECASE)
     text = re.sub(r"\{\{EB1911 lkpl\|([^|}]+)\|?[^}]*\}\}", r"\1", text, flags=re.IGNORECASE)
     # Strip any remaining templates
-    for _ in range(3):
-        text = re.sub(r"\{\{[^{}]*\}\}", "", text)
+    text = until_stable(text, lambda t: re.sub(r"\{\{[^{}]*\}\}", "", t))
     # Replace wiki links [[X|Y]] -> Y, [[X]] -> X
     text = re.sub(r"\[\[[^\]|]*\|([^\]]+)\]\]", r"\1", text)
     text = re.sub(r"\[\[([^\]]+)\]\]", r"\1", text)

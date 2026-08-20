@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 # A CSS length — `3.5em`, `.6em`, `2em`, `40px`, `100%`, … — i.e. the indent width.
 _MEASURE_RE = re.compile(r"^-?\d*\.?\d+\s*(?:em|ex|px|pt|rem|%|cm|mm|in)$",
@@ -30,7 +30,7 @@ def _hanging_peel(raw: str) -> tuple[str, str]:
     bar = inner.find("|")
     if bar < 0:                                   # bare `{{hi}}` — no content
         return _DEFAULT_WIDTH, ""
-    parts = _split_top_pipes(inner[bar:])
+    parts = split_top_pipes(inner[bar:])
     positional = [
         p for p in parts
         if p != "" and not re.match(r"^\s*[A-Za-z_][\w\- ]*\s*=", p)

@@ -10,8 +10,9 @@ Three patterns cover ~96% of plates:
 
 * ``<section begin="ArticleName" />`` — explicit XML section attr,
   the highest-fidelity signal.
-* ``{{rh|left|MIDDLE|right}}`` / ``{{RunningHeader|...}}`` /
-  ``{{EB1911 Page Heading|...}}`` — running-head template, with the
+* ``{{rh|left|MIDDLE|right}}`` and its other spellings (``{{RunningHeader}}``,
+  ``{{running header}}``, ``{{EB1911 Page Heading}}``; the name set lives in
+  ``wikitext.PAGE_HEAD_RE``) — running-head template, with the
   article name in the middle slot (often wrapped in ``{{x-larger|...}}``
   or ``{{fs|180%|...}}``).
 * ``{{c|{{x-larger|ArticleName}}}}`` — centered larger title,
@@ -24,6 +25,9 @@ caller falls back to the existing exact/prefix/proximity logic in
 from __future__ import annotations
 
 import re
+from britannica.wikitext import (first_template_body, iter_template_bodies,
+                                 page_head_fields, split_top_pipes,
+                                 template_end)
 
 
 _SECTION_BEGIN_RE = re.compile(
@@ -34,95 +38,108 @@ _SECTION_BEGIN_RE = re.compile(
 # articles carry that title — while every image names AURORA POLARIS).
 _IMG_ARTICLE_RE = re.compile(
     r'\[\[File:1911 Britannica - ([^\[\]|]+?) - ', re.IGNORECASE)
-_RH_RE = re.compile(
-    r'\{\{(?:rh|RunningHeader|EB1911\s+Page\s+Heading)\|', re.IGNORECASE)
-_C_XLARGER_RE = re.compile(
-    r'\{\{c\|\s*\{\{x-larger\|([^}]+)\}\}\s*\}\}', re.IGNORECASE)
+_C_OPEN_RE = re.compile(r"\{\{\s*c\s*\|", re.IGNORECASE)
+_XLARGER_OPEN_RE = re.compile(r"\{\{\s*x-larger\s*\|", re.IGNORECASE)
+# An INNERMOST template — no braces inside it — for the projection pass
+# and for the letters test.
+_INNERMOST_TEMPLATE_RE = re.compile(r"\{\{([^{}]*)\}\}")
+
+
+def _c_xlarger_title(wikitext: str) -> "str | None":
+    """The title inside `{{c|{{x-larger|TITLE}}}}` — read by walking braces.
+
+    This was one regex naming both templates and one level of nesting, so it saw
+    the pairing it spelled and nothing else: an `{{x-larger|{{uc|TITLE}}}}` inner
+    came back truncated at the first inner brace, and any extra wrapper missed
+    entirely ([[feedback_recursion_is_recognition]]).  Balanced reads instead, so
+    the centred title can nest as deep as it likes.
+
+    EVERY `{{c|…}}` is tried, not just the first: a page centres several things
+    and the titled one is not always first — checking only the first missed the
+    title on 25 pages when this was written.
+    """
+    for _off, centred in iter_template_bodies(wikitext, _C_OPEN_RE):
+        body = centred.strip()
+        m = _XLARGER_OPEN_RE.match(body)
+        if not m:
+            continue                       # this `{{c|…}}` centres something else
+        end = template_end(body, 0)
+        if end is None or end != len(body):
+            continue                       # x-larger must BE the centred content
+        return body[m.end():end - 2]
+    return None
 
 # Bogus section-attribute values that some plates use as a placeholder
 # instead of the article name.  Skip them.
 _PLACEHOLDER_RE = re.compile(r"^(?:S\d+|PLATE\d+|\d+)$", re.IGNORECASE)
 
 
-def _balanced_args(text: str) -> list[str]:
-    """Split a template body on ``|`` at brace-depth 0, preserving
-    nested ``{{...}}``."""
-    args: list[str] = []
-    depth = 0
-    cur: list[str] = []
-    for ch in text:
-        if ch == "{":
-            depth += 1
-            cur.append(ch)
-        elif ch == "}":
-            depth -= 1
-            cur.append(ch)
-        elif ch == "|" and depth == 0:
-            args.append("".join(cur))
-            cur = []
-        else:
-            cur.append(ch)
-    args.append("".join(cur))  # trailing slot, even if empty
-    return args
-
-
 def _strip_formatting(s: str) -> str:
     """Unwrap formatting templates by taking the last pipe-separated
     arg.  Handles ``{{x-larger|EMBROIDERY}}`` (1 arg → EMBROIDERY) and
-    ``{{fs|180%|BOOKBINDING}}`` (2 args → BOOKBINDING)."""
+    ``{{fs|180%|BOOKBINDING}}`` (2 args → BOOKBINDING).
+
+    Unwraps until there is nothing left to unwrap.  This was `for _ in range(5)`
+    around a hand-rolled brace walk — a claim that no plate title is wrapped more
+    than five deep, which nothing checked and which failed by returning the sixth
+    wrapper still in place, as a title.  The loop needs no cap because each turn
+    strictly SHORTENS the string: it terminates on the data, not on a number
+    ([[feedback_total_functions_not_cleanup_passes]]).
+    """
     s = s.strip()
     s = re.sub(r"'+", "", s)  # strip wikitext italics
-    for _ in range(5):  # depth cap
+    while True:
         m = re.match(r"^\{\{[\w\-]+\s*\|", s)
         if not m:
             break
-        body_start = m.end()
-        depth, i = 2, body_start
-        while i < len(s) and depth > 0:
-            if s[i:i+2] == "{{":
-                depth += 2
-                i += 2
-            elif s[i:i+2] == "}}":
-                depth -= 2
-                if depth == 0:
-                    break
-                i += 2
-            else:
-                i += 1
-        if i >= len(s) or depth != 0:
-            break
-        if s[i+2:].strip():
-            break  # template doesn't wrap the whole slot
-        args = _balanced_args(s[body_start:i])
+        end = template_end(s, 0)
+        if end is None or s[end:].strip():
+            break                 # never closes, or doesn't wrap the whole slot
+        args = split_top_pipes(s[m.end():end - 2])
         if not args:
             break
-        s = args[-1].strip()
-    return s
+        unwrapped = args[-1].strip()
+        if unwrapped == s:        # no progress — stop rather than spin
+            break
+        s = unwrapped
+
+    # A head may STYLE PARTS of a name rather than wrap the whole slot:
+    # `{{x-larger|HALIFAX,}} {{fs|110%|1ST}} {{x-larger|MARQUESS}}`.  The
+    # whole-slot unwrap above cannot touch those, and the field then came out
+    # with its braces intact — unusable as a title, so 24 plates' running heads
+    # were a signal we held and could not read.  Unwrapping each INNERMOST
+    # template to its last argument, repeatedly, reads it as "HALIFAX, 1ST
+    # MARQUESS".  Terminates on the data: every pass removes a template.
+    while True:
+        projected = _INNERMOST_TEMPLATE_RE.sub(
+            lambda mm: mm.group(1).rsplit("|", 1)[-1], s)
+        if projected == s:
+            return s.strip()
+        s = projected
 
 
 def _parse_rh_middle(wikitext: str) -> str | None:
-    """Pull the middle slot of the first running-head template."""
-    m = _RH_RE.search(wikitext)
-    if not m:
-        return None
-    start = m.end()
-    depth, i = 2, start
-    while i < len(wikitext) and depth > 0:
-        if wikitext[i:i+2] == "{{":
-            depth += 2
-            i += 2
-            continue
-        if wikitext[i:i+2] == "}}":
-            depth -= 2
-            if depth == 0:
-                break
-            i += 2
-            continue
-        i += 1
-    args = _balanced_args(wikitext[start:i])
+    """Pull the middle slot of the first running-head template.
+
+    The head's name set and its slot split are the lexicon's
+    (`wikitext.page_head_fields`); this module's own `_RH_RE` knew `{{rh}}`,
+    `{{RunningHeader}}` and `{{EB1911 Page Heading}}` but not `{{running
+    header}}`, the spelling that cost vol 18's MEDAL plate its number one module
+    over ([[feedback_tune_dont_fork]]).
+    """
+    args = page_head_fields(wikitext)
     if len(args) < 3:
         return None
-    return _strip_formatting(args[1].strip())
+    middle = _strip_formatting(args[1].strip())
+    # Some heads centre the FOLIO rather than the title
+    # (`{{size|xl|{{em|8.3}}611}}`), which unwraps to `{{EM|8.3}}611` — no name in
+    # it.  The test is LETTERS OUTSIDE the braces, not "any braces": a headword
+    # may carry an embedded styler and still be a name
+    # (`BUCKINGHAM, {{SMALLER|1ST}} DUKE OF` normalises to BUCKINGHAM), and
+    # rejecting those threw away five real plate signals.
+    if not re.search(r"[A-Za-z]", _INNERMOST_TEMPLATE_RE.sub("", middle)):
+        return None
+    return middle
 
 
 def extract_signals(wikitext: str) -> list[str]:
@@ -135,9 +152,9 @@ def extract_signals(wikitext: str) -> list[str]:
     WORD, as in AURORA)."""
     candidates: list[str] = []
 
-    m = _C_XLARGER_RE.search(wikitext)
-    if m:
-        v = _strip_formatting(m.group(1)).upper().strip()
+    inner = _c_xlarger_title(wikitext)
+    if inner:
+        v = _strip_formatting(inner).upper().strip()
         if v and not _PLACEHOLDER_RE.match(v):
             candidates.append(v)
 

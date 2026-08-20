@@ -53,6 +53,7 @@ from britannica.pipeline.stages.elements._registry import (
     IMAGE_LABELS,
     PLACEHOLDER_RE,
     TABLE_LABELS,
+    substitute_children,
 )
 from britannica.pipeline.stages.elements._indent import (
     process_indent, process_indent_block)
@@ -151,14 +152,7 @@ def _process_cell(tag, raw, inner, reg):
     (matching `produce_tree`), so a cell whose only content dropped strips to ''."""
     body = inner
     if reg is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(reg.elements):
-                if ph in body:
-                    body = body.replace(ph, reg.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+        body = substitute_children(body, reg)
     return _tag(tag, raw, body.strip(" \t"))
 
 
@@ -512,11 +506,11 @@ def _parse_image(raw):
             fn = img.replace(" ", "_") if img else ""
         return fn, None, None, ""
     if re.match(r"\{\{\s*plain image with caption\s*\|", tmpl, re.IGNORECASE):
-        from britannica.pipeline.stages.elements._link import _split_top_pipes
+        from britannica.wikitext import split_top_pipes
         inner = re.sub(r"\}\}\s*$", "", re.sub(
             r"^\s*\{\{\s*plain image with caption\s*\|", "", raw, flags=re.IGNORECASE))
         params: dict[str, str] = {}
-        for part in _split_top_pipes(inner):
+        for part in split_top_pipes(inner):
             k, eq, v = part.partition("=")
             if eq:
                 params[k.strip().lower()] = v.strip()
@@ -563,15 +557,7 @@ def _process_image(raw, inner, context, inner_registry):
         return ""
     cap = inner
     if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in cap:
-                    cap = cap.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+        cap = substitute_children(cap, inner_registry)
     cap = cap.strip()
     if not cap:
         return build_img_marker(fn, align=align, width=width)      # bare leaf carries its align
@@ -711,9 +697,9 @@ def _shoulder_peel(raw):
     «BR» node the producer removes) splits the run at the break and defeats dehyphenation — so
     this is extraction, NOT a movable transform.  Called only by `_classify_shoulder_composite`."""
     from britannica.pipeline.stages.elements._tables import _SHOULDER_HEADING_RE
-    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    from britannica.wikitext import split_top_pipes
     sh = _SHOULDER_HEADING_RE.match(raw)
-    slots = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[sh.end():]))
+    slots = split_top_pipes(re.sub(r"\}\}\s*$", "", raw[sh.end():]))
     positional = [g for g in slots if not re.match(r"\s*[A-Za-z][\w-]*\s*=", g)]
     label = (positional or slots)[-1]
     return re.sub(r"\s*<[Bb][Rr]\b[^>]*>\s*", " ", label)  # margin-wrap furniture → space
@@ -732,15 +718,7 @@ def process_shoulder(raw, inner, context, inner_registry):
     from britannica.util.strings import section_slug, strip_markers
     content = inner
     if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+        content = substitute_children(content, inner_registry)
     content = content.strip()
     # The insert's narrow measure wraps words the site's full margin doesn't:
     # a contiguous hyphen here is the insert's own line break, transcribed
@@ -757,9 +735,9 @@ def _running_header_cells(raw):
     into child nodes) and the producer agree on the split — the RUNNING_HEADER twin of the
     other styler peels, but for THREE content regions (margin | centre | margin)."""
     from britannica.pipeline.stages.elements._tables import _RUNNING_HEADER_RE
-    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    from britannica.wikitext import split_top_pipes
     rh = _RUNNING_HEADER_RE.match(raw)
-    cells = _split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
+    cells = split_top_pipes(re.sub(r"\}\}\s*$", "", raw[rh.end():]))
     return (cells + ["", "", ""])[:3]
 
 
@@ -1022,15 +1000,7 @@ def _process_title(raw, inner, context, inner_registry):
     not a re-parse with fresh placeholders that don't match the resolved body."""
     content = inner
     if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+        content = substitute_children(content, inner_registry)
     return f"«TITLE:{content}«/TITLE»"
 
 
@@ -1053,26 +1023,6 @@ def _param_peel(raw):
     bar = rest.find("|")
     value = (rest[:bar] if bar >= 0 else "").strip()
     return name, value, rest[bar + 1:] if bar >= 0 else rest
-
-
-def _substitute_children(inner, inner_registry):
-    """Substitute a composite's child markers into its placeholderized `inner` (5-pass, so a
-    child marker that itself carries another child's placeholder resolves — cross-references).
-    The shared body every composite producer runs when it needs the ASSEMBLED content (a slug,
-    a strip, a wrap, a display slot); `produce_tree` also post-substitutes, so this is belt-and-
-    braces for producers that read `content` before returning."""
-    content = inner
-    if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
-    return content
 
 
 def _recurse_slot_content(raw, label):
@@ -1212,7 +1162,7 @@ def _make_peel_recurse(label):
     producer reads `ctx.ref_bodies`).  `produce_tree` post-substitutes too, so this is the whole
     producer."""
     wrap = _PR_WRAP[label]
-    return lambda raw, inner, ctx, reg: wrap(raw, _substitute_children(inner, reg), ctx)
+    return lambda raw, inner, ctx, reg: wrap(raw, substitute_children(inner, reg), ctx)
 
 
 def _process_fraction(raw, inner, context, inner_registry):

@@ -27,8 +27,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._dual_line import (
-    _split_top_level_pipe)
+from britannica.wikitext import split_top_pipes
 
 
 # ── Labeled-equation family (equation / MathForm1 / ne) ──────────────
@@ -91,7 +90,7 @@ def _eqn_parse(raw: str) -> "tuple[str, str]":
     Shared by the composite (which recurses each slot to a CELL) and the producer (which reads
     the empty-body early-out + the number-empty guard off it) — one parse, called twice."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
-    parts = _split_top_level_pipe(inner)
+    parts = split_top_pipes(inner)
     if not parts:
         return "", ""
     name = parts[0].strip().lower()

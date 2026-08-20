@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 
 from britannica.util.strings import section_slug
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 _SANITIZE = re.compile(r"[{}«»]")
 
@@ -41,7 +41,7 @@ def _anchor_display(raw: str) -> str:
     or the id if that's all there is).  The pure-target spellings (`{{anchor|…}}` /
     `{{section|…}}` / `{{anchor#id}}`) have no visible content → ''."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
-    parts = _split_top_pipes(inner)
+    parts = split_top_pipes(inner)
     if parts[0].strip().lower() != "anchor+":
         return ""
     args = parts[1:]
@@ -55,7 +55,7 @@ def _wrap_anchor(raw, body, ctx):
     → ``«ANCHOR:slug|name»`` point anchors; ``anchor+`` also appends its recursed display
     ``body``.  Folds the old `process_anchor` — the display is now a classified child slot."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
-    parts = _split_top_pipes(inner)
+    parts = split_top_pipes(inner)
     tmpl = parts[0].strip().lower()
     args = parts[1:]
     if tmpl == "anchor+":

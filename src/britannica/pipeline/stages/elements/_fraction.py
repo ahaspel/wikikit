@@ -5,7 +5,7 @@ optional whole part), the classifier recurses each to a CELL node, and `_process
 reassembles the fraction from the cell markers — vulgar-Unicode where available (½, ¾, …),
 else `n/d`.  The producer assembles its OWN output from its recursed parts (a `{{Greek}}` /
 `{{sub}}` / `<math>` in a numerator is a real child node), not an across-the-board transform
-of inner content.  `_split_top_pipes` is the canonical parse primitive from `_link` (it
+of inner content.  `split_top_pipes` is the canonical parse primitive from `_link` (it
 splits, never strips).
 """
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 _VULGAR_FRACTIONS = {
     ("1", "2"): "½", ("1", "4"): "¼", ("3", "4"): "¾",
@@ -51,7 +51,7 @@ def _fraction_parse(raw: str) -> tuple[str, list[str]]:
             num, _sep, den = inner.partition(r"\over")
             return "over", [num, den]
         return "bare", []
-    parts = _split_top_pipes(inner[bar:])     # slot string begins with the leading `|`
+    parts = split_top_pipes(inner[bar:])     # slot string begins with the leading `|`
     if parts and parts[0] == "":              # empty slot before the first `|`
         parts = parts[1:]
     slots = [p for p in parts if not re.match(r"^[a-zA-Z_-]+=", p)]

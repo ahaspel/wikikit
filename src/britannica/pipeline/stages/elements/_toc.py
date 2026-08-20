@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 _NAMED_RE = re.compile(r"^\s*([A-Za-z_][\w\-]*)\s*=(.*)$", re.DOTALL)
 
@@ -29,7 +29,7 @@ def _toc_row_cells(raw: str) -> list[str]:
     (``col3``).  The classifier recurses each to a CELL node; the producer lays out the
     dotted-leader row, so hyphenation / ``{{ditto}}`` / inline markup render as nodes."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
-    parts = _split_top_pipes(inner)
+    parts = split_top_pipes(inner)
     positional: list[str] = []
     named: dict[str, str] = {}
     for arg in parts[1:]:                       # parts[0] is the template name

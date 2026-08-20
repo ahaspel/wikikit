@@ -26,6 +26,7 @@ Variants:
 from __future__ import annotations
 
 import re
+from britannica.wikitext import split_top_pipes
 
 
 _DUAL_LINE_NAME_RE = re.compile(
@@ -36,48 +37,6 @@ _DUAL_LINE_NAME_RE = re.compile(
 # FORMS' `{{dual line|A|B|style=…}}`); either way it is dropped, never rendered.
 _DECORATION_RE = re.compile(
     r"^\s*(?:style|align|valign|class|width|height)\s*=", re.IGNORECASE)
-
-
-_MATH_OPEN_RE = re.compile(r"<math\b", re.IGNORECASE)
-_MATH_CLOSE = "</math>"
-
-
-def _split_top_level_pipe(s: str) -> list[str]:
-    """Split ``s`` on `|`, but only at depth-0 brace nesting — pipes INSIDE a
-    nested ``{{…|…}}`` aren't separators.  A ``<math>…</math>`` block is opaque
-    too: a LaTeX pipe (``\\left|…\\right|``, an absolute value, a matrix column)
-    is content, never an arg boundary.  Pure utility; no caller-specific
-    knowledge."""
-    parts: list[str] = []
-    buf: list[str] = []
-    depth = 0
-    i = 0
-    n = len(s)
-    while i < n:
-        if depth == 0 and s[i] == "<" and _MATH_OPEN_RE.match(s, i):
-            end = s.lower().find(_MATH_CLOSE, i)
-            if end != -1:
-                end += len(_MATH_CLOSE)
-                buf.append(s[i:end])     # the whole <math>…</math> rides through
-                i = end
-                continue
-        if i + 1 < n and s[i] == "{" and s[i + 1] == "{":
-            depth += 1
-            buf.append("{{")
-            i += 2
-        elif i + 1 < n and s[i] == "}" and s[i + 1] == "}":
-            depth = max(0, depth - 1)
-            buf.append("}}")
-            i += 2
-        elif s[i] == "|" and depth == 0:
-            parts.append("".join(buf))
-            buf = []
-            i += 1
-        else:
-            buf.append(s[i])
-            i += 1
-    parts.append("".join(buf))
-    return parts
 
 
 def _dual_line_cells(raw: str) -> list[str]:
@@ -97,7 +56,7 @@ def _dual_line_cells(raw: str) -> list[str]:
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     m = _DUAL_LINE_NAME_RE.match(inner)
     body = inner[m.end():] if m else inner
-    parts = [p for p in _split_top_level_pipe(body) if not _DECORATION_RE.match(p)]
+    parts = [p for p in split_top_pipes(body) if not _DECORATION_RE.match(p)]
     if len(parts) < 2:
         return [p.strip() for p in parts]
     return [parts[0].strip(), "|".join(parts[1:]).strip()]
@@ -110,7 +69,7 @@ def _dual_line_decoration(raw: str) -> str:
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     m = _DUAL_LINE_NAME_RE.match(inner)
     body = inner[m.end():] if m else inner
-    for p in _split_top_level_pipe(body):
+    for p in split_top_pipes(body):
         sm = re.match(r"^\s*style\s*=\s*(.*)$", p, re.IGNORECASE | re.DOTALL)
         if sm:
             return sm.group(1).strip()

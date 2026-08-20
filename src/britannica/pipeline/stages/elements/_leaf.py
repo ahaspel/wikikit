@@ -17,7 +17,8 @@ import html as html_mod
 import re
 
 from britannica.image_assets import SCORE_IMAGES, normalize_score_content
-from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
+from britannica.pipeline.stages.elements._registry import substitute_children
+from britannica.wikitext import split_top_pipes
 
 
 def _process_score(inner: str) -> str:
@@ -114,7 +115,7 @@ def _ppoem_verse(inner: str) -> str:
     control params (start=/end=/class=/style=), take the positional / `1=` verse, rejoin on
     `|` (a verse line may legitimately hold a top-level pipe), strip the frame newlines.
     Shared so `_classify_ppoem_composite` recurses the SAME verse the producer wraps."""
-    segs = _split_top_level_pipe(inner)[1:]   # drop the "ppoem" template name
+    segs = split_top_pipes(inner)[1:]   # drop the "ppoem" template name
     verse: list[str] = []
     for seg in segs:
         if _PPOEM_CTRL_RE.match(seg):
@@ -138,15 +139,7 @@ def _process_ppoem(raw, inner, context, inner_registry) -> str:
     ppoem sits inside a TABLE/REF (ctx.inline).  An all-control / empty ppoem renders to nothing."""
     content = inner   # verse line breaks are «BR»: the BODY producer, seeing its PPOEM parent, made them
     if inner_registry is not None:
-        for _ in range(5):
-            changed = False
-            for ph in list(inner_registry.elements):
-                if ph in content:
-                    content = content.replace(
-                        ph, inner_registry.markers.get(ph, ""))
-                    changed = True
-            if not changed:
-                break
+        content = substitute_children(content, inner_registry)
     if not content.strip():
         return ""
     opener, closer = ("{{IVERSE:", "}IVERSE}") if context.inline else ("{{VERSE:", "}VERSE}")

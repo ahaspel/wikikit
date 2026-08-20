@@ -13,13 +13,16 @@ files no one had downloaded.
 
 Parameters live in any order, separated by ``|``, and the template is
 often pretty-printed across multiple lines with whitespace around the
-parameter name and ``=``.  Caption values can contain nested templates
-up to two levels deep (``{{EB1911 Fine Print|{{sc|Fig.}} 4.—…}}``).
+parameter name and ``=``.  A caption value can nest templates to ANY depth
+(``{{center|{{lh|88%|{{smaller|{{sc|Fig.}} 1.}}}}}}`` is four), which is why
+the parameter list is split rather than shape-matched.
 """
 from __future__ import annotations
 
 import re
 from typing import NamedTuple
+
+from britannica.wikitext import split_top_pipes
 
 
 # ``{{img float}}`` uses ``file=``/``cap=``/``align=``; the ``{{figure}}``
@@ -30,11 +33,21 @@ from typing import NamedTuple
 _FILE_RE = re.compile(
     r"\|\s*(?:file|image)\s*=\s*(?:(?:File|Image):\s*)?([^|}\n]+)", re.IGNORECASE)
 
-# Caption value can include nested ``{{…{{…}}…}}`` up to two levels.
-_CAPTION_RE = re.compile(
-    r"\|\s*(?:caption|cap)\s*=\s*((?:[^|{}]|\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\})+)",
-    re.IGNORECASE,
-)
+# The caption parameter, in every name the two vocabularies use.  `{{img float}}`
+# says `cap=`; `{{figure}}` says `caption=` — and, in all 50 of its EB1911
+# instances, `bottomcaption=`.
+#
+# That last one is why CARNIVORA showed seven figures with no legend under any of
+# them.  When `image=` was added to `_FILE_RE` to recover the `{{figure}}` family,
+# the matching caption synonym was not: the images came back and their captions
+# did not, which reads as "the figures are fine" from a coverage count and as a
+# mutilated article to a reader ([[feedback_content_integrity_over_count]]).
+#
+# `topcaption=` is deliberately ABSENT: it does not occur in the corpus (the
+# source is static, so that is final), and accepting it would place a legend the
+# source puts ABOVE the plate below it — a wrong render for a name we have never
+# seen ([[feedback_report_is_not_ought]]).
+_CAPTION_KEYS = ("cap", "caption", "bottomcaption")
 # ``width=Npx`` (the only size form these templates use); capture the
 # leading width, tolerate a trailing ``xMpx`` height defensively.
 _WIDTH_RE = re.compile(r"\|\s*width\s*=\s*(\d+)(?:x\d+)?px", re.IGNORECASE)
@@ -72,8 +85,22 @@ def parse(body: str) -> ImgFloat | None:
     if not file_m:
         return None
     filename = file_m.group(1).strip()
-    cap_m = _CAPTION_RE.search(anchored)
-    caption = cap_m.group(1).strip() if cap_m else ""
+
+    # The caption is read by SPLITTING the parameter list, not by matching a
+    # nested-brace shape.  The pattern this replaces spelled two levels of `{{…}}`
+    # out by hand and therefore returned NOTHING at three — and EB1911's figure
+    # legends are exactly where the source stacks templates deepest
+    # (`{{c|{{Fs|92%|{{sc|Fig}}. 3.—Skull of ''Eupleres goudoti''.}}}}`).  A regex
+    # that enumerates depth is fake recursion: it recognises the depths it wrote
+    # down and drops the rest silently ([[feedback_recursion_is_recognition]]).
+    # `split_top_pipes` has no depth to exceed.
+    caption = ""
+    for part in split_top_pipes(anchored)[1:]:
+        key, eq, value = part.partition("=")
+        if eq and key.strip().lower() in _CAPTION_KEYS:
+            caption = value.strip()
+            break
+
     w_m = _WIDTH_RE.search(anchored)
     width = int(w_m.group(1)) if w_m else None
     a_m = _ALIGN_RE.search(anchored)

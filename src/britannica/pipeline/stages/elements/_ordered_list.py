@@ -15,29 +15,13 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._dual_line import _split_top_level_pipe
+from britannica.wikitext import template_end
+
+from britannica.wikitext import split_top_pipes
 from britannica.pipeline.stages.elements._list import ListRow
 
 _OL_OPEN = re.compile(r"\{\{\s*ordered\s+list\b", re.IGNORECASE)
 _TYPE_ARG = re.compile(r"^\s*type\s*=\s*([\w-]+)\s*$", re.IGNORECASE)
-
-
-def _balanced_end(text: str, start: int) -> int:
-    """Index one past the `}}` that balances the `{{` at ``start``."""
-    depth, i, n = 0, start, len(text)
-    while i < n - 1:
-        two = text[i:i + 2]
-        if two == "{{":
-            depth += 1
-            i += 2
-        elif two == "}}":
-            depth -= 1
-            i += 2
-            if depth == 0:
-                return i
-        else:
-            i += 1
-    return n
 
 
 def _walk(block: str, depth: int, out: "list[ListRow]") -> None:
@@ -59,7 +43,7 @@ def _walk(block: str, depth: int, out: "list[ListRow]") -> None:
         inner = inner[:-2]
     ltype = ""
     items: list[str] = []
-    for arg in _split_top_level_pipe(inner):
+    for arg in split_top_pipes(inner):
         tm = _TYPE_ARG.match(arg)
         if tm:
             ltype = tm.group(1).strip().lower()
@@ -67,9 +51,15 @@ def _walk(block: str, depth: int, out: "list[ListRow]") -> None:
         items.append(arg)
     for arg in items:
         nest = _OL_OPEN.search(arg)               # a sub-list folded into this arg
-        if nest:
+        # `template_end` is the lexicon's walk.  The local copy this replaces
+        # returned `len(text)` when the braces never balanced, which handed the
+        # sub-list the whole REST of the argument as its content; `None` says so
+        # instead, and an unclosed `{{ordered list` then stays visible in the
+        # text where somebody can see it ([[feedback_honesty_surface_failures]]).
+        nest_end = template_end(arg, nest.start()) if nest else None
+        if nest and nest_end is not None:
             text = arg[:nest.start()]
-            nested = arg[nest.start():_balanced_end(arg, nest.start())]
+            nested = arg[nest.start():nest_end]
         else:
             text, nested = arg, None
         text = text.strip()

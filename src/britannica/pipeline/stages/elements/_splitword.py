@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.pipeline.stages.elements._link import _split_top_pipes
+from britannica.wikitext import split_top_pipes
 
 # END markers render nothing — the whole word already appeared at the START.
 _END_NAMES = frozenset({"hwe", "hyphenated word end", "lpe"})
@@ -38,7 +38,7 @@ def _split_word_word(raw: str) -> str:
     inner = re.sub(r"\}\}\s*$", "", inner)
     positional: list[str] = []
     named: dict[str, str] = {}
-    for arg in _split_top_pipes(inner)[1:]:        # parts[0] is the template name
+    for arg in split_top_pipes(inner)[1:]:        # parts[0] is the template name
         m = _NAMED_RE.match(arg)
         if m:
             named[m.group(1).lower()] = m.group(2)

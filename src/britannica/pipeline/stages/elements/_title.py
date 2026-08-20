@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import re
 from britannica.util.strings import HTML_TAG_RE
+from britannica.wikitext import (TEMPLATE_CLOSE, TEMPLATE_OPEN,
+                                 split_top_pipes, template_end)
 
 # Shared with `_is_connective_gap` (the title-run extender, below): small-caps →
 # caps and the inline-marker strip, to read a heading gap's plain text.
@@ -129,31 +131,23 @@ def decode_title(marker: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def _first_template_arg(text: str) -> str | None:
-    """Return the first positional argument of an open template.
+def _first_template_arg(text: str, arg_start: int) -> str | None:
+    """The first positional argument of the template whose ``{{name|`` ends at
+    ``arg_start``; ``None`` if that template never closes.
 
-    The caller positions ``text`` right after the opening ``{{name|``;
-    we read until the matching ``|`` (depth-1) or ``}}`` (depth-0),
-    counting nested ``{{...}}`` so a nested template doesn't end the
-    arg early.  Returns the raw arg text or None on imbalance.
+    Walks with the lexicon rather than counting braces here: `template_end` finds
+    the close at any depth and `split_top_pipes` cuts the slots, so a nested
+    `{{serif|J}}` inside the argument neither ends it early nor has to be
+    anticipated ([[feedback_tune_dont_fork]]).
     """
-    depth = 0
-    out = []
-    i = 0
-    while i < len(text):
-        ch = text[i]
-        if text[i:i+2] == "{{":
-            depth += 1
-            out.append("{{"); i += 2; continue
-        if text[i:i+2] == "}}":
-            if depth == 0:
-                return "".join(out)
-            depth -= 1
-            out.append("}}"); i += 2; continue
-        if ch == "|" and depth == 0:
-            return "".join(out)
-        out.append(ch); i += 1
-    return None
+    open_at = text.rfind(TEMPLATE_OPEN, 0, arg_start)
+    if open_at < 0:
+        return None
+    end = template_end(text, open_at)
+    if end is None:
+        return None
+    args = split_top_pipes(text[arg_start:end - len(TEMPLATE_CLOSE)])
+    return args[0] if args else None
 
 
 def _letter_from_dropcap(opening: str) -> str | None:
@@ -176,7 +170,7 @@ def _letter_from_dropcap(opening: str) -> str | None:
     m = _LETTER_OPENER_RE.match(opening)
     if not m:
         return None
-    arg = _first_template_arg(opening[m.end():])
+    arg = _first_template_arg(opening, m.end())
     if arg is None:
         return None
     # Unwrap a single layer of `{{name|X}}` (handles `{{serif|J}}`).
@@ -252,21 +246,13 @@ def _letter_title_span(opening: str) -> tuple[str, str] | None:
     if s[i:i + 2] != "{{":
         return None
     # Balance the leading {{…}} template(s) — a {{Serif|{{di|…}}}} wrapper or a
-    # bare {{di|…}} — to depth 0; that IS the drop-cap construct.
-    depth = 0
-    while i < len(s):
-        if s[i:i + 2] == "{{":
-            depth += 1
-            i += 2
-        elif s[i:i + 2] == "}}":
-            depth -= 1
-            i += 2
-            if depth == 0:
-                break
-        else:
-            i += 1
-    if depth != 0:
+    # bare {{di|…}} — to its close; that IS the drop-cap construct.  The walk is
+    # the lexicon's, so a wrapper stack of any depth carves correctly and an
+    # unclosed one is `None` rather than a guess.
+    end = template_end(s, i)
+    if end is None:
         return None
+    i = end
     if close:
         j = i
         while j < len(s) and s[j].isspace():

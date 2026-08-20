@@ -42,6 +42,7 @@ from britannica.pipeline.stages.elements._registry import (
     ElementRegistry,
     TABLE_LABELS,
     new_placeholder,
+    substitute_placeholders,
 )
 from britannica.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
@@ -788,11 +789,11 @@ def _columns_content_slots(raw: str) -> list[str]:
     slots in N order (plus any bare positional), dropping the layout params
     (`colwidth`/`class`/`style`/`gap`/`rules`/…).  These are the table's cells; the frame is
     presentation the single-column medium renders as a plain row."""
-    from britannica.pipeline.stages.elements._link import _split_top_pipes
+    from britannica.wikitext import split_top_pipes
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     numbered: dict[int, str] = {}
     positional: list[str] = []
-    for part in _split_top_pipes(inner)[1:]:          # drop the template name
+    for part in split_top_pipes(inner)[1:]:          # drop the template name
         m = _COL_CONTENT_RE.match(part)
         if m:
             numbered[int(m.group(1))] = m.group(2)
@@ -1436,14 +1437,11 @@ def produce_tree(
         # tables had ~17 such leaks from unresolved-`<ref name=X/>`
         # citation reuses inside `«TABLE[…]»` blocks.
         if ce.inner_registry:
-            for _ in range(5):
-                changed = False
-                for child_ph, child_ce in ce.inner_registry.items():
-                    if child_ph in marker:
-                        marker = marker.replace(child_ph, child_ce.marker)
-                        changed = True
-                if not changed:
-                    break
+            # Pairs re-read each pass: a child's marker may still be produced
+            # while this runs, so a snapshot could substitute a stale one.
+            marker = substitute_placeholders(
+                marker,
+                lambda: [(ph, c.marker) for ph, c in ce.inner_registry.items()])
 
         ce.marker = marker
 
@@ -1457,7 +1455,9 @@ def substitute_top_level_markers(
     marker may carry a placeholder for another top-level marker.
     Mutates marker strings on `tree` entries during substitution.
     """
-    for _ in range(3):
+    # Bounded by the tree, not by a number: a sibling chain needs at most one
+    # pass per entry, and needing more means a marker carries its own placeholder.
+    for _ in range(len(tree) + 1):
         changed = False
         for ph, ce in tree.items():
             marker = ce.marker
@@ -1468,5 +1468,7 @@ def substitute_top_level_markers(
                 if other_ph != ph and ph in other_ce.marker:
                     other_ce.marker = other_ce.marker.replace(ph, marker)
         if not changed:
-            break
-    return text
+            return text
+    raise RuntimeError(
+        f"top-level marker substitution did not converge over {len(tree)} "
+        f"element(s) — a marker carries its own placeholder (cycle)")
