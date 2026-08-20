@@ -168,6 +168,29 @@ def parse_paired_half(raw: str) -> "tuple[str, str, str] | None":
             m.group(2).lower(), (m.group(3) or "").strip())
 
 
+def template_param(body: str, name: str) -> str:
+    """The value of `| name = …` in a template BODY; `""` when absent.
+
+    THE named-parameter read.  Parameters are separated by TOP-LEVEL pipes, so
+    the split is `split_top_pipes`' and a pipe inside `[[Subject|Display]]` or a
+    nested template stays content.  Case-insensitive: the rolls write `Image=`
+    and `image=` interchangeably.
+
+    Two readers wrote their own, with three silent differences between them —
+    case sensitivity, whether a value may contain a pipe, and whether whitespace
+    may follow the pipe.  One of them ended a value at the next pipe THAT BEGAN
+    A LINE, which is a layout convention rather than a grammar, and where a
+    transcriber put two parameters on one line the first swallowed the second:
+    eleven contributors reached the database with another parameter's text as
+    their description.
+    """
+    for part in split_top_pipes(body):
+        key, eq, value = part.partition("=")
+        if eq and key.strip().lower() == name.strip().lower():
+            return value.strip()
+    return ""
+
+
 def first_template_body(text: str, name: str, pos: int = 0) -> "str | None":
     """Body of the first `{{name|…}}` at or after ``pos``; ``None`` if there is
     none or it never closes.

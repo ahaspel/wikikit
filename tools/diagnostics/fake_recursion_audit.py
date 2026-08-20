@@ -76,6 +76,9 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ast_shapes import docstring_ids          # noqa: E402
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -231,20 +234,6 @@ def _hand_walk(fn: ast.AST) -> "int | None":
     return None
 
 
-def _docstring_ids(tree: ast.AST) -> set[int]:
-    """`id()` of every Constant that is a docstring — prose, not a pattern."""
-    out = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
-                             ast.ClassDef)):
-            body = getattr(node, "body", None)
-            if (body and isinstance(body[0], ast.Expr)
-                    and isinstance(body[0].value, ast.Constant)
-                    and isinstance(body[0].value.value, str)):
-                out.add(id(body[0].value))
-    return out
-
-
 def _files():
     for scope in SCOPE:
         for p in sorted((ROOT / scope).rglob("*.py")):
@@ -269,7 +258,7 @@ def audit() -> list[dict]:
                              "line": 0, "kind": "UNREADABLE",
                              "pattern": f"{type(exc).__name__}: {exc}"})
             continue
-        skip = _docstring_ids(tree)
+        skip = docstring_ids(tree)
         rel = str(path.relative_to(ROOT)).replace("\\", "/")
         for fn in ast.walk(tree):
             if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):

@@ -31,6 +31,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ast_shapes import docstring_ids          # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 ROOTS = [ROOT / "src" / "britannica", ROOT / "tools"]
 SKIP_DIRS = {"__pycache__", "_scratch", "node_modules"}
@@ -47,20 +50,6 @@ INTERESTING = re.compile(r"[«»\\\[\](){}|^$*+?]|\x00|\x01|\x03")
 BORING = re.compile(r"^[A-Za-z][A-Za-z0-9 ,.'’\-]+$")
 JS_LITERAL = re.compile(
     r"""(['"`])((?:[^'"`\\\n]|\\.){6,200}?)\1|/((?:[^/\\\n]|\\.){6,200}?)/[gimsuy]*""")
-
-
-def _docstring_ids(tree) -> set:
-    """Docstrings describe rules; they do not implement them."""
-    out = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef,
-                             ast.AsyncFunctionDef)):
-            body = getattr(node, "body", None)
-            if (body and isinstance(body[0], ast.Expr)
-                    and isinstance(body[0].value, ast.Constant)
-                    and isinstance(body[0].value.value, str)):
-                out.add(id(body[0].value))
-    return out
 
 
 def _annotation_ids(tree) -> set:
@@ -129,7 +118,7 @@ def collect() -> dict[str, list[str]]:
                 tree = ast.parse(p.read_text(encoding="utf-8"))
             except (SyntaxError, UnicodeDecodeError):
                 continue
-            skip = _docstring_ids(tree) | _annotation_ids(tree)
+            skip = docstring_ids(tree) | _annotation_ids(tree)
             rel = p.relative_to(ROOT).as_posix()
             inner = _fstring_part_ids(tree)
             for node in ast.walk(tree):
