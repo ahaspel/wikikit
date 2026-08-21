@@ -63,6 +63,12 @@ EXPORTED_DIRECT = {
         "copies the directory as a backup; counts what it wrote",
     "tools/viewer/build_stamp.py":
         "hashes files for a build stamp — never reads a payload",
+    "tools/diagnostics/corpus_stamp.py":
+        "STATS files (name/size/mtime) to answer 'has anything written here since "
+        "the rebuild finished' — never opens a payload, and must not: reading "
+        "through load_corpus would parse 37k JSONs (~90s) and turn a 40ms deploy "
+        "gate into one worth skipping.  Reports its own count in both the stamp "
+        "and the refusal message",
     "src/britannica/epub/build.py":
         "enumerates article STEMS for the EPUB (`_STEM_RE` excludes the "
         "non-articles); reads no payload here — the build reports its own counts",
