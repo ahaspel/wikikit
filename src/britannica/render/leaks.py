@@ -107,10 +107,19 @@ _ATTR_RE = re.compile(
 # first one and went blind to every escaped tag that CARRIES an attribute
 # (`&lt;a href=&#39;x&#39;&gt;` leaked visibly and counted clean).  Capped at 200
 # chars so a lone `&lt;` in prose can't scan half the article for a `&gt;`.
-_ESC_TAG_RE = re.compile(
-    r"&lt;/?(?:a|abbr|b|big|blockquote|br|chem|cite|code|div|em|hr|i|includeonly"
+# THE TAG VOCABULARY, named so the other leak instrument keys on the SAME set.
+# `leak_audit` matched anything tag-shaped and so counted `<j>`/`<t>` (OCR-mangled
+# phi), `<secundus>` and `<praetor>` as BROKEN — 133 of its 134, the transcribers'
+# damage reported as ours, under a headline its own docstring calls "the number to
+# drive toward zero".  It could never reach zero, because we do not own it.  Two
+# instruments, one question, two answers ([[feedback_tune_dont_fork]]).
+KNOWN_TAG_NAMES = (
+    r"a|abbr|b|big|blockquote|br|chem|cite|code|div|em|hr|i|includeonly"
     r"|ins|li|mark|ol|p|poem|pre|q|ref|s|score|small|span|strike|strong|sub|sup"
-    r"|table|tbody|td|th|thead|tr|u|ul|var)\b"
+    r"|table|tbody|td|th|thead|tr|u|ul|var")
+
+_ESC_TAG_RE = re.compile(
+    r"&lt;/?(?:" + KNOWN_TAG_NAMES + r")\b"
     r"(?:[^&<>]|&#?\w{1,8};){0,200}?&gt;", re.IGNORECASE)
 
 
