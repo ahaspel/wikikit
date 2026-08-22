@@ -27,6 +27,8 @@ from pathlib import Path
 from britannica.export.markdown import body_to_markdown
 from britannica.markers import IMG_PARTS_RE
 from britannica.export.article_json import stable_id_from_filename
+from britannica.export.corpus import NON_ARTICLE
+from britannica.export._tei_readme import TEI_README as _TEI_README
 
 _SITE = "https://www.britannica11.org"
 _ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
@@ -261,10 +263,106 @@ def build_maps_bundle(maps_json: str = "data/maps.json",
             "bytes": archive.stat().st_size, "archive": str(archive)}
 
 
+def build_tei_bundle(articles_dir: str = "data/derived/articles",
+                     out_dir: str = "data/derived") -> dict:
+    """Write the TEI-P5 edition and archive it as a bundle of its OWN.
+
+    SEPARATE FROM THE CORPUS BUNDLE, for the same reason the maps are: a reader
+    who wants `articles.jsonl` for text-mining does not want a 37,000-file XML
+    tree, and the TEI audience does not want the JSONL.  Separation also lets the
+    edition carry its own DOI if it is deposited (Zenodo / TAPAS / the Oxford
+    Text Archive), which a file buried inside another archive cannot.
+
+    ONE DOCUMENT PER ARTICLE, named by stable_id, so a file's name is the article's
+    URL tail and a `<ref target="#22-0987-b3f68e">` resolves by inspection.  A
+    `teiCorpus.xml` binds them with XInclude — the standard way to present a TEI
+    corpus without a single multi-gigabyte file.
+
+    Not validated here: `tools/diagnostics/tei_validate.py` is the gate (rebuild
+    phase 7.7) and it validates every article against the TEI Consortium's own
+    schema.  Writing files is not the place to re-answer that question.
+    """
+    from britannica.export.tei import article_to_tei
+
+    src = Path(articles_dir)
+    out = Path(out_dir)
+    tei_dir = out / "tei"
+    if tei_dir.exists():
+        shutil.rmtree(tei_dir)
+    tei_dir.mkdir(parents=True)
+
+    n = 0
+    total_bytes = 0
+    names: list[str] = []
+    for fp in sorted(src.glob("*.json")):
+        if fp.name in NON_ARTICLE:
+            continue
+        try:
+            d = json.loads(fp.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(d, dict) or not d.get("body"):
+            continue
+        xml = article_to_tei(d)
+        name = f"{d.get('stable_id') or fp.stem}.xml"
+        (tei_dir / name).write_text(xml, encoding="utf-8")
+        names.append(name)
+        total_bytes += len(xml.encode("utf-8"))
+        n += 1
+
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    includes = "\n".join(
+        f'  <xi:include href="{nm}"/>' for nm in names)
+    (tei_dir / "teiCorpus.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<teiCorpus xmlns="http://www.tei-c.org/ns/1.0"\n'
+        '           xmlns:xi="http://www.w3.org/2001/XInclude">\n'
+        "<teiHeader><fileDesc>\n"
+        "<titleStmt><title>Encyclopædia Britannica, Eleventh Edition — "
+        "a TEI-P5 edition</title>\n"
+        '<respStmt xml:id="wikisource"><resp>transcription</resp>'
+        "<orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>\n"
+        f"<publicationStmt><publisher>britannica11.org</publisher>\n"
+        '<availability status="free"><licence '
+        'target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>\n'
+        f"<date>{generated}</date></publicationStmt>\n"
+        "<sourceDesc><p>Encyclopædia Britannica, 11th edition, Cambridge "
+        "University Press, 1910–1911, transcribed at Wikisource.</p></sourceDesc>\n"
+        "</fileDesc></teiHeader>\n"
+        f"{includes}\n"
+        "</teiCorpus>\n", encoding="utf-8")
+
+    # IDS ARE DOCUMENT-SCOPED, and the README has to say so.  Each member is
+    # SELF-CONTAINED — it declares its own <respStmt xml:id="wikisource"> and its
+    # own <rendition> set, which is what lets a single file validate and be read
+    # alone (all 37,225 do).  The cost is that resolving every XInclude into ONE
+    # tree collides: 37,225 `wikisource` ids, 37,225 `sc` renditions, and
+    # `section-history` in every article that has one.  That is ordinary for a
+    # file-per-member TEI corpus — the teiCorpus is a CATALOGUE and tools process
+    # members individually — but a consumer who tries to assemble the whole thing
+    # should learn it from the README, not from a validator.
+    (tei_dir / "README.md").write_text(_TEI_README.format(n=n), encoding="utf-8")
+
+    archive = out / "eb1911-tei.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(tei_dir / "README.md", arcname="eb1911-tei/README.md")
+        tar.add(tei_dir / "teiCorpus.xml", arcname="eb1911-tei/teiCorpus.xml")
+        for nm in names:
+            tar.add(tei_dir / nm, arcname=f"eb1911-tei/{nm}")
+    (out / f"{archive.name}.sha256").write_text(
+        f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
+
+    return {"documents": n, "uncompressed_bytes": total_bytes,
+            "archive": str(archive), "archive_bytes": archive.stat().st_size,
+            "out_dir": str(tei_dir)}
+
+
 if __name__ == "__main__":
     import sys
     if "maps" in sys.argv[1:]:
         print(json.dumps(build_maps_bundle(), indent=2))
+    elif "tei" in sys.argv[1:]:
+        print(json.dumps(build_tei_bundle(), indent=2))
     else:
         lim = int(sys.argv[1]) if len(sys.argv) > 1 else None
         print(json.dumps(build_download(limit=lim), indent=2))
