@@ -4,7 +4,7 @@ THE one inline decoder (project_render_to_python).  Reproduces the viewer verbat
 same order, same strings, same INDEPENDENT open→tag / close→tag substitution for the
 styler/wrapper markers (the «P»/«CTR» rule: a marker that nests or spans render chunks
 pairs in the browser, so there is no `«X»(.*?)«/X»` span-match to mis-pair).  The
-parametrized markers (SPAN/DIV/LN/XL/BAR/BRACE2/…) key their close on the `»`-anchored
+parametrized markers (SPAN/DIV/LN/XL/BAR/…) key their close on the `»`-anchored
 opener.  Regression-snapshotted against tests/snapshots/inline/inline_ref.json (once
 the viewer's decodeInlineMarkers output; now this decoder's own golden).
 
@@ -161,39 +161,6 @@ def _render_hieroglyph(m):
     return "".join(parts) or m.group(0)
 
 
-# ── size markers (applySizeMarkers) — longest openers first; no «XL» size line ──
-_SIZE_NAMED = r"xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger"
-_FS_RE = re.compile(r"«FS\[([^\]]*)\]»")
-_LH_RE = re.compile(r"«LH\[([^\]]*)\]»")
-
-
-def _fs(m):
-    sz = m.group(1).strip()
-    if re.fullmatch(r"[\d.]+", sz):
-        sz += "%"
-    ok = re.fullmatch(rf"[\d.]+(%|em|rem|px|pt)|(?:{_SIZE_NAMED})", sz, re.I)
-    return f'<span style="font-size:{sz}">' if ok else "<span>"
-
-
-def _lh(m):
-    lh = m.group(1).strip()
-    ok = re.fullmatch(r"[\d.]+(%|em|rem|px|pt)?", lh)
-    return f'<span style="display:inline-block;line-height:{lh}">' if ok else "<span>"
-
-
-def _apply_size_markers(h):
-    h = h.replace("«XXL»", '<span class="size-xxl">').replace("«/XXL»", "</span>")
-    h = h.replace("«LG»", '<span class="size-lg">').replace("«/LG»", "</span>")
-    h = h.replace("«XXS»", '<span class="size-xxs">').replace("«/XXS»", "</span>")
-    h = h.replace("«XS»", '<span class="size-xs">').replace("«/XS»", "</span>")
-    h = h.replace("«SM»", '<span class="size-sm">').replace("«/SM»", "</span>")
-    h = _FS_RE.sub(_fs, h)
-    h = h.replace("«/FS»", "</span>")
-    h = _LH_RE.sub(_lh, h)
-    h = h.replace("«/LH»", "</span>")
-    return h
-
-
 # ── parametrized markers ──
 _FN_OPEN_RE = re.compile(r"«FN(?:\[([^\]]+)\])?:")
 # Inline MATH (cell/caption/verse default): katex is stubbed to «MATHPH» and the cell path
@@ -225,7 +192,6 @@ _SPAN_STYLE_RE = re.compile(r"«SPAN\[style:([^\]]*)\]»")
 # in three articles' rendered HTML.  The leak oracle shared the same `[^\]]*` and so
 # could not report what it was blind to; both now use the corpus-true run.
 _SPAN_TITLE_RE = re.compile(r"«SPAN\[title:([^«»]*)\]»")
-_BRACE2_RE = re.compile(r"«BRACE2\[(\d+)\|([lrud])\]»")
 # «LN» decodes as INDEPENDENT open/close: the opener «LN:filename?|target|» → <a …>, «/LN» → </a>.
 # The display rides through and finishes decoding in the later passes (order-invariant), unlike the old
 # span-match whose display group excluded « and so leaked whenever a link held a marker decoded AFTER
@@ -234,7 +200,6 @@ _LN_OPEN_RE = re.compile(r"«LN(?:\[[a-z_]*\])?:([^|«]*)\|(?:([^|«]*)\|)?")
 _XL_OPEN_RE = re.compile(r"«XL:([^|«]*)(\|)?")
 _SEC_RE = re.compile(r"«(?:SEC|ANCHOR):([^|»]*)\|[^»]*»")
 
-_BRACE2_GLYPH = {"l": "⎧", "r": "⎫", "u": "⏞", "d": "⏟"}  # ⎧ ⎫ ⏞ ⏟
 
 
 def _verse(m):
@@ -245,11 +210,6 @@ def _verse(m):
 
 def _span_title(m):
     return f'<span class="xlit" title="{m.group(1).replace(chr(34), "&quot;")}">'
-
-
-def _brace2(m):
-    side = m.group(2)
-    return f'<span class="brace2 brace2-{side}">{_BRACE2_GLYPH[side]}</span>'
 
 
 def _ln_open_factory(article_url, book=False):
@@ -449,13 +409,7 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     h = h.replace("«B»", "<b>").replace("«/B»", "</b>")
     h = h.replace("«I»", "<i>").replace("«/I»", "</i>")
     h = h.replace("«SC»", '<span class="small-caps">').replace("«/SC»", "</span>")
-    h = h.replace("«SS»", '<span class="sans-serif">').replace("«/SS»", "</span>")
-    h = h.replace("«SR»", '<span class="explicit-serif">').replace("«/SR»", "</span>")
-    h = h.replace("«U»", '<span class="underline">').replace("«/U»", "</span>")
-    h = h.replace("«STK»", "<s>").replace("«/STK»", "</s>")
     h = h.replace("«BR»", "<br>")
-
-    h = _apply_size_markers(h)
 
     # «BAR[N]» = a fixed N-em rule; a bare «BAR» ({{bar}} with no width) is a
     # sum-line rule under a figures column (MANCHURIA) → span the whole cell.
@@ -478,7 +432,6 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     h = h.replace("«/SPAN»", "</span>")
     h = h.replace("«FR»", '<span class="float-right">').replace("«/FR»", "</span>")
     h = h.replace("«FL»", '<span class="float-left">').replace("«/FL»", "</span>")
-    h = _BRACE2_RE.sub(_brace2, h)
     h = _HIEROGLYPH_RE.sub(_render_hieroglyph, h)
 
     h = _LN_OPEN_RE.sub(

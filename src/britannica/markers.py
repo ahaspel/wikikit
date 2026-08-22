@@ -449,9 +449,24 @@ RENDERED_MARKER_OPENS: tuple[str, ...] = (
 # stray_close_braces drift note on RENDERED_MARKER_OPENS above).
 RENDERED_GUILLEMET_MARKER_NAMES: tuple[str, ...] = (
     # inline styling / typography (decodeInlineMarkers + applySizeMarkers)
-    "B", "I", "SC", "SS", "SR", "U", "STK", "MIRROR", "CTR", "FR", "FL",
-    "DIV", "SPAN", "BR", "BAR", "DHR", "BRACE2",
-    "XXL", "XL", "LG", "XXS", "XS", "SM", "FS", "LH",
+    #
+    # There is no SS / SR.  They were the sans-serif and explicit-serif pair, and
+    # NOTHING EMITTED THEM: 0 occurrences across 37,226 article bodies, and 0
+    # `class="sans-serif"` / `class="explicit-serif"` across 37,226 rendered HTML.
+    # The source construct is alive — `{{sans-serif|Α}}` on 20 pages, `{{serif}}` /
+    # `{{Serif}}` on 78, concentrated in ALPHABET where letters are discussed AS
+    # letters — but it is carried by the STYLE-SPAN path instead
+    # («SPAN[style:font-family:sans-serif]», 117 in ALPHABET alone), which carries
+    # the CSS the template implies rather than a marker someone must interpret.
+    #
+    # Deleted because dead code is not inert.  `export/markdown.py` held a rule for
+    # this pair mapping «SS»→<sub> and «SR»→<sup> — which they never were — and on
+    # 2026-08-22 that rule was read as authoritative and reported as a shipped bug
+    # corrupting the alphabet articles.  It could not fire.  Dead code hands
+    # confident wrong answers to whoever reads it next ([[feedback_dead_is_wrong]]).
+    "B", "I", "SC", "MIRROR", "CTR", "FR", "FL",
+    "DIV", "SPAN", "BR", "BAR", "DHR",
+    "XL",
     # links.  AL (the author link) never reaches the viewer — it resolves to LN
     # before export — but it IS emitted, so a consumer grounded in this list has to
     # carry a rule for it.

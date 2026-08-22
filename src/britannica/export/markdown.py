@@ -34,9 +34,11 @@ omitted the very names this file had no rule for.
 
 Policy per marker family:
   * headings   «SEC:slug|name» → ``## name``   ; «SH:slug»…«/SH» → ``### …``
-  * emphasis   «I»→``*…*``  «B»→``**…**``  «STK»→``~~…~~``  «SS»/«SR»→``<sub>``/``<sup>``
+  * emphasis   «I»→``*…*``  «B»→``**…**``
   * presentation (SHED to content)  «SC» «CTR» «DIV[…]» «SPAN[…]» «FL» «FR»
-                 «MIRROR» and the size family «SM»/«LG»/«XS»/«XXS»/«XXL»/«FS»/«LH»
+                 «MIRROR».  (The size family and «STK»/«U»/«BRACE2» are GONE —
+                 nothing emitted them; the source's sizes ride as «SPAN[style:
+                 font-size:N%]», carrying the percentage instead of a bucket.)
   * links      «LN:target|display«/LN» / «XL:url|display«/XL» → ``[display](target)``
   * footnotes  «FN[name]?:body«/FN» → ``[^n]`` inline + a collected notes block
   * math       «MATH:…«/MATH» → ``$…$`` (display → ``$$…$$``) ; «EQN» → ``$$``
@@ -135,14 +137,11 @@ _ANCHOR_RE = re.compile(r"«ANCHOR:[^»]*»")
 _IMG_RE = re.compile(r"\{\{IMG:([^|}]+)((?:\|[^{}]*?)*?)\}\}")
 
 # emphasis that maps to real Markdown
-_WRAP = {"I": ("*", "*"), "B": ("**", "**"), "STK": ("~~", "~~"),
-         "SS": ("<sub>", "</sub>"), "SR": ("<sup>", "</sup>")}
+_WRAP = {"I": ("*", "*"), "B": ("**", "**")}
 # presentation that SHEDS to its inner content (open+close both → "")
-_SHED = ("SC", "CTR", "MIRROR", "FL", "FR",
-         "SM", "LG", "XS", "XXS", "XXL", "FS", "LH")
+_SHED = ("SC", "CTR", "MIRROR", "FL", "FR")
 
 _RULE_RE = re.compile(r"«BAR(?:\[\d+\])?»|«DHR(?:\[[^\]]*\])?»|«DHRI(?:\[[^\]]*\])?»")
-_BRACE2_RE = re.compile(r"«BRACE2\[[^\]]*\]»")
 # open/close tokens for the SHED family and the styled DIV/SPAN (carry an [attr]).
 # `MIRROR` also has a SPLIT form (`«MIRROR:…«/MIRROR»`, ALPHABET's reversed glyphs)
 # which the split-marker pass handles; this catches the bare wrapper form.
@@ -447,7 +446,6 @@ def _convert(text: str, ctx: _Ctx) -> str:
         text = text.replace(f"«{name}»", o).replace(f"«/{name}»", c)
     text = _SHED_RE.sub("", text)                # presentation → its content
     text = _RULE_RE.sub("\n\n---\n\n", text)
-    text = _BRACE2_RE.sub("", text)
     return text.replace("«P»", "\n\n").replace("«BR»", "  \n")
 
 
