@@ -348,9 +348,19 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
     # should learn it from the README, not from a validator.
     (tei_dir / "README.md").write_text(_TEI_README.format(n=n), encoding="utf-8")
 
+    # The ODD ships WITH the edition: it documents which part of TEI this uses,
+    # which is the first thing a TEI-literate reader looks for and the difference
+    # between a data dump and an edition.  It is derived from the emitted corpus
+    # rather than from intention, and validates as TEI in its own right.
+    odd = Path("tools/schema/eb1911.odd.xml")
+    if not odd.is_file():
+        raise SystemExit(f"missing {odd} — the TEI bundle ships its ODD")
+    shutil.copy(odd, tei_dir / "eb1911.odd.xml")
+
     archive = out / "eb1911-tei.tar.gz"
     with tarfile.open(archive, "w:gz") as tar:
         tar.add(tei_dir / "README.md", arcname="eb1911-tei/README.md")
+        tar.add(tei_dir / "eb1911.odd.xml", arcname="eb1911-tei/eb1911.odd.xml")
         tar.add(tei_dir / "teiCorpus.xml", arcname="eb1911-tei/teiCorpus.xml")
         for nm in names:
             tar.add(tei_dir / nm, arcname=f"eb1911-tei/{nm}")

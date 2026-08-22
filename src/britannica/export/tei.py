@@ -278,11 +278,16 @@ def _lists(t: str) -> str:
     def item(_m, inner):
         return f"<item>{_inline(inner)}</item>"
 
-    def lst(rend):
+    # @type, not @rend or @rendition: whether a list is ordered is something the
+    # SOURCE states (`«OL»` vs `«UL»`), not a presentational choice we are
+    # carrying, and TEI's own convention for that is @type.  Deriving the ODD
+    # from the emitted corpus is what caught this using @rend, which contradicted
+    # the @rendition decision without being a rendition in the first place.
+    def lst(kind):
         def render(_m, inner):
-            return f'<list rend="{rend}">{sub_balanced(inner, _LI_OPEN, "«/LI»", item)}</list>'
+            return f'<list type="{kind}">{sub_balanced(inner, _LI_OPEN, "«/LI»", item)}</list>'
         return render
-    t = sub_balanced(t, _OL_OPEN, "«/OL»", lst("numbered"))
+    t = sub_balanced(t, _OL_OPEN, "«/OL»", lst("ordered"))
     return sub_balanced(t, _UL_OPEN, "«/UL»", lst("bulleted"))
 
 
