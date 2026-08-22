@@ -265,3 +265,16 @@ def title_case(text: str) -> str:
             else lower[:1].upper() + lower[1:]
         out[m.start():m.end()] = repl
     return "".join(out)
+
+
+def page_range(page_start, page_end) -> str:
+    """A printed page citation: ``pp. 320–358``, or ``p. 320`` for one page.
+
+    One owner because two renderers cite the same thing — the site's citation
+    line and the TEI `<biblScope>` — and an en-dash that drifts to a hyphen in
+    one of them is the kind of difference nobody notices until the two outputs
+    are compared.  Missing values render empty rather than "None".
+    """
+    a = "" if page_start is None else str(page_start)
+    b = "" if page_end is None else str(page_end)
+    return f"p. {a}" if a == b else f"pp. {a}–{b}"

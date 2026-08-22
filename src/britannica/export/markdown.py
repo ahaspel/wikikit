@@ -54,53 +54,17 @@ from __future__ import annotations
 
 import re
 
-from britannica.markers import strip_marker_tokens as strip_markers
-
-
-# ── the balanced scan — the ONE way this module crosses a marker span ─────────
-
-def _balanced_end(text: str, j: int, open_re: re.Pattern, close: str) -> int:
-    """Index just past the DEPTH-matched ``close`` for an opener ending at ``j``.
-
-    -1 when the span is unbalanced.  Callers leave unbalanced markers RAW rather
-    than guessing a close: a visible marker is a reported leak, a guessed close is
-    silently wrong text ([[feedback_honesty_surface_failures]]).
-    """
-    depth = 1
-    while depth:
-        nxt = open_re.search(text, j)
-        nc = text.find(close, j)
-        if nc < 0:
-            return -1
-        if nxt is not None and nxt.start() < nc:
-            depth, j = depth + 1, nxt.end()
-        else:
-            depth, j = depth - 1, nc + len(close)
-    return j
-
-
-def _sub_balanced(text: str, open_re: re.Pattern, close: str, render) -> str:
-    """Replace every balanced ``open_re``…``close`` span with ``render(m, inner)``."""
-    out, i = [], 0
-    while True:
-        m = open_re.search(text, i)
-        if m is None:
-            out.append(text[i:])
-            return "".join(out)
-        end = _balanced_end(text, m.end(), open_re, close)
-        if end < 0:                       # unbalanced — carry it out raw, visibly
-            out.append(text[i:m.end()])
-            i = m.end()
-            continue
-        out.append(text[i:m.start()])
-        out.append(render(m, text[m.end():end - len(close)]))
-        i = end
+from britannica.markers import (FN_OPEN_RE as _FN_OPEN,
+                                TR_OPEN_RE as _TR_OPEN,
+                                balanced_end as _balanced_end,
+                                heading_echo_end,
+                                strip_marker_tokens as strip_markers,
+                                sub_balanced as _sub_balanced)
 
 
 # ── openers (an opener is matched; a close is a literal token) ────────────────
 
 _TITLE_OPEN = re.compile(r"«TITLE:")
-_FN_OPEN = re.compile(r"«FN(?:\[([^\]]*)\])?:")
 _MATH_OPEN = re.compile(r"«MATH(\[[^\]]*\])?:")
 _EQN_OPEN = re.compile(r"«EQN:[^»]*»")
 _SH_OPEN = re.compile(r"«SH:[^»]*»")
@@ -128,7 +92,6 @@ _LEGEND_OPEN = re.compile(r"\{\{LEGEND:")
 _LIST_FORMS = ((re.compile(r"«OL(?:\[type:[\w-]+\])?»"), "«/OL»", True),
                (re.compile(r"«UL»"), "«/UL»", False))
 _LI_OPEN = re.compile(r"«LI»")
-_CTR_SC_OPEN = re.compile(r"«CTR»\s*«SC»")
 _SC_OPEN = re.compile(r"«SC»")
 _CAPTION_OPEN = re.compile(r"«CAPTION»")
 
@@ -307,7 +270,6 @@ def _table_to_gfm(opener: str, inner: str, ctx: _Ctx) -> str:
     return lead + "\n\n" + "\n".join([head, sep, body]).rstrip() + "\n\n"
 
 
-_TR_OPEN = re.compile(r"«TR(?:\[([^\]]*)\])?»")
 _CELL_OPEN = re.compile(r"«(T[DH])(?:\[([^\]]*)\])?»")
 
 
@@ -380,16 +342,9 @@ def _drop_heading_echo(text: str) -> str:
         out.append(text[i:m.start()])
         out.append(f"\n\n## {m.group(1).strip()}\n\n")
         j = m.end()
-        echo = _CTR_SC_OPEN.match(text, j + (len(text[j:]) - len(text[j:].lstrip())))
-        if echo is not None:
-            # The echo is EXACTLY `«CTR»«SC»…«/SC»«/CTR»`.  Requiring the «/CTR» to
-            # sit immediately after the balanced «/SC» is the whole discipline here:
-            # scanning to the balanced «/CTR» alone swallows whatever lies between —
-            # in VALVES that was two images and a heading, silently.  A shape that
-            # isn't this one is not an echo, so it stays.
-            sc_end = _balanced_end(text, echo.end(), _SC_OPEN, "«/SC»")
-            if sc_end > 0 and text.startswith("«/CTR»", sc_end):
-                j = sc_end + len("«/CTR»")
+        echo_end = heading_echo_end(text, j)   # the shape lives in markers.py
+        if echo_end > 0:
+            j = echo_end
         i = j
 
 

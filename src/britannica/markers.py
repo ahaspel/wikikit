@@ -109,6 +109,108 @@ def strip_marker_tokens(text: str, repl: str = " ") -> str:
         repl, MARKER_TOKEN_RE.sub(repl, text or ""))
 
 
+# ── The balanced marker scan — how a consumer CROSSES a marker span ──────────
+#
+# Markers nest («TABLE» in «TABLE», «I» in «SC»), so a span-shaped regex
+# (`«TABLE.*?«/TABLE»`) stops at the FIRST close rather than the matching one.
+# For a STRIPPER that loses a few words silently; for a TRANSLATOR it emits the
+# wrong text inside the wrong construct, which is how `export/markdown.py`
+# shipped 8,140 raw markers across 560 articles before it was rewritten around
+# this scan.  There is exactly one right way to do it, so it lives here, beside
+# the lexicon, rather than once per consumer ([[feedback_tune_dont_fork]]).
+#
+# Promoted from `export/markdown.py` (where it was `_balanced_end` /
+# `_sub_balanced`) when the TEI writer needed the same crossing.  A second
+# consumer is the moment to move it, not the moment to copy it.
+
+
+def balanced_end(text: str, j: int, open_re: "_re.Pattern | str", close: str) -> int:
+    """Index just past the DEPTH-matched ``close`` for an opener ending at ``j``.
+
+    -1 when the span is unbalanced.  Callers leave unbalanced markers RAW rather
+    than guessing a close: a visible marker is a reported leak, a guessed close
+    is silently wrong text ([[feedback_honesty_surface_failures]]).
+    """
+    if isinstance(open_re, str):          # a literal opener IS a pattern, escaped
+        open_re = _re.compile(_re.escape(open_re))
+    depth = 1
+    while depth:
+        nxt = open_re.search(text, j)
+        nc = text.find(close, j)
+        if nc < 0:
+            return -1
+        if nxt is not None and nxt.start() < nc:
+            depth, j = depth + 1, nxt.end()
+        else:
+            depth, j = depth - 1, nc + len(close)
+    return j
+
+
+def sub_balanced(text: str, open_re: "_re.Pattern", close: str, render) -> str:
+    """Replace every balanced ``open_re``…``close`` span with ``render(m, inner)``."""
+    out, i = [], 0
+    while True:
+        m = open_re.search(text, i)
+        if m is None:
+            out.append(text[i:])
+            return "".join(out)
+        end = balanced_end(text, m.end(), open_re, close)
+        if end < 0:                       # unbalanced — carry it out raw, visibly
+            out.append(text[i:m.end()])
+            i = m.end()
+            continue
+        out.append(text[i:m.start()])
+        out.append(render(m, text[m.end():end - len(close)]))
+        i = end
+
+
+# ── Shared marker OPENERS ────────────────────────────────────────────────────
+#
+# An opener is the marker's GRAMMAR, not a decoder's private detail, so the
+# moment a second decoder needs one it belongs here.  These four were each
+# spelled twice — `«FN…»` in the markdown decoder and the site decoder, `«TR…»`
+# in the markdown decoder and the TEI one, the two rule markers in the site
+# decoder and the TEI one — which is the same drift that put `«[^«»]*»` in five
+# modules and `«[^»]*»` in eight more.  The THIRD consumer is what surfaced it.
+FN_OPEN_RE = _re.compile(r"«FN(?:\[([^\]]*)\])?:")
+TR_OPEN_RE = _re.compile(r"«TR(?:\[([^\]]*)\])?»")
+DHR_RE = _re.compile(r"«DHR(?:\[[^\]]*\])?»")
+DHRI_RE = _re.compile(r"«DHRI(?:\[[^\]]*\])?»")
+
+
+def marker_open(name: str, attrs: str) -> str:
+    """The `«NAME[attrs]»` open token — one spelling of the wire form."""
+    return f"«{name}[{attrs}]»"
+
+
+# ── The «SEC» heading ECHO ───────────────────────────────────────────────────
+#
+# «SEC:slug|name» is a POINT marker carrying the name; the VISIBLE heading is
+# still in the stream right after it, as «CTR»«SC»name«/SC»«/CTR».  Any consumer
+# that emits the name from the marker (a `## name`, a `<head>`) must skip that
+# echo or print the heading twice.
+_CTR_SC_OPEN = _re.compile(r"«CTR»\s*«SC»")
+
+
+def heading_echo_end(text: str, j: int) -> int:
+    """Index just past a heading echo starting at/after ``j``; -1 if none.
+
+    THE SHAPE IS EXACT: `«CTR»«SC»…«/SC»«/CTR»`, with the `«/CTR»` immediately
+    after the balanced `«/SC»`.  That strictness is the whole discipline — a scan
+    to the balanced `«/CTR»` alone swallows whatever lies between, and in VALVES
+    that was two images and a heading, silently.  A run that is not this shape is
+    not an echo, so it stays.
+    """
+    lead = len(text[j:]) - len(text[j:].lstrip())
+    echo = _CTR_SC_OPEN.match(text, j + lead)
+    if echo is None:
+        return -1
+    sc_end = balanced_end(text, echo.end(), _re.compile(r"«SC»"), "«/SC»")
+    if sc_end > 0 and text.startswith("«/CTR»", sc_end):
+        return sc_end + len("«/CTR»")
+    return -1
+
+
 # ── The «LN» reader — the link marker's grammar, written ONCE ────────────────
 #
 # The producer's 2-part form is `«LN[kind]:target|display«/LN»` (the emitter is
@@ -360,26 +462,6 @@ def _table_open_tag(m: "_re.Match") -> str:
     return f"{TABLE_OPEN}cols:{m.group(1)}"
 
 
-def balanced_end(text: str, start: int, open_tok: str,
-                 close_tok: str) -> "int | None":
-    """Index just past the depth-balanced close of the marker opening at
-    ``start``; ``None`` if it never closes.
-
-    THE close-finder for the nesting markers («TABLE» inside «TD», «EQN»).
-    """
-    depth, j = 1, start + len(open_tok)
-    while depth:
-        no, nc = text.find(open_tok, j), text.find(close_tok, j)
-        if nc == -1:
-            return None
-        if no != -1 and no < nc:
-            depth, j = depth + 1, no + len(open_tok)
-        else:
-            depth, j = depth - 1, nc + len(close_tok)
-            if depth == 0:
-                return j
-
-
 def iter_table_spans(text: str) -> "_Iterator[tuple[int, str]]":
     """``(offset, span)`` for every TOP-LEVEL «TABLE» span, in order.
 
@@ -392,8 +474,8 @@ def iter_table_spans(text: str) -> "_Iterator[tuple[int, str]]":
         a = text.find(TABLE_OPEN, i)
         if a == -1:
             return
-        end = balanced_end(text, a, TABLE_OPEN, TABLE_CLOSE)
-        if end is None:
+        end = balanced_end(text, a + len(TABLE_OPEN), TABLE_OPEN, TABLE_CLOSE)
+        if end < 0:
             i = a + len(TABLE_OPEN)
             continue
         yield a, text[a:end]

@@ -20,8 +20,8 @@ target-specific resolver.  The default matches the jsdom reference stub.
 import re
 
 from britannica.image_assets import local_image_filename
-from britannica.markers import (OL_OPEN_RE, balanced_end,
-                                strip_marker_tokens)
+from britannica.markers import (DHR_RE, DHRI_RE, OL_OPEN_RE,
+                                balanced_end, strip_marker_tokens)
 from urllib.parse import quote
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
@@ -293,8 +293,8 @@ def _render_eqn(h, ctx):
         out.append(h[i:a])
         lbl_end = h.find("»", a + len(OPEN))
         label = h[a + len(OPEN):lbl_end]
-        close_end = balanced_end(h, a, OPEN, CLOSE) if lbl_end != -1 else None
-        if close_end is None:
+        close_end = balanced_end(h, a + len(OPEN), OPEN, CLOSE) if lbl_end != -1 else -1
+        if close_end < 0:
             out.append(h[a:lbl_end + 1] if lbl_end != -1 else h[a:]); i = (lbl_end + 1) if lbl_end != -1 else len(h); continue
         content = h[lbl_end + 1:close_end - len(CLOSE)].strip()
         mo = _MATH_ONLY_RE.match(content)
@@ -420,8 +420,8 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     # DHR divider — the block-vs-inline choice rides in the marker («DHR» vs «DHRI», stamped by the
     # producer off ctx.inline), so the render is a plain token sub with no per-caller flag.  «DHRI»
     # first (it is not a prefix of «DHR», but resolve it before «DHR» to keep the two independent).
-    h = re.sub(r"«DHRI(?:\[[^\]]*\])?»", '<span class="dhr-inline"></span>', h)
-    h = re.sub(r"«DHR(?:\[[^\]]*\])?»", '<span class="dhr-block"></span>', h)
+    h = DHRI_RE.sub('<span class="dhr-inline"></span>', h)
+    h = DHR_RE.sub('<span class="dhr-block"></span>', h)
 
     # Paragraph + wrapper markers — open/close substituted independently.
     h = h.replace("«P»", "<p>")

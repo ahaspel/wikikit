@@ -110,6 +110,7 @@ def _render_title_h1(marker, ctx):
 # verified identical across all 21,343 section titles — and equivalence today is
 # not the point: the render's anchors and the export's TOC links must move
 # together, which two copies cannot guarantee.
+from britannica.util.strings import page_range
 from britannica.util.strings import section_slug as _section_slug
 
 
@@ -489,8 +490,7 @@ def render_article(article, *, target="site", epub_bundled=None):
 
     vol = escape_html(article.get("volume", "?"))
     ps, pe = article.get("page_start"), article.get("page_end")
-    pages = (f'pp. {escape_html(ps if ps is not None else "")}–{escape_html(pe if pe is not None else "")}'
-             if ps != pe else f'p. {escape_html(ps if ps is not None else "")}')
+    pages = escape_html(page_range(ps, pe))
     wc = f'&middot; {article["word_count"]:,} words' if article.get("word_count") else ""
     # Site links the citation to the page scan; EPUB drops scans, so it's plain text.
     citation = (f"vol. {vol}, {pages}" if epub_bundled is not None

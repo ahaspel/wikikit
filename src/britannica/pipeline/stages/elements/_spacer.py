@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.markers import marker_open
+
 # The SPACER vocabulary — the word-named spacer/glyph/escape LEAVES and content-less
 # frame CONTROL markers this producer owns.  Each renders to a glyph or to nothing;
 # nothing recurses.  (The bracket-char escapes `{{=}}`/`{{(}}`/`{{...}}` are matched
@@ -107,7 +109,7 @@ def process_spacer(raw: str, ctx=None) -> str:
         # TABLE/REF (ctx.inline, threaded sticky by produce_tree) — the render decodes each to
         # dhr-block / dhr-inline mechanically, no per-caller flag.
         tag = "DHRI" if getattr(ctx, "inline", False) else "DHR"
-        return f"«{tag}[{arg}]»" if arg else f"«{tag}»"
+        return marker_open(tag, arg) if arg else f"«{tag}»"
     if low in ("rule", "bar"):
         mn = re.match(r"(\d+)", arg)
         if mn:

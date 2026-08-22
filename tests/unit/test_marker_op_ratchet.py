@@ -41,6 +41,7 @@ OWNERS = {
     "src/britannica/render/inline.py": "the site/epub decoder",
     "src/britannica/render/article.py": "the render shell (TITLE/SH peels)",
     "src/britannica/export/markdown.py": "the markdown decoder",
+    "src/britannica/export/tei.py": "the TEI decoder",
     # producers: peel/emit their OWN constructs
     "src/britannica/pipeline/stages/elements/__init__.py":
         "walker + body/sub-sup producers",
