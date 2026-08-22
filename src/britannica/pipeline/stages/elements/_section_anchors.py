@@ -29,7 +29,7 @@ import re
 
 from britannica.markers import collapse_links, strip_marker_tokens
 
-from britannica.util.strings import section_slug, until_stable
+from britannica.util.strings import section_slug, title_case, until_stable
 
 # A heading is a «CTR» whose FIRST LINE is entirely small-caps: peel the styled runs
 # (`«SC»…«/SC»`, `«SPAN…»…«/SPAN»`) and the numeral prefix, and only punctuation is
@@ -135,6 +135,28 @@ def _heading_name(ctr_content: str) -> str | None:
     name = _name(line1)
     if not name or _CAPWORD.match(name):
         return None  # empty, or a caption (Fig./Plate./Table.)
+    # SMALL CAPS SUPPLY THE CAPITALS.  `{{csc|polish literature}}` writes the
+    # letters lowercase and lets the small-caps rendering print them as capitals —
+    # so the heading a reader SEES is POLISH LITERATURE while `_name`, which
+    # strips markers to get plain text, returned "polish literature" and the
+    # section listed itself in lower case beside 73 Title-Case siblings.
+    #
+    # Only when the heading carries NO capital of its own: a name that already has
+    # case is the transcriber's, and this is the one situation where nothing else
+    # supplies it.  Corpus-wide that is three headings (POLISH LITERATURE and two
+    # in MENSURATION); the 1,133 mixed-case `{{csc}}` spans are untouched, as are
+    # the shoulder headings ("19th century.", "also from intellectual activity.")
+    # which reach their names by another path entirely and are correct lowercase.
+    #
+    # TITLE CASE, not caps: this name is read in the section list beside siblings
+    # the source wrote as "Origins of Poland." and "The Knights of the Sword.",
+    # and a shouted POLISH LITERATURE among them is as wrong as a whispered one.
+    # The small-caps RENDERING still prints the heading itself as capitals.
+    #
+    # The SLUG is unaffected — `section_slug` lowercases either way — so no anchor
+    # or URL moves ([[feedback_forks_are_dropped_attributes]]).
+    if not any(c.isupper() for c in name):
+        name = title_case(name)
     return name
 
 

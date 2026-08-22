@@ -24,7 +24,6 @@ from britannica.render.inline import (
     escape_html,
     format_footnote_text,
     _article_url,
-    _encode_uri_component as _enc,
 )
 from britannica.markers import markers_to_text
 # ── marker constants ──
@@ -501,10 +500,23 @@ def render_article(article, *, target="site", epub_bundled=None):
     if contributors:
         def _contrib_link(c):
             name = c.get("full_name", "")
-            # EPUB: a contrib token the packer resolves to the appendix chunk; site: the
-            # search page.
+            # EPUB: a contrib token the packer resolves to the appendix chunk.
+            #
+            # SITE: the contributor's OWN entry, addressed by the signature slug.
+            # This used to be `?q=<full name>`, which put a known identity back
+            # through the search box and hoped it came out again — a substring
+            # filter over 1,508 names that lands on a filtered LIST, not an entry,
+            # and that quietly returns several people when one name contains
+            # another.  We know exactly who this is; the roster carries the id.
+            #
+            # `c["slug"]` and not a slug recomputed here: the record builder in
+            # `resolve_contributors_post._contributor_record` is the one owner, and
+            # its uniqueness is gated there.  Recomputing would be a second answer
+            # to the same question ([[feedback_shadow_path_at_the_root]]), and a
+            # missing field is a producer bug that should be loud, not papered over
+            # with a fallback to the search link we are removing.
             href = (epub_bundled.contrib_url(_section_slug(name)) if epub_bundled is not None
-                    else "/contributors.html?q=" + _enc(name))
+                    else "/contributors.html#" + c["slug"])
             return (f'<a href="{href}" style="color: var(--muted);">{escape_html(name)}</a> '
                     f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>')
         parts = [_contrib_link(c) for c in contributors]

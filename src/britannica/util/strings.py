@@ -228,3 +228,40 @@ def collapse_key(s: str) -> str:
     ([[feedback_kill_all_darlings]]).
     """
     return collapse_spaces(s).lower()
+
+
+# Words a title leaves lowercase unless they open or close it — the house style
+# EB1911's own shoulder headings use ("Origins of Poland.", "The Knights of the
+# Sword.", "Beginnings of the Polish Constitution.").
+_TITLE_MINOR = frozenset(
+    "a an and as at but by for from in nor of on or the to up via with".split())
+_TITLE_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def title_case(text: str) -> str:
+    """Title-case ``text`` in the edition's house style.
+
+    `str.title()` capitalises the minor words ("Mensuration Of Graphs"); this
+    lowercases them except at either end, which is the style EB1911's own
+    shoulder headings use.
+
+    IT SHARES `str.title()`'S WORD-BOUNDARY BEHAVIOUR and does not try to be
+    cleverer: a letter run after any non-letter starts a new word, so a
+    transcriber's bracketed restoration comes out "Lavren[Tia Membra]".  Deciding
+    that `[` inside a Latin inscription is not a word break needs knowledge of
+    what the text IS, which a case function does not have — the caller that knows
+    it is an inscription is the one that should not be title-casing it
+    ([[feedback_hard_means_unencoded_knowledge]]).
+    """
+    words = list(_TITLE_WORD_RE.finditer(text or ""))
+    if not words:
+        return text or ""
+    out = list(text)
+    for i, m in enumerate(words):
+        w = m.group(0)
+        first, last = i == 0, i == len(words) - 1
+        lower = w.lower()
+        repl = lower if (lower in _TITLE_MINOR and not first and not last) \
+            else lower[:1].upper() + lower[1:]
+        out[m.start():m.end()] = repl
+    return "".join(out)
