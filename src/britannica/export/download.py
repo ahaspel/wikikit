@@ -30,7 +30,12 @@ from britannica.export.article_json import stable_id_from_filename
 from britannica.export.corpus import NON_ARTICLE
 from britannica.export._tei_readme import TEI_README as _TEI_README
 
-_SITE = "https://www.britannica11.org"
+# The CANONICAL host is the apex.  `www` had no DNS record at all until
+# 2026-08-22, so every url in every published bundle — and in the HuggingFace
+# dataset — pointed at a host that did not resolve.  `www` now exists and 301s
+# here, which repairs copies ALREADY downloaded; this line stops new ones
+# carrying the non-canonical form.
+_SITE = "https://britannica11.org"
 _ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
 
 

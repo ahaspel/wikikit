@@ -26,7 +26,7 @@ index volume: a cross-reference graph, a subject taxonomy, and an authorship gra
 the three exist in the source text; they were rebuilt from the printed classified index and
 the contributor tables, and they are the reason this is more than a text dump.
 
-Rendered from [britannica11.org](https://www.britannica11.org).
+Rendered from [britannica11.org](https://britannica11.org).
 **Corpus build: {{GENERATED}}** — the site and this dataset are published from the
 same build; exact counts and per-file SHA-256 checksums are in `manifest.json`.
 
@@ -52,7 +52,7 @@ same build; exact counts and per-file SHA-256 checksums are in `manifest.json`.
   "volume": 21,
   "page_start": 902,
   "word_count": 42817,
-  "url": "https://www.britannica11.org/article/21-0935-poland-POLAND",
+  "url": "https://britannica11.org/article/21-0935-poland-POLAND",
   "categories": ["history/europe-(continental)/general"],
   "sections": [{"title": "Polish Literature", "slug": "polish-literature", "level": 1}],
   "contributors": [{"initials": "R. N. B.", "name": "Robert Nisbet Bain"}],
@@ -111,7 +111,7 @@ The text is the 1911 *Encyclopædia Britannica* (public domain), transcribed by
 [Wikisource](https://en.wikisource.org/wiki/1911_Encyclopædia_Britannica) and the Internet
 Archive. This corpus renders that text through a faithful marker-encoded pipeline, and
 reconstructs the three graphs from the printed vol-29 classified index and the per-volume
-contributor tables. Full methodology: [britannica11.org/about](https://www.britannica11.org/about.html).
+contributor tables. Full methodology: [britannica11.org/about](https://britannica11.org/about.html).
 
 ## License & attribution
 
