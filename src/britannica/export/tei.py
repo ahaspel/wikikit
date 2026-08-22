@@ -39,6 +39,8 @@ from __future__ import annotations
 
 import re
 
+from britannica.render.article import dedupe_anchor_id
+from britannica.render.inline import commons_url
 from britannica.util.strings import page_range
 from britannica.markers import (DHR_RE, DHRI_RE, FN_OPEN_RE as _FN_OPEN,
                                 IMG_PARTS_RE, TR_OPEN_RE as _TR_OPEN,
@@ -110,7 +112,12 @@ _SPAN_OPEN = re.compile(r"«SPAN\[([^«»]*)\]»")
 _XL_OPEN = re.compile(r"«XL:([^|«]*)\|")
 _VERSE_OPEN = re.compile(r"\{\{VERSE:")
 
-_SEC_RE = re.compile(r"«(SEC|ANCHOR):([^|»]*)\|([^»]*)»")
+# The body is split at a SECTION only.  An «ANCHOR» is a point target INSIDE a
+# division — TEI's <anchor> is a milestone, allowed anywhere — so splitting
+# there orphaned the prose after it and forced an untyped wrapper <div> around
+# it (25 of them over 2,000 articles, some EMPTY: a division asserting nothing).
+_SEC_ONLY_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»")
+_ANCHOR_POINT_RE = re.compile(r"«ANCHOR:([^|»]*)\|[^»]*»")
 _SH_OPEN = re.compile(r"«SH:([^»]*)»")
 _ATTR_RE = re.compile(r"([a-zA-Z_-]+)\s*:\s*([^|]*)")
 
@@ -161,11 +168,16 @@ def _inline(t: str) -> str:
                                       f"{_inline(inner)}</seg>")
     t = sub_balanced(t, _SPAN_OPEN, "«/SPAN»", _span)
     t = sub_balanced(t, _FN_OPEN, "«/FN»", _note)
+    # A <formula> holds TeX and nothing else.  Passing the inner through
+    # unstripped left markers in it, and the bare-wrapper substitutions further
+    # down then turned an «I» INSIDE the formula into an <emph> — which the
+    # schema rejects, correctly: `<formula>` has no element content.
     t = sub_balanced(t, _MATH_OPEN, "«/MATH»",
-                     lambda m, inner: f'<formula notation="TeX">{_esc(inner)}</formula>')
+                     lambda m, inner: f'<formula notation="TeX">'
+                                      f"{strip_marker_tokens(inner, '')}</formula>")
     t = sub_balanced(t, _EQN_OPEN, "«/EQN»",
                      lambda m, inner: '<formula notation="TeX" rendition="#center">'
-                                      f"{_esc(inner)}</formula>")
+                                      f"{strip_marker_tokens(inner, '')}</formula>")
     t = _links(t)
     t = sub_balanced(t, _XL_OPEN, "«/XL»",
                      lambda m, inner: f'<ref target="{_att(m.group(1))}">{_inline(inner)}</ref>')
@@ -173,25 +185,54 @@ def _inline(t: str) -> str:
     t = _images(t)
 
     # bare wrappers — independent open/close, never a span regex
-    for mk, el in (("B", _hi_open("bold")), ("I", "<emph>")):
-        close = "</emph>" if mk == "I" else "</hi>"
-        t = t.replace(f"«{mk}»", el).replace(f"«/{mk}»", close)
-    t = t.replace("«MIRROR:", _hi_open("mirror")).replace("«/MIRROR»", "</hi>")
-    for mk, r in (("FL", "float-left"), ("FR", "float-right")):
-        t = t.replace(f"«{mk}»", _hi_open(r)).replace(f"«/{mk}»", "</hi>")
+    # BALANCED, not independent open/close.  The site decoder substitutes these
+    # two ends separately — that is the «P»/«CTR» rule, and a browser copes — but
+    # here a close with NO open became a stray `</hi>` and broke the document.
+    # SPHERICAL HARMONICS has exactly that, in an OCR-damaged run.  Converting
+    # only balanced pairs leaves a stray END VISIBLE as a raw marker, where the
+    # leak scan counts it, instead of emitting XML that cannot be parsed
+    # ([[feedback_honesty_surface_failures]]).
+    for mk, open_el, close_el in (("B", _hi_open("bold"), "</hi>"),
+                                  ("I", "<emph>", "</emph>"),
+                                  ("FL", _hi_open("float-left"), "</hi>"),
+                                  ("FR", _hi_open("float-right"), "</hi>")):
+        t = sub_balanced(t, re.compile(f"«{mk}»"), f"«/{mk}»",
+                         lambda m, inner, o=open_el, c=close_el: o + _inline(inner) + c)
+    t = sub_balanced(t, re.compile("«MIRROR:"), "«/MIRROR»",
+                     lambda m, inner: _hi("mirror", _inline(inner)))
 
     # point markers
+    t = _ANCHOR_POINT_RE.sub(lambda m: f'<anchor xml:id="{_att(m.group(1))}"/>', t)
     t = t.replace("«BR»", "<lb/>")
     t = DHRI_RE.sub('<milestone unit="rule" rendition="#rule-inline"/>', t)
     t = DHR_RE.sub('<milestone unit="rule" rendition="#rule-block"/>', t)
     t = re.sub(r"«BAR(?:\[[^\]]*\])?»", '<milestone unit="rule" rendition="#bar"/>', t)
 
     t = _tables(t)
-    # «P» is the PARAGRAPH and the single most common marker in the corpus
-    # (199,411).  It is an OPEN-only marker: the producer emits «P» at each
-    # paragraph start with no close, so it is a separator, not a span.
-    t = _paragraphs(t)
     return _carried_html(t)
+
+
+def _blocks(t: str) -> str:
+    """BLOCK level: inline conversion, then paragraphs.
+
+    TEI separates block from inline, and so must we.  `_inline` recurses into
+    every span, so splitting «P» there put a `<p>` inside `<hi>`, `<seg>` and
+    `<ref>` — the schema rejected all three.  A `<div>` also refuses bare text
+    and bare inline children, so anything that is not already a block is wrapped
+    here.  This is the split the HTML renderer never needed: a browser closes an
+    open `<p>` and tolerates loose text in a `<div>`, and that tolerance is
+    exactly what a validator withdraws.
+    """
+    out, carry = [], []
+    for part in _P_SPLIT.split(t):
+        piece, carry = _reflow(part, carry)     # a span may straddle a «P» too
+        if not piece.strip():
+            continue
+        h = _inline(piece)
+        if not h.strip():
+            continue
+        out.append(_wrap_inline_runs(h))
+    return "".join(out)
 
 
 def _span(m, inner: str) -> str:
@@ -255,9 +296,18 @@ def _images(t: str) -> str:
     def one(m):
         fn, meta, cap = m.group(1), m.group(2), m.group(3)
         a = parse_img_meta(meta or "")
-        dims = "".join(f' {k}="{_att(str(a[k]))}"' for k in ("width", "height") if a.get(k))
         head = _head(_inline(cap)) if (cap or "").strip() else ""
-        return (f'<figure><graphic url="/data/images/{_att((fn or "").strip())}"{dims}/>'
+        # `commons_url` — the SAME derivation the site and the downloader share.
+        # The path must be percent-encoded: EB1911 filenames carry spaces
+        # (`Karroo System.png`, `EB1911 Africa Political.jpg`), a space is not
+        # legal in a URI, and TEI's @url is typed as one — so the schema rejected
+        # every figure until this used the owner instead of concatenating a path
+        # by hand.  Three lines of this once lived in two places and the
+        # difference cost 18 articles their figures ([[feedback_tune_dont_fork]]).
+        #
+        # NO @width/@height: the dimension is a Wikisource display hint, not
+        # something EB1911 printed.
+        return (f'<figure><graphic url="{_att(commons_url((fn or "").strip()))}"/>'
                 f"{head}</figure>")
     return IMG_PARTS_RE.sub(one, t)
 
@@ -268,7 +318,7 @@ def _tables(t: str) -> str:
             a = _kv(m.group(1) or "")
             at = "".join(f' {k}="{_att(a[k])}"' for k in ("cols", "rows") if k in a)
             role = ' role="label"' if el == "TH" else ""
-            return f"<cell{role}{at}>{_inline(inner)}</cell>"
+            return f"<cell{role}{at}>{_blocks(inner)}</cell>"
         return render
 
     def row(_m, inner):
@@ -297,12 +347,19 @@ def _carried_html(t: str) -> str:
     so that is what is matched.  Anything not listed here stays escaped and
     therefore survives VISIBLY in the XML, where the leak scan counts it — the
     totality is in the output, not in this dict.
+
+    BALANCED PAIRS ONLY.  SPHERICAL HARMONICS carries 12 `<sub>` opens against 13
+    closes — OCR damage in the Wikisource transcription, not ours — and
+    substituting each end independently turned the surplus close into a stray
+    `</hi>` that made the whole document unparseable.  An unmatched end now stays
+    escaped and therefore VISIBLE, which is a leak the scan can count rather than
+    a file nobody can open.
     """
     for tag, (rendition, element) in _CARRIED.items():
         open_el = f"<{element}>" if element else _hi_open(rendition)
         close_el = f"</{element}>" if element else "</hi>"
-        t = re.sub(rf"&lt;{tag}&gt;", open_el, t, flags=re.I)
-        t = re.sub(rf"&lt;/{tag}&gt;", close_el, t, flags=re.I)
+        t = sub_balanced(t, re.compile(rf"&lt;{tag}&gt;", re.I), f"&lt;/{tag}&gt;",
+                         lambda m, inner, o=open_el, c=close_el: o + inner + c)
     return t
 
 
@@ -315,48 +372,77 @@ def _skip_echo(chunk: str) -> str:
     return chunk[end:] if end > 0 else chunk
 
 
+_ANY_ANCHOR_RE = re.compile(r"«(SEC|ANCHOR):([^|»]*)\|([^»]*)»|«SH:([^»]*)»")
+
+
+def _assign_ids(body: str) -> str:
+    """Rewrite every «SEC»/«ANCHOR»/«SH» slug to its FINAL, unique id, once, in
+    document order.
+
+    Ids must be unique across all three kinds — 142 of 1,145 articles repeat a
+    slug — and the rule is the renderer's `dedupe_anchor_id`, so a TEI `xml:id`
+    equals the site's HTML anchor.  Doing it in one ordered pass up front means
+    the converters downstream never need the counter, which is what lets an
+    «ANCHOR» be converted INLINE rather than at a split.
+    """
+    seen: dict = {}
+
+    def one(m):
+        if m.group(1):
+            kind, slug, name = m.group(1), m.group(2), m.group(3)
+            return f"«{kind}:{dedupe_anchor_id(seen, f'section-{slug}')}|{name}»"
+        return f"«SH:{dedupe_anchor_id(seen, f'section-{m.group(4)}')}»"
+    return _ANY_ANCHOR_RE.sub(one, body)
+
+
 def _body_tei(body: str) -> str:
     """The entry's content: prose, with «SEC»/«SH» turned into nested <div>s.
 
     The markers are FLAT in the stream — «SEC» is a point marker and «SH» wraps
     only its own heading text — so the nesting is rebuilt here, at the one place
     that knows the document shape ([[feedback_export_owns_assembly]]).
+
+    IDS COME FROM `dedupe_anchor_id`, the renderer's own rule, NOT from the raw
+    slug.  A slug is not unique within an article — 142 of 1,145 articles repeat
+    one, 544 surplus corpus-wide; AFRICA has an «ANCHOR» and a «SEC» both slugged
+    `history`, and two «SH» both `the-anglo-congolese-agreement-of-1894`.  XML
+    forbids a duplicate `xml:id`, so this is not optional — and reusing the
+    renderer's rule rather than inventing a second one means a TEI `xml:id` is
+    byte-identical to the site's HTML anchor, which is what lets the two be
+    cross-referenced at all ([[feedback_tune_dont_fork]]).
     """
+
     # level 2 first: «SH:slug»heading«/SH» opens a subsection that runs to the
     # next «SH» or the end of its level-1 chunk.
     def level2(chunk: str) -> str:
         parts = list(_SH_OPEN.finditer(chunk))
         if not parts:
-            return _inline(chunk)
+            return _blocks(chunk)
         # the SAME straddle applies one level down — a span may cross a shoulder
         # heading exactly as it crosses a section one, so carry through here too.
         lead, carry = _reflow(chunk[:parts[0].start()], [])
-        out = [_inline(lead)]
+        out = [_blocks(lead)]
         for i, m in enumerate(parts):
             end = balanced_end(chunk, m.end(), _SH_OPEN, "«/SH»")
             if end < 0:
-                out.append(_inline(chunk[m.start():]))
+                out.append(_blocks(chunk[m.start():]))
                 break
             head = chunk[m.end():end - len("«/SH»")]
             stop = parts[i + 1].start() if i + 1 < len(parts) else len(chunk)
             piece, carry = _reflow(chunk[end:stop], carry)
             out.append(f'<div type="subsection" xml:id="{_att(m.group(1))}">'
-                       f"<head>{_inline(head)}</head>{_inline(piece)}</div>")
+                       f"<head>{_inline(head)}</head>{_blocks(piece)}</div>")
         return "".join(out)
 
-    marks = list(_SEC_RE.finditer(body))
+    marks = list(_SEC_ONLY_RE.finditer(body))
     if not marks:
         return level2(body)
     lead, carry = _reflow(body[:marks[0].start()], [])
     out = [level2(lead)]
     for i, m in enumerate(marks):
-        kind, slug, name = m.group(1), m.group(2), m.group(3)
+        slug, name = m.group(1), m.group(2)
         stop = marks[i + 1].start() if i + 1 < len(marks) else len(body)
         chunk, carry = _reflow(body[m.end():stop], carry)
-        if kind == "ANCHOR":
-            # a link target only — never a heading, so it opens no division
-            out.append(f'<anchor xml:id="{_att(slug)}"/>' + level2(chunk))
-            continue
         out.append(f'<div type="section" xml:id="{_att(slug)}">'
                    f"<head>{_inline(name)}</head>"
                    f"{level2(_skip_echo(chunk))}</div>")
@@ -374,11 +460,19 @@ def _header(article: dict) -> str:
     rend = "".join(f'<rendition xml:id="{k}" scheme="css">{v}</rendition>'
                    for k, v in RENDITIONS)
     sq = (article.get("source_quality") or {}).get("lowest_level")
-    cert = ('<certainty locus="value" degree="low"/>'
-            if sq is not None and sq <= 1 else "")
+    # <certainty> is not allowed in <profileDesc> — the schema said so on 20 of
+    # 300 sampled articles.  The unproofread-page warning is an EDITORIAL note
+    # about the transcription, so it belongs in <editorialDecl>.
+    # AN EMPTY ELEMENT IS NOT A NEUTRAL ELEMENT.  Emitting <editorialDecl/> when
+    # there is no notice invalidated 271 of 300 — TEI requires content, so the
+    # wrapper is written only when it has something to say.
+    edecl = ("<editorialDecl><p>This article spans pages whose Wikisource "
+             "transcription is unproofread; mathematics in particular may be "
+             "corrupt.</p></editorialDecl>"
+             if sq is not None and sq <= 1 else "")
     return f"""<teiHeader>
 <fileDesc>
-<titleStmt><title>{escape_body(t)}</title>{authors}</titleStmt>
+<titleStmt><title>{escape_body(t)}</title>{authors}<respStmt xml:id="wikisource"><resp>transcription</resp><orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>
 <publicationStmt><publisher>britannica11.org</publisher>
 <availability status="free"><licence target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>
 <idno type="URL">{SITE}/article/{_att(aid)}</idno></publicationStmt>
@@ -387,11 +481,9 @@ def _header(article: dict) -> str:
 <imprint><pubPlace>Cambridge</pubPlace><publisher>Cambridge University Press</publisher><date>1911</date></imprint>
 <biblScope unit="volume">{vol}</biblScope><biblScope unit="page">{pages}</biblScope>
 </monogr></biblStruct>
-<p>Transcribed by the contributors to Wikisource; encoded from that transcription.</p>
 </sourceDesc>
 </fileDesc>
-<encodingDesc><tagsDecl>{rend}</tagsDecl></encodingDesc>
-<profileDesc>{cert}</profileDesc>
+<encodingDesc><projectDesc><p>Transcribed by the contributors to Wikisource; encoded from that transcription by britannica11.org.</p></projectDesc>{edecl}<tagsDecl>{rend}</tagsDecl></encodingDesc>
 <revisionDesc><change>Generated by britannica11.org export/tei.py</change></revisionDesc>
 </teiHeader>"""
 
@@ -400,6 +492,7 @@ def article_to_tei(article: dict) -> str:
     """One article as a standalone TEI-P5 document."""
     body = escape_body(article.get("body") or "")
     body = sub_balanced(body, _TITLE_OPEN, "«/TITLE»", lambda m, inner: "")
+    body = _nest_spans(_assign_ids(body))
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="en">\n'
             + _header(article) + "\n<text><body>\n"
@@ -410,33 +503,166 @@ def article_to_tei(article: dict) -> str:
 
 
 _P_SPLIT = re.compile(r"«P»")
-_BLOCK_START = re.compile(r"\s*<(table|figure|list|lg|div)\b")
+# The elements TEI counts as BLOCK inside a <div>; everything else needs a <p>.
+_BLOCK_EL = ("table", "figure", "list", "lg", "quote")
+_TAG = re.compile(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(/?)>")
 
 
-def _paragraphs(t: str) -> str:
-    """«P» → `<p>…</p>`.
+def _wrap_inline_runs(h: str) -> str:
+    """Emit block elements bare and wrap every run of loose inline/text in <p>.
 
-    «P» IS OPEN-ONLY.  The producer emits it at each paragraph START and never
-    closes it, because the browser closes a `<p>` for us — `render/inline.py`
-    says so explicitly ("the browser closes the open-only «P»").  XML has no such
-    forgiveness, so the close has to be INFERRED here, by treating «P» as the
-    separator it actually is rather than the span it looks like.  Getting this
-    wrong is not cosmetic: 190 «P» markers survived into the first AFRICA run and
-    the leak check saw every one of them.
-
-    A run that is only a block (a table, a figure, a list) is emitted bare — TEI
-    permits those inside `<p>`, but wrapping a lone table in an empty paragraph
-    asserts a paragraph the source never had.
+    A prefix test is not enough, and the schema is what caught it: a paragraph
+    whose text begins with a table — `<table>…</table> The prevailing ignorance
+    may be gauged by…` — was emitted whole and bare, so the prose AFTER the table
+    became a direct child of `<div>`, which TEI forbids.  Partition, don't sniff.
     """
-    out = []
-    for part in _P_SPLIT.split(t):
-        if not part.strip():
+    out, i, depth, start = [], 0, 0, None
+    for m in _TAG.finditer(h):
+        closing, name, selfclose = m.group(1), m.group(2), m.group(3)
+        if selfclose:
             continue
-        out.append(part if _BLOCK_START.match(part) else f"<p>{part}</p>")
+        # DEPTH COUNTS EVERY ELEMENT, not just the block ones.  Counting only
+        # blocks made a <table> nested inside a <seg> look top-level, and the
+        # split then tore the <seg> in half — `<p><seg></p><table/><p></seg></p>`,
+        # which is 9 of 300 articles not even well-formed.  A block is a BLOCK
+        # only when nothing encloses it.
+        if start is None and not closing and name in _BLOCK_EL and depth == 0:
+            run = h[i:m.start()]
+            if run.strip():
+                out.append(f"<p>{run}</p>")
+            start, i = m.start(), m.start()
+            depth = 1
+            continue
+        depth += -1 if closing else 1
+        if start is not None and depth == 0:
+            out.append(h[start:m.end()])
+            i, start = m.end(), None
+    run = h[i:]
+    if run.strip():
+        out.append(f"<p>{run}</p>")
     return "".join(out)
 
 
-_STRADDLE_OPEN = re.compile(r"«(DIV|SPAN)\[([^«»]*)\]»")
+
+
+# EVERY paired inline marker can straddle a boundary, not just the parametrised
+# ones.  Balancing only «DIV»/«SPAN» left `<hi>`/`<seg>` torn across a «P» in 9 of
+# 300 sampled articles — «SC» and «CTR» cross a paragraph break exactly as a
+# fine-print «DIV» crosses a heading.
+_NEST_RE = re.compile(
+    r"«(DIV|SPAN)\[([^«»]*)\]»"          # 1,2  parametrised open
+    r"|«(SC|CTR|B|I|FL|FR)»"             # 3    bare open
+    r"|«(MIRROR):"                       # 4    split open (payload is content)
+    r"|«/(DIV|SPAN|SC|CTR|B|I|FL|FR|MIRROR)»")   # 5    close
+
+
+_CELL_EDGE_RE = re.compile(r"«/?(?:TD|TH|TR)(?:\[[^«»]*\])?»")
+
+
+def _nest_cells(inner: str) -> str:
+    """Close open spans at a CELL edge and reopen them in the next cell.
+
+    A span may cross a cell boundary — SLAVS opens an «I» in one «TD» and closes
+    it in the next, which is properly nested in the stream and torn apart the
+    moment `_tables` splits at cells:
+    `…ošǐ<emph></p></cell><cell><p></emph>r…`.  Same disease as a span crossing a
+    «P» or a «SEC», so the same remedy: the boundary closes what is open and the
+    far side reopens it.  Nothing moves; both halves keep the styling.
+
+    The region is the cell's CONTENT, not the gap between cells: reopening in the
+    gap put a `<hi>` outside any `<cell>`, which is its own violation.
+    """
+    carry: list = []
+
+    def one(opener, close_tok):
+        def render(m, content):
+            nonlocal carry
+            piece, carry = _reflow(content, carry)
+            return m.group(0) + piece + close_tok
+        return render
+
+    inner = sub_balanced(inner, _TD_OPEN, "«/TD»", one(_TD_OPEN, "«/TD»"))
+    return sub_balanced(inner, _TH_OPEN, "«/TH»", one(_TH_OPEN, "«/TH»"))
+
+
+def _nest_spans(text: str) -> str:
+    """Rewrite CROSSING spans so they nest, which XML requires and the marker
+    stream does not.
+
+    VALERIAN: `«CTR»…«DIV[…]»…«/CTR»…«/DIV»`.  The «CTR» closes while the «DIV»
+    is still open.  Nothing is wrong with that in the stream — the site renderer
+    substitutes open and close independently and a browser copes — but XML has no
+    such thing as a partial overlap, so the writer produced `</hi>` inside a
+    `<seg>` that started outside it.  3 of 37,226 articles, and NOT source damage:
+    the markers balance perfectly, they simply interleave.
+
+    The fix is the standard one, and it is the technique `_reflow` already uses at
+    split points, generalised to the whole stream: when a close arrives for a span
+    that is not the innermost, close the inner spans first, emit the close, then
+    REOPEN the inner ones.  The rendering is identical and no content moves.
+
+    Tables are opaque here and normalised separately: a «TABLE» is converted by
+    its own balanced scan, and reopening one mid-stream would be nonsense.
+    """
+    def reopen(tok):
+        name, attrs = tok
+        if attrs is None:
+            return f"«{name}»"
+        return f"«{name}:" if attrs == ":" else marker_open(name, attrs)
+
+    out: list = []
+    stack: list = []
+    pos = 0
+    while True:
+        m = _NEST_RE.search(text, pos)
+        t = text.find("«TABLE[", pos)
+        if t != -1 and (m is None or t < m.start()):     # step over, then recurse in
+            end = balanced_end(text, t + len("«TABLE["), "«TABLE[", "«/TABLE»")
+            if end < 0:
+                out.append(text[pos:t + len("«TABLE[")])
+                pos = t + len("«TABLE[")
+                continue
+            inner_start = t + len("«TABLE[")
+            out.append(text[pos:inner_start])
+            out.append(_nest_cells(_nest_spans(
+                text[inner_start:end - len("«/TABLE»")])))
+            out.append("«/TABLE»")
+            pos = end
+            continue
+        if m is None:
+            out.append(text[pos:])
+            return "".join(out)
+        out.append(text[pos:m.start()])
+        pos = m.end()
+        if m.group(1):
+            stack.append((m.group(1), m.group(2)))
+            out.append(m.group(0))
+        elif m.group(3):
+            stack.append((m.group(3), None))
+            out.append(m.group(0))
+        elif m.group(4):
+            stack.append((m.group(4), ":"))
+            out.append(m.group(0))
+        else:
+            name = m.group(5)
+            names = [s[0] for s in stack]
+            if not names or name not in names:
+                out.append(m.group(0))      # a close with no open — leave it visible
+                continue
+            i = len(names) - 1 - names[::-1].index(name)
+            inner = stack[i + 1:]
+            out.extend(f"«/{n}»" for n, _ in reversed(inner))   # close the inners
+            out.append(m.group(0))                              # the real close
+            out.extend(reopen(s) for s in inner)                # and reopen them
+            stack = stack[:i] + inner
+
+
+_STRADDLE_PARAM = ("DIV", "SPAN")
+_STRADDLE_BARE = ("SC", "CTR", "B", "I", "FL", "FR")
+_STRADDLE_RE = re.compile(
+    r"«(" + "|".join(_STRADDLE_PARAM) + r")\[([^«»]*)\]»"
+    r"|«(" + "|".join(_STRADDLE_BARE) + r")»"
+    r"|«/(" + "|".join(_STRADDLE_PARAM + _STRADDLE_BARE) + r")»")
 
 
 def _reflow(chunk: str, carry: list) -> tuple[str, list]:
@@ -455,13 +681,32 @@ def _reflow(chunk: str, carry: list) -> tuple[str, list]:
     how this was found (16 of each across a 500-article sample) rather than by
     the output quietly losing its styling ([[feedback_honesty_surface_failures]]).
     """
-    text = "".join(marker_open(n, a) for n, a in carry) + chunk
-    depth, open_stack, i = 0, list(carry), 0
+    def reopen(n, a):
+        return marker_open(n, a) if a is not None else f"«{n}»"
+
+    text = "".join(reopen(n, a) for n, a in carry) + chunk
     stack: list = []
-    for m in re.finditer(r"«(DIV|SPAN)\[([^«»]*)\]»|«/(DIV|SPAN)»", text):
-        if m.group(1):
+    pos = 0
+    while True:
+        m = _STRADDLE_RE.search(text, pos)
+        # STEP OVER TABLES.  A cell balances its own content (`_blocks` reflows
+        # inside it), so a span left open INSIDE a table must be closed there —
+        # QUEENSLAND opens a «SPAN» in a cell and never closes it, and balancing
+        # it out here put the `</hi>` after `</table>`, crossing the tags.  The
+        # only article in 4,000 to fail, and it failed on exactly this.
+        t = text.find("«TABLE[", pos)
+        if t != -1 and (m is None or t < m.start()):
+            end = balanced_end(text, t + len("«TABLE["), "«TABLE[", "«/TABLE»")
+            pos = end if end > 0 else t + len("«TABLE[")
+            continue
+        if m is None:
+            break
+        pos = m.end()
+        if m.group(1):                       # «DIV[…]» / «SPAN[…]»
             stack.append((m.group(1), m.group(2)))
-        elif stack:
+        elif m.group(3):                     # «SC» / «CTR» / «B» / «I» / «FL» / «FR»
+            stack.append((m.group(3), None))
+        elif stack:                          # a close — pop whatever is open
             stack.pop()
     text += "".join(f"«/{n}»" for n, _ in reversed(stack))
     return text, stack
