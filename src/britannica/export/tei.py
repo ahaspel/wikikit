@@ -51,6 +51,13 @@ from britannica.markers import (DHR_RE, DHRI_RE, FN_OPEN_RE as _FN_OPEN,
 
 SITE = "https://britannica11.org"
 
+# The CONCEPT DOI, deliberately — it resolves to the newest deposited version,
+# so a document minted today still cites correctly after 2026.2 is deposited.
+# The version DOI (…22072146 for 2026.1) belongs in a citation of one release,
+# not baked into 37,225 documents that will be superseded.
+# See docs/zenodo_deposit.md.
+EDITION_DOI = "10.5281/zenodo.22072145"
+
 # ── the declared rendition set ───────────────────────────────────────────────
 # Read off `render/inline.py`'s class vocabulary, which is closed.  Ten, after
 # the 2026-08-22 sweep deleted the twelve markers nothing emitted; the sizes are
@@ -480,7 +487,8 @@ def _header(article: dict) -> str:
 <titleStmt><title>{escape_body(t)}</title>{authors}<respStmt xml:id="wikisource"><resp>transcription</resp><orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>
 <publicationStmt><publisher>britannica11.org</publisher>
 <availability status="free"><licence target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>
-<idno type="URL">{SITE}/article/{_att(aid)}</idno></publicationStmt>
+<idno type="URL">{SITE}/article/{_att(aid)}</idno>
+<idno type="DOI">{EDITION_DOI}</idno></publicationStmt>
 <sourceDesc><biblStruct><monogr>
 <title>Encyclopædia Britannica</title><edition>Eleventh</edition>
 <imprint><pubPlace>Cambridge</pubPlace><publisher>Cambridge University Press</publisher><date>1911</date></imprint>
