@@ -328,8 +328,21 @@ def _bio_target_best_match(target: str, title_map: dict[str, str],
     return None
 
 
-def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
-    """Add bio_article_filename to contributors with biographical articles."""
+def _resolve_bio_articles(session, contrib_map: dict[str, dict],
+                          raw_descriptions: dict | None = None) -> None:
+    """Add bio_article_filename to contributors with biographical articles.
+
+    ``raw_descriptions`` maps each ``contrib_map`` KEY to that contributor's
+    description AS STORED, markers and all.  It is not optional in practice: the
+    caller builds its records through `_contributor_record`, which runs
+    `_description_text` first, so by the time the map arrives here every `«LN»`
+    has already been flattened to plain text and the pointer this function is
+    built around has vanished.  The whole source-pointer path was therefore dead
+    in production while passing every simulation I wrote, because the simulation
+    fed descriptions straight from the database.  Read the markers from here.
+    """
+    raw_descriptions = raw_descriptions or {}
+    _saw_pointer = [0, 0]     # [descriptions that say "biographical article", markers found]
     # Build title -> filename lookup from all articles in DB
     # Deterministic first-wins per title (heap order must not pick homonyms).
     all_articles = sorted(session.query(Article).all(), key=article_sort_key)
@@ -348,8 +361,10 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     }
     fn_title = {fn: t for t, fn in title_map.items()}
 
-    for entry in contrib_map.values():
-        desc_raw = entry.get("description") or ""
+    for key, entry in contrib_map.items():
+        # The stored description if the caller supplied it, else whatever is on
+        # the record — which by then has had its markers stripped.
+        desc_raw = raw_descriptions.get(key) or entry.get("description") or ""
         desc = desc_raw.lower()
         if "biographical article" not in desc:
             continue
@@ -374,6 +389,8 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
         # BIOLINK regex this replaces went blind.  The display is read out
         # through the ONE converter so nested markers become text, not residue.
         bio_m = next(iter_ln_markers(desc_raw), None)
+        _saw_pointer[0] += 1
+        _saw_pointer[1] += bio_m is not None
         if bio_m is not None:
             link_target = bio_m.target.strip()
             link_display = (
@@ -518,6 +535,20 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
 
         if fn:
             entry["bio_article_filename"] = fn
+
+    # THE POINTER MUST ARRIVE INTACT.  This resolver is built around the source's
+    # `«LN»` bio pointer, and the caller converts descriptions before building its
+    # records — so the markers can vanish upstream while every name in the roster
+    # still says "See the biographical article:".  That happened, silently, and
+    # cost a full rebuild: the path was dead in production and passed every test
+    # I ran against database descriptions.  Say so rather than quietly matching
+    # on names ([[feedback_honesty_surface_failures]]).
+    if _saw_pointer[0] and not _saw_pointer[1]:
+        raise RuntimeError(
+            f"_resolve_bio_articles: {_saw_pointer[0]} descriptions say "
+            "'biographical article' and NOT ONE carries an «LN» marker. The "
+            "caller has flattened them (see `_description_text`) — pass the "
+            "stored descriptions via `raw_descriptions`.")
 
     # (The BIOLINK strip that used to sit here is gone: descriptions are converted
     # by `_description_text` at emit, on BOTH routes.  A strip here reached only
