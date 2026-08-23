@@ -20,6 +20,7 @@ from britannica.export.pages import (
     _load_scan_map,
     _printed_page,
 )
+from britannica.name_index import wordset
 from britannica.markers import (iter_ln_markers, markers_to_text,
                                 sub_al_markers, sub_ln_markers,
                                 strip_marker_tokens, strip_title_markers)
@@ -182,14 +183,170 @@ def _description_text(raw: str | None) -> str:
     return " ".join(markers_to_text(raw or "").split()).rstrip(".")
 
 
+# A peerage name puts the title-name before the territorial one, so its
+# surname is not the last token ("Viscount Morley of Blackburn").
+_PEERAGE_WORD = re.compile(
+    r"\b(Viscount|Baron|Baroness|Lord|Lady|Earl|Countess|Duke|Duchess|"
+    r"Marquis|Marquess|Prince|Princess)\b", re.I)
+
+
+def _name_tokens(s: str) -> set:
+    """Name words, on the corpus's own tokenizer — letters and digits only.
+
+    Splitting on whitespace and trimming punctuation keeps the apostrophe inside
+    the token, so `M‘LENNAN` (the title, U+2018) and `M'Lennan` (the front matter,
+    U+0027) are different words and John Fergusson M'Lennan matched nothing.
+    EB1911 spells 269 titles with a curly quote against 26 straight, so this is
+    not one stray record.  `name_index.wordset` has always tokenized this way,
+    dropping the apostrophe from both sides, and never had the problem — so this
+    CALLS it rather than restating the pattern.  (I wrote the regex out a second
+    time first and the duplicated-constant ratchet caught it, which is fitting: a
+    second copy of a rule is exactly how the two furniture lists came to disagree
+    and bind twelve contributors to medieval kings.)  Single letters go too: `M`
+    and `D'` carry no identity, and keeping them would let any initial score a
+    point.
+    """
+    return {w for w in wordset(s or "") if len(w) > 1}
+
+
+_QUALIFIER = re.compile(r"\(([^)]{2,44})\)\s*$")
+
+
+def _pick_by_qualifier(target: str, candidates: list):
+    """Split same-titled articles on the pointer's own parenthetical.
+
+    Two men can share a filed title, and `title_map` is title -> ONE filename, so
+    the bind fell to whichever sorted first — a coin toss.  But the front matter
+    says which one it means: `Sharp, William (poet)` and `Wallace, William
+    (Scottish philosopher)`.  Both were losing, to the line-engraver and the
+    mathematician respectively, with the deciding word sitting unread in the
+    pointer.
+
+    Score the qualifier's words against each candidate's opening sentence, where
+    EB1911 states the man's trade — "Scottish poet and man of letters" against
+    "English line-engraver".  A unique winner takes it; a tie abstains, which
+    leaves the previous behaviour rather than inventing a preference.
+    """
+    m = _QUALIFIER.search(target or "")
+    qw = _name_tokens(m.group(1)) if m else None
+    if qw:
+        return _pick_by_opening(qw, candidates, min_score=1)
+    # No parenthetical: score the whole pointer against the openings instead.
+    # A title can be poorer than the pointer as easily as richer — Paul Meyer's
+    # article is filed as bare `MEYER` with the forenames left in the body
+    # ("[MARIE] PAUL HYACINTHE (1840– ), French philologist"), so every MEYER
+    # title scores the surname and nothing separates them until you read one
+    # line in.  Two matching words required here, because a single forename
+    # recurring in someone else's opening is not identification.
+    return _pick_by_opening(_name_tokens(target), candidates, min_score=2)
+
+
+def _pick_by_opening(tokens: set, candidates: list, min_score: int = 1):
+    """The candidate whose opening sentence best matches ``tokens``, or None.
+
+    EB1911 states a man's trade and full name in his first line, which is where
+    the evidence is when the filed title has been worn down to a surname.  A
+    unique winner takes it; a tie abstains.
+    """
+    if not tokens or len(candidates) < 2:
+        return None
+    scored = []
+    for a in candidates:
+        opening = " ".join(strip_marker_tokens(a.body or "").split()[:40])
+        scored.append((len(tokens & _name_tokens(opening)), a))
+    best = max(s for s, _ in scored)
+    if best < min_score:
+        return None
+    winners = [a for s, a in scored if s == best]
+    return winners[0] if len(winners) == 1 else None
+
+
+def _bio_target_best_match(target: str, title_map: dict[str, str],
+                           homonyms: dict | None = None) -> str | None:
+    """The article the source's own bio POINTER means, when it is a near miss.
+
+    The front matter names the article outright —
+    ``{{EB1911 Article Link|Stevenson, R. L. B.|Stevenson, Robert Louis Balfour}}``
+    — and that is the most authoritative evidence there is about which man a
+    contributor was.  Requiring it to hit a title verbatim threw it away over a
+    single word: the Encyclopaedia files him under his given name, ROBERT LEWIS
+    BALFOUR, while the front-matter link spells the name he adopted, LOUIS.  We
+    then fell through to a surname scan and bound him to Robert Stevenson the
+    lighthouse engineer.
+
+    So score the pointer against the titles filed under the SAME SURNAME and take
+    the best overlap, which is what makes BALFOUR decide it — the token the
+    engineer's title cannot supply.  Requires a unique winner and at least one
+    distinctive word beyond the surname, so a bare "Stevenson" still abstains
+    rather than guessing among three of them.
+
+    ABSTAINING IS SOMETIMES THE ONLY RIGHT ANSWER.  The front matter can promise
+    a biography the Encyclopaedia never printed: it points Sir William Chandler
+    Roberts-Austen at an article of his own and there is none — he is cited
+    throughout the metallurgical articles but never given an entry (checked
+    against the corpus, 2026-08-23).  A pointer is evidence about WHICH article
+    is meant, not proof that one exists, so a miss here is not a gap to go and
+    close.
+    """
+    tw = _name_tokens(target)
+    surname_toks = _name_tokens(target.split(",")[0])
+    if not tw or not surname_toks:
+        return None
+    scored: list[tuple[int, str]] = []
+    for title, title_fn in title_map.items():
+        # The surname must be IN the title, but not necessarily first: EB1911
+        # files most biographies inverted, and some in natural order.  William
+        # Robertson Smith is `WILLIAM ROBERTSON SMITH`, so a "title starts with
+        # the surname" filter dropped the one article that was a perfect
+        # word-for-word match for the pointer.
+        title_words = _name_tokens(title)
+        if not surname_toks <= title_words:
+            continue
+        scored.append((len(tw & title_words), title, title_fn))
+    if not scored:
+        return None
+    best = max(s for s, _t, _f in scored)
+    # A surname alone identifies nobody — UNLESS the surname is the whole
+    # pointer.  The front matter does that deliberately, and says so: Goldsmid's
+    # reads `«LN:Goldsmid|Goldsmid (Family)»` and Pollock's ends `Family`, both
+    # sending the reader to the article on the FAMILY because the man has no
+    # entry of his own.  Demanding two matching words rejected exactly the case
+    # the source was being explicit about.  One word still has to be a unique
+    # hit, so a bare "Stevenson" (three of them) abstains as before.
+    winners = [(t, fn) for s, t, fn in scored if s == best]
+    if best >= min(2, len(tw)) and len(winners) == 1:
+        return winners[0][1]
+    # Tied on words: fall back to the pointer's parenthetical.  "Wallace,
+    # William (Scottish philosopher)" ties WALLACE, SIR WILLIAM with two
+    # different WALLACE, WILLIAMs and WALLACE, WILLIAM VINCENT — all scoring the
+    # surname plus the forename — and only the qualifier separates them.
+    if homonyms:
+        cands = [a for t, _fn in winners for a in homonyms.get(t, ())]
+        pick = _pick_by_qualifier(target, cands)
+        if pick is not None:
+            return _safe_filename(pick, pick.title)
+    return None
+
+
 def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
     """Add bio_article_filename to contributors with biographical articles."""
     # Build title -> filename lookup from all articles in DB
     # Deterministic first-wins per title (heap order must not pick homonyms).
     all_articles = sorted(session.query(Article).all(), key=article_sort_key)
-    title_map: dict[str, str] = {}
+    # ONE map, and the filename map derived from it — not two built side by side.
+    # The qualifier matcher needs every article under a title (two men share
+    # SHARP, WILLIAM), while the rest of this wants title -> one filename; a
+    # second hand-built map is exactly what the title-index ratchet forbids, and
+    # for the right reason, so `title_map` is a projection of `homonyms` rather
+    # than a parallel accumulation that could disagree with it.
+    homonyms: dict[str, list] = {}
     for a in all_articles:
-        title_map.setdefault(a.title.upper(), _safe_filename(a, a.title))
+        homonyms.setdefault(a.title.upper(), []).append(a)
+    title_map: dict[str, str] = {
+        t: _safe_filename(group[0], group[0].title)
+        for t, group in homonyms.items()
+    }
+    fn_title = {fn: t for t, fn in title_map.items()}
 
     for entry in contrib_map.values():
         desc_raw = entry.get("description") or ""
@@ -225,16 +382,28 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
             )
             # Try display first (matches the article title verbatim
             # in the canonical "SURNAME, FIRSTNAMES, ..." form).
+            chosen_title = None
             for cand in (link_display, link_target):
                 fn = title_map.get(cand.upper())
                 if fn:
                     entry["bio_article_filename"] = fn
+                    chosen_title = cand.upper()
                     break
             else:
-                # No exact match.  Fall through to surname inversion
-                # below — the source's link target may differ slightly
-                # from how the article is filed.
-                pass
+                # No exact match.  Before falling through to the surname scan,
+                # score the pointer itself — it names the man, and a one-word
+                # spelling difference should not discard it (see
+                # `_bio_target_best_match`).
+                near = _bio_target_best_match(link_target, title_map,
+                                              homonyms)
+                if near:
+                    entry["bio_article_filename"] = near
+                    chosen_title = fn_title.get(near)
+            # Same title, two men: the pointer's own parenthetical decides.
+            if chosen_title and len(homonyms.get(chosen_title, ())) > 1:
+                pick = _pick_by_qualifier(link_target, homonyms[chosen_title])
+                if pick is not None:
+                    entry["bio_article_filename"] = _safe_filename(pick, pick.title)
             if "bio_article_filename" in entry:
                 continue
 
@@ -277,11 +446,15 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
             if fn:
                 break
         if not fn and len(parts) > 1:
+            # ABSTAIN ON AMBIGUITY.  This took the FIRST title sharing the
+            # "SURNAME, FIRSTNAME" prefix, which cannot tell two men apart:
+            # `STEVENSON, ROBERT` matches both the engineer (1772-1850) and
+            # `STEVENSON, ROBERT LEWIS BALFOUR`, and Robert Louis Stevenson got
+            # the engineer.  A prefix that matches more than one article has not
+            # identified anybody ([[feedback_contributor_zero_false_positives]]).
             prefix = f"{last}, {parts[0].upper()}"
-            fn = next(
-                (title_map[t] for t in title_map if t.startswith(prefix)),
-                None,
-            )
+            pref_hits = [title_map[t] for t in title_map if t.startswith(prefix)]
+            fn = pref_hits[0] if len(pref_hits) == 1 else None
         # Fallback: word-set containment (A⊆B or B⊆A). Strip brackets
         # and punctuation from both sides so titles with qualifiers
         # ("MORLEY [of Blackburn], JOHN MORLEY") can match peerage-
@@ -291,7 +464,24 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
                 s = re.sub(r"[\[\]\(\)]", " ", s)
                 return {w.upper().rstrip(".,:;") for w in s.split()
                         if w.strip(".,:;[]()")}
-            # Drop filler words that don't help identify the person.
+            # Drop filler words that don't help identify the person — from the
+            # CONTRIBUTOR NAME ONLY, where "Viscount Morley of Blackburn" really
+            # is furniture around the name.
+            #
+            # NOT from the title.  Lord, King, Queen and Earl are surnames, and
+            # subtracting them there collapsed `KING, WILLIAM` to `{WILLIAM}`,
+            # which is a subset of any contributor with a William in his name —
+            # so the first-wins scan handed it out.  Twelve contributors shipped
+            # with a medieval king as their biography, Frederick William Maitland
+            # and William Michael Rossetti among them, and Colonel Sir Henry Yule
+            # bound to KING, HENRY.  `name_index._FURNITURE` already knew this
+            # and says so ("Excludes surname-risky words on purpose … those can
+            # BE the name"); this was the second furniture list, and the one that
+            # had it wrong.
+            #
+            # Morley still matches: {MORLEY, BLACKBURN} is a subset of the title's
+            # full {MORLEY, OF, BLACKBURN, JOHN}, so the containment that
+            # motivated the filter never needed the title side stripped.
             _filler = {"OF", "THE", "AND", "VISCOUNT", "BARON", "LORD",
                        "LADY", "DUKE", "EARL", "COUNT", "COUNTESS",
                        "MARQUIS", "KING", "QUEEN", "SIR"}
@@ -300,8 +490,27 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict]) -> None:
                 for title, title_fn in title_map.items():
                     if "," not in title:
                         continue
-                    title_words = _tokens(title) - _filler
+                    title_words = _tokens(title)
                     if not title_words:
+                        continue
+                    # THE ARTICLE MUST BE FILED UNDER THIS MAN'S SURNAME.
+                    # Containment alone binds any title whose words happen to sit
+                    # inside a longer name: William Robertson Smith took
+                    # ROBERTSON, WILLIAM, and Edward Stanley Poole took STANLEY,
+                    # EDWARD, because a middle name is a surname somewhere.  A
+                    # biography is filed under the surname, so require it.
+                    # EXCEPT for a peerage name, where the surname is not the
+                    # last token: "Viscount Morley of Blackburn" ends in
+                    # BLACKBURN while the article is MORLEY [OF BLACKBURN].  I
+                    # assumed those bound on the «LN» pointer and they do not —
+                    # gating them strictly dropped Morley, so the peerage form
+                    # keeps the looser test.
+                    head = re.sub(r"[\[\]]", " ", title.split(",")[0]).split()
+                    if not head:
+                        continue
+                    peerage = bool(_PEERAGE_WORD.search(clean))
+                    if head[0].upper() != last and not (
+                            peerage and head[0].upper() in name_words):
                         continue
                     if name_words <= title_words or title_words <= name_words:
                         fn = title_fn
