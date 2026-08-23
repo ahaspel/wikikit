@@ -497,9 +497,19 @@ class LinkResolver:
         if not bag or tag not in ("exact", "alt", "fold", "subset"):
             return None
         if tag == "subset" and " " not in name.strip():
-            nm = name.strip().upper()
-            bag = [c for c in bag if c[1].upper().startswith(nm + ",")
-                   or c[1].upper().startswith(nm + " ")]
+            # FOLDED on both sides, because the bag it filters was recalled with
+            # accents folded.  Comparing raw strings here re-imposed a
+            # sensitivity the rung had already dropped, and threw the candidate
+            # away whenever the two sources disagreed about an accent — in
+            # BOTH directions.  The Reader's Guide writes "Clémenceau" and the
+            # article is titled CLEMENCEAU, GEORGES, so the guard rejected it;
+            # equally a bare "Merimee" lost MÉRIMÉE.  This cannot widen recall:
+            # it only filters what `subset` already returned, so a candidate the
+            # fold rung did not produce still cannot appear here.
+            nm = fold_accents(name.strip()).upper()
+            bag = [c for c in bag
+                   if fold_accents(c[1]).upper().startswith(nm + ",")
+                   or fold_accents(c[1]).upper().startswith(nm + " ")]
             if not bag:
                 return None
         if len(bag) == 1:
