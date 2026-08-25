@@ -29,6 +29,7 @@ from britannica.markers import IMG_PARTS_RE
 from britannica.export.article_json import stable_id_from_filename
 from britannica.export.corpus import NON_ARTICLE
 from britannica.export._tei_readme import TEI_README as _TEI_README
+from britannica.export.tei import EDITION_DOI
 
 # The CANONICAL host is the apex.  `www` had no DNS record at all until
 # 2026-08-22, so every url in every published bundle — and in the HuggingFace
@@ -330,6 +331,11 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
         f"<publicationStmt><publisher>britannica11.org</publisher>\n"
         '<availability status="free"><licence '
         'target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>\n'
+        # The catalogue has a better claim to the citation than any single
+        # article: it is the document that stands for the whole edition.  The
+        # CONCEPT DOI, as in the members — it follows the newest deposit rather
+        # than freezing on the release current when the file was written.
+        f'<idno type="DOI">{EDITION_DOI}</idno>\n'
         f"<date>{generated}</date></publicationStmt>\n"
         "<sourceDesc><p>Encyclopædia Britannica, 11th edition, Cambridge "
         "University Press, 1910–1911, transcribed at Wikisource.</p></sourceDesc>\n"

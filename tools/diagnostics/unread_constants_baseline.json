@@ -1,0 +1,49 @@
+{
+  "src/britannica/export/markdown.py": [
+    "_SC_OPEN"
+  ],
+  "src/britannica/export/tei.py": [
+    "_CELL_EDGE_RE"
+  ],
+  "src/britannica/markers.py": [
+    "LIST_MARKERS",
+    "RENDERED_MARKER_OPENS"
+  ],
+  "src/britannica/pipeline/stages/detect_boundaries.py": [
+    "_SEC_MARKER"
+  ],
+  "src/britannica/pipeline/stages/elements/_registry.py": [
+    "BLOCK_LABELS",
+    "_SUBSTITUTION_PASSES"
+  ],
+  "src/britannica/pipeline/stages/elements/_shapes.py": [
+    "SHAPES"
+  ],
+  "src/britannica/pipeline/stages/elements/_tables.py": [
+    "_CELL_ALIGN_ATTR_RE",
+    "_CELL_TS_RE"
+  ],
+  "src/britannica/pipeline/stages/super_walker.py": [
+    "_SECTION_BEGIN"
+  ],
+  "src/britannica/xrefs/disambiguation.py": [
+    "PLACE_KINDS"
+  ],
+  "tools/diagnostics/caption_quality_check.py": [
+    "ART_DIR"
+  ],
+  "tools/diagnostics/capture_transform_snapshots.py": [
+    "EXPORT_DIR"
+  ],
+  "tools/pipeline/resolve_xrefs_post.py": [
+    "_SKIP"
+  ],
+  "tools/vol29/build_toc.py": [
+    "OCR",
+    "_CONT_CACHE",
+    "_SUBSPINE_CACHE"
+  ],
+  "tools/vol29/populate_classified_toc.py": [
+    "ARTS_DIR"
+  ]
+}
