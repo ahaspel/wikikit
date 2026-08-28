@@ -45,3 +45,21 @@ def test_a_genuine_anchor_is_still_kept():
     so a genuine one never looks like a legacy slug."""
     body = anchor_marker(anchor_slug("Kościuszko"), "Kościuszko") + "text"
     assert [s["kind"] for s in detect_sections(body)] == ["anchor"]
+
+
+def test_point_anchors_also_carry_their_legacy_twin():
+    """A `{{anchor}}` exists to be linked at, so folding its accent must not
+    change its address either.  Corpus scan after the 2026-08-28 rebuild found
+    14 such targets in 7 articles (FRANCE, HUNGARY, OLAF, NAPOLEONIC CAMPAIGNS,
+    …) whose ids had moved with no legacy twin behind them."""
+    from britannica.pipeline.stages.elements._anchor import _anchor
+    marker = _anchor("The Orléans")
+    assert "«ANCHOR:the-orl-ans|" in marker      # legacy, still landing
+    assert "«ANCHOR:the-orleans|" in marker      # folded, the new address
+    # …and only the folded one is a section.
+    assert [s["slug"] for s in detect_sections(marker)] == ["the-orleans"]
+
+
+def test_unaccented_point_anchor_stays_single():
+    from britannica.pipeline.stages.elements._anchor import _anchor
+    assert _anchor("The Cossacks").count("«ANCHOR:") == 1

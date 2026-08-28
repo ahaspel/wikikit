@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.util.strings import anchor_slug
+from britannica.util.strings import anchor_slug, section_slug
 from britannica.wikitext import split_top_pipes
 
 _SANITIZE = re.compile(r"[{}«»]")
@@ -33,7 +33,18 @@ def _anchor(name: str) -> str:
     marker glyphs and escape the ``|`` delimiter, so a recognition slip can never smuggle
     a live ``{{…}}`` or marker that the walk would re-parse."""
     name = _SANITIZE.sub("", name).replace("|", "/").strip()
-    return anchor_marker(anchor_slug(name), name) if name else ""
+    if not name:
+        return ""
+    # A point anchor gets the SAME back-compat treatment as a heading.  Folding
+    # the accent moved 14 of these (FRANCE's "The Orléans" was
+    # `#section-the-orl-ans`), and a `{{anchor}}` exists precisely to BE linked
+    # at — so it is the last thing that should quietly change its address.
+    # `export.sections` filters the legacy twin straight back out, exactly as
+    # it does for «SEC»/«SH».
+    legacy = section_slug(name)
+    slug = anchor_slug(name)
+    prefix = anchor_marker(legacy, name) if legacy != slug else ""
+    return prefix + anchor_marker(slug, name)
 
 
 def anchor_marker(slug: str, name: str) -> str:
