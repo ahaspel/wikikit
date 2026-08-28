@@ -59,12 +59,43 @@ def fold_accents(s: str) -> str:
 
 
 def section_slug(name: str) -> str:
-    """URL-safe slug from a wikisource section name (or any string).
+    """The IDENTITY slug.  FROZEN — changing this changes every article's URL.
 
-    Preserves ASCII letters/digits, lowercases, collapses runs of other
-    chars to a single hyphen. Strips surrounding hyphens.
+    Preserves ASCII letters/digits, lowercases, collapses runs of other chars to
+    a single hyphen.  It therefore MANGLES accents: `Kościuszko` -> `ko-ciuszko`,
+    `Poincaré` -> `poincar`.
+
+    DO NOT "FIX" THAT.  This function's output is hashed into `stable_id`
+    (`article_json._section_slug_for` -> `_base_stable_id`), so it decides every
+    article's URL, S3 key and Meilisearch document id — and the URL forwarder
+    recomputes the same hash from OLD urls' slugs, table-free.  Folding accents
+    here would silently re-address every article whose `<section begin=…>` name
+    carries one, break the forwarder, and orphan the deposited Zenodo bundle.
+    The mangling is invisible precisely because it is hashed away.
+
+    For a slug a READER sees — a `#section-…` fragment — use `anchor_slug`,
+    which folds.  The two are deliberately different jobs and that is why they
+    have different names.
     """
     name = (name or "").strip().lower()
+    name = re.sub(r"[^a-z0-9]+", "-", name)
+    return name.strip("-")
+
+
+def anchor_slug(name: str) -> str:
+    """The VISIBLE slug — a `#section-…` fragment a reader may bookmark.
+
+    Identical to `section_slug` except that accents FOLD rather than dropping to
+    hyphens: `Sömmerring` -> `sommerring`, not `s-mmerring`; `Kościuszko` ->
+    `kosciuszko`, not `ko-ciuszko`.  379 anchors across 102 articles were
+    mangled that way.
+
+    Kept separate from `section_slug` rather than replacing it, because that one
+    is hashed into article ids and must never move.  Two functions for two jobs;
+    the danger is a future reader seeing near-duplicates and unifying them, so
+    each says what the other is for.
+    """
+    name = fold_accents((name or "").strip()).lower()
     name = re.sub(r"[^a-z0-9]+", "-", name)
     return name.strip("-")
 

@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import re
 
-from britannica.util.strings import strip_markers
+from britannica.util.strings import (anchor_slug, section_slug,
+                                     strip_markers)
 
 # «SEC:slug|name» (major, L1), «SH:slug»…«/SH» (shoulder, L2), and «ANCHOR:slug|name»
 # (link target, L3 — kept OUT of the TOC by kind=="anchor"), in doc order.
@@ -52,6 +53,18 @@ def detect_sections(body: str) -> list[dict]:
         else:                             # «ANCHOR:slug|name» — link target, NOT a heading
             slug, name = m.group(5), m.group(6)
             level, kind = 3, "anchor"
+            # A BACK-COMPAT anchor is not a section.  Where a heading's slug
+            # changed because `anchor_slug` folds an accent the old `section_slug`
+            # dropped, the producer emits an extra «ANCHOR» carrying the OLD slug
+            # so existing `#section-…` links still land.  It is invisible markup,
+            # and listing it would put "Kościuszko." in the contents twice — the
+            # download bundle drops `kind`, so a consumer could not tell them
+            # apart.  The test is exact: this slug IS the legacy form of its own
+            # name, and the folded form differs.  A genuine anchor never matches,
+            # because `_anchor` mints its slug with `anchor_slug`.
+            plain = strip_markers(name)
+            if slug == section_slug(plain) != anchor_slug(plain):
+                continue
         sections.append({
             "title": name, "slug": slug, "id": f"section-{slug}",
             "level": level, "kind": kind,

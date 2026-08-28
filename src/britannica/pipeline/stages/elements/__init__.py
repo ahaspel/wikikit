@@ -715,7 +715,8 @@ def process_shoulder(raw, inner, context, inner_registry):
     (once, by the one slug function, exactly as «SEC» carries its slug), and wrap.  (The
     margin-wrap `<br>` was already dropped in `_shoulder_peel`, before decomposition, so
     `_dehyphenate` could span it — see there.)"""
-    from britannica.util.strings import section_slug, strip_markers
+    from britannica.util.strings import (anchor_slug, section_slug,
+                                         strip_markers)
     content = inner
     if inner_registry is not None:
         content = substitute_children(content, inner_registry)
@@ -725,8 +726,14 @@ def process_shoulder(raw, inner, context, inner_registry):
     # joined ("Differenti-ation"), so the corpus vote applies contiguously —
     # BEFORE the slug is minted, so the anchor reads "differentiation-…".
     content = _dehyphenate(content, contiguous=True)
-    slug = section_slug(strip_markers(content))
-    return f"«SH:{slug}»{content}«/SH»"
+    bare = strip_markers(content)
+    slug = anchor_slug(bare)
+    # See `_section_anchors`: the old slug rides along as an «ANCHOR» so
+    # existing `#section-…` links still land.
+    legacy = section_slug(bare)
+    from britannica.pipeline.stages.elements._anchor import anchor_marker
+    prefix = anchor_marker(legacy, bare) if legacy != slug else ""
+    return prefix + f"«SH:{slug}»{content}«/SH»"
 
 
 def _running_header_cells(raw):

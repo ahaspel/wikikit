@@ -29,7 +29,9 @@ import re
 
 from britannica.markers import collapse_links, strip_marker_tokens
 
-from britannica.util.strings import section_slug, title_case, until_stable
+from britannica.pipeline.stages.elements._anchor import anchor_marker
+from britannica.util.strings import (anchor_slug, section_slug,
+                                     title_case, until_stable)
 
 # A heading is a «CTR» whose FIRST LINE is entirely small-caps: peel the styled runs
 # (`«SC»…«/SC»`, `«SPAN…»…«/SPAN»`) and the numeral prefix, and only punctuation is
@@ -194,6 +196,22 @@ def stamp_section_anchors(body: str) -> str:
         heads.append((m.start(), name))
 
     for pos, name in reversed(heads):  # tail-first so positions stay valid
-        slug = section_slug(_ROMAN_PREFIX.sub("", name))
-        body = body[:pos] + f"«SEC:{slug}|{name}»" + body[pos:]
+        bare = _ROMAN_PREFIX.sub("", name)
+        slug = anchor_slug(bare)
+        # BACK-COMPAT ANCHOR.  `anchor_slug` folds accents where the old
+        # `section_slug` dropped them to hyphens, so 379 fragments across 102
+        # articles change: `#section-s-mmerring` becomes `#section-sommerring`.
+        # An extra «ANCHOR» carrying the OLD slug keeps every existing link
+        # landing — «ANCHOR» is already "a link target, NOT a heading", which is
+        # exactly what this is.  Emitted only where the two differ.
+        legacy = section_slug(bare)
+        # Label it with `bare`, NOT `name`: the legacy slug is minted from the
+        # roman-prefix-stripped text, and `export.sections` filters this anchor
+        # back out by recomputing `section_slug` from the LABEL.  Pass the full
+        # "IV.—Kosciuszko" and that recomputation yields "iv-ko-ciuszko" against a
+        # legacy of "ko-ciuszko", the filter misses, and the invisible anchor
+        # surfaces as a duplicate section in the download bundle (which drops
+        # `kind` and so cannot tell a target from a heading).
+        prefix = anchor_marker(legacy, bare) if legacy != slug else ""
+        body = body[:pos] + prefix + f"«SEC:{slug}|{name}»" + body[pos:]
     return body

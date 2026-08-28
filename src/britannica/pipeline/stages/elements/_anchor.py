@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.util.strings import section_slug
+from britannica.util.strings import anchor_slug
 from britannica.wikitext import split_top_pipes
 
 _SANITIZE = re.compile(r"[{}«»]")
@@ -33,7 +33,21 @@ def _anchor(name: str) -> str:
     marker glyphs and escape the ``|`` delimiter, so a recognition slip can never smuggle
     a live ``{{…}}`` or marker that the walk would re-parse."""
     name = _SANITIZE.sub("", name).replace("|", "/").strip()
-    return f"«ANCHOR:{section_slug(name)}|{name}»" if name else ""
+    return anchor_marker(anchor_slug(name), name) if name else ""
+
+
+def anchor_marker(slug: str, name: str) -> str:
+    """THE «ANCHOR» marker, minted in one place.
+
+    Exported because the back-compat anchors in `_section_anchors` and the
+    shoulder-heading producer need the same marker: where `anchor_slug` folds
+    an accent the old `section_slug` dropped, they emit an extra «ANCHOR»
+    carrying the OLD slug so existing `#section-…` links still land.  Writing
+    the literal at each of those sites is what the duplicated-constant ratchet
+    caught, and rightly: three copies of a marker grammar is how a grammar
+    drifts."""
+    name = _SANITIZE.sub("", name or "").replace("|", "/").strip()
+    return f"«ANCHOR:{slug}|{name}»" if slug and name else ""
 
 
 def _anchor_display(raw: str) -> str:
