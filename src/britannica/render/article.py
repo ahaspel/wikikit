@@ -111,6 +111,7 @@ def _render_title_h1(marker, ctx):
 # not the point: the render's anchors and the export's TOC links must move
 # together, which two copies cannot guarantee.
 from britannica.util.strings import page_range
+from britannica.util.strings import anchor_slug as _anchor_slug
 from britannica.util.strings import section_slug as _section_slug
 
 
@@ -408,7 +409,13 @@ def _build_xref_href(xref, bundled=None):
         filename = str(xref["normalized_target"]).strip().lower() + ".json"
     else:
         return "#"
-    slug = _section_slug(xref["target_section"]) if xref.get("target_section") else ""
+    # `anchor_slug`, matching the id the «SEC»/«SH» producers actually bake.
+    # `section_slug` here would emit the LEGACY fragment: it still lands (the
+    # producers keep a back-compat twin at the old address), but an internal
+    # link we generate ourselves should point at the canonical id, not the
+    # compatibility shim.  Line 518 below stays `_section_slug` — that is a
+    # CONTRIBUTOR slug, a different namespace entirely.
+    slug = _anchor_slug(xref["target_section"]) if xref.get("target_section") else ""
     if bundled is not None:
         # EPUB: the section rides INSIDE the token (a chunked book can't append a
         # fragment to a URL that already carries the article's anchor).
