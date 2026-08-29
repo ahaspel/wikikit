@@ -43,6 +43,7 @@ from britannica.epub import pack
 from britannica.epub import readers_guide as RG
 from britannica.epub import math_assets as MA
 from britannica.markers import markers_to_text
+from britannica.export.tei import EDITION_DOI
 from britannica.render.article import render_article, _section_slug
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -1406,6 +1407,15 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         f'    <dc:title>{_html.escape(title)}</dc:title>\n'
         '    <dc:language>en</dc:language>\n'
         '    <dc:source>https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica</dc:source>\n'
+        # RELATION, not identifier.  Zenodo's deposit is the TEI edition ALONE
+        # (docs/zenodo_deposit.md: "Only the TEI is deposited"), so this book is
+        # not the thing that DOI names, and `dc:identifier` would claim it was.
+        # `unique-identifier` stays `urn:britannica11:complete` regardless -- readers
+        # key library identity on (dc:identifier, dcterms:modified), and changing it
+        # turns every existing library copy into a different book.
+        # The CONCEPT DOI, matching `tei.EDITION_DOI`: it follows the newest deposit,
+        # so a book pressed today still points somewhere true after 2026.2.
+        f'    <dc:relation>https://doi.org/{EDITION_DOI}</dc:relation>\n'
         f'    <meta property="dcterms:modified">{_MODIFIED}</meta>\n'
         + ('    <meta name="cover" content="cover-image"/>\n' if target == "kindle" else "")
         + '  </metadata>\n'
