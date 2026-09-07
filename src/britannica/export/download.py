@@ -352,7 +352,10 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
     # file-per-member TEI corpus — the teiCorpus is a CATALOGUE and tools process
     # members individually — but a consumer who tries to assemble the whole thing
     # should learn it from the README, not from a validator.
-    (tei_dir / "README.md").write_text(_TEI_README.format(n=n), encoding="utf-8")
+    (tei_dir / "README.md").write_text(
+        # By token, not by format: the README quotes BibTeX, whose braces
+        # format() reads as field names.  See _tei_readme.py.
+        _TEI_README.replace("ARTICLE_COUNT", f"{n:,}"), encoding="utf-8")
 
     # The ODD ships WITH the edition: it documents which part of TEI this uses,
     # which is the first thing a TEI-literate reader looks for and the difference

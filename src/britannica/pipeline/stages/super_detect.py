@@ -24,6 +24,7 @@ import bisect
 import britannica.pipeline.stages.super_walker as SW
 from britannica.db.models import SourcePage
 from britannica.db.session import SessionLocal
+from britannica.corpora import current_corpus
 from britannica.pipeline.stages.detect_boundaries import (
     DetectedArticle,
     SegmentInfo,
@@ -36,6 +37,18 @@ from britannica.pipeline.stages.detect_boundaries import (
 
 
 def detect_boundaries(volume: int) -> list[DetectedArticle]:
+    # WHICH BOOK.  EB1911 separates articles by typography — a bold headword at
+    # the head of a paragraph — and everything below reads that.  The DNB's
+    # transcribers marked every article with an explicit `<section>` run, so it
+    # needs a different detector rather than a tuned version of this one.
+    # Refusing loudly beats running the typographic reader over a book that does
+    # not use typography and getting a plausible-looking wrong answer.
+    style = current_corpus().boundary_style
+    if style != "typographic":
+        raise NotImplementedError(
+            f"boundary detection for {current_corpus().key!r} is {style!r}; "
+            "only 'typographic' is implemented (see docs/dnb_project.md, Phase 2)"
+        )
     session = SessionLocal()
     try:
         pages = SW._volume_pages(session, volume)
