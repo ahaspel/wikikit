@@ -103,5 +103,36 @@ def test_every_field_is_read_by_something():
     """
     import dataclasses
     fields = {f.name for f in dataclasses.fields(EB1911)}
-    assert fields == {"key", "title", "scan_name", "boundary_style"}, (
+    assert fields == {"key", "title", "scan_name", "boundary_style", "pages"}, (
         "a field was added or removed — is its consumer written?")
+
+
+def test_the_page_manifest_covers_every_volume():
+    """A missing volume means a silently short import, not an error."""
+    assert EB1911.volumes == list(range(1, 30))
+    assert DNB.volumes == list(range(1, 72))
+    assert all(n > 0 for n in EB1911.pages.values())
+    assert all(n > 0 for n in DNB.pages.values())
+
+
+def test_eb1911_page_counts_match_the_array_they_replaced():
+    """Verbatim, not re-derived.
+
+    They lived in a bash array in fetch_all.sh.  ARTICLE_WS_RANGE looks like the
+    same fact and is not — it is the span holding ARTICLES, and it disagrees for
+    volumes 20 and 29, the index volume being absent from it entirely.
+    """
+    was = [0, 1029, 1027, 1015, 1031, 1002, 1017, 1008, 1027, 997, 967, 968,
+           985, 985, 953, 994, 1016, 1039, 1000, 1034, 1054, 1019, 993, 1069,
+           1100, 1090, 1104, 1092, 1091, 982]
+    assert [EB1911.pages[v] for v in range(1, 30)] == was[1:]
+
+
+def test_dnb_totals_match_what_was_measured():
+    """33,824 pages, read from the DjVu files through the Wikisource API."""
+    assert sum(DNB.pages.values()) == 33_824
+    assert sum(DNB.pages[v] for v in range(1, 64)) == 29_232   # the original series
+    assert sum(DNB.pages[v] for v in range(64, 67)) == 1_510   # 1901
+    assert sum(DNB.pages[v] for v in range(67, 70)) == 2_118   # 1912
+    assert DNB.pages[70] == 650                                # 1927
+    assert DNB.pages[71] == 314                                # the Errata

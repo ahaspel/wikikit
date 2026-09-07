@@ -35,6 +35,40 @@ from britannica.settings import settings
 _ROMAN = {1: "I", 2: "II", 3: "III"}
 
 
+# --- how many scanned pages each volume has ----------------------------------
+# The fetch range.  EB1911's numbers were a bash array inside fetch_all.sh, a
+# poor home for a manifest: it could not be tested, imported, or checked against
+# anything.  They are reproduced here VERBATIM, not re-derived from
+# ARTICLE_WS_RANGE, which is a DIFFERENT fact — the span holding articles — and
+# disagrees for volumes 20 and 29 (volume 29, the index, is not in it at all).
+#
+# The DNB's were measured from the DjVu files themselves through the Wikisource
+# API, all 71 volumes resolving, 33,824 pages in total.
+
+_EB1911_PAGES = {
+    1: 1029, 2: 1027, 3: 1015, 4: 1031, 5: 1002, 6: 1017,
+    7: 1008, 8: 1027, 9: 997, 10: 967, 11: 968, 12: 985,
+    13: 985, 14: 953, 15: 994, 16: 1016, 17: 1039, 18: 1000,
+    19: 1034, 20: 1054, 21: 1019, 22: 993, 23: 1069, 24: 1100,
+    25: 1090, 26: 1104, 27: 1092, 28: 1091, 29: 982,
+}
+
+_DNB_PAGES = {
+    1: 504, 2: 472, 3: 474, 4: 472, 5: 462, 6: 490,
+    7: 465, 8: 466, 9: 474, 10: 466, 11: 482, 12: 463,
+    13: 462, 14: 467, 15: 468, 16: 430, 17: 458, 18: 454,
+    19: 453, 20: 454, 21: 452, 22: 460, 23: 460, 24: 468,
+    25: 468, 26: 454, 27: 441, 28: 450, 29: 463, 30: 452,
+    31: 454, 32: 451, 33: 453, 34: 456, 35: 454, 36: 453,
+    37: 476, 38: 461, 39: 461, 40: 457, 41: 463, 42: 470,
+    43: 462, 44: 464, 45: 472, 46: 461, 47: 456, 48: 449,
+    49: 504, 50: 468, 51: 473, 52: 424, 53: 491, 54: 453,
+    55: 494, 56: 459, 57: 467, 58: 477, 59: 465, 60: 475,
+    61: 482, 62: 457, 63: 466, 64: 500, 65: 468, 66: 542,
+    67: 678, 68: 702, 69: 738, 70: 650, 71: 314,
+}
+
+
 @dataclass(frozen=True)
 class Corpus:
     """One book's worth of difference.
@@ -53,6 +87,8 @@ class Corpus:
     #: How articles are separated: EB1911 by typography, the DNB by explicit
     #: ``<section>`` runs its transcribers marked.
     boundary_style: str
+    #: volume -> how many scanned pages it has.  Read by the fetch orchestrator.
+    pages: dict[int, int]
 
     # A FIELD ARRIVES WHEN ITS CONSUMER DOES.  Every field here is read by
     # working code; none is a placeholder for a later phase.  A declared-but-
@@ -72,6 +108,11 @@ class Corpus:
     # the third simply never occurs in its text.  A narrower copy for the DNB
     # would invent a difference and leave two patterns to drift apart.
 
+    @property
+    def volumes(self) -> list[int]:
+        """Every volume in this book, in order."""
+        return sorted(self.pages)
+
     def page_title(self, volume: int, page: int) -> str:
         """The Wikisource ``Page:`` title for one scanned page."""
         return f"Page:{self.scan_name(volume)}/{page}"
@@ -87,6 +128,7 @@ EB1911 = Corpus(
     title="Encyclopædia Britannica, Eleventh Edition",
     scan_name=lambda v: f"EB1911 - Volume {v:02d}.djvu",
     boundary_style="typographic",
+    pages=_EB1911_PAGES,
 )
 
 
@@ -127,6 +169,7 @@ DNB = Corpus(
     title="Dictionary of National Biography",
     scan_name=_dnb_scan,
     boundary_style="sections",
+    pages=_DNB_PAGES,
 )
 
 
