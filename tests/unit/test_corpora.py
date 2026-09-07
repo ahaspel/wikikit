@@ -103,7 +103,8 @@ def test_every_field_is_read_by_something():
     """
     import dataclasses
     fields = {f.name for f in dataclasses.fields(EB1911)}
-    assert fields == {"key", "title", "scan_name", "boundary_style", "pages"}, (
+    assert fields == {"key", "title", "scan_name", "boundary_style",
+                      "pages", "raw_dir"}, (
         "a field was added or removed — is its consumer written?")
 
 
@@ -136,3 +137,24 @@ def test_dnb_totals_match_what_was_measured():
     assert sum(DNB.pages[v] for v in range(67, 70)) == 2_118   # 1912
     assert DNB.pages[70] == 650                                # 1927
     assert DNB.pages[71] == 314                                # the Errata
+
+
+def test_eb1911_raw_path_is_unchanged():
+    """29,688 files already sit at data/raw/wikisource.
+
+    The name is a legacy of there being only one book.  Renaming it would buy
+    tidiness at the cost of a mass move, and every test that reads a fixture
+    page hardcodes the old path.
+    """
+    from britannica.source_pages import raw_dir, volume_dir, page_filename
+    assert raw_dir().as_posix() == "data/raw/wikisource"
+    assert volume_dir(3).as_posix() == "data/raw/wikisource/vol_03"
+    assert page_filename(3, 42) == "vol03-page0042.json"
+
+
+@pytest.mark.parametrize("corpus", ["dnb"], indirect=True)
+def test_the_dnb_reads_from_its_own_directory(corpus):
+    """Two books, two trees — the same separation the databases have."""
+    from britannica.source_pages import raw_dir, volume_dir
+    assert raw_dir().as_posix() == "data/raw/dnb"
+    assert volume_dir(65).as_posix() == "data/raw/dnb/vol_65"

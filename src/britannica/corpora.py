@@ -89,6 +89,11 @@ class Corpus:
     boundary_style: str
     #: volume -> how many scanned pages it has.  Read by the fetch orchestrator.
     pages: dict[int, int]
+    #: where this book's fetched pages live on disk.  EB1911's is a legacy
+    #: name — 'wikisource', from when there was only one book — and is kept
+    #: because 29,688 files already sit there and renaming them would buy
+    #: tidiness at the cost of a needless mass move.
+    raw_dir: str
 
     # A FIELD ARRIVES WHEN ITS CONSUMER DOES.  Every field here is read by
     # working code; none is a placeholder for a later phase.  A declared-but-
@@ -129,6 +134,7 @@ EB1911 = Corpus(
     scan_name=lambda v: f"EB1911 - Volume {v:02d}.djvu",
     boundary_style="typographic",
     pages=_EB1911_PAGES,
+    raw_dir="wikisource",
 )
 
 
@@ -170,6 +176,7 @@ DNB = Corpus(
     scan_name=_dnb_scan,
     boundary_style="sections",
     pages=_DNB_PAGES,
+    raw_dir="dnb",
 )
 
 

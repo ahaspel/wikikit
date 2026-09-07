@@ -31,7 +31,28 @@ from typing import Iterable, NamedTuple
 from britannica.corrections import apply_corrections
 from britannica.util.loading import PartialLoadError, unreadable
 
-RAW_DIR = Path("data/raw/wikisource")
+def raw_dir() -> Path:
+    """Where the selected book's fetched pages live.
+
+    ONE owner for the layout.  A caller that builds `data/raw/<x>/vol_NN` itself
+    is a second answer to the same question, which is what the dup-constants
+    ratchet caught when the fetcher grew its own copy.
+    """
+    from britannica.corpora import current_corpus
+    return Path("data/raw") / current_corpus().raw_dir
+
+
+def volume_dir(volume: int, base: Path | str | None = None) -> Path:
+    """The directory holding one volume's pages, under ``base`` or the book's own."""
+    return (Path(base) if base is not None else raw_dir()) / f"vol_{volume:02d}"
+
+
+def page_filename(volume: int, page: int) -> str:
+    """The filename one fetched page is stored under."""
+    return f"vol{volume:02d}-page{page:04d}.json"
+
+
+RAW_DIR = raw_dir()
 _VOL_DIR_RE = re.compile(r"^vol_(\d+)$")
 _PAGE_FILE_RE = re.compile(r"^vol(\d+)-page(\d+)\.json$")
 
@@ -73,7 +94,7 @@ def load_pages(volume: int | None = None, *,
     failures: list[tuple[Path, str]] = []
 
     if volume is not None:
-        vol_dirs = [raw_dir / f"vol_{volume:02d}"]
+        vol_dirs = [volume_dir(volume, raw_dir)]
         if not vol_dirs[0].is_dir():
             failures.append((vol_dirs[0], "volume directory does not exist"))
             vol_dirs = []
