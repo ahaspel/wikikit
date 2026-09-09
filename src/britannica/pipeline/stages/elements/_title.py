@@ -107,10 +107,17 @@ def strip_title_joint(span: str) -> str:
 # recognition) — making field-vs-heading divergence impossible by construction.
 _FN_MARK = re.compile(r"«FN(?:\[[^\]]*\])?:.*?«/FN»", re.DOTALL)
 _LN_MARK = re.compile(r"«(?:LN|XL):(?:[^|»]*\|)?(.*?)«/(?:LN|XL)»", re.DOTALL)
+# A span attribute may itself contain brackets — ANATOMY's
+# `«SPAN[title:farm [tribute] of the county]»`, THEORY OF NUMBERS'
+# `«SPAN[title:2＝[2,1＋√m]²]»`, and a `{{SIC}}` hint's `[sic]`.  `[^\]]*` stops at
+# the FIRST `]` and leaves the marker unstripped in the title, which is how
+# `LAISANT, CHARLES ANNE` became `LAISANT, CHARLES «SPAN[title:[sic] 'ANGE']»ANNE`.
+# The renderer already learned this (`render.inline._SPAN_TITLE_RE`); bound on the
+# marker delimiters, which cannot occur inside an attribute, not on `]`.
 _UPPER_SPAN = re.compile(
-    r"«SPAN\[[^\]]*text-transform:uppercase[^\]]*\]»(.*?)«/SPAN»", re.DOTALL)
+    r"«SPAN\[[^«»]*text-transform:uppercase[^«»]*\]»(.*?)«/SPAN»", re.DOTALL)
 _SC_MARK = re.compile(r"«SC»(.*?)«/SC»", re.DOTALL)
-_SPAN_MARK = re.compile(r"«/?SPAN(?:\[[^\]]*\])?»")
+_SPAN_MARK = re.compile(r"«/?SPAN(?:\[[^«»]*\])?»")
 _STYLE_MARK = re.compile(r"«/?(?:B|I|SC|U|SUP|SUB)»")
 _HTML_TAG = HTML_TAG_RE
 

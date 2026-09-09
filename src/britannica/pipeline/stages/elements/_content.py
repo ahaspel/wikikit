@@ -9,7 +9,11 @@ expansion).  We CARRY it as the same `«SPAN[title:…]»` tooltip marker that
 `_handle_title_spans` emits for the HTML `<span title="…">` form — ONE marker, one viewer
 decoder, two source shapes (the EB1911 transliteration tooltip mechanism).
 
-For `lang`/`sic`/`dropinitial`/`fqm` the metadata is genuinely droppable: unwrap to the
+`sic` is a tooltip too, and was miscategorised as droppable.  `{{SIC|lire|life}}` shows
+the page's own reading and carries the EMENDATION as its hint; throwing the second arg
+away discards an editor's correction, which is the same loss as discarding an erratum.
+
+For `lang`/`dropinitial`/`fqm` the metadata genuinely is droppable: unwrap to the
 display arg.  A nested styler in the display rides through as a classified child node that
 `produce_tree` substitutes, so it survives.
 """
@@ -29,15 +33,46 @@ def _content_parse(raw: str) -> "tuple[str, str, str]":
     opening quote (recursed inertly to the same char)."""
     inner = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw.strip()))
     parts = [p.strip() for p in split_top_pipes(inner)]
-    name = parts[0].lower().replace(" ", "")
+    raw_name = parts[0].strip()          # CASE MATTERS for sic — see below
+    name = raw_name.lower().replace(" ", "")
     args = parts[1:]
     if name in ("tooltip", "abbr"):        # display | hover-hint
         return name, (args[0] if args else ""), (args[1] if len(args) > 1 else "")
+    if name == "sic":
+        # TWO DIFFERENT TEMPLATES, told apart only by case.  MediaWiki template
+        # names are case-sensitive after the first letter, and Wikisource has
+        # both:
+        #
+        #   {{SIC|as-printed|correction}}  Template:SIC — expands to
+        #       {{tooltip|as-printed|[sic] 'correction'}}.  Shows the page's own
+        #       reading; the second arg is the EMENDATION, not metadata.
+        #
+        #   {{sic}} / {{Sic|anything}}     Template:Sic — "THIS TEMPLATE IS
+        #       INTENTIONALLY LEFT BLANK".  A proofreader's annotation on the
+        #       PRECEDING word, invisible to readers, whatever arguments it is
+        #       given.
+        #
+        # Lowercasing the name collapsed them, so `{{sic|hide=y}}` and
+        # `{{sic|lowercase in original}}` printed their arguments as body text —
+        # live on the site today: "maufacturedhide=y by fermenting".
+        if raw_name != "SIC":
+            return name, "", ""          # the blank template renders nothing
+        named = {}
+        pos = []
+        for a in args:
+            k, sep, v = a.partition("=")
+            (named.__setitem__(k.strip(), v.strip()) if sep else pos.append(a))
+        display = named.get("target") or (pos[0] if pos else "")
+        corr = named.get("texttip") or (pos[1] if len(pos) > 1 else "")
+        # A hint with nothing to hang on is not worth a span; the bare form
+        # annotates text we cannot reach from inside this template.
+        tip = ("[sic]" + (f" '{corr}'" if corr else "")) if display else ""
+        return name, display, tip
     if name in ("lang", "wdl"):            # code | text (the code / Qid is metadata)
         return name, (args[1] if len(args) > 1 else (args[0] if args else "")), ""
     if name == "fqm":                      # floating quote mark; bare → a curly opening quote
         return name, (args[0] if args else "“"), ""
-    # sic / dropinitial / di / vrl / phn / definition / nsl / suspect / nodent → the content
+    # dropinitial / di / vrl / phn / definition / nsl / suspect / nodent → the content
     # (drop-cap: the letter; a size arg like `4em` in `{{di|{{serif|J}}|4em}}` is metadata).
     return name, (args[0] if args else ""), ""
 
@@ -47,6 +82,7 @@ def _wrap_content_extract(raw, body, ctx):
     tooltip/abbr hint rides as a `«SPAN[title:…]»`; everything else unwraps to the display."""
     name, _display, tip = _content_parse(raw)
     body = body.strip()
-    if name in ("tooltip", "abbr"):
-        return f"«SPAN[title:{tip}]»{body}«/SPAN»" if tip else body
+    if name in ("tooltip", "abbr", "sic"):
+        # No display text means no span: a tooltip on nothing cannot be hovered.
+        return f"«SPAN[title:{tip}]»{body}«/SPAN»" if (tip and body) else body
     return body
