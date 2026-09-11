@@ -90,13 +90,39 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     # Positional args (skip font-size sentinels like "108%")
     positional = [p.strip() for p in parts if "=" not in p and "%" not in p]
 
-    # First contributor: first two positional args.
+    named = {}
+    for part in parts:
+        if "=" in part:
+            key, _, value = part.partition("=")
+            named[key.strip()] = value.strip()
+
+    # First contributor: the first two positional args — or, when the template
+    # was written in NAMED form, `name=`/`initials=` (or `name1=`/`initials1=`).
+    #
+    # Only `name2`..`name9` were read, so a footer whose FIRST author is named
+    # lost that author silently: 63 `name=` and 45 `name1=` occurrences, of which
+    # 18 footers parsed to nothing whatever.  SHERBROOKE, ROBERT LOWE shipped with
+    # an empty byline because its sole signature is
+    # `{{EB1911 footer initials|name=Hugh Chisholm|initials=H. Ch.}}` — the
+    # edition's own editor, uncredited on an article he signed.
+    #
+    # The forms do not mix: a template that names its first author uses no
+    # positional name, so preferring positional cannot double-count.
     if len(positional) >= 2:
         for clean_init in _clean_footer_initials(positional[1]):
             results.append({
                 "full_name": positional[0],
                 "initials": clean_init,
             })
+    else:
+        for name_key, init_key in (("name", "initials"), ("name1", "initials1")):
+            if name_key in named and init_key in named:
+                for clean_init in _clean_footer_initials(named[init_key]):
+                    results.append({
+                        "full_name": named[name_key],
+                        "initials": clean_init,
+                    })
+                break
 
     # Second contributor: the `footer double initials` template uses
     # positional args 3 and 4 for (name2, init2). Detect by looking
@@ -109,12 +135,6 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
             })
 
     # Additional contributors via named params: name2=…|initials2=…
-    named = {}
-    for part in parts:
-        if "=" in part:
-            key, _, value = part.partition("=")
-            named[key.strip()] = value.strip()
-
     for n in range(2, 10):
         name_key = f"name{n}"
         init_key = f"initials{n}"
