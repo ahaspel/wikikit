@@ -385,7 +385,7 @@ def compile_package(folder: Path, entries, resources, basename, *, sample=True):
         raise ValueError("Compiled MDD has missing resources")
 
 
-def build_edition(output: Path, *, sample=True):
+def build_edition(output: Path, *, sample=True, native_search=False):
     started = time.perf_counter()
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="build-", dir=output) as tmp:
@@ -519,6 +519,10 @@ def build_edition(output: Path, *, sample=True):
             entries[PREFIX + "help"] += wrap(f"<p>{len(source_link_issues)} pre-existing source links have unavailable section destinations. Their labels remain visible and are marked unavailable. See source-link-issues.json in the distribution.</p>")
         qa_entries = entries
         entries, display_keys = label_content_entries(entries, articles)
+        search_files = []
+        if native_search:
+            from britannica.mdx.native import package_search
+            entries, search_files = package_search(output, entries, display_keys, articles, aliases, stylesheet(), ROOT)
         checks = validate(entries, resources, report_path=output / "link_failures.json")
         basename = "Britannica11-sample" if sample else "Britannica11"
         print("Compiling", len(entries), "keys and", len(resources), "resources", flush=True)
@@ -545,6 +549,7 @@ def build_edition(output: Path, *, sample=True):
                     "choice_count": choices, "contributor_count": len(contributors), "topic_count": topic_count,
                     "resource_count": len(resources), "checks": checks, "roundtrip": "exact entries and resource bytes",
                     "edition": "sample" if sample else "complete", "excluded": excluded,
+                    "native_search": native_search,
                     "unavailable_source_link_count": len(source_link_issues),
                     "redundant_alias_count": len(redundant_aliases),
                     "display_keys": display_keys,
@@ -558,16 +563,16 @@ def build_edition(output: Path, *, sample=True):
                     "reader_verification": "pending; see separate reader QA report"}
         for ext in (".mdx", ".mdd"):
             shutil.copyfile(stage / (basename + ext), output / (basename + ext))
-        (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-        (output / "source-link-issues.json").write_text(json.dumps(source_link_issues, ensure_ascii=False, indent=2), encoding="utf-8")
+        # Shipped text goes out LF on every platform, and the SHA256SUMS is
+        # written by its one owner — see britannica.mdx.checksums.
+        from britannica.mdx.checksums import write_checksums, write_shipped_text
+        write_shipped_text(output / "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+        write_shipped_text(output / "source-link-issues.json", json.dumps(source_link_issues, ensure_ascii=False, indent=2))
         shutil.copyfile(ROOT / "src/britannica/export/download_assets/LICENSE", output / "LICENSE")
-        (output / "README.md").write_text("# Britannica 11 compatibility sample\n\nPlace the MDX and MDD together in a GoldenDict-ng dictionary directory and rescan. Look up `Britannica 11 sample` for contents, `MERCURY` for disambiguation, `Continued Fraction` for an alias, and `ALGEBRA` for mathematics.\n\nThis is an engineering sample, not a complete or reader-certified release. External article destinations are marked online/outside sample. Contributor and topic lists cover the sample only. See manifest.json for exact contents and build checks.\n", encoding="utf-8")
-        if not sample:
-            (output / "README.md").write_text("# Britannica 11 — complete MDX edition\n\nKeep Britannica11.mdx and Britannica11.mdd together. Add their folder to GoldenDict-ng dictionary sources and rescan. Look up `Britannica 11` for the contents, contributor index, topics, volume lists and Reader’s Guide. The edition is offline; explicitly external source/reference links need an internet connection.\n\nUse the reader's full-text search (Ctrl+Shift+F in GoldenDict-ng) after initial indexing completes. The dictionary does not depend on a website or JavaScript to render its content. See manifest.json for exact coverage and build checks; reader QA is recorded separately.\n", encoding="utf-8")
-        with (output / "README.md").open("a", encoding="utf-8") as readme:
-            readme.write("\nFor accent-free lookup, enable **Ignore diacritics** in GoldenDict-ng Preferences. The dictionary keeps canonical spellings and source-attested alternative names, including natural name order (for example Jonathan Swift). Redundant punctuation and accent variants are omitted from the result list.\n")
-        shipped = [basename + ".mdx", basename + ".mdd", "README.md", "LICENSE", "manifest.json", "source-link-issues.json"]
-        (output / "SHA256SUMS").write_text("".join(digest((output / n).read_bytes()) + "  " + n + "\n" for n in shipped), encoding="utf-8")
+        from britannica.mdx.readme import edition_readme
+        write_shipped_text(output / "README.md", edition_readme(sample, native_search))
+        shipped = [basename + ".mdx", basename + ".mdd", "README.md", "LICENSE", "manifest.json", "source-link-issues.json"] + search_files
+        write_checksums(output, shipped)
         with zipfile.ZipFile(output / (basename + ".zip"), "w", zipfile.ZIP_DEFLATED) as z:
             for name in shipped + ["SHA256SUMS"]:
                 z.write(output / name, name)
@@ -586,9 +591,10 @@ def main():
     mode.add_argument("--sample", action="store_true")
     mode.add_argument("--all", action="store_true")
     ap.add_argument("--output", type=Path)
+    ap.add_argument("--native-search", action="store_true", help="Package canonical-title native search helpers")
     args = ap.parse_args()
     output = args.output or Path("mdx/sample" if args.sample else "mdx/complete")
-    build_edition(output.resolve(), sample=args.sample)
+    build_edition(output.resolve(), sample=args.sample, native_search=args.native_search)
 
 
 if __name__ == "__main__":
