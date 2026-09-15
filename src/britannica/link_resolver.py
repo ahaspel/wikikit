@@ -45,6 +45,43 @@ _PARTICLES = frozenset({
     "DER", "DEN", "TER", "TEN", "LA", "LE", "LES", "EL", "AL", "IBN", "BIN",
 })
 
+# Nobiliary RANKS — packaging that precedes a name and is never its head.
+#
+# Deliberately NOT folded into `_FURNITURE` or `_PARTICLES`, and this is the
+# whole reason the set exists separately: EB has real ARTICLES titled BARON,
+# COUNT, DUKE, EARL, MARQUESS, VISCOUNT, PRINCE, CARDINAL, and `content()` uses
+# `_FURNITURE` to build the wordset those titles are matched ON.  Putting ranks
+# there would empty their content and break the bindings that are CORRECT —
+# PEERAGE citing "baron" means exactly the BARON article, 54 such resolutions.
+#
+# Used for exactly one decision, below: whether a reference's FIRST word is its
+# head.  Nothing else reads it.
+_RANKS = frozenset({
+    "MARQUIS", "MARQUISE", "MARQUESS", "MARCHIONESS",
+    "COUNT", "COMTE", "COMTESSE", "COUNTESS", "GRAF",
+    "DUC", "DUKE", "DUCHESS", "DUCHESSE", "HERZOG",
+    "EARL", "BARON", "BARONNE", "BARONESS", "FREIHERR",
+    "VISCOUNT", "VICOMTE", "VICOMTESSE",
+    "LORD", "LADY", "PRINCE", "PRINCESS", "PRINCESSE",
+    "CARDINAL", "CHEVALIER", "SEIGNEUR", "DON", "DONNA", "SIEUR",
+})
+
+
+def _head_is_packaging(name: str) -> bool:
+    """True when a reference's FIRST word is a rank or particle, not its head.
+
+    `MARQUIS DE GROUCHY`, `DE LA BOUILLERIE`, `MARQUISE DE LA ROCHEJAQUELEIN` —
+    the words that identify the person come later, so a rung keyed on the FIRST
+    word is keyed on nothing.
+    """
+    ws = [w.upper() for w in _TOK.findall(fold(name or ""))]
+    # A ONE-WORD reference is its own head: `BARON`, `COMTE`, `POPE` name the
+    # articles about those titles, and there is no name after the word for the
+    # word to be packaging FOR.  (Harmless today — a bare rank matches at
+    # `exact` and never reaches this rung — but the predicate should be true on
+    # its own terms, not by luck of call site.)
+    return len(ws) > 1 and (ws[0] in _RANKS or ws[0] in _PARTICLES)
+
 ARTICLES_INDEX = Path("data/derived/articles/index.json")
 ARTS_DIR = ARTICLES_INDEX.parent
 SECTION_INDEX = Path("data/derived/classified_section_index.json")
@@ -857,6 +894,23 @@ class LinkResolver:
             return c["filename"], c.get("anchor")
         bag, tag = self.candidates(name, superset=True)
         if not bag or tag not in rungs:
+            return None
+        # `firstword` binds "any title CONTAINING the name's first word".  When
+        # that first word is a RANK or a PARTICLE it identifies nobody, and the
+        # rung reaches whichever title happens to carry the same packaging:
+        # MARQUIS DE GROUCHY -> BEAUREGARD, MARQUIS DE, raised from the GROUCHY
+        # article itself.  Eleven links in the corpus land that way, on four
+        # destinations (BEAUREGARD 4, DELAMERE 3, LA PLACE 2, LA CONDAMINE),
+        # one of them a BOOK — MONUMENTS DE LA PERSE, bound to a person.
+        #
+        # Scoped to this rung ON PURPOSE.  At `exact` the packaging word IS the
+        # subject, and those bindings are right: of the 67 resolutions sharing
+        # only such words with their target, 54 are exact matches on articles
+        # about the titles themselves.  `resolve_see` already refuses the loose
+        # case ("a single-word surname/firstword match is a red herring"); this
+        # is the same judgement on the trusted side, where a self-evidently
+        # empty key should not outrank abstaining.
+        if tag == "firstword" and _head_is_packaging(name):
             return None
         if self_fn:
             # An article never links to ITSELF.  When self is the ONLY candidate
