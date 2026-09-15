@@ -13,7 +13,7 @@ from britannica.export.download import _topic_index
 from britannica.markers import strip_title_markers
 from britannica.util.strings import fold_accents
 from britannica.xrefs.normalizer import normalize_xref_target
-from britannica.mdx.build import ROOT, SITE, PREFIX, article_key, topic_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics
+from britannica.mdx.build import ROOT, SITE, PREFIX, article_key, topic_key, volume_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics, HREF_ATTR_RE
 
 
 def add_reference_aliases(articles, aliases):
@@ -145,10 +145,10 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         volumes[a["volume"]].append(stem)
     for volume, stems in sorted(volumes.items()):
         stems.sort(key=lambda s: (articles[s]["page_start"], articles[s].get("page_end") or 0, articles[s]["title"], s))
-        entries[PREFIX + f"volume:{volume}"] = wrap(f"<h1>Volume {volume}</h1>" + list_links(
+        entries[volume_key(volume)] = wrap(f"<h1>Volume {volume}</h1>" + list_links(
             (strip_title_markers(articles[s]["title"]), entry_url(article_key(s))) for s in stems))
     entries[PREFIX + "volumes"] = wrap("<h1>Volumes</h1>" + list_links(
-        (f"Volume {v}", entry_url(PREFIX + f"volume:{v}")) for v in sorted(volumes)))
+        (f"Volume {v}", entry_url(volume_key(v))) for v in sorted(volumes)))
 
     FM.DROPPED_HREFS.clear()
     front = FM.pages()
@@ -177,7 +177,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
                     slug = signature_map.get(u.fragment) or name_map.get(query_name)
                     url = entry_url(PREFIX + "contributor:" + slug) if slug else entry_url(PREFIX + "contributors")
             return 'href=' + m[1] + html.escape(url, quote=True) + m[1]
-        return re.sub(r'''\bhref=(["'])(.*?)\1''', href, body)
+        return HREF_ATTR_RE.sub(href, body)
 
     for name, path in images.items():
         with open(path, "rb") as source:

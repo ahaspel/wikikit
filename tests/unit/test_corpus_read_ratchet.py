@@ -78,6 +78,12 @@ EXPORTED_DIRECT = {
     "tools/pipeline/download_images.py":
         "reads the corpus through load_corpus; its `iterdir` counts files in the "
         "IMAGE dir",
+    "src/britannica/mdx/navigation.py":
+        "reads no payload at all: it names ONE file in the article dir, the "
+        "contributor roster `contributors.json`, and its only glob is over "
+        "`tools/viewer/readers-guide*.html`.  The file-level rule pairs those two "
+        "unrelated facts — which is the price of the coarseness that keeps it "
+        "from being defeated by a constant two lines up",
 }
 
 RAW_DIRECT = {

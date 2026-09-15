@@ -26,6 +26,10 @@ def build(edition, output, node):
         if sha(edition/name) != expected:
             raise ValueError('Edition checksum mismatch: '+name)
     runtime_version = subprocess.check_output([str(node), '--version'], text=True).strip()
+    # Duplicated in `install_search.py` ON PURPOSE: that file is copied into the
+    # shipped package as `install.py` and runs on a machine with no `britannica`
+    # package, so it cannot import a shared helper.  Accepted in the dup-constants
+    # baseline for that reason rather than consolidated.
     subprocess.run([str(node), '--no-warnings', '-e',
                     "const {DatabaseSync}=require('node:sqlite');new DatabaseSync(':memory:').close()"], check=True)
     output.mkdir(parents=True, exist_ok=True)

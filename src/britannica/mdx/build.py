@@ -35,7 +35,7 @@ from britannica.export.download import _topic_index
 from britannica.markers import strip_title_markers
 from britannica.render.article import render_article, _section_slug
 from britannica.render.inline import _article_url
-from britannica.util.strings import fold_accents
+from britannica.util.strings import fold_accents, strip_html_tags
 from britannica.xrefs.normalizer import normalize_xref_target
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,6 +56,18 @@ def topic_key(topic_id: str) -> str:
     # GoldenDict-ng truncates lookup keys longer than 100 characters. Deep
     # taxonomy paths exceed that limit; retain their full names in the page.
     return PREFIX + "topic:" + digest(topic_id.encode("utf-8"))[:24]
+
+
+def volume_key(volume) -> str:
+    return PREFIX + f"volume:{volume}"
+
+
+# `href="…"` / `src="…"` with the quote captured so the rewrite can hand back the
+# SAME one.  Both the article body rewriter here and the navigation pages rewrite
+# these attributes; spelling the pattern twice is what the dup-constants ratchet
+# caught.
+HREF_ATTR_RE = re.compile(r'''\bhref=(["'])(.*?)\1''')
+SRC_ATTR_RE = re.compile(r'''\bsrc=(["'])(.*?)\1''')
 
 
 def entry_url(key: str, fragment: str = "") -> str:
@@ -162,8 +174,12 @@ def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, 
                 return m[0]
             raise ValueError(f"Unbundled image/resource: {url}")
         name = unquote(url.removeprefix("/data/images/"))
+        # Hand back the quote character the source used, both ways out.
+        def attr(value):
+            return f'src={m[1]}{value}{m[1]}'
+
         if name in source_assets:
-            return f'src={m[1]}{source_assets[name]["resource"]}{m[1]}'
+            return attr(source_assets[name]["resource"])
         base = (ROOT / "data/images").resolve()
         path = (base / name).resolve()
         if not path.is_relative_to(base):
@@ -173,9 +189,9 @@ def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, 
         dest = "images/" + digest(data) + ext
         resources[dest] = data
         source_assets[name] = {"sha256": digest(raw), "resource": dest}
-        return f'src={m[1]}{dest}{m[1]}'
+        return attr(dest)
 
-    body = re.sub(r'''\bsrc=(["'])(.*?)\1''', image_src, body)
+    body = SRC_ATTR_RE.sub(image_src, body)
 
     def href(m):
         url = html.unescape(m[2])
@@ -183,7 +199,7 @@ def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, 
             return m[0]
         return 'href=' + m[1] + html.escape(urljoin(SITE + "/", url), quote=True) + m[1]
 
-    body = re.sub(r'''\bhref=(["'])(.*?)\1''', href, body)
+    body = HREF_ATTR_RE.sub(href, body)
     # An outside destination must be apparent before clicking, not just in help.
     if sample:
         body = re.sub(r'(<a\b[^>]*href="https://britannica11.org/article/[^>]*>.*?</a>)',
@@ -272,7 +288,7 @@ def label_content_entries(entries, articles):
         heading = re.search(r"<h1\b[^>]*>(.*?)</h1>", body, re.S | re.I)
         if not heading:
             raise ValueError(f"Content entry has no display heading: {key}")
-        title = " ".join(html.unescape(re.sub(r"<[^>]*>", " ", heading[1])).split())
+        title = " ".join(html.unescape(strip_html_tags(heading[1], " ")).split())
         if key.startswith(PREFIX + "article:"):
             a = articles[key.removeprefix(PREFIX + "article:")]
             title = strip_title_markers(a["title"])
