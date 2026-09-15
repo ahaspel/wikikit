@@ -28,8 +28,8 @@ from britannica.pipeline.stages.elements._image import (
 from britannica.pipeline.stages.elements._dual_line import _process_dual_line
 from britannica.pipeline.stages.elements._link import (
     _LINK_LABELS, _link_display,
-    _wrap_article_link, _wrap_target_first, _wrap_selfref, _wrap_author_link,
-    _wrap_fragment_link, _wrap_intra_link, _wrap_wikilink)
+    _wrap_article_link, _wrap_target_first, _wrap_cross_work, _wrap_selfref,
+    _wrap_author_link, _wrap_fragment_link, _wrap_intra_link, _wrap_wikilink)
 from britannica.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from britannica.pipeline.stages.elements._spacer import process_spacer
@@ -1147,6 +1147,7 @@ _PR_WRAP = {
     # the «LN:target|display» family — one wrap each, all on the shared `_link_display` peel
     "EB1911_ARTICLE_LINK": _wrap_article_link,
     "TARGET_FIRST_LINK":   _wrap_target_first,
+    "CROSS_WORK_LINK":     _wrap_cross_work,   # {{DNB lkpl}} → its printed display, unlinked
     "EB1911_SELFREF":      _wrap_selfref,
     "AUTHOR_LINK":         _wrap_author_link,
     "FRAGMENT_LINK":       _wrap_fragment_link,

@@ -294,7 +294,30 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # so a 9th-edition ref to a topic EB11 also covers resolves to OUR article.
     # (NOT the display-first "EB9/EB1911 article link" above, NOT the EB1911
     # self-fragment "intra-article link" below.)
-    if re.match(r"\{\{\s*(?:(?:EB1911|DNB|EB9|CE|Oxon)\s+lkpl|1911link|11link|EB1911\s+link"
+    # `{{DNB lkpl|Walsh, Peter|Dict. Nat. Biog}}` — a citation of ANOTHER WORK,
+    # the Dictionary of National Biography, and not an EB1911 cross-reference at
+    # all.  It was in the target-first family below, which cost us a real
+    # production defect: the family is harvested `display -> target` into the
+    # EB1911 alias table, and a DNB citation is written the other way round — the
+    # target is the PERSON, the display is always the same generic phrase.  So
+    # the table learnt "the words 'Dict. Nat. Biog.' mean Peter Walsh" and then
+    # applied it everywhere, turning that phrase into a link to Walsh (or, for
+    # the trailing-period spelling, Walsingham) in every article citing the DNB.
+    # Sixteen articles reached production that way, each also listing WALSH,
+    # PETER in its cross-reference panel.
+    #
+    # The DNB is not this book, so there is nothing here to resolve TO: the form
+    # below returns no target, and `_link_wrap` already renders a targetless link
+    # as its recursed display — the printed citation, italics intact.  When the
+    # DNB sister site is up these can point there instead; that is a change of
+    # destination in ONE form, not a reclassification.
+    #
+    # `EB9`/`CE`/`Oxon` deliberately stay below: the 9th edition is this same
+    # work, and their displays are article names rather than a fixed phrase, so
+    # the alias harvest reads them correctly.
+    if re.match(r"\{\{\s*DNB\s+lkpl\b", raw, re.IGNORECASE):
+        return "CROSS_WORK_LINK"
+    if re.match(r"\{\{\s*(?:(?:EB1911|EB9|CE|Oxon)\s+lkpl|1911link|11link|EB1911\s+link"
                 r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link|linktext)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"

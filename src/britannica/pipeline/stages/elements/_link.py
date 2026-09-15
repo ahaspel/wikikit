@@ -234,6 +234,19 @@ def _resolve_target_first(target, display, body):
     return folded, (body if display is not None else folded.partition("#")[0])
 
 
+def _resolve_cross_work(target, display, body):
+    """A citation of ANOTHER work — no target in THIS one, so it prints.
+
+    Returning an empty target is the whole producer: `_link_wrap` renders a
+    targetless link as its recursed display, so `''Dict. Nat. Biog.''` keeps its
+    italics and simply stops being a link. The page name in the first slot is a
+    DNB address and is deliberately dropped rather than shown.
+
+    When the DNB sister site is up, this is where a destination goes.
+    """
+    return "", body
+
+
 def _resolve_intra(target, display, body):
     return ("#" + target if target else ""), body
 
@@ -305,6 +318,7 @@ _LINK_FORMS = {
                                      peel_target_when_bare=True),
     "TARGET_FIRST_LINK":   _LinkForm(_slots_target_first, _resolve_target_first,
                                      peel_target_when_bare=True),
+    "CROSS_WORK_LINK":     _LinkForm(_slots_target_first, _resolve_cross_work),
     "INTRA_ARTICLE_LINK":  _LinkForm(_slots_target_first, _resolve_intra,
                                      peel_target_when_bare=True),
     "EB1911_SELFREF":      _LinkForm(_slots_bracket, _resolve_selfref),
@@ -336,6 +350,7 @@ _LINK_LABELS = frozenset(_LINK_FORMS)
 
 _wrap_article_link = _link_wrap("EB1911_ARTICLE_LINK")
 _wrap_target_first = _link_wrap("TARGET_FIRST_LINK")
+_wrap_cross_work = _link_wrap("CROSS_WORK_LINK")
 _wrap_selfref = _link_wrap("EB1911_SELFREF")
 _wrap_author_link = _link_wrap("AUTHOR_LINK")
 _wrap_fragment_link = _link_wrap("FRAGMENT_LINK")

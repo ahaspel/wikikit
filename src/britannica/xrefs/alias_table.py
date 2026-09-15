@@ -54,8 +54,21 @@ def _extract_aliases_from_wikitext(
 ) -> None:
     """Extract alias mappings from a single page's raw wikitext."""
     # {{EB1911 lkpl|Target|Display}}
+    #
+    # EB1911 ONLY.  `DNB` was harvested here too and it is written backwards for
+    # this purpose: `{{DNB lkpl|Walsh, Peter|Dict. Nat. Biog}}` names the PERSON
+    # in the target slot and a fixed generic phrase in the display, so
+    # `aliases[display].append(target)` taught the table that the words "Dict.
+    # Nat. Biog." mean Peter Walsh.  `most_common` then crowned one owner per
+    # spelling — WALSH, PETER for the bare form, WALSINGHAM for the one with a
+    # trailing period — and every article citing the DNB linked its citation to
+    # a stranger.  Sixteen reached production.
+    #
+    # The apostrophe guard below is why it was only SOME articles: it drops the
+    # instances whose italics sit inside the braces and keeps the ones where they
+    # sit outside, so which person won was decided by Wikisource punctuation.
     for m in re.finditer(
-        r"\{\{(?:EB1911|DNB)\s+lkpl\|([^|}]+)\|([^}]+)\}\}", raw, re.I
+        r"\{\{EB1911\s+lkpl\|([^|}]+)\|([^}]+)\}\}", raw, re.I
     ):
         target = m.group(1).strip().upper()
         display = m.group(2).strip().upper()
