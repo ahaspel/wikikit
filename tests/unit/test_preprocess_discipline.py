@@ -81,6 +81,23 @@ _VETTED = frozenset({
     # interpretation hazard (decoding `&lt;`/`&gt;` would forge a tag) is
     # handled by the keep-rule.  Deletion-shaped under word-preservation.
     "_decode_entities",
+    # Transport decoding, on EXACTLY the J8 grounds above: Wikisource's
+    # unproofread OCR layer stores some characters double-encoded (`Â£` for `£`,
+    # `â€”` for `—` — verified present in live `action=parse` wikitext, so it is
+    # the source's own damage, not our scrape's).  That is the source's SPELLING
+    # of a character, and the character identity is needed by every downstream
+    # matcher, so there is no single owner to relocate to.
+    #
+    # NOT listed in `_CRUFT_REMOVERS`, and the reason is recorded rather than
+    # hidden: the word-preservation PROXY misfires here.  `_WORD` counts Latin-1
+    # letters, and a mojibake lead byte IS one (`â` = U+00E2), so it glues to the
+    # preceding word — `childrenâ€”an` tokenizes as {childrenâ, an}, and deleting
+    # the corruption yields `children`, which reads as an invented word.  It is
+    # the same gluing problem the `\S+`→word-char switch fixed for `a<!--`,
+    # residual because here the markup is letter-shaped.  `&mdash;` escapes it
+    # only because `&` is already a non-word separator.  Nothing is invented:
+    # every output character was in the source's intent.
+    "_demojibake",
 })
 # The junk ledger — shrinks to ∅ as docs/sweeper_removal.md is worked.
 _JUNK = frozenset()

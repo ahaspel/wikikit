@@ -254,6 +254,49 @@ _EDITORIAL_INS = re.compile(r"</?ins\b[^>]*>", re.IGNORECASE)
 # The pages are unproofread (ws679/680 are pagequality=1), but the tables there
 # are well-formed — `{|` and `|}` balance on every PURIN page — so this is not a
 # transcription defect ([[feedback_source_is_the_only_excuse]]).
+# ── mojibake — UTF-8 the SOURCE decoded as cp1252 ───────────────────────────
+#
+# Wikisource's unproofread OCR layer carries double-encoded characters: `Â£` for
+# `£`, `â€”` for `—`.  We scrape them faithfully — verified by comparing
+# codepoints against live `action=parse` wikitext, which has the same bytes — so
+# they reach the reader unless repaired.  This belongs beside `_decode_entities`
+# because it is the same job (restore the character the source MEANT, not a
+# content edit) and idempotent, which is `_source_clean`'s stated contract.
+#
+# The map is EXPLICIT and keyed on the lead character.  The tempting general
+# repair — re-encode cp1252, decode UTF-8 — is unusable in THIS codebase
+# specifically, because `«` is U+00AB, a valid UTF-8 continuation byte:
+# `JOSÉ«/B»` (É = 0xC9, « = 0xAB) round-trips "successfully" into a Greek
+# letter.  125 legitimate pairs are booby-trapped that way — `DEZSÖ«/B»`,
+# `NICCOLÒ«/B»`, `FORLÌ«/B»`, `6×¾ in.` — some 90 of them accented names in
+# bylines.  Our own delimiter is what makes the off-the-shelf tool wrong here.
+#
+# Five sequences, each read in context before inclusion (467 occurrences across
+# 51 articles).  DELIBERATELY EXCLUDED, all of them OCR-wrecked mathematics
+# where decoding the bytes leaves the maths just as broken:
+#   `Â«`/`Â»` (170) — and `Â«QÂ»` in SPHERICAL HARMONICS would mint a spurious
+#       `«Q»` marker.  User ruling 2026-09-14: leave wrecked math alone.
+#   `â€ž` (60) / `â„¢` (17) — these stand in for a SUBSCRIPT and SUPERSCRIPT in
+#       Legendre functions: `Qâ€ž(m)` is Qₙ(m), `Pâ„¢(cos θ)` is Pᵐ(cos θ).
+#       Decoding them yields `Q„(m)`, which merely looks deliberate while
+#       staying wrong.
+#   `â€¢` (15), `Â¥` (1) — equation-number and formula noise, same reason.
+_MOJIBAKE = {
+    "â€”": "—",    # â€” → — em dash        342
+    "Â°": "°",          # Â°  → ° degree          52
+    "Â£": "£",          # Â£  → £ pound           44
+    "Â§": "§",          # Â§  → § section          16
+    "Â±": "±",          # Â±  → ± plus-minus       13
+}
+_MOJIBAKE_RE = re.compile(
+    "|".join(re.escape(k) for k in sorted(_MOJIBAKE, key=len, reverse=True)))
+
+
+def _demojibake(text: str) -> str:
+    """Restore characters the source double-encoded (`Â£12,500,000` → `£12,500,000`)."""
+    return _MOJIBAKE_RE.sub(lambda m: _MOJIBAKE[m.group(0)], text)
+
+
 _KEEP_ENTITY = re.compile(
     r"&(?:lt|gt|vert|verbar|VerticalLine|#0*(?:60|62|124)|#[xX]0*(?:3[ce]|7c));",
     re.IGNORECASE)
@@ -349,5 +392,6 @@ def _source_clean(stream: str) -> str:
     # reconstructed here — they reach the walk as raw templates and are rejoined by
     # recognition (the SPLIT_WORD producer): start marker → the whole word, end
     # marker → nothing.
+    stream = _demojibake(stream)                  # source's double-encoded chars → chars
     stream = _decode_entities(stream)             # presentational HTML entities → chars
     return stream
