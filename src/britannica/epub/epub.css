@@ -53,9 +53,45 @@ table { border-collapse: collapse; margin: 1em auto; font-size: 0.9em; max-width
    Expand and does not scroll overflow — it clips — so the one lever left is
    type size.  Step the wide ones down; everything else keeps 0.9em. */
 .wide-table-inline table { font-size: 0.75em; }
-td, th { padding: 0.15em 0.5em; vertical-align: top; text-align: left; }
-.data-table td, .data-table th { border: 1px solid #ccc; }
+/* No `text-align` here.  A rule targeting the CELL beats the value it would
+   otherwise INHERIT, so `text-align:left` silently overrode every table whose
+   source says `text-align:center` — the whole of AGRICULTURE Table IX, whose
+   brace then sat at the left edge of its cell instead of centred under "Hay.".
+   That read as a broken transform; it was this.  Let the source decide, as the
+   viewer does: `td` inherits, `th` keeps the browser's centring. */
+td, th { padding: 0.15em 0.5em; vertical-align: top; }
+/* No blanket cell rule.  `.data-table td {border:1px solid #ccc}` drew a grey
+   grid around EVERY cell of all 11,814 tables — rules the printed page does not
+   have (AGRICULTURE Table IX prints no line between 1895 and 1896) — and in two
+   colours at once, since a cell the source marks with `{{Ts|ba}}` carries its own
+   `border:1px solid` in currentColor.  The SOURCE says which rules a table has;
+   we draw those and nothing else.  This is the site's model, which epub.css had
+   never followed: the grid-from-CSS spelling here is the ORIGINAL 2026-04 design,
+   left behind when the viewer moved on. */
 .chem-grid td { border: 0; text-align: center; }
+
+/* `_tablecolhdborder` / `_tablegridhdborder` — Wikisource's own bordered-table
+   classes, carried on 758 of our tables and styled nowhere until now, so
+   everything they draw was lost: the frame AND the full-height column rules.
+   Ported verbatim from the TemplateStyles en.wikisource serves with the page.
+   `border:1px solid` with no colour is currentColor — the ink the scans use. */
+.data-table._tablecolhdborder,
+.data-table._tablegridhdborder {
+  border-collapse: collapse; border: 1px solid;
+  margin-left: auto; margin-right: auto;
+}
+.data-table._tablecolhdborder th {
+  border-bottom: 1px solid; border-left: 1px solid; text-align: center;
+}
+.data-table._tablecolhdborder td { border-left: 1px solid; padding-left: 5px; }
+.data-table._tablegridhdborder th {
+  border-left: 1px solid; border-right: 1px solid; border-bottom: 1px solid;
+  text-align: center;
+}
+.data-table._tablegridhdborder td {
+  border-left: 1px solid; border-right: 1px solid; border-bottom: 1px solid;
+  padding-left: 5px;
+}
 caption { font-style: italic; padding: 0.3em; }
 
 /* ── verse / outline ── */
