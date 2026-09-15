@@ -31,6 +31,18 @@ def add_reference_aliases(articles, aliases):
             if not name or any(c in name for c in ("«", "<", ">", "#", "\n")) or "://" in name:
                 rejected.append({"from": stem, "target": target, "spelling": name, "reason": "Not a plain article lookup target"})
                 continue
+            # A `/` is a Wikisource PAGE PATH, so the name addresses another work
+            # and is not an EB1911 lookup name — `BIBLE (KING JAMES)/NUMBERS: 17:8`
+            # and `UNITED STATES STATUTES AT LARGE/VOLUME 1/1ST CONGRESS/...` were
+            # both indexed as headwords, stacking rows in the reader's list under
+            # an article whose name they are not.  The same cross-work leak as
+            # `{{DNB lkpl}}`, arriving by a different route.
+            # No EB1911 title contains a `/` (checked against the whole corpus and
+            # the shipped index), so this can only remove foreign addresses.
+            if "/" in name:
+                rejected.append({"from": stem, "target": target, "spelling": name,
+                                 "reason": "Wikisource page path, not an EB1911 article name"})
+                continue
             for spelling in {name, normalize_xref_target(fold_accents(name))}:
                 aliases[spelling].add(target)
                 accepted[spelling].add(target)
