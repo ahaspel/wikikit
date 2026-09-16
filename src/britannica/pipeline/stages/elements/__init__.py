@@ -487,6 +487,39 @@ def _process_wrap_half(raw, opening):
     return f"«{tag}[style:{spec['css']}]»" if opening else f"«/{tag}»"
 
 
+# The figure constructs, each with the placement ITS OWN template gives it.  Read
+# from the templates on en.wikisource, not assumed — they do not agree:
+#
+#   {{img float}}  `{{#switch:{{{align|right}}}` — a float, default RIGHT.  We
+#                  emit LEFT for the align-less ones deliberately: the scans put
+#                  122 of the 227 on the left and only 105 on the right, so the
+#                  template's default is wrong about the book more often than
+#                  not.  data/img_float_align.json is the per-figure record.
+#   {{figure}}     `float:{{{position|left}}}` — a float, default LEFT.
+#   {{FI}}         redirects to {{FreedImg}}, whose stylesheet has NO float at
+#                  all: `.wst-freedimg { margin: .40em auto; text-align:center }`
+#                  is a CENTRED BLOCK.  Its instances here are full-width maps
+#                  (France1911topo at 810px, North America at 600px); floating
+#                  one to a side is simply not what the source asks for.
+#
+# Anything NOT listed (a bare `[[File:]]` glyph, a crop, a raw image) is inline
+# where it stands.  `align` alone cannot make this call: an `{{img float}}`
+# stating no align looks exactly like a bare `[[File:]]` by the time we see it.
+_FIGURE_PLACEMENT = (
+    (re.compile(r"\{\{\s*(?:img float|figure)\s*\|", re.IGNORECASE), "left"),
+    (re.compile(r"\{\{\s*FI\s*\|", re.IGNORECASE), "center"),
+)
+
+
+def _figure_placement(raw):
+    """The construct's own default placement, or None if it is not a figure."""
+    stripped = raw.strip()
+    for pattern, placement in _FIGURE_PLACEMENT:
+        if pattern.match(stripped):
+            return placement
+    return None
+
+
 def _parse_image(raw):
     """Every image spelling → ``(filename, width, align, caption_raw)`` — the ONE parse.
     ``caption_raw`` is "" unless the wrapper glued a caption INSIDE it: a `thumb`/`frame`
@@ -518,7 +551,7 @@ def _parse_image(raw):
         wm = re.match(r"(\d+)", params.get("width", ""))
         return (fn, int(wm.group(1)) if wm else None,
                 params.get("align") or None, params.get("caption", ""))
-    if re.match(r"\{\{\s*(?:img float|figure|FI)\s*\|", tmpl, re.IGNORECASE):
+    if _figure_placement(tmpl):
         from britannica.parsers import img_float as _imgf
         inner = tmpl[2:-2] if tmpl.startswith("{{") and tmpl.endswith("}}") else tmpl
         parsed = _imgf.parse(inner)
@@ -559,17 +592,30 @@ def _process_image(raw, inner, context, inner_registry):
     if inner_registry is not None:
         cap = substitute_children(cap, inner_registry)
     cap = cap.strip()
-    if not cap:
-        return build_img_marker(fn, align=align, width=width)      # bare leaf carries its align
+    placement = _figure_placement(raw)
+    if not cap and placement is None:
+        # An image in running text is not a figure: a bare `[[File:]]` glyph must stay
+        # INLINE.  It still carries its own `align` on the marker.
+        return build_img_marker(fn, align=align, width=width)
     # Captioned figure: image + caption as ONE inline-float unit.  The span is inline-LEVEL,
     # so it floats INSIDE the paragraph and the prose wraps it — no `<p>`-breaking block.  A
     # floated span shrink-wraps to its content (the plate), so the caption stays snug at the
     # image width even with no explicit width — exactly what the figtable's `<table>` gave.
     leaf = build_img_marker(fn, width=width)
     w = f";width:{width}px" if width else ""
-    align = align or "left"                                        # img float's long-standing default
+    # The source's own `align` first; then the CONSTRUCT's default, which differs per
+    # template (see `_FIGURE_PLACEMENT`); `left` only for the captioned non-figure
+    # spellings (`[[File:…|thumb|caption]]`) that reach here, whose behaviour is unchanged.
+    align = align or placement or "left"
     box = (f"display:block;margin-left:auto;margin-right:auto{w}"
            if align == "center" else f"float:{align}{w}")
+    if not cap:
+        # A CAPTIONLESS figure still takes its placement.  This used to return the bare
+        # leaf, so the marker carried `align` and nothing ever rendered it: 58 instances
+        # sat inline in the prose with the source's placement silently dropped — 18 of
+        # them stating `align` outright, where we ignored an instruction, not a default.
+        # The placement is the construct's whole point; only the caption row is optional.
+        return f"«SPAN[style:{box}]»{leaf}«/SPAN»"
     return f"«SPAN[style:{box};text-align:center]»{leaf}«BR»{cap}«/SPAN»"
 
 
