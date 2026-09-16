@@ -925,6 +925,12 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
                      load(s).get("body") or "")
         asset = coll.asset_js()
         open(os.path.join(oebps, "fts-data.js"), "w", encoding="utf-8").write(asset)
+        # The site's ranking, carried in verbatim rather than retyped — same file
+        # `mdx/native.py` copies into the dictionary package.  Safe to load here:
+        # it defines functions and assigns `window.BritannicaSearch`; its only
+        # `fetch` lives inside `createSearchClient`'s closure and never runs.
+        shutil.copyfile(os.path.join(ROOT, "tools", "viewer", "search-api.js"),
+                        os.path.join(oebps, "search-api.js"))
         log(f"fts: {len(fts_docs)} docs, {len(coll.by_term):,} terms, "
             f"asset {len(asset)/1e6:.1f}MB")
         ft_script = (
@@ -941,18 +947,48 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             ' if(r.miss)msg.push("no article contains \\u201c"+r.miss+"\\u201d");\n'
             " if(r.docs.length)msg.push(r.docs.length+\" article\"+(r.docs.length===1?\"\":\"s\"));\n"
             ' note.textContent=msg.join(" \\u00b7 ");\n'
-            # title-boosted order: articles whose title carries a query token first
+            # THE site's ranking, not a second one.  `titleRank` comes from
+            # `tools/viewer/search-api.js`, shipped beside this page — the same
+            # file the website and the MDX helper load, so all three order
+            # results identically and cannot drift ([[feedback_tune_dont_fork]]).
+            #
+            # What was here was a ONE-BIT boost: "title contains any query word"
+            # or not, then alphabetical.  Searching `steam engine` put every
+            # title holding `steam` OR `engine` first in A-Z order and several
+            # thousand body hits after it, also A-Z.  titleRank is six tiers —
+            # exact title, first word, any word, prefix, substring, body-only.
+            #
+            # The site breaks ties on BODY-match count; this index cannot, being
+            # set-based with no term frequencies (that is what keeps it to 23MB),
+            # so ties fall to title order as before.  Ranking the body-only tier
+            # would need positions the asset deliberately does not carry.
+            # titleRank tests the query as a PHRASE, so on a multi-word query
+            # almost everything lands in its body-only tier: `steam engine` puts
+            # STEAM ENGINE first (exact) and then drops ENGINE, STEAM and MARINE
+            # ENGINEERING into tier 5 beside BOILER and CORNWALL.  The site never
+            # notices because it breaks that tie on body-match COUNT.
+            #
+            # This index has no counts, so the old one-bit signal becomes the
+            # tie-break instead of being replaced by it: how many of the query's
+            # TERMS the title carries.  Phrase tiers first (the site's order),
+            # then term coverage, then title.  Strictly more information than
+            # either arrangement alone.
+            " var TR=(window.BritannicaSearch||{}).titleRank;\n"
+            " var terms=r.terms||[];\n"
             " var hits=[];\n"
             " for(var i=0;i<r.docs.length;i++){\n"
-            "  var d=FTS_DOCS[r.docs[i]];\n"
-            "  var tf=ftsFold(d[0]);var boost=0;\n"
-            "  for(var k=0;k<(r.terms||[]).length;k++)if(tf.indexOf(r.terms[k])!==-1){boost=1;break;}\n"
-            "  hits.push([boost?0:1,d[0],d[1]]);\n"
+            "  var d=FTS_DOCS[r.docs[i]];var tf=ftsFold(d[0]);\n"
+            "  var cover=0;\n"
+            "  for(var k=0;k<terms.length;k++)if(tf.indexOf(terms[k])!==-1)cover++;\n"
+            "  var rank=TR?TR(d[0],q):(cover?2:5);\n"
+            "  hits.push([rank,-cover,d[0],d[1]]);\n"
             " }\n"
-            " hits.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:a[1]>b[1]?1:0);});\n"
+            " hits.sort(function(a,b){return a[0]-b[0]||a[1]-b[1]||"
+            "(a[2]<b[2]?-1:a[2]>b[2]?1:0);});\n"
             ' var html="";\n'
+            # tuple is [rank, -coverage, title, href] — title 2, href 3
             " for(var j=0;j<Math.min(hits.length,200);j++)"
-            "html+='<li><a href=\"'+hits[j][2]+'\">'+esc(hits[j][1])+'</a></li>';\n"
+            "html+='<li><a href=\"'+hits[j][3]+'\">'+esc(hits[j][2])+'</a></li>';\n"
             " if(hits.length>200)html+='<li>\\u2026 '+(hits.length-200)+' more \\u2014 add a word</li>';\n"
             " out.innerHTML=html;\n"
             "}\n"
@@ -997,6 +1033,9 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
             '<p id="keys" class="keyrow"></p>'
             '<p id="note" style="color:#6b5e4f"></p>'
             '<ul id="results"></ul></div>'
+            # `search-api.js` FIRST: the ranking must exist before the query
+            # handler binds.  It is the site's own file, copied in unchanged.
+            '<script src="search-api.js"></script>'
             '<script src="fts-data.js"></script>'
             f'<script>{ft_script}</script>'))
 
@@ -1396,6 +1435,8 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         manifest.append(f'<item id="mpng-{n}" href="math/{name}" media-type="image/png"/>')
     if with_search:
         manifest.append('<item id="fts-data" href="fts-data.js" '
+                        'media-type="application/javascript"/>')
+        manifest.append('<item id="search-api" href="search-api.js" '
                         'media-type="application/javascript"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
 
