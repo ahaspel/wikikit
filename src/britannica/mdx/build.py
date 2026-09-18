@@ -80,17 +80,14 @@ def lookup_fold(text: str) -> str:
     return "".join(c for c in fold_accents(text).casefold() if c.isalnum())
 
 
-def add_article_topics(body, links):
-    """Place visible topic navigation after the byline, or unsigned citation."""
-    anchor = re.search(r'<div class="contributors">By .*?</div>', body, re.S)
-    if anchor is None:
-        anchor = re.search(r'</h1>\s*<div\b[^>]*>.*?</div>', body, re.S)
-    if anchor is None:
-        raise ValueError("Article header missing for topic navigation")
-    navigation = '<div class="article-topics">Topics: ' + ' · '.join(
-        '<a href="' + html.escape(url, quote=True) + '">' + html.escape(label) + '</a>'
-        for label, url in links) + '</div>'
-    return body[:anchor.end()] + navigation + body[anchor.end():]
+def add_article_topics(body, paths):
+    """Place topic navigation after the byline, or the unsigned citation line.
+
+    Both the POSITION and the MARKUP are shared with the EPUB and the site —
+    `paths` is a list of paths, each a list of `(label, url)` segments.
+    """
+    from britannica.render.article import insert_after_byline, topic_trail_html
+    return insert_after_byline(body, topic_trail_html(paths))
 
 
 class Links:
@@ -148,7 +145,6 @@ def stylesheet() -> str:
     return css + """
 .eb1911 {line-height:1.5; color:inherit; background:transparent;}
 .eb1911 .contributors {color:inherit; opacity:.8;}
-.eb1911 .article-topics {font-size:.85em; margin:.4em 0 1em;}
 .eb1911 svg.math-display {display:block; max-width:100%; height:auto; margin:1em auto;}
 .eb1911 svg.math-inline {max-width:100%;}
 .eb1911 .wide-table-inline, .eb1911 .wide-table-wrap {overflow-x:auto;}
@@ -503,7 +499,11 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             label = " › ".join(topic["path"]) if isinstance(topic["path"], list) else topic["path"]
             entries[key] = wrap("<h1>" + html.escape(label) + "</h1><p>Articles in this sample</p>" + list_links((articles[s]["title"], entry_url(article_key(s))) for s in members))
             for stem in members:
-                sample_memberships[stem].append((label, entry_url(key)))
+                # One (label, url) per SEGMENT; the sample bundles only the leaf
+                # topic page, so every segment points at it rather than pretending
+                # an ancestor page exists in a sample that does not carry one.
+                segs = topic["path"] if isinstance(topic["path"], list) else topic["path"].split(" > ")
+                sample_memberships[stem].append([(s, entry_url(key)) for s in segs])
         for stem, links in sample_memberships.items():
             entries[article_key(stem)] = add_article_topics(entries[article_key(stem)], links)
         ancillary = {}

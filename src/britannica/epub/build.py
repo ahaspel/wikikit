@@ -43,6 +43,7 @@ from britannica.epub import pack
 from britannica.epub import readers_guide as RG
 from britannica.epub import math_assets as MA
 from britannica.markers import markers_to_text
+from britannica.render.article import insert_after_byline, topic_trail_html
 from britannica.export.tei import EDITION_DOI
 from britannica.render.article import render_article, _section_slug
 
@@ -661,13 +662,14 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         if paths:
             # The article's topic memberships, each path element linked to its
             # topic page — the book's form of the site's "In: …" overlay.
-            ps = "".join(
-                "<p>In: " + " › ".join(
-                    f'<a href="{fname_of_topic[id(n)]}">'
-                    f'{_html.escape(n.get("name") or "?")}</a>'
-                    for n in path) + "</p>"
-                for path in paths)
-            xhtml += f'<section class="topic-refs">{ps}</section>'
+            #
+            # PLACED AFTER THE BYLINE, not appended.  A chunk holds dozens of
+            # articles, so an appended block sits against the NEXT article's
+            # opening card and reads as belonging to it.  The position is the
+            # site's own topic slot, shared with the MDX.
+            xhtml = insert_after_byline(xhtml, topic_trail_html(
+                [[(n.get("name") or "?", fname_of_topic[id(n)]) for n in path]
+                 for path in paths]))
         open(os.path.join(render_dir, stem + ".xhtml"), "w", encoding="utf-8").write(xhtml)
         if (i + 1) % 2000 == 0:
             log(f"  staged {i + 1}/{len(spine_stems)}")

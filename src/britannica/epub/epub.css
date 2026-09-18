@@ -216,6 +216,9 @@ svg.math-display { max-width: 100%; height: auto; }
 .frontmatter .sc { font-variant: small-caps; }
 
 /* ── per-article topic references (the site's "In: …" overlay, baked) ── */
-.topic-refs { border-top: 1px solid #d4cab8; margin-top: 1.2em; padding-top: 0.4em;
-  font-size: 0.85em; color: #6b5e4f; }
-.topic-refs p { margin: 0.15em 0; }
+/* Topic memberships sit in the article HEADER, directly under the byline — the
+   site's own slot.  So they are styled like the byline and NOT like a footer:
+   the `border-top` + `margin-top: 1.2em` this rule used to carry were for a
+   block appended at the END of the article, and in the header they drew a rule
+   straight through it. */
+.topic-refs { font-size: 0.9em; color: #555; margin: 0.2em 0 0.5em; text-align: left; }

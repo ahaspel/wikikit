@@ -427,6 +427,50 @@ def _build_xref_href(xref, bundled=None):
     return base
 
 
+# The article header's topic slot, in ONE place.  `topics_html` below is always
+# empty because topics are a client-side overlay ([[project_topic_overlay]]), and
+# the viewer fills this exact position — "the original slot (after the 'By …'
+# byline)".  A format that BAKES topics instead (EPUB, MDX) has to land in the
+# same position, so the rule lives here rather than being spelled once per
+# format.  The fallback is the unsigned-article citation line, which is the first
+# div after the <h1>.
+_BYLINE_RE = re.compile(r'<div class="contributors">By .*?</div>', re.S)
+_HEADER_LINE_RE = re.compile(r'</h1>\s*<div\b[^>]*>.*?</div>', re.S)
+
+
+def insert_after_byline(body: str, fragment: str) -> str:
+    """Splice `fragment` into the article header, after the byline.
+
+    Appending to the END of an article instead puts the topics hard against the
+    NEXT article's opening card wherever articles share a file — an EPUB chunk
+    holds dozens — so the reader cannot tell which article they belong to.
+    """
+    m = _BYLINE_RE.search(body) or _HEADER_LINE_RE.search(body)
+    if m is None:
+        raise ValueError("Article header missing: nowhere to place topic navigation")
+    return body[:m.end()] + fragment + body[m.end():]
+
+
+def topic_trail_html(paths) -> str:
+    """The article's topic memberships, written as the site writes them.
+
+    ONE "In:", the paths separated by ";", the segments within a path by "›", and
+    every segment its own link to that bucket's page — `Astronomy › General` is a
+    real bucket, not decoration, so each level is reachable.
+
+    `paths` is a list of paths; each path is a list of `(label, url)` segments,
+    root first.  The three baked formats differed gratuitously before this —
+    the EPUB repeated "In:" once per path, the MDX said "Topics: a · b" and
+    linked whole paths rather than segments — so this owns the WHOLE fragment,
+    markup and class included, and the callers supply only the links.
+    """
+    trail = "; ".join(
+        " › ".join(f'<a href="{_html.escape(url, quote=True)}">{_html.escape(label)}</a>'
+                   for label, url in path)
+        for path in paths)
+    return f'<div class="topic-refs">In: {trail}</div>'
+
+
 def render_article(article, *, target="site", epub_bundled=None):
     """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
     (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor

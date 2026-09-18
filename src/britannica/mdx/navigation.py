@@ -134,8 +134,15 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
     for stem, a in articles.items():
         ids = memberships.get(stem + ".json", [])
         if ids:
-            links = [(topic_by_id[i]["path"], topic_link(topic_by_id[i])) for i in ids]
-            entries[article_key(stem)] = add_article_topics(entries[article_key(stem)], links)
+            # Each SEGMENT gets its own link, as on the site: a topic's path is
+            # stored joined ("Astronomy > General"), so walk its prefixes back
+            # through `by_path` to reach every level's own page.
+            paths = []
+            for i in ids:
+                segs = topic_by_id[i]["path"].split(" > ")
+                paths.append([(s, topic_link(by_path[" > ".join(segs[:k + 1])]))
+                              for k, s in enumerate(segs)])
+            entries[article_key(stem)] = add_article_topics(entries[article_key(stem)], paths)
 
     entries[PREFIX + "contributors"] = wrap("<h1>Contributors</h1>" + list_links(
         (c["person"].get("display_name") or c["person"]["full_name"], entry_url(PREFIX + "contributor:" + slug))
