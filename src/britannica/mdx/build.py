@@ -32,6 +32,7 @@ from britannica.epub.images import diet_image
 from britannica.export.corpus import load_corpus
 from britannica.export.article_json import stable_id_from_filename
 from britannica.export.download import _topic_index
+from britannica import provenance as _prov
 from britannica.markers import strip_title_markers
 from britannica.render.article import render_article, _section_slug
 from britannica.render.inline import _article_url
@@ -573,8 +574,11 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                     "input_sha256": input_hashes, "input_hash_mode": "raw bytes" if sample else "sorted-key JSON payload",
                     "index_sha256": digest(index_raw), "ancillary": ancillary,
                     "topics_sha256": digest(ct_raw), "source_assets": source_assets,
-                    "export_code_sha256": {str(p.relative_to(ROOT)).replace("\\", "/"): digest(p.read_bytes())
-                                           for p in sorted((ROOT / "src/britannica").rglob("*.py"))},
+                    # Same rule as before, now owned by britannica.provenance so
+                    # the EPUB records the identical thing rather than a second
+                    # implementation of it.
+                    "export_code_sha256": _prov.source_files(),
+                    "provenance": _prov.fingerprint(),
                     "sample_spec_sha256": digest(SAMPLE.read_bytes()),
                     "reader_verification": "pending; see separate reader QA report"}
         for ext in (".mdx", ".mdd"):

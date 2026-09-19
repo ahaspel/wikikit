@@ -1540,6 +1540,20 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
     stats = {"path": out_path, "articles": len(spine_stems), "chunks": n_chunks,
              "images": len(seen_imgs), "math_png": len(seen_math),
              "size_mb": round(os.path.getsize(out_path) / 1e6, 1)}
+    # WHAT THIS WAS BUILT FROM.  A sha256 beside an artifact says only "these are
+    # its bytes"; it cannot say whether those bytes came from the current corpus
+    # and the current code, which is the question that actually goes wrong — the
+    # vol-1 sampler has now shipped a build behind twice, once four days behind
+    # the corpus and once behind a CODE change, both times under a freshly
+    # computed sha256 that made it look current.  A SIDECAR, not a file inside
+    # the zip: recording provenance must not change the artifact it describes.
+    from britannica import provenance as _prov
+    prov = _prov.fingerprint(payloads=None)
+    prov.update({"articles": len(spine_stems), "chunks": n_chunks,
+                 "target": target, "built_utc": _dt.datetime.now(_dt.timezone.utc).isoformat()})
+    with open(out_path + ".provenance.json", "w", encoding="utf-8", newline="\n") as f:
+        json.dump(prov, f, indent=2, sort_keys=True)
+        f.write("\n")
     log(f"built {out_path}: {stats['articles']} articles in {stats['chunks']} chunks, "
         f"{stats['images']} images, {stats['size_mb']} MB")
     return stats
