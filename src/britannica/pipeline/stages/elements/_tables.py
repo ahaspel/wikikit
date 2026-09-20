@@ -326,6 +326,21 @@ def styled_marker(tag: str, css: str, body: str) -> str:
     return f"«{tag}[style:{css}]»{body}«/{tag}»"
 
 
+def br_stack(top: str, bottom: str) -> str:
+    """Two markers stacked by a line break — `top«BR»bottom`.
+
+    The figure producer stacks a cut over its caption and the dual-line producer
+    stacks two cells; spelling `f"{a}«BR»{b}"` in both made the stack a second
+    implementation.  Either side empty returns the other, so a missing half
+    yields content rather than a dangling break.
+    """
+    if not top:
+        return bottom
+    if not bottom:
+        return top
+    return f"{top}«BR»{bottom}"
+
+
 def style_block(content: str, *, css: str = "", tag: str = "DIV",
                 ctr: bool = False, sc: bool = False) -> str:
     """The ONE style-marker emitter: an (already-recursed) `content` + a style

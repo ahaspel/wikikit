@@ -108,8 +108,13 @@ table { border-collapse: collapse; margin: 1em auto; font-size: 0.9em; max-width
    otherwise INHERIT, so `text-align:left` silently overrode every table whose
    source says `text-align:center` — the whole of AGRICULTURE Table IX, whose
    brace then sat at the left edge of its cell instead of centred under "Hay.".
-   That read as a broken transform; it was this.  Let the source decide, as the
-   viewer does: `td` inherits, `th` keeps the browser's centring. */
+   That read as broken mirroring; it was this.  Let the source decide, as the
+   viewer does: `td` inherits, `th` keeps the browser's centring.
+   (Careful with the wording here: `epub_css("kindle")` asserts the Kindle build
+   contains no CSS scaling/rotation at all, by plain substring, so naming that
+   property anywhere in this file -- even in prose -- fails the gate.  The
+   bluntness is the point: Amazon's rasterizer dies on any such node, and a
+   check that can be talked around is not a check.) */
 td, th { padding: 0.15em 0.5em; vertical-align: top; }
 /* No blanket cell rule.  `.data-table td {border:1px solid #ccc}` drew a grey
    grid around EVERY cell of all 11,814 tables — rules the printed page does not

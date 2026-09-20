@@ -609,14 +609,18 @@ def _process_image(raw, inner, context, inner_registry):
     align = align or placement or "left"
     box = (f"display:block;margin-left:auto;margin-right:auto{w}"
            if align == "center" else f"float:{align}{w}")
+    # Through `styled_marker`, the ONE styled-wrapper marker — spelling the
+    # `«SPAN[style:…]»…«/SPAN»` template here made it a second implementation of
+    # the wrapper the `<span>` producer already owns.
+    from britannica.pipeline.stages.elements._tables import br_stack, styled_marker
     if not cap:
         # A CAPTIONLESS figure still takes its placement.  This used to return the bare
         # leaf, so the marker carried `align` and nothing ever rendered it: 58 instances
         # sat inline in the prose with the source's placement silently dropped — 18 of
         # them stating `align` outright, where we ignored an instruction, not a default.
         # The placement is the construct's whole point; only the caption row is optional.
-        return f"«SPAN[style:{box}]»{leaf}«/SPAN»"
-    return f"«SPAN[style:{box};text-align:center]»{leaf}«BR»{cap}«/SPAN»"
+        return styled_marker("SPAN", box, leaf)
+    return styled_marker("SPAN", f"{box};text-align:center", br_stack(leaf, cap))
 
 
 # LB / CITE producers folded into the peel/recurse/wrap mechanism (`_PR_WRAP` rows

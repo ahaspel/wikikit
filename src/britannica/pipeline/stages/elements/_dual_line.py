@@ -87,7 +87,9 @@ def _process_dual_line(raw, inner, context, inner_registry) -> str:
     A ``style=`` param rides onto a wrapping span (carried, not dropped, not leaked).
     No re-``process_elements`` — the cells ARE the recursion."""
     from britannica.pipeline.stages.elements import _cell_markers
+    from britannica.pipeline.stages.elements._tables import br_stack, styled_marker
     cells = _cell_markers(inner_registry)
-    stack = " ".join(cells).strip() if len(cells) < 2 else f"{cells[0]}«BR»{cells[1]}"
-    css = _dual_line_decoration(raw)
-    return f"«SPAN[style:{css}]»{stack}«/SPAN»" if css else stack
+    stack = " ".join(cells).strip() if len(cells) < 2 else br_stack(cells[0], cells[1])
+    # `styled_marker` IS the empty-css fallthrough this used to spell itself, and
+    # it drops a wrapper with nothing in it rather than emitting an empty one.
+    return styled_marker("SPAN", _dual_line_decoration(raw), stack)

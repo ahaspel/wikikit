@@ -13,7 +13,6 @@ import argparse
 import gc
 from collections import defaultdict
 from datetime import datetime, timezone
-import hashlib
 import html
 from html.parser import HTMLParser
 from importlib.metadata import version
@@ -38,15 +37,12 @@ from britannica.render.article import render_article, _section_slug
 from britannica.render.inline import _article_url
 from britannica.util.strings import fold_accents, strip_html_tags
 from britannica.xrefs.normalizer import normalize_xref_target
+from britannica.provenance import digest
 
 ROOT = Path(__file__).resolve().parents[3]
 SITE = "https://britannica11.org"
 PREFIX = "EB1911:"
 SAMPLE = Path(__file__).with_name("sample.json")
-
-
-def digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
 
 
 def article_key(stem: str) -> str:
