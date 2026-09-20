@@ -296,6 +296,72 @@ def _resumes_interrupted_sentence(raw: str, context) -> bool:
     return bool(_RESUMPTION_JOINER.match(head)) or head[:1].islower()
 
 
+# ── A note ENDS a paragraph, so what follows one opens a new one ─────────────
+#
+# The other half of the same defect, in the opposite direction.  Small type
+# means matter that carries LESS emphasis — a note, a bibliography, a run of
+# statistics — and matter like that is never set inside a running sentence, so
+# the prose after it starts a paragraph.  The source often supplies no blank
+# line there and we then set it flush, which reads as though the note ran on
+# into the text.
+#
+# 44 sites drawn at random were read against the scans: 40 indented, 4 not.  All
+# four exceptions follow a displayed QUOTATION — verse in BLANK VERSE,
+# ANTICLIMAX and BALLADS, a manuscript quotation in FREEMASONRY — which is
+# quoted matter sitting INSIDE a paragraph, not a note ending one.  Quotation
+# alone is not the discriminator (DERBY and CORPORATION resume after quotations
+# and are correctly indented, and BALLADS p.266 has one of each in its two
+# columns), so the guard is the same continuation test used above: matter that
+# reads as the rest of a sentence is left alone.  That catches the one
+# conspicuous exception (BLANK VERSE resumes lowercase, mid-clause); the rest
+# begin new sentences, where a paragraph break that need not be there is a far
+# milder fault than a broken clause.
+_SMALL_TYPE_CSS = "font-size:83%"
+_ONE_NEWLINE = re.compile(r"^\n(?!\n)")
+
+
+def _closes_small_type(context) -> bool:
+    """Did the left neighbour END a small-type block?
+
+    Two shapes, because the source writes both.  A CONTAINED block is one
+    element and carries its own style in its marker.  An unpaired half is its
+    own element whose marker is a bare «/DIV» — that one is identified from its
+    raw, through the same `_TEMPLATE_STYLE_WRAPPERS` registry the producers read,
+    so "what counts as small type" keeps one owner.
+    """
+    marker = (getattr(context, "prev_marker", "") or "").rstrip()
+    if not marker.endswith("«/DIV»"):
+        return False
+    if marker.startswith("«DIV[style:") and _SMALL_TYPE_CSS in marker[:80]:
+        return True
+    if marker != "«/DIV»":
+        return False
+    from britannica.pipeline.stages.elements._tables import _TEMPLATE_STYLE_WRAPPERS
+    m = _WRAP_HALF_NAME_RE.match(getattr(context, "prev_raw", "") or "")
+    if not m:
+        return False
+    name = re.sub(r"\s+", " ", m.group(1).strip().lower())
+    return (_TEMPLATE_STYLE_WRAPPERS.get(name) or {}).get("css") == _SMALL_TYPE_CSS
+
+
+def _opens_paragraph_after_note(raw: str, context) -> bool:
+    """Should this run open a paragraph the source did not mark?"""
+    # EXACTLY ONE newline.  Two or more and the source already says paragraph;
+    # NONE and the text runs on in the same line, which is not a resumption at
+    # all — a crossing wrapper closes mid-line (`{{EB1911 fine print/e}} Z`
+    # inside a still-open `<div>`) and opening a paragraph there would break
+    # flowing text in half.
+    if not _ONE_NEWLINE.match(raw or ""):
+        return False
+    if not _closes_small_type(context):
+        return False
+    head = (raw or "").lstrip()
+    if not head:
+        return False
+    # THE GUARD.  Anything that reads as the rest of a sentence is left flush.
+    return not (_RESUMPTION_JOINER.match(head) or head[:1].islower())
+
+
 def _produce_body(raw, inner, context, inner_registry):
     """BODY producer — also the «\\n\\n producer».  The body run is the inert text
     between element markers; this producer turns a blank line into a paragraph-
@@ -323,6 +389,12 @@ def _produce_body(raw, inner, context, inner_registry):
     # source states the break outright instead of leaving it to a blank line.
     if _resumes_interrupted_sentence(raw, context):
         raw = _LEADING_BREAK.sub("\n", raw, count=1)
+    elif _opens_paragraph_after_note(raw, context):
+        # Spelled as a blank line rather than a «P» so this producer keeps ONE
+        # emission point for the marker: the run below still does the converting.
+        # The guard has already established a single leading newline, so this
+        # makes it a pair and nothing else moves.
+        raw = "\n" + raw
     # A literal `<p>` IS a paragraph break, exactly like the blank line below — the
     # source writes both (GENESIS/CLIMATE prose, CONTINUED FRACTIONS' matrix-cell
     # `<p>a</p><p>-1</p>` stack).  Recognize it into the SAME «P» so it never rides

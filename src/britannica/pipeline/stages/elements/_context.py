@@ -42,6 +42,12 @@ class ElementContext:
     # it is the fact that settles it, and only the left neighbour carries it.
     prev_label: str | None = None
     prev_marker: str = ""
+    # The left neighbour's RAW too, because one shape does not identify itself in
+    # its marker: `{{EB1911 fine print/e}}` is its own element and produces bare
+    # «/DIV», indistinguishable from `{{outdent/e}}`.  Which wrapper closed is
+    # only in the raw, and the BODY producer needs it to tell a NOTE ending from
+    # any other div ending.
+    prev_raw: str = ""
     # STICKY (set once a TABLE/REF ancestor is entered, inherited by every descendant):
     # this node's content is decoded wholesale by ``decode_inline`` (a table is one
     # decode pass; a footnote body is another), so a verse / outline here must render in
