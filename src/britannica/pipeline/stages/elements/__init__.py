@@ -242,12 +242,28 @@ def _dehyphenate(text, contiguous=False):
 # single column).  Neither witness alone is trusted: "thus" can open a genuine
 # new paragraph, and a block ending on a comma can be followed by one.
 #
-# Only «/CTR» for now.  Tables, margin divs and styled divs hold the other 123
-# of 931 sites and are a separate slice — widening is adding to this tuple, once
-# the same scan check has been run for that shape.
-_BLOCK_CLOSES = ("«/CTR»",)
+# Every close that forces the browser to break the paragraph.  An INLINE styler
+# must never be here: after one, a blank line is an ordinary paragraph break in
+# running prose, not a resumption, and suppressing it would join two paragraphs.
+# That is why the label cannot be the test — STRIP covers `{{center|…}}` and
+# `{{csc|…}}` alike, block and inline — and the marker can: a producer's own
+# close says what it made.
+#
+# The 46 scan reads that validated the rule spanned all three shapes (GEOMETRY's
+# table, MECHANICS' styled div, INTERPOLATION's margin div), so widening here is
+# the same rule over the same evidence, not a new claim.  «/DIV» also closes the
+# small-type family, where exactly ONE corpus site has both witnesses — a note
+# that really does end mid-clause is a continuation like any other.
+_BLOCK_CLOSES = ("«/CTR»", "«/TABLE»", "«/DIV»")
 _SENTENCE_OPEN = (",", ";", ":")
 _LEADING_BREAK = re.compile(r"^\n{2,}")
+# TeX SPACING commands end in punctuation characters, and a displayed formula
+# routinely ends with one: `H=4T^2, \mbox{ or } (2T)^2. \,` really ends on a full
+# STOP, but its last character is the comma of `\,`.  Read that way the rule
+# suppressed a paragraph break BALLISTICS wants (vol 3 p.273, "Thus, if the time
+# of flight of a shell is 5 sec."), and none of the 46 scan reads happened to
+# cover a `\,`-terminated formula — the corpus diff is what surfaced it.
+_TEX_TAIL = re.compile(r"(?:\s|\\[,;:!>]|\\q?quad\b|\\thinspace\b|\\ )+$")
 # Words that cannot begin an English sentence, so their clause began earlier.
 # A lowercase opening says the same thing and is kept as a separate test, since
 # mathematics resumes lowercase far more often than it resumes with a joiner.
@@ -273,7 +289,7 @@ def _resumes_interrupted_sentence(raw: str, context) -> bool:
     # `strip_marker_tokens` is the ONE way to read text through markers; it drops
     # delimiters and leaves content, so this sees the block's last PRINTED
     # character rather than the tail of its markup.
-    printed = strip_marker_tokens(prev, "").rstrip()
+    printed = _TEX_TAIL.sub("", strip_marker_tokens(prev, ""))
     if printed[-1:] not in _SENTENCE_OPEN:
         return False
     head = raw.lstrip()
