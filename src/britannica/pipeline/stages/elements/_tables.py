@@ -331,13 +331,18 @@ def br_stack(top: str, bottom: str) -> str:
 
     The figure producer stacks a cut over its caption and the dual-line producer
     stacks two cells; spelling `f"{a}«BR»{b}"` in both made the stack a second
-    implementation.  Either side empty returns the other, so a missing half
-    yields content rather than a dangling break.
+    implementation.
+
+    UNCONDITIONAL, and it has to be.  This first "helpfully" returned the other
+    side when one was empty, which reads like tidying a dangling break and is a
+    content change: an EMPTY CELL STILL STACKS.  `{{dual line||Na}}` (8 instances
+    corpus-wide, five of them in COUMARONES' structural formulae) exists exactly
+    to put `Na` on its own line under what precedes it, and dropping the break
+    collapsed `H / O / Na` onto `H / ONa`.  The source wrote the empty half on
+    purpose ([[feedback_authors_dont_add_for_health]]); carrying it is not
+    optional ([[feedback_when_in_doubt_carry]]).  21 seed snapshots called the
+    change a no-op because none of them holds one of the 8.
     """
-    if not top:
-        return bottom
-    if not bottom:
-        return top
     return f"{top}«BR»{bottom}"
 
 
