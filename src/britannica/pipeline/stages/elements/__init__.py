@@ -55,6 +55,7 @@ from britannica.pipeline.stages.elements._registry import (
     TABLE_LABELS,
     substitute_children,
 )
+from britannica.markers import strip_marker_tokens
 from britannica.pipeline.stages.elements._indent import (
     process_indent, process_indent_block)
 from britannica.pipeline.stages.elements._list import (
@@ -220,6 +221,65 @@ def _dehyphenate(text, contiguous=False):
     return (_HYPHEN_CONTIG_RE if contiguous else _HYPHEN_RE).sub(_repl, text)
 
 
+# ── A body run that RESUMES a sentence, rather than opening a paragraph ──────
+#
+# The book sets prose FLUSH when a display block interrupted a running sentence
+# and INDENTS it when a new paragraph starts.  The transcription does not record
+# which, and cannot be made to: Wikisource renders EB1911 with no `text-indent`
+# at all, so a transcriber got no feedback that would make them encode the
+# difference, and the blank line that might have carried it is noise (after
+# `{{center|…}}`: blank line 26% continuations, single newline 41% — mixtures
+# both).  So the fact has to be recovered, and there are exactly two witnesses:
+#
+#   * the BLOCK's own last character is `,` `;` or `:` — the sentence that ran
+#     into it had not ended.  The text BEFORE the block will not do: a displayed
+#     formula is part of the sentence and routinely ENDS it ("we must write
+#     [HCl+KOH=KCl+H₂O]."), which is why that test over-counts sixfold.
+#   * the RESUMPTION opens with a word that cannot begin a sentence.
+#
+# Both firing was read against the scans at 46 sites drawn at random, with no
+# failures — every one flush in the book (AETHER vol 1 p.297 carries three in a
+# single column).  Neither witness alone is trusted: "thus" can open a genuine
+# new paragraph, and a block ending on a comma can be followed by one.
+#
+# Only «/CTR» for now.  Tables, margin divs and styled divs hold the other 123
+# of 931 sites and are a separate slice — widening is adding to this tuple, once
+# the same scan check has been run for that shape.
+_BLOCK_CLOSES = ("«/CTR»",)
+_SENTENCE_OPEN = (",", ";", ":")
+_LEADING_BREAK = re.compile(r"^\n{2,}")
+# Words that cannot begin an English sentence, so their clause began earlier.
+# A lowercase opening says the same thing and is kept as a separate test, since
+# mathematics resumes lowercase far more often than it resumes with a joiner.
+_RESUMPTION_JOINER = re.compile(
+    r"(?:where|wherein|whereby|whence|in which|of which|from which|to which|"
+    r"by which|with which|which|who|whose|that|and|or|but|nor|so that|since|"
+    r"because|thus|hence|therefore|while|whilst|when|if|though|although|unless|"
+    r"until|being|giving|having|also)\b", re.IGNORECASE)
+
+
+def _resumes_interrupted_sentence(raw: str, context) -> bool:
+    """Is this run the rest of a sentence a display block cut in half?
+
+    Reads the left neighbour's FINISHED marker, which is the only place the
+    answer lives — the run itself cannot tell a paragraph break from a
+    resumption, because the source spells both as a blank line.
+    """
+    if not _LEADING_BREAK.match(raw or ""):
+        return False                       # no blank line: nothing to suppress
+    prev = (getattr(context, "prev_marker", "") or "").rstrip()
+    if not prev.endswith(_BLOCK_CLOSES):
+        return False
+    # `strip_marker_tokens` is the ONE way to read text through markers; it drops
+    # delimiters and leaves content, so this sees the block's last PRINTED
+    # character rather than the tail of its markup.
+    printed = strip_marker_tokens(prev, "").rstrip()
+    if printed[-1:] not in _SENTENCE_OPEN:
+        return False
+    head = raw.lstrip()
+    return bool(_RESUMPTION_JOINER.match(head)) or head[:1].islower()
+
+
 def _produce_body(raw, inner, context, inner_registry):
     """BODY producer — also the «\\n\\n producer».  The body run is the inert text
     between element markers; this producer turns a blank line into a paragraph-
@@ -237,6 +297,16 @@ def _produce_body(raw, inner, context, inner_registry):
     and the walker, both of which read raw `\\n\\n`; swapping it there blinds them.
     By the time the body producer runs, every `\\n\\n`-dependent stage is done.
     """
+    # A sentence the previous display block interrupted resumes FLUSH, so its
+    # leading blank line is not a paragraph break and must not become «P».  Drop
+    # it to a single `\n`, which the run below resolves to a space: the text then
+    # rides inside the open paragraph, exactly as a run that never had a blank
+    # line does.  Decided here because this producer owns the `\n\n` → «P» rule;
+    # nothing downstream is touched, and the CSS already leaves un-`<p>`-wrapped
+    # body text un-indented.  A literal `<p>` below is NOT suppressed: there the
+    # source states the break outright instead of leaving it to a blank line.
+    if _resumes_interrupted_sentence(raw, context):
+        raw = _LEADING_BREAK.sub("\n", raw, count=1)
     # A literal `<p>` IS a paragraph break, exactly like the blank line below — the
     # source writes both (GENESIS/CLIMATE prose, CONTINUED FRACTIONS' matrix-cell
     # `<p>a</p><p>-1</p>` stack).  Recognize it into the SAME «P» so it never rides

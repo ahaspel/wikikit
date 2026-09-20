@@ -1425,6 +1425,15 @@ def produce_tree(
     node_ctx = (replace(context, parent_label=parent_label)
                 if context.parent_label != parent_label else context)
 
+    # The left neighbour, threaded sibling to sibling.  `tree` is ordered and a
+    # marker is stored before the next handler runs, so this is the preceding
+    # element's FINISHED output — the BODY producer reads it to tell a paragraph
+    # break from a sentence resuming after a display block.  Same discipline as
+    # `parent_label`: an immutable `replace`, never a mutate-and-restore, and
+    # only where there IS a predecessor.
+    prev_label: str | None = None
+    prev_marker: str = ""
+
     for ph, ce in tree.items():
         # Recurse first — children's markers must be populated
         # before this element's producer runs and before
@@ -1444,8 +1453,10 @@ def produce_tree(
             if ce.inner_registry else None
         )
         handler = _PRODUCER_DISPATCH.get(ce.label, _passthrough_inner)
+        sib_ctx = (replace(node_ctx, prev_label=prev_label, prev_marker=prev_marker)
+                   if prev_label is not None else node_ctx)
         marker = handler(
-            ce.raw, ce.inner_text, node_ctx, legacy_inner_reg)
+            ce.raw, ce.inner_text, sib_ctx, legacy_inner_reg)
 
         # Substitute child markers into the producer's output.
         # Multi-pass because a substituted child marker can itself
@@ -1467,6 +1478,7 @@ def produce_tree(
                 lambda: [(ph, c.marker) for ph, c in ce.inner_registry.items()])
 
         ce.marker = marker
+        prev_label, prev_marker = ce.label, marker
 
 
 def substitute_top_level_markers(

@@ -27,6 +27,21 @@ class ElementContext:
     # producer read its own parent — the BODY producer keys on it to tell a verse
     # line break (parent POEM/PPOEM → «BR») from a prose soft-wrap (→ space).
     parent_label: str | None = None
+    # PER-NODE, threaded the same way ``parent_label`` is: the immediately
+    # PRECEDING sibling's label and produced marker.  Siblings are produced in
+    # order and each marker is populated before the next handler runs, so the
+    # left neighbour is genuinely available — no look-ahead, no second pass.
+    #
+    # The BODY producer is the only consumer.  It owns the "blank line → «P»"
+    # decision, and that decision is not knowable from the run alone: a blank
+    # line separating a display block from the prose after it says nothing about
+    # whether a paragraph starts there, because a transcriber types one around a
+    # template either way (measured: after `{{center|…}}` a blank line precedes a
+    # sentence-continuation 26% of the time and a single newline 41% — both
+    # buckets mixtures).  What the sentence was doing when the block interrupted
+    # it is the fact that settles it, and only the left neighbour carries it.
+    prev_label: str | None = None
+    prev_marker: str = ""
     # STICKY (set once a TABLE/REF ancestor is entered, inherited by every descendant):
     # this node's content is decoded wholesale by ``decode_inline`` (a table is one
     # decode pass; a footnote body is another), so a verse / outline here must render in
