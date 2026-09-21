@@ -146,8 +146,19 @@ extension is optional and distributed separately.
 
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    for name, default in [('standard','mdx/standard'),('enhanced','mdx/complete'),
-                          ('output','mdx/releases')]:
+    # The DIRECTORIES say which edition they hold, and these defaults must
+    # follow them.  They used to read `standard -> mdx/standard`, `enhanced ->
+    # mdx/complete`, which was the original scheme; the builds moved to
+    # `mdx/complete` (standard) and `mdx/complete-enhanced` (native search) and
+    # these did not.  A default-args run would therefore have packaged the
+    # STANDARD edition as "Enhanced" and taken "standard" from a directory
+    # nothing builds into any more.  The releases actually shipped were correct
+    # because they were run with explicit paths — which is luck, not a design.
+    # Each edition's own `manifest.json` carries `native_search`; that is the
+    # thing to check if these ever look wrong again.
+    for name, default in [('standard', 'mdx/complete'),
+                          ('enhanced', 'mdx/complete-enhanced'),
+                          ('output', 'mdx/releases')]:
         parser.add_argument('--'+name,type=Path,default=Path(default))
     parser.add_argument('--node',type=Path,default=shutil.which('node'),required=not bool(shutil.which('node')))
     args=parser.parse_args()
