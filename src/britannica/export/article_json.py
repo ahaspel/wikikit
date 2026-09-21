@@ -21,9 +21,10 @@ from britannica.export.pages import (
     _printed_page,
 )
 from britannica.name_index import wordset
-from britannica.markers import (iter_ln_markers, markers_to_text,
-                                sub_al_markers, sub_ln_markers,
-                                strip_marker_tokens, strip_title_markers)
+from britannica.markers import (countable_words, iter_ln_markers,
+                                markers_to_text, sub_al_markers,
+                                sub_ln_markers, strip_marker_tokens,
+                                strip_title_markers)
 from britannica.export.plate_parent import find_parent_by_signal
 from britannica.pipeline.stages.elements._link import ln_marker
 from britannica.render.article import render_article
@@ -1235,7 +1236,12 @@ def export_articles_to_json(
                 "leaf_start": leaf_for_ws(article.volume, article.page_start),
                 "leaf_end": leaf_for_ws(article.volume, article.page_end),
                 "source_quality": quality,
-                "word_count": len(cleaned_body.split()),
+                # NOT `len(body.split())`: that counts the marker stream, so a
+                # display formula between spaces scores as a word and a «P»
+                # between two words fuses them.  `countable_words` counts what a
+                # reader sees — footnotes, tables and verse included, markers,
+                # link targets, mathematics and the title excluded.
+                "word_count": countable_words(cleaned_body),
                 "parent_article": parent_article_info,
                 "body": cleaned_body,
                 # Page keys — ordinary article data, like `sections`.  Each

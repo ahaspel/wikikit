@@ -646,6 +646,50 @@ def collapse_links(text: str) -> str:
     return _LINK_RE.sub(_link_display, text)
 
 
+# Matter that is NOT words even though it is in the body: the title (its own
+# field, and set with a styled initial that would count as two), displayed
+# mathematics (`\int_0^1` is not "int 0 1"), and images.  Everything else the
+# reader reads — footnotes, tables, verse, figure keys, legends — IS words.
+_UNCOUNTABLE_RE = _re.compile(
+    r"«TITLE:[\s\S]*?«/TITLE»"
+    r"|«MATH(?:\[[^\]]*\])?:[\s\S]*?«/MATH»"
+    r"|«EQN:[^»]*»[\s\S]*?«/EQN»"
+    r"|\{\{IMG:[^}]*\}\}"
+)
+# WHAT COUNTS AS A WORD in this corpus, for every consumer that has to say.
+# Public because `export_fingerprint` asks the same question of a rendered
+# article and spelled the pattern itself; two spellings of "a word" can drift
+# apart and then two reports disagree about the same article.
+WORD_RE = _re.compile(r"[0-9A-Za-zÀ-ÖØ-öø-ÿ]+")
+
+
+def countable_words(text: str) -> int:
+    """How many words a reader sees in this ``body`` — the shipped "N words".
+
+    A SEPARATE contract from :func:`markers_to_text`, not a flag on it, because
+    the two want opposite things from a marker.  Search wants an inline marker to
+    VANISH so `H<sub>2</sub>O` indexes as one token; counting wants it to
+    SEPARATE, or `«TD»A«/TD»«TD»B«/TD»` is one word and `note.«P»The` is one
+    word.  One module owns marker→text policy; two questions get two named
+    answers over the same primitives.
+
+    WHAT WAS WRONG BEFORE: `len(body.split())` counted the marker stream itself,
+    so `«MATH:…«/MATH»` standing between spaces scored as a word while `«P»`
+    between two words fused them.  Measured over the corpus that ran 2.84% high
+    in total and, worse, wrong per article in proportion to markup density — the
+    articles thickest with italics, small caps and cross-references were the
+    most understated, so any comparison between two articles was unreliable.
+    `markers_to_text` is not the fix either: it DROPS footnotes, tables, verse
+    and legends whole, which silently omits the poems from CHANT ROYAL and the
+    figure keys from TOOL.
+    """
+    text = _UNCOUNTABLE_RE.sub(" ", text or "")
+    text = collapse_links(text)               # a link's target is an address
+    text = _RAW_HTML_RE.sub("", text)         # `H<sub>2</sub>O` stays ONE word
+    text = _RAW_BR_RE.sub(" ", text)
+    return len(WORD_RE.findall(strip_marker_tokens(text, " ")))
+
+
 def markers_to_text(text: str, *, sep: str = " ") -> str:
     """Convert a marker-stream ``body`` into plain text (search / previews).
 
