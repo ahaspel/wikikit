@@ -542,7 +542,12 @@ def render_article(article, *, target="site", epub_bundled=None):
     vol = escape_html(article.get("volume", "?"))
     ps, pe = article.get("page_start"), article.get("page_end")
     pages = escape_html(page_range(ps, pe))
-    wc = f'&middot; {article["word_count"]:,} words' if article.get("word_count") else ""
+    # A plate is a picture; the words on it are its legend, and a count of
+    # them describes nothing a reader wants to know.  The FIELD still carries
+    # the count (the download index and the MCP tool read it) — this is only
+    # whether the header shows it.  Before 2026-09-26, 434 of 535 plates did.
+    wc = (f'&middot; {article["word_count"]:,} words'
+          if article.get("word_count") and article.get("article_type") != "plate" else "")
     # Site links the citation to the page scan; EPUB drops scans, so it's plain text.
     citation = (f"vol. {vol}, {pages}" if epub_bundled is not None
                 else f'<a href="{ctx.scan_url}" style="color: #6b5e4f;">vol. {vol}, {pages}</a>')

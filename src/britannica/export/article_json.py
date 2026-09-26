@@ -809,7 +809,12 @@ def xref_panel_entries(xrefs, session):
             "normalized_target": xref.normalized_target,
             "xref_type": xref.xref_type,
             "status": xref.status,
-            "target_article_id": xref.target_article_id,
+            # No `target_article_id`: it is a DATABASE id, reassigned on every
+            # rebuild, so shipping it rewrote 11,548 article files per deploy
+            # with no content change — and no reader used it (the viewer, the
+            # indexer and the MCP tool read target_filename; the download
+            # schema already reduced xrefs to {to, display}).  The lookup below
+            # uses the in-memory id, which is where it belongs.
         }
         if xref.target_section:
             entry["target_section"] = xref.target_section
