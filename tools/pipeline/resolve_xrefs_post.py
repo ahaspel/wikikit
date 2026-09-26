@@ -24,6 +24,7 @@ from britannica.export.article_json import (
     build_title_index, register_stable_id_dedup, xref_panel_entries,
 )
 from britannica.link_resolver import LinkResolver
+from britannica.markers import countable_words
 from britannica.render.article import render_article
 
 ART = Path("data/derived/articles")
@@ -88,7 +89,13 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
         if decorate is not None:
             body = decorate(body, d)
         d["body"] = body
-        d["word_count"] = len(body.split())
+        # The body was just rewritten, so the count is recomputed — by the ONE
+        # function that owns it.  This line was `len(body.split())` and ran
+        # after the export's `countable_words`, so it silently replaced the
+        # fixed count with the marker-stream count on every article: the
+        # 2026-09-26 rebuild shipped 37,225 counts identical to the pre-fix
+        # ones.  `check_word_counts.py` gates the shipped field now.
+        d["word_count"] = countable_words(body)
         d["xrefs"] = [e for e in xref_list if e["status"] == "resolved"]
         d["rendered_html"] = render_article(d, target="site")
         n += 1
