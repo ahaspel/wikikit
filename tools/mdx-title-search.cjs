@@ -23,6 +23,8 @@ for (const record of records) {
   if (rank < Infinity) matches.push({...record, rank});
 }
 // One record per article identity; alternate spellings never become outputs.
+// A choice links by the article's DISPLAY key, which is the only headword it
+// has: the stable identifier stopped being one when it stopped being a key.
 matches.sort((a,b) => a.rank-b.rank || a.title.localeCompare(b.title));
 if (process.argv[3] === '--article') {
   // Canonical queries are already served by the MDX; do not duplicate them.
@@ -38,7 +40,7 @@ if (process.argv[3] === '--article') {
   if (exact.length !== 1) {
     const choices = exact.length ? exact : matches.slice(0,50);
     process.stdout.write('<style>'+css+'</style><div class="eb1911"><h1>Choose an article</h1><ul>'+choices.map(r =>
-      `<li><a href="gdlookup://localhost/?word=${encodeURIComponent('EB1911:article:'+r.id)}&amp;group=4294967294">${escape(r.title)}</a></li>`).join('')+'</ul></div>');
+      `<li><a href="gdlookup://localhost/?word=${encodeURIComponent(r.title)}&amp;group=4294967294">${escape(r.title)}</a></li>`).join('')+'</ul></div>');
   } else {
     const row = db.prepare('SELECT body FROM articles WHERE id=?').get(exact[0].id);
     if (!row) throw new Error('Missing article: '+exact[0].id);

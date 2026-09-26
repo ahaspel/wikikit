@@ -224,7 +224,17 @@ def compact_aliases(articles, aliases):
         spellings, stems = group["spellings"], sorted(group["targets"])
         keep = preferred(spellings)
         compact[keep] = set(stems)
-        for spelling in sorted(spellings - {keep}):
+        # The accent-free spelling is not a redundant route: it is the only one
+        # a reader can TYPE.  Ignore diacritics is off by default and a
+        # hand-copied .mdx never meets the installer that turns it on, so
+        # dropping ABABDA as a duplicate of ABĀBDA is what made the reviewer's
+        # lookup fail.  Every other fold this groups by — case, punctuation,
+        # word order — the reader can reproduce from the keyboard; accents are
+        # the one that they cannot.
+        plain = fold_accents(keep)
+        if plain != keep:
+            compact[plain] = set(stems)
+        for spelling in sorted(spellings - {keep, plain}):
             removed.append({"spelling": spelling, "retained": keep, "targets": list(stems)})
     return compact, sorted(removed, key=lambda r: r["spelling"])
 
@@ -261,11 +271,83 @@ def add_headwords(entries, articles, aliases):
     return choices
 
 
+# The image a plate shows, which is the only thing that tells two plates of one
+# article apart: they share their article's title and carry no words at all.
+_PLATE_ALT_RE = re.compile(r'<img\b[^>]*\balt="([^"]*)"', re.I)
+_BODY_TEXT_RE = re.compile(r'<div\b[^>]*\bclass="body-text"[^>]*>(.*)', re.S | re.I)
+# Sample-edition furniture on every link that leaves the sample; it is not the
+# book's words and must not become a headword.
+_OUTSIDE_SAMPLE_RE = re.compile(r'<span\b[^>]*\bclass="outside-sample".*?</span>', re.S | re.I)
+_SPACE_BEFORE_CLOSE = re.compile(r"\s+([)\]},.;:!?’”])")
+_SPACE_AFTER_OPEN = re.compile(r"([(\[{“‘])\s+")
+_LEADING_PUNCT = re.compile(r"^[\s,.;:—–-]+")
+
+
+def _after_title(text: str, title: str) -> str:
+    """What a name says BEYOND the title, with the punctuation that joined them.
+
+    A gloss and a plate's image name are the same question asked of different
+    text, so they strip the echoed title the same way.
+    """
+    if title and text.upper().startswith(title.upper()):
+        text = text[len(title):]
+    return _LEADING_PUNCT.sub("", text).strip()
+GLOSS_WORDS = 8
+
+
+def display_gloss(body, article, *, words=GLOSS_WORDS):
+    """The few words that tell one homonym from another, in the book's voice.
+
+    ELEVEN articles are titled JOHN.  `JOHN (vol. 15, p. 440)` distinguishes
+    them and tells a reader nothing; `JOHN — (1296–1346), king of Bohemia` is
+    how the book itself distinguishes them, and it is what an INDEX entry has
+    always looked like.  Measured over the corpus, title + eight words leaves
+    two genuine collisions out of 37,226 (HERZBERG and WILMINGTON, whose
+    openings really do start alike), against 1,183 colliding bare titles.
+
+    It also has the property the printed location has and an ordinal `(2)` does
+    not: it is SOURCE-derived, so it moves only when the text moves.  That is
+    what makes it safe to address a link to.
+
+    A plate has no words — its body is one `<img>` — so it is named by the image
+    it shows, `NEUROPATHOLOGY — Plate II`.
+    """
+    if (article or {}).get("article_type") == "plate":
+        alt = _PLATE_ALT_RE.search(body)
+        if alt:
+            name = re.sub(r"\.(?:jpg|jpeg|png|gif|svg)$", "", alt[1], flags=re.I)
+            name = re.sub(r"^EB1911\b[\s\-—–]*", "", name, flags=re.I)
+            name = _after_title(name, strip_title_markers((article or {}).get("title") or ""))
+            if name:
+                return name
+    # `body-text` is the RENDERER's own name for the article's prose, shared
+    # with the site.  Reading from `</h1>` instead swept up the furniture
+    # between them and produced `MERCURY — vol. 18, p. 154 · 521 words In:`,
+    # which disambiguates by exactly the printed location the gloss exists to
+    # replace.
+    rest = _BODY_TEXT_RE.search(body)
+    text = _OUTSIDE_SAMPLE_RE.sub("", rest[1] if rest else body)
+    text = " ".join(html.unescape(strip_html_tags(text, " ")).split())
+    # A tag boundary is a word boundary, so the separator has to be a space —
+    # but `(<span>Mercurius</span>)` then reads `( Mercurius )` in the headword
+    # list.  Closing up around punctuation is display work, and this is the
+    # display key.
+    text = _SPACE_AFTER_OPEN.sub(r"\1", _SPACE_BEFORE_CLOSE.sub(r"\1", text))
+    text = _after_title(text, strip_title_markers((article or {}).get("title") or ""))
+    return " ".join(text.split()[:words])
+
+
 def label_content_entries(entries, articles):
     """Put readable keys on HTML records: GoldenDict uses them in FTS results.
 
-    Stable identifiers remain redirect keys, so hyperlinks retain their identity.
-    Reuse an unambiguous title key; qualify homonyms with printed location.
+    The stable identifier does NOT survive as a redirect.  Every key in an MDX
+    file is a headword — a redirect is indexed exactly like a body — so keeping
+    `EB1911:article:01-0036-dd33a0` beside each article put a machine id in the
+    reader's headword list for every article in the book.  Links are repointed
+    at the display key instead, which is why this returns a rewritten mapping
+    rather than editing in place.
+    Reuse an unambiguous title key; qualify homonyms with the book's own opening
+    words, then the printed location, and only last with an ordinal.
     Never merge bodies or change a choice page's existing lookup spelling.
     """
     output, names = dict(entries), {}
@@ -282,29 +364,123 @@ def label_content_entries(entries, articles):
         if not heading:
             raise ValueError(f"Content entry has no display heading: {key}")
         title = " ".join(html.unescape(strip_html_tags(heading[1], " ")).split())
+        article = None
         if key.startswith(PREFIX + "article:"):
-            a = articles[key.removeprefix(PREFIX + "article:")]
-            title = strip_title_markers(a["title"])
-            if entries.get(title) != "@@@LINK=" + key:
-                title += f' (vol. {a["volume"]}, p. {a["page_start"]})'
+            article = articles[key.removeprefix(PREFIX + "article:")]
+            title = strip_title_markers(article["title"])
         elif key.startswith(PREFIX + "choice:"):
             title = "Articles named " + min(headwords[key], key=lambda s: (len(s), s))
         elif key.startswith(PREFIX + "topic:"):
             title = "Topic: " + title
         elif key.startswith(PREFIX + "contributor:"):
             title = "Contributor: " + title
-        base = title if len(title) <= 90 else title[:87] + "…"
-        candidate, number = base, 1
-        while owners[lookup_fold(candidate)] - {key}:
-            number += 1
-            candidate = base + f" ({number})"
-        if candidate == key or len(candidate) > 100:
-            raise ValueError(f"Invalid display key: {candidate}")
+        # The bare title FIRST, which absorbs the alias that already points here
+        # and so costs a headword rather than adding one.  Then the book's own
+        # disambiguation, then the printed location, and only then an ordinal —
+        # which is a last resort because it is the one form that can MOVE when
+        # an unrelated article is added, silently repointing every link to it.
+        forms = [title]
+        if article is not None:
+            gloss = display_gloss(body, article)
+            if gloss:
+                forms.append(f"{title} — {gloss}")
+            forms.append(f'{title} (vol. {article["volume"]}, p. {article["page_start"]})')
+        candidate = None
+        for form in forms:
+            form = form if len(form) <= 90 else form[:87] + "…"
+            if not owners[lookup_fold(form)] - {key}:
+                candidate = form
+                break
+        if candidate is None:
+            base = forms[-1]
+            base = base if len(base) <= 90 else base[:87] + "…"
+            candidate, number = base, 1
+            while owners[lookup_fold(candidate)] - {key}:
+                number += 1
+                candidate = base + f" ({number})"
+        if len(candidate) > 100:
+            raise ValueError(f"Display key exceeds the reader's limit: {candidate}")
         output[candidate] = body
-        output[key] = "@@@LINK=" + candidate
+        # An entry already keyed by its own display title relabels to itself;
+        # deleting the old key would delete the body just written.  The old code
+        # rejected that case because it would have made a self-redirect.
+        if candidate != key:
+            del output[key]
+        # An alias whose fold is a PREFIX of the display key's is a second line
+        # in every list where the key already appears, and there is nothing a
+        # reader can type to reach it that does not also reach the key: VOLTAIRE
+        # beside VOLTAIRE, FRANÇOIS MARIE AROUET DE.  Dropping it costs no
+        # lookup at all.
+        #
+        # The other direction is NOT the same trade and is left alone.  DANTE
+        # ALIGHIERI is a prefix sibling of DANTE, and dropping the longer one
+        # would mean typing the poet's full name finds nothing — the same
+        # failure as the ABABDA report.  One redundant line is the lesser
+        # defect, which is the ruling the accent variants already got.
+        folded = lookup_fold(candidate)
+        for alias in headwords.get(key, ()):
+            spelt = lookup_fold(alias)
+            if spelt != folded and folded.startswith(spelt):
+                output.pop(alias, None)
         owners[lookup_fold(candidate)].add(key)
         names[key] = candidate
-    return output, names
+    return _repoint(output, names), names
+
+
+def _repoint(output, names):
+    """Send every link at the display key, now that the identifier is not one.
+
+    Both halves of the graph carry identifiers: `entry://` hrefs inside bodies
+    and the `@@@LINK=` value of every alias.  Anything missed here has nothing
+    left to resolve to, so `validate` reports it as a missing entry rather than
+    shipping a dead headword.
+    """
+    def repoint(url):
+        raw, _, fragment = url[8:].partition("#")
+        key = unquote(raw)
+        return entry_url(names.get(key, key), unquote(fragment)) if key else url
+
+    def href(m):
+        url = html.unescape(m[2])
+        if not url.startswith("entry://"):
+            return m[0]
+        return "href=" + m[1] + html.escape(repoint(url), quote=True) + m[1]
+
+    return {key: "@@@LINK=" + names.get(body[8:], body[8:])
+            if body.startswith("@@@LINK=") else HREF_ATTR_RE.sub(href, body)
+            for key, body in output.items()}
+
+
+def check_headwords(entries):
+    """Nothing in the list a reader scrolls may be an identifier or a free duplicate.
+
+    Both failures shipped, and neither is visible to `validate`, because both
+    resolve perfectly.  They are only visible in the headword list itself:
+
+      * ~40,000 `EB1911:article:…` keys sat there beside the articles they
+        named, because an MDX redirect is indexed exactly like a body.
+      * an alias whose fold is a PREFIX of its own article's key put that
+        article on the list twice for one query, and no query could reach the
+        alias without also reaching the key.
+
+    The converse — a key that is a prefix of one of its own aliases, DANTE
+    beside DANTE ALIGHIERI — is deliberately allowed: removing it would cost a
+    lookup rather than a line.
+    """
+    shadows = []
+    for key, body in entries.items():
+        if key.startswith(PREFIX):
+            raise ValueError(f"Machine identifier left in the headword list: {key}")
+        if not body.startswith("@@@LINK="):
+            continue
+        spelt, folded = lookup_fold(key), lookup_fold(body[8:])
+        if spelt != folded and folded.startswith(spelt):
+            shadows.append(f"{key} -> {body[8:]}")
+    if shadows:
+        raise ValueError(f"{len(shadows)} alias(es) shadow their own article: "
+                         + ", ".join(shadows[:10]))
+    return {"headwords": len(entries),
+            "redirects": sum(v.startswith("@@@LINK=") for v in entries.values())}
 
 
 def validate(entries, resources, *, report_path=None):
@@ -532,6 +708,10 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             entries[PREFIX + "help"] += wrap(f"<p>{len(source_link_issues)} pre-existing source links have unavailable section destinations. Their labels remain visible and are marked unavailable. See source-link-issues.json in the distribution.</p>")
         qa_entries = entries
         entries, display_keys = label_content_entries(entries, articles)
+        # Before the native edition deliberately re-hides its choice pages under
+        # their identities: this asks what the STANDARD edition puts in front of
+        # a reader, which is the edition the reviewer installed.
+        headword_checks = check_headwords(entries)
         search_files = []
         if native_search:
             from britannica.mdx.native import package_search
@@ -560,7 +740,8 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         manifest = {"built_utc": datetime.now(timezone.utc).isoformat(), "compiler": "mdict-utils " + version("mdict-utils"),
                     "article_count": len(articles), "alias_count": sum(v.startswith("@@@LINK=") for v in entries.values()),
                     "choice_count": choices, "contributor_count": len(contributors), "topic_count": topic_count,
-                    "resource_count": len(resources), "checks": checks, "roundtrip": "exact entries and resource bytes",
+                    "resource_count": len(resources), "checks": {**checks, **headword_checks},
+                    "roundtrip": "exact entries and resource bytes",
                     "edition": "sample" if sample else "complete", "excluded": excluded,
                     "native_search": native_search,
                     "unavailable_source_link_count": len(source_link_issues),

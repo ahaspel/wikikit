@@ -33,9 +33,12 @@ def package_search(output, entries, display_keys, articles, aliases, css, root):
                            ('tools/viewer/search-api.js','search-api.js'),
                            ('src/britannica/mdx/install_search.py','install.py')]:
         shutil.copyfile(root/source, folder/target)
-    # Internal identities remain addressable. Only public article aliases go away.
+    # Only public article aliases go away. The `key.startswith(PREFIX)` arm that
+    # stood here kept the stable identities addressable; they stopped being keys
+    # at all when the standard edition stopped putting them in its headword
+    # list, so the arm could no longer match anything.
     clean = {key: body for key,body in entries.items()
-             if not body.startswith('@@@LINK=') or key.startswith(PREFIX)
+             if not body.startswith('@@@LINK=')
              or key in ('Britannica 11','Britannica 11 sample')}
     # Choice pages stay available through their stable identity, not as another
     # suggestion alongside each of their actual articles.

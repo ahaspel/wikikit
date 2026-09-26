@@ -28,12 +28,16 @@ def edition_readme(sample=False, native_search=False):
     else:
         text += ('Includes all 37,225 nonempty article and plate records, contributors, topics, '
                  'volume lists, front matter and the Reader’s Guide.\n\n')
-    text += ('In GoldenDict-ng, enable Ignore diacritics for accent-free lookup. '
+    text += ('Accent-free spellings are indexed directly, so ABABDA finds ABĀBDA with no '
+             'setting changed; GoldenDict-ng’s Ignore diacritics option additionally folds '
+             'accents in what you type. '
              'Full-text search is available after initial indexing (Ctrl+Shift+F). '
              'Search presentation and ordering depend on the reader. ')
     if not native_search:
-        text += ('Alternative spellings and name orders are ordinary dictionary aliases; '
-                 'your reader may show more than one alias for the same article. ')
+        text += ('Almost every article has a single headword. A few carry one extra spelling '
+                 'deliberately — an accent-free form, or a name order the book does not print, '
+                 'such as DANTE ALIGHIERI beside DANTE — so that typing it in full still finds '
+                 'the article. ')
     text += ('Reading, illustrations, mathematics and internal navigation work offline. '
              'Explicitly external links require an internet connection.\n\n'
              'See LICENSE for attribution, manifest.json for coverage, SHA256SUMS for file '
