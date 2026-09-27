@@ -307,96 +307,29 @@ def to_xhtml_body(html_str, target="epub"):
     return result
 
 
-# ── cover (the site mark's language: cream field, dark double-rule frame, Georgia) ──
-_COVER_BG = (245, 241, 235)      # sampled from britannica11-logo.png
-_COVER_INK = (44, 36, 22)
-_COVER_W, _COVER_H = 1600, 2560
+# ── cover: the BOOK's finished image ────────────────────────────────────────
+# A book declares its cover (`epub_cover.jpg`) and the single-volume builds it
+# is right for (`cover_volumes`); the engine copies it verbatim.  Until
+# 2026-09-27 this section DREW a cover in code — the Britannica's words at set
+# positions — used only as a fallback: the published covers were already a
+# crop of the Volume I title-page photograph, which is now the book's file.
+def install_cover(dest, volumes=None) -> tuple[int, int]:
+    """Copy the book's cover to ``dest`` and return its real ``(width, height)``.
 
-
-def _cover_font(size, bold=False, italic=False):
-    from PIL import ImageFont
-    name = "georgia" + ("z" if bold and italic else "b" if bold else "i" if italic else "")
-    try:
-        return ImageFont.truetype(os.path.join(os.environ.get("WINDIR", r"C:\Windows"),
-                                               "Fonts", name + ".ttf"), size)
-    except Exception:
-        return ImageFont.load_default()
-
-
-def _draw_tracked(draw, cx, y, text, font, tracking=0, fill=_COVER_INK):
-    """Centered text with letter-tracking (PIL has none built in)."""
-    widths = [draw.textlength(ch, font=font) for ch in text]
-    total = sum(widths) + tracking * (len(text) - 1)
-    x = cx - total / 2
-    for ch, w in zip(text, widths):
-        draw.text((x, y), ch, font=font, fill=fill)
-        x += w + tracking
-
-
-_TITLE_PAGE_SCAN = os.path.join(ROOT, "tools", "viewer", "title_page.jpg")
-# The flat printed page inside the site's title-page photograph (crop excludes
-# the book's leaf edges and the grey backdrop; fractions of the source frame).
-_TITLE_PAGE_CROP = (0.106, 0.051, 0.900, 0.957)
-
-
-def make_cover(path, subtitle=None):
-    """The cover.  Complete edition: the site's Volume I title-page photograph,
-    cropped to the flat printed page (user spec: the page, minus the book edges),
-    scaled to the 1600×2560 language.  Volume builds (and a missing scan): the
-    drawn site mark.  Deterministic (no timestamps), regenerated per build."""
-    from PIL import Image, ImageDraw
-    # The scan IS the Volume I title page — right for the complete edition and
-    # for the vol-1 sampler alike; other volume builds keep the drawn mark.
-    if subtitle in (None, "Volume 1") and os.path.exists(_TITLE_PAGE_SCAN):
-        im = Image.open(_TITLE_PAGE_SCAN)
-        w, h = im.size
-        l, t, r, b = _TITLE_PAGE_CROP
-        page = im.crop((int(w * l), int(h * t), int(w * r), int(h * b)))
-        cover = page.resize((int(page.width * _COVER_H / page.height), _COVER_H),
-                            Image.LANCZOS)
-        cover.save(path, quality=88)
-        return
-    im = Image.new("RGB", (_COVER_W, _COVER_H), _COVER_BG)
-    d = ImageDraw.Draw(im)
-    # double-rule frame, as the logo draws it
-    d.rectangle([56, 56, _COVER_W - 56, _COVER_H - 56], outline=_COVER_INK, width=10)
-    d.rectangle([92, 92, _COVER_W - 92, _COVER_H - 92], outline=_COVER_INK, width=4)
-    # EB medallion
-    cx = _COVER_W // 2
-    ms = 430
-    top = 330
-    d.rectangle([cx - ms // 2, top, cx + ms // 2, top + ms], outline=_COVER_INK, width=8)
-    d.rectangle([cx - ms // 2 + 26, top + 26, cx + ms // 2 - 26, top + ms - 26],
-                outline=_COVER_INK, width=3)
-    f_eb = _cover_font(240, bold=False)
-    bb = d.textbbox((0, 0), "EB", font=f_eb)
-    d.text((cx - (bb[2] - bb[0]) / 2 - bb[0], top + ms / 2 - (bb[3] - bb[1]) / 2 - bb[1]),
-           "EB", font=f_eb, fill=_COVER_INK)
-    # title block — the big lines auto-fit inside the frame
-    def _fit(text, size, tracking, max_w=1240):
-        while size > 40:
-            f = _cover_font(size, bold=True)
-            w = sum(d.textlength(ch, font=f) for ch in text) + tracking * (len(text) - 1)
-            if w <= max_w:
-                return f
-            size -= 4
-        return _cover_font(size, bold=True)
-
-    _draw_tracked(d, cx, 1120, "THE", _cover_font(60), tracking=26)
-    _draw_tracked(d, cx, 1235, "ENCYCLOPÆDIA", _fit("ENCYCLOPÆDIA", 150, 10), tracking=10)
-    _draw_tracked(d, cx, 1425, "BRITANNICA", _fit("BRITANNICA", 150, 26), tracking=26)
-    d.line([cx - 260, 1670, cx - 40, 1670], fill=_COVER_INK, width=3)
-    d.line([cx + 40, 1670, cx + 260, 1670], fill=_COVER_INK, width=3)
-    d.polygon([(cx, 1660), (cx + 12, 1670), (cx, 1680), (cx - 12, 1670)], fill=_COVER_INK)
-    _draw_tracked(d, cx, 1730, "ELEVENTH EDITION", _cover_font(72), tracking=22)
-    f_dict = _cover_font(44, italic=True)
-    _draw_tracked(d, cx, 1890, "A Dictionary of Arts, Sciences, Literature", f_dict, tracking=1)
-    _draw_tracked(d, cx, 1955, "and General Information", f_dict, tracking=1)
-    _draw_tracked(d, cx, 2090, "1910–1911", _cover_font(56), tracking=8)
-    if subtitle:
-        _draw_tracked(d, cx, 2210, subtitle.upper(), _cover_font(58, bold=True), tracking=14)
-    _draw_tracked(d, cx, 2380, "BRITANNICA11.ORG", _cover_font(38), tracking=16)
-    im.save(path, "JPEG", quality=90, optimize=True)
+    ``volumes`` is None for the complete edition, else the volumes a
+    single-volume build holds.  A build the book's cover would mislabel — any
+    volume outside ``cover_volumes`` — fails here rather than shipping the
+    wrong title page."""
+    from PIL import Image
+    from britannica.corpora import current_corpus
+    book = current_corpus()
+    if volumes is not None and not set(volumes) <= book.cover_volumes:
+        raise SystemExit(f"{book.key} has no cover for a build of volume(s) {sorted(volumes)}; "
+                         f"its cover serves {sorted(book.cover_volumes) or 'the complete edition only'}")
+    src = book.data("epub_cover.jpg")
+    shutil.copyfile(src, dest)
+    with Image.open(src) as im:
+        return im.size
 
 
 _IMG_TAG_RE = re.compile(r'<img\b[^>]*>')
@@ -557,7 +490,7 @@ def list_stems(volumes=None):
 
 def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ARTICLES_DIR,
                images="diet", nav_articles=False,
-               cover_subtitle=None, nudge=0, keep_stage=False, log=_log):
+               cover_volumes=None, nudge=0, keep_stage=False, log=_log):
     global _NUDGE
     _NUDGE = nudge
     """Build a chunk-packed EPUB from the given corpus stems.  Returns a stats dict."""
@@ -1339,12 +1272,14 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     # IMAGE ONLY — Amazon generates its own cover page, and shipping an HTML cover
     # page silently disqualifies Enhanced Typesetting (vol-1 regressed "Supported" →
     # "Not Supported" on exactly this delta, with zero logged errors).
-    make_cover(os.path.join(oebps, "cover.jpg"), subtitle=cover_subtitle)
+    cover_w, cover_h = install_cover(os.path.join(oebps, "cover.jpg"), volumes=cover_volumes)
     if target != "kindle":
         open(os.path.join(oebps, "cover.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
             title,
             '<div style="text-align:center;margin:0;padding:0">'
-            f'<img src="cover.jpg" alt="{_html.escape(title)}" width="{_COVER_W}" height="{_COVER_H}" '
+            # The image's REAL size.  This was a constant 1600×2560 while the
+            # cover itself was 1641×2560 — the crop of the title-page photo.
+            f'<img src="cover.jpg" alt="{_html.escape(title)}" width="{cover_w}" height="{cover_h}" '
             'style="max-width:100%;height:auto"/></div>'))
 
     # ── pass 3: emit chunks (same staged bytes → same pieces), resolve at close ──
@@ -1604,11 +1539,10 @@ def main(argv=None):
     suffix = ("-kindle" if args.target == "kindle" else "") + \
         ("-fullnav" if args.nav_articles else "")
     out = args.out or os.path.join(ROOT, f"{name}{suffix}.epub")
-    cover_sub = (None if args.all
-                 else "Volume " + ", ".join(map(str, sorted(args.volume))))
     build_epub(stems, out, target=args.target, title=title, ident=ident,
                images=args.images, nav_articles=args.nav_articles,
-               cover_subtitle=cover_sub, nudge=args.nudge, keep_stage=args.keep_stage)
+               cover_volumes=None if args.all else sorted(args.volume),
+               nudge=args.nudge, keep_stage=args.keep_stage)
 
 
 if __name__ == "__main__":

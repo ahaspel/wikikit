@@ -56,7 +56,16 @@ KNOWN_DATA = frozenset({
     "link_exceptions.json",      # audited source links with no destination
     "genealogy_images.json",     # family-tree templates -> their scan crops
     "mdx_sample.json",           # the dictionary's compatibility sample
+    # PROSE THE BOOK WRITES, as templates the engine fills (see `template`).
+    # Each line names the $placeholders the engine supplies.
+    "templates/tei_readme.md",   # $article_count $site $slug $concept_doi
+    "templates/tei_source.xml",  # $volume $pages — the printed book, per article
+    "templates/tei_corpus_source.xml",  # (none) — the printed book, for the catalogue
+    "epub_cover.jpg",            # the EPUB's cover: a finished image, used as-is
 })
+
+
+_TEMPLATES: dict[tuple[str, str], str] = {}
 
 
 def _check_known(name: str) -> None:
@@ -140,6 +149,27 @@ class Corpus:
     source_url: str | None = None   # the work's Wikisource page — EPUB dc:source
     search_name: str | None = None  # "Britannica title search" — the reader's
                                     # label for the enhanced edition's title search
+    concept_doi: str | None = None  # the edition's Zenodo CONCEPT DOI — TEI, EPUB
+    #: Single-volume builds the cover image is right for.  EB1911's cover is a
+    #: photograph of VOLUME I's title page, so it serves the complete edition
+    #: and the vol-1 sampler, and would mislabel any other volume's book.
+    cover_volumes: frozenset[int] = field(default_factory=frozenset)
+
+    def template(self, name: str, **values) -> str:
+        """Fill one of the book's declared prose templates.
+
+        The BOOK writes the words; the engine supplies the values.  Placeholders
+        are `$name` (string.Template), not `{name}`: these texts quote BibTeX,
+        JSON and CSS, all made of braces.  Substitution is STRICT — a
+        placeholder the engine does not supply raises instead of leaving a hole
+        in a published file — and the file is read VERBATIM, so it ends exactly
+        where the text ends.  A literal dollar sign is written `$$`."""
+        from string import Template
+        cache_key = (self.key, name)
+        text = _TEMPLATES.get(cache_key)
+        if text is None:
+            text = _TEMPLATES[cache_key] = self.data(name).read_text(encoding="utf-8")
+        return Template(text).substitute(values)
 
     def need(self, name: str) -> str:
         """A branding value this book must have for the artifact asking."""
@@ -216,6 +246,8 @@ EB1911 = Corpus(
         "corrections.json", "hyphen_map.json", "contributor_aliases.json",
         "xref_adjudications.json", "maps.json", "link_exceptions.json",
         "genealogy_images.json", "mdx_sample.json",
+        "templates/tei_readme.md", "templates/tei_source.xml",
+        "templates/tei_corpus_source.xml", "epub_cover.jpg",
     }),
     site="https://britannica11.org",
     short_name="Britannica 11",
@@ -225,6 +257,8 @@ EB1911 = Corpus(
     urn="urn:britannica11",
     source_url="https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica",
     search_name="Britannica title search",
+    concept_doi="10.5281/zenodo.22072145",
+    cover_volumes=frozenset({1}),
 )
 
 

@@ -24,12 +24,11 @@ import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from britannica.corpora import brand
+from britannica.corpora import brand, current_corpus
 from britannica.export.markdown import body_to_markdown
 from britannica.markers import IMG_PARTS_RE
 from britannica.export.article_json import stable_id_from_filename
 from britannica.export.corpus import NON_ARTICLE
-from britannica.export._tei_readme import TEI_README as _TEI_README
 from britannica.export.tei import EDITION_DOI
 
 # The CANONICAL host is the apex.  `www` had no DNS record at all until
@@ -343,11 +342,11 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
         '<teiCorpus xmlns="http://www.tei-c.org/ns/1.0"\n'
         '           xmlns:xi="http://www.w3.org/2001/XInclude">\n'
         "<teiHeader><fileDesc>\n"
-        "<titleStmt><title>Encyclopædia Britannica, Eleventh Edition — "
+        f"<titleStmt><title>{current_corpus().title} — "
         "a TEI-P5 edition</title>\n"
         '<respStmt xml:id="wikisource"><resp>transcription</resp>'
         "<orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>\n"
-        f"<publicationStmt><publisher>britannica11.org</publisher>\n"
+        f"<publicationStmt><publisher>{_SITE.split('://', 1)[-1]}</publisher>\n"
         '<availability status="free"><licence '
         'target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>\n'
         # The catalogue has a better claim to the citation than any single
@@ -356,8 +355,7 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
         # than freezing on the release current when the file was written.
         f'<idno type="DOI">{EDITION_DOI}</idno>\n'
         f"<date>{generated}</date></publicationStmt>\n"
-        "<sourceDesc><p>Encyclopædia Britannica, 11th edition, Cambridge "
-        "University Press, 1910–1911, transcribed at Wikisource.</p></sourceDesc>\n"
+        + current_corpus().template("templates/tei_corpus_source.xml") + "\n"
         "</fileDesc></teiHeader>\n"
         f"{includes}\n"
         "</teiCorpus>\n", encoding="utf-8")
@@ -372,9 +370,10 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
     # members individually — but a consumer who tries to assemble the whole thing
     # should learn it from the README, not from a validator.
     (tei_dir / "README.md").write_text(
-        # By token, not by format: the README quotes BibTeX, whose braces
-        # format() reads as field names.  See _tei_readme.py.
-        _TEI_README.replace("ARTICLE_COUNT", f"{n:,}"), encoding="utf-8")
+        # The BOOK's prose; the engine supplies the numbers and names.
+        current_corpus().template("templates/tei_readme.md", article_count=f"{n:,}",
+                                  site=_SITE, slug=brand("slug"), concept_doi=EDITION_DOI),
+        encoding="utf-8")
 
     # The ODD ships WITH the edition: it documents which part of TEI this uses,
     # which is the first thing a TEI-literate reader looks for and the difference
