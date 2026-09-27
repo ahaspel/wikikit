@@ -214,7 +214,7 @@ def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, 
 
         if name in source_assets:
             return attr(source_assets[name]["resource"])
-        base = (ROOT / "data/images").resolve()
+        base = (ROOT / current_corpus().images()).resolve()
         path = (base / name).resolve()
         if not path.is_relative_to(base):
             raise ValueError(f"Image escapes asset directory: {name}")
@@ -673,7 +673,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
     with tempfile.TemporaryDirectory(prefix="build-", dir=output) as tmp:
         stage = Path(tmp)
         selected = json.loads(_sample_spec().read_text(encoding="utf-8")) if sample else None
-        source = ROOT / "data/derived/articles"
+        source = ROOT / current_corpus().derived("articles")
         index_raw = (source / "index.json").read_bytes()
         index = json.loads(index_raw)
         known = {stable_id_from_filename(a["filename"]) for a in index}
@@ -756,7 +756,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             if bio:
                 body += list_links([("Biographical article", policy.url_for(stable_id_from_filename(bio)))])
             entries[PREFIX + "contributor:" + slug] = wrap(body)
-        ct_raw = (ROOT / "data/derived/classified_toc.json").read_bytes()
+        ct_raw = (ROOT / current_corpus().derived("classified_toc.json")).read_bytes()
         topics, _ = _topic_index(json.loads(ct_raw))
         topic_count = 0
         sample_memberships = defaultdict(list)

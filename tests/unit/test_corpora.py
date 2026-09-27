@@ -120,11 +120,14 @@ def test_every_field_is_read_by_something():
     #   concept_doi TEI headers and catalogue, the TEI readme, EPUB dc:relation
     #   cover_volumes  epub.build.install_cover — which builds the cover fits
     #   subtitle, years, article_volumes  the EPUB title page and closing
+    #   derived_dir, images_dir  `derived()` / `images()` — every output and
+    #               image path in the engine
     assert fields == {"key", "title", "scan_name", "boundary_style",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",
-                      "cover_volumes", "subtitle", "years", "article_volumes"}, (
+                      "cover_volumes", "subtitle", "years", "article_volumes",
+                      "derived_dir", "images_dir"}, (
         "a field was added or removed — is its consumer written?")
 
 

@@ -99,7 +99,10 @@ RAW_DIRECT = {
 
 # A collection is (label, what names it, its one reader, the allow-ledger).
 COLLECTIONS = (
-    ("exported articles", re.compile(r"data/derived/articles|ARTICLES_DIR"),
+    # `derived("articles"…)` since wikikit step 3: the book owns its output
+    # root, so a reader now NAMES the directory through it.  Without this
+    # spelling the ratchet would go blind to every reader the step converted.
+    ("exported articles", re.compile(r"data/derived/articles|ARTICLES_DIR|derived\(\s*[\"']articles[\"']"),
      "export.corpus.load_corpus", EXPORTED_DIRECT),
     ("raw source pages", re.compile(r"data/raw/wikisource|RAW_DIR"),
      "source_pages.load_pages", RAW_DIRECT),

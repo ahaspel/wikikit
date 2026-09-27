@@ -12,6 +12,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from britannica.corpora import current_corpus
 from britannica.source_pages import RAW_DIR, load_pages
 from britannica.util.strings import strip_html_tags, until_stable
 
@@ -101,7 +102,7 @@ def _extract_aliases_from_wikitext(
 
 
 _VOL29_DIR = RAW_DIR / "vol_29"
-_VOL29_OCR = Path("data/derived/vol29_ocr.json")
+_VOL29_OCR = current_corpus().derived("vol29_ocr.json")
 
 
 def _strip_vol29_wikitext(text: str) -> str:

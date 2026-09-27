@@ -159,6 +159,12 @@ class Corpus:
     #: photograph of VOLUME I's title page, so it serves the complete edition
     #: and the vol-1 sampler, and would mislabel any other volume's book.
     cover_volumes: frozenset[int] = field(default_factory=frozenset)
+    #: Where this book's OUTPUTS go (the export, bundles, reports, caches) and
+    #: where its images are stored.  No default: two books sharing a root is
+    #: exactly how a DNB export would overwrite EB1911's articles, so each book
+    #: must name its own.  Read through `derived()` / `images()`, never spelled.
+    derived_dir: str | None = None
+    images_dir: str | None = None
     #: The work's own subtitle and years, and how many of its volumes hold
     #: articles (EB1911: 28; its 29th is the index) — the EPUB title page.
     subtitle: str | None = None
@@ -180,6 +186,14 @@ class Corpus:
         if text is None:
             text = _TEMPLATES[cache_key] = self.data(name).read_text(encoding="utf-8")
         return Template(text).substitute(values)
+
+    def derived(self, *parts) -> Path:
+        """A path under this book's output root — `book.derived("articles")`."""
+        return Path(self.need("derived_dir"), *parts)
+
+    def images(self, *parts) -> Path:
+        """A path under this book's image store."""
+        return Path(self.need("images_dir"), *parts)
 
     def need(self, name: str) -> str:
         """A branding value this book must have for the artifact asking."""
@@ -272,6 +286,8 @@ EB1911 = Corpus(
     search_name="Britannica title search",
     concept_doi="10.5281/zenodo.22072145",
     cover_volumes=frozenset({1}),
+    derived_dir="data/derived",
+    images_dir="data/images",
     subtitle="A Dictionary of Arts, Sciences, Literature and General Information",
     years="1910–1911",
     article_volumes=28,
@@ -317,6 +333,9 @@ DNB = Corpus(
     boundary_style="sections",
     pages=_DNB_PAGES,
     raw_dir="dnb",
+    # Its own roots, so its outputs can never land on EB1911's.
+    derived_dir="data/dnb/derived",
+    images_dir="data/dnb/images",
 )
 
 

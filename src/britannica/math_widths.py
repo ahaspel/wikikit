@@ -24,13 +24,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from britannica.corpora import current_corpus
 from britannica.util.strings import content_digest
 
 # The cache's identity — BOTH halves owned here, where the reader lives.
 # `measure_math_widths` imports them to write the file this module reads: key
 # and path have to agree forever, and a copy of either on the writer's side is
 # a silent total cache miss the day one of them moves.
-CACHE_PATH = Path("data/derived/math_widths.json")
+CACHE_PATH = current_corpus().derived("math_widths.json")
 
 
 def cache_key(latex: str) -> str:

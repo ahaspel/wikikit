@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from britannica.corpora import current_corpus
 
 
 def _load_printed_pages() -> dict:
     """Load the printed page number lookup (leaf → printed per volume)."""
-    path = Path("data/derived/printed_pages.json")
+    path = current_corpus().derived("printed_pages.json")
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {}
@@ -24,7 +25,7 @@ def _load_printed_pages() -> dict:
 
 def _load_scan_map() -> dict:
     """Load the ws → leaf mapping per volume."""
-    path = Path("data/derived/scan_map.json")
+    path = current_corpus().derived("scan_map.json")
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {}

@@ -23,11 +23,12 @@ from pathlib import Path
 
 import numpy as np
 
+from britannica.corpora import current_corpus
 from britannica.markers import strip_marker_tokens
 
 _MODEL_NAME = "BAAI/bge-small-en-v1.5"
-_CACHE = Path("data/derived/lead_embeddings.npz")
-_ARTS_DIR = Path("data/derived/articles")
+_CACHE = current_corpus().derived("lead_embeddings.npz")
+_ARTS_DIR = current_corpus().derived("articles")
 _INDEX = _ARTS_DIR / "index.json"
 
 # Strip the producer's marker SYNTAX from a lead before embedding, keeping the

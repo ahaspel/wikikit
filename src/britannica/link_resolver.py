@@ -23,6 +23,7 @@ preserving (topic path byte-identical), with ``prose`` threaded into the fisher.
 import json
 import re
 
+from britannica.corpora import current_corpus
 from britannica.markers import collapse_links, strip_marker_tokens
 from pathlib import Path
 
@@ -82,10 +83,10 @@ def _head_is_packaging(name: str) -> bool:
     # its own terms, not by luck of call site.)
     return len(ws) > 1 and (ws[0] in _RANKS or ws[0] in _PARTICLES)
 
-ARTICLES_INDEX = Path("data/derived/articles/index.json")
+ARTICLES_INDEX = current_corpus().derived("articles", "index.json")
 ARTS_DIR = ARTICLES_INDEX.parent
-SECTION_INDEX = Path("data/derived/classified_section_index.json")
-CLASSIFIED_TOC = Path("data/derived/classified_toc.json")
+SECTION_INDEX = current_corpus().derived("classified_section_index.json")
+CLASSIFIED_TOC = current_corpus().derived("classified_toc.json")
 # Hand-adjudicated resolutions live in the book's `xref_adjudications.json`.  The
 # corpus is static, so a ruling there is permanent.  Accreted as cases are found
 # (like the corrections file) — there is no systematic enumeration.  ONLY

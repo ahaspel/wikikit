@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from britannica.corpora import current_corpus
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src/britannica"
@@ -76,7 +77,7 @@ def rebuild_stamp() -> dict:
     corpus is this" — the same value `corpus_stamp.py --check` gates the deploy
     on — so an artifact and a deploy cannot disagree about what they mean by it.
     """
-    path = ROOT / "data/derived/rebuild_stamp.json"
+    path = ROOT / current_corpus().derived("rebuild_stamp.json")
     if not path.is_file():
         return {}
     d = json.loads(path.read_text(encoding="utf-8"))

@@ -19,9 +19,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from britannica.corpora import current_corpus
 from britannica.util.loading import PartialLoadError, unreadable
 
-ARTICLES_DIR = Path("data/derived/articles")
+ARTICLES_DIR = current_corpus().derived("articles")
 # Sidecar files in the articles dir that are NOT articles.
 NON_ARTICLE = frozenset({"index.json", "contributors.json"})
 

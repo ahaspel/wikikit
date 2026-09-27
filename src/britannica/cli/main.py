@@ -2,6 +2,7 @@ from pathlib import Path
 
 import typer
 
+from britannica.corpora import current_corpus
 from britannica.db.base import Base
 from britannica.db.session import SessionLocal, engine
 from britannica.db.models import (
@@ -106,7 +107,7 @@ def detect_boundaries_cmd(volume: int = typer.Argument(...)) -> None:
 @app.command("export-articles")
 def export_articles_cmd(
     volume: int = typer.Argument(...),
-    out_dir: str = typer.Option("data/derived/articles"),
+    out_dir: str = typer.Option(str(current_corpus().derived("articles"))),
 ) -> None:
     count = assemble_and_export(out_dir, only_volume=volume)
     print(f"Exported {count} articles for volume {volume} to {out_dir}.")
@@ -114,7 +115,7 @@ def export_articles_cmd(
 
 @app.command("corpus-export")
 def corpus_export_cmd(
-    out_dir: str = typer.Option("data/derived/articles"),
+    out_dir: str = typer.Option(str(current_corpus().derived("articles"))),
 ) -> None:
     count = assemble_and_export(out_dir)
     print(f"Assembled + exported {count} articles to {out_dir}.")

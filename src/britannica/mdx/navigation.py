@@ -52,7 +52,7 @@ def add_reference_aliases(articles, aliases):
 
 
 def load_contributors(articles, contributors):
-    roster = json.loads((ROOT / "data/derived/articles/contributors.json").read_text(encoding="utf-8"))
+    roster = json.loads((ROOT / current_corpus().derived("articles", "contributors.json")).read_text(encoding="utf-8"))
     for c in roster:
         slug = _section_slug(c["full_name"])
         entry = contributors.setdefault(slug, {"person": c, "articles": []})
@@ -201,7 +201,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         entries[page_map[filename]] = wrap('<div class="frontmatter">' + body + "</div>")
     entries[PREFIX + "introduction"] = wrap("<h1>Introduction and prefaces</h1>" + list_links(
         (title, entry_url(page_map[filename])) for filename, title, _ in front))
-    sources = [ROOT / "docs/introduction.txt", ROOT / "data/derived/articles/contributors.json"]
+    sources = [ROOT / "docs/introduction.txt", ROOT / current_corpus().derived("articles", "contributors.json")]
     sources += list((ROOT / "tools/viewer").glob("readers-guide*.html"))
     sources += [ROOT / "tools/viewer/preface.html", ROOT / "tools/viewer/ancillary-prefatory-note.html"]
     return {"topic_count": len(flat), "front_matter_count": len(front), "guide_page_count": len(guide),

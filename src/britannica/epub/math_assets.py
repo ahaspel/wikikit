@@ -22,9 +22,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from britannica.corpora import current_corpus
 from britannica.util.strings import content_digest
 
-_DERIVED = Path("data/derived")
+_DERIVED = current_corpus().derived()
 SVG_CACHE = _DERIVED / "math_svg.json"
 PNG_META = _DERIVED / "math_png.json"
 PNG_DIR = _DERIVED / "math_png"

@@ -103,16 +103,16 @@ def _topic_index(classified_toc: dict) -> tuple[list[dict], dict[str, list[str]]
     return list(nodes.values()), reverse
 
 
-def build_download(articles_dir: str = "data/derived/articles",
-                   classified_toc: str = "data/derived/classified_toc.json",
-                   out_dir: str = "data/derived/download",
+def build_download(articles_dir: str | None = None,
+                   classified_toc: str | None = None,
+                   out_dir: str | None = None,
                    version: str = "1.0",
                    limit: int | None = None) -> dict:
-    arts = Path(articles_dir)
-    out = Path(out_dir)
+    arts = Path(articles_dir or current_corpus().derived("articles"))
+    out = Path(out_dir or current_corpus().derived("download"))
     out.mkdir(parents=True, exist_ok=True)
 
-    toc = json.loads(Path(classified_toc).read_text(encoding="utf-8"))
+    toc = json.loads(Path(classified_toc or current_corpus().derived("classified_toc.json")).read_text(encoding="utf-8"))
     topic_nodes, reverse = _topic_index(toc)
     (out / "topics.json").write_text(
         json.dumps(topic_nodes, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -235,8 +235,8 @@ def build_download(articles_dir: str = "data/derived/articles",
 
 
 def build_maps_bundle(maps_json: str | None = None,
-                      images_dir: str = "data/images/maps",
-                      out_dir: str = "data/derived") -> dict:
+                      images_dir: str | None = None,
+                      out_dir: str | None = None) -> dict:
     """Archive the colour maps — the EB1911 plates and the Stieler originals —
     as a bundle of their own (eb1911-maps.tar.gz).  Kept separate from the
     corpus bundle: ~200MB of full-resolution JPGs would bloat the agent
@@ -251,7 +251,7 @@ def build_maps_bundle(maps_json: str | None = None,
         from britannica.corpora import current_corpus
         maps_json = current_corpus().data("maps.json")
     reg = json.loads(Path(maps_json).read_text(encoding="utf-8"))
-    imgs = Path(images_dir)
+    imgs = Path(images_dir or current_corpus().images("maps"))
     files: list[Path] = []
     for row in reg.get("maps", []):
         # A row's SIDES are recognised by shape — a dict carrying `sheets`,
@@ -274,7 +274,7 @@ def build_maps_bundle(maps_json: str | None = None,
                         raise RuntimeError(f"maps.json names missing file: {fp}")
                     if fp not in files:
                         files.append(fp)
-    out = Path(out_dir)
+    out = Path(out_dir or current_corpus().derived())
     top = brand("slug") + "-maps"
     archive = out / _archive_name("maps")
     with tarfile.open(archive, "w:gz") as tar:
@@ -287,8 +287,8 @@ def build_maps_bundle(maps_json: str | None = None,
             "bytes": archive.stat().st_size, "archive": str(archive)}
 
 
-def build_tei_bundle(articles_dir: str = "data/derived/articles",
-                     out_dir: str = "data/derived") -> dict:
+def build_tei_bundle(articles_dir: str | None = None,
+                     out_dir: str | None = None) -> dict:
     """Write the TEI-P5 edition and archive it as a bundle of its OWN.
 
     SEPARATE FROM THE CORPUS BUNDLE, for the same reason the maps are: a reader
@@ -308,8 +308,8 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
     """
     from britannica.export.tei import article_to_tei
 
-    src = Path(articles_dir)
-    out = Path(out_dir)
+    src = Path(articles_dir or current_corpus().derived("articles"))
+    out = Path(out_dir or current_corpus().derived())
     tei_dir = out / "tei"
     if tei_dir.exists():
         shutil.rmtree(tei_dir)
