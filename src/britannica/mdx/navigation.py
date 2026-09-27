@@ -7,7 +7,7 @@ import json
 import re
 from urllib.parse import unquote, parse_qs, urlsplit
 
-from britannica.corpora import brand
+from britannica.corpora import brand, current_corpus
 
 from britannica.epub import front_matter as FM, readers_guide as RG
 from britannica.export.article_json import stable_id_from_filename
@@ -68,15 +68,16 @@ def load_contributors(articles, contributors):
 
 
 def full_help(count):
-    return (f"<h1>Britannica 11</h1><p>Complete offline reference edition: {count:,} articles and plates. "
+    # The engine's instructions and contents list, then the BOOK's paragraph
+    # about itself (`mdx_about.html`).
+    return (f"<h1>{brand('short_name')}</h1><p>Complete offline reference edition: {count:,} articles and plates. "
             "Type an article title in the reader’s lookup box. Use its full-text search to find words within articles; initial indexing may take time.</p>"
             + list_links((label, entry_url(PREFIX + key)) for label, key in [
                 ("Introduction and prefaces", "introduction"), ("Volumes", "volumes"),
                 ("Topics", "topics"), ("Contributors", "contributors"),
                 ("Reader’s Guide", "page:guide.xhtml")])
-            + '<p>Encyclopædia Britannica, Eleventh Edition (1910–1911). Transcription from Wikisource; '
-              'digital edition by britannica11.org. See the accompanying license and build manifest. '
-              '<a href="https://britannica11.org">Website (online)</a>.</p>')
+            + current_corpus().template("templates/mdx_about.html", site=brand("site"),
+                                        host=brand("site").split("://", 1)[-1]))
 
 
 def add_navigation(entries, articles, contributors, ct, policy, resources, source_assets):

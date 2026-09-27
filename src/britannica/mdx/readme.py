@@ -1,9 +1,26 @@
-"""Reader-facing instructions shared by complete and sample dictionary builds."""
+"""Reader-facing instructions shared by complete and sample dictionary builds.
+
+The SENTENCES are the engine's — how an MDX is installed, what GoldenDict does,
+what works offline — and are the same for every book.  The book's own nouns come
+from its declared `mdx_phrases.json`: its accent example, its name-order example,
+what its sample exercises and which titles to try, and what an edition holds
+besides its articles.  A whole-README template per book would copy these
+instructions into every book, where they would drift apart.
+"""
 
 
-def edition_readme(sample=False, native_search=False):
+def phrases() -> dict[str, str]:
+    """The book's phrases.  Asking for one the book lacks is a KeyError — a
+    missing phrase must not become a hole in a shipped README."""
+    import json
+    from britannica.corpora import current_corpus
+    return json.loads(current_corpus().data("mdx_phrases.json").read_text(encoding="utf-8"))
+
+
+def edition_readme(sample=False, native_search=False, *, article_count):
     from britannica.corpora import brand
     from britannica.mdx.build import dictionary_basename, help_word as _help_word
+    p = phrases()
     label = 'sample' if sample else 'complete edition'
     basename = dictionary_basename(sample)
     help_word = _help_word(sample)
@@ -23,14 +40,13 @@ def edition_readme(sample=False, native_search=False):
              'format and are not tied to Windows; other readers and operating systems have '
              'not been verified. Try the sample in your own reader before choosing the full edition.\n\n')
     if sample:
-        text += ('This 13-article sample exercises illustrations, equations, tables, Unicode, '
-                 'footnotes and ambiguous titles. Try ALGEBRA, ALPHABET, MERCURY and '
-                 'Continued Fraction. Links outside the sample are explicitly marked online. '
+        text += (f'This {article_count:,}-article sample exercises {p["sample_exercises"]}. '
+                 f'Try {p["sample_try"]}. Links outside the sample are explicitly marked online. '
                  'Remove the sample from your reader when installing the complete edition.\n\n')
     else:
-        text += ('Includes all 37,225 nonempty article and plate records, contributors, topics, '
-                 'volume lists, front matter and the Reader’s Guide.\n\n')
-    text += ('Accent-free spellings are indexed directly, so ABABDA finds ABĀBDA with no '
+        text += (f'Includes all {article_count:,} nonempty article and plate records, '
+                 f'{p["edition_contents"]}.\n\n')
+    text += (f'Accent-free spellings are indexed directly, so {p["accent_example"]} with no '
              'setting changed; GoldenDict-ng’s Ignore diacritics option additionally folds '
              'accents in what you type. '
              'Full-text search is available after initial indexing (Ctrl+Shift+F). '
@@ -38,7 +54,7 @@ def edition_readme(sample=False, native_search=False):
     if not native_search:
         text += ('Almost every article has a single headword. A few carry one extra spelling '
                  'deliberately — an accent-free form, or a name order the book does not print, '
-                 'such as DANTE ALIGHIERI beside DANTE — so that typing it in full still finds '
+                 f'such as {p["name_order_example"]} — so that typing it in full still finds '
                  'the article. ')
     text += ('Reading, illustrations, mathematics and internal navigation work offline. '
              'Explicitly external links require an internet connection.\n\n'

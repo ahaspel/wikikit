@@ -29,6 +29,45 @@ def book_cs(book):
             "}\n")
 
 
+def windows_readme(book, sample, article_count):
+    """The enhanced Windows package's README.txt.  The install steps are the
+    engine's; the book supplies its names (from the edition manifest's `book`
+    block) and, for the sample, which titles to try (its `mdx_phrases.json`)."""
+    from britannica.mdx.readme import phrases
+    upper = book['short_name'].upper()
+    return (
+        (upper + ' — ENHANCED SEARCH FOR WINDOWS' + (' — SAMPLE' if sample else '') + '\n\n') +
+        'This optional edition displays one canonical title per matching article.\n'
+        'It contains its own MDX/MDD pair and search helper: install it instead of the\n'
+        'standard MDX edition, not as a second copy beside it. GoldenDict is not bundled.\n'
+        f"For ordinary MDX installation without helpers, choose {book['file_stem']}-MDX.zip.\n\n" +
+        (f'This is a {article_count:,}-article trial of the same enhanced-search setup used by the full\n'
+         f"edition. Try {phrases()['sample_try']}. Links to\n"
+         'articles outside the sample are marked online. Use a separate test reader\n'
+         'folder if the complete edition is already installed.\n\n' if sample else '') +
+        '1. Extract this entire ZIP to a folder. Do not run setup from inside the ZIP.\n'
+        '2. Close GoldenDict using File > Quit.\n'
+        f'3. Double-click {installer_exe(book)}. Browse to your portable GoldenDict folder\n'
+        '   (the folder containing goldendict.exe), then click Install.\n' +
+        ('4. Open GoldenDict and search for ' + book['help_word'] + ' to see the contents.\n\n') +
+        'GoldenDict-ng is required and is not included. This package is tested with\n'
+        'GoldenDict-ng 26.8.0 on 64-bit Windows. Use a writable portable reader folder,\n'
+        'such as one under Documents, rather than Program Files. Setup creates portable\n'
+        'configuration if the folder has not been initialized. Python and Node do not\n'
+        'need to be installed: the search runtime is included privately with this edition.\n\n'
+        'The first full-text index may take several minutes. Title lookup is available\n'
+        'sooner. GoldenDict controls\n'
+        'result ordering. Reading, search, images and mathematics work offline.\n\n'
+        'To update, quit GoldenDict and run the new installer against the same folder.\n'
+        'Existing settings are preserved and backed up. If you move the reader folder,\n'
+        'run setup again to update the search paths. Keep content/search with the book.\n'
+        'You may remove the extracted setup folder after installation.\n\n'
+        'The Chrome selection menu is a separate optional extension; setup does not\n'
+        'change your browser or the registered goldendict:// handler.\n\n'
+        'See LICENSE for edition attribution and search/runtime/LICENSE for the bundled\n'
+        'Node runtime notices. Package identity and checksums are included.\n')
+
+
 def build(edition, output, node):
     edition, output, node = edition.resolve(), output.resolve(), node.resolve()
     manifest = json.loads((edition/'manifest.json').read_text(encoding='utf-8'))
@@ -100,36 +139,7 @@ def build(edition, output, node):
                     '/out:'+str(executable), str(source), str(book_source)], check=True)
     payload += [installer_name, 'installer-source/InstallBritannica.cs', 'installer-source/Book.cs']
     write_shipped_text(output/'README.txt',
-        ('BRITANNICA 11 — ENHANCED SEARCH FOR WINDOWS' + (' — SAMPLE' if sample else '') + '\n\n') +
-        'This optional edition displays one canonical title per matching article.\n'
-        'It contains its own MDX/MDD pair and search helper: install it instead of the\n'
-        'standard MDX edition, not as a second copy beside it. GoldenDict is not bundled.\n'
-        'For ordinary MDX installation without helpers, choose Britannica11-MDX.zip.\n\n' +
-        ('This is a 13-article trial of the same enhanced-search setup used by the full\n'
-         'edition. Try ALGEBRA, ALPHABET, MERCURY and Continued Fraction. Links to\n'
-         'articles outside the sample are marked online. Use a separate test reader\n'
-         'folder if the complete edition is already installed.\n\n' if sample else '') +
-        '1. Extract this entire ZIP to a folder. Do not run setup from inside the ZIP.\n'
-        '2. Close GoldenDict using File > Quit.\n'
-        '3. Double-click Install Britannica 11.exe. Browse to your portable GoldenDict folder\n'
-        '   (the folder containing goldendict.exe), then click Install.\n' +
-        ('4. Open GoldenDict and search for '+('Britannica 11 sample' if sample else 'Britannica 11')+' to see the contents.\n\n') +
-        'GoldenDict-ng is required and is not included. This package is tested with\n'
-        'GoldenDict-ng 26.8.0 on 64-bit Windows. Use a writable portable reader folder,\n'
-        'such as one under Documents, rather than Program Files. Setup creates portable\n'
-        'configuration if the folder has not been initialized. Python and Node do not\n'
-        'need to be installed: the search runtime is included privately with this edition.\n\n'
-        'The first full-text index may take several minutes. Title lookup is available\n'
-        'sooner. GoldenDict controls\n'
-        'result ordering. Reading, search, images and mathematics work offline.\n\n'
-        'To update, quit GoldenDict and run the new installer against the same folder.\n'
-        'Existing settings are preserved and backed up. If you move the reader folder,\n'
-        'run setup again to update the search paths. Keep content/search with the book.\n'
-        'You may remove the extracted setup folder after installation.\n\n'
-        'The Chrome selection menu is a separate optional extension; setup does not\n'
-        'change your browser or the registered goldendict:// handler.\n\n'
-        'See LICENSE for edition attribution and search/runtime/LICENSE for the bundled\n'
-        'Node runtime notices. Package identity and checksums are included.\n')
+                       windows_readme(book, sample, manifest['article_count']))
     write_shipped_text(output/'installation.json', json.dumps({
         'platform':'windows-x64', 'runtime_version':runtime_version, 'edition':manifest['edition'],
         'runtime_sha256':sha(runtime/'node.exe'), 'edition_manifest_sha256':sha(edition/'manifest.json'),

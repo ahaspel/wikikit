@@ -62,6 +62,11 @@ KNOWN_DATA = frozenset({
     "templates/tei_source.xml",  # $volume $pages — the printed book, per article
     "templates/tei_corpus_source.xml",  # (none) — the printed book, for the catalogue
     "epub_cover.jpg",            # the EPUB's cover: a finished image, used as-is
+    "templates/mdx_description.html",         # the reader's Dictionary info:
+    "templates/mdx_description_sample.html",  #   $articles $contributors $illustrations $headwords $site
+    "templates/mdx_about.html",        # the help page's paragraph about the book: $site $host
+    "templates/mdx_help_sample.html",  # the sample's help heading + intro: $short_name
+    "mdx_phrases.json",          # the book's own nouns inside the engine's README sentences
 })
 
 
@@ -154,6 +159,11 @@ class Corpus:
     #: photograph of VOLUME I's title page, so it serves the complete edition
     #: and the vol-1 sampler, and would mislabel any other volume's book.
     cover_volumes: frozenset[int] = field(default_factory=frozenset)
+    #: The work's own subtitle and years, and how many of its volumes hold
+    #: articles (EB1911: 28; its 29th is the index) — the EPUB title page.
+    subtitle: str | None = None
+    years: str | None = None
+    article_volumes: int | None = None
 
     def template(self, name: str, **values) -> str:
         """Fill one of the book's declared prose templates.
@@ -248,6 +258,9 @@ EB1911 = Corpus(
         "genealogy_images.json", "mdx_sample.json",
         "templates/tei_readme.md", "templates/tei_source.xml",
         "templates/tei_corpus_source.xml", "epub_cover.jpg",
+        "templates/mdx_description.html", "templates/mdx_description_sample.html",
+        "templates/mdx_about.html", "templates/mdx_help_sample.html",
+        "mdx_phrases.json",
     }),
     site="https://britannica11.org",
     short_name="Britannica 11",
@@ -259,6 +272,9 @@ EB1911 = Corpus(
     search_name="Britannica title search",
     concept_doi="10.5281/zenodo.22072145",
     cover_volumes=frozenset({1}),
+    subtitle="A Dictionary of Arts, Sciences, Literature and General Information",
+    years="1910–1911",
+    article_volumes=28,
 )
 
 

@@ -26,7 +26,7 @@ import time
 from urllib.parse import quote, unquote, urljoin
 import zipfile
 
-from britannica.corpora import brand
+from britannica.corpora import brand, current_corpus
 from britannica.epub import math_assets
 from britannica.epub.images import diet_image
 from britannica.export.corpus import load_corpus
@@ -579,25 +579,16 @@ def dictionary_description(*, sample, articles, contributors, illustrations, hea
     from the build that produced the file, never typed, so it cannot drift
     from the dictionary it describes.  Nothing volatile (no build date): the
     same inputs still compile to the same bytes.
+
+    The WORDS are the book's (`mdx_description.html`, and `…_sample.html` for
+    the sample, whose help page lists only its articles); the engine fills in
+    the counts.
     """
-    # The sample's help page lists its articles and nothing else; only the
-    # complete edition has the volume, topic and contributor indexes.
-    if sample:
-        scope = "A compatibility sample: a small test selection from the complete edition."
-        start = "<p>{h:,} headwords. Look up <i>Britannica 11 sample</i> for its list of articles.</p>"
-    else:
-        scope = "The complete text of the Eleventh Edition’s 28 volumes of articles."
-        start = ("<p>{h:,} headwords. Look up <i>Britannica 11</i> for contents: "
-                 "volumes, topics, contributors and the Reader’s Guide.</p>")
-    return (
-        "<p><b>Encyclopædia Britannica, Eleventh Edition</b> (1910–1911)</p>"
-        f"<p>{scope} {articles:,} articles and plates by {contributors:,} contributors, "
-        f"with their {illustrations:,} illustrations and every table and formula, "
-        "bundled for offline reading.</p>"
-        + start.format(h=headwords) +
-        "<p>Edited by Aaron Haspel, from the Wikisource volunteers’ proofread "
-        'transcription. Also at <a href="https://britannica11.org">britannica11.org</a>.</p>'
-        "<p>Text licensed CC BY-SA 4.0; see LICENSE for attribution.</p>")
+    from britannica.corpora import current_corpus
+    name = "templates/mdx_description_sample.html" if sample else "templates/mdx_description.html"
+    return current_corpus().template(
+        name, articles=f"{articles:,}", contributors=f"{contributors:,}",
+        illustrations=f"{illustrations:,}", headwords=f"{headwords:,}", site=brand("site"))
 
 
 # The site's own mark, and its paper colour.  The favicon's ink is dark on a
@@ -794,7 +785,8 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         (output / "redundant-aliases.json").write_text(json.dumps(redundant_aliases, ensure_ascii=False, indent=2), encoding="utf-8")
         choices = add_headwords(entries, articles, aliases)
         if sample:
-            body = "<h1>Britannica 11 — compatibility sample</h1><p>This is a small test selection, not the complete edition. Article text, illustrations and mathematics are bundled offline. Destinations outside this sample open the website. Front matter and the Reader’s Guide are not included in this pilot.</p>" + list_links((a["title"], entry_url(article_key(s))) for s, a in articles.items())
+            body = current_corpus().template("templates/mdx_help_sample.html",
+                                             short_name=brand("short_name")) + list_links((a["title"], entry_url(article_key(s))) for s, a in articles.items())
             # Use a real canonical section in the pilot's reader test.
             section_ids = sorted(i for i in Inventory(entries[article_key("01-0639-46474b")]).ids if i.startswith("section-"))
             if not section_ids:
@@ -881,7 +873,8 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         write_shipped_text(output / "source-link-issues.json", json.dumps(source_link_issues, ensure_ascii=False, indent=2))
         shutil.copyfile(ROOT / "src/britannica/export/download_assets/LICENSE", output / "LICENSE")
         from britannica.mdx.readme import edition_readme
-        write_shipped_text(output / "README.md", edition_readme(sample, native_search))
+        write_shipped_text(output / "README.md",
+                           edition_readme(sample, native_search, article_count=len(articles)))
         (output / (basename + ".png")).write_bytes(dictionary_icon())
         shipped = [basename + ".mdx", basename + ".mdd", basename + ".png", "README.md", "LICENSE",
                    "manifest.json", "source-link-issues.json"] + search_files

@@ -29,7 +29,9 @@ def package_standard(source, destination, sample):
                     digest.update(chunk)
                     outgoing.write(chunk)
             checksums[name] = digest.hexdigest()
-        readme = edition_readme(sample, False).encode('utf-8')
+        # The count of what THIS archive holds, from its own manifest.
+        count = json.loads(original.read('manifest.json'))['article_count']
+        readme = edition_readme(sample, False, article_count=count).encode('utf-8')
         target.writestr('README.md', readme)
         checksums['README.md'] = hashlib.sha256(readme).hexdigest()
         target.writestr('SHA256SUMS', format_checksums(checksums))
@@ -76,6 +78,58 @@ def verify_archive(archive, *, sample, enhanced):
         return manifest
 
 
+_RELEASE_README = '''# $short_name dictionary downloads
+
+**Choose the standard MDX edition for ordinary dictionary use.** Extract its MDX
+and MDD together and add their folder to your existing reader. There is no
+installer or additional runtime. GoldenDict is not included in any download.
+
+| Download | What it provides |
+|---|---|
+| [Standard MDX]($file_stem-MDX.zip) | The complete dictionary with conventional lookup aliases. |
+| [Enhanced search for Windows]($file_stem-Enhanced-Windows.zip) | The complete dictionary with one canonical title per article in GoldenDict's title suggestions. |
+
+The standard format is independent of OS. Both editions have been tested with
+GoldenDict-ng 26.8.0 on Windows; other readers and operating systems are not
+verified. The enhanced package currently supports portable GoldenDict on 64-bit
+Windows and includes its own search runtime. Python and Node need not be installed.
+
+Both complete editions contain the same $article_count articles and plates, $contents.
+The difference is lookup: the standard edition exposes ordinary aliases, which the reader may
+show separately; enhanced search matches aliases internally and displays canonical
+titles. GoldenDict controls final result ordering and full-text presentation.
+
+**Choose one complete edition.** Enhanced search includes a different MDX plus
+its helper; it is a complete alternative, not a helper-only add-on. Do not load
+both editions at once. Its installer replaces the standard pair if installed in
+the same portable reader's content directory. Remove any other copy from your
+reader's sources to avoid duplicate dictionaries.
+
+To return from enhanced search to the standard MDX, disable the
+“$search_name” and “$short_name” entries under GoldenDict's Programs sources, replace the
+MDX/MDD pair, and rescan. Keep the actual $short_name MDX dictionary enabled.
+
+Each ZIP contains instructions, attribution and file checksums. Known unavailable
+source links are inventoried in each edition. Reading and internal resources work
+offline; explicitly external links require a connection. The Chrome selection-menu
+extension is optional and distributed separately.
+
+'''
+
+
+def release_readme(article_count):
+    """The release folder's README: the engine's account of the two editions,
+    with the book's names and its `release_contents` phrase filled in.  The table
+    of archives is appended by `assemble`."""
+    from string import Template
+    from britannica.corpora import brand
+    from britannica.mdx.readme import phrases
+    return Template(_RELEASE_README).substitute(
+        short_name=brand('short_name'), file_stem=brand('file_stem'),
+        search_name=brand('search_name'), article_count=f'{article_count:,}',
+        contents=phrases()['release_contents'])
+
+
 def assemble(standard, enhanced, output, node):
     # 13-article samples were dropped from the release 2026-09-15: the downloads
     # page should not hand a buyer a four-way choice.  `build.py --sample` still
@@ -106,44 +160,7 @@ def assemble(standard, enhanced, output, node):
                             edition='enhanced-windows' if enhanced_search else 'standard-mdx',
                             sample=sample, article_count=manifest['article_count']))
         print('Verified', name, flush=True)
-    introduction = '''# Britannica 11 dictionary downloads
-
-**Choose the standard MDX edition for ordinary dictionary use.** Extract its MDX
-and MDD together and add their folder to your existing reader. There is no
-installer or additional runtime. GoldenDict is not included in any download.
-
-| Download | What it provides |
-|---|---|
-| [Standard MDX](Britannica11-MDX.zip) | The complete dictionary with conventional lookup aliases. |
-| [Enhanced search for Windows](Britannica11-Enhanced-Windows.zip) | The complete dictionary with one canonical title per article in GoldenDict's title suggestions. |
-
-The standard format is independent of OS. Both editions have been tested with
-GoldenDict-ng 26.8.0 on Windows; other readers and operating systems are not
-verified. The enhanced package currently supports portable GoldenDict on 64-bit
-Windows and includes its own search runtime. Python and Node need not be installed.
-
-Both complete editions contain the same 37,225 articles and plates, illustrations,
-mathematics, contributor and topic navigation, and Reader's Guide. The difference
-is lookup: the standard edition exposes ordinary aliases, which the reader may
-show separately; enhanced search matches aliases internally and displays canonical
-titles. GoldenDict controls final result ordering and full-text presentation.
-
-**Choose one complete edition.** Enhanced search includes a different MDX plus
-its helper; it is a complete alternative, not a helper-only add-on. Do not load
-both editions at once. Its installer replaces the standard pair if installed in
-the same portable reader's content directory. Remove any other copy from your
-reader's sources to avoid duplicate dictionaries.
-
-To return from enhanced search to the standard MDX, disable the “Britannica title
-search” and “Britannica 11” entries under GoldenDict's Programs sources, replace the
-MDX/MDD pair, and rescan. Keep the actual Britannica MDX dictionary enabled.
-
-Each ZIP contains instructions, attribution and file checksums. Known unavailable
-source links are inventoried in each edition. Reading and internal resources work
-offline; explicitly external links require a connection. The Chrome selection-menu
-extension is optional and distributed separately.
-
-'''
+    introduction = release_readme(catalog[0]['article_count'])
     introduction += '| Archive | Size (MB) |\n|---|---:|\n' + ''.join(
         f'| {r["file"]} | {r["bytes"]/1_000_000:.1f} |\n' for r in catalog)
     write_shipped_text(output/'README.md', introduction)

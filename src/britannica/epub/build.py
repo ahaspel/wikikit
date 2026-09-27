@@ -1244,20 +1244,25 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         tool_links.append('<a href="guide.xhtml">Reader’s Guide</a>')
     n_arts = sum(1 for s in spine_stems if meta[s]["article_type"] == "article")
     vols_present = sorted({meta[s]["volume"] for s in spine_stems})
+    # The book's facts (its subtitle, its years, how many volumes of articles)
+    # inside the engine's sentences.
+    book = current_corpus()
+    site, host = brand("site"), brand("site").split("://", 1)[-1]
+    years, of_n = book.need("years"), book.need("article_volumes")
     if len(vols_present) == 1:
         # Single-volume book = the sampler form: honest count line + the
         # try-before-you-buy pointer, traveling inside every copy.
-        count_line = f"{n_arts:,} articles · Volume {vols_present[0]} of 28 (1910–1911)"
-        closing = (f"<p>This is Volume {vols_present[0]} of 28.  The complete "
+        count_line = f"{n_arts:,} articles · Volume {vols_present[0]} of {of_n} ({years})"
+        closing = (f"<p>This is Volume {vols_present[0]} of {of_n}.  The complete "
                    "edition — every volume in one searchable book — at "
-                   '<a href="https://britannica11.org/download.html">britannica11.org</a>.</p>')
+                   f'<a href="{site}/download.html">{host}</a>.</p>')
     else:
-        count_line = f"{n_arts:,} articles · 28 volumes (1910–1911)"
-        closing = '<p><a href="https://britannica11.org">britannica11.org</a></p>'
+        count_line = f"{n_arts:,} articles · {of_n} volumes ({years})"
+        closing = f'<p><a href="{site}">{host}</a></p>'
     open(os.path.join(oebps, "titlepage.xhtml"), "w", encoding="utf-8").write(xhtml_doc(
         title,
         f'<div class="titlepage"><h1>{_html.escape(title)}</h1>'
-        '<p>A Dictionary of Arts, Sciences, Literature and General Information</p>'
+        f'<p>{_html.escape(book.need("subtitle"))}</p>'
         f'<p>{count_line}</p>'
         f'<p class="titlepage-tools">{" · ".join(tool_links)}</p>'
         + (('<p class="titlepage-tools">' + " · ".join(

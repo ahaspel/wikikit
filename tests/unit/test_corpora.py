@@ -119,11 +119,12 @@ def test_every_field_is_read_by_something():
     #   search_name the installers' program label (via the manifest `book` block)
     #   concept_doi TEI headers and catalogue, the TEI readme, EPUB dc:relation
     #   cover_volumes  epub.build.install_cover — which builds the cover fits
+    #   subtitle, years, article_volumes  the EPUB title page and closing
     assert fields == {"key", "title", "scan_name", "boundary_style",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",
-                      "cover_volumes"}, (
+                      "cover_volumes", "subtitle", "years", "article_volumes"}, (
         "a field was added or removed — is its consumer written?")
 
 
