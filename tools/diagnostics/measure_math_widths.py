@@ -21,6 +21,7 @@ Output schema:
 Foundation for the auto-scaling pipeline (Approach C from the math-quality session).
 Cached: hash-keyed, so subsequent runs only measure new LaTeX.
 """
+from britannica.corpora import current_corpus
 import json
 import re
 import sys
@@ -64,7 +65,7 @@ def _collect_latex() -> dict[str, list[str]]:
     by_hash: dict[str, dict] = {}
     # Total load — an unparseable article here would silently go UNMEASURED, so
     # its wide math would ship unhinted (no fs= / popout) rather than loudly fail.
-    payloads, _ = load_corpus(Path("data/derived/articles"), require=("body",))
+    payloads, _ = load_corpus(current_corpus().derived("articles"), require=("body",))
     for path, d in sorted(payloads.items()):
         body = d.get("body", "")
         if not isinstance(body, str):

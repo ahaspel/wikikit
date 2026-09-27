@@ -37,6 +37,7 @@ Usage:
 """
 from __future__ import annotations
 
+from britannica.corpora import current_corpus
 import argparse
 import collections
 import json
@@ -50,7 +51,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 from britannica.export.corpus import load_corpus     # noqa: E402
 
-IMAGE_DIR = Path("data/images")
+IMAGE_DIR = current_corpus().images()
 EXCEPTIONS = Path("data/image_exceptions.json")
 SITE_PREFIX = "/data/images/"
 
@@ -108,7 +109,7 @@ def main() -> int:
         for src, arts in sorted(external.items()):
             print(f"    {src[:72]}  ({', '.join(sorted(set(arts)))})")
         print()
-        print("  Fix: mirror it into data/images/ and reference it as "
+        print(f"  Fix: mirror it into {IMAGE_DIR.as_posix()}/ and reference it as "
               f"{SITE_PREFIX}<name> — see image_assets.local_image_filename.")
 
     if not unreviewed and not external:

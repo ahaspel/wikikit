@@ -69,6 +69,7 @@ and EDITING the pattern revokes it — a changed pattern is a new decision.
 """
 from __future__ import annotations
 
+from britannica.corpora import current_corpus
 import argparse
 import ast
 import hashlib
@@ -84,7 +85,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 ROOT = Path(__file__).resolve().parents[2]
 SCOPE = ("src/britannica", "tools")
 SKIP_PARTS = {"__pycache__", ".venv", "_scratch", "node_modules"}
-EXCEPTIONS = ROOT / "data" / "fake_recursion_exceptions.json"
+EXCEPTIONS = ROOT / current_corpus().data("fake_recursion_exceptions.json")
 
 # This file quotes every idiom it hunts for; scanning itself would report each
 # detector as a finding.

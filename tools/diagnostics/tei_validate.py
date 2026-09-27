@@ -22,11 +22,10 @@ dependency — the same pattern `deploy.sh` uses for `huggingface_hub`.
 """
 from __future__ import annotations
 
+from britannica.corpora import current_corpus
+from britannica.export.corpus import load_corpus
 import argparse
 import collections
-import glob
-import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -36,7 +35,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 SCHEMA = ROOT / "tools" / "schema" / "tei_all.rng"
-ARTICLES = ROOT / "data" / "derived" / "articles"
+ARTICLES = ROOT / current_corpus().derived("articles")
 
 
 def main() -> int:
@@ -60,24 +59,24 @@ def main() -> int:
     from britannica.export.tei import article_to_tei
 
     rng = etree.RelaxNG(etree.parse(str(SCHEMA)))
-    files = sorted(glob.glob(str(ARTICLES / "*.json")))
-    files = [f for f in files if os.path.basename(f) not in
-             ("index.json", "contributors.json")]
+    # Through the ONE reader.  This read `except Exception: continue`, so an
+    # article the gate could not read was skipped and the gate still reported
+    # clean — invisible until wikikit step 3, because the path was spelled in
+    # pieces the corpus-read ratchet could not see.  load_corpus RAISES on an
+    # unreadable payload: a gate that cannot read an article must stop.
+    payloads, _ = load_corpus(ARTICLES)
+    items = sorted(payloads.items())            # the same files, same order
     if args.sample:
         import random
         random.seed(args.seed)
-        files = random.sample(files, min(args.sample, len(files)))
+        items = random.sample(items, min(args.sample, len(items)))
 
     ok = invalid = malformed = 0
     errs: collections.Counter = collections.Counter()
     offenders: list = []
     t0 = time.time()
-    for f in files:
-        try:
-            d = json.loads(Path(f).read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        if not isinstance(d, dict) or not d.get("body"):
+    for _path, d in items:
+        if not d.get("body"):
             continue
         if args.article and (d.get("title") or "") != args.article:
             continue

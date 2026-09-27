@@ -11,6 +11,7 @@ Cache: data/derived/epub_img_cache/<sha1(source bytes + params)>.<ext> — a reb
 re-encodes only new/changed images (the math-assets pattern).  If the re-encode is
 not smaller, the original bytes ship unchanged.
 """
+from britannica.corpora import current_corpus
 import hashlib
 import io
 import os
@@ -19,7 +20,7 @@ DIET_MAXDIM = 1000
 DIET_JPEG_Q = 60
 _GRAY_TOL = 12
 
-CACHE_DIR = os.path.join("data", "derived", "epub_img_cache")
+CACHE_DIR = str(current_corpus().derived("epub_img_cache"))
 
 
 def _params_tag():

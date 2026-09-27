@@ -67,6 +67,8 @@ KNOWN_DATA = frozenset({
     "templates/mdx_about.html",        # the help page's paragraph about the book: $site $host
     "templates/mdx_help_sample.html",  # the sample's help heading + intro: $short_name
     "mdx_phrases.json",          # the book's own nouns inside the engine's README sentences
+    "fake_recursion_exceptions.json",  # findings the recursion audit acknowledges
+    "reference_link_overrides.json",   # the viewer's Reader's Guide link overrides
 })
 
 
@@ -171,6 +173,15 @@ class Corpus:
     years: str | None = None
     article_volumes: int | None = None
 
+    def data_path(self, name: str) -> Path:
+        """Where a declared data file LIVES, whether or not it exists yet — for
+        the tool that writes it (build_hyphen_map writes hyphen_map.json).
+        Readers use `data()`, which also requires the file to be there."""
+        _check_known(name)
+        if name not in self.data_files:
+            raise LookupError(f"{self.key} does not declare {name}")
+        return Path(self.data_dir) / name
+
     def template(self, name: str, **values) -> str:
         """Fill one of the book's declared prose templates.
 
@@ -216,10 +227,7 @@ class Corpus:
         """The path of a data file this book DECLARES.  Asking for one it does
         not declare is a bug in the caller (check ``has_data`` first), and a
         declared file that is missing is a broken book — both raise."""
-        _check_known(name)
-        if name not in self.data_files:
-            raise LookupError(f"{self.key} does not declare {name}")
-        path = Path(self.data_dir) / name
+        path = self.data_path(name)             # the declaration check, once
         if not path.is_file():
             raise FileNotFoundError(f"{self.key} declares {name}, but {path} does not exist")
         return path
@@ -274,7 +282,7 @@ EB1911 = Corpus(
         "templates/tei_corpus_source.xml", "epub_cover.jpg",
         "templates/mdx_description.html", "templates/mdx_description_sample.html",
         "templates/mdx_about.html", "templates/mdx_help_sample.html",
-        "mdx_phrases.json",
+        "mdx_phrases.json", "fake_recursion_exceptions.json", "reference_link_overrides.json",
     }),
     site="https://britannica11.org",
     short_name="Britannica 11",
@@ -362,3 +370,21 @@ def current_corpus() -> Corpus:
             f"unknown corpus {settings.corpus!r}; "
             f"expected one of {', '.join(sorted(_REGISTRY))}"
         ) from None
+
+
+# ── for shell scripts, which cannot import this module ──────────────────────
+#   uv run python -m britannica.corpora derived articles   ->  data/derived/articles
+#   uv run python -m britannica.corpora images maps        ->  data/images/maps
+# Prints the path for the book selected by settings (BRITANNICA_CORPUS), in
+# POSIX form, so rebuild_all.sh and deploy.sh ask the book instead of spelling it.
+if __name__ == "__main__":
+    import sys
+    kind, *parts = sys.argv[1:] or ["derived"]
+    if kind == "brand" and len(parts) == 1:     # `brand slug` -> eb1911
+        print(brand(parts[0]))
+    elif kind == "data" and len(parts) == 1:    # `data maps.json` -> data/maps.json
+        print(current_corpus().data(parts[0]).as_posix())
+    elif kind in ("derived", "images"):
+        print(getattr(current_corpus(), kind)(*parts).as_posix())
+    else:
+        raise SystemExit("usage: python -m britannica.corpora derived|images [part ...] | brand NAME | data FILE")

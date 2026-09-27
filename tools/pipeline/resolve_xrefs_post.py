@@ -12,6 +12,7 @@ docs/xref_resolution_strategy.md, [[project_resolver_consolidation]].
 Sole (re)writer of `xref_resolution.jsonl`; patches each article JSON in place
 (body, word_count, xrefs panel, rendered_html).
 """
+from britannica.corpora import current_corpus
 import json
 import sys
 from pathlib import Path
@@ -27,7 +28,7 @@ from britannica.link_resolver import LinkResolver
 from britannica.markers import countable_words
 from britannica.render.article import render_article
 
-ART = Path("data/derived/articles")
+ART = current_corpus().derived("articles")
 _SKIP = {"index.json", "contributors.json"}
 
 

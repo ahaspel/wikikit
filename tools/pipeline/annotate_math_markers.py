@@ -17,6 +17,7 @@ expression that fell out of the cache).
 """
 from __future__ import annotations
 
+from britannica.corpora import current_corpus
 import re
 import sys
 from pathlib import Path
@@ -29,7 +30,7 @@ import britannica.math_widths as _mw
 _mw._LOOKUP = None
 from britannica.math_widths import scale_hint  # noqa: E402
 
-ARTICLES_DIR = Path("data/derived/articles")
+ARTICLES_DIR = current_corpus().derived("articles")
 # Capture the existing hint slot so the producer-carried `display` token (block-
 # vs-inline) survives this refresh — we only re-derive the width hint (fs/popout).
 MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:([^«]*)«/MATH»")

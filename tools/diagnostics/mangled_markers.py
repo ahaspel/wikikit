@@ -32,6 +32,7 @@ raw pipe in the anchor text.  Every check we had was silent.
 
 Exits nonzero on any finding, so `set -e` aborts the rebuild before deploy.
 """
+from britannica.corpora import current_corpus
 import argparse
 import glob
 import re
@@ -56,8 +57,8 @@ from britannica.render.leaks import mask_math                  # noqa: E402
 # invented 15 findings in SPHERICAL HARMONICS alone.
 _REAL_TAG = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?/?>")
 
-ART = "data/derived/articles"
-OUT = Path("data/derived/quality_reports/mangled_markers.tsv")
+ART = current_corpus().derived("articles").as_posix()
+OUT = current_corpus().derived("quality_reports/mangled_markers.tsv")
 
 
 def _comparable(text, fmt="text"):

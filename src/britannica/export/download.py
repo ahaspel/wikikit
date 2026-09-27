@@ -405,6 +405,12 @@ def build_tei_bundle(articles_dir: str | None = None,
 
 if __name__ == "__main__":
     import sys
+    # `name corpus` prints an archive's name — for deploy.sh, which must upload
+    # under the same names and so asks the one naming rule instead of
+    # re-spelling `<slug>-corpus.tar.gz` in shell.
+    if sys.argv[1:2] == ["name"]:
+        print(_archive_name(sys.argv[2]))
+        raise SystemExit(0)
     if "maps" in sys.argv[1:]:
         print(json.dumps(build_maps_bundle(), indent=2))
     elif "tei" in sys.argv[1:]:

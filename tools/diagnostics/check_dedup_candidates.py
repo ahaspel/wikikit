@@ -26,6 +26,7 @@ Usage:
 """
 from __future__ import annotations
 
+from britannica.corpora import current_corpus
 import argparse
 import io
 import json
@@ -37,8 +38,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8",
 
 from britannica.contributors.aliases import normalize  # noqa: E402
 
-DEFAULT_REPORT = "data/derived/quality_reports/dedup_candidates.json"
-DEFAULT_ALIASES = "data/contributor_aliases.json"
+DEFAULT_REPORT = current_corpus().derived("quality_reports/dedup_candidates.json").as_posix()
+DEFAULT_ALIASES = current_corpus().data("contributor_aliases.json").as_posix()
 
 
 def _load_aliases_index(path: Path) -> tuple[dict[str, str], set[frozenset[str]]]:
@@ -118,7 +119,7 @@ def main() -> int:
 
     print()
     print("FAIL: unreviewed contributor-dupe candidates — resolve in "
-          "data/contributor_aliases.json before deploy:")
+          f"{DEFAULT_ALIASES} before deploy:")
     for c in unreviewed:
         print(f"  sim={c.get('sim'):.3f}  "
               f"{c.get('a_name')!r} (id={c.get('a_id')}, "

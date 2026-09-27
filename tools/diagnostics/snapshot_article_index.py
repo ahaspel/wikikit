@@ -21,6 +21,7 @@ article-list and xref churn over time, and we can identify which
 specific articles or xrefs changed between any two rebuilds without
 needing to re-run the pipeline.
 """
+from britannica.corpora import current_corpus
 import sys
 from pathlib import Path
 
@@ -40,8 +41,8 @@ def _pp(vol: int, leaf: int) -> str:
 
 
 def main():
-    out_articles = Path("data/derived/article_index.tsv")
-    out_xrefs = Path("data/derived/xref_index.tsv")
+    out_articles = current_corpus().derived("article_index.tsv")
+    out_xrefs = current_corpus().derived("xref_index.tsv")
     s = SessionLocal()
     try:
         articles = (s.query(Article)

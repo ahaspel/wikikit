@@ -14,6 +14,7 @@ tag) AND missed what the render actually emits.  Alongside the oracle, a few
 structural-integrity checks (marker imbalance, dropped bodies) catch producer
 bugs that don't surface as visible output residue.
 """
+from britannica.corpora import current_corpus
 import json
 import re
 import sys
@@ -38,7 +39,7 @@ _REGISTERED = frozenset(RENDERED_GUILLEMET_MARKER_NAMES)
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-REPORT_DIR = Path("data/derived/quality_reports")
+REPORT_DIR = current_corpus().derived("quality_reports")
 
 
 def run_db_checks() -> dict:
@@ -73,7 +74,7 @@ def run_db_checks() -> dict:
         # filling, sitting silently at zero for every article.
         _xr_resolved = 0
         _xr_unresolved = 0
-        _xr_path = "data/derived/xref_resolution.jsonl"
+        _xr_path = current_corpus().derived("xref_resolution.jsonl").as_posix()
         if os.path.exists(_xr_path):
             with open(_xr_path, encoding="utf-8") as _fh:
                 for _line in _fh:

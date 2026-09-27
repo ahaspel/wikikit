@@ -49,9 +49,9 @@ from britannica.export.tei import EDITION_DOI
 from britannica.render.article import render_article, _section_slug
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-ARTICLES_DIR = os.path.join(ROOT, "data", "derived", "articles")
-IMAGES_SRC = os.path.join(ROOT, "data", "images")
-MATH_PNG_SRC = os.path.join(ROOT, "data", "derived", "math_png")
+ARTICLES_DIR = os.path.join(ROOT, current_corpus().derived("articles"))
+IMAGES_SRC = os.path.join(ROOT, current_corpus().images())
+MATH_PNG_SRC = os.path.join(ROOT, current_corpus().derived("math_png"))
 # dcterms:modified is the BUILD time, not a fixed constant: readers key library
 # identity on (dc:identifier, dcterms:modified) — a fixed value made every revision
 # look like the same publication, so re-imports silently kept showing an OLD copy
@@ -537,7 +537,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     # it into each staged article, so topic page names must exist before pass 1.
     topic_files, fname_of_topic, topic_name_to_file = [], {}, {}
     topics_of = {}                     # stem -> [path of nodes, root → holder]
-    ct_path = os.path.join(ROOT, "data", "derived", "classified_toc.json")
+    ct_path = os.path.join(ROOT, current_corpus().derived("classified_toc.json"))
     ct = json.load(open(ct_path, encoding="utf-8")) if os.path.exists(ct_path) else None
     if ct:
         def _tkids(n):
