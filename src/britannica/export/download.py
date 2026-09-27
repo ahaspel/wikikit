@@ -24,6 +24,7 @@ import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from britannica.corpora import brand
 from britannica.export.markdown import body_to_markdown
 from britannica.markers import IMG_PARTS_RE
 from britannica.export.article_json import stable_id_from_filename
@@ -36,8 +37,14 @@ from britannica.export.tei import EDITION_DOI
 # dataset — pointed at a host that did not resolve.  `www` now exists and 301s
 # here, which repairs copies ALREADY downloaded; this line stops new ones
 # carrying the non-canonical form.
-_SITE = "https://britannica11.org"
+_SITE = brand("site")   # the book's; one owner in corpora
 _ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
+
+
+def _archive_name(part: str) -> str:
+    """`<slug>-<part>.tar.gz` — the ONE naming rule for the three download
+    archives (corpus, maps, TEI).  Each spelled it out separately."""
+    return f"{brand('slug')}-{part}.tar.gz"
 
 
 def _sha256(path: Path) -> str:
@@ -215,10 +222,11 @@ def build_download(articles_dir: str = "data/derived/articles",
 
     # A single gzip archive of the whole bundle — what the download link points at —
     # with its own checksum beside it for verification.
-    archive = out.parent / "eb1911-corpus.tar.gz"   # stable name; version in manifest
+    slug = brand("slug")
+    archive = out.parent / _archive_name("corpus")   # stable name; version in manifest
     with tarfile.open(archive, "w:gz") as tar:
         for fp in sorted(out.glob("*")):
-            tar.add(fp, arcname=f"eb1911/{fp.name}")
+            tar.add(fp, arcname=f"{slug}/{fp.name}")
     (out.parent / f"{archive.name}.sha256").write_text(
         f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
 
@@ -247,9 +255,14 @@ def build_maps_bundle(maps_json: str | None = None,
     imgs = Path(images_dir)
     files: list[Path] = []
     for row in reg.get("maps", []):
-        for side in ("eb1911", "stieler"):
-            block = row.get(side)
-            if not block:
+        # A row's SIDES are recognised by shape — a dict carrying `sheets`,
+        # `file` or `full` — not by name.  The names ("eb1911", "stieler": the
+        # book's own map and the atlas original) are the book's data; the
+        # engine naming them was the book leaking into the bundler.  Rows keep
+        # their JSON order, so the archive's file order is unchanged.
+        for side, block in row.items():
+            if not (isinstance(block, dict) and
+                    (block.get("sheets") or block.get("file") or block.get("full"))):
                 continue
             sheets = block.get("sheets") or [block]
             for sheet in sheets:
@@ -263,11 +276,12 @@ def build_maps_bundle(maps_json: str | None = None,
                     if fp not in files:
                         files.append(fp)
     out = Path(out_dir)
-    archive = out / "eb1911-maps.tar.gz"
+    top = brand("slug") + "-maps"
+    archive = out / _archive_name("maps")
     with tarfile.open(archive, "w:gz") as tar:
-        tar.add(Path(maps_json), arcname="eb1911-maps/maps.json")
+        tar.add(Path(maps_json), arcname=f"{top}/maps.json")
         for fp in sorted(files):
-            tar.add(fp, arcname=f"eb1911-maps/{fp.name}")
+            tar.add(fp, arcname=f"{top}/{fp.name}")
     (out / f"{archive.name}.sha256").write_text(
         f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
     return {"maps": len(reg.get("maps", [])), "files": len(files),
@@ -369,15 +383,19 @@ def build_tei_bundle(articles_dir: str = "data/derived/articles",
     odd = Path("tools/schema/eb1911.odd.xml")
     if not odd.is_file():
         raise SystemExit(f"missing {odd} — the TEI bundle ships its ODD")
-    shutil.copy(odd, tei_dir / "eb1911.odd.xml")
+    # The ODD's SOURCE is the exporter's own (it describes what tei.py writes)
+    # and moves with the engine; the name it SHIPS under is the book's.
+    shipped_odd = brand("slug") + ".odd.xml"
+    shutil.copy(odd, tei_dir / shipped_odd)
 
-    archive = out / "eb1911-tei.tar.gz"
+    top = brand("slug") + "-tei"
+    archive = out / _archive_name("tei")
     with tarfile.open(archive, "w:gz") as tar:
-        tar.add(tei_dir / "README.md", arcname="eb1911-tei/README.md")
-        tar.add(tei_dir / "eb1911.odd.xml", arcname="eb1911-tei/eb1911.odd.xml")
-        tar.add(tei_dir / "teiCorpus.xml", arcname="eb1911-tei/teiCorpus.xml")
+        tar.add(tei_dir / "README.md", arcname=f"{top}/README.md")
+        tar.add(tei_dir / shipped_odd, arcname=f"{top}/{shipped_odd}")
+        tar.add(tei_dir / "teiCorpus.xml", arcname=f"{top}/teiCorpus.xml")
         for nm in names:
-            tar.add(tei_dir / nm, arcname=f"eb1911-tei/{nm}")
+            tar.add(tei_dir / nm, arcname=f"{top}/{nm}")
     (out / f"{archive.name}.sha256").write_text(
         f"{_sha256(archive)}  {archive.name}\n", encoding="utf-8")
 

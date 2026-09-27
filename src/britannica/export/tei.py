@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import re
 
+from britannica.corpora import brand
 from britannica.render.article import dedupe_anchor_id
 from britannica.render.inline import commons_url
 from britannica.util.strings import page_range
@@ -49,7 +50,7 @@ from britannica.markers import (DHR_RE, DHRI_RE, FN_OPEN_RE as _FN_OPEN,
                                 iter_ln_markers, strip_marker_tokens,
                                 sub_balanced)
 
-SITE = "https://britannica11.org"
+SITE = brand("site")   # the book's; one owner in corpora
 
 # The CONCEPT DOI, deliberately — it resolves to the newest deposited version,
 # so a document minted today still cites correctly after 2026.2 is deposited.

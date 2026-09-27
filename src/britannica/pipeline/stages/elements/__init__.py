@@ -687,7 +687,7 @@ def _parse_image(raw):
     trailing positional, a `cap=`, or a `caption=`.  Filename derivation is per-spelling
     (bracket / crop-hash / raw-djvu-ref / named param); width & align ride the leaf."""
     from britannica.pipeline.stages.elements._image import (
-        djvu_crop_filename, _parse_crop_param, _RAW_IMAGE_ARG_RE, _RAW_DJVU_REF_RE,
+        djvu_crop_filename, _parse_crop_param, _RAW_IMAGE_ARG_RE, scan_page_ref,
         _img_bracket_meta, _thumb_caption_raw)
     tmpl = raw.strip()
     if tmpl.startswith("[["):                        # [[File:…]] — caption only if thumb/frame
@@ -722,9 +722,8 @@ def _parse_image(raw):
     m = _RAW_IMAGE_ARG_RE.match(tmpl)                # {{raw image|…}} — no caption
     if m:
         arg = m.group(1).strip()
-        dref = _RAW_DJVU_REF_RE.match(arg)
-        fn = (f"djvu_vol{int(dref.group(1)):02d}_page{int(dref.group(2)):04d}.jpg"
-              if dref else arg)
+        dref = scan_page_ref(arg)
+        fn = f"djvu_vol{dref[0]:02d}_page{dref[1]:04d}.jpg" if dref else arg
         return fn, None, None, ""
     return "", None, None, ""
 

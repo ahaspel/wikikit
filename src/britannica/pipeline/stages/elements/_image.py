@@ -166,7 +166,29 @@ def djvu_crop_filename(crop_body: str) -> str | None:
 # a full-page DjVu scan; the arg is a DjVu page-ref normalized to the local
 # full-page render `djvu_volNN_pagePPPP.jpg` (matching download_djvu_crops.py).
 _RAW_IMAGE_ARG_RE = re.compile(r"\{\{\s*raw\s+image\s*\|([^{}|]+)\}\}", re.IGNORECASE)
-_RAW_DJVU_REF_RE = re.compile(r"EB1911\s*-\s*Volume\s*(\d+)\.djvu/(\d+)", re.IGNORECASE)
+_SCAN_VOLUME: dict[str, int] | None = None
+
+
+def scan_page_ref(arg: str) -> tuple[int, int] | None:
+    """``"<scan file>/<page>"`` -> ``(volume, page)`` when the scan file is one
+    of THIS BOOK's, else None.
+
+    Inverts the book's own ``scan_name`` rather than matching a pattern.  This
+    was `EB1911\\s*-\\s*Volume\\s*(\\d+)\\.djvu/(\\d+)` — the one line that held the
+    whole walker core in the Britannica, since the engine then knew the
+    Britannica's file names.  Its case- and space-tolerance was never used:
+    across the whole source ONE `{{raw image}}` argument is a scan reference,
+    and it is spelled exactly as `scan_name` spells it (the other 25 are plain
+    filenames), so the exact lookup gives identical results."""
+    global _SCAN_VOLUME
+    if _SCAN_VOLUME is None:
+        from britannica.corpora import current_corpus
+        book = current_corpus()
+        _SCAN_VOLUME = {book.scan_name(v): v for v in book.volumes}
+    head, sep, page = arg.rpartition("/")
+    if not sep or not page.isdigit() or head not in _SCAN_VOLUME:
+        return None
+    return _SCAN_VOLUME[head], int(page)
 
 
 # `{{Plain image with caption|image=File:…|align=…|width=…px|caption=…|caption

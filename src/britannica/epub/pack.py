@@ -19,12 +19,13 @@ by construction.
 import html as _html
 import re
 from xml.etree import ElementTree as ET
+from britannica.corpora import brand
 from britannica.util.strings import HTML_TAG_RE
 
 ET.register_namespace("epub", "http://www.idpf.org/2007/ops")
 _EPUB_NS = "{http://www.idpf.org/2007/ops}"
 
-SITE_BASE = "https://britannica11.org"
+SITE_BASE = brand("site")   # the book's; one owner in corpora
 TARGET_CHUNK = 300_000     # soft chunk budget (bytes of XHTML)
 HARD_SPLIT = 450_000       # an article bigger than this splits at section boundaries
 

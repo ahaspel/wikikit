@@ -22,13 +22,13 @@ through build.to_xhtml_body for XHTML conformance like every other baked body.
 import os
 import re
 
+from britannica.corpora import brand
 from britannica.util.strings import section_slug
 import xml.etree.ElementTree as ET
 
 import html5lib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SITE = "https://britannica11.org"
 
 _COLON_RUN_RE = re.compile(r"^\s*:+\s*")
 DROPPED_HREFS = []          # malformed source hrefs dropped at extraction (logged)
@@ -47,8 +47,8 @@ def _absolutize(href):
     if href.split("#")[0].endswith(".xhtml"):     # already retargeted book-internal
         return href
     if href.startswith("/"):
-        return SITE + href
-    return SITE + "/" + href
+        return brand("site") + href
+    return brand("site") + "/" + href
 
 
 def _adapt(el):
@@ -74,7 +74,7 @@ def _adapt(el):
         lid = li.get("id") or ""
         if lid.startswith("fn-"):
             for a in li.iter("a"):
-                if a.get("href") in ("#", SITE + "/#", None):
+                if a.get("href") in ("#", brand("site") + "/#", None):
                     a.set("href", "#fnref-" + lid[3:])
     for p in el.iter("p"):
         if p.text and _COLON_RUN_RE.match(p.text) and p.text.strip().startswith(":"):

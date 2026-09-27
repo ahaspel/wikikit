@@ -7,13 +7,15 @@ import json
 import re
 from urllib.parse import unquote, parse_qs, urlsplit
 
+from britannica.corpora import brand
+
 from britannica.epub import front_matter as FM, readers_guide as RG
 from britannica.export.article_json import stable_id_from_filename
 from britannica.export.download import _topic_index
 from britannica.markers import strip_title_markers
 from britannica.util.strings import fold_accents
 from britannica.xrefs.normalizer import normalize_xref_target
-from britannica.mdx.build import ROOT, SITE, PREFIX, article_key, topic_key, volume_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics, HREF_ATTR_RE
+from britannica.mdx.build import ROOT, PREFIX,article_key, topic_key, volume_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics, HREF_ATTR_RE
 
 
 def add_reference_aliases(articles, aliases):
@@ -170,7 +172,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         def href(m):
             url = html.unescape(m[2])
             u = urlsplit(url)
-            if not u.netloc or u.netloc == "britannica11.org":
+            if not u.netloc or u.netloc == urlsplit(brand("site")).netloc:
                 base = u.path.lstrip("/")
                 if base in page_map:
                     url = entry_url(page_map[base], unquote(u.fragment))

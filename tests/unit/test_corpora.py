@@ -106,9 +106,30 @@ def test_every_field_is_read_by_something():
     # data_files / data_dir: read by `data()` and `has_data()`, which the eight
     # book-data readers call (corrections, hyphen map, contributor aliases,
     # xref adjudications, maps, link exceptions, genealogy crops, MDX sample).
+    # Branding, via `brand()` / `need()`:
+    #   site        mdx.build, epub.front_matter, epub.pack, export.tei,
+    #               export.download, mdx.navigation (host check)
+    #   short_name  the dictionary's title, sample note, help word
+    #   file_stem   dictionary_basename (the .mdx/.mdd/.png names)
+    #   slug        the dictionary's CSS scope and wrap(), EPUB file name,
+    #               corpus / maps / TEI archive names
+    #   key_prefix  the dictionary's internal keys (mdx.build PREFIX)
+    #   urn         EPUB identifiers
+    #   source_url  EPUB dc:source
     assert fields == {"key", "title", "scan_name", "boundary_style",
-                      "pages", "raw_dir", "data_files", "data_dir"}, (
+                      "pages", "raw_dir", "data_files", "data_dir",
+                      "site", "short_name", "file_stem", "slug", "key_prefix",
+                      "urn", "source_url"}, (
         "a field was added or removed — is its consumer written?")
+
+
+def test_a_book_without_a_name_cannot_print_none():
+    """The DNB has no domain yet.  Asking for one must fail, not print 'None'
+    into a published file."""
+    import pytest
+    with pytest.raises(LookupError):
+        DNB.need("site")
+    assert EB1911.need("site") == "https://britannica11.org"
 
 
 def test_book_data_is_declared_at_both_ends():

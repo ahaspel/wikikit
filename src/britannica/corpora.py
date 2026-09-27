@@ -127,6 +127,24 @@ class Corpus:
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"
+    #: Branding — the book's NAMES for itself, as values the engine fills in.
+    #: None until a book has one (the DNB has no domain yet: an open decision),
+    #: and reading an absent one raises through `need`, so a missing name can
+    #: never print as "None" in a published file.
+    site: str | None = None         # "https://britannica11.org"
+    short_name: str | None = None   # "Britannica 11"  — the dictionary's name
+    file_stem: str | None = None    # "Britannica11"   — dictionary file names
+    slug: str | None = None         # "eb1911"         — archives, CSS scope, EPUB name
+    key_prefix: str | None = None   # "EB1911:"        — dictionary's internal keys
+    urn: str | None = None          # "urn:britannica11" — EPUB identifiers
+    source_url: str | None = None   # the work's Wikisource page — EPUB dc:source
+
+    def need(self, name: str) -> str:
+        """A branding value this book must have for the artifact asking."""
+        value = getattr(self, name)
+        if value is None:
+            raise LookupError(f"{self.key} has no {name} — it cannot build what asked for one")
+        return value
 
     def __post_init__(self):
         unknown = set(self.data_files) - KNOWN_DATA
@@ -197,6 +215,13 @@ EB1911 = Corpus(
         "xref_adjudications.json", "maps.json", "link_exceptions.json",
         "genealogy_images.json", "mdx_sample.json",
     }),
+    site="https://britannica11.org",
+    short_name="Britannica 11",
+    file_stem="Britannica11",
+    slug="eb1911",
+    key_prefix="EB1911:",
+    urn="urn:britannica11",
+    source_url="https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica",
 )
 
 
@@ -243,6 +268,12 @@ DNB = Corpus(
 
 
 _REGISTRY = {c.key: c for c in (EB1911, DNB)}
+
+
+def brand(name: str) -> str:
+    """One branding value of the book being built — the ONE place the engine
+    learns a name.  The site's URL was five separate module constants."""
+    return current_corpus().need(name)
 
 
 def current_corpus() -> Corpus:

@@ -26,6 +26,7 @@ import time
 from urllib.parse import quote, unquote, urljoin
 import zipfile
 
+from britannica.corpora import brand
 from britannica.epub import math_assets
 from britannica.epub.images import diet_image
 from britannica.export.corpus import load_corpus
@@ -40,8 +41,22 @@ from britannica.xrefs.normalizer import normalize_xref_target
 from britannica.provenance import digest
 
 ROOT = Path(__file__).resolve().parents[3]
-SITE = "https://britannica11.org"
-PREFIX = "EB1911:"
+# The dictionary's internal key prefix is the BOOK's (`key_prefix`); this name
+# is the dictionary modules' handle on it, not a second owner.
+PREFIX = brand("key_prefix")
+
+
+def help_word(sample: bool) -> str:
+    """The name a reader looks up for contents — "Britannica 11", or
+    "Britannica 11 sample".  Spelled out separately in five dictionary modules
+    before; they all ask here now."""
+    return brand("short_name") + (" sample" if sample else "")
+
+
+def dictionary_basename(sample: bool) -> str:
+    """The dictionary's file stem — "Britannica11", or "Britannica11-sample" —
+    which GoldenDict also uses to find the icon beside the .mdx."""
+    return brand("file_stem") + ("-sample" if sample else "")
 def _sample_spec() -> Path:
     """The book's compatibility-sample selection (`mdx_sample.json`).  The
     complete build reads it too — for its QA read-back fixture and manifest —
@@ -104,7 +119,7 @@ class Links:
         fragment = "section-" + section_slug if section_slug else ""
         if stem in self.selected:
             return entry_url(article_key(stem), fragment)
-        return SITE + _article_url(stem + ".json") + ("#" + quote(fragment) if fragment else "")
+        return brand("site") + _article_url(stem + ".json") + ("#" + quote(fragment) if fragment else "")
 
     def contrib_url(self, slug):
         return entry_url(PREFIX + "contributor:" + slug)
@@ -141,24 +156,30 @@ def stylesheet() -> str:
     if "@" in css or "url(" in css:
         raise ValueError("EPUB stylesheet changed: review CSS scoping/resources")
 
+    # Every rule is scoped under the book's own class, so the dictionary's
+    # styles cannot leak into another dictionary the reader has loaded.  The
+    # class is the book's slug; `wrap` puts the same class on every entry.
+    s_ = "." + brand("slug")
+
     def scope(m):
         selectors = [s.strip() for s in m[1].split(",")]
-        return ",".join(".eb1911" if s == "body" else ".eb1911 " + s for s in selectors) + "{"
+        return ",".join(s_ if s == "body" else s_ + " " + s for s in selectors) + "{"
 
     css = re.sub(r"([^{}]+)\{", scope, css)
     return css + """
-.eb1911 {line-height:1.5; color:inherit; background:transparent;}
-.eb1911 .contributors {color:inherit; opacity:.8;}
-.eb1911 svg.math-display {display:block; max-width:100%; height:auto; margin:1em auto;}
-.eb1911 svg.math-inline {max-width:100%;}
-.eb1911 .wide-table-inline, .eb1911 .wide-table-wrap {overflow-x:auto;}
-.eb1911 .sample-note {font-size:.85em; border-bottom:1px solid; padding:.4em 0;}
-.eb1911 .outside-sample {font-size:.8em;}
-"""
+{s} {line-height:1.5; color:inherit; background:transparent;}
+{s} .contributors {color:inherit; opacity:.8;}
+{s} svg.math-display {display:block; max-width:100%; height:auto; margin:1em auto;}
+{s} svg.math-inline {max-width:100%;}
+{s} .wide-table-inline, {s} .wide-table-wrap {overflow-x:auto;}
+{s} .sample-note {font-size:.85em; border-bottom:1px solid; padding:.4em 0;}
+{s} .outside-sample {font-size:.8em;}
+""".replace("{s}", s_)
 
 
 def wrap(body: str) -> str:
-    return '<link rel="stylesheet" href="britannica.css"><div class="eb1911">' + body + "</div>"
+    return ('<link rel="stylesheet" href="britannica.css"><div class="'
+            + brand("slug") + '">' + body + "</div>")
 
 
 def list_links(items):
@@ -197,12 +218,12 @@ def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, 
         url = html.unescape(m[2])
         if url.startswith(("entry://", "#", "https://", "http://", "mailto:")):
             return m[0]
-        return 'href=' + m[1] + html.escape(urljoin(SITE + "/", url), quote=True) + m[1]
+        return 'href=' + m[1] + html.escape(urljoin(brand("site") + "/", url), quote=True) + m[1]
 
     body = HREF_ATTR_RE.sub(href, body)
     # An outside destination must be apparent before clicking, not just in help.
     if sample:
-        body = re.sub(r'(<a\b[^>]*href="https://britannica11.org/article/[^>]*>.*?</a>)',
+        body = re.sub(r'(<a\b[^>]*href="' + re.escape(brand("site")) + r'/article/[^>]*>.*?</a>)',
                       r'\1 <span class="outside-sample">[online; outside sample]</span>', body, flags=re.S)
     if "«MATHPH»" in body:
         raise ValueError("Missing rendered mathematics")
@@ -613,7 +634,7 @@ def compile_package(folder: Path, entries, resources, basename, *, sample=True, 
     conn.close()
     try:
         writer.pack(str(folder / (basename + ".mdx")), writer.pack_mdx_db(str(db)),
-                    title="Britannica 11" + (" — compatibility sample" if sample else " — complete edition"),
+                    title=brand("short_name") + (" — compatibility sample" if sample else " — complete edition"),
                     description=description)
         writer.pack(str(folder / (basename + ".mdd")), writer.pack_mdd_db(str(db)), is_mdd=True)
     finally:
@@ -704,7 +725,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             except Exception as exc:
                 failures.append({"article": stem, "title": a["title"], "error": str(exc)})
                 continue
-            note = '<p class="sample-note">Britannica 11' + (" compatibility sample" if sample else " complete edition") + ' · <a href="' + entry_url(PREFIX + "help") + '">Contents and help</a></p>'
+            note = '<p class="sample-note">' + brand("short_name") + (" compatibility sample" if sample else " complete edition") + ' · <a href="' + entry_url(PREFIX + "help") + '">Contents and help</a></p>'
             entries[article_key(stem)] = wrap(note + body)
             for c in a.get("contributors") or []:
                 if c.get("full_name"):
@@ -768,11 +789,11 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             body += "<h2>Section-link test</h2>" + list_links([
                 ("Open a section within Algebra", entry_url(article_key("01-0639-46474b"), section_ids[0]))])
             entries[PREFIX + "help"] = wrap(body)
-            entries["Britannica 11 sample"] = "@@@LINK=" + PREFIX + "help"
+            entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
         else:
             from britannica.mdx.navigation import full_help
             entries[PREFIX + "help"] = wrap(full_help(len(articles)))
-            entries["Britannica 11"] = "@@@LINK=" + PREFIX + "help"
+            entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
         print("Validating complete link/resource graph", flush=True)
         from britannica.mdx.link_exceptions import mark_unavailable
         source_link_issues = mark_unavailable(entries)
@@ -789,7 +810,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             from britannica.mdx.native import package_search
             entries, search_files = package_search(output, entries, display_keys, articles, aliases, stylesheet(), ROOT)
         checks = validate(entries, resources, report_path=output / "link_failures.json")
-        basename = "Britannica11-sample" if sample else "Britannica11"
+        basename = dictionary_basename(sample)
         print("Compiling", len(entries), "keys and", len(resources), "resources", flush=True)
         description = dictionary_description(
             sample=sample, articles=len(articles), contributors=len(contributors),

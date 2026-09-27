@@ -36,6 +36,7 @@ from xml.etree import ElementTree as ET
 
 import html5lib
 
+from britannica.corpora import brand, current_corpus
 from britannica.epub import front_matter as FM
 from britannica.epub import fts as FTS
 from britannica.epub import images as IMG
@@ -554,9 +555,8 @@ def list_stems(volumes=None):
     return stems
 
 
-def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
-               title="Encyclopædia Britannica, Eleventh Edition",
-               ident="urn:britannica11:complete", images="diet", nav_articles=False,
+def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ARTICLES_DIR,
+               images="diet", nav_articles=False,
                cover_subtitle=None, nudge=0, keep_stage=False, log=_log):
     global _NUDGE
     _NUDGE = nudge
@@ -1449,7 +1449,7 @@ def build_epub(stems, out_path, *, target="epub", articles_dir=ARTICLES_DIR,
         f'    <dc:identifier id="pub-id">{ident}</dc:identifier>\n'
         f'    <dc:title>{_html.escape(title)}</dc:title>\n'
         '    <dc:language>en</dc:language>\n'
-        '    <dc:source>https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica</dc:source>\n'
+        f'    <dc:source>{_html.escape(brand("source_url"))}</dc:source>\n'
         # RELATION, not identifier.  Zenodo's deposit is the TEI edition ALONE
         # (docs/zenodo_deposit.md: "Only the TEI is deposited"), so this book is
         # not the thing that DOI names, and `dc:identifier` would claim it was.
@@ -1589,14 +1589,16 @@ def main(argv=None):
         stems = stems[:args.limit]
     if args.exclude:
         stems = [s for s in stems if s not in set(args.exclude)]
+    # The file name, identifier and title are the BOOK's (`slug`, `urn`, `title`).
+    slug, urn, book_title = brand("slug"), brand("urn"), current_corpus().title
     if args.all:
-        name, ident = "eb1911", "urn:britannica11:complete"
-        title = "Encyclopædia Britannica, Eleventh Edition"
+        name, ident = slug, f"{urn}:complete"
+        title = book_title
     else:
         vols = "-".join(f"{v:02d}" for v in sorted(args.volume))
-        name = f"eb1911-vol{vols}"
-        ident = f"urn:britannica11:vol-{vols}"
-        title = f"Encyclopædia Britannica, Eleventh Edition — Volume {', '.join(map(str, sorted(args.volume)))}"
+        name = f"{slug}-vol{vols}"
+        ident = f"{urn}:vol-{vols}"
+        title = f"{book_title} — Volume {', '.join(map(str, sorted(args.volume)))}"
     if args.nav_articles:
         ident += ":fullnav"
     suffix = ("-kindle" if args.target == "kindle" else "") + \
