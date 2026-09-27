@@ -91,21 +91,27 @@ SCORE_IMAGES: dict[str, str] = {
 # Verified corpus-wide (all 28 vols): exactly these seven blocks exist, each on a
 # distinct volume — so the genealogy producer (``_process_genealogy``) keys the
 # lookup on volume.
-#   * chart2:     vols 1, 21, 23, 24, 28
-#   * familytree: COWPER, WILLIAM (vol 7, p369)
-#   * tree chart: SOLOMON, PSALMS OF (vol 25, p382)
+# WHICH blocks, on which pages, is the BOOK's data — its `genealogy_images.json`,
+# one entry per crop with a note of the template and article.  The mechanism
+# (grid macro -> its crop) is the engine's.  A book that declares no crops has
+# none, and its grid macros strip rather than leak (see `_process_genealogy`).
 # TODO(crops): the familytree/tree-chart .jpg crops may still be pending; until
 # produced the IMG marker points at the pending file (a visible broken-image
 # placeholder) rather than silently dropping the tree.
-GENEALOGY_IMAGES: dict[tuple[int, int], str] = {
-    (1, 124): "chart2_vol01_page0124.jpg",
-    (21, 573): "chart2_vol21_page0573.jpg",
-    (23, 945): "chart2_vol23_page0945.jpg",
-    (24, 271): "chart2_vol24_page0271.jpg",
-    (28, 952): "chart2_vol28_page0952.jpg",
-    (7, 369): "familytree_vol07_page0369.jpg",
-    (25, 382): "treechart_vol25_page0382.jpg",
-}
+_GENEALOGY: dict[tuple[int, int], str] | None = None
+
+
+def genealogy_images() -> dict[tuple[int, int], str]:
+    """``{(volume, page): crop filename}`` from the book's declared data."""
+    global _GENEALOGY
+    if _GENEALOGY is None:
+        import json
+        from britannica.corpora import current_corpus
+        book = current_corpus()
+        rows = (json.loads(book.data("genealogy_images.json").read_text(encoding="utf-8"))
+                if book.has_data("genealogy_images.json") else [])
+        _GENEALOGY = {(r["volume"], r["page"]): r["image"] for r in rows}
+    return _GENEALOGY
 
 # ── THE local filename of a Commons image — one derivation, two callers ────────
 #

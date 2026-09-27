@@ -161,17 +161,20 @@ _HYPHEN_MAP = None
 
 
 def _hyphen_map():
-    """Lazy-load the corpus dehyphenation map (built by tools/build_hyphen_map.py).
-    Absent / unreadable → empty, so every wrap simply 'leaves'."""
+    """Lazy-load the book's dehyphenation map (built by tools/build_hyphen_map.py).
+
+    A book that does not declare one gets `{}`: every wrap 'leaves', which is
+    the honest default for text nobody has measured.  A book that DECLARES one
+    and cannot read it raises — this used to swallow OSError and ValueError
+    into `{}`, so a lost or corrupt map left every line-wrap hyphen in the
+    text of every article, with nothing to say why."""
     global _HYPHEN_MAP
     if _HYPHEN_MAP is None:
         import json
-        from pathlib import Path
-        try:
-            _HYPHEN_MAP = json.loads(
-                Path("data/hyphen_map.json").read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            _HYPHEN_MAP = {}
+        from britannica.corpora import current_corpus
+        book = current_corpus()
+        _HYPHEN_MAP = (json.loads(book.data("hyphen_map.json").read_text(encoding="utf-8"))
+                       if book.has_data("hyphen_map.json") else {})
     return _HYPHEN_MAP
 
 

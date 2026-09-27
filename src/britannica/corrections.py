@@ -31,24 +31,27 @@ and doesn't affect application order.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-_CORRECTIONS_FILE = Path("data/corrections.json")
 _cache: dict | None = None
 
 
 def load_corrections() -> dict:
-    """Load `data/corrections.json` once and cache the parsed dict.
+    """The book's `corrections.json`, loaded once.
 
-    Returns an empty dict if the file is absent (e.g. in test fixtures
-    that don't ship a corrections file)."""
+    A book that does not DECLARE corrections has none — the DNB, for one,
+    which previously shared this path and would have been handed EB1911's.  A
+    book that declares them and has lost the file fails: this used to return
+    `{}` for an absent file, which made "corrections silently not applied" look
+    exactly like "no corrections needed"."""
     global _cache
     if _cache is not None:
         return _cache
-    if not _CORRECTIONS_FILE.exists():
+    from britannica.corpora import current_corpus
+    book = current_corpus()
+    if not book.has_data("corrections.json"):
         _cache = {}
         return _cache
-    with _CORRECTIONS_FILE.open(encoding="utf-8") as f:
+    with book.data("corrections.json").open(encoding="utf-8") as f:
         _cache = json.load(f)
     return _cache
 

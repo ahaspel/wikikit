@@ -28,9 +28,7 @@ from __future__ import annotations
 
 import json
 import unicodedata
-from pathlib import Path
 
-_ALIASES_FILE = Path("data/contributor_aliases.json")
 _aliases_cache: dict[str, str] | None = None
 
 
@@ -43,10 +41,13 @@ def _load_aliases() -> dict[str, str]:
     global _aliases_cache
     if _aliases_cache is not None:
         return _aliases_cache
-    if not _ALIASES_FILE.exists():
+    # Declared or not — an absent file no longer passes for "no aliases".
+    from britannica.corpora import current_corpus
+    book = current_corpus()
+    if not book.has_data("contributor_aliases.json"):
         _aliases_cache = {}
         return _aliases_cache
-    raw = json.loads(_ALIASES_FILE.read_text(encoding="utf-8"))
+    raw = json.loads(book.data("contributor_aliases.json").read_text(encoding="utf-8"))
     out: dict[str, str] = {}
     for canonical, variants in raw.get("aliases", {}).items():
         canonical_n = normalize(canonical)

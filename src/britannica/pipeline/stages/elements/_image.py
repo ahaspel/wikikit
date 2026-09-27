@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import re
 
-from britannica.image_assets import GENEALOGY_IMAGES
+from britannica.image_assets import genealogy_images
 from britannica.pipeline.stages.elements._context import ElementContext
 from britannica.wikitext import split_top_pipes
 
@@ -185,8 +185,8 @@ def _process_genealogy(raw, inner, context, inner_registry) -> str:
     """A ``{{chart2}}`` / ``{{familytree}}`` / ``{{Tree chart}}`` genealogical-tree
     block → its pre-cropped page-scan image (the grid macro renders to a mess).
 
-    The crops are a fixed, corpus-verified set — exactly seven, each on a distinct
-    volume (``GENEALOGY_IMAGES``) — so the lookup keys on volume.  A tree node can carry an
+    The crops are the book's fixed, corpus-verified set (``genealogy_images()``; for
+    EB1911 exactly seven, each on a distinct volume) — so the lookup keys on volume.  A tree node can carry an
     inner ``<ref>`` footnote (vol-28 chart2; vol-7 COWPER familytree); the tree becomes a flat
     image so the note can't sit on a node.  ``_classify_chart2_composite`` classified those
     inner refs into REF nodes; ``inner`` is their placeholderized subtree — appended after the
@@ -194,7 +194,7 @@ def _process_genealogy(raw, inner, context, inner_registry) -> str:
     footnote.  (The old preprocess chart2 substitution dropped the vol-28 ref; now it flows
     through as a real child node, no re-``process_elements``.)"""
     filename = next(
-        (fn for (v, _p), fn in GENEALOGY_IMAGES.items() if v == context.volume), None)
+        (fn for (v, _p), fn in genealogy_images().items() if v == context.volume), None)
     if not filename:
         return ""   # unknown volume — strip rather than leak the raw grid macro
     return build_img_marker(filename, "Genealogical table") + inner

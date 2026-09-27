@@ -227,7 +227,7 @@ def build_download(articles_dir: str = "data/derived/articles",
             "version": version, "archive": str(archive), "out_dir": str(out)}
 
 
-def build_maps_bundle(maps_json: str = "data/maps.json",
+def build_maps_bundle(maps_json: str | None = None,
                       images_dir: str = "data/images/maps",
                       out_dir: str = "data/derived") -> dict:
     """Archive the colour maps — the EB1911 plates and the Stieler originals —
@@ -238,6 +238,11 @@ def build_maps_bundle(maps_json: str = "data/maps.json",
     The registry (maps.json) rides along as the bundle's own manifest; every
     file it names must exist — a missing referenced image RAISES rather than
     shipping a bundle that silently lacks it."""
+    if maps_json is None:
+        # The book's own map manifest.  A book without one has no map bundle
+        # to build, and asking for it is a caller's mistake — `data()` raises.
+        from britannica.corpora import current_corpus
+        maps_json = current_corpus().data("maps.json")
     reg = json.loads(Path(maps_json).read_text(encoding="utf-8"))
     imgs = Path(images_dir)
     files: list[Path] = []

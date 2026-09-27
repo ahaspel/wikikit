@@ -103,9 +103,41 @@ def test_every_field_is_read_by_something():
     """
     import dataclasses
     fields = {f.name for f in dataclasses.fields(EB1911)}
+    # data_files / data_dir: read by `data()` and `has_data()`, which the eight
+    # book-data readers call (corrections, hyphen map, contributor aliases,
+    # xref adjudications, maps, link exceptions, genealogy crops, MDX sample).
     assert fields == {"key", "title", "scan_name", "boundary_style",
-                      "pages", "raw_dir"}, (
+                      "pages", "raw_dir", "data_files", "data_dir"}, (
         "a field was added or removed — is its consumer written?")
+
+
+def test_book_data_is_declared_at_both_ends():
+    """The user's rule: declared, never discovered.  A missing file used to
+    read as "no data" — corrections silently unapplied looked exactly like a
+    book that needed none."""
+    import dataclasses
+    import pytest
+    from britannica.corpora import KNOWN_DATA
+
+    # Every file EB1911 declares exists — a declaration is a promise.
+    for name in EB1911.data_files:
+        assert EB1911.data(name).is_file(), name
+    # The DNB declares nothing yet, so it is handed none of EB1911's data.
+    assert not DNB.data_files
+    assert not DNB.has_data("corrections.json")
+    with pytest.raises(LookupError):
+        DNB.data("corrections.json")
+    # An engine-side typo cannot quietly turn a feature off.
+    with pytest.raises(KeyError):
+        EB1911.has_data("correction.json")
+    # A book-side typo cannot be declared at all.
+    with pytest.raises(ValueError):
+        dataclasses.replace(DNB, data_files=frozenset({"corections.json"}))
+    # Declared but absent is a broken book, not an empty feature.
+    ghost = dataclasses.replace(DNB, data_files=frozenset({"maps.json"}), data_dir="no/such/dir")
+    with pytest.raises(FileNotFoundError):
+        ghost.data("maps.json")
+    assert EB1911.data_files <= KNOWN_DATA
 
 
 def test_the_page_manifest_covers_every_volume():

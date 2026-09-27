@@ -27,12 +27,42 @@ switch, and it has to be EB1911-neutral on its own merits.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable
 
 from britannica.settings import settings
 
 _ROMAN = {1: "I", 2: "II", 3: "III"}
+
+
+# --- the book's data files ----------------------------------------------------
+# EVERY per-book data file the ENGINE knows how to use.  A book declares which
+# of these it has; the engine asks for one by name and never builds a path.
+#
+# DECLARED, NOT DISCOVERED (the user's rule).  Before this, each reader built
+# `Path("data/…")` itself and two of them treated a missing file as "no data" —
+# so a misnamed corrections file looked exactly like a book with no
+# corrections, and the DNB, sharing the path, would have been fed EB1911's.
+# Now both ends are checked: a book may declare only names on this list, the
+# engine may ask only for names on this list, a declared file must exist, and
+# an undeclared one means the feature is off for that book.
+KNOWN_DATA = frozenset({
+    "corrections.json",          # source typos, applied as the page is read
+    "hyphen_map.json",           # corpus-frequency dehyphenation
+    "contributor_aliases.json",  # contributor name adjudications
+    "xref_adjudications.json",   # cross-reference picks made by hand
+    "maps.json",                 # the map-plate bundle's manifest
+    "link_exceptions.json",      # audited source links with no destination
+    "genealogy_images.json",     # family-tree templates -> their scan crops
+    "mdx_sample.json",           # the dictionary's compatibility sample
+})
+
+
+def _check_known(name: str) -> None:
+    if name not in KNOWN_DATA:
+        raise KeyError(f"{name!r} is not a book data file the engine knows "
+                       f"(known: {', '.join(sorted(KNOWN_DATA))})")
 
 
 # --- how many scanned pages each volume has ----------------------------------
@@ -94,6 +124,31 @@ class Corpus:
     #: because 29,688 files already sit there and renaming them would buy
     #: tidiness at the cost of a needless mass move.
     raw_dir: str
+    #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
+    data_files: frozenset[str] = field(default_factory=frozenset)
+    data_dir: str = "data"
+
+    def __post_init__(self):
+        unknown = set(self.data_files) - KNOWN_DATA
+        if unknown:
+            raise ValueError(f"{self.key} declares unknown data files: {sorted(unknown)}")
+
+    def has_data(self, name: str) -> bool:
+        """Does this book have ``name``?  False means the feature is off."""
+        _check_known(name)
+        return name in self.data_files
+
+    def data(self, name: str) -> Path:
+        """The path of a data file this book DECLARES.  Asking for one it does
+        not declare is a bug in the caller (check ``has_data`` first), and a
+        declared file that is missing is a broken book — both raise."""
+        _check_known(name)
+        if name not in self.data_files:
+            raise LookupError(f"{self.key} does not declare {name}")
+        path = Path(self.data_dir) / name
+        if not path.is_file():
+            raise FileNotFoundError(f"{self.key} declares {name}, but {path} does not exist")
+        return path
 
     # A FIELD ARRIVES WHEN ITS CONSUMER DOES.  Every field here is read by
     # working code; none is a placeholder for a later phase.  A declared-but-
@@ -135,6 +190,13 @@ EB1911 = Corpus(
     boundary_style="typographic",
     pages=_EB1911_PAGES,
     raw_dir="wikisource",
+    # Listed, not `KNOWN_DATA`: when the engine learns a new file, no book
+    # should be found to "have" it by default.
+    data_files=frozenset({
+        "corrections.json", "hyphen_map.json", "contributor_aliases.json",
+        "xref_adjudications.json", "maps.json", "link_exceptions.json",
+        "genealogy_images.json", "mdx_sample.json",
+    }),
 )
 
 

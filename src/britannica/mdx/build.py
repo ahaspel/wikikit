@@ -42,7 +42,14 @@ from britannica.provenance import digest
 ROOT = Path(__file__).resolve().parents[3]
 SITE = "https://britannica11.org"
 PREFIX = "EB1911:"
-SAMPLE = Path(__file__).with_name("sample.json")
+def _sample_spec() -> Path:
+    """The book's compatibility-sample selection (`mdx_sample.json`).  The
+    complete build reads it too — for its QA read-back fixture and manifest —
+    so a book that builds a dictionary must declare one; `data()` says so
+    loudly if it does not.  It lived beside this code as `sample.json`, which
+    put thirteen Britannica article ids inside the engine."""
+    from britannica.corpora import current_corpus
+    return current_corpus().data("mdx_sample.json")
 
 
 def article_key(stem: str) -> str:
@@ -640,7 +647,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="build-", dir=output) as tmp:
         stage = Path(tmp)
-        selected = json.loads(SAMPLE.read_text(encoding="utf-8")) if sample else None
+        selected = json.loads(_sample_spec().read_text(encoding="utf-8")) if sample else None
         source = ROOT / "data/derived/articles"
         index_raw = (source / "index.json").read_bytes()
         index = json.loads(index_raw)
@@ -803,7 +810,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         else:
             # Small read-back fixture for the same reader QA, without serializing
             # the full HTML corpus a second time into the distribution directory.
-            qa_stems = json.loads(SAMPLE.read_text(encoding="utf-8"))
+            qa_stems = json.loads(_sample_spec().read_text(encoding="utf-8"))
             (output / "entries.json").write_text(json.dumps({article_key(s): qa_entries[article_key(s)] for s in qa_stems}, ensure_ascii=False), encoding="utf-8")
         manifest = {"built_utc": datetime.now(timezone.utc).isoformat(), "compiler": "mdict-utils " + version("mdict-utils"),
                     "article_count": len(articles), "alias_count": sum(v.startswith("@@@LINK=") for v in entries.values()),
@@ -815,7 +822,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                     "unavailable_source_link_count": len(source_link_issues),
                     "redundant_alias_count": len(redundant_aliases),
                     "display_keys": display_keys,
-                    "sample": json.loads(SAMPLE.read_text(encoding="utf-8")),
+                    "sample": json.loads(_sample_spec().read_text(encoding="utf-8")),
                     "input_sha256": input_hashes, "input_hash_mode": "raw bytes" if sample else "sorted-key JSON payload",
                     "index_sha256": digest(index_raw), "ancillary": ancillary,
                     "topics_sha256": digest(ct_raw), "source_assets": source_assets,
@@ -824,7 +831,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                     # implementation of it.
                     "export_code_sha256": _prov.source_files(),
                     "provenance": _prov.fingerprint(),
-                    "sample_spec_sha256": digest(SAMPLE.read_bytes()),
+                    "sample_spec_sha256": digest(_sample_spec().read_bytes()),
                     "reader_verification": "pending; see separate reader QA report"}
         for ext in (".mdx", ".mdd"):
             shutil.copyfile(stage / (basename + ext), output / (basename + ext))

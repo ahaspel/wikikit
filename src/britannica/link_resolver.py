@@ -86,11 +86,11 @@ ARTICLES_INDEX = Path("data/derived/articles/index.json")
 ARTS_DIR = ARTICLES_INDEX.parent
 SECTION_INDEX = Path("data/derived/classified_section_index.json")
 CLASSIFIED_TOC = Path("data/derived/classified_toc.json")
-# Hand-adjudicated resolutions.  The corpus is static, so a ruling here is
-# permanent.  Accreted as cases are found (like data/corrections.json) — there
-# is no systematic enumeration.  ONLY `by: user` entries resolve: model verdicts
-# in the same file are regression fixtures, and must never become policy.
-ADJUDICATIONS = Path("data/xref_adjudications.json")
+# Hand-adjudicated resolutions live in the book's `xref_adjudications.json`.  The
+# corpus is static, so a ruling there is permanent.  Accreted as cases are found
+# (like the corrections file) — there is no systematic enumeration.  ONLY
+# `by: user` entries resolve: model verdicts in the same file are regression
+# fixtures, and must never become policy.
 
 # The trusted-xref ladder runs the fill rungs in two tiers over BOTH the target
 # and the display name: every full-containment rung on either name before any
@@ -729,10 +729,13 @@ class LinkResolver:
         self-link, which must still abstain)."""
         if self._adjudged is None:
             self._adjudged = {}
-            try:
-                d = json.loads(ADJUDICATIONS.read_text(encoding="utf-8"))
-            except OSError:
-                d = {"entries": []}
+            # Undeclared: this book has no rulings.  Declared but unreadable
+            # raises — it used to read as "no rulings", silently unlinking every
+            # citation the user had adjudicated.
+            from britannica.corpora import current_corpus
+            book = current_corpus()
+            d = (json.loads(book.data("xref_adjudications.json").read_text(encoding="utf-8"))
+                 if book.has_data("xref_adjudications.json") else {"entries": []})
             for e in d.get("entries", []):
                 if e.get("by") != "user":
                     continue                      # model verdicts are FIXTURES
