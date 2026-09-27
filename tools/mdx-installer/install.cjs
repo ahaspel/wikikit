@@ -5,7 +5,10 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
 const {DOMParser, XMLSerializer} = require('@xmldom/xmldom');
-const IDS = ['eb1911-title-search', 'eb1911-name-lookup'];
+// Everything this installer knows about its book comes from the package's
+// manifest (`manifest.book`, written by the build): it carries no book's names.
+const programIds = book => [book.slug+'-title-search', book.slug+'-name-lookup'];
+const dictionaryFiles = book => [book.file_stem+'.mdd', book.file_stem+'.mdx'];
 
 function within(root, name) {
   const result = path.resolve(root, name), relative = path.relative(path.resolve(root), result);
@@ -28,8 +31,8 @@ function profileCandidates(platform = process.platform, home = os.homedir(), env
   if (platform === 'darwin') return [old];
   return [old, path.join(env.XDG_CONFIG_HOME || path.join(home,'.config'), 'goldendict', 'config')];
 }
-function dictionaryId(content, portable) {
-  const names = ['Britannica11.mdd','Britannica11.mdx'].map(name => portable ? name : path.join(content,name).replace(/\\/g,'/'));
+function dictionaryId(content, portable, book) {
+  const names = dictionaryFiles(book).map(name => portable ? name : path.join(content,name).replace(/\\/g,'/'));
   return crypto.createHash('md5').update(names.sort().map(name=>name+'\0').join('')).digest('hex');
 }
 function running() {
@@ -40,7 +43,8 @@ function running() {
   return commands.split('\n').some(command => /^goldendict(?:-ng)?$/i.test(path.basename(command.trim())));
 }
 
-function configure(xml, content, node, portable) {
+function configure(xml, content, node, portable, book) {
+  const IDS = programIds(book);
   const doc = new DOMParser({onError: level => { if (level !== 'warning') throw Error('Invalid GoldenDict configuration XML'); }}).parseFromString(xml, 'text/xml');
   if (doc.documentElement.nodeName !== 'config') throw Error('Expected a GoldenDict config file');
   const root = doc.documentElement, programs = child(doc, root, 'programs');
@@ -51,7 +55,7 @@ function configure(xml, content, node, portable) {
   const command = quote(node)+' --no-warnings '+quote(path.join(search,'lookup.cjs'))+' '+quote(path.join(search,'titles.json'));
   IDS.forEach((id, i) => {
     const p = doc.createElement('program');
-    const values = {id, type:i ? '2':'3', enabled:'1', name:i ? 'Britannica 11':'Britannica title search', icon:'',
+    const values = {id, type:i ? '2':'3', enabled:'1', name:i ? book.short_name : book.search_name, icon:'',
       commandLine:command+(i ? ' --article '+quote(path.join(search,'articles.sqlite'))+' '+quote(path.join(search,'binding.json')):'')};
     for (const [key,value] of Object.entries(values)) p.setAttribute(key,value);
     programs.appendChild(p);
@@ -79,7 +83,9 @@ async function install(options, progress = console.log, isRunning = running) {
   } else {
     config = options.config ? path.resolve(options.config) : profileCandidates().find(p=>fs.existsSync(p));
     if (!config || !fs.existsSync(config)) throw Error('Open GoldenDict once, quit it, then run setup again. Or specify --config PATH.');
-    content = options.destination ? path.resolve(options.destination) : path.join(path.dirname(config),'dictionaries','Britannica11');
+    // The default folder is named for the book, so it waits for the manifest,
+    // which is read only after every checksum below has passed.
+    content = options.destination ? path.resolve(options.destination) : null;
   }
   if (isRunning()) throw Error('GoldenDict is still running. Choose File > Quit, then try again.');
   progress('Checking the package…');
@@ -92,19 +98,23 @@ async function install(options, progress = console.log, isRunning = running) {
     files.set(name, expected);
   }
   const runtime = process.platform === 'win32' ? 'node.exe':'node';
-  for (const name of ['Britannica11.mdx','Britannica11.mdd','search/lookup.cjs','search/search-api.js',
-    'search/titles.json','search/articles.sqlite','search/runtime/'+runtime,'search/runtime/LICENSE','manifest.json'])
-    if (!files.has(name)) throw Error('Missing package file: '+name);
+  if (!files.has('manifest.json')) throw Error('Missing package file: manifest.json');
   const incoming = JSON.parse(fs.readFileSync(path.join(packageRoot,'manifest.json'),'utf8'));
+  const book = incoming.book;
+  if (!book || !book.file_stem || !book.slug) throw Error('This package does not say which book it holds (manifest.book).');
+  for (const name of [...dictionaryFiles(book),'search/lookup.cjs','search/search-api.js','search/book.json',
+    'search/titles.json','search/articles.sqlite','search/runtime/'+runtime,'search/runtime/LICENSE'])
+    if (!files.has(name)) throw Error('Missing package file: '+name);
+  if (content === null) content = path.join(path.dirname(config),'dictionaries',book.file_stem);
   const installedManifest = path.join(content,'manifest.json');
-  if (incoming.edition==='sample' && fs.existsSync(path.join(content,'Britannica11.mdx')) &&
+  if (incoming.edition==='sample' && fs.existsSync(path.join(content,book.file_stem+'.mdx')) &&
       (!fs.existsSync(installedManifest) || JSON.parse(fs.readFileSync(installedManifest,'utf8')).edition!=='sample'))
     throw Error('The complete dictionary is already installed here. Use a separate reader folder to try the sample.');
   const node = path.join(content,'search','runtime',runtime);
   const bundled = path.join(packageRoot,'search','runtime',runtime);
   execFileSync(bundled, ['--no-warnings','-e',"const {DatabaseSync}=require('node:sqlite');new DatabaseSync(':memory:').close()"], {windowsHide:true, timeout:15000});
   const previous = fs.existsSync(config) ? fs.readFileSync(config,'utf8') : '<config/>';
-  const updated = configure(previous, content, node, portable);
+  const updated = configure(previous, content, node, portable, book);
   fs.mkdirSync(path.dirname(content), {recursive:true});
   const stage = fs.mkdtempSync(path.join(path.dirname(content),'.britannica-install-'));
   const changes = [], committed=[];
@@ -113,17 +123,17 @@ async function install(options, progress = console.log, isRunning = running) {
     progress('Copying the dictionary and search files…');
     for (const name of files.keys()) {
       // Install book data and runtime; retain setup tools in the extracted package.
-      // Britannica11.png is the reader's dictionary icon: it only works beside the
-      // .mdx with the same base name, so it installs with the book data.  It is
+      // The .png is the reader's dictionary icon: it only works beside the .mdx
+      // with the same base name, so it installs with the book data.  It is
       // copied when present but not required, so an older package still installs.
-      if (!(name.startsWith('search/') || ['Britannica11.mdx','Britannica11.mdd','Britannica11.png','manifest.json','LICENSE','source-link-issues.json','installation.json'].includes(name))) continue;
+      if (!(name.startsWith('search/') || [...dictionaryFiles(book),book.file_stem+'.png','manifest.json','LICENSE','source-link-issues.json','installation.json'].includes(name))) continue;
       const source = within(stage,'new/'+name), dest=within(content,name);
       fs.mkdirSync(path.dirname(source),{recursive:true}); fs.copyFileSync(within(packageRoot,name),source);
       if (process.platform !== 'win32' && name==='search/runtime/node') fs.chmodSync(source,0o755);
       changes.push({source,dest});
     }
     const binding = within(stage,'new/binding.json');
-    fs.writeFileSync(binding,JSON.stringify({dictionaryId:dictionaryId(content,portable)}));
+    fs.writeFileSync(binding,JSON.stringify({dictionaryId:dictionaryId(content,portable,book)}));
     changes.push({source:binding,dest:path.join(content,'search','binding.json')});
     const stagedConfig = within(stage,'new/config'); fs.writeFileSync(stagedConfig,updated);
     changes.push({source:stagedConfig,dest:config});
@@ -147,7 +157,7 @@ async function install(options, progress = console.log, isRunning = running) {
   } finally {
     if (cleanup && path.dirname(stage)===path.dirname(content) && path.basename(stage).startsWith('.britannica-install-')) fs.rmSync(stage,{recursive:true});
   }
-  progress('Installed. Open GoldenDict and look up '+(incoming.edition==='sample'?'Britannica 11 sample':'Britannica 11')+'.');
+  progress('Installed. Open GoldenDict and look up '+book.help_word+'.');
   return {config,content};
 }
 

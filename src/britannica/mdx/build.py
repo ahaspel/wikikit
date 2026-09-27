@@ -57,6 +57,19 @@ def dictionary_basename(sample: bool) -> str:
     """The dictionary's file stem — "Britannica11", or "Britannica11-sample" —
     which GoldenDict also uses to find the icon beside the .mdx."""
     return brand("file_stem") + ("-sample" if sample else "")
+
+
+def book_identity(sample: bool) -> dict:
+    """What an installed dictionary needs to know about its book, written into
+    the edition manifest because the installers cannot import this package."""
+    # Both stems: the Windows package always installs the plain `file_stem`
+    # (the sample too — the installer tells editions apart by manifest), while
+    # the advanced install.py runs in the edition folder, where the sample's
+    # files keep their `-sample` basename.
+    return {"short_name": brand("short_name"), "search_name": brand("search_name"),
+            "help_word": help_word(sample),
+            "file_stem": brand("file_stem"), "basename": dictionary_basename(sample),
+            "key_prefix": brand("key_prefix"), "slug": brand("slug")}
 def _sample_spec() -> Path:
     """The book's compatibility-sample selection (`mdx_sample.json`).  The
     complete build reads it too — for its QA read-back fixture and manifest —
@@ -840,6 +853,11 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                     "roundtrip": "exact entries and resource bytes",
                     "edition": "sample" if sample else "complete", "excluded": excluded,
                     "native_search": native_search,
+                    # The book's identity, for the parts that run on a reader's
+                    # machine WITHOUT this package — the installers and the
+                    # lookup helper — and so cannot ask `brand()`.  Checksummed
+                    # with the rest of the manifest.
+                    "book": book_identity(sample),
                     "unavailable_source_link_count": len(source_link_issues),
                     "redundant_alias_count": len(redundant_aliases),
                     "display_keys": display_keys,

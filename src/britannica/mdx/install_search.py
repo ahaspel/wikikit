@@ -12,7 +12,11 @@ import subprocess
 from xml.etree import ElementTree as ET
 
 
-PROGRAM_IDS = ('eb1911-title-search', 'eb1911-name-lookup')
+def program_ids(book):
+    """GoldenDict program ids for this book's two helpers — from the edition
+    manifest's `book` block, since this file runs without the britannica
+    package.  Were the constant ('eb1911-title-search', 'eb1911-name-lookup')."""
+    return (book['slug'] + '-title-search', book['slug'] + '-name-lookup')
 
 
 def install(package, reader, node):
@@ -31,7 +35,11 @@ def install(package, reader, node):
     manifest = json.loads((package / 'manifest.json').read_text(encoding='utf-8'))
     if not manifest.get('native_search'):
         raise ValueError('Build this edition with --native-search first')
-    basename = 'Britannica11' if manifest['edition'] == 'complete' else 'Britannica11-sample'
+    book = manifest.get('book')
+    if not book or not book.get('basename') or not book.get('slug'):
+        raise ValueError('This edition does not say which book it holds (manifest.book); rebuild it')
+    basename = book['basename']
+    ids = program_ids(book)
     content = reader / 'content'
     content.mkdir(exist_ok=True)
     for ext in ('mdx', 'mdd'):
@@ -53,13 +61,13 @@ def install(package, reader, node):
     if programs is None:
         programs = ET.SubElement(root, 'programs')
     for child in list(programs):
-        if child.get('id') in PROGRAM_IDS:
+        if child.get('id') in ids:
             programs.remove(child)
     command = f'"{node}" --no-warnings "{folder / "lookup.cjs"}" "{folder / "titles.json"}"'
     # No query substitution: GoldenDict writes UTF-8 to stdin safely.
     for ident, kind, name, suffix in [
-        (PROGRAM_IDS[0], '3', 'Britannica title search', ''),
-        (PROGRAM_IDS[1], '2', 'Britannica 11', f' --article "{folder / "articles.sqlite"}" "{binding}"'),
+        (ids[0], '3', book['search_name'], ''),
+        (ids[1], '2', book['short_name'], f' --article "{folder / "articles.sqlite"}" "{binding}"'),
     ]:
         ET.SubElement(programs, 'program', dict(id=ident, type=kind, name=name,
                       enabled='1', commandLine=command+suffix, icon=''))

@@ -6,7 +6,10 @@ require(fs.existsSync(path.join(__dirname, 'search-api.js')) ? './search-api.js'
 const {fold, titleRank} = window.BritannicaSearch;
 const indexPath = process.argv[2];
 const query = fs.readFileSync(0, 'utf8').trim();
-if (!query || query.startsWith('EB1911:')) process.exit(0);
+// The book's key prefix and CSS scope sit beside this file (written by the
+// packager), so the helper carries no book's names in its own source.
+const book = JSON.parse(fs.readFileSync(path.join(__dirname,'book.json'),'utf8'));
+if (!query || query.startsWith(book.key_prefix)) process.exit(0);
 const q = fold(query), terms = q.split(/[\s,.'’()\-]+/).filter(Boolean);
 if (!terms.length) process.exit(0);
 const records = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
@@ -39,7 +42,7 @@ if (process.argv[3] === '--article') {
   const escape = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   if (exact.length !== 1) {
     const choices = exact.length ? exact : matches.slice(0,50);
-    process.stdout.write('<style>'+css+'</style><div class="eb1911"><h1>Choose an article</h1><ul>'+choices.map(r =>
+    process.stdout.write('<style>'+css+'</style><div class="'+book.slug+'"><h1>Choose an article</h1><ul>'+choices.map(r =>
       `<li><a href="gdlookup://localhost/?word=${encodeURIComponent(r.title)}&amp;group=4294967294">${escape(r.title)}</a></li>`).join('')+'</ul></div>');
   } else {
     const row = db.prepare('SELECT body FROM articles WHERE id=?').get(exact[0].id);

@@ -57,12 +57,20 @@ def verify_archive(archive, *, sample, enhanced):
         assert bool(manifest.get('native_search')) == enhanced
         assert manifest['article_count'] == (13 if sample else 37225)
         assert not any(Path(name).name.lower() == 'goldendict.exe' for name in names)
+        # EXPECTED names come from the book being built, never from the archive's
+        # own manifest: an archive checked against itself would always agree.
+        from britannica.corpora import brand
+        from britannica.mdx.build import book_identity, dictionary_basename
+        from britannica.mdx.windows import installer_exe
+        assert manifest['book'] == book_identity(sample)
         if enhanced:
-            assert {'Britannica11.mdx', 'Britannica11.mdd', 'Install Britannica 11.exe',
-                    'search/titles.json', 'search/articles.sqlite', 'search/runtime/node.exe'} <= set(names)
+            stem = brand('file_stem')
+            assert {stem+'.mdx', stem+'.mdd', installer_exe(book_identity(sample)),
+                    'search/titles.json', 'search/articles.sqlite', 'search/book.json',
+                    'search/runtime/node.exe'} <= set(names)
             assert json.loads(z.read('installation.json'))['edition'] == manifest['edition']
         else:
-            base = 'Britannica11-sample' if sample else 'Britannica11'
+            base = dictionary_basename(sample)
             assert set(names) == {base+'.mdx', base+'.mdd', base+'.png', 'README.md', 'LICENSE',
                                   'manifest.json', 'source-link-issues.json', 'SHA256SUMS'}
         return manifest
@@ -79,9 +87,11 @@ def assemble(standard, enhanced, output, node):
     builds = output.parent/'release-builds'
     build_windows(enhanced, builds/'enhanced-windows', node)
     output.mkdir(parents=True, exist_ok=True)
+    from britannica.corpora import brand
+    stem = brand('file_stem')
     packages = [
-        ('Britannica11-MDX.zip', standard/'Britannica11.zip', False, False),
-        ('Britannica11-Enhanced-Windows.zip', builds/'enhanced-windows.zip', False, True),
+        (f'{stem}-MDX.zip', standard/f'{stem}.zip', False, False),
+        (f'{stem}-Enhanced-Windows.zip', builds/'enhanced-windows.zip', False, True),
     ]
     catalog = []
     for name, source, sample, enhanced_search in packages:

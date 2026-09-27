@@ -2,10 +2,12 @@
 
 
 def edition_readme(sample=False, native_search=False):
+    from britannica.corpora import brand
+    from britannica.mdx.build import dictionary_basename, help_word as _help_word
     label = 'sample' if sample else 'complete edition'
-    basename = 'Britannica11-sample' if sample else 'Britannica11'
-    help_word = 'Britannica 11 sample' if sample else 'Britannica 11'
-    text = f'# Britannica 11 — {label}\n\n'
+    basename = dictionary_basename(sample)
+    help_word = _help_word(sample)
+    text = f'# {brand("short_name")} — {label}\n\n'
     if native_search:
         text += ('This is the dictionary component of the optional enhanced-search edition. '
                  'Its alias matching requires the accompanying search helper. '

@@ -6,7 +6,8 @@ import zlib
 
 
 def package_search(output, entries, display_keys, articles, aliases, css, root):
-    from britannica.mdx.build import PREFIX, article_key
+    from britannica.corpora import brand
+    from britannica.mdx.build import PREFIX, article_key, help_word
     from britannica.markers import strip_title_markers
     names = {stem: {strip_title_markers(a['title']), display_keys[article_key(stem)]} for stem, a in articles.items()}
     for alias, stems in aliases.items():
@@ -33,17 +34,23 @@ def package_search(output, entries, display_keys, articles, aliases, css, root):
                            ('tools/viewer/search-api.js','search-api.js'),
                            ('src/britannica/mdx/install_search.py','install.py')]:
         shutil.copyfile(root/source, folder/target)
+    # The lookup helper runs per query on the reader's machine, without this
+    # package: it reads the book's key prefix and CSS scope from here instead
+    # of carrying `EB1911:` and `eb1911` in its own source.
+    (folder / 'book.json').write_text(json.dumps(
+        {'key_prefix': brand('key_prefix'), 'slug': brand('slug')}), encoding='utf-8')
     # Only public article aliases go away. The `key.startswith(PREFIX)` arm that
     # stood here kept the stable identities addressable; they stopped being keys
     # at all when the standard edition stopped putting them in its headword
     # list, so the arm could no longer match anything.
     clean = {key: body for key,body in entries.items()
              if not body.startswith('@@@LINK=')
-             or key in ('Britannica 11','Britannica 11 sample')}
+             or key in (help_word(False), help_word(True))}
     # Choice pages stay available through their stable identity, not as another
     # suggestion alongside each of their actual articles.
     for key, title in list(display_keys.items()):
         if key.startswith(PREFIX+'choice:'):
             clean[key] = clean.pop(title)
             display_keys[key] = key
-    return clean, ['search/'+name for name in ('titles.json','articles.sqlite','lookup.cjs','search-api.js','install.py')]
+    return clean, ['search/'+name for name in ('titles.json','articles.sqlite','lookup.cjs','search-api.js',
+                                               'book.json','install.py')]

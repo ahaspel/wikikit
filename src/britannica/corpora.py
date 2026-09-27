@@ -138,6 +138,8 @@ class Corpus:
     key_prefix: str | None = None   # "EB1911:"        — dictionary's internal keys
     urn: str | None = None          # "urn:britannica11" — EPUB identifiers
     source_url: str | None = None   # the work's Wikisource page — EPUB dc:source
+    search_name: str | None = None  # "Britannica title search" — the reader's
+                                    # label for the enhanced edition's title search
 
     def need(self, name: str) -> str:
         """A branding value this book must have for the artifact asking."""
@@ -222,6 +224,7 @@ EB1911 = Corpus(
     key_prefix="EB1911:",
     urn="urn:britannica11",
     source_url="https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica",
+    search_name="Britannica title search",
 )
 
 

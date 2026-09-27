@@ -19,7 +19,7 @@ class InstallBritannica : Form {
             Console.OutputEncoding = new UTF8Encoding(false);
             try {
                 if (args.Length != 4 || args[0] != "--package" || args[2] != "--reader")
-                    throw new Exception("Usage: Install Britannica 11.exe --package FOLDER --reader FOLDER");
+                    throw new Exception("Usage: " + Book.Installer + " --package FOLDER --reader FOLDER");
                 RunInstall(args[1], args[3], delegate(string message) { Console.WriteLine(message); });
                 return 0;
             } catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
@@ -30,13 +30,13 @@ class InstallBritannica : Form {
     }
 
     InstallBritannica() {
-        Text = "Install Britannica 11";
+        Text = "Install " + Book.ShortName;
         ClientSize = new Size(590, 255);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 10);
-        var heading = new Label { Text = "Britannica 11 for GoldenDict", Font = new Font(Font, FontStyle.Bold),
+        var heading = new Label { Text = Book.ShortName + " for GoldenDict", Font = new Font(Font, FontStyle.Bold),
             AutoSize = true, Location = new Point(20, 18) };
         var instructions = new Label { Text = "Close GoldenDict, then choose its portable folder (the one containing goldendict.exe). Your existing settings will be kept.",
             Location = new Point(20, 52), Size = new Size(550, 48) };

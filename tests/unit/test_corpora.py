@@ -116,10 +116,11 @@ def test_every_field_is_read_by_something():
     #   key_prefix  the dictionary's internal keys (mdx.build PREFIX)
     #   urn         EPUB identifiers
     #   source_url  EPUB dc:source
+    #   search_name the installers' program label (via the manifest `book` block)
     assert fields == {"key", "title", "scan_name", "boundary_style",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
-                      "urn", "source_url"}, (
+                      "urn", "source_url", "search_name"}, (
         "a field was added or removed — is its consumer written?")
 
 
