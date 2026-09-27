@@ -528,7 +528,72 @@ def validate(entries, resources, *, report_path=None):
     return {"internal_links": links, "html_entries": len(inventories)}
 
 
-def compile_package(folder: Path, entries, resources, basename, *, sample=True):
+def dictionary_description(*, sample, articles, contributors, illustrations, headwords):
+    """The reader's "Dictionary info" pane — HTML, which GoldenDict-ng renders
+    through the same stylesheet and resource filtering as an article.
+
+    It was one line, "Offline edition from britannica11.org; CC BY-SA 4.0.",
+    and a reviewer rightly called it sparse: it said nothing about what the
+    dictionary holds, who made it or how to begin.  Every number is passed in
+    from the build that produced the file, never typed, so it cannot drift
+    from the dictionary it describes.  Nothing volatile (no build date): the
+    same inputs still compile to the same bytes.
+    """
+    # The sample's help page lists its articles and nothing else; only the
+    # complete edition has the volume, topic and contributor indexes.
+    if sample:
+        scope = "A compatibility sample: a small test selection from the complete edition."
+        start = "<p>{h:,} headwords. Look up <i>Britannica 11 sample</i> for its list of articles.</p>"
+    else:
+        scope = "The complete text of the Eleventh Edition’s 28 volumes of articles."
+        start = ("<p>{h:,} headwords. Look up <i>Britannica 11</i> for contents: "
+                 "volumes, topics, contributors and the Reader’s Guide.</p>")
+    return (
+        "<p><b>Encyclopædia Britannica, Eleventh Edition</b> (1910–1911)</p>"
+        f"<p>{scope} {articles:,} articles and plates by {contributors:,} contributors, "
+        f"with their {illustrations:,} illustrations and every table and formula, "
+        "bundled for offline reading.</p>"
+        + start.format(h=headwords) +
+        "<p>Edited by Aaron Haspel, from the Wikisource volunteers’ proofread "
+        'transcription. Also at <a href="https://britannica11.org">britannica11.org</a>.</p>'
+        "<p>Text licensed CC BY-SA 4.0; see LICENSE for attribution.</p>")
+
+
+# The site's own mark, and its paper colour.  The favicon's ink is dark on a
+# TRANSPARENT ground; in a dark-themed reader that would all but disappear, so
+# the dictionary icon gets the page colour behind it.
+_ICON_SVG = ROOT / "tools/viewer/favicon.svg"
+_ICON_PAPER = "#f5f1eb"
+
+
+def dictionary_icon(size: int = 256) -> bytes:
+    """The site's favicon as a PNG, for `<basename>.png` beside the `.mdx`.
+
+    GoldenDict-ng loads an image with the dictionary's base name from the same
+    folder (bmp/png/jpg/ico everywhere; svg only in -ng — hence PNG, which the
+    original GoldenDict reads too).  Rendered at build time from the ONE
+    favicon source rather than committed as a second copy that could drift.
+    """
+    from playwright.sync_api import sync_playwright
+    svg = _ICON_SVG.read_text(encoding="utf-8")
+    page_html = (f'<html><body style="margin:0;background:{_ICON_PAPER}">'
+                 f'<div style="width:{size}px;height:{size}px">'
+                 + svg.replace("<svg ", f'<svg width="{size}" height="{size}" ', 1)
+                 + "</div></body></html>")
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": size, "height": size})
+            page.set_content(page_html)
+            png = page.screenshot(clip={"x": 0, "y": 0, "width": size, "height": size})
+        finally:
+            browser.close()
+    if not png.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("Dictionary icon did not render as a PNG")
+    return png
+
+
+def compile_package(folder: Path, entries, resources, basename, *, sample=True, description=""):
     from mdict_utils import writer
     from mdict_utils.base.readmdict import MDX, MDD
     db = folder / "stage.db"
@@ -542,7 +607,7 @@ def compile_package(folder: Path, entries, resources, basename, *, sample=True):
     try:
         writer.pack(str(folder / (basename + ".mdx")), writer.pack_mdx_db(str(db)),
                     title="Britannica 11" + (" — compatibility sample" if sample else " — complete edition"),
-                    description="Offline edition from britannica11.org; CC BY-SA 4.0.")
+                    description=description)
         writer.pack(str(folder / (basename + ".mdd")), writer.pack_mdd_db(str(db)), is_mdd=True)
     finally:
         for obj in writer.MDICT_OBJ.values():
@@ -719,7 +784,10 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         checks = validate(entries, resources, report_path=output / "link_failures.json")
         basename = "Britannica11-sample" if sample else "Britannica11"
         print("Compiling", len(entries), "keys and", len(resources), "resources", flush=True)
-        compile_package(stage, entries, resources, basename, sample=sample)
+        description = dictionary_description(
+            sample=sample, articles=len(articles), contributors=len(contributors),
+            illustrations=len(source_assets), headwords=len(entries))
+        compile_package(stage, entries, resources, basename, sample=sample, description=description)
         preview = output / "preview"
         preview.mkdir(exist_ok=True)
         for key, body in entries.items() if sample else []:
@@ -768,7 +836,9 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         shutil.copyfile(ROOT / "src/britannica/export/download_assets/LICENSE", output / "LICENSE")
         from britannica.mdx.readme import edition_readme
         write_shipped_text(output / "README.md", edition_readme(sample, native_search))
-        shipped = [basename + ".mdx", basename + ".mdd", "README.md", "LICENSE", "manifest.json", "source-link-issues.json"] + search_files
+        (output / (basename + ".png")).write_bytes(dictionary_icon())
+        shipped = [basename + ".mdx", basename + ".mdd", basename + ".png", "README.md", "LICENSE",
+                   "manifest.json", "source-link-issues.json"] + search_files
         write_checksums(output, shipped)
         with zipfile.ZipFile(output / (basename + ".zip"), "w", zipfile.ZIP_DEFLATED) as z:
             for name in shipped + ["SHA256SUMS"]:

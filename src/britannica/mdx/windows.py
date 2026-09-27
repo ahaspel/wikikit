@@ -33,7 +33,7 @@ def build(edition, output, node):
     subprocess.run([str(node), '--no-warnings', '-e',
                     "const {DatabaseSync}=require('node:sqlite');new DatabaseSync(':memory:').close()"], check=True)
     output.mkdir(parents=True, exist_ok=True)
-    payload = ['Britannica11.mdx', 'Britannica11.mdd', 'manifest.json', 'LICENSE', 'source-link-issues.json',
+    payload = ['Britannica11.mdx', 'Britannica11.mdd', 'Britannica11.png', 'manifest.json', 'LICENSE', 'source-link-issues.json',
                'search/titles.json', 'search/articles.sqlite', 'search/lookup.cjs', 'search/search-api.js']
     for name in payload:
         dest = output/name

@@ -63,7 +63,7 @@ def verify_archive(archive, *, sample, enhanced):
             assert json.loads(z.read('installation.json'))['edition'] == manifest['edition']
         else:
             base = 'Britannica11-sample' if sample else 'Britannica11'
-            assert set(names) == {base+'.mdx', base+'.mdd', 'README.md', 'LICENSE',
+            assert set(names) == {base+'.mdx', base+'.mdd', base+'.png', 'README.md', 'LICENSE',
                                   'manifest.json', 'source-link-issues.json', 'SHA256SUMS'}
         return manifest
 

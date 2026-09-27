@@ -113,7 +113,10 @@ async function install(options, progress = console.log, isRunning = running) {
     progress('Copying the dictionary and search files…');
     for (const name of files.keys()) {
       // Install book data and runtime; retain setup tools in the extracted package.
-      if (!(name.startsWith('search/') || ['Britannica11.mdx','Britannica11.mdd','manifest.json','LICENSE','source-link-issues.json','installation.json'].includes(name))) continue;
+      // Britannica11.png is the reader's dictionary icon: it only works beside the
+      // .mdx with the same base name, so it installs with the book data.  It is
+      // copied when present but not required, so an older package still installs.
+      if (!(name.startsWith('search/') || ['Britannica11.mdx','Britannica11.mdd','Britannica11.png','manifest.json','LICENSE','source-link-issues.json','installation.json'].includes(name))) continue;
       const source = within(stage,'new/'+name), dest=within(content,name);
       fs.mkdirSync(path.dirname(source),{recursive:true}); fs.copyFileSync(within(packageRoot,name),source);
       if (process.platform !== 'win32' && name==='search/runtime/node') fs.chmodSync(source,0o755);
