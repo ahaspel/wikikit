@@ -5,11 +5,12 @@ from collections import defaultdict
 import html
 import json
 import re
+from pathlib import Path
 from urllib.parse import unquote, parse_qs, urlsplit
 
 from britannica.corpora import brand, current_corpus
 
-from britannica.epub import front_matter as FM, readers_guide as RG
+from britannica.epub import front_matter as FM
 from britannica.export.article_json import stable_id_from_filename
 from britannica.export.download import _topic_index
 from britannica.markers import strip_title_markers
@@ -67,15 +68,13 @@ def load_contributors(articles, contributors):
                 entry["articles"].append(stem)
 
 
-def full_help(count):
+def full_help(count, contents):
     # The engine's instructions and contents list, then the BOOK's paragraph
-    # about itself (`mdx_about.html`).
+    # about itself (`mdx_about.html`).  ``contents`` is [(label, entry key)] —
+    # the hub pages `add_navigation` built, in order.
     return (f"<h1>{brand('short_name')}</h1><p>Complete offline reference edition: {count:,} articles and plates. "
             "Type an article title in the reader’s lookup box. Use its full-text search to find words within articles; initial indexing may take time.</p>"
-            + list_links((label, entry_url(PREFIX + key)) for label, key in [
-                ("Introduction and prefaces", "introduction"), ("Volumes", "volumes"),
-                ("Topics", "topics"), ("Contributors", "contributors"),
-                ("Reader’s Guide", "page:guide.xhtml")])
+            + list_links((label, entry_url(PREFIX + key)) for label, key in contents)
             + current_corpus().template("templates/mdx_about.html", site=brand("site"),
                                         host=brand("site").split("://", 1)[-1]))
 
@@ -161,8 +160,8 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         (f"Volume {v}", entry_url(volume_key(v))) for v in sorted(volumes)))
 
     FM.DROPPED_HREFS.clear()
-    front = FM.pages()
-    guide, images = RG.pages()
+    book_pages = FM.book_pages()              # the book's own (`Corpus.ancillary`)
+    front, guide, images = book_pages.front, book_pages.guide, book_pages.images
     if FM.DROPPED_HREFS:
         raise ValueError(f"Ancillary extraction dropped malformed source links: {FM.DROPPED_HREFS}")
     page_map = {f: PREFIX + "page:" + f for f, *_ in front + guide}
@@ -199,11 +198,20 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         if not re.search(r"<h1\b", body, re.I):
             body = "<h1>" + html.escape(title) + "</h1>" + body
         entries[page_map[filename]] = wrap('<div class="frontmatter">' + body + "</div>")
-    entries[PREFIX + "introduction"] = wrap("<h1>Introduction and prefaces</h1>" + list_links(
-        (title, entry_url(page_map[filename])) for filename, title, _ in front))
-    sources = [ROOT / "docs/introduction.txt", ROOT / current_corpus().derived("articles", "contributors.json")]
-    sources += list((ROOT / "tools/viewer").glob("readers-guide*.html"))
-    sources += [ROOT / "tools/viewer/preface.html", ROOT / "tools/viewer/ancillary-prefatory-note.html"]
-    return {"topic_count": len(flat), "front_matter_count": len(front), "guide_page_count": len(guide),
-            "volume_count": len(volumes), "source_sha256": {str(p.relative_to(ROOT)): digest(p.read_bytes()) for p in sources},
-            "guide_image_sha256": {n: digest(resources["images/" + n]) for n in images}}
+    if front:
+        entries[PREFIX + "introduction"] = wrap("<h1>Introduction and prefaces</h1>" + list_links(
+            (title, entry_url(page_map[filename])) for filename, title, _ in front))
+    # Provenance: the roster (the engine's own output), then the files the book
+    # built its pages from.
+    sources = [ROOT / current_corpus().derived("articles", "contributors.json")]
+    sources += [Path(p) for p in book_pages.sources]
+    # The help page's contents: the hubs built here, the book's only when it has
+    # them.  The guide is named by its own hub page.
+    contents = ([("Introduction and prefaces", "introduction")] if front else []) + [
+        ("Volumes", "volumes"), ("Topics", "topics"), ("Contributors", "contributors")]
+    if guide:
+        contents.append((guide[0][1], "page:" + guide[0][0]))
+    stats = {"topic_count": len(flat), "front_matter_count": len(front), "guide_page_count": len(guide),
+             "volume_count": len(volumes), "source_sha256": {str(p.relative_to(ROOT)): digest(p.read_bytes()) for p in sources},
+             "guide_image_sha256": {n: digest(resources["images/" + n]) for n in images}}
+    return stats, contents

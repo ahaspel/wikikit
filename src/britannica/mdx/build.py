@@ -777,10 +777,10 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                 sample_memberships[stem].append([(s, entry_url(key)) for s in segs])
         for stem, links in sample_memberships.items():
             entries[article_key(stem)] = add_article_topics(entries[article_key(stem)], links)
-        ancillary = {}
+        ancillary, help_contents = {}, []
         if not sample:
             from britannica.mdx.navigation import add_navigation
-            ancillary = add_navigation(entries, articles, contributors, json.loads(ct_raw), policy, resources, source_assets)
+            ancillary, help_contents = add_navigation(entries, articles, contributors, json.loads(ct_raw), policy, resources, source_assets)
             topic_count = ancillary["topic_count"]
         aliases, redundant_aliases = compact_aliases(articles, aliases)
         (output / "redundant-aliases.json").write_text(json.dumps(redundant_aliases, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -798,7 +798,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
         else:
             from britannica.mdx.navigation import full_help
-            entries[PREFIX + "help"] = wrap(full_help(len(articles)))
+            entries[PREFIX + "help"] = wrap(full_help(len(articles), help_contents))
             entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
         print("Validating complete link/resource graph", flush=True)
         from britannica.mdx.link_exceptions import mark_unavailable

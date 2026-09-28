@@ -41,7 +41,6 @@ from britannica.epub import front_matter as FM
 from britannica.epub import fts as FTS
 from britannica.epub import images as IMG
 from britannica.epub import pack
-from britannica.epub import readers_guide as RG
 from britannica.epub import math_assets as MA
 from britannica.markers import markers_to_text
 from britannica.render.article import insert_after_byline, topic_trail_html
@@ -1074,7 +1073,10 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         return _SITE_CONTRIB_RE.sub(_site_contrib_href,
                                     _GUIDE_ART_RE.sub(_guide_art_href, body))
 
-    guide_pages, guide_imgs = RG.pages()
+    # The book's pages beyond its articles (`Corpus.ancillary`): its front
+    # matter and its guide tree, extracted once for the whole build.
+    book_pages = FM.book_pages()
+    guide_pages, guide_imgs = book_pages.guide, book_pages.images
     if FM.DROPPED_HREFS:
         log(f"front-matter/guide: dropped {len(FM.DROPPED_HREFS)} malformed source href(s) "
             "(site-side generator bug, queued)")
@@ -1089,15 +1091,17 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     for fname, g_title, _b, part in guide_pages:
         guide_by_part.setdefault(part, []).append((fname, g_title))
     guide_branch = ""
+    # The guide's HUB is its first row; its title is the guide's name.
+    guide_hub, guide_name = (guide_pages[0][0], guide_pages[0][1]) if guide_pages else ("", "")
     if guide_pages:
-        # TOC: the six parts only — chapters live on the part pages, one click in.
+        # TOC: the parts only — chapters live on the part pages, one click in.
         part_lis = [f'<li><a href="{guide_by_part[n][0][0]}">'
                     f"{_html.escape(guide_by_part[n][0][1])}</a></li>"
-                    for n in range(1, 7)]
-        stray = [(f, t) for f, t in guide_by_part.get(None, []) if f != "guide.xhtml"]
+                    for n in sorted(k for k in guide_by_part if k is not None)]
+        stray = [(f, t) for f, t in guide_by_part.get(None, []) if f != guide_hub]
         if stray:
-            log(f"readers-guide: {len(stray)} chapter(s) not listed on any part page")
-        guide_branch = ('<li><a href="guide.xhtml">Reader’s Guide</a><ol>'
+            log(f"guide: {len(stray)} chapter(s) not listed on any part page")
+        guide_branch = (f'<li><a href="{guide_hub}">{_html.escape(guide_name)}</a><ol>'
                         + "".join(part_lis) + "</ol></li>")
 
     # ── nav: TOP-LEVELS ONLY (user spec) — 28 flat volume entries; each opens a
@@ -1204,7 +1208,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     # Front matter (introduction when written · the 1910 Editorial Preface · the
     # Index Preface) rides directly after the title page; ONE compact nav group so
     # Title Search keeps its visual top slot while nav stays spine-monotone.
-    fm_pages = FM.pages()
+    fm_pages = book_pages.front
     for fname, fm_title, fm_body in fm_pages:
         open(os.path.join(oebps, fname), "w", encoding="utf-8").write(
             xhtml_doc(fm_title, '<div class="frontmatter">'
@@ -1241,7 +1245,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     if contrib_files:
         tool_links.append(f'<a href="{contrib_files[0]}">Contributors</a>')
     if guide_pages:
-        tool_links.append('<a href="guide.xhtml">Reader’s Guide</a>')
+        tool_links.append(f'<a href="{guide_hub}">{_html.escape(guide_name)}</a>')
     n_arts = sum(1 for s in spine_stems if meta[s]["article_type"] == "article")
     vols_present = sorted({meta[s]["volume"] for s in spine_stems})
     # The book's facts (its subtitle, its years, how many volumes of articles)

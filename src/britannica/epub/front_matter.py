@@ -1,15 +1,15 @@
-"""Front-matter pages for the EPUB.
+"""The book's pages beyond its articles — front matter and a guide — and the
+extraction that turns them into book bodies.
 
-Three pages, in book order after the title page:
+WHICH pages a book has is the book's (``Corpus.ancillary``, returning an
+``Ancillary``); EB1911's — its introduction, the 1910 Editorial Preface, the
+Historical Preface and the Reader's Guide — are listed in
+britannica/books/eb1911/front_matter.py.  The EPUB and the dictionary both read
+them through ``book_pages()``.  This module keeps what any book's pages need:
 
-  * ``introduction.xhtml`` — the editor's own introduction, from
-    ``docs/introduction.txt`` (plain text, blank-line paragraphs; ``#`` lines are
-    comments).  Page omitted while the file is absent or has no content lines.
-  * ``preface.xhtml`` — the 1910 Editorial Preface, extracted from the static site
-    page ``tools/viewer/preface.html`` (built once from raw Wikisource by
-    ``tools/viewer/build_preface.py``; frozen content).
-  * ``index-preface.xhtml`` — the vol-29 Preface to the Index, extracted from
-    ``tools/viewer/ancillary-index-preface.html``.
+  * ``text_page_html`` — a plain-text page (blank-line paragraphs, ``#`` comment
+    lines, ``[Header.]`` shoulder headings) rendered to HTML;
+  * ``_extract`` — one content div lifted out of one of OUR static site pages.
 
 The site pages are OUR static renders — extraction takes the one content div and
 adapts it to the book context: ``on*`` script attributes dropped (an EPUB content
@@ -21,8 +21,9 @@ through build.to_xhtml_body for XHTML conformance like every other baked body.
 """
 import os
 import re
+from dataclasses import dataclass, field
 
-from britannica.corpora import brand
+from britannica.corpora import brand, current_corpus
 from britannica.util.strings import section_slug
 import xml.etree.ElementTree as ET
 
@@ -104,15 +105,38 @@ def _extract(path, cls):
 _SHOULDER_RE = re.compile(r"^\[([^\]]+)\]\s*")
 
 
-def introduction_html():
-    """docs/introduction.txt → body HTML, or None while there is nothing to show.
+@dataclass
+class Ancillary:
+    """A book's pages beyond its articles, as ``Corpus.ancillary`` returns them.
+
+    front    [(file, nav title, body HTML)] — the Introduction group, in order.
+    guide    [(file, title, body HTML, part | None)] — a guide tree: its HUB is
+             the first row (part None); a part's first row is that part's page,
+             and its other rows are the chapters under it.  Empty = no guide.
+    images   {bundled basename: source path} — images the guide bodies use.
+    sources  the files these pages are built FROM, for provenance hashes.
+    """
+    front: list = field(default_factory=list)
+    guide: list = field(default_factory=list)
+    images: dict = field(default_factory=dict)
+    sources: list = field(default_factory=list)
+
+
+def book_pages() -> Ancillary:
+    """The current book's pages beyond its articles; none when it names none."""
+    hook = current_corpus().ancillary
+    return hook() if hook is not None else Ancillary()
+
+
+def text_page_html(path, title):
+    """A plain-text page → body HTML, or None while there is nothing to show.
+
+    The file is REQUIRED: an empty one (or all comments) is a page not yet
+    written, and omitted; a missing one is an error, never a quietly absent page.
 
     Notation: plain text, blank-line paragraphs, ``#`` comment lines; a paragraph
     opening with ``[Some Header.]`` renders the bracketed text as a shoulder
     heading (the About page's device), anchored by its slug."""
-    path = os.path.join(ROOT, "docs", "introduction.txt")
-    if not os.path.exists(path):
-        return None
     lines = [l for l in open(path, encoding="utf-8").read().splitlines()
              if not l.lstrip().startswith("#")]
     paras = [p.strip() for p in re.split(r"\n\s*\n", "\n".join(lines)) if p.strip()]
@@ -129,33 +153,4 @@ def introduction_html():
         return (f'<p><span class="shoulder-heading" id="intro-{slug}">'
                 f"{_h.escape(head)}</span> {_h.escape(p[m.end():])}</p>")
 
-    return "<h1>To This Edition</h1>" + "".join(_para(p) for p in paras)
-
-
-def preface_html():
-    body = _extract(os.path.join(ROOT, "tools", "viewer", "preface.html"),
-                    "preface-body")
-    return ("<h1>Editorial Preface</h1>"
-            '<p class="fm-meta"><i>By Hugh Chisholm · London, December 10, 1910</i></p>'
-            + body)
-
-
-def historical_preface_html():
-    """The Prefatory Note — the 1910 history of the Britannica's editions."""
-    body = _extract(os.path.join(ROOT, "tools", "viewer",
-                                 "ancillary-prefatory-note.html"), "body")
-    return "<h1>Historical Preface</h1>" + body
-
-
-def pages():
-    """[(fname, nav title, body HTML)] — the Introduction group's children, in
-    book order (user's TOC spec); the editor's own piece only when written.
-    The Index Preface is OUT (user: the book's own indices supersede it)."""
-    out = []
-    intro = introduction_html()
-    if intro:
-        out.append(("introduction.xhtml", "To This Edition", intro))
-    out.append(("preface.xhtml", "Editorial Preface", preface_html()))
-    out.append(("historical-preface.xhtml", "Historical Preface",
-                historical_preface_html()))
-    return out
+    return f"<h1>{_h.escape(title)}</h1>" + "".join(_para(p) for p in paras)
