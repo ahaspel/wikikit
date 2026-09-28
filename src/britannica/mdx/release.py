@@ -24,7 +24,14 @@ def package_standard(source, destination, sample):
             if name in ('README.md', 'SHA256SUMS'):
                 continue
             digest = hashlib.sha256()
-            with original.open(name) as incoming, target.open(name, 'w', force_zip64=True) as outgoing:
+            # Carry each member's timestamp from the verified build.  Opening a
+            # member by NAME stamped it 1980-01-01 (zipfile's floor date), so
+            # every file in the download claimed to predate the reader's index
+            # of the previous release, and GoldenDict kept that index: the
+            # reviewer saw the new icon but the OLD "About dictionary" text.
+            info = zipfile.ZipInfo(name, date_time=original.getinfo(name).date_time)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            with original.open(name) as incoming, target.open(info, 'w', force_zip64=True) as outgoing:
                 while chunk := incoming.read(1024*1024):
                     digest.update(chunk)
                     outgoing.write(chunk)
