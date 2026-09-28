@@ -673,7 +673,8 @@ def build_edition(output: Path, *, sample=True, native_search=False):
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="build-", dir=output) as tmp:
         stage = Path(tmp)
-        selected = json.loads(_sample_spec().read_text(encoding="utf-8")) if sample else None
+        spec = json.loads(_sample_spec().read_text(encoding="utf-8"))
+        selected = spec["articles"] if sample else None
         source = ROOT / current_corpus().derived("articles")
         index_raw = (source / "index.json").read_bytes()
         index = json.loads(index_raw)
@@ -693,10 +694,13 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         if not sample:
             if set(articles) != known:
                 raise ValueError(f"Index/corpus identity mismatch: {sorted(set(articles) ^ known)}")
+            # The records the SOURCE leaves empty are the book's declared fact
+            # (`Corpus.empty_records`); any other empty record is news, not noise.
+            declared_empty = current_corpus().empty_records
             empty = {s for s, a in articles.items() if not a["body"]}
-            if empty != {"25-0483-dc502a"}:
+            if empty != set(declared_empty):
                 raise ValueError(f"Changed empty-record disposition: {sorted(empty)}")
-            excluded = {s: "Empty source plate, also excluded by the corpus download" for s in empty}
+            excluded = {s: declared_empty[s] for s in empty}
             for s in empty:
                 del articles[s]
             selected = {s: a["title"] for s, a in articles.items()}
@@ -743,7 +747,8 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             (output / "failures.json").write_text(json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8")
             raise ValueError(f"{len(failures)} rendering/resource failures; see {output / 'failures.json'}")
         if sample:
-            aliases["Continued Fraction"].add("07-0045-9b7a0f")
+            for alias, stem in spec["aliases"].items():
+                aliases[alias].add(stem)
         else:
             from britannica.mdx.navigation import add_reference_aliases, load_contributors
             alias_report = add_reference_aliases(articles, aliases)
@@ -789,11 +794,12 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             body = current_corpus().template("templates/mdx_help_sample.html",
                                              short_name=brand("short_name")) + list_links((a["title"], entry_url(article_key(s))) for s, a in articles.items())
             # Use a real canonical section in the pilot's reader test.
-            section_ids = sorted(i for i in Inventory(entries[article_key("01-0639-46474b")]).ids if i.startswith("section-"))
+            test = spec["section_test"]
+            section_ids = sorted(i for i in Inventory(entries[article_key(test["article"])]).ids if i.startswith("section-"))
             if not section_ids:
-                raise ValueError("Algebra sample has lost its section anchors")
+                raise ValueError(f"Section-test article {test['article']} has lost its section anchors")
             body += "<h2>Section-link test</h2>" + list_links([
-                ("Open a section within Algebra", entry_url(article_key("01-0639-46474b"), section_ids[0]))])
+                (test["label"], entry_url(article_key(test["article"]), section_ids[0]))])
             entries[PREFIX + "help"] = wrap(body)
             entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
         else:
@@ -837,7 +843,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         else:
             # Small read-back fixture for the same reader QA, without serializing
             # the full HTML corpus a second time into the distribution directory.
-            qa_stems = json.loads(_sample_spec().read_text(encoding="utf-8"))
+            qa_stems = spec["articles"]
             (output / "entries.json").write_text(json.dumps({article_key(s): qa_entries[article_key(s)] for s in qa_stems}, ensure_ascii=False), encoding="utf-8")
         manifest = {"built_utc": datetime.now(timezone.utc).isoformat(), "compiler": "mdict-utils " + version("mdict-utils"),
                     "article_count": len(articles), "alias_count": sum(v.startswith("@@@LINK=") for v in entries.values()),
@@ -854,7 +860,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                     "unavailable_source_link_count": len(source_link_issues),
                     "redundant_alias_count": len(redundant_aliases),
                     "display_keys": display_keys,
-                    "sample": json.loads(_sample_spec().read_text(encoding="utf-8")),
+                    "sample": spec,
                     "input_sha256": input_hashes, "input_hash_mode": "raw bytes" if sample else "sorted-key JSON payload",
                     "index_sha256": digest(index_raw), "ancillary": ancillary,
                     "topics_sha256": digest(ct_raw), "source_assets": source_assets,

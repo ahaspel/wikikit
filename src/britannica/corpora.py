@@ -137,6 +137,17 @@ class Corpus:
     #: are built from (``epub.front_matter.Ancillary``).  Read by the EPUB and
     #: the dictionary through ``epub.front_matter.book_pages``.  None = none.
     ancillary: Callable[[], object] | None = None
+    #: volume -> the inclusive (first, last) page span that holds ARTICLES, in
+    #: the book's page space (``SourcePage.page_number``).  Pages outside it are
+    #: front or back matter and never enter the walk.  A volume not listed
+    #: admits every page.  Read through ``volumes.article_ws_range``.
+    article_pages: dict[int, tuple[int, int]] = field(default_factory=dict)
+    #: Records the SOURCE leaves empty, each with the reason recorded for it.
+    #: The dictionary excludes them, and its build refuses to proceed unless
+    #: the empty records are exactly these (a new empty record is news).
+    empty_records: dict[str, str] = field(default_factory=dict)
+    #: The volume published as the free single-volume EPUB sampler (deploy.sh).
+    sampler_volume: int | None = None
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"

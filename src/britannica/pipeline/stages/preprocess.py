@@ -316,7 +316,7 @@ def _decode_entities(text: str) -> str:
 # article-space instance sits in a table/cell attr slot, so the decode lives in
 # `_table_fold.fold_cell_attrs`, the producer that owns the slot; J5 of
 # docs/sweeper_removal.md.  The front-matter instances — vol 1's title page
-# `VOLUME {{{vol|I}}}`, ws pages 3–4 — are outside ARTICLE_WS_RANGE and never
+# `VOLUME {{{vol|I}}}`, ws pages 3–4 — are outside the article span (`Corpus.article_pages`) and never
 # enter this chain.)
 
 

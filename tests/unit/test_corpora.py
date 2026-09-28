@@ -143,9 +143,13 @@ def test_every_field_is_read_by_something():
     #   alias_sources  link_resolver._overlay_aliases — the aliases hook
     #   bind_contributors  tools/pipeline/post_export — the contributors hook
     #   ancillary   epub.front_matter.book_pages (EPUB + dictionary) — front matter
+    #   article_pages  volumes.article_ws_range / in_article_range — the walk's span
+    #   empty_records  mdx.build (the gate + exclusions), mdx.release (the count)
+    #   sampler_volume  tools/deploy.sh — the sampler EPUB it builds and uploads
     assert fields == {"key", "title", "scan_name", "article_starts",
                       "is_plate", "plate_title", "alias_sources",
                       "bind_contributors", "ancillary",
+                      "article_pages", "empty_records", "sampler_volume",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",

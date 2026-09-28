@@ -37,6 +37,19 @@ def package_standard(source, destination, sample):
         target.writestr('SHA256SUMS', format_checksums(checksums))
 
 
+def expected_article_count(sample):
+    """How many articles an edition must hold — from the book, never from the
+    archive: the sample's declared selection, or the exported corpus index less
+    the records the source leaves empty (which the dictionary excludes)."""
+    from britannica.corpora import current_corpus
+    from britannica.mdx.build import ROOT, _sample_spec
+    book = current_corpus()
+    if sample:
+        return len(json.loads(_sample_spec().read_text(encoding='utf-8'))['articles'])
+    index = json.loads((ROOT / book.derived('articles', 'index.json')).read_text(encoding='utf-8'))
+    return len(index) - len(book.empty_records)
+
+
 def verify_archive(archive, *, sample, enhanced):
     with zipfile.ZipFile(archive) as z:
         names = z.namelist()
@@ -57,7 +70,7 @@ def verify_archive(archive, *, sample, enhanced):
         manifest = json.loads(z.read('manifest.json'))
         assert manifest['edition'] == ('sample' if sample else 'complete')
         assert bool(manifest.get('native_search')) == enhanced
-        assert manifest['article_count'] == (13 if sample else 37225)
+        assert manifest['article_count'] == expected_article_count(sample)
         assert not any(Path(name).name.lower() == 'goldendict.exe' for name in names)
         # EXPECTED names come from the book being built, never from the archive's
         # own manifest: an archive checked against itself would always agree.

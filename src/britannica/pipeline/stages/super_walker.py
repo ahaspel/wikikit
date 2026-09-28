@@ -40,7 +40,7 @@ def _page_before(page_keys: list[tuple[int, int]], pos: int) -> int:
 
 def _volume_pages(session, volume: int) -> list:
     """The volume's SourcePages constrained to its article-leaf range
-    (``volumes.ARTICLE_WS_RANGE``): front matter and back matter never enter the
+    (``Corpus.article_pages``): front matter and back matter never enter the
     gather, so step 1 is article/plate ONLY — not "gather every page and let the
     front matter fall off as the unclaimed lead before the first heading".  A
     volume with no recorded range (e.g. vol 29) admits every page."""
