@@ -223,9 +223,8 @@ def persist_articles(detected: list[DetectedArticle]) -> int:
     """Create Article and ArticleSegment records from detected boundaries.
 
     Pure insertion — no implicit wipe.  Callers that want a full
-    re-detect call ``wipe_articles(volume)`` first.  Both the CLI
-    `detect-boundaries` and `tools/pipeline/rebuild_volume.py` do
-    exactly that.
+    re-detect call ``wipe_articles(volume)`` first, as the CLI
+    `detect-boundaries` does.
     """
     session = SessionLocal()
     try:

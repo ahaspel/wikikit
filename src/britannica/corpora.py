@@ -124,6 +124,14 @@ class Corpus:
     #: ``xrefs.alias_table.build_section_alias_map``; a book lists it if it wants
     #: it.  Empty = no overlay beyond the article titles themselves.
     alias_sources: tuple[Callable[[], dict[str, str]], ...] = ()
+    #: CONTRIBUTORS — who wrote which article.  ``bind_contributors(session,
+    #: payloads)`` fills each payload's ``contributors`` IN MEMORY and writes the
+    #: roster (``contributors.json``); it returns False to tell the post-export
+    #: pass to write nothing (a dry run).  Coarse on purpose: EB1911 binds from
+    #: initials-only signatures and two indices of its own, the DNB names its
+    #: contributor in the template, and nothing about the procedure is shared.
+    #: None = no bylines; the export's empty lists stand.
+    bind_contributors: Callable[[object, dict], bool] | None = None
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"
@@ -225,12 +233,11 @@ class Corpus:
     # unread setting invites the next reader to believe it does something, and
     # the phase that finally wires it inherits a decision nobody tested.
     #
-    # Contributor binding is the clearest example and is NOT here yet.  EB1911
-    # puts the name INSIDE `{{EB1911 footer initials|Name|Initials}}`; the DNB
-    # puts it in the template's NAME, `{{DNB AWW}}`, and looks it up in a
-    # roster.  That is a different mechanism, not a different pattern — a regex
-    # swap would hand the DNB a reader hunting a field it does not have — so it
-    # arrives in Phase 3 with the roster lookup that reads it.
+    # Contributor binding shows why a hook is a whole PROCEDURE, not a pattern.
+    # EB1911 puts the name INSIDE `{{EB1911 footer initials|Name|Initials}}`;
+    # the DNB puts it in the template's NAME, `{{DNB AWW}}`, and looks it up in
+    # a roster.  A regex swap would hand the DNB a reader hunting a field it
+    # does not have, so `bind_contributors` hands the book the whole job.
     #
     # `page_head_re` is absent for the opposite reason: there is no difference to
     # record.  The running-head pattern is already the union

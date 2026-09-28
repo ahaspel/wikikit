@@ -33,13 +33,13 @@ import time
 sys.path.insert(0, "src")
 sys.path.insert(0, "tools/pipeline")
 
+from britannica.corpora import current_corpus
 from britannica.db.models import Article
 from britannica.db.session import SessionLocal
 from britannica.export.article_json import register_stable_id_dedup
 from britannica.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
 
 from annotate_math_markers import annotate_payloads
-from resolve_contributors_post import bind_contributors
 from resolve_xrefs_post import resolve_and_render
 
 
@@ -62,8 +62,12 @@ def main() -> None:
         changed, with_math = annotate_payloads(payloads)
         tick(f"math markers: {changed} re-hinted / {with_math} with math")
 
-        wrote = bind_contributors(session, payloads)
-        tick("contributors bound")
+        # WHO WROTE WHAT is the book's question (`Corpus.bind_contributors`):
+        # EB1911 answers from initials-only signatures and its own indices.  A
+        # book with no binder ships no bylines — the export's empty lists stand.
+        bind = current_corpus().bind_contributors
+        wrote = bind(session, payloads) if bind is not None else True
+        tick("contributors bound" if bind is not None else "no contributor binder")
         if not wrote:                      # STEP5_DRYRUN — write nothing
             print("  [post-export] dry run — no JSONs written")
             return

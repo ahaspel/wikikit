@@ -1033,9 +1033,7 @@ def export_articles_to_json(
     ``only_article_id`` is the single-article iteration seam: when
     set, only that one article's JSON is written.  ``tools/render_
     article.py`` uses this together with ``body_override`` to re-render
-    a single article in ~5s after a transform-code change, vs the ~2min
-    that ``rebuild_volume.py`` takes for a full per-volume rebuild.
-    The volume-wide ``index.json`` is also skipped in that mode since
+    a single article in ~5s after a transform-code change.  The volume-wide ``index.json`` is also skipped in that mode since
     the existing index already lists the article.
     """
     out_path = Path(out_dir)

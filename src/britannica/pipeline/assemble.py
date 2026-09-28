@@ -34,7 +34,7 @@ def assemble_corpus(session):
     total = len(all_articles)
     print(f"  [assemble] walking {total} articles…", flush=True)
     # ALL contributor binding moved OUT of the walk into one post-export phase
-    # (Phase 5.4, tools/pipeline/resolve_contributors_post.py) that runs after the
+    # (Phase 5.4, books/eb1911/contributors/resolve_contributors_post.py) that runs after the
     # kind index (5.3) and so can use each contributor's kind FOOTPRINT to
     # disambiguate vol-29 credits.  The walk keeps only what it uniquely owns —
     # the body and the article_type bit.  [[project_resolver_consolidation]]

@@ -115,8 +115,7 @@ def test_every_field_is_read_by_something():
     """No placeholders.
 
     A declared-but-unread setting invites the next reader to believe it does
-    something.  Contributor binding is deliberately NOT a field yet — it arrives
-    in Phase 3 with the roster lookup that reads it.
+    something.
     """
     import dataclasses
     fields = {f.name for f in dataclasses.fields(EB1911)}
@@ -142,8 +141,10 @@ def test_every_field_is_read_by_something():
     #   article_starts  super_detect.detect_boundaries — the boundaries hook
     #   is_plate, plate_title  detect_boundaries._split_out_plates — the inserts hook
     #   alias_sources  link_resolver._overlay_aliases — the aliases hook
+    #   bind_contributors  tools/pipeline/post_export — the contributors hook
     assert fields == {"key", "title", "scan_name", "article_starts",
                       "is_plate", "plate_title", "alias_sources",
+                      "bind_contributors",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",

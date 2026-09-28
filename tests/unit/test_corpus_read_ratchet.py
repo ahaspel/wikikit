@@ -89,9 +89,6 @@ EXPORTED_DIRECT = {
 RAW_DIRECT = {
     "src/britannica/source_pages.py":
         "IS the reader",
-    "tools/pipeline/rebuild_volume.py":
-        "names `vol_NN/` only to pass it to the IMPORT stage as `--indir`; the "
-        "import is the reader that loads those pages into the DB",
 }
 
 # A collection is (label, what names it, its one reader, the allow-ledger).
