@@ -56,8 +56,8 @@ OWNERS = {
     "src/britannica/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
     "src/britannica/books/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
     # readers (throwaway copies / node extraction, never the shipping stream)
-    "src/britannica/pipeline/stages/detect_boundaries.py":
-        "heading-comparison copies",
+    "src/britannica/books/eb1911/plates.py":
+        "EB1911 plate-title projection (strips «B»/«I» from a heading field)",
     "src/britannica/pipeline/stages/transform_articles/__init__.py":
         "title-node reader",
     # sanctioned decorators (own ONE marker param each)

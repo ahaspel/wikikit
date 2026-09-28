@@ -15,9 +15,6 @@
     "LIST_MARKERS",
     "RENDERED_MARKER_OPENS"
   ],
-  "src/britannica/pipeline/stages/detect_boundaries.py": [
-    "_SEC_MARKER"
-  ],
   "src/britannica/pipeline/stages/elements/_registry.py": [
     "BLOCK_LABELS",
     "_SUBSTITUTION_PASSES"

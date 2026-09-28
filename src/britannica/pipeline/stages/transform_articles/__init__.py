@@ -162,7 +162,7 @@ def walk_article(session, article) -> str:
     # The plain field IS the walked «TITLE» marker decoded (recursion =
     # recognition — ONE title source, so the field can't diverge from the rendered
     # heading, and the regnal period `clean_title` used to eat is kept).  EXCEPT
-    # plates: a plate's title is a `_split_out_plates`/`_compose_plate_title`
+    # plates: a plate's title is a `_split_out_plates`/`Corpus.plate_title`
     # product (AMERICA, PLATE II), NOT a `produce_title` shape — leave the
     # detection-set plate title alone.
     if article.article_type != "plate":

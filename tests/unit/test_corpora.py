@@ -101,6 +101,16 @@ def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
         detect_boundaries(1)
 
 
+def test_a_plate_hook_comes_whole():
+    """A book that can recognize a plate but not name it — or the reverse — is
+    refused when the profile is made, not when the first plate turns up."""
+    import dataclasses
+    with pytest.raises(ValueError, match="only one of is_plate / plate_title"):
+        dataclasses.replace(EB1911, plate_title=None)
+    with pytest.raises(ValueError, match="only one of is_plate / plate_title"):
+        dataclasses.replace(DNB, is_plate=lambda raw: False)
+
+
 def test_every_field_is_read_by_something():
     """No placeholders.
 
@@ -130,7 +140,9 @@ def test_every_field_is_read_by_something():
     #   derived_dir, images_dir  `derived()` / `images()` — every output and
     #               image path in the engine
     #   article_starts  super_detect.detect_boundaries — the boundaries hook
+    #   is_plate, plate_title  detect_boundaries._split_out_plates — the inserts hook
     assert fields == {"key", "title", "scan_name", "article_starts",
+                      "is_plate", "plate_title",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",

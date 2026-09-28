@@ -110,6 +110,13 @@ class Corpus:
     #: the DNB will answer from its explicit ``<section>`` runs.  None = the
     #: book has no detector yet, and detection refuses it loudly.
     article_starts: Callable[[str, list, list], list[int]] | None = None
+    #: PLATES — the inserts hook, a classifier and its producer.  ``is_plate``
+    #: reads one raw leaf and says whether it is a plate insert (a page that
+    #: stands apart from the running text as its own article); ``plate_title``
+    #: names it, given the leaf, its volume and page.  Both or neither: a book
+    #: that names no plate test has no plates, and every page is text.
+    is_plate: Callable[[str], bool] | None = None
+    plate_title: Callable[[str, int, int], str] | None = None
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"
@@ -187,6 +194,10 @@ class Corpus:
         unknown = set(self.data_files) - KNOWN_DATA
         if unknown:
             raise ValueError(f"{self.key} declares unknown data files: {sorted(unknown)}")
+        if (self.is_plate is None) != (self.plate_title is None):
+            raise ValueError(f"{self.key} names only one of is_plate / plate_title: "
+                             "a plate the book can recognize but not name, or the "
+                             "reverse, is half a hook")
 
     def has_data(self, name: str) -> bool:
         """Does this book have ``name``?  False means the feature is off."""
