@@ -97,7 +97,7 @@ def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
     plausible set of wrong boundaries, which is worse.
     """
     from britannica.pipeline.stages.super_detect import detect_boundaries
-    with pytest.raises(NotImplementedError, match="only 'typographic'"):
+    with pytest.raises(NotImplementedError, match="names no article detector"):
         detect_boundaries(1)
 
 
@@ -129,7 +129,8 @@ def test_every_field_is_read_by_something():
     #   subtitle, years, article_volumes  the EPUB title page and closing
     #   derived_dir, images_dir  `derived()` / `images()` — every output and
     #               image path in the engine
-    assert fields == {"key", "title", "scan_name", "boundary_style",
+    #   article_starts  super_detect.detect_boundaries — the boundaries hook
+    assert fields == {"key", "title", "scan_name", "article_starts",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",

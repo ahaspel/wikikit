@@ -38,7 +38,7 @@ TEMPLATE_OPEN, TEMPLATE_CLOSE = "{{", "}}"
 # article balanced, and blamed us for a stray `}}` that Wikisource leaks too.
 #
 # Three byte-identical copies of this pattern already existed
-# (`elements/_classifier`, `super_walker`, and `pipeline/stages/source_cleanup`'s
+# (`elements/_classifier`, the super walker, and `pipeline/stages/source_cleanup`'s
 # newline-preserving variant), and the triage tool was about to be the fourth
 # ([[project_duplicated_constant_campaign]]).
 COMMENT_RE = _re.compile(r"<!--.*?-->", _re.DOTALL)

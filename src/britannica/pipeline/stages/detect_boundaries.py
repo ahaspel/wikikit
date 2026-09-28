@@ -125,7 +125,7 @@ class DetectedArticle:
 
 
 # `_normalize_title` + `_VALID_TWO_LETTER` retired with `clean_title`: detection no
-# longer flattens a heading to classify it — `super_walker._heading_text` reads the
+# longer flattens a heading to classify it — `books/eb1911/boundaries._heading_text` reads the
 # headword for the is-title test, and `produce_title` produces the title itself.
 
 

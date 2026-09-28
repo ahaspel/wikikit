@@ -7,7 +7,7 @@ the headword↔body joint and recurses the span into the «TITLE» marker;
 two views — the rendered heading and the plain field — both descending from the
 single recursion, so they cannot diverge.  (Replaced the flat legacy
 ``clean_title``, now deleted; the detection classifier's own headword read lives
-in ``super_walker._heading_text``.)
+in ``books/eb1911/boundaries._heading_text``.)
 """
 from __future__ import annotations
 
@@ -192,7 +192,7 @@ def _letter_from_dropcap(opening: str) -> str | None:
 def _caps_dominant(bold: str) -> bool:
     """Is this bold span a HEADWORD rather than prose — uppercase-dominant?
 
-    The same signature `super_walker._first_word_caps` reads to decide whether a
+    The same signature `books/eb1911/boundaries._first_word_caps` reads to decide whether a
     bold run is a title at all, applied here to the run's continuation.
     """
     t = re.sub(r"«[^»]*»|\{\{[^{}]*\}\}", "", bold).strip(" ,.;:")

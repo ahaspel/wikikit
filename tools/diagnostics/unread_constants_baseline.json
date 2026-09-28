@@ -2,7 +2,7 @@
   "src/britannica/books/dnb.py": [
     "DNB"
   ],
-  "src/britannica/books/eb1911.py": [
+  "src/britannica/books/eb1911/__init__.py": [
     "EB1911"
   ],
   "src/britannica/export/markdown.py": [
@@ -28,9 +28,6 @@
   "src/britannica/pipeline/stages/elements/_tables.py": [
     "_CELL_ALIGN_ATTR_RE",
     "_CELL_TS_RE"
-  ],
-  "src/britannica/pipeline/stages/super_walker.py": [
-    "_SECTION_BEGIN"
   ],
   "src/britannica/xrefs/disambiguation.py": [
     "PLACE_KINDS"

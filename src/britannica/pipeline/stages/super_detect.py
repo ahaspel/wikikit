@@ -1,12 +1,13 @@
 """Super-walker article assembly — the honest replacement for the per-page
 ``detect_boundaries`` parser.
 
-``super_detect_boundaries(volume)`` turns ``super_walk``'s boundaries into the
+``detect_boundaries(volume)`` turns the book's article starts into the
 same ``DetectedArticle``/``SegmentInfo`` shape ``persist_articles`` consumes —
 but built from RAW segment slices (recognize-on-view, carry-raw):
 
-  * boundaries come from ``super_walk`` (which consumes nothing — it recognizes
-    article-opening headings on the raw volume stream);
+  * boundaries come from the book's hook, ``Corpus.article_starts`` (which
+    consumes nothing — EB1911's recognizes article-opening headings on the raw
+    volume stream, britannica/books/eb1911/boundaries.py);
   * the article's content is the raw slice between consecutive boundaries;
   * the title is NOT extracted here (MOVE 2): the title rides UNSTRIPPED in
     segment 0 and is produced in exactly one place downstream —
@@ -37,18 +38,16 @@ from britannica.pipeline.stages.detect_boundaries import (
 
 
 def detect_boundaries(volume: int) -> list[DetectedArticle]:
-    # WHICH BOOK.  EB1911 separates articles by typography — a bold headword at
-    # the head of a paragraph — and everything below reads that.  The DNB's
-    # transcribers marked every article with an explicit `<section>` run, so it
-    # needs a different detector rather than a tuned version of this one.
-    # Refusing loudly beats running the typographic reader over a book that does
-    # not use typography and getting a plausible-looking wrong answer.
-    style = current_corpus().boundary_style
-    if style != "typographic":
+    # WHICH BOOK.  Where articles START is the book's question: EB1911 by
+    # typography (a bold headword at the head of a block), the DNB by its
+    # explicit `<section>` runs.  A book that names no detector is refused
+    # loudly — running another book's reader over it would not crash, it would
+    # return plausible wrong boundaries.
+    book = current_corpus()
+    if book.article_starts is None:
         raise NotImplementedError(
-            f"boundary detection for {current_corpus().key!r} is {style!r}; "
-            "only 'typographic' is implemented (see docs/dnb_project.md, Phase 2)"
-        )
+            f"{book.key} names no article detector (Corpus.article_starts); "
+            "see docs/dnb_project.md, Phase 2")
     session = SessionLocal()
     try:
         pages = SW._volume_pages(session, volume)
@@ -58,12 +57,16 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
     art_pages = [p for p in art_pages if (p.wikitext or "").strip()]
     pid = {p.page_number: p.id for p in art_pages}
 
-    # The CLEAN stream and its KEYS — the SAME single stream super_walk slices
-    # (no second independent assembly).  This IS the article content: boundaries
-    # slice it and nothing else touches it.
+    # The CLEAN stream and its KEYS, built ONCE: the book's detector reads this
+    # stream and the offsets it returns index into it (no second independent
+    # assembly).  This IS the article content: boundaries slice it and nothing
+    # else touches it.
     raw_stream, page_keys, section_keys = SW.volume_stream(volume)
 
-    arts = SW.super_walk(volume)
+    # One offset per article start, from the book; ordered and de-duplicated
+    # here, because a boundary SET has no duplicates whatever the detector (a
+    # heading can fall under two overlapping <section begin> tags).
+    starts = sorted(set(book.article_starts(raw_stream, page_keys, section_keys)))
 
     def section_at(off: int) -> str:
         """The section `off` falls in — the last section key at or before it.
@@ -73,15 +76,15 @@ def detect_boundaries(volume: int) -> list[DetectedArticle]:
         i = bisect.bisect_right(section_keys, (off, "￿")) - 1
         return section_keys[i][1] if i >= 0 else ""
 
-    # super_walk already stopped at each article's boundary: ``a.start`` IS the
-    # byte offset (in this same ``volume_stream``) and ``a.page_start`` IS the leaf
-    # it sits on (the «PAGE» marker before ``a.start``).  Use them.  We do NOT
+    # The detector already stopped at each article's boundary: each start IS the
+    # byte offset (in this same ``volume_stream``), and the page it sits on is the
+    # last page key at or before it.  Use them.  We do NOT
     # re-find the article by searching the stream for its own headword — the
     # headword isn't unique (collisions — the per-page cursor was that admission),
     # it can be rewritten before the search, and on a miss the old code FABRICATED
     # a boundary from the previous article's end.  A boundary known at the walk is
     # carried, never re-derived.
-    bounds = [(a.start, section_at(a.start), a.page_start) for a in arts]
+    bounds = [(s, section_at(s), SW._page_before(page_keys, s)) for s in starts]
 
     out: list[DetectedArticle] = list(plates)
     for i, (bpos, sec, pstart) in enumerate(bounds):

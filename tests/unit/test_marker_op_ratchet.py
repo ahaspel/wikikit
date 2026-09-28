@@ -54,7 +54,7 @@ OWNERS = {
     "src/britannica/pipeline/stages/elements/_title.py": "title producer",
     "src/britannica/pipeline/stages/elements/_walker.py": "the walker",
     "src/britannica/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
-    "src/britannica/pipeline/stages/super_walker.py": "the super walker",
+    "src/britannica/books/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
     # readers (throwaway copies / node extraction, never the shipping stream)
     "src/britannica/pipeline/stages/detect_boundaries.py":
         "heading-comparison copies",

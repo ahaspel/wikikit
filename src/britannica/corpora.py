@@ -95,9 +95,6 @@ class Corpus:
     key: str
     title: str
     scan_name: Callable[[int], str]
-    #: How articles are separated: EB1911 by typography, the DNB by explicit
-    #: ``<section>`` runs its transcribers marked.
-    boundary_style: str
     #: volume -> how many scanned pages it has.  Read by the fetch orchestrator.
     pages: dict[int, int]
     #: where this book's fetched pages live on disk.  EB1911's is a legacy
@@ -105,6 +102,14 @@ class Corpus:
     #: because 29,688 files already sit there and renaming them would buy
     #: tidiness at the cost of a needless mass move.
     raw_dir: str
+    #: WHERE ARTICLES START — the book's boundaries hook.  Given one volume's
+    #: stream and its keys (``[(offset, page)]``, ``[(offset, section)]``), the
+    #: offsets at which an article begins, in any order.  The engine builds the
+    #: stream, orders and de-duplicates the offsets, and does everything after.
+    #: EB1911 answers by typography (a bold headword at the head of a block);
+    #: the DNB will answer from its explicit ``<section>`` runs.  None = the
+    #: book has no detector yet, and detection refuses it loudly.
+    article_starts: Callable[[str, list, list], list[int]] | None = None
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"
