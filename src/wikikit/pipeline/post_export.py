@@ -30,8 +30,6 @@ past, because a silently skipped article ships stale ([[feedback_honesty_surface
 import sys
 import time
 
-sys.path.insert(0, "src")
-sys.path.insert(0, "tools/pipeline")
 
 from wikikit.corpora import current_corpus
 from wikikit.db.models import Article
@@ -39,8 +37,8 @@ from wikikit.db.session import SessionLocal
 from wikikit.export.article_json import register_stable_id_dedup
 from wikikit.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
 
-from annotate_math_markers import annotate_payloads
-from resolve_xrefs_post import resolve_and_render
+from wikikit.pipeline.annotate_math_markers import annotate_payloads
+from wikikit.pipeline.resolve_xrefs_post import resolve_and_render
 
 
 def main() -> None:

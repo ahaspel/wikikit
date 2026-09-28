@@ -20,7 +20,7 @@ from wikikit.xrefs.normalizer import NormalizedIndex
 ROOT = Path(__file__).resolve().parents[2]
 CONSUMERS = [
     ROOT / "src" / "wikikit" / "export" / "article_json.py",
-    ROOT / "tools" / "pipeline" / "resolve_xrefs_post.py",
+    ROOT / "src" / "wikikit" / "pipeline" / "resolve_xrefs_post.py",
 ]
 
 # `{...}.setdefault(a.title.upper(), …)` and friends — a title map being built

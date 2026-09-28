@@ -21,7 +21,7 @@ Workflow when this gate fires:
   4. Re-run rebuild.
 
 Usage:
-    uv run python tools/diagnostics/check_dedup_candidates.py
+    uv run python -m wikikit.diagnostics.check_dedup_candidates
         [--report PATH] [--aliases PATH]
 """
 from __future__ import annotations

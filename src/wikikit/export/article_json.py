@@ -980,7 +980,7 @@ def printed_page_keys(session, article) -> list[dict]:
     printing "p. 980" twice with plate content in between.
 
     Shared by the direct export and the DEFERRED render in
-    ``tools/pipeline/resolve_xrefs_post.py``, which renders from the JSON on disk
+    ``src/wikikit/pipeline/resolve_xrefs_post.py``, which renders from the JSON on disk
     and so must rebuild these from the database rather than read them back.
     """
     from wikikit.render.page_markers import signature

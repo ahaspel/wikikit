@@ -1,6 +1,6 @@
 """Is every article's shipped `word_count` the count a reader sees?
 
-    uv run python tools/diagnostics/check_word_counts.py
+    uv run python -m wikikit.diagnostics.check_word_counts
 
 The field has ONE owner, `wikikit.markers.countable_words`.  The export
 computed it correctly from 2026-09-21, and it still shipped wrong: a later
@@ -18,7 +18,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from wikikit.export.corpus import load_corpus    # noqa: E402
 from wikikit.markers import countable_words      # noqa: E402
 

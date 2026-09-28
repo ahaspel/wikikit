@@ -52,7 +52,7 @@ def _process_math(raw: str, inner: str) -> str:
     display="block">`` tag or a ``\\begin{…}`` environment) and an offline-
     measured width hint (``fs=N`` / ``popout``).  The viewer renders display
     mode and scaling from these — no runtime guessing.  See
-    ``wikikit.math_widths`` and ``tools/diagnostics/measure_math_widths.py``.
+    ``wikikit.math_widths`` and ``src/wikikit/diagnostics/measure_math_widths.py``.
     """
     from wikikit.math_widths import scale_hint
     from wikikit.pipeline.stages.elements._spacer import decode_char_escapes

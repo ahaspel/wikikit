@@ -1,12 +1,12 @@
 """Does every article's TEI validate against the OFFICIAL TEI P5 schema?
 
-    uv run --with lxml python tools/diagnostics/tei_validate.py            # whole corpus
-    uv run --with lxml python tools/diagnostics/tei_validate.py --sample 500
-    uv run --with lxml python tools/diagnostics/tei_validate.py --article AFRICA
+    uv run --with lxml python -m wikikit.diagnostics.tei_validate            # whole corpus
+    uv run --with lxml python -m wikikit.diagnostics.tei_validate --sample 500
+    uv run --with lxml python -m wikikit.diagnostics.tei_validate --article AFRICA
 
 THE SCHEMA IS EXTERNAL ON PURPOSE.  A RELAX NG hand-written from our own output
 would only restate what `export/tei.py` already does — a tautology, and the
-`current output is not an oracle` trap.  `tools/schema/tei_all.rng` is the TEI
+`current output is not an oracle` trap.  `tei_all.rng` (beside this module) is the TEI
 Consortium's own schema, vendored (1.0 MB) so the gate never depends on
 tei-c.org being reachable during a build.
 
@@ -31,10 +31,12 @@ import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+from wikikit.corpora import book_root
 
-SCHEMA = ROOT / "tools" / "schema" / "tei_all.rng"
+ROOT = book_root()                     # the BOOK's repository: its articles
+
+# The vendored TEI schema is the ENGINE's file, shipped beside this module.
+SCHEMA = Path(__file__).resolve().parent / "tei_all.rng"
 ARTICLES = ROOT / current_corpus().derived("articles")
 
 
@@ -50,7 +52,7 @@ def main() -> int:
         from lxml import etree
     except ImportError:
         print("  lxml is required: uv run --with lxml python "
-              "tools/diagnostics/tei_validate.py", file=sys.stderr)
+              "-m wikikit.diagnostics.tei_validate", file=sys.stderr)
         return 2
     if not SCHEMA.is_file():
         print(f"  missing schema: {SCHEMA}", file=sys.stderr)

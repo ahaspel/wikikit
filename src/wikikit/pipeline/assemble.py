@@ -8,7 +8,7 @@ Walks every article into an in-memory ``{id: body}`` corpus via
 chain: the body and the title are produced once, held in memory, and read
 straight into the JSON — the DB is never written.  Xref resolution +
 «LN»-baking + render are DEFERRED wholesale to the post-export resolve phase
-(``tools/pipeline/resolve_xrefs_post.py``), which runs after the classified
+(``src/wikikit/pipeline/resolve_xrefs_post.py``), which runs after the classified
 TOC + kind index exist and routes through the shared ``LinkResolver``.
 """
 from __future__ import annotations
@@ -95,7 +95,7 @@ def assemble_and_export(out_dir, only_volume: int | None = None) -> int:
                 volume, out_dir,
                 body_override=corpus,
                 # Phase F: defer xref resolution + baking + render to the
-                # post-export resolve phase (tools/pipeline/resolve_xrefs_post.py,
+                # post-export resolve phase (src/wikikit/pipeline/resolve_xrefs_post.py,
                 # rebuild phase 5.4), which resolves through the shared
                 # LinkResolver and is the sole writer of xref_resolution.jsonl.
                 # [[project_resolver_consolidation]]

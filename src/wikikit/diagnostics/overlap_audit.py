@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Overlapping-span audit — how much of the corpus is `<A><B></A></B>`?
 
-    uv run python tools/diagnostics/overlap_audit.py [--examples N]
+    uv run python -m wikikit.diagnostics.overlap_audit [--examples N]
 
 A tree can represent NESTING (`<A><B></B></A>`) and nothing else.  When two
 source spans CROSS — neither contains the other — no balanced matcher can bound
@@ -35,8 +35,6 @@ from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "tools" / "diagnostics"))
 sys.stdout.reconfigure(encoding="utf-8")
 
 # Real HTML/wiki tag names — the same real-tag-vs-garbage discrimination the
@@ -151,7 +149,7 @@ def main():
                          "(required in a rebuild — the pickle is otherwise stale)")
     args = ap.parse_args()
 
-    from _corpus_cache import iter_raw_articles
+    from wikikit.diagnostics._corpus_cache import iter_raw_articles
     rows = list(iter_raw_articles(refresh=args.refresh))
     print(f"scanning {len(rows)} articles …", flush=True)
 
@@ -186,7 +184,6 @@ def main():
     # the examples were un-followable the moment the log scrolled.  Titles are
     # as durable as the source; resolve just the printed few.
     worst = sorted(dirty, reverse=True)[:args.examples]
-    sys.path.insert(0, str(ROOT / "src"))
     from wikikit.db.session import SessionLocal
     from wikikit.db.models import Article
     s = SessionLocal()

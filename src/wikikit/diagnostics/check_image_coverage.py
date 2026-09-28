@@ -32,7 +32,7 @@ legitimate external `<img>`, so this gate treats one as a defect rather than
 reporting it forever ([[feedback_sweepers_hide_bugs]]).
 
 Usage:
-    uv run python tools/diagnostics/check_image_coverage.py
+    uv run python -m wikikit.diagnostics.check_image_coverage
         [--images DIR] [--exceptions PATH]
 """
 from __future__ import annotations
@@ -46,7 +46,6 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
 from wikikit.export.corpus import load_corpus     # noqa: E402

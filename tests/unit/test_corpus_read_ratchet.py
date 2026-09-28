@@ -49,7 +49,7 @@ EXPORTED_DIRECT = {
         "hashes 37k payloads in a ProcessPoolExecutor over PATHS; carries each "
         "failure back with its reason and ABORTS rather than emit a partial "
         "fingerprint",
-    "tools/diagnostics/mangled_markers.py":
+    "src/wikikit/diagnostics/mangled_markers.py":
         "parallel scan; an unreadable payload is returned as an 'unreadable' "
         "FINDING, not skipped",
     "tools/diagnostics/output_leaks.py":

@@ -35,7 +35,7 @@
   "tools/diagnostics/capture_transform_snapshots.py": [
     "EXPORT_DIR"
   ],
-  "tools/pipeline/resolve_xrefs_post.py": [
+  "src/wikikit/pipeline/resolve_xrefs_post.py": [
     "_SKIP"
   ],
   "tools/vol29/build_toc.py": [

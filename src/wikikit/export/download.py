@@ -302,7 +302,7 @@ def build_tei_bundle(articles_dir: str | None = None,
     `teiCorpus.xml` binds them with XInclude — the standard way to present a TEI
     corpus without a single multi-gigabyte file.
 
-    Not validated here: `tools/diagnostics/tei_validate.py` is the gate (rebuild
+    Not validated here: `src/wikikit/diagnostics/tei_validate.py` is the gate (rebuild
     phase 7.7) and it validates every article against the TEI Consortium's own
     schema.  Writing files is not the place to re-answer that question.
     """

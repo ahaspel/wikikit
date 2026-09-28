@@ -22,7 +22,6 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "src")
 
 # Force a fresh cache load — measure_math_widths.py may have just
 # rewritten the file from under us.
@@ -54,7 +53,7 @@ def annotate_payloads(payloads: dict) -> tuple[int, int]:
     """Re-hint every math marker IN MEMORY → ``(changed, with_math)``.
 
     The phase as a pure transform over the loaded corpus, so the merged
-    post-export pass (``tools/pipeline/post_export.py``) can apply it without a
+    post-export pass (``src/wikikit/pipeline/post_export.py``) can apply it without a
     corpus round-trip of its own.  ``main()`` below is the standalone wrapper."""
     changed = with_math = 0
     for data in payloads.values():

@@ -17,7 +17,6 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "src")
 from wikikit.db.models import Article
 from wikikit.db.session import SessionLocal
 from wikikit.export.article_json import (

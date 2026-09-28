@@ -69,7 +69,7 @@ def unaccounted_guillemets(text: str, context: int = 45
     A guillemet is our marker DELIMITER, so one standing outside a well-formed
     token is either a marker we MANGLED or a guillemet the source itself had.
     This function only finds them; only the raw source can say which — see
-    ``tools/diagnostics/mangled_markers.py``, which asks that question.
+    ``src/wikikit/diagnostics/mangled_markers.py``, which asks that question.
 
     The oracle in :mod:`wikikit.render.leaks` cannot: its ``marker`` check
     matches well-formed tokens, and a mangled one is by definition not one.

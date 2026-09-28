@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mangled-marker gate — our output may not invent a guillemet the source lacks.
 
-    uv run python tools/diagnostics/mangled_markers.py [--limit N] [--detail]
+    uv run python -m wikikit.diagnostics.mangled_markers [--limit N] [--detail]
 
 A `«` is the marker delimiter, so one standing outside a well-formed token is
 either a marker WE mangled or a guillemet the SOURCE already had.  Counting them
@@ -43,7 +43,6 @@ from concurrent.futures import ProcessPoolExecutor
 from html import unescape
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 from wikikit.export.corpus import NON_ARTICLE               # noqa: E402
 from wikikit.markers import unaccounted_guillemets          # noqa: E402

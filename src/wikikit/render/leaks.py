@@ -73,7 +73,7 @@ def mask_math(text: str, fmt: str) -> str:
     """``text`` with its math carrier removed, per that format's wrapper.
 
     Public so a second scanner cannot grow a second idea of where math lives:
-    ``tools/diagnostics/mangled_markers.py`` compares a guillemet's neighbours
+    ``src/wikikit/diagnostics/mangled_markers.py`` compares a guillemet's neighbours
     across formats, and rendered math rewrites those neighbours wholesale.
     """
     mask = _MATH_MASK[fmt]

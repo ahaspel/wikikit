@@ -1,7 +1,7 @@
 """A guillemet outside a marker token, and the signature that identifies it.
 
 This is the lexicon half of the mangled-marker gate.  It cannot say whether a
-guillemet is ours or the source's — only `tools/diagnostics/mangled_markers.py`
+guillemet is ours or the source's — only `src/wikikit/diagnostics/mangled_markers.py`
 can, by asking the source — so what it owes is a signature STABLE across the
 pipeline, or the comparison drowns in false positives.
 """

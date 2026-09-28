@@ -30,7 +30,7 @@ from wikikit import markers, math_widths  # noqa: E402
 
 
 def test_math_writer_and_reader_share_one_key_and_path():
-    import measure_math_widths as writer
+    from wikikit.diagnostics import measure_math_widths as writer
     assert writer.cache_key is math_widths.cache_key
     assert writer.CACHE_PATH is math_widths.CACHE_PATH
 

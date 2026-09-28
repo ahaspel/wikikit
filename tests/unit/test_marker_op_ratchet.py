@@ -60,8 +60,12 @@ OWNERS = {
         "EB1911 plate-title projection (strips «B»/«I» from a heading field)",
     "src/wikikit/pipeline/stages/transform_articles/__init__.py":
         "title-node reader",
+    # measurements the rebuild runs (in the package since wikikit 7b-1; they
+    # read markers, and nothing they compute ships as text)
+    "src/wikikit/diagnostics/measure_math_widths.py": "«MATH» reader (width cache)",
+    "src/wikikit/diagnostics/quality_report.py": "«MATH» strip on a metrics copy",
     # sanctioned decorators (own ONE marker param each)
-    "tools/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
+    "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
     # annotate_table_markers.py was here: the «TABLE[cols|wide]» grammar moved
     # into the lexicon (`markers.iter_table_spans` / `set_table_wide`) once the
     # render, the annotator, the width-cache key and the measurer turned out to

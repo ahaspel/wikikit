@@ -13,7 +13,7 @@ a single bulk query and pickle it.  Subsequent runs load the pickle (seconds)
 and optionally pre-filter to articles whose raw contains a token of interest —
 e.g. a Ts audit only needs the few hundred Ts-bearing articles, not all 36k.
 
-    from _corpus_cache import iter_raw_articles
+    from wikikit.diagnostics._corpus_cache import iter_raw_articles
     for aid, vol, pg0, raw in iter_raw_articles(contains="{{Ts"):
         ...
 
@@ -25,7 +25,9 @@ import pickle
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from wikikit.corpora import book_root
+
+ROOT = book_root()          # the BOOK's repository: the cache is a scratch file there
 CACHE = ROOT / "tools" / "_scratch" / "corpus_raw.pkl"
 
 
@@ -42,7 +44,6 @@ def _build() -> list[tuple[int, int, int, str]]:
     destroyed the information needed to invert it.  Nothing is cut now
     ([[project_page_position_out_of_band]]).
     """
-    sys.path.insert(0, str(ROOT / "src"))
     from wikikit.db.session import SessionLocal
     from wikikit.db.models import Article
     s = SessionLocal()

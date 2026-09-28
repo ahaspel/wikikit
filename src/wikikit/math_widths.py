@@ -1,7 +1,7 @@
 """Lookup table for measured math widths.
 
 The companion build-time tool
-``tools/diagnostics/measure_math_widths.py`` renders every unique
+``src/wikikit/diagnostics/measure_math_widths.py`` renders every unique
 display-mode `«MATH:` marker in the corpus through KaTeX in a headless
 browser and records the resulting pixel width plus the smallest
 font-size that fits the target body-text column.  The output JSON is

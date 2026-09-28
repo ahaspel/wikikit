@@ -23,7 +23,6 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from wikikit.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
 from wikikit.outputs import outputs_for  # noqa: E402
 from wikikit.markers import marker_names  # noqa: E402
