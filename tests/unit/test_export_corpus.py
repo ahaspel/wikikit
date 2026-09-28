@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from britannica.export.corpus import (
+from wikikit.export.corpus import (
     CorpusLoadError, load_corpus, write_corpus, write_payload)
 
 

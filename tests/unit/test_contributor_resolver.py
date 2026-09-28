@@ -1,4 +1,4 @@
-from britannica.contributors.resolver import ContributorResolver
+from wikikit.contributors.resolver import ContributorResolver
 
 
 NAMES = [

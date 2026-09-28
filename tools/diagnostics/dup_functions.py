@@ -28,7 +28,7 @@ The floor (`--min`, default 3 statements) keeps one-line accessors and
 `__init__` shims out of the report — they are structurally identical by
 nature and consolidating them buys nothing.
 
-Scope matches dup_constants: `src/britannica` + `tools`, skipping
+Scope matches dup_constants: `src` + `tools`, skipping
 `tools/_scratch` (throwaway probes) and `__pycache__`.  Test files are
 excluded: two tests SHOULD be able to share a shape.
 """
@@ -42,7 +42,7 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCOPE = ("src/britannica", "tools")
+SCOPE = ("src", "tools")
 SKIP_PARTS = ("__pycache__", "_scratch", "tests")
 
 

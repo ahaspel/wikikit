@@ -29,7 +29,7 @@ import re
 
 import pytest
 
-from britannica.pipeline.stages import preprocess as P
+from wikikit.pipeline.stages import preprocess as P
 
 
 # ── Layer 1: the pre-walker chain, CLASSIFIED (not snapshotted) ───────────────

@@ -5,7 +5,7 @@ Runs both DB-level and file-level quality checks, saves results to
 data/derived/quality_reports/, and diffs against the previous run.
 
 The leak signal is ONE honest oracle, `find_leaks`, run over EVERY output the
-marker stream has (`britannica.outputs`): the render (`render_leak_*`), the
+marker stream has (`wikikit.outputs`): the render (`render_leak_*`), the
 Markdown (`markdown_leak_*`), the search text and the titles.  The old body-level
 `stray_*` heuristics were
 retired — they read the pre-render marker stream, so they conflated legit content
@@ -14,7 +14,7 @@ tag) AND missed what the render actually emits.  Alongside the oracle, a few
 structural-integrity checks (marker imbalance, dropped bodies) catch producer
 bugs that don't surface as visible output residue.
 """
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import json
 import re
 import sys
@@ -24,10 +24,10 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
-from britannica.outputs import outputs_for  # noqa: E402
-from britannica.markers import marker_names  # noqa: E402
-from britannica.render.leaks import find_leaks  # noqa: E402
+from wikikit.markers import RENDERED_GUILLEMET_MARKER_NAMES  # noqa: E402
+from wikikit.outputs import outputs_for  # noqa: E402
+from wikikit.markers import marker_names  # noqa: E402
+from wikikit.render.leaks import find_leaks  # noqa: E402
 
 # Consumer → issue-key prefix.  `rendered_html` keeps the historical `render_leak_*`
 # keys: they are compared build-over-build, and renaming them would break that
@@ -44,10 +44,10 @@ REPORT_DIR = current_corpus().derived("quality_reports")
 
 def run_db_checks() -> dict:
     """Database-level quality checks."""
-    from britannica.db.models import (
+    from wikikit.db.models import (
         Article, ArticleSegment, SourcePage,
     )
-    from britannica.db.session import SessionLocal
+    from wikikit.db.session import SessionLocal
 
     session = SessionLocal()
     try:
@@ -61,7 +61,7 @@ def run_db_checks() -> dict:
         # Body + xrefs now live in the exported JSON, not the DB.  Read through
         # the corpus loader: it owns NON_ARTICLE and raises on an unreadable
         # file, so this GATE cannot report on a corpus it only partly read.
-        from britannica.export.corpus import load_corpus
+        from wikikit.export.corpus import load_corpus
         _recs = list(load_corpus()[0].values())
         bodies = {r["id"]: (r.get("body") or "") for r in _recs}
         # Xref totals come from data/derived/xref_resolution.jsonl — the
@@ -198,7 +198,7 @@ def run_file_checks() -> dict:
 
     Two families:
       * ``*_leak_*`` — the HONEST leak oracle, `find_leaks` over each converter's
-        actual output (`britannica.outputs`): `render_leak_*`, `markdown_leak_*`,
+        actual output (`wikikit.outputs`): `render_leak_*`, `markdown_leak_*`,
         `search_text_leak_*`, `title_leak_*`.  This is the leak number; it replaces
         the retired body-level `stray_*` heuristics (see the module docstring).
       * structural integrity — an unbalanced `«FN»`/`«TABLE»` marker, a dropped
@@ -206,7 +206,7 @@ def run_file_checks() -> dict:
         a marker name the registry doesn't list.  These are producer bugs that need
         NOT surface as visible output residue, so the leak oracle can't see them.
     """
-    from britannica.export.corpus import load_corpus
+    from wikikit.export.corpus import load_corpus
     _loaded = sorted(load_corpus()[0].items())
     files = [str(p) for p, _ in _loaded]
 
@@ -244,7 +244,7 @@ def run_file_checks() -> dict:
             issues["pipe_leak"] += 1
 
         # ── The leak signal: the HONEST oracle over EVERY consumer's ACTUAL output. ──
-        # One stream, several converters (britannica.outputs), all scanned the same
+        # One stream, several converters (wikikit.outputs), all scanned the same
         # way — scanning `rendered_html` alone is the handled-marker blindness one
         # level up, and it is what hid `markdown.py`'s leaks for five weeks.
         # Counted per ARTICLE, not per output entry: an article carries one body but

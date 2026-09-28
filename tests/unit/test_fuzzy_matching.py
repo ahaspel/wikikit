@@ -1,4 +1,4 @@
-from britannica.xrefs.scoring import find_fuzzy_match
+from wikikit.xrefs.scoring import find_fuzzy_match
 
 
 def _make_titles(*titles: str) -> dict[str, int]:

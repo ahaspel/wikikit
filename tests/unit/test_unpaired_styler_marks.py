@@ -17,7 +17,7 @@ Corpus (2026-07): 16 articles have a true crossing, 441 dangling halves exist;
 """
 from __future__ import annotations
 
-from britannica.pipeline.stages.elements import process_elements, ElementContext
+from wikikit.pipeline.stages.elements import process_elements, ElementContext
 
 
 def _render(text: str) -> str:
@@ -89,7 +89,7 @@ def test_body_fragment_cannot_close_its_own_container():
     render balances the fragment at its own boundary instead (drop a close with
     no open, close an open with no close), which is exactly what HTML5 fragment
     parsing does."""
-    from britannica.render.article import _contain
+    from wikikit.render.article import _contain
     assert _contain("a</div> b") == "a b"
     assert _contain("a</div> b</span> c") == "a b c"
     assert _contain('a<div style="x">b') == 'a<div style="x">b</div>'
@@ -120,7 +120,7 @@ def test_noinclude_halves_are_not_transcluded():
     span across pages and the whole-volume balanced matcher pairs it, while a
     kept 2-column page-layout opener wrapped whole pages of mainspace prose in
     a bogus table and silently dropped them (LIBRARIES ws 573/584)."""
-    from britannica.pipeline.stages.source_cleanup import strip_noinclude_blocks
+    from wikikit.pipeline.stages.source_cleanup import strip_noinclude_blocks
     assert strip_noinclude_blocks(
         "body<noinclude>\n{{EB1911 fine print/e}}</noinclude>") == "body"
     assert strip_noinclude_blocks(

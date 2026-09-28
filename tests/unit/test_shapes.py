@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from britannica.pipeline.stages.elements._shapes import (
+from wikikit.pipeline.stages.elements._shapes import (
     LEAF_SHAPES,
     SHAPE_BRACE_PIPE,
     SHAPE_DOUBLE_BRACE,

@@ -8,8 +8,8 @@ EB1911 set in type.
 """
 import pytest
 
-from britannica.export.article_json import swapped_link
-from britannica.xrefs.normalizer import NormalizedIndex
+from wikikit.export.article_json import swapped_link
+from wikikit.xrefs.normalizer import NormalizedIndex
 
 # Filed titles come from EB1911 itself, so a title IS a printed spelling.
 # A NormalizedIndex, not a dict: the lookup key is the normalized form on both

@@ -12,7 +12,7 @@ from CHANT ROYAL and the figure keys from TOOL.
 """
 from __future__ import annotations
 
-from britannica.markers import countable_words, markers_to_text
+from wikikit.markers import countable_words, markers_to_text
 
 
 def test_markers_do_not_count_as_words():

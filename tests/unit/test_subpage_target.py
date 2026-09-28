@@ -8,8 +8,8 @@ which no longer matches the «LN» opener grammar — the marker collapsed to it
 """
 import pytest
 
-from britannica.markers import MARKER_TOKEN_RE
-from britannica.pipeline.stages.elements._link import subpage_target
+from wikikit.markers import MARKER_TOKEN_RE
+from wikikit.pipeline.stages.elements._link import subpage_target
 
 
 @pytest.mark.parametrize("path,want", [

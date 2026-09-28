@@ -5,7 +5,7 @@ These pairs are the whole reason the encoding is not a plain slugify: in each
 one the rolls distinguish two real people using nothing but the separator
 between initials, and a slugifier that folds separators merges them.
 """
-from britannica.contributors.names import contributor_slug, normalize_initials_token
+from wikikit.contributors.names import contributor_slug, normalize_initials_token
 
 # (signature A, signature B, who they are) — DIFFERENT people whose signatures
 # differ only in how the initials are separated.

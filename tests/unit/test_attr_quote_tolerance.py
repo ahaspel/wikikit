@@ -8,9 +8,9 @@ tag's `>`, so an unterminated quote ends at the tag close.  Two readers own it:
 `_table_fold._KV_RE` (every cell/row/table/styled-wrapper attr slot) and
 `_walker._SPAN_TITLE_OPEN_RE` (title-span recognition + peel).
 """
-from britannica.pipeline.stages.elements import process_elements
-from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._table_fold import fold_cell_attrs
+from wikikit.pipeline.stages.elements import process_elements
+from wikikit.pipeline.stages.elements._context import ElementContext
+from wikikit.pipeline.stages.elements._table_fold import fold_cell_attrs
 
 
 def ctx():

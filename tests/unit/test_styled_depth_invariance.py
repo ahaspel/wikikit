@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from britannica.pipeline.stages.elements import process_elements, ElementContext
+from wikikit.pipeline.stages.elements import process_elements, ElementContext
 
 
 def _render(text: str) -> str:

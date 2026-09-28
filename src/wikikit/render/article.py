@@ -1,0 +1,653 @@
+"""Article marker-stream → HTML: the Python port of the viewer's renderArticle.
+
+Builds the SAME open-only template the viewer builds (mechanical marker decode); a browser
+(or normalize_html) does the tag fixup.  Verified by diffing normalize_html(this) against the
+jsdom golden (tests/snapshots/render/<stem>.html), per project_render_to_python.
+
+Scope: the shell (card / metadata / contributors / xref / TITLE h1) only.  The BODY is decoded
+by the ONE mechanical decoder — ``decode_inline(..., body_blocks=True)`` (inline.py) — which
+substitutes every marker in place: prose breaks (open-only «P»→<p>, browser closes at the next
+block), «SH» shoulder headings, «EQN» display-math grids, «VERSE»/«OUTLINE» blocks, the cols≥10
+wide-table wrap, and every inline styler.  There is no render_paragraph, no block re-scan, and
+no span-match regex.
+
+Paragraph structure is CARRIED — prose breaks ride as «P», each numbered equation is a
+self-delimiting «EQN» block — never re-inferred at render: no `\\n\\n` split, no merge pass,
+no EQNGROUP wrapper.
+"""
+import html as _html
+import re
+import unicodedata
+
+from wikikit.render.inline import (
+    decode_inline,
+    escape_html,
+    format_footnote_text,
+    _article_url,
+)
+from wikikit.markers import markers_to_text
+# ── marker constants ──
+TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
+
+_MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
+# A genuine single-«MATH» EQN row: the content group must NOT cross an internal «/MATH», so a
+# multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its close
+# backtracks to the LAST «/MATH», lumping every equation into one display span and leaking the
+# interior «/MATH»«MATH: markers) and each equation decodes inline instead.  The «EQN» grid owner
+# (inline._render_eqn) imports this to force a lone-«MATH» row into display mode.
+_MATH_ONLY_RE = re.compile(
+    r"^«MATH(?:\[([^\]]*)\])?:((?:(?!«/MATH»)[\s\S])*?)«/MATH»\s*[.,;:]?\s*$", re.S)
+_SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
+_SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
+_ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
+_SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
+
+_ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"]
+
+
+# Latin ligatures / letters NFKD leaves whole — expand to their base sequence for the
+# primary collation level (Æ≈AE, Œ≈OE, …), matching localeCompare.
+_LIGATURES = {"æ": "ae", "œ": "oe", "ø": "o", "ß": "ss", "þ": "th", "ð": "d", "đ": "d", "ł": "l"}
+
+
+def _xref_sort_key(s):
+    """Approximate the viewer's ``localeCompare`` xref ordering (UCA): symbols < digits <
+    letters, case- and accent-insensitive at the primary level, with the original string as a
+    secondary tiebreak (accented forms after their base).  Matches localeCompare across the
+    corpus; full UCA (pyuca) would be exact for the rarest tailorings.
+    """
+    s = s or ""
+    primary = []
+    for c in unicodedata.normalize("NFKD", s):
+        if unicodedata.combining(c):        # drop accents → base letter (primary fold)
+            continue
+        lc = c.lower()
+        if lc in _LIGATURES:
+            primary.extend((2, b) for b in _LIGATURES[lc])
+            continue
+        cls = 0 if not c.isalnum() else (1 if c.isdigit() else 2)  # symbols < digits < letters
+        primary.append((cls, lc))
+    return (primary, s)
+
+
+def _render_title_markers(value, ctx):
+    """Inline title markers → HTML (no drop-cap): the H1 fallback and the parent-plate link."""
+    return decode_inline(escape_html(value or ""), ctx=ctx)
+
+
+def _render_title_h1(marker, ctx):
+    """The head-of-body «TITLE:…«/TITLE» element → an <h1> with a drop-cap first character.
+    The one block form the shell renders directly (it sits above the body, not in the «P» flow),
+    so it stays here rather than in the body's mechanical decode.
+
+    EPUB targets skip the drop-cap: the wrapping span SPLITS the title's text node
+    ("D" + "YNAMICS"), and a reader's text search — the book's only search — can't
+    match across the element boundary, so titles were unfindable by title."""
+    inner = marker[len(TITLE_OPEN):len(marker) - len(TITLE_CLOSE)]
+    h = decode_inline(escape_html(inner), ctx=ctx)
+    if getattr(ctx, "target", "site") == "site":
+        # The drop-cap unit is one RENDERED glyph, and `h` is escaped HTML —
+        # a title the edition prints in quotation marks ("SURVILLE, CLOTILDE
+        # DE," — the persona is apocryphal and the quotes say so) starts with
+        # the entity `&quot;`, and taking one CHARACTER split it: <span>&</span>
+        # quot;… rendered a big ampersand and the literal text `quot;`.
+        dc = re.match(r"^((?:<[^>]+>)*)(&#?\w+;|[\s\S])([\s\S]*)$", h, re.S)
+        # ONLY A LETTER TAKES THE DROP-CAP.  Sixteen titles open on a quotation
+        # or transliteration mark — `“CHALLENGER” EXPEDITION`, `’AḤAI`,
+        # `‘ALQAMA IBN ‘ABADA` — and each was setting that mark at 1.6em.  The
+        # glyph is unescaped for the test because it may be an entity: the mark
+        # arrives as `&quot;` or `&#8220;`, which no character test sees as
+        # punctuation while it is still spelled as an entity.  A title that does
+        # not open on a letter simply gets no drop-cap; promoting the SECOND
+        # character instead would break the words that begin with the mark.
+        if dc and _html.unescape(dc.group(2)).isalpha():
+            h = (f"{dc.group(1)}<span style=\"font-size:1.6em; line-height:1; "
+                 f"vertical-align:baseline;\">{dc.group(2)}</span>{dc.group(3)}")
+    return f"<h1>{h}</h1>"
+
+
+# The slug rule has ONE owner.  This was a byte-equivalent reimplementation —
+# verified identical across all 21,343 section titles — and equivalence today is
+# not the point: the render's anchors and the export's TOC links must move
+# together, which two copies cannot guarantee.
+from wikikit.util.strings import page_range
+from wikikit.util.strings import anchor_slug as _anchor_slug
+from wikikit.util.strings import section_slug as _section_slug
+
+
+class RenderContext:
+    """Per-article render state (mirrors renderArticle's module-level counters)."""
+
+    def __init__(self, volume, scan_url, unproofed_pages, target="site", epub_bundled=None):
+        self.volume = volume
+        self.scan_url = scan_url
+        self.unproofed_pages = unproofed_pages
+        self.target = target            # "site" (byte-identical to the viewer) | "epub"
+        self.epub_bundled = epub_bundled  # None on site; the token link policy (epub.pack.LINK_TOKENS) on EPUB
+        self.footnote_counter = 0
+        self.named_fn_numbers = {}
+        self.fn_anchor_instance = 0
+        self.collected_footnotes = []
+        self.collected_sections = []
+        self.wide_table_counter = 0
+        # Image placeholders are article-scoped, not per-decode_inline call: a footnote's
+        # image is shielded by the outer paragraph decode but restored inside the nested
+        # footnote decode (or vice-versa).  A shared list keeps the «\x00IMGn\x00» → HTML
+        # restore nesting-safe; indices stay globally unique via append.
+        self.img_html = []
+
+
+# ── math (KaTeX is stubbed to «MATHPH» in the golden; reproduce the structure) ──
+def parse_math_hint(hint):
+    toks = hint.split(",") if hint else []
+    fs_pct = None
+    for t in toks:
+        m = re.fullmatch(r"fs=(\d+)", t)
+        if m:
+            fs_pct = int(m.group(1))
+    return {"display": "display" in toks, "popout": "popout" in toks, "fsPct": fs_pct}
+
+
+def _process_latex(latex):
+    raw = _html.unescape(latex)
+    raw = re.sub(r"\\mbox\b", r"\\text", raw)
+    raw = re.sub(r"[          ​]", " ", raw)
+    raw = re.sub(r"\\overset\{([^}]*)\}\s*\\underset\{([^}]*)\}\s*\{\\Sigma\s*", r"\\sum_{\2}^{\1}{", raw)
+    # Re-brace an unbraced `\sqrt \text{…}` radicand.  The source omits the braces
+    # (`\sqrt \mbox{A}_{11}`, ALGEBRAIC FORMS / vol24 p1005), so `\sqrt` swallows the
+    # bare `\text` token and leaves it argument-less → MathJax "Missing argument for
+    # \text", rendered as a wide dark ERROR BAR.  Wrap the `\text{…}` (with any
+    # trailing sub/sup) back into the radicand so it renders the intended √A.
+    raw = re.sub(r"\\sqrt\s*(\\text\s*\{[^{}]*\}(?:[_^]\{[^{}]*\})*)", r"\\sqrt{\1}", raw)
+    return raw
+
+
+def render_math_popout(latex, is_display, ctx):
+    # The LaTeX must ride IN the markup: the render runs in Python, the click
+    # handler in the browser — an id into a render-side dict is a carry into a
+    # void.  Attribute-escape it into data-latex; the handler reads the DOM.
+    cls = "math-popout-link popout-display" if is_display else "math-popout-link"
+    esc = _html.escape(latex, quote=True)
+    return (f'<a class="{cls}" data-latex="{esc}" '
+            "onclick=\"openMathPopout(this);return false;\" href=\"#\">"
+            "[equation ⤢ click to view]</a>")
+
+
+def _epub_math_el(latex, display, ctx):
+    """EPUB targets read the pre-rendered math cache (wikikit.epub.math_assets):
+    ``epub`` → inline SVG (currentColor, adapts to the reader theme); ``kindle`` →
+    an ``<img>`` PNG (Kindle renders no SVG).  An UNCACHED equation returns the
+    `«MATHPH»` stub so a missing asset surfaces as a leak, never silently drops."""
+    from wikikit.epub.math_assets import collect, math_key, png_meta, svg_for
+    if collect(latex, display):          # collect pass → throwaway; assets rendered after
+        return ""
+    cls = "math-display" if display else "math-inline"
+    if ctx.target == "kindle":
+        meta = png_meta(latex, display)
+        if not meta:
+            return "«MATHPH»"
+        va = "" if display else f"vertical-align:-{meta['depth_em']:.3f}em;"
+        return (f'<img class="{cls}" src="math/{math_key(latex, display)}.png" '
+                f'alt="{_html.escape(latex, quote=True)}" '
+                f'style="width:{meta["w_em"]:.3f}em;height:{meta["h_em"]:.3f}em;{va}"/>')
+    svg = svg_for(latex, display)
+    if not svg:
+        return "«MATHPH»"
+    return svg.replace("<svg ", f'<svg class="{cls}" ', 1)
+
+
+def _tex_math(latex, display, ctx):
+    """Site target → a KaTeX-hydration placeholder carrying the (HTML-escaped) LaTeX and its
+    display mode; the viewer runs KaTeX over `.tex-math` after inserting the page.  EPUB targets
+    read the pre-rendered SVG/PNG cache; any other target keeps the `«MATHPH»` comparison stub."""
+    if ctx.target == "site":
+        return f'<span class="tex-math" data-display="{"1" if display else "0"}">{latex}</span>'
+    if ctx.target in ("epub", "kindle"):
+        return _epub_math_el(latex, display, ctx)
+    return "«MATHPH»"
+
+
+def _render_math_markers(html, ctx):
+    def repl(m):
+        hint, latex = m.group(1), m.group(2)
+        ph = parse_math_hint(hint)
+        # popout is a SITE policy (click-to-modal needs JS + a viewport that
+        # can't fit the equation).  Every other target renders the equation
+        # itself — a popout-hinted expression is display math there.
+        if ph["popout"] and ctx.target == "site":
+            return render_math_popout(_process_latex(latex), ph["display"], ctx)
+        result = _tex_math(latex, ph["display"] or ph["popout"], ctx)
+        fs = ph["fsPct"]
+        if fs and 0 < fs < 100:
+            return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
+        return result
+    return _MATH_RE.sub(repl, html)
+
+
+def _render_display_math(latex, hint, ctx):
+    """A display-mode equation («EQN» row) → a KaTeX-hydration placeholder (or popout / fs-scaled)."""
+    ph = parse_math_hint(hint)
+    if ph["popout"] and ctx.target == "site":
+        return render_math_popout(_process_latex(latex), True, ctx)
+    result = _tex_math(latex, True, ctx)
+    fs = ph["fsPct"]
+    if fs and 0 < fs < 100:
+        return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
+    return result
+
+
+def _render_sh(html):
+    def repl(m):
+        slug, content = m.group(1), m.group(2)
+        display = _SH_STRIP_RE.sub("", content).strip()
+        return f'<span class="shoulder-heading" id="section-{slug}">{display}</span>'
+    return _SH_RE.sub(repl, html)
+
+
+def dedupe_anchor_id(seen, id_):
+    seen[id_] = seen.get(id_, 0) + 1
+    return id_ if seen[id_] == 1 else f"{id_}-{seen[id_]}"
+
+
+def _section_title_text(raw):
+    """A section title reduced to plain text for the TOC.  The title can itself be
+    a link (`«LN:Iron|Iron»`) or carry inline markers; the TOC entry is ALREADY a
+    link to the section anchor, and an `<a>` can't nest the link's own `<a>`, so
+    the marker interior collapses to its display text (recurse, don't read flat —
+    else the marker escapes straight into the TOC: SOMALILAND, UNITED KINGDOM).
+
+    `markers_to_text` SUPERSEDES the old `_SH_STRIP_RE` here: that regex matched
+    the closing `«/LN»` but not the opening `«LN:…`, so it mangled a linked title
+    into a broken half-marker.  Whitespace is NOT collapsed — same spacing the old
+    strip produced, so only link-bearing titles change."""
+    return markers_to_text(raw or "").strip()
+
+
+def detect_sections(paragraphs, ctx):
+    """Walk «SEC» (L1) and «SH» (L2) anchors in document order into ctx.collected_sections."""
+    ctx.collected_sections = []
+    seen = {}
+    for p in paragraphs:
+        for m in _ANCHOR_RE.finditer(p):
+            if m.group(1) is not None:  # «SEC:slug|name» — major section
+                ctx.collected_sections.append(
+                    {"id": dedupe_anchor_id(seen, f"section-{m.group(1)}"),
+                     "title": _section_title_text(m.group(2)), "level": 1})
+            else:                       # «SH:slug»…«/SH» — shoulder heading
+                display = _section_title_text(m.group(4))
+                ctx.collected_sections.append(
+                    {"id": dedupe_anchor_id(seen, f"section-{m.group(3)}"),
+                     "title": display, "level": 2})
+
+
+def _toc_link(s):
+    return f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a></li>'
+
+
+def _build_toc(sections):
+    level1 = [s for s in sections if s["level"] == 1]
+    level2 = [s for s in sections if s["level"] == 2]
+    if len(level1) >= 1 and len(level2) >= 1:
+        # Interleaved: major sections with shoulder headings nested below; level-2
+        # orphans (before any level-1) render standalone so the HTML stays valid.
+        # A SINGLE major section counts (>= 1): a lone «SEC» among shoulders (AFGHANISTAN's
+        # `History`, POLAND's `Polish Literature`) must appear in the TOC, not be dropped
+        # to the shoulder-only branch which lists only level-2.
+        inner = ""
+        in_sub = False
+        seen_level1 = False
+        for s in sections:
+            if s["level"] == 1:
+                if in_sub:
+                    inner += "</ul></li>"
+                    in_sub = False
+                elif seen_level1:
+                    inner += "</li>"
+                inner += f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a>'
+                seen_level1 = True
+            elif not seen_level1:
+                inner += _toc_link(s)
+            else:
+                if not in_sub:
+                    inner += "<ul>"
+                    in_sub = True
+                inner += _toc_link(s)
+        if in_sub:
+            inner += "</ul></li>"
+        elif seen_level1:
+            inner += "</li>"
+        return f'<div class="toc"><h3>Contents</h3><ul class="toc-contents">{inner}</ul></div>'
+    if len(level1) >= 2:
+        return (f'<div class="toc"><h3>Contents</h3><ul class="toc-contents">'
+                f'{"".join(_toc_link(s) for s in level1)}</ul></div>')
+    if len(level2) >= 3:
+        return (f'<div class="toc"><h3>Sections</h3><ol>'
+                f'{"".join(_toc_link(s) for s in level2)}</ol></div>')
+    return ""
+
+
+_WRAP_TAG_RE = re.compile(r"<(/?)(div|span)\b[^>]*>", re.IGNORECASE)
+
+
+def _contain(fragment):
+    """Make the body fragment SELF-CONTAINED: it may not close a tag it didn't open.
+
+    The source legitimately carries unpaired `<div>`/`<span>` halves — an unclosed
+    wrapper, or one half of a pair of spans that CROSS — and the pipeline carries
+    each half faithfully rather than dropping the styling.  That is right, but a
+    close with nothing of ours to close is not inert: `rendered_html` carries its
+    OWN `div.card` / `div.body-text` wrappers, so a stray `</div>` inside them
+    closes one and the rest of the article spills out of the body styling (two of
+    them escape the card).  Verified: with two strays the trailing prose reparents
+    to `div.card`.
+
+    So the fragment is balanced at its own boundary, with exactly the semantics
+    HTML5 fragment parsing gives (checked against html5lib, the engine
+    `normalize_html` uses): a close at depth 0 is DROPPED — it has no element in
+    scope, and a browser ignores it — and an open still standing at the end is
+    CLOSED.  Nothing else moves; the styling both halves carry survives.
+
+    This is containment, not cleanup: no producer can enforce it, because "is
+    there a matching open?" is whole-body context that only exists here
+    [[feedback_recursion_cannot_provide_context]].  It is deliberately blind to
+    WHY a half is unpaired — that stays the producer's business."""
+    depth = {"div": 0, "span": 0}
+    out, last = [], 0
+    for m in _WRAP_TAG_RE.finditer(fragment):
+        tag = m.group(2).lower()
+        if not m.group(1):                        # open
+            depth[tag] += 1
+            continue
+        if depth[tag]:                            # close with a partner
+            depth[tag] -= 1
+            continue
+        out.append(fragment[last:m.start()])      # stray close → drop it
+        last = m.end()
+    out.append(fragment[last:])
+    return "".join(out) + "".join(
+        f"</{t}>" for t in ("span", "div") for _ in range(depth[t]))
+
+
+def _render_body(article, ctx):
+    body = article.get("body") or ""
+    marked = re.sub(r"^«TITLE:[\s\S]*?«/TITLE»", "", body, count=1)
+    # No page token is synthesized here any more.  This used to prepend one when
+    # the body had none, because the marker had to BE in the stream for the
+    # renderer's regex to find it.  Page position is carried as keys now and
+    # injected below, after the HTML exists
+    # ([[project_page_position_out_of_band]]).
+    # Paragraph structure is CARRIED, not re-inferred: prose breaks ride as «P» (→<p>, the
+    # browser auto-closes at the next block) and each numbered equation is a self-delimiting «EQN».
+    # A leading «P» opens the first paragraph — the body has no separator before its first prose
+    # run.  decode_inline(body_blocks=True) is the ONE mechanical decoder: it owns every block form
+    # in place (page markers, «SH», «EQN» grids, «VERSE»/«OUTLINE», the cols≥10 wide-table wrap)
+    # as balanced markers — no render_paragraph, no `\n\n` split, no block re-scan.
+    detect_sections([marked], ctx)
+    body_html = decode_inline("«P»" + marked, escape=True, body_blocks=True, ctx=ctx)
+    # De-dup colliding section ids in the SAME document order detect_sections used, so
+    # each TOC link resolves to its own anchor (first keeps section-<slug>, reuses get -N).
+    id_seen = {}
+    body_html = _SECTION_ID_RE.sub(
+        lambda m: f'id="{dedupe_anchor_id(id_seen, m.group(1))}"', body_html)
+    body_html = _contain(body_html)
+    # PAGE MARKERS — the second and last place page position is handled.  The
+    # keys ride the article payload; `inject` bridges their RAW offsets to
+    # positions in this finished HTML and inserts at TEXT positions only, so a
+    # marker can never land inside a tag.
+    from wikikit.render.page_markers import inject as _inject_page_markers
+    body_html = _inject_page_markers(
+        body_html, article.get("page_keys") or [], ctx,
+        body_span=article.get("body_span") or 0)
+    toc_html = _build_toc(ctx.collected_sections)
+    return toc_html + f'<div class="body-text">{body_html}</div>'
+
+
+def _build_xref_href(xref, bundled=None):
+    if xref.get("target_filename"):
+        filename = xref["target_filename"]
+    elif xref.get("normalized_target"):
+        filename = str(xref["normalized_target"]).strip().lower() + ".json"
+    else:
+        return "#"
+    # `anchor_slug`, matching the id the «SEC»/«SH» producers actually bake.
+    # `section_slug` here would emit the LEGACY fragment: it still lands (the
+    # producers keep a back-compat twin at the old address), but an internal
+    # link we generate ourselves should point at the canonical id, not the
+    # compatibility shim.  Line 518 below stays `_section_slug` — that is a
+    # CONTRIBUTOR slug, a different namespace entirely.
+    slug = _anchor_slug(xref["target_section"]) if xref.get("target_section") else ""
+    if bundled is not None:
+        # EPUB: the section rides INSIDE the token (a chunked book can't append a
+        # fragment to a URL that already carries the article's anchor).
+        stem = re.sub(r"\.json$", "", str(filename))
+        return bundled.url_for(stem, slug or None)
+    base = _article_url(filename)
+    if slug:
+        base = base + "#section-" + slug
+    return base
+
+
+# The article header's topic slot, in ONE place.  `topics_html` below is always
+# empty because topics are a client-side overlay ([[project_topic_overlay]]), and
+# the viewer fills this exact position — "the original slot (after the 'By …'
+# byline)".  A format that BAKES topics instead (EPUB, MDX) has to land in the
+# same position, so the rule lives here rather than being spelled once per
+# format.  The fallback is the unsigned-article citation line, which is the first
+# div after the <h1>.
+_BYLINE_RE = re.compile(r'<div class="contributors">By .*?</div>', re.S)
+_HEADER_LINE_RE = re.compile(r'</h1>\s*<div\b[^>]*>.*?</div>', re.S)
+
+
+def insert_after_byline(body: str, fragment: str) -> str:
+    """Splice `fragment` into the article header, after the byline.
+
+    Appending to the END of an article instead puts the topics hard against the
+    NEXT article's opening card wherever articles share a file — an EPUB chunk
+    holds dozens — so the reader cannot tell which article they belong to.
+    """
+    m = _BYLINE_RE.search(body) or _HEADER_LINE_RE.search(body)
+    if m is None:
+        raise ValueError("Article header missing: nowhere to place topic navigation")
+    return body[:m.end()] + fragment + body[m.end():]
+
+
+def topic_trail_html(paths) -> str:
+    """The article's topic memberships, written as the site writes them.
+
+    ONE "In:", the paths separated by ";", the segments within a path by "›", and
+    every segment its own link to that bucket's page — `Astronomy › General` is a
+    real bucket, not decoration, so each level is reachable.
+
+    `paths` is a list of paths; each path is a list of `(label, url)` segments,
+    root first.  The three baked formats differed gratuitously before this —
+    the EPUB repeated "In:" once per path, the MDX said "Topics: a · b" and
+    linked whole paths rather than segments — so this owns the WHOLE fragment,
+    markup and class included, and the callers supply only the links.
+    """
+    trail = "; ".join(
+        " › ".join(f'<a href="{_html.escape(url, quote=True)}">{_html.escape(label)}</a>'
+                   for label, url in path)
+        for path in paths)
+    return f'<div class="topic-refs">In: {trail}</div>'
+
+
+def render_article(article, *, target="site", epub_bundled=None):
+    """Render an article JSON to HTML.  target="site" is byte-identical to the viewer
+    (corpus-proven); target="epub" swaps the per-target policies (footnotes, contributor
+    links → appendix, scans dropped, …).  ``epub_bundled`` — the EPUB link policy object
+    (``epub.pack.LINK_TOKENS``) — makes links emit packer-resolved tokens (see
+    ``_article_url``); leave None for site."""
+    ctx = RenderContext(
+        volume=article.get("volume", "?"),
+        scan_url="scans.html",   # bare anchor; fixScanHrefs rebuilds the real URL at runtime
+        unproofed_pages=(article.get("source_quality") or {}).get("unproofed_pages") or {},
+        target=target,
+        epub_bundled=epub_bundled,
+    )
+    # Sort by the SAME name the panel shows — the canonical title for a resolved
+    # xref, the normalized reference otherwise — so the alphabetical order matches
+    # the displayed labels (was sorting by the source phrasing, `normalized_target`).
+    xrefs = sorted(article.get("xrefs") or [],
+                   key=lambda x: _xref_sort_key(
+                       x.get("target_title") or x.get("normalized_target") or ""))
+    # Dedupe by target: two source refs to one article (ALGEBRA's "Continued
+    # Fraction" + "Continued Fractions" → CONTINUED FRACTIONS) collapse to one
+    # panel entry.  The old source-phrasing display masked this (the labels read
+    # differently); the canonical display exposes it.
+    _seen: set = set()
+    _deduped = []
+    for x in xrefs:
+        key = x.get("target_filename") or x.get("normalized_target") or ""
+        if key in _seen:
+            continue
+        _seen.add(key)
+        _deduped.append(x)
+    xrefs = _deduped
+    contributors = article.get("contributors") or []
+
+    xref_html = ""
+    if xrefs:
+        items = []
+        for xref in xrefs:
+            normalized = xref.get("normalized_target") or ""
+            resolved = (xref.get("status") or "") == "resolved"
+            # The panel is OUR index, so a resolved xref shows OUR canonical title
+            # (DESCARTES, RENÉ), not the source's phrasing — the inline prose keeps
+            # the original text ([[project_resolver_consolidation]] display policy).
+            # Unresolved falls back to the normalized reference.  Recurse the display
+            # through the decoder like all display text — the target may carry style
+            # markers («I»/«SC») that rode in from the source; printing it raw leaked
+            # them into the panel.
+            disp = decode_inline(xref.get("target_title") or normalized,
+                                 escape=True, ctx=ctx)
+            inner = (f'<a href="{_build_xref_href(xref, epub_bundled)}">{disp}</a>'
+                     if resolved else disp)
+            items.append(
+                f'\n                <li class="xref-item {"resolved" if resolved else "unresolved"}">'
+                f"\n                  {inner}"
+                f"\n                </li>")
+        xref_html = (f'\n          <ul class="xref-list">'
+                     f'\n            {"".join(items)}'
+                     f"\n          </ul>")
+
+    # h1 — the «TITLE» element at the head of the body (drop-cap first char); if the body
+    # carries no «TITLE», fall back to the article's title field.
+    body = article.get("body") or ""
+    tm = re.match(r"^«TITLE:[\s\S]*?«/TITLE»", body)
+    if tm:
+        h1 = _render_title_h1(tm.group(0), ctx)
+    else:
+        h1 = f'<h1>{_render_title_markers(article.get("title") or "Untitled", ctx)}</h1>'
+
+    vol = escape_html(article.get("volume", "?"))
+    ps, pe = article.get("page_start"), article.get("page_end")
+    pages = escape_html(page_range(ps, pe))
+    # A plate is a picture; the words on it are its legend, and a count of
+    # them describes nothing a reader wants to know.  The FIELD still carries
+    # the count (the download index and the MCP tool read it) — this is only
+    # whether the header shows it.  Before 2026-09-26, 434 of 535 plates did.
+    wc = (f'&middot; {article["word_count"]:,} words'
+          if article.get("word_count") and article.get("article_type") != "plate" else "")
+    # Site links the citation to the page scan; EPUB drops scans, so it's plain text.
+    citation = (f"vol. {vol}, {pages}" if epub_bundled is not None
+                else f'<a href="{ctx.scan_url}" style="color: #6b5e4f;">vol. {vol}, {pages}</a>')
+
+    contrib_html = ""
+    if contributors:
+        def _contrib_link(c):
+            name = c.get("full_name", "")
+            # EPUB: a contrib token the packer resolves to the appendix chunk.
+            #
+            # SITE: the contributor's OWN entry, addressed by the signature slug.
+            # This used to be `?q=<full name>`, which put a known identity back
+            # through the search box and hoped it came out again — a substring
+            # filter over 1,508 names that lands on a filtered LIST, not an entry,
+            # and that quietly returns several people when one name contains
+            # another.  We know exactly who this is; the roster carries the id.
+            #
+            # `c["slug"]` and not a slug recomputed here: the record builder in
+            # `resolve_contributors_post._contributor_record` is the one owner, and
+            # its uniqueness is gated there.  Recomputing would be a second answer
+            # to the same question ([[feedback_shadow_path_at_the_root]]), and a
+            # missing field is a producer bug that should be loud, not papered over
+            # with a fallback to the search link we are removing.
+            href = (epub_bundled.contrib_url(_section_slug(name)) if epub_bundled is not None
+                    else "/contributors.html#" + c["slug"])
+            return (f'<a href="{href}" style="color: var(--muted);">{escape_html(name)}</a> '
+                    f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>')
+        parts = [_contrib_link(c) for c in contributors]
+        contrib_html = f'<div class="contributors">By {", ".join(parts)}</div>'
+
+    parent = article.get("parent_article")
+    parent_html = ""
+    if parent:
+        parent_html = ('<div style="margin-bottom: 8px; font-size: 0.95rem;">Plate for '
+                       f'<a href="{_article_url(parent["filename"], epub_bundled)}">'
+                       f'{_render_title_markers(parent.get("title") or "", ctx)}</a></div>')
+    topics_html = ""   # always empty in the golden (topicMap unloaded)
+    plates = article.get("plates") or []
+    plates_html = ""
+    if plates and article.get("article_type") != "plate":
+        links = ", ".join(
+            f'<a href="{_article_url(p["filename"], epub_bundled)}">Plate {_ROMAN[i] if i < len(_ROMAN) else i + 1}</a>'
+            for i, p in enumerate(plates))
+        plates_html = f'<div class="contributors">Plates: {links}</div>'
+
+    sq = article.get("source_quality") or {}
+    source_notice = ""
+    if sq.get("lowest_level") is not None and sq["lowest_level"] <= 1:
+        source_notice = (
+            '<div style="text-align: center; margin: 10px 0;">\n'
+            '                 <div style="background: #fff3cd; border: 1px solid #ffc107; '
+            'border-radius: 6px; padding: 6px 14px; font-size: 0.9rem; display: inline-block;">\n'
+            "                   <strong>Source quality notice:</strong> This article spans "
+            "pages with unproofread transcriptions.\n"
+            "                 </div>\n"
+            "               </div>")
+
+    body_section = _render_body(article, ctx)
+    footnotes_html = ""
+    if ctx.collected_footnotes:
+        if ctx.target in ("epub", "kindle"):
+            # Popup footnotes: the reader hides these asides and pops each up from its noteref.
+            # No visible "Notes" section — the reader hides the aside content, so a heading over
+            # them just renders empty.  The asides live at the end of the body as popup targets.
+            footnotes_html = "".join(
+                f'<aside epub:type="footnote" role="doc-footnote" id="fn-{fn["num"]}"><p>'
+                f'<a epub:type="backlink" href="#fnref-{fn["num"]}">{fn["num"]}.</a> '
+                f'{format_footnote_text(fn["text"], ctx)}</p></aside>'
+                for fn in ctx.collected_footnotes
+            )
+        else:
+            lis = "".join(
+                f'<li id="fn-{fn["num"]}" value="{fn["num"]}">'
+                f'<a onclick="var el=document.getElementById(\'fnref-{fn["num"]}\');'
+                f"if(el)el.scrollIntoView({{behavior:'instant',block:'start'}});return false;\" "
+                f'href="#">{fn["num"]}.</a> {format_footnote_text(fn["text"], ctx)}</li>'
+                for fn in ctx.collected_footnotes
+            )
+            footnotes_html = f'<div class="footnotes"><h3>Notes</h3><ol>{lis}</ol></div>'
+
+    xref_card = (f'<div class="card">\n          <h2>Cross-references</h2>\n'
+                 f"          {xref_html}\n        </div>") if xref_html else ""
+
+    return (
+        f"\n        <div class=\"card\">"
+        f"\n          {h1}"
+        f"\n          <div style=\"font-size: 0.85rem; color: #6b5e4f; font-style: italic; margin-bottom: 6px;\">"
+        f"\n            {citation}"
+        f"\n            {wc}"
+        f"\n          </div>"
+        f"\n          {parent_html}"
+        f"\n          {contrib_html}"
+        f"\n          {topics_html}"
+        f"\n          {plates_html}"
+        f"\n          {source_notice}"
+        f"\n          {body_section}"
+        f"\n          {footnotes_html}"
+        f"\n        </div>"
+        f"\n"
+        f"\n        {xref_card}"
+        f"\n"
+        f"\n      "
+    )

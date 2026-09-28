@@ -22,8 +22,8 @@ the corpus) cannot match, and no exemption list is needed to keep it out.
 from collections import Counter
 from pathlib import Path
 
-from britannica.markers import RENDERED_GUILLEMET_MARKER_NAMES
-from britannica.markers import marker_names
+from wikikit.markers import RENDERED_GUILLEMET_MARKER_NAMES
+from wikikit.markers import marker_names
 
 SNAPS = Path(__file__).resolve().parents[1] / "snapshots" / "transform"
 _REGISTERED = frozenset(RENDERED_GUILLEMET_MARKER_NAMES)

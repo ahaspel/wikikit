@@ -19,7 +19,7 @@ eleventh edition, uncredited on an article he signed.
 
 Every shape below is taken verbatim from the corpus, not invented.
 """
-from britannica.pipeline.stages.extract_contributors import (
+from wikikit.pipeline.stages.extract_contributors import (
     _iter_footers, _parse_contributors)
 
 

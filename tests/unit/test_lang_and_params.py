@@ -13,9 +13,9 @@
 """
 import pytest
 
-from britannica.pipeline.stages.elements import process_elements
-from britannica.pipeline.stages.elements._context import ElementContext
-from britannica.pipeline.stages.elements._table_fold import (
+from wikikit.pipeline.stages.elements import process_elements
+from wikikit.pipeline.stages.elements._context import ElementContext
+from wikikit.pipeline.stages.elements._table_fold import (
     _resolve_param_defaults, fold_cell_attrs)
 
 

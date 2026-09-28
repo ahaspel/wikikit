@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _ast_shapes import docstring_ids          # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-ROOTS = [ROOT / "src" / "britannica", ROOT / "tools"]
+ROOTS = [ROOT / "src", ROOT / "tools"]
 SKIP_DIRS = {"__pycache__", "_scratch", "node_modules"}
 # Hand-written viewer sources only; the rest of tools/viewer is generated (Phase 6.2).
 VIEWER_KEEP = {"viewer.html", "index.html", "contributors.html", "maps.html",
@@ -163,7 +163,7 @@ def collect_symbols() -> dict[str, list[str]]:
     switched off.
     """
     names: dict[str, list[str]] = defaultdict(list)
-    for p in sorted((ROOT / "src" / "britannica").rglob("*.py")):
+    for p in sorted((ROOT / "src").rglob("*.py")):
         if any(s in p.parts for s in SKIP_DIRS):
             continue
         try:

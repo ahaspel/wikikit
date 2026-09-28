@@ -3,7 +3,7 @@ the title/display split keys identity, search, and xref matching on
 (docs/title-display-split.md).  Each case is a real `«TITLE»` shape from the corpus."""
 import pytest
 
-from britannica.util.strings import primary_headword
+from wikikit.util.strings import primary_headword
 
 
 @pytest.mark.parametrize("heading,expected", [

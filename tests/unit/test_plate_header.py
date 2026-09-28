@@ -1,5 +1,5 @@
 """A plate's header carries no word count; an article's still does."""
-from britannica.render.article import render_article
+from wikikit.render.article import render_article
 
 
 def _record(article_type, word_count):

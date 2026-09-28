@@ -26,7 +26,7 @@ Usage:
 """
 from __future__ import annotations
 
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import argparse
 import io
 import json
@@ -36,7 +36,7 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8",
                               errors="replace")
 
-from britannica.contributors.aliases import normalize  # noqa: E402
+from wikikit.contributors.aliases import normalize  # noqa: E402
 
 DEFAULT_REPORT = current_corpus().derived("quality_reports/dedup_candidates.json").as_posix()
 DEFAULT_ALIASES = current_corpus().data("contributor_aliases.json").as_posix()

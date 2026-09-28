@@ -187,8 +187,8 @@ def main():
     # as durable as the source; resolve just the printed few.
     worst = sorted(dirty, reverse=True)[:args.examples]
     sys.path.insert(0, str(ROOT / "src"))
-    from britannica.db.session import SessionLocal
-    from britannica.db.models import Article
+    from wikikit.db.session import SessionLocal
+    from wikikit.db.models import Article
     s = SessionLocal()
     titles = dict(
         s.query(Article.id, Article.title)

@@ -10,9 +10,9 @@ stray marker on one side and not the other breaks the match silently, and the
 anchor surfaces as a duplicate section in the download bundle (which drops
 `kind`).  This binds the two ends together.
 """
-from britannica.export.sections import detect_sections
-from britannica.pipeline.stages.elements._anchor import anchor_marker
-from britannica.util.strings import anchor_slug, section_slug
+from wikikit.export.sections import detect_sections
+from wikikit.pipeline.stages.elements._anchor import anchor_marker
+from wikikit.util.strings import anchor_slug, section_slug
 
 # Names whose two slugs differ — i.e. every name that triggers a back-compat anchor.
 DIVERGENT = [
@@ -52,7 +52,7 @@ def test_point_anchors_also_carry_their_legacy_twin():
     change its address either.  Corpus scan after the 2026-08-28 rebuild found
     14 such targets in 7 articles (FRANCE, HUNGARY, OLAF, NAPOLEONIC CAMPAIGNS,
     …) whose ids had moved with no legacy twin behind them."""
-    from britannica.pipeline.stages.elements._anchor import _anchor
+    from wikikit.pipeline.stages.elements._anchor import _anchor
     marker = _anchor("The Orléans")
     assert "«ANCHOR:the-orl-ans|" in marker      # legacy, still landing
     assert "«ANCHOR:the-orleans|" in marker      # folded, the new address
@@ -61,5 +61,5 @@ def test_point_anchors_also_carry_their_legacy_twin():
 
 
 def test_unaccented_point_anchor_stays_single():
-    from britannica.pipeline.stages.elements._anchor import _anchor
+    from wikikit.pipeline.stages.elements._anchor import _anchor
     assert _anchor("The Cossacks").count("«ANCHOR:") == 1

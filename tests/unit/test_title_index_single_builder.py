@@ -14,12 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from britannica.export.article_json import build_title_index
-from britannica.xrefs.normalizer import NormalizedIndex
+from wikikit.export.article_json import build_title_index
+from wikikit.xrefs.normalizer import NormalizedIndex
 
 ROOT = Path(__file__).resolve().parents[2]
 CONSUMERS = [
-    ROOT / "src" / "britannica" / "export" / "article_json.py",
+    ROOT / "src" / "wikikit" / "export" / "article_json.py",
     ROOT / "tools" / "pipeline" / "resolve_xrefs_post.py",
 ]
 
@@ -29,7 +29,7 @@ BY_HAND = re.compile(r"\.setdefault\(\s*\w+\.title\.(?:strip\(\)\.)?upper\(\)")
 
 
 def _art(title, atype="article", page=1):
-    from britannica.db.models import Article
+    from wikikit.db.models import Article
     return Article(title=title, article_type=atype, volume=1,
                    page_start=page, page_end=page, body="", section_name=None)
 

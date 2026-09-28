@@ -4,10 +4,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from britannica.db.base import Base
+from wikikit.db.base import Base
 
 # Import models so they are registered on Base.metadata
-from britannica.db.models import Article, ArticleSegment, SourcePage  # noqa: F401
+from wikikit.db.models import Article, ArticleSegment, SourcePage  # noqa: F401
 
 
 @pytest.fixture()

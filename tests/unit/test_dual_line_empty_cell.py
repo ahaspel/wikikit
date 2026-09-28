@@ -22,8 +22,8 @@ from __future__ import annotations
 
 import pytest
 
-from britannica.pipeline.stages.elements import ElementContext, process_elements
-from britannica.pipeline.stages.elements._tables import br_stack
+from wikikit.pipeline.stages.elements import ElementContext, process_elements
+from wikikit.pipeline.stages.elements._tables import br_stack
 
 
 def _render(text: str) -> str:

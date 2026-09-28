@@ -1,4 +1,4 @@
-from britannica.xrefs.extractor import extract_xrefs
+from wikikit.xrefs.extractor import extract_xrefs
 
 
 # --- See / See also: producer-stamped windows (J7 slice 2) ---
@@ -58,7 +58,7 @@ def test_cited_work_in_italics_gets_no_stamp() -> None:
 
 def _stamped(text: str):
     """Producer stamps (q.v. then see, the _produce_body order) → extract."""
-    from britannica.pipeline.stages.elements import (
+    from wikikit.pipeline.stages.elements import (
         _stamp_qv_windows, _stamp_see_windows)
     return extract_xrefs(_stamp_see_windows(_stamp_qv_windows(text)))
 
@@ -100,7 +100,7 @@ def test_multiple_qv_windows() -> None:
 
 def test_qv_after_link_gets_no_stamp() -> None:
     """A linked reference is already asserted — the cue is just prose."""
-    from britannica.pipeline.stages.elements import _stamp_qv_windows
+    from wikikit.pipeline.stages.elements import _stamp_qv_windows
     text = "see «LN:Geber|Geber«/LN» (q.v.) for details"
     assert _stamp_qv_windows(text) == text
     results = extract_xrefs(_stamp_qv_windows(text))

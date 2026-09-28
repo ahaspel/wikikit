@@ -37,7 +37,7 @@ Usage:
 """
 from __future__ import annotations
 
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import argparse
 import collections
 import json
@@ -49,7 +49,7 @@ from pathlib import Path
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from britannica.export.corpus import load_corpus     # noqa: E402
+from wikikit.export.corpus import load_corpus     # noqa: E402
 
 IMAGE_DIR = current_corpus().images()
 EXCEPTIONS = Path("data/image_exceptions.json")

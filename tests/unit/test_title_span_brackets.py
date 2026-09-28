@@ -16,7 +16,7 @@ titles came out carrying raw markup:
 
 Bound on the marker delimiters, which cannot occur inside an attribute.
 """
-from britannica.pipeline.stages.elements._title import decode_title
+from wikikit.pipeline.stages.elements._title import decode_title
 
 
 def test_a_sic_hint_in_a_headword_leaves_no_markup():

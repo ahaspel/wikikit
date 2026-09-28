@@ -21,16 +21,16 @@ article-list and xref churn over time, and we can identify which
 specific articles or xrefs changed between any two rebuilds without
 needing to re-run the pipeline.
 """
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8") if hasattr(
     sys.stdout, "reconfigure") else None
 
-from britannica.db.session import SessionLocal
-from britannica.db.models import Article
-from britannica.export.pages import _printed_page
+from wikikit.db.session import SessionLocal
+from wikikit.db.models import Article
+from wikikit.export.pages import _printed_page
 
 
 def _pp(vol: int, leaf: int) -> str:
@@ -65,7 +65,7 @@ def main():
         # Xrefs live in the exported JSON now, not the DB.
         rows = []
         # The loader owns both the exclusion list and the failure policy.
-        from britannica.export.corpus import load_corpus
+        from wikikit.export.corpus import load_corpus
         for _fp, rec in sorted(load_corpus()[0].items()):
             for x in rec.get("xref_list", []):
                 rows.append((

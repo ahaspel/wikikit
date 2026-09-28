@@ -36,8 +36,8 @@ import re
 
 import pytest
 
-from britannica.pipeline.stages.quote_runs import _convert_quote_runs
-from britannica.pipeline.stages.elements import ElementContext, process_elements
+from wikikit.pipeline.stages.quote_runs import _convert_quote_runs
+from wikikit.pipeline.stages.elements import ElementContext, process_elements
 
 
 def _transform(src: str, volume: int, page_number: int) -> str:
@@ -118,7 +118,7 @@ WEIGHING_MACHINES = (
 
 # Central grammar — group 1 filename, group 2 meta-block, group 3 caption.
 # Matches the whole marker, so `IMG_RE.sub("", body)` still strips cleanly.
-from britannica.markers import IMG_PARTS_RE as IMG_RE
+from wikikit.markers import IMG_PARTS_RE as IMG_RE
 
 
 def extract_imgs(body: str) -> list[tuple[str, str | None]]:

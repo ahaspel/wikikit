@@ -69,7 +69,7 @@ and EDITING the pattern revokes it — a changed pattern is a new decision.
 """
 from __future__ import annotations
 
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import argparse
 import ast
 import hashlib
@@ -83,7 +83,7 @@ from _ast_shapes import docstring_ids          # noqa: E402
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[2]
-SCOPE = ("src/britannica", "tools")
+SCOPE = ("src", "tools")   # the engine AND the books, which sit beside it
 SKIP_PARTS = {"__pycache__", ".venv", "_scratch", "node_modules"}
 EXCEPTIONS = ROOT / current_corpus().data("fake_recursion_exceptions.json")
 

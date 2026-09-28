@@ -15,7 +15,7 @@ corpus holds 1,240 of those spans whose hints `_handle_title_spans` already
 carries.  Without this, a refetch would convert 1,240 preserved corrections into
 dropped ones.
 """
-from britannica.pipeline.stages.elements._content import (
+from wikikit.pipeline.stages.elements._content import (
     _content_parse, _wrap_content_extract)
 
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 
-from britannica.render.page_markers import _place, inject, marker_positions
+from wikikit.render.page_markers import _place, inject, marker_positions
 
 _MARK = re.compile(r'data-page="(\d+)"')
 

@@ -5,7 +5,7 @@ The «AL» grammar was spelled as a private regex in the xref extractor, the
 shape that silently unlinked «LN» references whose display carried markers.
 `markers.iter_al_markers` / `sub_al_markers` are now the only spelling.
 """
-from britannica.markers import iter_al_markers, sub_al_markers
+from wikikit.markers import iter_al_markers, sub_al_markers
 
 
 PLAIN = "by «AL:John Smith|J. Smith«/AL» here"
@@ -35,7 +35,7 @@ def test_sub_rewrites_through_the_reader():
 
 
 def test_extractor_reads_a_marked_up_author_display():
-    from britannica.xrefs.extractor import extract_xrefs
+    from wikikit.xrefs.extractor import extract_xrefs
     (rec,) = extract_xrefs("by «AL:Hugh Chisholm|«SC»Hugh Chisholm«/SC»«/AL»")
     assert rec["xref_type"] == "author"
     assert rec["display"] == "«SC»Hugh Chisholm«/SC»"

@@ -2,7 +2,7 @@
 
     uv run python tools/diagnostics/check_word_counts.py
 
-The field has ONE owner, `britannica.markers.countable_words`.  The export
+The field has ONE owner, `wikikit.markers.countable_words`.  The export
 computed it correctly from 2026-09-21, and it still shipped wrong: a later
 phase, `resolve_xrefs_post.py`, recomputed it as `len(body.split())` after
 rewriting the body, and every article left the 2026-09-26 rebuild with its old
@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from britannica.export.corpus import load_corpus    # noqa: E402
-from britannica.markers import countable_words      # noqa: E402
+from wikikit.export.corpus import load_corpus    # noqa: E402
+from wikikit.markers import countable_words      # noqa: E402
 
 
 def main() -> int:

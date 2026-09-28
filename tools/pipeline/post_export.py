@@ -33,11 +33,11 @@ import time
 sys.path.insert(0, "src")
 sys.path.insert(0, "tools/pipeline")
 
-from britannica.corpora import current_corpus
-from britannica.db.models import Article
-from britannica.db.session import SessionLocal
-from britannica.export.article_json import register_stable_id_dedup
-from britannica.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
+from wikikit.corpora import current_corpus
+from wikikit.db.models import Article
+from wikikit.db.session import SessionLocal
+from wikikit.export.article_json import register_stable_id_dedup
+from wikikit.export.corpus import ARTICLES_DIR, load_corpus, write_corpus
 
 from annotate_math_markers import annotate_payloads
 from resolve_xrefs_post import resolve_and_render

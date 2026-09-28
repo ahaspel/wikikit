@@ -1,9 +1,9 @@
 """Fast RAW-SOURCE access for repeated audits.
 
-NOT `britannica.export.corpus.load_corpus`, which loads EXPORTED payloads.
+NOT `wikikit.export.corpus.load_corpus`, which loads EXPORTED payloads.
 This yields raw wikitext rows from a pickle of the DB.  The two were both
 called `load_corpus`, and at a call site `from _corpus_cache import
-load_corpus` and `from britannica.export.corpus import load_corpus` are
+load_corpus` and `from wikikit.export.corpus import load_corpus` are
 indistinguishable while returning different things about different data.
 
 The naive pattern (one segment query + one Article.get PER article) costs ~73k
@@ -43,8 +43,8 @@ def _build() -> list[tuple[int, int, int, str]]:
     ([[project_page_position_out_of_band]]).
     """
     sys.path.insert(0, str(ROOT / "src"))
-    from britannica.db.session import SessionLocal
-    from britannica.db.models import Article
+    from wikikit.db.session import SessionLocal
+    from wikikit.db.models import Article
     s = SessionLocal()
     rows = (
         s.query(Article.id, Article.volume, Article.page_start, Article.body)

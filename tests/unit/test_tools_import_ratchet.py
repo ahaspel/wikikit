@@ -40,7 +40,7 @@ def _broken() -> list[str]:
             for node in ast.walk(tree):
                 if not isinstance(node, ast.ImportFrom) or not node.module:
                     continue
-                if not node.module.startswith("britannica"):
+                if not node.module.startswith(("wikikit", "eb1911", "dnb")):
                     continue
                 try:
                     mod = importlib.import_module(node.module)

@@ -17,7 +17,7 @@ expression that fell out of the cache).
 """
 from __future__ import annotations
 
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import re
 import sys
 from pathlib import Path
@@ -26,9 +26,9 @@ sys.path.insert(0, "src")
 
 # Force a fresh cache load — measure_math_widths.py may have just
 # rewritten the file from under us.
-import britannica.math_widths as _mw
+import wikikit.math_widths as _mw
 _mw._LOOKUP = None
-from britannica.math_widths import scale_hint  # noqa: E402
+from wikikit.math_widths import scale_hint  # noqa: E402
 
 ARTICLES_DIR = current_corpus().derived("articles")
 # Capture the existing hint slot so the producer-carried `display` token (block-
@@ -71,7 +71,7 @@ def annotate_payloads(payloads: dict) -> tuple[int, int]:
 
 def main() -> int:
     """Standalone: load the corpus, annotate, write back what changed."""
-    from britannica.export.corpus import load_corpus, write_payload
+    from wikikit.export.corpus import load_corpus, write_payload
     payloads, _ = load_corpus(ARTICLES_DIR)
     before = {p: d.get("body", "") for p, d in payloads.items()}
     changed, with_math = annotate_payloads(payloads)

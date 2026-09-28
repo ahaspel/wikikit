@@ -12,8 +12,8 @@ last ingest), the corpus audit can't cover them — these tests are the gate.  d
 and {{nop}} STAY in preprocess (no-render / editorial), and the centring family
 stays byte-identical — guarded here too.
 """
-from britannica.pipeline.stages.preprocess import preprocess
-from britannica.pipeline.stages.elements import ElementContext, process_elements
+from wikikit.pipeline.stages.preprocess import preprocess
+from wikikit.pipeline.stages.elements import ElementContext, process_elements
 
 
 def _run(raw: str) -> str:
@@ -73,8 +73,8 @@ def test_centring_paired_leaves_a_self_placed_block_alone():
     because no corpus article reaches it: the newlines around a table become
     BODY siblings, so its paragraph never holds a lone placeholder.
     """
-    from britannica.pipeline.stages.elements import _center_wrap
-    from britannica.pipeline.stages.elements._registry import ElementRegistry
+    from wikikit.pipeline.stages.elements import _center_wrap
+    from wikikit.pipeline.stages.elements._registry import ElementRegistry
 
     reg = ElementRegistry()
     ph = reg.add("BRACE_PIPE", "{|\n| a\n|}")

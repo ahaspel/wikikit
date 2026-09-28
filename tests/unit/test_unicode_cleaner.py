@@ -1,4 +1,4 @@
-from britannica.cleaners.unicode import normalize_unicode, replace_print_artifacts
+from wikikit.cleaners.unicode import normalize_unicode, replace_print_artifacts
 
 
 def test_normalize_unicode_preserves_plain_ascii() -> None:

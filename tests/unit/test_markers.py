@@ -1,7 +1,7 @@
 """`markers_to_text` — the ONE marker-stream → plain-text converter (search index body +
 previews).  Plain text must carry NO markup: the guillemet markers, the carried SAFE-HTML
 tags (`sub/sup/small/big/br`), and dropped block markers all have to go."""
-from britannica.markers import markers_to_text
+from wikikit.markers import markers_to_text
 
 
 class TestCarriedHtmlStripped:

@@ -1,0 +1,204 @@
+"""Shape constants — the walker/classifier interface.
+
+A *shape* is the structural form the walker recognises in raw
+wikitext.  There are six shapes; nothing else is balanced by the
+walker.  Each shape names a delimiter family, nothing more — the
+walker emits ``(shape, raw_bytes)`` and the classifier turns that
+into a label (``MATH``, ``IMAGE``, ``LAYOUT_WRAPPER``, ``LEGEND``,
+…) by inspecting the bytes' opening identifier and, for composite
+shapes, the labels of the recursively-classified children.
+
+Shape is the walker's vocabulary; label is the classifier's.  The
+two never overlap.
+
+``strip_outer(shape, raw)`` peels the shape's delimiters and returns
+the inner content with no further walking applied.  The classifier
+hands that inner content back to the walker to find the next-level
+shapes — that mutual recursion is how the classified tree is built.
+"""
+
+from __future__ import annotations
+
+import re
+
+from wikikit.wikitext import paired_half_pattern
+
+
+SHAPE_BRACE_PIPE        = "BRACE_PIPE"        # {|...|}
+SHAPE_HTML_TAG          = "HTML_TAG"          # <NAME ...>...</NAME>
+SHAPE_HTML_SELF_CLOSING = "HTML_SELF_CLOSING" # <NAME ... />
+SHAPE_DOUBLE_BRACKET    = "DOUBLE_BRACKET"    # [[...]]
+SHAPE_DOUBLE_BRACE      = "DOUBLE_BRACE"      # {{...}}
+SHAPE_INDENT            = "INDENT"            # one `:`-marked paragraph (text-shaped)
+SHAPE_LIST              = "LIST"              # a run of `#`-marked lines (text-shaped)
+SHAPE_BODY              = "BODY"               # article-level prose run between other elements
+SHAPE_PAIRED_WRAPPER    = "PAIRED_WRAPPER"     # {{NAME/s}}…{{NAME/e}} paired open/close span
+                                               # — the centring family, ALWAYS composite, always
+                                               # CENTER.  It no longer shares a shape with the
+                                               # genealogy leaf (see SHAPE_GENEALOGY), so the
+                                               # classifier needs no name test to tell them apart.
+SHAPE_GENEALOGY         = "GENEALOGY"          # {{chart2|familytree|tree chart/start}}…/end — a
+                                               # LEAF: the producer emits the pre-cropped image.
+                                               # Sharing PAIRED_WRAPPER forced a name test to
+                                               # separate leaf from composite, and that test
+                                               # claimed whole wrappers (PHYLLOXERA lost ~50% of
+                                               # its prose, SOLOMON ~24%).
+# SHAPE_PAGE is GONE — page position never enters the stream, so there is no
+# page-break marker for the walker to recognize as a shape
+# ([[project_page_position_out_of_band]]).
+SHAPE_TITLE             = "TITLE"              # «TITLE»…«/TITLE» stamp (preprocess_article)
+
+
+SHAPES: frozenset[str] = frozenset({
+    SHAPE_BRACE_PIPE,
+    SHAPE_HTML_TAG,
+    SHAPE_HTML_SELF_CLOSING,
+    SHAPE_DOUBLE_BRACKET,
+    SHAPE_DOUBLE_BRACE,
+    SHAPE_INDENT,
+    SHAPE_LIST,
+    SHAPE_BODY,
+    SHAPE_PAIRED_WRAPPER,
+    SHAPE_GENEALOGY,
+    SHAPE_TITLE,
+})
+
+
+# Shapes whose inner content is not walked — the producer owns the
+# entire payload between (or under) the markers and does whatever
+# internal parsing it needs.
+#
+# * HTML_SELF_CLOSING — no inner content.
+# (INDENT and LIST are line-pattern shapes but NOT leaves: each decomposes
+#   into child nodes like any other composite.  The OUTLINE leaf that stood
+#   here — the `;head:desc` ladder with its inferred hierarchy — is gone
+#   [[project_outline_arc]].)
+# NOTE: SHAPE_PAIRED_WRAPPER is NOT a leaf.  Its CENTER family is a composite —
+# the classifier recurses its inner into the tree via the generic non-leaf path
+# (`strip_outer` peels `{{NAME/s}}…{{NAME/e}}`), so a heading inside a centered
+# block is a real node and `classify_article` runs once per article.  Its CHART2
+# family is effectively a leaf anyway: `strip_outer` returns "" for it (chart-grammar
+# tokens aren't extractable wikitext), so it gets no children and its producer reads
+# raw — exactly as before.
+LEAF_SHAPES: frozenset[str] = frozenset({
+    SHAPE_HTML_SELF_CLOSING,
+    SHAPE_INDENT,
+    SHAPE_LIST,
+    SHAPE_GENEALOGY,
+    # The six STYLED-derived structures (STRIP / PARAM / SHOULDER / RUNNING_HEADER
+    # = `{{…}}` template-form stylers/headings; SPAN_TITLE / HTML_STYLE = `<tag>`
+    # styled wrappers) no longer have their own shapes: they ride the generic
+    # SHAPE_DOUBLE_BRACE / SHAPE_HTML_TAG shapes, with the type carve done by the
+    # classifier's two label-derivers.  Their leaf-ness is inherited from those
+    # generic shapes (both already leaves below); the producers (`process_strip` /
+    # `process_param` / `process_shoulder` / `process_running_header` /
+    # `process_span_title` / `process_html_style`) are unchanged — they read `raw`,
+    # peel their own wrapper, and recurse the inner through the main dispatch.
+    # BODY — a prose run between other elements, at any depth.  The body
+    # producer owns it end-to-end; it is a leaf (no inner — that's what makes
+    # it body text), so the walker never recurses into it.
+    SHAPE_BODY,
+    # BRACE_PIPE — a `{|…|}` table.  Its inner is a GRID (`|-`, `|` row/cell
+    # delimiters) — the table's own structure, NOT body text.  The producer
+    # (`_process_table_unified`) decomposes the grid from raw and `cell_recurse`s
+    # each cell's content through `process_elements` (so cell prose → BODY →
+    # «P»).  A leaf here so the generic walk doesn't grab the grid as body text
+    # (table→row→cell→body lives in the producer, not the classifier).
+    SHAPE_BRACE_PIPE,
+    # DOUBLE_BRACE — a `{{name|arg|arg}}` template (link, fraction, image, footer,
+    # coordinate, …).  Its inner is PIPE-SEPARATED ARGS — the template's own
+    # structure, NOT body text.  The producer chews the whole arg string (splits
+    # the pipes, pulls target/display/params) and stops; a content slot that needs
+    # markup recursion is the producer's own `process_elements` call.  A leaf so
+    # the generic walk doesn't wrap the args into one BODY (which left link
+    # producers a placeholder with no pipes → empty link).  The label derives from
+    # `raw`, so no child registry is needed.
+    SHAPE_DOUBLE_BRACE,
+})
+
+
+def strip_outer(shape: str, raw: str) -> str:
+    """Peel `shape`'s delimiters off `raw`, return the inner content.
+
+    No further walking is applied — the returned string may itself
+    contain balanced shapes which the walker will find when the
+    classifier hands the inner back for next-level extraction.
+
+    Per-label specifics (e.g. IMAGE's optional ``\\n\\nEXTCAP:`` tail
+    after ``]]``) do NOT live here — strip_outer is shape-uniform.
+    The label-deriver for IMAGE handles that during classification.
+    """
+    if shape == SHAPE_BRACE_PIPE:
+        s = re.sub(r"^\{\|[^\n]*\n?", "", raw)
+        s = re.sub(r"\n?\|\}\s*$", "", s)
+        return s
+    if shape == SHAPE_HTML_TAG:
+        s = re.sub(r"^<[A-Za-z][A-Za-z0-9]*\b[^>]*>", "", raw,
+                   flags=re.IGNORECASE)
+        s = re.sub(r"</[A-Za-z][A-Za-z0-9]*>\s*$", "", s,
+                   flags=re.IGNORECASE)
+        # Today's legacy strip for `<poem>` / `<ref>` / `<math>` calls
+        # `.strip()` after removing the tags, so producers see no
+        # leading/trailing whitespace inside.  Preserve that contract
+        # at the shape level — wikitext tag content carries no
+        # significant whitespace at the boundary.
+        return s.strip()
+    if shape == SHAPE_HTML_SELF_CLOSING:
+        return ""
+    if shape == SHAPE_GENEALOGY:
+        # Leaf — chart-grammar tokens are not extractable wikitext.  The
+        # producer reads `raw` and emits the pre-cropped image.
+        return ""
+    if shape == SHAPE_DOUBLE_BRACKET:
+        s = re.sub(r"^\[\[", "", raw)
+        s = re.sub(r"\]\]\s*$", "", s)
+        return s
+    if shape == SHAPE_DOUBLE_BRACE:
+        s = re.sub(r"^\{\{", "", raw)
+        s = re.sub(r"\}\}\s*$", "", s)
+        return s
+    if shape == SHAPE_INDENT:
+        # No delimiters — the raw bytes ARE the indented paragraph, colons and
+        # all; the classifier peels the mark and keeps the rest.
+        return raw
+    if shape == SHAPE_LIST:
+        # No delimiters either — the raw bytes ARE the `#`-marked lines; the
+        # classifier reads the mark count as the nesting depth.
+        return raw
+    if shape == SHAPE_BODY:
+        # No delimiters — the raw bytes ARE the body prose; the producer
+        # transforms them end-to-end.
+        return raw
+    if shape == SHAPE_PAIRED_WRAPPER:
+        # The `{{NAME/s}}…{{NAME/e}}` paired open/close span (former CENTER +
+        # CHART2 — one structure, two families distinguished by name).
+        #
+        #   * CHART2 family (`{{chart2/start}}…{{chart2/end}}`): the bytes are
+        #     chart-grammar templates we never walk inside.  Return empty (the
+        #     old CHART2 `strip_outer`), so a downstream `walker.walk("")`
+        #     yields no extracts and the producer reads `raw`.
+        #   * CENTER family (every other paired wrapper): peel the paired
+        #     `{{NAME/s}}` opener and `{{NAME/e}}` closer (the old CENTER
+        #     `strip_outer`).  Name-agnostic; `[^{}]*?` spans a multi-word name
+        #     (`EB1911 fine print`) but not braces, and the closer is anchored
+        #     at end so a NESTED same-name pair inside survives into the inner
+        #     for the producer's own recursive walk.
+        if re.match(r"\{\{\s*chart2\s*/\s*start", raw, flags=re.IGNORECASE):
+            return ""
+        # Both halves peel through the ONE paired-wrapper grammar, which knows
+        # a half may carry an argument (`{{left margin/s|3.2em}}` states the
+        # width of the indent it opens).  Spelling it here separately is how the
+        # opener came to echo into its own content as text.
+        s = re.sub("^" + paired_half_pattern(half="s"), "", raw,
+                   flags=re.IGNORECASE)
+        s = re.sub(paired_half_pattern(half="e") + r"\s*$", "", s,
+                   flags=re.IGNORECASE)
+        return s
+    if shape == SHAPE_TITLE:
+        # Peel the «TITLE»…«/TITLE» stamp; the inner is the carved title span
+        # (markers + raw <ref>/{{sc}}), handed back to the walker so the title node
+        # is produced recursively — the rendered heading the viewer shows as the H1.
+        s = re.sub(r"^«TITLE»", "", raw)
+        s = re.sub(r"«/TITLE»\s*$", "", s)
+        return s
+    raise ValueError(f"Unknown shape: {shape!r}")

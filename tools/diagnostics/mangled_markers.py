@@ -32,7 +32,7 @@ raw pipe in the anchor text.  Every check we had was silent.
 
 Exits nonzero on any finding, so `set -e` aborts the rebuild before deploy.
 """
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import argparse
 import glob
 import re
@@ -45,10 +45,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
-from britannica.export.corpus import NON_ARTICLE               # noqa: E402
-from britannica.markers import unaccounted_guillemets          # noqa: E402
-from britannica.outputs import outputs_for                     # noqa: E402
-from britannica.render.leaks import mask_math                  # noqa: E402
+from wikikit.export.corpus import NON_ARTICLE               # noqa: E402
+from wikikit.markers import unaccounted_guillemets          # noqa: E402
+from wikikit.outputs import outputs_for                     # noqa: E402
+from wikikit.render.leaks import mask_math                  # noqa: E402
 
 # The tags a RENDERER emits, and nothing looser.  A permissive tag pattern eats
 # the untranscribed math's stray `<`…`>` (`<i,X iV^A\**^\W\W>`) and any
@@ -125,8 +125,8 @@ def main():
 
     # Only the articles that carry ANY unaccounted guillemet need the source,
     # so the database side stays small however big the corpus gets.
-    from britannica.db.models import Article
-    from britannica.db.session import SessionLocal
+    from wikikit.db.models import Article
+    from wikikit.db.session import SessionLocal
     session = SessionLocal()
 
     ours, theirs, unjoined, rows = [], [], [], []

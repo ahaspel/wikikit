@@ -7,7 +7,7 @@ pipeline, or the comparison drowns in false positives.
 """
 import pytest
 
-from britannica.markers import unaccounted_guillemets
+from wikikit.markers import unaccounted_guillemets
 
 
 def sigs(text):

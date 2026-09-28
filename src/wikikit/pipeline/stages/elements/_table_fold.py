@@ -1,0 +1,369 @@
+"""Table recognizer — three concepts (table, row, cell), one recognizer.
+
+`recognize_table` is a single nesting-aware top-level chop of a table's inner
+into rows and cells, recognizing both `{|` and `<table>` spellings at once (no
+flavor branch), skipping any divider that sits inside a nested construct
+({{…}}, [[…]], {|…|}, <table>, <math>, a walker placeholder, …) by stepping
+over it with the walker's `_construct_end`.
+
+The dividers die at the chop: the output is divider-blind structure, the
+canonical `(sep, attr_part, content)` cell shape that `_classify_table_composite`
+turns into TD/TH/ROW child nodes; the composite's producers reassemble it.
+"""
+from __future__ import annotations
+
+import re
+
+from wikikit.pipeline.stages.elements._walker import _construct_end
+
+# (sep, attr_part, content); sep '|' = data cell, '!' = header cell.
+Cell = tuple[str, str, str]
+Row = tuple[str, list[Cell]]  # (row_attr_part, cells)
+
+_TAG_ROW = re.compile(r"<tr\b([^>]*)>", re.IGNORECASE)
+_TAG_CELL = re.compile(r"<(t[dh])\b([^>]*)>", re.IGNORECASE)
+_TAG_CAPTION = re.compile(r"<caption\b[^>]*>(.*?)</caption\s*>",
+                          re.IGNORECASE | re.DOTALL)
+_TAG_CLOSE = re.compile(r"</(?:td|th|tr|caption)\s*>", re.IGNORECASE)
+
+# A wiki cell's attr/content boundary: the part before the first top-level
+# `|` is the attr slot IFF it looks like attributes (an attr keyword, an
+# HTML style/align/etc., or pure `{{Ts|…}}` styling) — MediaWiki's own rule.
+_CELL_ATTR_RE = re.compile(
+    r'^\s*(?:[A-Za-z_:-]+\s*=|colspan|rowspan|align|valign|style|class|'
+    r'width|height|scope|bgcolor|nowrap|abbr|id|{{[Tt]s\b)', re.IGNORECASE)
+
+
+def _skip(inner: str, i: int) -> int:
+    """End of the nested construct opening at `i`, or `i` if none opens
+    here.  `<td>`/`<tr>`/`<th>`/`<i>`/… return `None` from `_construct_end`
+    (not constructs the walker bounds), so they are left for the divider
+    scan; `{{…}}`/`[[…]]`/`<table>`/`<math>`/comments are stepped over whole.
+
+    A nested `{|…|}` is depth-counted HERE rather than via `_construct_end`,
+    because an UNCLOSED `{|` (common in the corpus, where the nested table
+    shares the outer's `|}`) makes `_construct_end` return `None` — which
+    would let the scanner descend and hoist the nested table's cells (the
+    flatten bug).  Run it to its matching `|}` or to end-of-string, whole."""
+    if inner.startswith("{|", i):
+        n = len(inner)
+        depth, j = 1, i + 2
+        while j < n and depth:
+            if inner.startswith("{|", j):
+                depth += 1
+                j += 2
+            elif inner.startswith("|}", j):
+                depth -= 1
+                j += 2
+            else:
+                j += 1
+        return j
+    e = _construct_end(inner, i)
+    return e if (e is not None and e > i) else i
+
+
+def _peel_caption(inner: str) -> tuple[str, str]:
+    """Pull a top-level caption (`|+ …` wiki line, or `<caption>…</caption>`)
+    out of the inner so it doesn't masquerade as a cell.  Returns
+    `(caption, inner_without_caption)`."""
+    # HTML caption — match at top level (skip nested).
+    n = len(inner)
+    i = 0
+    while i < n:
+        j = _skip(inner, i)
+        if j > i:
+            i = j
+            continue
+        m = _TAG_CAPTION.match(inner, i)
+        if m:
+            return m.group(1).strip(), inner[:m.start()] + inner[m.end():]
+        i += 1
+    # Wiki caption — a `|+` at line start.  The caption body may span multiple
+    # source lines (a styler whose body carries a newline, e.g. a two-line
+    # `{{sc|…}}` heading), so scan from `|+` to the next TOP-LEVEL table
+    # delimiter (a line-start `|`/`!`) stepping over nested constructs with
+    # `_skip` — NOT to the first `\n`, which would truncate the styler into an
+    # unclosed `{{sc|…` fragment its producer can't match (it then leaks raw).
+    # Like a cell it may carry an attr slot before a top-level `|`; split it off
+    # the same way `_split_cells` does, else the attrs leak into the <caption>.
+    m = re.search(r"(?:^|\n)[ \t]*\|\+", inner)
+    if m:
+        cstart = m.end()                 # just after `|+`
+        i, line_nl, line_start, end = cstart, -1, False, None
+        while i < n:
+            j = _skip(inner, i)
+            if j > i:                    # step over a nested {{…}}/[[…]]/{|…|} whole
+                i, line_start = j, False
+                continue
+            if _TAG_ROW.match(inner, i) or _TAG_CELL.match(inner, i):
+                # HTML row/cell ends the caption (a table may mix `|+` with
+                # `<tr>`/`<td>`, as AGRICULTURE's livestock tables do).
+                end = line_nl if (line_start and line_nl >= 0) else i
+                break
+            ch = inner[i]
+            if line_start and ch in ("|", "!"):
+                end = line_nl            # next wiki cell / header / row / table-end
+                break
+            if ch == "\n":
+                line_nl, line_start = i, True
+            elif not (line_start and ch in " \t"):
+                line_start = False
+            i += 1
+        if end is None:
+            end = i
+        _attr, content = _wiki_attr_split(inner[cstart:end])
+        return content.strip(), inner[:m.start()] + inner[end:]
+    return "", inner
+
+
+def _split_rows(inner: str) -> list[tuple[str, str]]:
+    """Top-level split of (caption-free) inner into `[(row_attr, row_body)]`
+    on `|-` (wiki) and `<tr>` (html) dividers.  The pre-first-divider
+    segment is the implicit first row."""
+    n = len(inner)
+    dividers: list[tuple[int, int, str]] = []  # (div_start, body_start, attr)
+    i = 0
+    line_start = True
+    while i < n:
+        j = _skip(inner, i)
+        if j > i:
+            i = j
+            line_start = False
+            continue
+        m = _TAG_ROW.match(inner, i)
+        if m:
+            dividers.append((i, m.end(), m.group(1).strip()))
+            i = m.end()
+            line_start = False
+            continue
+        if line_start and inner.startswith("|-", i):
+            eol = inner.find("\n", i)
+            eol = n if eol < 0 else eol
+            dividers.append((i, eol, inner[i + 2:eol].strip()))
+            i = eol
+            line_start = True
+            continue
+        ch = inner[i]
+        line_start = ch == "\n" or (line_start and ch in " \t")
+        i += 1
+
+    rows: list[tuple[str, str]] = []
+    first = dividers[0][0] if dividers else n
+    rows.append(("", inner[:first]))
+    for k, (_ds, bs, attr) in enumerate(dividers):
+        nxt = dividers[k + 1][0] if k + 1 < len(dividers) else n
+        rows.append((attr, inner[bs:nxt]))
+    return rows
+
+
+def _split_cells(row_body: str) -> list[Cell]:
+    """Top-level split of a row body into `[(sep, attr_part, content)]`.
+    Cell starts: line-start `|`/`!` (wiki), inline `||`/`!!` (wiki), and
+    `<td>`/`<th>` (html).  A close tag (`</td>`/`</tr>`) ends the current
+    cell's content; a wiki cell self-closes at the next cell.  Nested
+    constructs are skipped whole.  Each cell's content runs to the next
+    EVENT (cell start or close), not the next cell start."""
+    n = len(row_body)
+    events: list[tuple] = []  # ("cell", pos, content_start, sep, html_attr) | ("close", pos, …)
+    i = 0
+    line_start = True
+    while i < n:
+        j = _skip(row_body, i)
+        if j > i:
+            i = j
+            line_start = False
+            continue
+        m = _TAG_CELL.match(row_body, i)
+        if m:
+            sep = "!" if m.group(1).lower() == "th" else "|"
+            events.append(("cell", i, m.end(), sep, m.group(2).strip()))
+            i = m.end()
+            line_start = False
+            continue
+        m = _TAG_CLOSE.match(row_body, i)
+        if m:
+            events.append(("close", i, None, None, None))
+            i = m.end()
+            line_start = False
+            continue
+        two = row_body[i:i + 2]
+        if not line_start and two in ("||", "!!"):
+            sep = "|" if two == "||" else "!"
+            events.append(("cell", i, i + 2, sep, None))
+            i += 2
+            line_start = False
+            continue
+        if line_start and row_body[i:i + 1] in ("|", "!"):
+            # A line-start `||`/`!!` is ONE cell start -- an author's redundant
+            # double delimiter (ARENIG GROUP's `|| ''Dicranograptus''…` beside
+            # a sibling `| Derfel…`).  Consume BOTH pipes so the second doesn't
+            # leak into the cell content.
+            width = 2 if two in ("||", "!!") else 1
+            sep = row_body[i]
+            events.append(("cell", i, i + width, sep, None))
+            i += width
+            line_start = False
+            continue
+        ch = row_body[i]
+        line_start = ch == "\n" or (line_start and ch in " \t")
+        i += 1
+
+    cells: list[Cell] = []
+    for idx, ev in enumerate(events):
+        if ev[0] != "cell":
+            continue
+        _, _mark, cs, sep, html_attr = ev
+        content_end = events[idx + 1][1] if idx + 1 < len(events) else n
+        raw = row_body[cs:content_end]
+        if html_attr is not None:          # html cell — attr was in the tag
+            attr, content = html_attr, raw
+        else:                              # wiki cell — split attr|content
+            attr, content = _wiki_attr_split(raw)
+        cells.append((sep, attr.strip(), content.strip()))
+    return cells
+
+
+def _wiki_attr_split(raw: str) -> tuple[str, str]:
+    """Split a wiki cell body at its first TOP-LEVEL `|`: the prefix is the
+    attr slot iff it looks like attributes, else the whole body is content."""
+    n = len(raw)
+    i = 0
+    while i < n:
+        j = _skip(raw, i)
+        if j > i:
+            i = j
+            continue
+        if raw[i] == "|":
+            prefix = raw[:i]
+            if _CELL_ATTR_RE.match(prefix):
+                return prefix, raw[i + 1:]
+            return "", raw
+        i += 1
+    return "", raw
+
+
+def recognize_table(inner: str) -> tuple[str, list[Row]]:
+    """Chop a table's inner into `(caption, [(row_attr, cells)])` — ONE
+    nesting-aware top-level recognizer, both syntaxes, divider-blind output."""
+    caption, body = _peel_caption(inner)
+    rows: list[Row] = []
+    for row_attr, row_body in _split_rows(body):
+        cells = _split_cells(row_body)
+        if cells:
+            rows.append((row_attr, cells))
+    return caption, rows
+
+
+# ── Attr-slot, recursed (no whitelist) ──────────────────────────────────
+#
+# The cell/row/table attribute slot has ONE nested construct, `{{Ts|…}}`,
+# which is recursed through its producer (`_parse_ts_codes` — the existing
+# Ts-code→CSS map, which also passes inline CSS through).  EVERYTHING else —
+# `style="…"`, `align=`, `width=`, `bgcolor=`, bare CSS, an attribute we
+# don't recognise — is CARRIED, never dropped.  This is the faithful
+# replacement for `_cell_styles`'s whitelist: recursion never loses.
+
+_TS_TMPL_RE = re.compile(r"\{\{[Tt]s\s*((?:\|[^{}]*)?)\}\}")
+# The quoted value's closing `"` is OPTIONAL: an unterminated attr quote
+# (`<td style="padding-left:2em;>` — the transcriber forgot the close) runs to
+# the end of the attr slot, which is where the tag's `>` cut it.  Reader-side
+# tolerance replacing the `close_unclosed_attr_quotes` sweeper (J2,
+# docs/sweeper_removal.md) — same semantics the sweeper's inserted quote gave.
+_KV_RE = re.compile(r'([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"?|(\S+))')
+_ATTR_CSS = {"valign": "vertical-align", "bgcolor": "background-color",
+             "color": "color", "width": "width", "height": "height"}
+
+# A template PARAMETER reference with a default — `{{{width|100%}}}`,
+# `{{{align|left}}}`.  In article space the parameter is never bound, so
+# MediaWiki renders the DEFAULT.  Every article-space instance lives in a
+# table/cell attr slot (ALGEBRA's transposition table, ws 01-0640), so the
+# decode belongs HERE, to the producer that owns the slot — exactly like the
+# `{{=}}` attr-escape in `_html_style_peel` ([[feedback_context_sensitive_is_producer]];
+# J5 of docs/sweeper_removal.md).  A parameter with NO default (`{{{foo}}}`,
+# zero corpus instances) is left alone: MediaWiki renders it literally, so
+# leaking it is faithful.
+_PARAM_DEFAULT_RE = re.compile(r"\{\{\{[^{}|]+\|([^{}]*)\}\}\}")
+
+
+def _resolve_param_defaults(slot: str) -> str:
+    prev = None
+    while prev != slot:                  # nested defaults resolve inside-out
+        prev = slot
+        slot = _PARAM_DEFAULT_RE.sub(lambda m: m.group(1), slot)
+    return slot
+
+
+def fold_cell_attrs(
+    attr_part: str, table_level: bool = False,
+) -> tuple[list[str], dict[str, str]]:
+    """Total attr handling — the slot recursed, nothing dropped, nothing FAKED.
+
+    Returns ``(css_declarations, html_attrs)``.  The style bits (``{{Ts}}``,
+    inline ``style=``, ``align``/``width``/``valign``/…) become CSS; every other
+    attribute (``class``, ``colspan``, ``cellpadding``, ``summary``…) rides as a
+    real HTML attribute on the tag — NOT a bogus ``key:value`` CSS declaration
+    the browser silently ignores.  The emit splices both onto the tag; this is
+    the faithful carry the retired ``_cell_styles`` whitelist couldn't give (it
+    DROPPED every non-style attr).
+
+    ``table_level`` carries the one cell-vs-table distinction MediaWiki makes: a
+    TABLE's ``align=`` centres/floats the whole table (``margin:auto``/``float``),
+    a CELL's is ``text-align``."""
+    def _nonempty_decl(d):
+        # `width=` / `style="width:"` — an empty value carries nothing; emitting
+        # `width:;` is an invalid declaration everywhere (browsers drop it
+        # silently, XHTML validators reject it).
+        d = d.strip()
+        return bool(d) and (":" not in d or bool(d.split(":", 1)[1].strip()))
+    from wikikit.pipeline.stages.elements._tables import _parse_ts_codes
+    rules: list[str] = []
+    attrs: dict[str, str] = {}
+    slot = _resolve_param_defaults(attr_part or "")
+    for m in _TS_TMPL_RE.finditer(slot):          # {{Ts|…}} → CSS (its producer)
+        rules += _parse_ts_codes(m.group(1).lstrip("|"))
+    slot = _TS_TMPL_RE.sub(" ", slot)
+    for m in _KV_RE.finditer(slot):               # key="val" or key=val attributes
+        k = m.group(1).lower()
+        v = m.group(2) if m.group(2) is not None else m.group(3)
+        if k == "style":
+            rules += [d.strip() for d in v.split(";") if _nonempty_decl(d)]
+        elif k == "align":
+            a = "center" if v.startswith("cent") else v
+            if table_level:                       # a TABLE's align centres/floats it
+                rules.append("margin-right:auto;margin-left:auto" if a == "center"
+                             else f"float:{a}")
+            else:
+                rules.append(f"text-align:{a}")
+        elif k in _ATTR_CSS:
+            if not v.strip():
+                continue                          # an empty attr (`width=`) carries nothing
+            if k in ("width", "height") and re.fullmatch(r"\d+", v.strip()):
+                v = v.strip() + "px"              # bare integer ⇒ px (HTML default)
+            rules.append(f"{_ATTR_CSS[k]}:{v}")
+        else:                                      # not a style → real HTML attr
+            attrs[k] = v
+    slot = _KV_RE.sub(" ", slot)
+    if re.search(r"(?<![-\w])nowrap(?![-\w])", slot, re.IGNORECASE):
+        rules.append("white-space:nowrap")        # bare HTML boolean attr
+    for frag in slot.split(";"):                  # leftover bare CSS (width:50%)
+        frag = frag.strip()
+        if ":" in frag and not frag.startswith(("|", "{")) and _nonempty_decl(frag):
+            rules.append(frag.rstrip(";").strip())
+    seen: dict[str, int] = {}                      # dedupe CSS, later wins
+    out: list[str] = []
+    for r in rules:
+        p = r.split(":", 1)[0].strip()
+        if p in seen:
+            out[seen[p]] = r
+        else:
+            seen[p] = len(out)
+            out.append(r)
+    return out, attrs
+
+
+def fold_cell_styles(attr_part: str, table_level: bool = False) -> list[str]:
+    """CSS-only view of :func:`fold_cell_attrs` — for callers that emit only a
+    ``style="…"`` and have no tag to hang HTML attrs on (the styled-wrapper
+    markers, the align-only ``_cell_align``).  Non-style attrs drop here exactly
+    as the retired ``_cell_styles`` dropped them — no junk, nothing faked."""
+    return fold_cell_attrs(attr_part, table_level)[0]

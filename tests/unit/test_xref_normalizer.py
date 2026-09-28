@@ -7,7 +7,7 @@ merge: whatever matched before still matches.
 """
 import pytest
 
-from britannica.xrefs.normalizer import normalize_xref_target as N
+from wikikit.xrefs.normalizer import normalize_xref_target as N
 
 
 @pytest.mark.parametrize("reference,filed", [
@@ -65,7 +65,7 @@ def test_the_index_answers_two_different_questions():
     but it is not that title AS WRITTEN, and treating it as one let the swap
     show `Menelek`, dropping a regnal number the page printed.
     """
-    from britannica.xrefs.normalizer import NormalizedIndex
+    from wikikit.xrefs.normalizer import NormalizedIndex
     idx = NormalizedIndex([("MENELEK II", "18-0147.json"),
                            ("QUEEN ANNE’S BOUNTY", "22-0001.json")])
 
@@ -80,7 +80,7 @@ def test_the_index_answers_two_different_questions():
 
 def test_a_raw_lookup_is_not_expressible():
     """The index normalizes on both add and get, so a caller cannot half-do it."""
-    from britannica.xrefs.normalizer import NormalizedIndex
+    from wikikit.xrefs.normalizer import NormalizedIndex
     idx = NormalizedIndex([("Sea-Power", "x.json")])
     assert idx.get("sea power") == "x.json"
     assert "SEA POWER" in idx

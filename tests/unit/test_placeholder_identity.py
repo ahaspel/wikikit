@@ -14,11 +14,11 @@ function and the SAME compiled pattern, not merely agreeing copies.
 """
 from __future__ import annotations
 
-import britannica.pipeline.stages.elements as elements
-import britannica.pipeline.stages.elements._classifier as classifier
-import britannica.pipeline.stages.elements._indent as indent
-import britannica.pipeline.stages.elements._walker as walker
-from britannica.pipeline.stages.elements._registry import (
+import wikikit.pipeline.stages.elements as elements
+import wikikit.pipeline.stages.elements._classifier as classifier
+import wikikit.pipeline.stages.elements._indent as indent
+import wikikit.pipeline.stages.elements._walker as walker
+from wikikit.pipeline.stages.elements._registry import (
     PLACEHOLDER_RE, ElementRegistry, new_placeholder)
 
 

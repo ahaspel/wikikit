@@ -1,5 +1,5 @@
 """Tests that unicode normalization preserves sub/superscripts and fractions."""
-from britannica.cleaners.unicode import normalize_unicode
+from wikikit.cleaners.unicode import normalize_unicode
 
 
 def test_subscripts_survive_nfc():

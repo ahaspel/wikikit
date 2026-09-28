@@ -21,10 +21,10 @@ from pathlib import Path
 
 import pytest
 
-from britannica.mdx.checksums import (
+from wikikit.mdx.checksums import (
     format_checksums, sha, write_checksums, write_shipped_text)
 
-MDX_PACKAGE = Path(__file__).resolve().parents[2] / "src" / "britannica" / "mdx"
+MDX_PACKAGE = Path(__file__).resolve().parents[2] / "src" / "wikikit" / "mdx"
 # Every artifact that leaves the building inside a download.
 SHIPPED_NAMES = ("SHA256SUMS", "README.md", "README.txt", "manifest.json",
                  "installation.json", "source-link-issues.json", "release.json")

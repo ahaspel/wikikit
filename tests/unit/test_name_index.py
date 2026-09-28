@@ -5,7 +5,7 @@ These lock the BEHAVIOUR each rung exists for, in the terms the design states it
 dumb and broad, each rung is strictly looser than the last, and NOTHING here
 picks — a rung returns a bag.
 """
-from britannica.name_index import NameIndex, content, fold, wordset, wordset_f
+from wikikit.name_index import NameIndex, content, fold, wordset, wordset_f
 
 
 def _idx(*titles):

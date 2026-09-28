@@ -1,4 +1,4 @@
-from britannica.pipeline.stages.extract_contributors import (
+from wikikit.pipeline.stages.extract_contributors import (
     _clean_footer_initials,
 )
 

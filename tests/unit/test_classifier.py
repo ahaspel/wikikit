@@ -12,11 +12,11 @@ yet — so these tests exercise it standalone.  They cover:
 
 from __future__ import annotations
 
-from britannica.pipeline.stages.elements._classifier import (
+from wikikit.pipeline.stages.elements._classifier import (
     classify,
     classify_article,
 )
-from britannica.pipeline.stages.elements._shapes import (
+from wikikit.pipeline.stages.elements._shapes import (
     SHAPE_BRACE_PIPE,
     SHAPE_DOUBLE_BRACE,
     SHAPE_DOUBLE_BRACKET,

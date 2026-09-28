@@ -7,7 +7,7 @@ and MECHANICS' `(8)` / `(9)` rendered as `((8))` / `((9))`.
 """
 import pytest
 
-from britannica.pipeline.stages.elements._math import (
+from wikikit.pipeline.stages.elements._math import (
     _eqn_label_text, _eqn_strip_paren_label,
 )
 

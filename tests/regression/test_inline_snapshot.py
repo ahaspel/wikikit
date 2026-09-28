@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from britannica.render.inline import decode_inline
+from wikikit.render.inline import decode_inline
 
 
 REF_PATH = Path("tests/snapshots/inline/inline_ref.json")

@@ -12,21 +12,21 @@ docs/xref_resolution_strategy.md, [[project_resolver_consolidation]].
 Sole (re)writer of `xref_resolution.jsonl`; patches each article JSON in place
 (body, word_count, xrefs panel, rendered_html).
 """
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, "src")
-from britannica.db.models import Article
-from britannica.db.session import SessionLocal
-from britannica.export.article_json import (
+from wikikit.db.models import Article
+from wikikit.db.session import SessionLocal
+from wikikit.export.article_json import (
     _link_xrefs_in_body, _safe_filename, _xrefs_from_body,
     build_title_index, register_stable_id_dedup, xref_panel_entries,
 )
-from britannica.link_resolver import LinkResolver
-from britannica.markers import countable_words
-from britannica.render.article import render_article
+from wikikit.link_resolver import LinkResolver
+from wikikit.markers import countable_words
+from wikikit.render.article import render_article
 
 ART = current_corpus().derived("articles")
 _SKIP = {"index.json", "contributors.json"}
@@ -53,7 +53,7 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
     ``_safe_filename`` call — otherwise a BOG/BOGÓ-type pair drops its -N suffix
     and bakes a dangling ``resolved_to``.
     """
-    from britannica.export.article_json import article_sort_key
+    from wikikit.export.article_json import article_sort_key
     all_articles = sorted(session.query(Article).all(), key=article_sort_key)
     # The ONE name→article resolver (reads the exported index.json — same
     # filename space as _safe_filename post-dedup); fn_to_id maps its picks
@@ -123,7 +123,7 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
 
 def main() -> None:
     """Standalone: load the corpus, resolve + render, write back."""
-    from britannica.export.corpus import load_corpus, write_corpus
+    from wikikit.export.corpus import load_corpus, write_corpus
     session = SessionLocal()
     try:
         register_stable_id_dedup(session.query(Article).all())

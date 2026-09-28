@@ -43,7 +43,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # file (repo-relative) -> why it reads the directory itself, and how it stays honest.
 EXPORTED_DIRECT = {
-    "src/britannica/export/corpus.py":
+    "src/wikikit/export/corpus.py":
         "IS the reader",
     "tools/diagnostics/export_fingerprint.py":
         "hashes 37k payloads in a ProcessPoolExecutor over PATHS; carries each "
@@ -69,16 +69,16 @@ EXPORTED_DIRECT = {
         "through load_corpus would parse 37k JSONs (~90s) and turn a 40ms deploy "
         "gate into one worth skipping.  Reports its own count in both the stamp "
         "and the refusal message",
-    "src/britannica/epub/build.py":
+    "src/wikikit/epub/build.py":
         "enumerates article STEMS for the EPUB (`_STEM_RE` excludes the "
         "non-articles); reads no payload here — the build reports its own counts",
-    "src/britannica/export/download.py":
+    "src/wikikit/export/download.py":
         "reads the corpus through load_corpus; its globs are over the download "
         "OUTPUT dir, not the article dir",
     "tools/pipeline/download_images.py":
         "reads the corpus through load_corpus; its `iterdir` counts files in the "
         "IMAGE dir",
-    "src/britannica/mdx/navigation.py":
+    "src/wikikit/mdx/navigation.py":
         "reads no payload at all: it names ONE file in the article dir, the "
         "contributor roster `contributors.json`, and its only glob is over "
         "`tools/viewer/readers-guide*.html`.  The file-level rule pairs those two "
@@ -87,7 +87,7 @@ EXPORTED_DIRECT = {
 }
 
 RAW_DIRECT = {
-    "src/britannica/source_pages.py":
+    "src/wikikit/source_pages.py":
         "IS the reader",
 }
 
@@ -166,8 +166,8 @@ def test_both_readers_still_refuse_to_skip():
     would be enforcing a rule that no longer buys anything."""
     import inspect
 
-    from britannica.export.corpus import load_corpus
-    from britannica.source_pages import load_pages
+    from wikikit.export.corpus import load_corpus
+    from wikikit.source_pages import load_pages
 
     for fn, name in ((load_corpus, "load_corpus"), (load_pages, "load_pages")):
         src = inspect.getsource(fn)
@@ -182,7 +182,7 @@ def test_the_raw_reader_applies_corrections():
     what makes that unforgettable ([[feedback_corrections_json]])."""
     import inspect
 
-    from britannica.source_pages import load_pages
+    from wikikit.source_pages import load_pages
     assert "apply_corrections" in inspect.getsource(load_pages)
 
 

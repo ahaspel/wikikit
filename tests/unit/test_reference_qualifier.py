@@ -15,9 +15,9 @@ kind and embedding, because the author declaring the sense outranks any proxy:
 `Down (hill)` sits in a footnote about a battle at Dunkirk, so the prose cosine
 points confidently at the Irish county.
 """
-from britannica.link_resolver import _qualifier_of
-from britannica.topic_fisher import Fisher
-from britannica.xrefs.disambiguation import lead_kind
+from wikikit.link_resolver import _qualifier_of
+from wikikit.topic_fisher import Fisher
+from wikikit.xrefs.disambiguation import lead_kind
 
 
 class _EmbStub:

@@ -22,11 +22,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "src" / "britannica"
+SRC = ROOT / "src"
 
 # marker name -> the module allowed to build it
 OWNERS = {
-    "LN": "pipeline/stages/elements/_link.py",
+    "LN": "wikikit/pipeline/stages/elements/_link.py",
 }
 # A string literal that BUILDS the marker: it opens with `«NAME:` and the literal
 # is not the whole, closed token (which would be a pattern or a comparison).

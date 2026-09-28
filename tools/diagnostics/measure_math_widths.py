@@ -21,7 +21,7 @@ Output schema:
 Foundation for the auto-scaling pipeline (Approach C from the math-quality session).
 Cached: hash-keyed, so subsequent runs only measure new LaTeX.
 """
-from britannica.corpora import current_corpus
+from wikikit.corpora import current_corpus
 import json
 import re
 import sys
@@ -29,7 +29,7 @@ from collections import defaultdict
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-from britannica.math_widths import CACHE_PATH, cache_key
+from wikikit.math_widths import CACHE_PATH, cache_key
 
 sys.stdout.reconfigure(encoding="utf-8") if hasattr(sys.stdout, "reconfigure") else None
 
@@ -61,7 +61,7 @@ def _collect_latex() -> dict[str, list[str]]:
     plus all markers >100 chars (any of these MIGHT render display
     depending on paragraph context; measuring is cheap).
     """
-    from britannica.export.corpus import load_corpus
+    from wikikit.export.corpus import load_corpus
     by_hash: dict[str, dict] = {}
     # Total load — an unparseable article here would silently go UNMEASURED, so
     # its wide math would ship unhinted (no fs= / popout) rather than loudly fail.

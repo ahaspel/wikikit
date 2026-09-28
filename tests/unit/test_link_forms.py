@@ -6,8 +6,8 @@ be separate parses kept in step by hand.
 """
 import pytest
 
-from britannica.export.article_json import _resolve_ln_markers
-from britannica.pipeline.stages.elements._link import (
+from wikikit.export.article_json import _resolve_ln_markers
+from wikikit.pipeline.stages.elements._link import (
     _LINK_FORMS, _link_display, _slots_bracket, _slots_display_first,
     _slots_target_first,
 )
@@ -15,7 +15,7 @@ from britannica.pipeline.stages.elements._link import (
 
 def test_every_form_is_routed():
     """The classifier's label set IS the form table — one list, not two."""
-    from britannica.pipeline.stages.elements._link import _LINK_LABELS
+    from wikikit.pipeline.stages.elements._link import _LINK_LABELS
     assert _LINK_LABELS == frozenset(_LINK_FORMS)
 
 

@@ -36,29 +36,29 @@ ROOT = Path(__file__).resolve().parents[2]
 # file (repo-relative, /-separated) -> why it may operate on marker tokens.
 OWNERS = {
     # the lexicon: THE readers/rewriters (iter/sub_*), strip helpers, emitters
-    "src/britannica/markers.py": "the marker lexicon",
+    "src/wikikit/markers.py": "the marker lexicon",
     # sanctioned decoders (marker -> target output)
-    "src/britannica/render/inline.py": "the site/epub decoder",
-    "src/britannica/render/article.py": "the render shell (TITLE/SH peels)",
-    "src/britannica/export/markdown.py": "the markdown decoder",
-    "src/britannica/export/tei.py": "the TEI decoder",
+    "src/wikikit/render/inline.py": "the site/epub decoder",
+    "src/wikikit/render/article.py": "the render shell (TITLE/SH peels)",
+    "src/wikikit/export/markdown.py": "the markdown decoder",
+    "src/wikikit/export/tei.py": "the TEI decoder",
     # producers: peel/emit their OWN constructs
-    "src/britannica/pipeline/stages/elements/__init__.py":
+    "src/wikikit/pipeline/stages/elements/__init__.py":
         "walker + body/sub-sup producers",
-    "src/britannica/pipeline/stages/elements/_anchor.py": "anchor producer",
-    "src/britannica/pipeline/stages/elements/_classifier.py": "TITLE peel",
-    "src/britannica/pipeline/stages/elements/_link.py": "link wire form",
-    "src/britannica/pipeline/stages/elements/_section_anchors.py":
+    "src/wikikit/pipeline/stages/elements/_anchor.py": "anchor producer",
+    "src/wikikit/pipeline/stages/elements/_classifier.py": "TITLE peel",
+    "src/wikikit/pipeline/stages/elements/_link.py": "link wire form",
+    "src/wikikit/pipeline/stages/elements/_section_anchors.py":
         "section-anchor producer",
-    "src/britannica/pipeline/stages/elements/_shapes.py": "TITLE peel",
-    "src/britannica/pipeline/stages/elements/_title.py": "title producer",
-    "src/britannica/pipeline/stages/elements/_walker.py": "the walker",
-    "src/britannica/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
-    "src/britannica/books/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
+    "src/wikikit/pipeline/stages/elements/_shapes.py": "TITLE peel",
+    "src/wikikit/pipeline/stages/elements/_title.py": "title producer",
+    "src/wikikit/pipeline/stages/elements/_walker.py": "the walker",
+    "src/wikikit/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
+    "src/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
     # readers (throwaway copies / node extraction, never the shipping stream)
-    "src/britannica/books/eb1911/plates.py":
+    "src/eb1911/plates.py":
         "EB1911 plate-title projection (strips «B»/«I» from a heading field)",
-    "src/britannica/pipeline/stages/transform_articles/__init__.py":
+    "src/wikikit/pipeline/stages/transform_articles/__init__.py":
         "title-node reader",
     # sanctioned decorators (own ONE marker param each)
     "tools/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
@@ -100,7 +100,7 @@ def _scan(globs, op_re):
 def test_marker_ops_only_in_owners():
     hits = _scan(_PY_GLOBS, _PY_OP)
     # Guard on the guard: a broken glob would pass vacuously.
-    assert "src/britannica/markers.py" in hits, \
+    assert "src/wikikit/markers.py" in hits, \
         "scanner found nothing in markers.py — the scan itself is broken"
     strays = {f: lines for f, lines in hits.items() if f not in OWNERS}
     assert not strays, (

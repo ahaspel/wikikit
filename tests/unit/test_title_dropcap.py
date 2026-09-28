@@ -20,7 +20,7 @@ The entity rule still matters even though no title starts with `&quot;` today:
 the letter test reads the UNESCAPED glyph, so it must see `&quot;` whole to know
 it is punctuation at all.
 """
-from britannica.render.article import RenderContext, _render_title_h1
+from wikikit.render.article import RenderContext, _render_title_h1
 
 DROPCAP = "font-size:1.6em"
 

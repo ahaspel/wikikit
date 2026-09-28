@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 for _p in ("src", "tools/diagnostics", "tools/pipeline"):
     sys.path.insert(0, str(ROOT / _p))
 
-from britannica import markers, math_widths  # noqa: E402
+from wikikit import markers, math_widths  # noqa: E402
 
 
 

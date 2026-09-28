@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from britannica.pipeline.stages.elements._shapes import (
+from wikikit.pipeline.stages.elements._shapes import (
     SHAPE_BODY,
     SHAPE_BRACE_PIPE,
     SHAPE_DOUBLE_BRACE,
@@ -22,7 +22,7 @@ from britannica.pipeline.stages.elements._shapes import (
     SHAPE_HTML_SELF_CLOSING,
     SHAPE_HTML_TAG,
 )
-from britannica.pipeline.stages.elements._walker import walk
+from wikikit.pipeline.stages.elements._walker import walk
 
 
 def _non_body(extracts):

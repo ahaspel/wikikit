@@ -8,10 +8,10 @@ fetched under different names.
 """
 import pytest
 
-from britannica import settings as settings_module
-from britannica.books.dnb import DNB
-from britannica.books.eb1911 import EB1911
-from britannica.corpora import current_corpus
+from wikikit import settings as settings_module
+from dnb import DNB
+from eb1911 import EB1911
+from wikikit.corpora import current_corpus
 
 
 @pytest.fixture
@@ -74,29 +74,29 @@ def test_dnb_refuses_a_volume_it_does_not_have():
         DNB.page_title(72, 1)
 
 
-@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
+@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
 def test_selecting_a_corpus_selects_its_profile(corpus):
     assert current_corpus() is DNB
 
 
 @pytest.mark.parametrize("corpus,error", [
     ("klingon", ValueError),                       # not module:attribute
-    ("britannica.books.klingon:K", ModuleNotFoundError),
-    ("britannica.books.eb1911:_EB1911_PAGES", TypeError),   # not a Corpus
+    ("klingon:K", ModuleNotFoundError),
+    ("eb1911:_EB1911_PAGES", TypeError),   # not a Corpus
 ], indirect=["corpus"])
 def test_a_book_that_cannot_be_used_is_refused(corpus, error):
     with pytest.raises(error):
         current_corpus()
 
 
-@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
+@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
 def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
     """The DNB marks articles with `<section>` runs, not typography.
 
     Running the typographic reader over it would not crash — it would return a
     plausible set of wrong boundaries, which is worse.
     """
-    from britannica.pipeline.stages.super_detect import detect_boundaries
+    from wikikit.pipeline.stages.super_detect import detect_boundaries
     with pytest.raises(NotImplementedError, match="names no article detector"):
         detect_boundaries(1)
 
@@ -173,7 +173,7 @@ def test_book_data_is_declared_at_both_ends():
     book that needed none."""
     import dataclasses
     import pytest
-    from britannica.corpora import KNOWN_DATA
+    from wikikit.corpora import KNOWN_DATA
 
     # Every file EB1911 declares exists — a declaration is a promise.
     for name in EB1911.data_files:
@@ -234,15 +234,15 @@ def test_eb1911_raw_path_is_unchanged():
     tidiness at the cost of a mass move, and every test that reads a fixture
     page hardcodes the old path.
     """
-    from britannica.source_pages import raw_dir, volume_dir, page_filename
+    from wikikit.source_pages import raw_dir, volume_dir, page_filename
     assert raw_dir().as_posix() == "data/raw/wikisource"
     assert volume_dir(3).as_posix() == "data/raw/wikisource/vol_03"
     assert page_filename(3, 42) == "vol03-page0042.json"
 
 
-@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
+@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
 def test_the_dnb_reads_from_its_own_directory(corpus):
     """Two books, two trees — the same separation the databases have."""
-    from britannica.source_pages import raw_dir, volume_dir
+    from wikikit.source_pages import raw_dir, volume_dir
     assert raw_dir().as_posix() == "data/raw/dnb"
     assert volume_dir(65).as_posix() == "data/raw/dnb/vol_65"

@@ -1,32 +1,32 @@
 {
-  "src/britannica/books/dnb.py": [
+  "src/dnb/__init__.py": [
     "DNB"
   ],
-  "src/britannica/books/eb1911/__init__.py": [
+  "src/eb1911/__init__.py": [
     "EB1911"
   ],
-  "src/britannica/export/markdown.py": [
+  "src/wikikit/export/markdown.py": [
     "_SC_OPEN"
   ],
-  "src/britannica/export/tei.py": [
+  "src/wikikit/export/tei.py": [
     "_CELL_EDGE_RE"
   ],
-  "src/britannica/markers.py": [
+  "src/wikikit/markers.py": [
     "LIST_MARKERS",
     "RENDERED_MARKER_OPENS"
   ],
-  "src/britannica/pipeline/stages/elements/_registry.py": [
+  "src/wikikit/pipeline/stages/elements/_registry.py": [
     "BLOCK_LABELS",
     "_SUBSTITUTION_PASSES"
   ],
-  "src/britannica/pipeline/stages/elements/_shapes.py": [
+  "src/wikikit/pipeline/stages/elements/_shapes.py": [
     "SHAPES"
   ],
-  "src/britannica/pipeline/stages/elements/_tables.py": [
+  "src/wikikit/pipeline/stages/elements/_tables.py": [
     "_CELL_ALIGN_ATTR_RE",
     "_CELL_TS_RE"
   ],
-  "src/britannica/xrefs/disambiguation.py": [
+  "src/wikikit/xrefs/disambiguation.py": [
     "PLACE_KINDS"
   ],
   "tools/diagnostics/caption_quality_check.py": [

@@ -22,8 +22,8 @@ dependency — the same pattern `deploy.sh` uses for `huggingface_hub`.
 """
 from __future__ import annotations
 
-from britannica.corpora import current_corpus
-from britannica.export.corpus import load_corpus
+from wikikit.corpora import current_corpus
+from wikikit.export.corpus import load_corpus
 import argparse
 import collections
 import sys
@@ -56,7 +56,7 @@ def main() -> int:
         print(f"  missing schema: {SCHEMA}", file=sys.stderr)
         return 2
 
-    from britannica.export.tei import article_to_tei
+    from wikikit.export.tei import article_to_tei
 
     rng = etree.RelaxNG(etree.parse(str(SCHEMA)))
     # Through the ONE reader.  This read `except Exception: continue`, so an

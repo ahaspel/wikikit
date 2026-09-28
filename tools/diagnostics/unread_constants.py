@@ -36,7 +36,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[2]
-ROOTS = [ROOT / "src" / "britannica", ROOT / "tools"]
+ROOTS = [ROOT / "src", ROOT / "tools"]
 BASELINE = Path(__file__).with_name("unread_constants_baseline.json")
 SKIP_PARTS = {"__pycache__", "_scratch", ".git", "node_modules"}
 

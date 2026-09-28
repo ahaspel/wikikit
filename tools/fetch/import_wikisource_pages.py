@@ -4,8 +4,8 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from britannica.db.session import SessionLocal
-from britannica.db.models import SourcePage
+from wikikit.db.session import SessionLocal
+from wikikit.db.models import SourcePage
 
 
 def load_payload(path: Path) -> dict:

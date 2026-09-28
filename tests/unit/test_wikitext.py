@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import re
 
-from britannica.books.eb1911.contributors.frontmatter import iter_entries, parse_field
-from britannica.wikitext import iter_template_bodies, template_end
+from eb1911.contributors.frontmatter import iter_entries, parse_field
+from wikikit.wikitext import iter_template_bodies, template_end
 
 _OPEN = re.compile(r"\{\{tmpl\|")
 

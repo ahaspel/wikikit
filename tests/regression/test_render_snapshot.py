@@ -25,8 +25,8 @@ from pathlib import Path
 
 import pytest
 
-from britannica.render.article import render_article
-from britannica.render.normalize import normalize_html
+from wikikit.render.article import render_article
+from wikikit.render.normalize import normalize_html
 
 
 SNAPSHOT_DIR = Path("tests/snapshots/render")

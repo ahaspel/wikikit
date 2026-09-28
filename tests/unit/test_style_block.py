@@ -8,7 +8,7 @@ byte-identity cross-check retired with that producer in the figure collapse.)
 """
 from __future__ import annotations
 
-from britannica.pipeline.stages.elements._tables import style_block, styled_marker
+from wikikit.pipeline.stages.elements._tables import style_block, styled_marker
 
 
 def _ts_block_ref(css_list, content):
