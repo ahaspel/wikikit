@@ -36,7 +36,7 @@ from xml.etree import ElementTree as ET
 
 import html5lib
 
-from wikikit.corpora import brand, current_corpus
+from wikikit.corpora import book_root, brand, current_corpus
 from wikikit.epub import front_matter as FM
 from wikikit.epub import fts as FTS
 from wikikit.epub import images as IMG
@@ -47,7 +47,7 @@ from wikikit.render.article import insert_after_byline, topic_trail_html
 from wikikit.export.tei import EDITION_DOI
 from wikikit.render.article import render_article, _section_slug
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+ROOT = str(book_root())   # the BOOK's repository — see wikikit.corpora.book_root
 ARTICLES_DIR = os.path.join(ROOT, current_corpus().derived("articles"))
 IMAGES_SRC = os.path.join(ROOT, current_corpus().images())
 MATH_PNG_SRC = os.path.join(ROOT, current_corpus().derived("math_png"))

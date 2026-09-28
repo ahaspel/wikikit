@@ -28,10 +28,22 @@ import json
 from pathlib import Path
 from wikikit.corpora import current_corpus
 
-ROOT = Path(__file__).resolve().parents[2]
-# All the code that builds the edition: the engine (src/wikikit) AND the book
-# (src/eb1911), which sit side by side since the wikikit rename.
-SRC = ROOT / "src"
+import importlib
+
+from wikikit.corpora import book_root
+from wikikit.settings import settings
+
+#: The engine package's own directory — found from the package, not the book.
+ENGINE = Path(__file__).resolve().parent
+
+
+def _code_roots() -> list[Path]:
+    """All the code that builds the edition: the ENGINE package and the BOOK's
+    package — the one named by the book's `book.env`, found by importing it, so
+    either can be installed anywhere.  Other books' packages are not this
+    edition's code and are not hashed."""
+    book = importlib.import_module(settings.corpus.split(":", 1)[0])
+    return [ENGINE, Path(book.__file__).resolve().parent]
 
 
 def digest(data: bytes) -> str:
@@ -44,18 +56,25 @@ def _rollup(items: dict[str, str]) -> str:
 
 
 def source_files() -> dict[str, str]:
-    """Every `.py` under `src/`, repo-relative path -> sha256.
+    """Every `.py` of the engine and of the book, `package/relative/path.py` ->
+    sha256.
 
-    Byte-for-byte the rule the MDX manifest has always used, so moving it here
-    leaves that manifest's meaning unchanged.  An EMPTY result raises: when the
-    package was renamed this root pointed at a directory that no longer existed,
-    and every manifest quietly recorded no code at all.
+    Keyed by PACKAGE (`wikikit/corpora.py`, `eb1911/aliases.py`), not by
+    repository path: the engine and the book live in different repositories, and
+    a key must mean the same file wherever either is installed.  An EMPTY result
+    raises: when the package was renamed the old root pointed at a directory that
+    no longer existed, and every manifest quietly recorded no code at all.
     """
-    files = {str(p.relative_to(ROOT)).replace("\\", "/"): digest(p.read_bytes())
-             for p in sorted(SRC.rglob("*.py"))}
+    files = {}
+    for root in _code_roots():
+        for p in sorted(root.rglob("*.py")):
+            if "__pycache__" in p.parts:
+                continue
+            key = f"{root.name}/{p.relative_to(root).as_posix()}"
+            files[key] = digest(p.read_bytes())
     if not files:
-        raise RuntimeError(f"provenance found no source under {SRC}")
-    return files
+        raise RuntimeError(f"provenance found no source under {_code_roots()}")
+    return dict(sorted(files.items()))
 
 
 def payload_digest(article: dict) -> str:
@@ -84,7 +103,7 @@ def rebuild_stamp() -> dict:
     corpus is this" — the same value `corpus_stamp.py --check` gates the deploy
     on — so an artifact and a deploy cannot disagree about what they mean by it.
     """
-    path = ROOT / current_corpus().derived("rebuild_stamp.json")
+    path = book_root() / current_corpus().derived("rebuild_stamp.json")
     if not path.is_file():
         return {}
     d = json.loads(path.read_text(encoding="utf-8"))

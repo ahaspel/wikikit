@@ -280,6 +280,24 @@ def brand(name: str) -> str:
     return current_corpus().need(name)
 
 
+def book_root() -> Path:
+    """The book's repository: the directory every command runs in.
+
+    The book's files — its data, its derived outputs, its site pages — are found
+    from HERE, never from the engine's own location: once the engine is an
+    installed package, `Path(__file__)` points into the engine's checkout, not
+    the book's.  It is already where the settings read `book.env` and `.env`
+    from; this names it, and refuses a directory that holds no book.  The
+    engine's OWN files (stylesheets, templates it ships, installer sources) are
+    found from the package, beside the code that uses them.
+    """
+    root = Path.cwd().resolve()
+    if not (root / "book.env").is_file():
+        raise RuntimeError(f"{root} is not a book's repository (no book.env); "
+                           "run wikikit from the book's root")
+    return root
+
+
 _BOOK: Corpus | None = None
 
 

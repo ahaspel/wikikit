@@ -26,7 +26,7 @@ import time
 from urllib.parse import quote, unquote, urljoin
 import zipfile
 
-from wikikit.corpora import brand, current_corpus
+from wikikit.corpora import book_root, brand, current_corpus
 from wikikit.epub import math_assets
 from wikikit.epub.images import diet_image
 from wikikit.export.corpus import load_corpus
@@ -40,7 +40,8 @@ from wikikit.util.strings import fold_accents, strip_html_tags
 from wikikit.xrefs.normalizer import normalize_xref_target
 from wikikit.provenance import digest
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = book_root()          # the BOOK's repository — its data, outputs, site pages
+_PKG = Path(__file__).resolve().parents[1]   # the ENGINE package — its own assets
 # The dictionary's internal key prefix is the BOOK's (`key_prefix`); this name
 # is the dictionary modules' handle on it, not a second owner.
 PREFIX = brand("key_prefix")
@@ -164,7 +165,7 @@ class Inventory(HTMLParser):
 
 
 def stylesheet() -> str:
-    css = (ROOT / "src/wikikit/epub/epub.css").read_text(encoding="utf-8")
+    css = (_PKG / "epub" / "epub.css").read_text(encoding="utf-8")
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     if "@" in css or "url(" in css:
         raise ValueError("EPUB stylesheet changed: review CSS scoping/resources")
@@ -878,7 +879,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         from wikikit.mdx.checksums import write_checksums, write_shipped_text
         write_shipped_text(output / "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
         write_shipped_text(output / "source-link-issues.json", json.dumps(source_link_issues, ensure_ascii=False, indent=2))
-        shutil.copyfile(ROOT / "src/wikikit/export/download_assets/LICENSE", output / "LICENSE")
+        shutil.copyfile(_PKG / "export" / "download_assets" / "LICENSE", output / "LICENSE")
         from wikikit.mdx.readme import edition_readme
         write_shipped_text(output / "README.md",
                            edition_readme(sample, native_search, article_count=len(articles)))

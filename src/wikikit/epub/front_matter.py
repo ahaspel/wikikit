@@ -19,7 +19,6 @@ britannica11.org (the packer's policy for content the book doesn't carry), and t
 leading wiki-indent colons of the signature lines stripped.  The result is fed
 through build.to_xhtml_body for XHTML conformance like every other baked body.
 """
-import os
 import re
 from dataclasses import dataclass, field
 
@@ -29,7 +28,6 @@ import xml.etree.ElementTree as ET
 
 import html5lib
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 _COLON_RUN_RE = re.compile(r"^\s*:+\s*")
 DROPPED_HREFS = []          # malformed source hrefs dropped at extraction (logged)
