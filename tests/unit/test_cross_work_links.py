@@ -75,7 +75,7 @@ def test_eb1911_lkpl_still_links():
 
 def test_alias_table_ignores_dnb_templates():
     """The alias harvest is EB1911-only; a DNB citation teaches it nothing."""
-    from britannica.xrefs.alias_table import _extract_aliases_from_wikitext
+    from britannica.books.eb1911.aliases import _extract_aliases_from_wikitext
 
     aliases = defaultdict(list)
     _extract_aliases_from_wikitext(
@@ -86,7 +86,7 @@ def test_alias_table_ignores_dnb_templates():
 
 def test_alias_table_still_learns_eb1911_aliases():
     """Guard on the guard: the harvest is narrowed, not disabled."""
-    from britannica.xrefs.alias_table import _extract_aliases_from_wikitext
+    from britannica.books.eb1911.aliases import _extract_aliases_from_wikitext
 
     aliases = defaultdict(list)
     _extract_aliases_from_wikitext(

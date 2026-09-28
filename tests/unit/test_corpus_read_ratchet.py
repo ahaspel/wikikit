@@ -89,9 +89,6 @@ EXPORTED_DIRECT = {
 RAW_DIRECT = {
     "src/britannica/source_pages.py":
         "IS the reader",
-    "src/britannica/xrefs/alias_table.py":
-        "reads through load_pages; the surviving mention is a `RAW_DIR / 'vol_29'` "
-        "existence guard, which enumerates nothing",
     "tools/pipeline/rebuild_volume.py":
         "names `vol_NN/` only to pass it to the IMPORT stage as `--indir`; the "
         "import is the reader that loads those pages into the DB",

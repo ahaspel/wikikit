@@ -141,8 +141,9 @@ def test_every_field_is_read_by_something():
     #               image path in the engine
     #   article_starts  super_detect.detect_boundaries — the boundaries hook
     #   is_plate, plate_title  detect_boundaries._split_out_plates — the inserts hook
+    #   alias_sources  link_resolver._overlay_aliases — the aliases hook
     assert fields == {"key", "title", "scan_name", "article_starts",
-                      "is_plate", "plate_title",
+                      "is_plate", "plate_title", "alias_sources",
                       "pages", "raw_dir", "data_files", "data_dir",
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",

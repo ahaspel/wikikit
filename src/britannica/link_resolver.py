@@ -275,7 +275,7 @@ class LinkResolver:
         arts = [e for e in article_index if e.get("article_type") == "article"]
         # The shared FILL substrate — word-set / fold / subset / first-word / fuzzy.
         self.idx = NameIndex(arts)
-        # Alias overlay (title aliases + section + vol29 index): opt-in, so the
+        # Alias overlay (the book's `alias_sources`): opt-in, so the
         # topic path stays byte-identical.  The xref path enables it — the reach
         # the retired resolver.py cascade had, kept by the sole resolver.
         if aliases:
@@ -306,14 +306,11 @@ class LinkResolver:
         self.fisher = Fisher(_emb, self._opening)
 
     def _overlay_aliases(self):
-        """Merge the alias / section-alias / vol29-index-alias maps: each alias
-        inherits its canonical title's article (recall only)."""
-        from britannica.xrefs.alias_table import (
-            build_alias_map, build_section_alias_map, build_vol29_index_aliases)
+        """Merge the book's alias maps (``Corpus.alias_sources``, in order): each
+        alias inherits its canonical title's article (recall only)."""
         merged: dict[str, str] = {}
-        for m in (build_alias_map(), build_section_alias_map(),
-                  build_vol29_index_aliases()):
-            merged.update(m)
+        for source in current_corpus().alias_sources:
+            merged.update(source())
         # Two aliases can share one normalized key while naming DIFFERENT
         # articles — `Alfred Stevens` is both `STEVENS, ALFRED (PAINTER)` and
         # `(SCULPTOR)`; `Pyrénées Orientales` reaches both `PYRÉNÉES-ORIENTALES`

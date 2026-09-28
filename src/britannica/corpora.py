@@ -117,6 +117,13 @@ class Corpus:
     #: that names no plate test has no plates, and every page is text.
     is_plate: Callable[[str], bool] | None = None
     plate_title: Callable[[str, int, int], str] | None = None
+    #: ALIASES — the book's extra names for its articles.  Each source returns
+    #: ``{alias: canonical title}``; the resolver's overlay merges them IN ORDER
+    #: (a later source wins a shared alias) and abstains on an alias that lands
+    #: on two articles.  The engine offers one generic source,
+    #: ``xrefs.alias_table.build_section_alias_map``; a book lists it if it wants
+    #: it.  Empty = no overlay beyond the article titles themselves.
+    alias_sources: tuple[Callable[[], dict[str, str]], ...] = ()
     #: the book's data files, from ``KNOWN_DATA``, and the folder they live in.
     data_files: frozenset[str] = field(default_factory=frozenset)
     data_dir: str = "data"
