@@ -357,7 +357,8 @@ def display_gloss(body, article, *, words=GLOSS_WORDS):
         alt = _PLATE_ALT_RE.search(body)
         if alt:
             name = re.sub(r"\.(?:jpg|jpeg|png|gif|svg)$", "", alt[1], flags=re.I)
-            name = re.sub(r"^EB1911\b[\s\-—–]*", "", name, flags=re.I)
+            # The book's own prefix on its image files ("EB1911 - …") — its slug.
+            name = re.sub(r"^" + re.escape(brand("slug")) + r"\b[\s\-—–]*", "", name, flags=re.I)
             name = _after_title(name, strip_title_markers((article or {}).get("title") or ""))
             if name:
                 return name

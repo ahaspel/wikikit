@@ -1,4 +1,10 @@
 {
+  "src/britannica/books/dnb.py": [
+    "DNB"
+  ],
+  "src/britannica/books/eb1911.py": [
+    "EB1911"
+  ],
   "src/britannica/export/markdown.py": [
     "_SC_OPEN"
   ],

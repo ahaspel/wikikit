@@ -9,7 +9,9 @@ fetched under different names.
 import pytest
 
 from britannica import settings as settings_module
-from britannica.corpora import DNB, EB1911, current_corpus
+from britannica.books.dnb import DNB
+from britannica.books.eb1911 import EB1911
+from britannica.corpora import current_corpus
 
 
 @pytest.fixture
@@ -28,8 +30,9 @@ def corpus(request):
         settings_module.settings.corpus = before
 
 
-def test_default_is_the_britannica():
-    """Nothing that does not opt in can change behaviour."""
+def test_the_committed_book_is_the_britannica():
+    """book.env names the Britannica.  The engine has NO default (it was the
+    key "eb1911"): the book is named by the repository that builds it."""
     assert current_corpus() is EB1911
 
 
@@ -71,18 +74,22 @@ def test_dnb_refuses_a_volume_it_does_not_have():
         DNB.page_title(72, 1)
 
 
-@pytest.mark.parametrize("corpus", ["dnb"], indirect=True)
+@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
 def test_selecting_a_corpus_selects_its_profile(corpus):
     assert current_corpus() is DNB
 
 
-@pytest.mark.parametrize("corpus", ["klingon"], indirect=True)
-def test_an_unknown_corpus_is_refused_by_name(corpus):
-    with pytest.raises(ValueError, match="unknown corpus"):
+@pytest.mark.parametrize("corpus,error", [
+    ("klingon", ValueError),                       # not module:attribute
+    ("britannica.books.klingon:K", ModuleNotFoundError),
+    ("britannica.books.eb1911:_EB1911_PAGES", TypeError),   # not a Corpus
+], indirect=["corpus"])
+def test_a_book_that_cannot_be_used_is_refused(corpus, error):
+    with pytest.raises(error):
         current_corpus()
 
 
-@pytest.mark.parametrize("corpus", ["dnb"], indirect=True)
+@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
 def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
     """The DNB marks articles with `<section>` runs, not typography.
 
@@ -213,7 +220,7 @@ def test_eb1911_raw_path_is_unchanged():
     assert page_filename(3, 42) == "vol03-page0042.json"
 
 
-@pytest.mark.parametrize("corpus", ["dnb"], indirect=True)
+@pytest.mark.parametrize("corpus", ["britannica.books.dnb:DNB"], indirect=True)
 def test_the_dnb_reads_from_its_own_directory(corpus):
     """Two books, two trees — the same separation the databases have."""
     from britannica.source_pages import raw_dir, volume_dir
