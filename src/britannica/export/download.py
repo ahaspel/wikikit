@@ -379,11 +379,9 @@ def build_tei_bundle(articles_dir: str | None = None,
     # which is the first thing a TEI-literate reader looks for and the difference
     # between a data dump and an edition.  It is derived from the emitted corpus
     # rather than from intention, and validates as TEI in its own right.
-    odd = Path("tools/schema/eb1911.odd.xml")
-    if not odd.is_file():
-        raise SystemExit(f"missing {odd} — the TEI bundle ships its ODD")
-    # The ODD's SOURCE is the exporter's own (it describes what tei.py writes)
-    # and moves with the engine; the name it SHIPS under is the book's.
+    # The BOOK's file (`tei_odd.xml`): its header names and describes the
+    # edition, as the README template does; `data()` raises if it is missing.
+    odd = current_corpus().data("tei_odd.xml")
     shipped_odd = brand("slug") + ".odd.xml"
     shutil.copy(odd, tei_dir / shipped_odd)
 

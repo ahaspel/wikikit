@@ -55,6 +55,7 @@ KNOWN_DATA = frozenset({
     "link_exceptions.json",      # audited source links with no destination
     "genealogy_images.json",     # family-tree templates -> their scan crops
     "mdx_sample.json",           # the dictionary's compatibility sample
+    "tei_odd.xml",               # the TEI customisation shipped in the TEI bundle
     # PROSE THE BOOK WRITES, as templates the engine fills (see `template`).
     # Each line names the $placeholders the engine supplies.
     "templates/tei_readme.md",   # $article_count $site $slug $concept_doi
