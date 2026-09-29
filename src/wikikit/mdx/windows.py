@@ -107,9 +107,11 @@ def build(edition, output, node):
     shutil.copy2(node, runtime/'node.exe')
     shutil.copy2(node.parent/'LICENSE', runtime/'LICENSE')
     payload += ['search/runtime/node.exe', 'search/runtime/LICENSE']
-    engine = Path(__file__).resolve().parents[3]/'tools/mdx-installer'
+    # The installer is the ENGINE's, shipped beside this module; its one npm
+    # dependency is installed there (`npm ci`), not in the book's repository.
+    engine = Path(__file__).resolve().parent/'installer'
     if not (engine/'node_modules/@xmldom/xmldom/package.json').exists():
-        raise ValueError('Run npm ci --prefix tools/mdx-installer --ignore-scripts first')
+        raise ValueError(f'Run npm ci --prefix {engine} --ignore-scripts first')
     for name in ['install.cjs', 'package.json', 'package-lock.json']:
         dest = output/'installer'/name
         dest.parent.mkdir(parents=True, exist_ok=True)

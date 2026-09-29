@@ -3,6 +3,7 @@ import json
 import shutil
 import sqlite3
 import zlib
+from pathlib import Path
 
 
 def package_search(output, entries, display_keys, articles, aliases, css, root):
@@ -30,10 +31,14 @@ def package_search(output, entries, display_keys, articles, aliases, css, root):
         for stem, body in conn.execute('SELECT id,body FROM articles'):
             assert zlib.decompress(body).decode('utf-8') == entries[display_keys[article_key(stem)]]
     conn.close()
-    for source, target in [('tools/mdx-title-search.cjs','lookup.cjs'),
-                           ('tools/viewer/search-api.js','search-api.js'),
-                           ('src/wikikit/mdx/install_search.py','install.py')]:
-        shutil.copyfile(root/source, folder/target)
+    # The lookup helper and its installer are the ENGINE's, beside this module;
+    # the search API is the site's (the viewer is still the book's), read from
+    # the book's root.
+    here = Path(__file__).resolve().parent
+    for source, target in [(here/'mdx-title-search.cjs', 'lookup.cjs'),
+                           (root/'tools/viewer/search-api.js', 'search-api.js'),
+                           (here/'install_search.py', 'install.py')]:
+        shutil.copyfile(source, folder/target)
     # The lookup helper runs per query on the reader's machine, without this
     # package: it reads the book's key prefix and CSS scope from here instead
     # of carrying `EB1911:` and `eb1911` in its own source.
