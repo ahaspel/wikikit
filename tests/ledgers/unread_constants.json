@@ -1,49 +1,29 @@
 {
-  "src/dnb/__init__.py": [
-    "DNB"
-  ],
-  "src/eb1911/__init__.py": [
-    "EB1911"
-  ],
-  "src/wikikit/export/markdown.py": [
-    "_SC_OPEN"
-  ],
-  "src/wikikit/export/tei.py": [
-    "_CELL_EDGE_RE"
-  ],
-  "src/wikikit/markers.py": [
-    "LIST_MARKERS",
-    "RENDERED_MARKER_OPENS"
-  ],
-  "src/wikikit/pipeline/stages/elements/_registry.py": [
-    "BLOCK_LABELS",
-    "_SUBSTITUTION_PASSES"
-  ],
-  "src/wikikit/pipeline/stages/elements/_shapes.py": [
-    "SHAPES"
-  ],
-  "src/wikikit/pipeline/stages/elements/_tables.py": [
-    "_CELL_ALIGN_ATTR_RE",
-    "_CELL_TS_RE"
-  ],
-  "src/wikikit/xrefs/disambiguation.py": [
-    "PLACE_KINDS"
-  ],
-  "tools/diagnostics/caption_quality_check.py": [
-    "ART_DIR"
-  ],
-  "tools/diagnostics/capture_transform_snapshots.py": [
-    "EXPORT_DIR"
-  ],
-  "src/wikikit/pipeline/resolve_xrefs_post.py": [
-    "_SKIP"
-  ],
-  "tools/vol29/build_toc.py": [
-    "OCR",
-    "_CONT_CACHE",
-    "_SUBSPINE_CACHE"
-  ],
-  "tools/vol29/populate_classified_toc.py": [
-    "ARTS_DIR"
-  ]
+ "src/wikikit/export/markdown.py": [
+  "_SC_OPEN"
+ ],
+ "src/wikikit/export/tei.py": [
+  "_CELL_EDGE_RE"
+ ],
+ "src/wikikit/markers.py": [
+  "LIST_MARKERS",
+  "RENDERED_MARKER_OPENS"
+ ],
+ "src/wikikit/pipeline/stages/elements/_registry.py": [
+  "BLOCK_LABELS",
+  "_SUBSTITUTION_PASSES"
+ ],
+ "src/wikikit/pipeline/stages/elements/_shapes.py": [
+  "SHAPES"
+ ],
+ "src/wikikit/pipeline/stages/elements/_tables.py": [
+  "_CELL_ALIGN_ATTR_RE",
+  "_CELL_TS_RE"
+ ],
+ "src/wikikit/xrefs/disambiguation.py": [
+  "PLACE_KINDS"
+ ],
+ "src/wikikit/pipeline/resolve_xrefs_post.py": [
+  "_SKIP"
+ ]
 }

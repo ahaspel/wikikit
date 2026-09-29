@@ -14,15 +14,12 @@
   "src/wikikit/pipeline/stages/elements/_title.py": "title producer",
   "src/wikikit/pipeline/stages/elements/_walker.py": "the walker",
   "src/wikikit/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
-  "src/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
-  "src/eb1911/plates.py": "EB1911 plate-title projection (strips «B»/«I» from a heading field)",
   "src/wikikit/pipeline/stages/transform_articles/__init__.py": "title-node reader",
   "src/wikikit/diagnostics/measure_math_widths.py": "«MATH» reader (width cache)",
   "src/wikikit/diagnostics/quality_report.py": "«MATH» strip on a metrics copy",
   "src/wikikit/audits/dup_constants.py": "literal classifier (reads «»)",
   "src/wikikit/audits/marker_emitters.py": "construction recognizer (reads «NAME:)",
-  "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
-  "tools/viewer/ancillary_render.py": "ancillary page policy"
+  "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner"
  },
  "py_globs": [
   "src/**/*.py",

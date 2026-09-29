@@ -1,16 +1,6 @@
 {
- "tool_dirs": [
-  "tools/diagnostics",
-  "tools/qa",
-  "tools/pipeline",
-  "tools/db",
-  "tools/vol29",
-  "tools/fetch",
-  "tools/viewer"
- ],
+ "tool_dirs": [],
  "packages": [
-  "wikikit",
-  "eb1911",
-  "dnb"
+  "wikikit"
  ]
 }
