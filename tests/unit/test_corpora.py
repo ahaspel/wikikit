@@ -1,100 +1,41 @@
-"""The corpus seam.
+"""The corpus seam — the ENGINE's side: what a book profile is and how the
+engine selects, checks and refuses one.
 
-The load-bearing test is `test_eb1911_titles_are_unchanged`: Phase 0's whole
-claim is that introducing a second book moves nothing about the first, and the
-page title is the one value the profile took over from a hardcoded format
-string.  If that drifts, 37,000 live articles are being rebuilt from pages
-fetched under different names.
+Every test here runs against `fixture_book`, which holds nothing of any real
+book, so none of it can pass because EB1911 happens to be configured.  The
+books' own facts — EB1911's page titles and counts, the DNB's five volume
+namings — are in test_corpora_books.py.
 """
+import dataclasses
+
 import pytest
 
-from wikikit import settings as settings_module
-from dnb import DNB
-from eb1911 import EB1911
-from wikikit.corpora import current_corpus
+import fixture_book
+from fixture_book import BARE
+from wikikit.corpora import KNOWN_DATA, Corpus, current_corpus
 
 
-@pytest.fixture
-def corpus(request):
-    """Build as another book for one test, then put it back.
-
-    The corpus is process-wide by design — one run reads one database and
-    therefore one book — so a test that changes it has to restore it, or the
-    next test inherits a different book.
-    """
-    before = settings_module.settings.corpus
-    settings_module.settings.corpus = request.param
-    try:
-        yield request.param
-    finally:
-        settings_module.settings.corpus = before
-
-
-def test_the_committed_book_is_the_britannica():
-    """book.env names the Britannica.  The engine has NO default (it was the
-    key "eb1911"): the book is named by the repository that builds it."""
-    assert current_corpus() is EB1911
-
-
-def test_eb1911_titles_are_unchanged():
-    """Byte-identical to the format string the fetcher used to hold.
-
-    This is the gate in miniature.  The old line was:
-        f"Page:EB1911 - Volume {volume:02d}.djvu/{page_number}"
-    """
-    for volume in range(1, 30):
-        for page in (1, 7, 42, 1234):
-            assert EB1911.page_title(volume, page) == (
-                f"Page:EB1911 - Volume {volume:02d}.djvu/{page}")
-
-
-@pytest.mark.parametrize("volume,expected", [
-    # the original series — zero-padded
-    (1, "Page:Dictionary of National Biography volume 01.djvu/5"),
-    (63, "Page:Dictionary of National Biography volume 63.djvu/5"),
-    # 1901 supplement — ROMAN numerals, and a different separator
-    (64, "Page:Dictionary of National Biography. Sup. Vol I (1901).djvu/5"),
-    (66, "Page:Dictionary of National Biography. Sup. Vol III (1901).djvu/5"),
-    # 1912 — arabic, NOT zero-padded, and called the Second Supplement
-    (67, "Page:Dictionary of National Biography, Second Supplement, volume 1.djvu/5"),
-    (69, "Page:Dictionary of National Biography, Second Supplement, volume 3.djvu/5"),
-    # 1927 — no volume number at all
-    (70, "Page:Dictionary of National Biography, Third Supplement.djvu/5"),
-    # the errata, a source in its own right
-    (71, "Page:Dictionary of National Biography. Errata (1904).djvu/5"),
-])
-def test_dnb_names_its_volumes_five_different_ways(volume, expected):
-    """A format string would have fitted the main series and silently
-    mis-addressed all eight supplement volumes."""
-    assert DNB.page_title(volume, 5) == expected
-
-
-def test_dnb_refuses_a_volume_it_does_not_have():
-    with pytest.raises(ValueError, match="volumes 1-71"):
-        DNB.page_title(72, 1)
-
-
-@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
+@pytest.mark.parametrize("corpus", ["fixture_book:BARE"], indirect=True)
 def test_selecting_a_corpus_selects_its_profile(corpus):
-    assert current_corpus() is DNB
+    assert current_corpus() is fixture_book.BARE
 
 
 @pytest.mark.parametrize("corpus,error", [
     ("klingon", ValueError),                       # not module:attribute
     ("klingon:K", ModuleNotFoundError),
-    ("eb1911:_EB1911_PAGES", TypeError),   # not a Corpus
+    ("fixture_book:NOT_A_BOOK", TypeError),        # not a Corpus
 ], indirect=["corpus"])
 def test_a_book_that_cannot_be_used_is_refused(corpus, error):
     with pytest.raises(error):
         current_corpus()
 
 
-@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
+@pytest.mark.parametrize("corpus", ["fixture_book:BARE"], indirect=True)
 def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
-    """The DNB marks articles with `<section>` runs, not typography.
+    """A book that names no article detector is refused.
 
-    Running the typographic reader over it would not crash — it would return a
-    plausible set of wrong boundaries, which is worse.
+    Running some other book's reader over it would not crash — it would return
+    a plausible set of wrong boundaries, which is worse.
     """
     from wikikit.pipeline.stages.super_detect import detect_boundaries
     with pytest.raises(NotImplementedError, match="names no article detector"):
@@ -104,11 +45,12 @@ def test_boundary_detection_refuses_a_book_it_cannot_read(corpus):
 def test_a_plate_hook_comes_whole():
     """A book that can recognize a plate but not name it — or the reverse — is
     refused when the profile is made, not when the first plate turns up."""
-    import dataclasses
+    whole = dataclasses.replace(BARE, is_plate=lambda raw: False,
+                                plate_title=lambda raw, v, p: "")
     with pytest.raises(ValueError, match="only one of is_plate / plate_title"):
-        dataclasses.replace(EB1911, plate_title=None)
+        dataclasses.replace(whole, plate_title=None)
     with pytest.raises(ValueError, match="only one of is_plate / plate_title"):
-        dataclasses.replace(DNB, is_plate=lambda raw: False)
+        dataclasses.replace(BARE, is_plate=lambda raw: False)
 
 
 def test_every_field_is_read_by_something():
@@ -117,8 +59,7 @@ def test_every_field_is_read_by_something():
     A declared-but-unread setting invites the next reader to believe it does
     something.
     """
-    import dataclasses
-    fields = {f.name for f in dataclasses.fields(EB1911)}
+    fields = {f.name for f in dataclasses.fields(Corpus)}
     # data_files / data_dir: read by `data()` and `has_data()`, which the eight
     # book-data readers call (corrections, hyphen map, contributor aliases,
     # xref adjudications, maps, link exceptions, genealogy crops, MDX sample).
@@ -129,7 +70,7 @@ def test_every_field_is_read_by_something():
     #   file_stem   dictionary_basename (the .mdx/.mdd/.png names)
     #   slug        the dictionary's CSS scope and wrap(), EPUB file name,
     #               corpus / maps / TEI archive names
-    #   key_prefix  the dictionary's internal keys (mdx.build PREFIX)
+    #   key_prefix  the dictionary's internal keys (mdx.build)
     #   urn         EPUB identifiers
     #   source_url  EPUB dc:source
     #   search_name the installers' program label (via the manifest `book` block)
@@ -141,11 +82,11 @@ def test_every_field_is_read_by_something():
     #   article_starts  super_detect.detect_boundaries — the boundaries hook
     #   is_plate, plate_title  detect_boundaries._split_out_plates — the inserts hook
     #   alias_sources  link_resolver._overlay_aliases — the aliases hook
-    #   bind_contributors  tools/pipeline/post_export — the contributors hook
+    #   bind_contributors  wikikit.pipeline.post_export — the contributors hook
     #   ancillary   epub.front_matter.book_pages (EPUB + dictionary) — front matter
     #   article_pages  volumes.article_ws_range / in_article_range — the walk's span
     #   empty_records  mdx.build (the gate + exclusions), mdx.release (the count)
-    #   sampler_volume  tools/deploy.sh — the sampler EPUB it builds and uploads
+    #   sampler_volume  the book's deploy — the sampler EPUB it builds and uploads
     assert fields == {"key", "title", "scan_name", "article_starts",
                       "is_plate", "plate_title", "alias_sources",
                       "bind_contributors", "ancillary",
@@ -159,90 +100,44 @@ def test_every_field_is_read_by_something():
 
 
 def test_a_book_without_a_name_cannot_print_none():
-    """The DNB has no domain yet.  Asking for one must fail, not print 'None'
+    """A book with no domain yet: asking for one must fail, not print 'None'
     into a published file."""
-    import pytest
     with pytest.raises(LookupError):
-        DNB.need("site")
-    assert EB1911.need("site") == "https://britannica11.org"
+        BARE.need("site")
+    assert dataclasses.replace(BARE, site="https://fixture.example").need("site") \
+        == "https://fixture.example"
 
 
-def test_book_data_is_declared_at_both_ends():
+def test_book_data_is_declared_at_both_ends(tmp_path):
     """The user's rule: declared, never discovered.  A missing file used to
     read as "no data" — corrections silently unapplied looked exactly like a
     book that needed none."""
-    import dataclasses
-    import pytest
-    from wikikit.corpora import KNOWN_DATA
-
-    # Every file EB1911 declares exists — a declaration is a promise.
-    for name in EB1911.data_files:
-        assert EB1911.data(name).is_file(), name
-    # The DNB declares nothing yet, so it is handed none of EB1911's data.
-    assert not DNB.data_files
-    assert not DNB.has_data("corrections.json")
+    # A book that declares nothing is handed nothing.
+    assert not BARE.data_files
+    assert not BARE.has_data("corrections.json")
     with pytest.raises(LookupError):
-        DNB.data("corrections.json")
+        BARE.data("corrections.json")
     # An engine-side typo cannot quietly turn a feature off.
     with pytest.raises(KeyError):
-        EB1911.has_data("correction.json")
+        BARE.has_data("correction.json")
     # A book-side typo cannot be declared at all.
     with pytest.raises(ValueError):
-        dataclasses.replace(DNB, data_files=frozenset({"corections.json"}))
+        dataclasses.replace(BARE, data_files=frozenset({"corections.json"}))
     # Declared but absent is a broken book, not an empty feature.
-    ghost = dataclasses.replace(DNB, data_files=frozenset({"maps.json"}), data_dir="no/such/dir")
+    ghost = dataclasses.replace(BARE, data_files=frozenset({"maps.json"}), data_dir="no/such/dir")
     with pytest.raises(FileNotFoundError):
         ghost.data("maps.json")
-    assert EB1911.data_files <= KNOWN_DATA
+    # Declared and present is found.
+    (tmp_path / "maps.json").write_text("{}", encoding="utf-8")
+    real = dataclasses.replace(BARE, data_files=frozenset({"maps.json"}), data_dir=str(tmp_path))
+    assert real.data("maps.json").is_file()
+    assert "maps.json" in KNOWN_DATA
 
 
-def test_the_page_manifest_covers_every_volume():
-    """A missing volume means a silently short import, not an error."""
-    assert EB1911.volumes == list(range(1, 30))
-    assert DNB.volumes == list(range(1, 72))
-    assert all(n > 0 for n in EB1911.pages.values())
-    assert all(n > 0 for n in DNB.pages.values())
-
-
-def test_eb1911_page_counts_match_the_array_they_replaced():
-    """Verbatim, not re-derived.
-
-    They lived in a bash array in fetch_all.sh.  ARTICLE_WS_RANGE looks like the
-    same fact and is not — it is the span holding ARTICLES, and it disagrees for
-    volumes 20 and 29, the index volume being absent from it entirely.
-    """
-    was = [0, 1029, 1027, 1015, 1031, 1002, 1017, 1008, 1027, 997, 967, 968,
-           985, 985, 953, 994, 1016, 1039, 1000, 1034, 1054, 1019, 993, 1069,
-           1100, 1090, 1104, 1092, 1091, 982]
-    assert [EB1911.pages[v] for v in range(1, 30)] == was[1:]
-
-
-def test_dnb_totals_match_what_was_measured():
-    """33,824 pages, read from the DjVu files through the Wikisource API."""
-    assert sum(DNB.pages.values()) == 33_824
-    assert sum(DNB.pages[v] for v in range(1, 64)) == 29_232   # the original series
-    assert sum(DNB.pages[v] for v in range(64, 67)) == 1_510   # 1901
-    assert sum(DNB.pages[v] for v in range(67, 70)) == 2_118   # 1912
-    assert DNB.pages[70] == 650                                # 1927
-    assert DNB.pages[71] == 314                                # the Errata
-
-
-def test_eb1911_raw_path_is_unchanged():
-    """29,688 files already sit at data/raw/wikisource.
-
-    The name is a legacy of there being only one book.  Renaming it would buy
-    tidiness at the cost of a mass move, and every test that reads a fixture
-    page hardcodes the old path.
-    """
-    from wikikit.source_pages import raw_dir, volume_dir, page_filename
-    assert raw_dir().as_posix() == "data/raw/wikisource"
-    assert volume_dir(3).as_posix() == "data/raw/wikisource/vol_03"
-    assert page_filename(3, 42) == "vol03-page0042.json"
-
-
-@pytest.mark.parametrize("corpus", ["dnb:DNB"], indirect=True)
-def test_the_dnb_reads_from_its_own_directory(corpus):
+@pytest.mark.parametrize("corpus", ["fixture_book:BARE"], indirect=True)
+def test_a_book_reads_from_its_own_directory(corpus):
     """Two books, two trees — the same separation the databases have."""
-    from wikikit.source_pages import raw_dir, volume_dir
-    assert raw_dir().as_posix() == "data/raw/dnb"
-    assert volume_dir(65).as_posix() == "data/raw/dnb/vol_65"
+    from wikikit.source_pages import raw_dir, volume_dir, page_filename
+    assert raw_dir().as_posix() == "data/raw/fixture"
+    assert volume_dir(2).as_posix() == "data/raw/fixture/vol_02"
+    assert page_filename(3, 42) == "vol03-page0042.json"

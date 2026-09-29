@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 
-from eb1911.contributors.frontmatter import iter_entries, parse_field
 from wikikit.wikitext import iter_template_bodies, template_end
 
 _OPEN = re.compile(r"\{\{tmpl\|")
@@ -39,27 +38,3 @@ def test_offsets_address_the_open_brace():
     text = "lead {{tmpl|body}} tail"
     (off, body), = iter_template_bodies(text, _OPEN)
     assert text[off:off + 2] == "{{" and body == "body"
-
-
-ENTRY = """
-{{EB1911 contributor table/entry
-| initials = J. D. {{sc|v. d.}} W.
-| name = [[Author:Johannes van der Waals|J. D. van der Waals]]
-| description = Professor of Physics {{brace2|Amsterdam}}
-| subject1 = MOLECULE
-| lnksubject2 = [[EB1911:CONDENSATION|CONDENSATION OF GASES]]
-}}
-"""
-
-
-def test_entry_reader_survives_nested_templates_in_every_field():
-    (body,) = iter_entries(ENTRY)
-    assert parse_field(body, "initials") == "J. D. {{sc|v. d.}} W."
-    assert parse_field(body, "subject1") == "MOLECULE"
-    assert parse_field(body, "lnksubject2") == \
-        "[[EB1911:CONDENSATION|CONDENSATION OF GASES]]"
-    assert parse_field(body, "nosuchfield") == ""
-
-
-def test_entry_reader_finds_every_entry_in_a_page():
-    assert len(list(iter_entries(ENTRY * 3))) == 3

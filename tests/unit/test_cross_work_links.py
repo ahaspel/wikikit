@@ -18,7 +18,6 @@ Both spellings below are verbatim from the scans (vol 22 p. 123, vol 28 p. 309).
 """
 from __future__ import annotations
 
-from collections import defaultdict
 
 import pytest
 
@@ -71,25 +70,3 @@ def test_eb1911_lkpl_still_links():
     out = walk("see {{EB1911 lkpl|Aachen|Aix-la-Chapelle}} there", volume=1)
 
     assert "«LN" in out and "Aix-la-Chapelle" in out
-
-
-def test_alias_table_ignores_dnb_templates():
-    """The alias harvest is EB1911-only; a DNB citation teaches it nothing."""
-    from eb1911.aliases import _extract_aliases_from_wikitext
-
-    aliases = defaultdict(list)
-    _extract_aliases_from_wikitext(
-        "''{{DNB lkpl|Walsh, Peter|Dict. Nat. Biog}}''", aliases)
-
-    assert not aliases, f"DNB citation still feeds the EB1911 alias table: {dict(aliases)}"
-
-
-def test_alias_table_still_learns_eb1911_aliases():
-    """Guard on the guard: the harvest is narrowed, not disabled."""
-    from eb1911.aliases import _extract_aliases_from_wikitext
-
-    aliases = defaultdict(list)
-    _extract_aliases_from_wikitext(
-        "{{EB1911 lkpl|Aachen|Aix-la-Chapelle}}", aliases)
-
-    assert dict(aliases) == {"AIX-LA-CHAPELLE": ["AACHEN"]}

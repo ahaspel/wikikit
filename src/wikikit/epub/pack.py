@@ -25,7 +25,6 @@ from wikikit.util.strings import HTML_TAG_RE
 ET.register_namespace("epub", "http://www.idpf.org/2007/ops")
 _EPUB_NS = "{http://www.idpf.org/2007/ops}"
 
-SITE_BASE = brand("site")   # the book's; one owner in corpora
 TARGET_CHUNK = 300_000     # soft chunk budget (bytes of XHTML)
 HARD_SPLIT = 450_000       # an article bigger than this splits at section boundaries
 
@@ -352,7 +351,7 @@ def resolve_chunk(xhtml, own_ids, anchor_map, contrib_map):
         if art in anchor_map:
             return f'href="{anchor_map[art]}#{art}"'
         tail = f"#{suffix}" if suffix else ""
-        return f'href="{SITE_BASE}/article/{stem}{tail}"'
+        return f'href="{brand("site")}/article/{stem}{tail}"'
 
     xhtml = _EPUBLINK_RE.sub(link, xhtml)
 
@@ -361,7 +360,7 @@ def resolve_chunk(xhtml, own_ids, anchor_map, contrib_map):
         f = contrib_map.get(slug)
         if f is None:
             dangling.append("contrib:" + slug)
-            return f'href="{SITE_BASE}/contributors.html"'
+            return f'href="{brand("site")}/contributors.html"'
         return f'href="{f}#contrib-{slug}"'
 
     xhtml = _EPUBCONTRIB_RE.sub(contrib, xhtml)
@@ -376,7 +375,7 @@ def resolve_chunk(xhtml, own_ids, anchor_map, contrib_map):
         return m.group(0)
 
     xhtml = _FRAG_HREF_RE.sub(frag, xhtml)
-    xhtml = _ROOT_HREF_RE.sub(lambda m: f'href="{SITE_BASE}{m.group(1)}"', xhtml)
+    xhtml = _ROOT_HREF_RE.sub(lambda m: f'href="{brand("site")}{m.group(1)}"', xhtml)
     # A source URL carrying literal quotes (WS: The Nigger of the "Narcissus") is an
     # invalid URL character — percent-encode it in place.
     xhtml = _HTTP_HREF_RE.sub(lambda m: 'href="' + m.group(1).replace("&quot;", "%22") + '"', xhtml)

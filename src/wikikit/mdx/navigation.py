@@ -16,7 +16,7 @@ from wikikit.export.download import _topic_index
 from wikikit.markers import strip_title_markers
 from wikikit.util.strings import fold_accents
 from wikikit.xrefs.normalizer import normalize_xref_target
-from wikikit.mdx.build import ROOT, PREFIX,article_key, topic_key, volume_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics, HREF_ATTR_RE
+from wikikit.mdx.build import ROOT, article_key, topic_key, volume_key, entry_url, list_links, wrap, bundle_body, _section_slug, digest, add_article_topics, HREF_ATTR_RE
 
 
 def add_reference_aliases(articles, aliases):
@@ -74,7 +74,7 @@ def full_help(count, contents):
     # the hub pages `add_navigation` built, in order.
     return (f"<h1>{brand('short_name')}</h1><p>Complete offline reference edition: {count:,} articles and plates. "
             "Type an article title in the reader’s lookup box. Use its full-text search to find words within articles; initial indexing may take time.</p>"
-            + list_links((label, entry_url(PREFIX + key)) for label, key in contents)
+            + list_links((label, entry_url(brand("key_prefix") + key)) for label, key in contents)
             + current_corpus().template("templates/mdx_about.html", site=brand("site"),
                                         host=brand("site").split("://", 1)[-1]))
 
@@ -130,7 +130,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
 
     for node in ct["categories"]:
         nodes(node, [])
-    entries[PREFIX + "topics"] = wrap("<h1>Topics</h1>" + list_links(
+    entries[brand("key_prefix") + "topics"] = wrap("<h1>Topics</h1>" + list_links(
         (n["name"], topic_link(by_path[n["name"]])) for n in ct["categories"]))
     topic_by_id = {n["id"]: n for n in flat}
     for stem, a in articles.items():
@@ -146,8 +146,8 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
                               for k, s in enumerate(segs)])
             entries[article_key(stem)] = add_article_topics(entries[article_key(stem)], paths)
 
-    entries[PREFIX + "contributors"] = wrap("<h1>Contributors</h1>" + list_links(
-        (c["person"].get("display_name") or c["person"]["full_name"], entry_url(PREFIX + "contributor:" + slug))
+    entries[brand("key_prefix") + "contributors"] = wrap("<h1>Contributors</h1>" + list_links(
+        (c["person"].get("display_name") or c["person"]["full_name"], entry_url(brand("key_prefix") + "contributor:" + slug))
         for slug, c in sorted(contributors.items(), key=lambda pair: pair[1]["person"].get("display_name") or pair[1]["person"]["full_name"])))
     volumes = defaultdict(list)
     for stem, a in articles.items():
@@ -156,7 +156,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
         stems.sort(key=lambda s: (articles[s]["page_start"], articles[s].get("page_end") or 0, articles[s]["title"], s))
         entries[volume_key(volume)] = wrap(f"<h1>Volume {volume}</h1>" + list_links(
             (strip_title_markers(articles[s]["title"]), entry_url(article_key(s))) for s in stems))
-    entries[PREFIX + "volumes"] = wrap("<h1>Volumes</h1>" + list_links(
+    entries[brand("key_prefix") + "volumes"] = wrap("<h1>Volumes</h1>" + list_links(
         (f"Volume {v}", entry_url(volume_key(v))) for v in sorted(volumes)))
 
     FM.DROPPED_HREFS.clear()
@@ -164,7 +164,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
     front, guide, images = book_pages.front, book_pages.guide, book_pages.images
     if FM.DROPPED_HREFS:
         raise ValueError(f"Ancillary extraction dropped malformed source links: {FM.DROPPED_HREFS}")
-    page_map = {f: PREFIX + "page:" + f for f, *_ in front + guide}
+    page_map = {f: brand("key_prefix") + "page:" + f for f, *_ in front + guide}
     signature_map = {c["person"].get("slug"): slug for slug, c in contributors.items()}
     name_map = {c["person"]["full_name"]: slug for slug, c in contributors.items()}
 
@@ -184,7 +184,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
                 elif base == "contributors.html":
                     query_name = parse_qs(u.query).get("q", [""])[0]
                     slug = signature_map.get(u.fragment) or name_map.get(query_name)
-                    url = entry_url(PREFIX + "contributor:" + slug) if slug else entry_url(PREFIX + "contributors")
+                    url = entry_url(brand("key_prefix") + "contributor:" + slug) if slug else entry_url(brand("key_prefix") + "contributors")
             return 'href=' + m[1] + html.escape(url, quote=True) + m[1]
         return HREF_ATTR_RE.sub(href, body)
 
@@ -199,7 +199,7 @@ def add_navigation(entries, articles, contributors, ct, policy, resources, sourc
             body = "<h1>" + html.escape(title) + "</h1>" + body
         entries[page_map[filename]] = wrap('<div class="frontmatter">' + body + "</div>")
     if front:
-        entries[PREFIX + "introduction"] = wrap("<h1>Introduction and prefaces</h1>" + list_links(
+        entries[brand("key_prefix") + "introduction"] = wrap("<h1>Introduction and prefaces</h1>" + list_links(
             (title, entry_url(page_map[filename])) for filename, title, _ in front))
     # Provenance: the roster (the engine's own output), then the files the book
     # built its pages from.

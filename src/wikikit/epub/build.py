@@ -44,7 +44,6 @@ from wikikit.epub import pack
 from wikikit.epub import math_assets as MA
 from wikikit.markers import markers_to_text
 from wikikit.render.article import insert_after_byline, topic_trail_html
-from wikikit.export.tei import EDITION_DOI
 from wikikit.render.article import render_article, _section_slug
 
 ROOT = str(book_root())   # the BOOK's repository — see wikikit.corpora.book_root
@@ -994,7 +993,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
             stem = re.sub(r"\.json$", "", fn)
             anch = pack.article_anchor(stem)
             href = (f"{anchor_map[anch]}#{anch}" if anch in anchor_map
-                    else f"{pack.SITE_BASE}/article/{stem}")
+                    else f"{brand("site")}/article/{stem}")
             return f'<li><a href="{href}">{disp}</a></li>'
 
         def _note_html(note):
@@ -1047,9 +1046,9 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
     # the static site pages; article citations resolve presence-aware against the
     # anchor map (absent stem keeps its site URL — the packer's standing policy) ──
     _GUIDE_ART_RE = re.compile(
-        r'href="' + re.escape(pack.SITE_BASE) + r'/article/([0-9a-z-]+)"')
+        r'href="' + re.escape(brand("site")) + r'/article/([0-9a-z-]+)"')
     _SITE_CONTRIB_RE = re.compile(
-        r'href="' + re.escape(pack.SITE_BASE) + r'/contributors\.html\?q=([^"]+)"')
+        r'href="' + re.escape(brand("site")) + r'/contributors\.html\?q=([^"]+)"')
     _name_to_slug = {e["name"]: s for s, e in contribs.items()}
 
     def _guide_art_href(m):
@@ -1402,7 +1401,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         # turns every existing library copy into a different book.
         # The CONCEPT DOI, matching `tei.EDITION_DOI`: it follows the newest deposit,
         # so a book pressed today still points somewhere true after 2026.2.
-        f'    <dc:relation>https://doi.org/{EDITION_DOI}</dc:relation>\n'
+        f'    <dc:relation>https://doi.org/{brand("concept_doi")}</dc:relation>\n'
         f'    <meta property="dcterms:modified">{_MODIFIED}</meta>\n'
         + ('    <meta name="cover" content="cover-image"/>\n' if target == "kindle" else "")
         + '  </metadata>\n'

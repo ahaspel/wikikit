@@ -29,14 +29,12 @@ from wikikit.export.markdown import body_to_markdown
 from wikikit.markers import IMG_PARTS_RE
 from wikikit.export.article_json import stable_id_from_filename
 from wikikit.export.corpus import NON_ARTICLE
-from wikikit.export.tei import EDITION_DOI
 
 # The CANONICAL host is the apex.  `www` had no DNS record at all until
 # 2026-08-22, so every url in every published bundle — and in the HuggingFace
 # dataset — pointed at a host that did not resolve.  `www` now exists and 301s
 # here, which repairs copies ALREADY downloaded; this line stops new ones
 # carrying the non-canonical form.
-_SITE = brand("site")   # the book's; one owner in corpora
 _ASSETS = Path(__file__).parent / "download_assets"   # README / LICENSE / schema
 
 
@@ -163,7 +161,7 @@ def build_download(articles_dir: str | None = None,
                 "page_start": d.get("page_start"),
                 "page_end": d.get("page_end"),
                 "word_count": d.get("word_count"),
-                "url": f"{_SITE}/article/{aid}",
+                "url": f"{brand("site")}/article/{aid}",
                 "categories": reverse.get(fp.name, []),
                 "sections": [{"title": s.get("title"), "slug": s.get("slug"),
                               "level": s.get("level")} for s in d.get("sections") or []],
@@ -210,7 +208,7 @@ def build_download(articles_dir: str | None = None,
         "version": version,
         "generated": generated,
         "license": "CC-BY-SA-4.0",
-        "source": _SITE,
+        "source": brand("site"),
         "counts": {"articles": n_arts, "xref_edges": n_edges,
                    "topic_nodes": len(topic_nodes), "contributors": len(contributors)},
         "files": [{"name": fp.name, "bytes": fp.stat().st_size, "sha256": _sha256(fp)}
@@ -346,14 +344,14 @@ def build_tei_bundle(articles_dir: str | None = None,
         "a TEI-P5 edition</title>\n"
         '<respStmt xml:id="wikisource"><resp>transcription</resp>'
         "<orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>\n"
-        f"<publicationStmt><publisher>{_SITE.split('://', 1)[-1]}</publisher>\n"
+        f"<publicationStmt><publisher>{brand("site").split('://', 1)[-1]}</publisher>\n"
         '<availability status="free"><licence '
         'target="https://creativecommons.org/licenses/by-sa/4.0/"/></availability>\n'
         # The catalogue has a better claim to the citation than any single
         # article: it is the document that stands for the whole edition.  The
         # CONCEPT DOI, as in the members — it follows the newest deposit rather
         # than freezing on the release current when the file was written.
-        f'<idno type="DOI">{EDITION_DOI}</idno>\n'
+        f'<idno type="DOI">{brand("concept_doi")}</idno>\n'
         f"<date>{generated}</date></publicationStmt>\n"
         + current_corpus().template("templates/tei_corpus_source.xml") + "\n"
         "</fileDesc></teiHeader>\n"
@@ -372,7 +370,7 @@ def build_tei_bundle(articles_dir: str | None = None,
     (tei_dir / "README.md").write_text(
         # The BOOK's prose; the engine supplies the numbers and names.
         current_corpus().template("templates/tei_readme.md", article_count=f"{n:,}",
-                                  site=_SITE, slug=brand("slug"), concept_doi=EDITION_DOI),
+                                  site=brand("site"), slug=brand("slug"), concept_doi=brand("concept_doi")),
         encoding="utf-8")
 
     # The ODD ships WITH the edition: it documents which part of TEI this uses,

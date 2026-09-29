@@ -44,7 +44,6 @@ ROOT = book_root()          # the BOOK's repository — its data, outputs, site 
 _PKG = Path(__file__).resolve().parents[1]   # the ENGINE package — its own assets
 # The dictionary's internal key prefix is the BOOK's (`key_prefix`); this name
 # is the dictionary modules' handle on it, not a second owner.
-PREFIX = brand("key_prefix")
 
 
 def help_word(sample: bool) -> str:
@@ -82,17 +81,17 @@ def _sample_spec() -> Path:
 
 
 def article_key(stem: str) -> str:
-    return PREFIX + "article:" + stem
+    return brand("key_prefix") + "article:" + stem
 
 
 def topic_key(topic_id: str) -> str:
     # GoldenDict-ng truncates lookup keys longer than 100 characters. Deep
     # taxonomy paths exceed that limit; retain their full names in the page.
-    return PREFIX + "topic:" + digest(topic_id.encode("utf-8"))[:24]
+    return brand("key_prefix") + "topic:" + digest(topic_id.encode("utf-8"))[:24]
 
 
 def volume_key(volume) -> str:
-    return PREFIX + f"volume:{volume}"
+    return brand("key_prefix") + f"volume:{volume}"
 
 
 # `href="…"` / `src="…"` with the quote captured so the rewrite can hand back the
@@ -136,7 +135,7 @@ class Links:
         return brand("site") + _article_url(stem + ".json") + ("#" + quote(fragment) if fragment else "")
 
     def contrib_url(self, slug):
-        return entry_url(PREFIX + "contributor:" + slug)
+        return entry_url(brand("key_prefix") + "contributor:" + slug)
 
 
 class Inventory(HTMLParser):
@@ -296,7 +295,7 @@ def add_headwords(entries, articles, aliases):
             target = article_key(next(iter(stems)))
         else:
             choices += 1
-            target = PREFIX + "choice:" + digest(folded.encode())[:16]
+            target = brand("key_prefix") + "choice:" + digest(folded.encode())[:16]
             items = []
             for stem in sorted(stems):
                 a = articles[stem]
@@ -307,7 +306,7 @@ def add_headwords(entries, articles, aliases):
                 items.append((label, entry_url(article_key(stem))))
             entries[target] = wrap("<h1>Choose an article</h1>" + list_links(items))
         for spelling in sorted(spellings[folded]):
-            if spelling.startswith(PREFIX) or spelling in entries:
+            if spelling.startswith(brand("key_prefix")) or spelling in entries:
                 raise ValueError(f"Reserved or duplicate headword: {spelling}")
             entries[spelling] = "@@@LINK=" + target
     return choices
@@ -408,14 +407,14 @@ def label_content_entries(entries, articles):
             raise ValueError(f"Content entry has no display heading: {key}")
         title = " ".join(html.unescape(strip_html_tags(heading[1], " ")).split())
         article = None
-        if key.startswith(PREFIX + "article:"):
-            article = articles[key.removeprefix(PREFIX + "article:")]
+        if key.startswith(brand("key_prefix") + "article:"):
+            article = articles[key.removeprefix(brand("key_prefix") + "article:")]
             title = strip_title_markers(article["title"])
-        elif key.startswith(PREFIX + "choice:"):
+        elif key.startswith(brand("key_prefix") + "choice:"):
             title = "Articles named " + min(headwords[key], key=lambda s: (len(s), s))
-        elif key.startswith(PREFIX + "topic:"):
+        elif key.startswith(brand("key_prefix") + "topic:"):
             title = "Topic: " + title
-        elif key.startswith(PREFIX + "contributor:"):
+        elif key.startswith(brand("key_prefix") + "contributor:"):
             title = "Contributor: " + title
         # The bare title FIRST, which absorbs the alias that already points here
         # and so costs a headword rather than adding one.  Then the book's own
@@ -512,7 +511,7 @@ def check_headwords(entries):
     """
     shadows = []
     for key, body in entries.items():
-        if key.startswith(PREFIX):
+        if key.startswith(brand("key_prefix")):
             raise ValueError(f"Machine identifier left in the headword list: {key}")
         if not body.startswith("@@@LINK="):
             continue
@@ -735,7 +734,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             except Exception as exc:
                 failures.append({"article": stem, "title": a["title"], "error": str(exc)})
                 continue
-            note = '<p class="sample-note">' + brand("short_name") + (" compatibility sample" if sample else " complete edition") + ' · <a href="' + entry_url(PREFIX + "help") + '">Contents and help</a></p>'
+            note = '<p class="sample-note">' + brand("short_name") + (" compatibility sample" if sample else " complete edition") + ' · <a href="' + entry_url(brand("key_prefix") + "help") + '">Contents and help</a></p>'
             entries[article_key(stem)] = wrap(note + body)
             for c in a.get("contributors") or []:
                 if c.get("full_name"):
@@ -762,7 +761,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             bio = c.get("bio_article_filename")
             if bio:
                 body += list_links([("Biographical article", policy.url_for(stable_id_from_filename(bio)))])
-            entries[PREFIX + "contributor:" + slug] = wrap(body)
+            entries[brand("key_prefix") + "contributor:" + slug] = wrap(body)
         ct_raw = (ROOT / current_corpus().derived("classified_toc.json")).read_bytes()
         topics, _ = _topic_index(json.loads(ct_raw))
         topic_count = 0
@@ -801,17 +800,17 @@ def build_edition(output: Path, *, sample=True, native_search=False):
                 raise ValueError(f"Section-test article {test['article']} has lost its section anchors")
             body += "<h2>Section-link test</h2>" + list_links([
                 (test["label"], entry_url(article_key(test["article"]), section_ids[0]))])
-            entries[PREFIX + "help"] = wrap(body)
-            entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
+            entries[brand("key_prefix") + "help"] = wrap(body)
+            entries[help_word(sample)] = "@@@LINK=" + brand("key_prefix") + "help"
         else:
             from wikikit.mdx.navigation import full_help
-            entries[PREFIX + "help"] = wrap(full_help(len(articles), help_contents))
-            entries[help_word(sample)] = "@@@LINK=" + PREFIX + "help"
+            entries[brand("key_prefix") + "help"] = wrap(full_help(len(articles), help_contents))
+            entries[help_word(sample)] = "@@@LINK=" + brand("key_prefix") + "help"
         print("Validating complete link/resource graph", flush=True)
         from wikikit.mdx.link_exceptions import mark_unavailable
         source_link_issues = mark_unavailable(entries)
         if source_link_issues:
-            entries[PREFIX + "help"] += wrap(f"<p>{len(source_link_issues)} pre-existing source links have unavailable section destinations. Their labels remain visible and are marked unavailable. See source-link-issues.json in the distribution.</p>")
+            entries[brand("key_prefix") + "help"] += wrap(f"<p>{len(source_link_issues)} pre-existing source links have unavailable section destinations. Their labels remain visible and are marked unavailable. See source-link-issues.json in the distribution.</p>")
         qa_entries = entries
         entries, display_keys = label_content_entries(entries, articles)
         # Before the native edition deliberately re-hides its choice pages under

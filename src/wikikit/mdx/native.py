@@ -7,7 +7,7 @@ import zlib
 
 def package_search(output, entries, display_keys, articles, aliases, css, root):
     from wikikit.corpora import brand
-    from wikikit.mdx.build import PREFIX, article_key, help_word
+    from wikikit.mdx.build import article_key, help_word
     from wikikit.markers import strip_title_markers
     names = {stem: {strip_title_markers(a['title']), display_keys[article_key(stem)]} for stem, a in articles.items()}
     for alias, stems in aliases.items():
@@ -49,7 +49,7 @@ def package_search(output, entries, display_keys, articles, aliases, css, root):
     # Choice pages stay available through their stable identity, not as another
     # suggestion alongside each of their actual articles.
     for key, title in list(display_keys.items()):
-        if key.startswith(PREFIX+'choice:'):
+        if key.startswith(brand("key_prefix")+'choice:'):
             clean[key] = clean.pop(title)
             display_keys[key] = key
     return clean, ['search/'+name for name in ('titles.json','articles.sqlite','lookup.cjs','search-api.js',
