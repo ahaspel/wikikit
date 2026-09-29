@@ -4,7 +4,8 @@
   "src/wikikit/diagnostics/mangled_markers.py": "parallel scan; an unreadable payload is returned as an 'unreadable' FINDING, not skipped",
   "src/wikikit/epub/build.py": "enumerates article STEMS for the EPUB (`_STEM_RE` excludes the non-articles); reads no payload here — the build reports its own counts",
   "src/wikikit/export/download.py": "reads the corpus through load_corpus; its globs are over the download OUTPUT dir, not the article dir",
-  "src/wikikit/mdx/navigation.py": "reads no payload at all: it names ONE file in the article dir, the contributor roster `contributors.json`, and its only glob is over `tools/viewer/readers-guide*.html`.  The file-level rule pairs those two unrelated facts — which is the price of the coarseness that keeps it from being defeated by a constant two lines up"
+  "src/wikikit/mdx/navigation.py": "reads no payload at all: it names ONE file in the article dir, the contributor roster `contributors.json`, and its only glob is over `tools/viewer/readers-guide*.html`.  The file-level rule pairs those two unrelated facts — which is the price of the coarseness that keeps it from being defeated by a constant two lines up",
+  "src/wikikit/site/stamp.py": "hashes files for a build stamp — never reads a payload"
  },
  "raw source pages": {
   "src/wikikit/source_pages.py": "IS the reader"

@@ -6,7 +6,7 @@ import zlib
 from pathlib import Path
 
 
-def package_search(output, entries, display_keys, articles, aliases, css, root):
+def package_search(output, entries, display_keys, articles, aliases, css):
     from wikikit.corpora import brand
     from wikikit.mdx.build import article_key, help_word
     from wikikit.markers import strip_title_markers
@@ -31,12 +31,12 @@ def package_search(output, entries, display_keys, articles, aliases, css, root):
         for stem, body in conn.execute('SELECT id,body FROM articles'):
             assert zlib.decompress(body).decode('utf-8') == entries[display_keys[article_key(stem)]]
     conn.close()
-    # The lookup helper and its installer are the ENGINE's, beside this module;
-    # the search API is the site's (the viewer is still the book's), read from
-    # the book's root.
+    # The lookup helper, its installer and the site's search API are all the
+    # ENGINE's: the first two beside this module, the last among the site pages.
+    from wikikit.site.build import PAGES as SITE_PAGES
     here = Path(__file__).resolve().parent
     for source, target in [(here/'mdx-title-search.cjs', 'lookup.cjs'),
-                           (root/'tools/viewer/search-api.js', 'search-api.js'),
+                           (SITE_PAGES/'search-api.js', 'search-api.js'),
                            (here/'install_search.py', 'install.py')]:
         shutil.copyfile(source, folder/target)
     # The lookup helper runs per query on the reader's machine, without this

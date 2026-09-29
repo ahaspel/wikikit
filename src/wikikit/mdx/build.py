@@ -594,8 +594,8 @@ def dictionary_description(*, sample, articles, contributors, illustrations, hea
 
 # The site's own mark, and its paper colour.  The favicon's ink is dark on a
 # TRANSPARENT ground; in a dark-themed reader that would all but disappear, so
-# the dictionary icon gets the page colour behind it.
-_ICON_SVG = ROOT / "tools/viewer/favicon.svg"
+# the dictionary icon gets the page colour behind it.  The mark is the one the
+# site serves (`wikikit.site`), which the book supplies.
 _ICON_PAPER = "#f5f1eb"
 
 
@@ -608,7 +608,8 @@ def dictionary_icon(size: int = 256) -> bytes:
     favicon source rather than committed as a second copy that could drift.
     """
     from playwright.sync_api import sync_playwright
-    svg = _ICON_SVG.read_text(encoding="utf-8")
+    from wikikit.site.build import page
+    svg = page("favicon.svg").decode("utf-8")
     page_html = (f'<html><body style="margin:0;background:{_ICON_PAPER}">'
                  f'<div style="width:{size}px;height:{size}px">'
                  + svg.replace("<svg ", f'<svg width="{size}" height="{size}" ', 1)
@@ -820,7 +821,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
         search_files = []
         if native_search:
             from wikikit.mdx.native import package_search
-            entries, search_files = package_search(output, entries, display_keys, articles, aliases, stylesheet(), ROOT)
+            entries, search_files = package_search(output, entries, display_keys, articles, aliases, stylesheet())
         checks = validate(entries, resources, report_path=output / "link_failures.json")
         basename = dictionary_basename(sample)
         print("Compiling", len(entries), "keys and", len(resources), "resources", flush=True)

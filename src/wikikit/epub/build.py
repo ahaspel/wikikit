@@ -45,6 +45,7 @@ from wikikit.epub import math_assets as MA
 from wikikit.markers import markers_to_text
 from wikikit.render.article import insert_after_byline, topic_trail_html
 from wikikit.render.article import render_article, _section_slug
+from wikikit.site.build import PAGES as SITE_PAGES
 
 ROOT = str(book_root())   # the BOOK's repository — see wikikit.corpora.book_root
 ARTICLES_DIR = os.path.join(ROOT, current_corpus().derived("articles"))
@@ -862,7 +863,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         # `mdx/native.py` copies into the dictionary package.  Safe to load here:
         # it defines functions and assigns `window.BritannicaSearch`; its only
         # `fetch` lives inside `createSearchClient`'s closure and never runs.
-        shutil.copyfile(os.path.join(ROOT, "tools", "viewer", "search-api.js"),
+        shutil.copyfile(SITE_PAGES / "search-api.js",
                         os.path.join(oebps, "search-api.js"))
         log(f"fts: {len(fts_docs)} docs, {len(coll.by_term):,} terms, "
             f"asset {len(asset)/1e6:.1f}MB")
@@ -881,7 +882,7 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
             " if(r.docs.length)msg.push(r.docs.length+\" article\"+(r.docs.length===1?\"\":\"s\"));\n"
             ' note.textContent=msg.join(" \\u00b7 ");\n'
             # THE site's ranking, not a second one.  `titleRank` comes from
-            # `tools/viewer/search-api.js`, shipped beside this page — the same
+            # the site's `search-api.js`, shipped beside this page — the same
             # file the website and the MDX helper load, so all three order
             # results identically and cannot drift ([[feedback_tune_dont_fork]]).
             #

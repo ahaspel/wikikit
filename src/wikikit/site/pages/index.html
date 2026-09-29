@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@@work_name@@, @@edition_label@@</title>
+  <style>
+    :root {
+      --bg: #f5f1eb;
+      --panel: #fdfcf9;
+      --text: #2c2416;
+      --muted: #6b5e4f;
+      --border: #d4cab8;
+      --link: #7b3f00;
+      --highlight: #fff3cd;
+      --warn: #b42318;
+      --warn-bg: #fff1f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    h1 { margin-top: 0; font-size: 1.8rem; }
+
+    .stats {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* Search form */
+    .search-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-box {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font: inherit;
+      font-size: 1rem;
+      background: var(--panel);
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: #8b7355;
+      box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.12);
+    }
+
+    .search-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--link);
+      border-radius: 4px;
+      background: var(--link);
+      color: #fff;
+      font: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .search-btn:hover { opacity: 0.9; }
+
+    .search-modes {
+      display: flex;
+      gap: 16px;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .search-modes label {
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .search-modes input:checked + span {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Results area */
+    .result {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+    }
+
+    .result:last-child { border-bottom: none; }
+
+    .result-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .result-title a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    .result-title a:hover { text-decoration: underline; }
+
+    .result-meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+
+    .result-snippet {
+      margin-top: 4px;
+      font-size: 0.93rem;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      color: var(--text);
+    }
+
+    .result-snippet em {
+      background: var(--highlight);
+      font-style: normal;
+      padding: 1px 2px;
+      border-radius: 2px;
+    }
+
+    /* Full-text search result occurrences — mirrors the in-article
+       match-list style in viewer.html. */
+    .ft-occurrences { margin: 6px 0 0 0; padding: 0; list-style: none; }
+    .ft-occurrences li {
+      padding: 4px 10px; line-height: 1.4;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem; color: var(--text);
+    }
+    .ft-occurrences li:last-child { border-bottom: none; }
+    .ft-occurrences li mark {
+      background: #ff9800; color: #fff;
+      padding: 0 1px; border-radius: 2px;
+    }
+    .ft-occ-link {
+      color: inherit; text-decoration: none; display: block;
+    }
+    .ft-occ-link:hover { background: #f0ebe0; }
+    .ft-more {
+      font-size: 0.85rem; color: var(--muted);
+      margin-top: 4px; padding: 4px 10px;
+    }
+    .ft-count {
+      color: var(--muted); font-size: 0.82rem;
+      margin-left: 8px; font-weight: normal;
+    }
+
+    .body-start {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-left: 8px;
+    }
+
+    .page-range { color: var(--muted); font-size: 0.85rem; }
+
+    .empty { color: var(--muted); padding: 40px; text-align: center; }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .pagination button {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel);
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .pagination button:hover { background: #ebe4d6; }
+    .pagination button:disabled { opacity: 0.3; cursor: default; }
+
+    .page-index {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px 0;
+    }
+
+    .page-index a {
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .page-index a:hover { background: #ebe4d6; }
+    .page-index a.active { background: var(--link); color: #fff; border-color: var(--link); }
+
+    /* Volume browse */
+    .volume-section { margin-top: 8px; }
+
+    .volume-section summary {
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--muted);
+      padding: 8px 0;
+    }
+
+    .volume-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(14, auto);
+      grid-auto-flow: column;
+      gap: 4px;
+      padding: 8px 0;
+    }
+
+    .vol-btn {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel);
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .vol-btn:hover { background: #ebe4d6; }
+    .vol-btn.active { background: var(--link); color: #fff; border-color: var(--link); }
+    .vol-btn.disabled { opacity: 0.3; cursor: default; }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    td a { color: var(--link); text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+  </style>
+  <!-- NOT deferred: inline scripts below call createSearchClient() /
+       BritannicaUrls at module load time, so these must finish loading
+       first. -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="/article-urls.js"></script>
+  <script src="/search-api.js"></script>
+  <script src="/typeahead.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <h1 style="margin: 0; font-size: 1.3rem; color: #5c4a32;"><a href="/home.html" style="color: inherit; text-decoration: none;"><svg viewBox="0 0 32 32" width="32" height="32" style="vertical-align: middle; margin-right: 10px;" aria-hidden="true"><rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1"/><rect x="3.5" y="3.5" width="25" height="25" fill="none" stroke="currentColor" stroke-width="0.6"/><text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="currentColor" style="letter-spacing:-0.3px">@@monogram@@</text></svg><span style="font-variant: small-caps; letter-spacing: 0.06em;">Articles</span> <span style="font-variant: normal; font-style: italic; letter-spacing: 0.02em;">&mdash; @@edition_label@@</span></a></h1>
+        <div style="font-size: 0.9rem;">
+          <a href="/contributors.html" style="color: var(--link); text-decoration: none;">Contributors</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/topics.html" style="color: var(--link); text-decoration: none;">Topics</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/ancillary.html" style="color: var(--link); text-decoration: none;">Ancillary</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/download.html" style="color: var(--link); text-decoration: none;">Download</a>
+        </div>
+      </div>
+      <div id="stats" class="stats">Loading...</div>
+
+      <div class="search-form" style="align-items: center; flex-wrap: wrap;">
+        <div style="position: relative; flex: 1 1 200px; min-width: 0; max-width: 480px;">
+          <input id="search" class="search-box" type="text" placeholder="Search articles..." autofocus autocomplete="off" style="width: 100%; box-sizing: border-box;" />
+          <ul id="search-typeahead" style="display:none; position:absolute; top:100%; left:0; right:0; margin:0; padding:0; list-style:none; background:var(--panel); border:1px solid var(--border); border-top:none; border-radius:0 0 6px 6px; max-height:320px; overflow-y:auto; z-index:100; font-size:0.9rem;"></ul>
+          <style>#search-typeahead mark { background: #ffe033; padding: 0 2px; border-radius: 2px; color: inherit; }</style>
+        </div>
+        <button id="search-btn" class="search-btn">Search</button>
+        <span id="search-help-btn" style="cursor:pointer; font-size:1rem; color:var(--muted); padding:0 6px; user-select:none;" title="Search tips">&#x2139;</span>
+        <span id="result-count" style="font-size:0.85rem; color:var(--muted); margin-left:8px; white-space:nowrap;"></span>
+      </div>
+      <div id="search-help-popup" style="display:none; font-size:0.82rem; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:10px 14px; margin-top:4px; line-height:1.6;">
+        <b>Search operators:</b><br>
+        <code>min:1000</code> — articles longer than N words<br>
+        <code>max:500</code> — articles shorter than N words<br>
+        <code>vol:15</code> — filter to a specific volume<br>
+        <code>by:@@contributor_example@@</code> — filter by contributor<br>
+        <code>type:plate</code> — only plate pages<br>
+        <code>-word</code> — exclude results containing word<br>
+        <code>"battle of hastings"</code> — match words in exact order
+      </div>
+
+      <div style="border-top: 1px solid var(--border); margin: 12px 0 4px;"></div>
+      <details id="volume-browse">
+        <summary style="font-size: 0.85rem; font-variant: small-caps; letter-spacing: 0.05em; color: #8b7355; cursor: pointer; padding: 2px 0; list-style: revert;">Browse by Volume</summary>
+        <div id="volume-bar" class="volume-bar" style="margin-top: 4px;"></div>
+      </details>
+      <script>
+        (function() {
+          const vb = document.getElementById("volume-browse");
+          // Open by default on wider viewports (desktop / tablet), collapsed on phones.
+          if (window.matchMedia("(min-width: 700px)").matches) vb.open = true;
+        })();
+      </script>
+    </div>
+    <div id="results-divider" style="text-align:center; color:#8b7355; font-size:1.6rem; margin:-6px 0 14px; letter-spacing:0.3em; user-select:none; display:none;">&#x223C;&#x25C6;&#x223C;</div>
+    <div id="results-card" class="card" style="display:none">
+      <!-- Title search results (table) -->
+      <div id="title-results" style="display:none">
+        <div id="title-pagination-top" class="pagination" style="display:none">
+          <button id="title-prev-top">&larr; Previous</button>
+          <span id="title-page-info-top"></span>
+          <button id="title-next-top">Next &rarr;</button>
+        </div>
+        <div id="title-tbody"></div>
+        <div id="title-pagination" class="pagination" style="display:none">
+          <button id="title-prev">&larr; Previous</button>
+          <span id="title-page-info"></span>
+          <button id="title-next">Next &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Full-text search results -->
+      <div id="fulltext-results" style="display:none"></div>
+
+      <!-- Contributor results -->
+      <div id="contrib-results" style="display:none"></div>
+
+      <div id="empty" class="empty" style="display:none">No results found.</div>
+    </div>
+
+    <!-- Volume front matter -->
+    <div id="frontmatter-card" class="card" style="display:none">
+      <div id="frontmatter-content"></div>
+    </div>
+
+    <!-- Volume browse results -->
+    <div id="browse-card" class="card" style="display:none">
+      <div id="browse-page-index-top" class="page-index"></div>
+      <div id="browse-tbody"></div>
+      <div id="browse-page-index-bottom" class="page-index"></div>
+    </div>
+  </div>
+
+  <script>
+    // Production URL space, one form everywhere — locally tools/serve.py maps
+    // these paths onto the working tree (and swaps the search key in its proxy).
+    const DATA_BASE = "/data/articles";
+    const MEILI_URL = "/search-api";
+    const MEILI_KEY = "@@search_key|js@@";
+    // Shared Meilisearch client — see /search-api.js.  Both
+    // index.html's main-search typeahead and viewer.html's in-article
+    // typeahead call the same code path.
+    const searchClient = createSearchClient(MEILI_URL, MEILI_KEY);
+    const PAGE_SIZE = 100;
+
+    let articles = [];
+    let contributors = [];
+    let volumesMeta = [];
+    let currentPage = 0;
+    let lastFiltered = [];
+    let browsingVolume = null;
+
+    const searchInput = document.getElementById("search");
+    const searchBtn = document.getElementById("search-btn");
+    const statsEl = document.getElementById("stats");
+    const resultsCard = document.getElementById("results-card");
+    const resultsDivider = document.getElementById("results-divider");
+    const browseCard = document.getElementById("browse-card");
+    const emptyEl = document.getElementById("empty");
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // (formatPreview / ftCleanMarkup are DELETED \u2014 they were marker-stripping
+    // armor over inputs that are already plain: `body_start` and the indexed
+    // `body`/`title` all pass through markers_to_text at the PRODUCER, and a
+    // corpus scan found zero marker tokens and zero \x01 page sentinels in any
+    // of them.  If a marker ever DOES reach here it now shows as a visible
+    // leak instead of being silently swept \u2014 the honest posture; the fix
+    // belongs in markers_to_text, not in a JS regex.)
+
+    function viewerUrl(filename) {
+      return BritannicaUrls.filenameToUrl(filename);
+    }
+
+    function getMode() {
+      return "fulltext";
+    }
+
+    function pageRange(a) {
+      return a.page_start === a.page_end
+        ? `p.${a.page_start}`
+        : `pp.${a.page_start}\u2013${a.page_end}`;
+    }
+
+    function articleRow(a) {
+      const len = a.body_length;
+      const lenLabel = len > 1000 ? `${(len/1000).toFixed(1)}k words` : `${len} words`;
+      return `<div class="result">
+        <div class="result-title"><a href="${viewerUrl(a.filename)}">${escapeHtml(a.title)}</a> <span style="color:var(--muted);font-size:0.78rem;font-weight:normal;">${lenLabel}</span></div>
+        ${a.body_start ? `<div class="result-snippet">${escapeHtml(a.body_start)}</div>` : ""}
+      </div>`;
+    }
+
+    // ── Operator-only browse ──
+    // An operator query with no text ("min:10000", "vol:15 type:plate") is a
+    // BROWSE: the answer is EVERY article satisfying the operators, and the
+    // client-side index answers that completely — a capped server page cannot
+    // (631 articles clear min:10000; a 50-hit page shows 50 of them and calls
+    // it the result).  Renders through the title-results list, which already
+    // paginates.  `by:` is the one operator the index cannot answer (no
+    // contributors column) — those queries go to the server path.
+    function browseOperators(parsed) {
+      const o = parsed.ops;
+      lastFiltered = articles
+        .filter(a => {
+          const type = a.article_type || "article";
+          if (o.type !== null ? type !== o.type : type === "plate") return false;
+          if (o.vol !== null && a.volume !== o.vol) return false;
+          if (o.min !== null && (a.body_length || 0) < o.min) return false;
+          if (o.max !== null && (a.body_length || 0) > o.max) return false;
+          if (o.page !== null
+              && !(a.page_start <= o.page && o.page <= a.page_end)) return false;
+          if (parsed.excludes.length) {
+            const text = (a.title + " " + (a.body_start || "")).toLowerCase();
+            if (parsed.excludes.some(ex => text.includes(ex))) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => a.title.localeCompare(b.title));
+
+      currentPage = 0;
+      showTitleResults();
+    }
+
+    function updatePagination(prefix, totalPages) {
+      const info = `Page ${currentPage + 1} of ${totalPages} (${lastFiltered.length.toLocaleString()} results)`;
+      for (const suffix of ["", "-top"]) {
+        const pag = document.getElementById(`${prefix}-pagination${suffix}`);
+        if (totalPages > 1) {
+          pag.style.display = "flex";
+          document.getElementById(`${prefix}-prev${suffix}`).disabled = currentPage === 0;
+          document.getElementById(`${prefix}-next${suffix}`).disabled = currentPage >= totalPages - 1;
+          document.getElementById(`${prefix}-page-info${suffix}`).textContent = info;
+        } else {
+          pag.style.display = "none";
+        }
+      }
+    }
+
+    function showTitleResults() {
+      hideAllResults();
+      resultsCard.style.display = "block"; resultsDivider.style.display = "block";
+
+      setResultCount(lastFiltered.length);
+      if (lastFiltered.length === 0) {
+        emptyEl.style.display = "block";
+        return;
+      }
+
+      const el = document.getElementById("title-results");
+      el.style.display = "block";
+      const tbody = document.getElementById("title-tbody");
+      const totalPages = Math.ceil(lastFiltered.length / PAGE_SIZE);
+      const start = currentPage * PAGE_SIZE;
+
+      tbody.innerHTML = lastFiltered.slice(start, start + PAGE_SIZE).map(articleRow).join("");
+      updatePagination("title", totalPages);
+    }
+
+    // ── Query parser for search operators ──
+    // The operators are parsed into STRUCTURED values exactly once; the
+    // Meilisearch filter string is derived from them.  (The old shape pushed
+    // filter strings directly, and the client-side browse then re-parsed its
+    // own serialization with regexes.)
+    function parseQuery(raw) {
+      let q = raw;
+      const excludes = [];
+      const ops = { vol: null, min: null, max: null, page: null, type: null, by: null };
+
+      q = q.replace(/\bvol:(\d+)\b/gi, (m, n) => { ops.vol = parseInt(n); return ""; });
+      q = q.replace(/\bmin:(\d+)\b/gi, (m, n) => { ops.min = parseInt(n); return ""; });
+      q = q.replace(/\bmax:(\d+)\b/gi, (m, n) => { ops.max = parseInt(n); return ""; });
+      q = q.replace(/\btype:(\w+)\b/gi, (m, t) => { ops.type = t.toLowerCase(); return ""; });
+      q = q.replace(/\bpage:(\d+)\b/gi, (m, n) => { ops.page = parseInt(n); return ""; });
+
+      // by:Name — filter by contributor.  NOT a Meilisearch filter: the
+      // server's filter engine has no substring operator (`CONTAINS` was
+      // rejected with invalid_search_filter, which the page showed as zero
+      // results), and `contributors` is a joined string of full names that a
+      // surname can never `=`-match.  The client post-filters the hit's own
+      // contributors field instead (search-api.js), and a bare `by:Name`
+      // searches the contributors attribute directly.
+      q = q.replace(/\bby:(\S+)\b/gi, (m, name) => { ops.by = name; return ""; });
+
+      // -word — exclude (post-filter, Meilisearch doesn't support NOT)
+      q = q.replace(/(?:^|\s)-(\S+)/g, (m, word) => { excludes.push(word.toLowerCase()); return ""; });
+
+      const filters = [];
+      if (ops.vol !== null) filters.push(`volume = ${ops.vol}`);
+      if (ops.min !== null) filters.push(`body_length >= ${ops.min}`);
+      if (ops.max !== null) filters.push(`body_length <= ${ops.max}`);
+      if (ops.type !== null) filters.push(`article_type = "${ops.type}"`);
+      // Default: exclude plate-type articles.  Plates inherit their parent's
+      // title (e.g. SHIPBUILDING), so searching "SHIPBUILDING" would otherwise
+      // return the main article plus 6 plate duplicates.  Negation includes
+      // records where ``article_type`` is null (regular articles store null).
+      // THIS clause is the plate default for index.html — the search call
+      // passes excludePlates:false, else `type:plate` contradicts the client
+      // default (plates-only AND not-plate = always empty, the standing bug).
+      else filters.push(`NOT article_type = "plate"`);
+      if (ops.page !== null) {
+        filters.push(`page_start <= ${ops.page}`);
+        filters.push(`page_end >= ${ops.page}`);
+      }
+
+      return {
+        query: q.trim(),
+        filter: filters.length ? filters.join(" AND ") : undefined,
+        excludes,
+        ops,
+        by: ops.by,
+        // Operators the client-side INDEX can answer — everything but by:.
+        indexOps: ops.vol !== null || ops.min !== null || ops.max !== null
+          || ops.page !== null || ops.type !== null || excludes.length > 0,
+      };
+    }
+
+    // ── Full-text search ──
+    function ftEscapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Exact-substring matching, case-insensitive. Same behavior as
+    // viewer.html's in-article search: count occurrences, extract
+    // every paragraph containing a match, highlight all matches.
+    // Each emitted snippet also reports `matchIdx` = the 1-based
+    // index (across the whole body, in reading order) of the FIRST
+    // match inside that paragraph. Clicking the snippet in the UI
+    // forwards to viewer.html?q=…&match=<matchIdx> so the reader
+    // lands on the exact highlight.
+    function ftExtractOccurrences(body, query, max) {
+      if (!body || !query) return { items: [], total: 0 };
+      const qLow = query.toLowerCase();
+      const paras = body.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const CTX = 50;
+      const items = [];
+      const qEscRe = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      let runningIdx = 0;  // matches seen before current paragraph
+      let totalHitParas = 0;
+      for (const para of paras) {
+        const pLow = para.toLowerCase();
+        // Count matches in this paragraph.
+        let pCount = 0;
+        let i = 0;
+        while ((i = pLow.indexOf(qLow, i)) !== -1) { pCount++; i += qLow.length; }
+        if (pCount === 0) continue;
+        totalHitParas++;
+        if (items.length < max) {
+          const firstMatchIdx = runningIdx + 1;  // 1-based global
+          const idx = pLow.indexOf(qLow);
+          const s = Math.max(0, idx - CTX);
+          const e = Math.min(para.length, idx + query.length + CTX);
+          const snippet = (s > 0 ? "\u2026" : "") + para.slice(s, e) +
+                          (e < para.length ? "\u2026" : "");
+          const esc = ftEscapeHtml(snippet).replace(
+            new RegExp(`(${qEscRe})`, "gi"),
+            "<mark>$1</mark>"
+          );
+          items.push({ html: esc, matchIdx: firstMatchIdx });
+        }
+        runningIdx += pCount;
+      }
+      return { items, total: totalHitParas };
+    }
+
+    async function searchFulltext(query) {
+      hideAllResults();
+      resultsCard.style.display = "block"; resultsDivider.style.display = "block";
+
+      if (!query.trim()) {
+        emptyEl.style.display = "block";
+        emptyEl.textContent = "Enter a search term.";
+        return;
+      }
+
+      try {
+        const parsed = parseQuery(query);
+        // THE shared ranked search — the dropdown shows the top 16 of this exact
+        // list, so the two views cannot differ.  One Meilisearch query, one
+        // ranking (search-api.js): folded so "zurich" matches "ZÜRICH", tiered so
+        // PLATO precedes PLATOON precedes CAMBRIDGE PLATONISTS, body-only last.
+        let hits = await searchClient.rankedSearch(parsed.query, {
+          filter: parsed.filter,
+          by: parsed.by,
+          // parseQuery's filter owns the plate default here — letting the
+          // client add its own `NOT plate` made `type:plate` self-contradict
+          // (plates-only AND not-plate = always empty).
+          excludePlates: false,
+          // A bare by:Name browses a contributor's whole œuvre — the default
+          // 50 would silently cap it (Chisholm signs hundreds).
+          limit: parsed.by && !parsed.query ? 1000 : undefined,
+        });
+
+        if (parsed.excludes.length) {
+          hits = hits.filter(hit => {
+            const text = ((hit.body_start || "") + " " + (hit.title || "")).toLowerCase();
+            return !parsed.excludes.some(ex => text.includes(ex));
+          });
+        }
+
+        // Dedupe by filename — stable IDs make filenames unique per
+        // article. Previously this keyed on (title, volume, page_start)
+        // which collapsed distinct same-page articles (e.g. three
+        // AETIUS articles on vol 1 p335, sections s5/s6/s7).
+        const seen = new Set();
+        hits = hits.filter(hit => {
+          if (seen.has(hit.filename)) return false;
+          seen.add(hit.filename);
+          return true;
+        });
+        setResultCount(hits.length);
+
+        if (hits.length === 0) {
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "No results found.";
+          return;
+        }
+
+        const MAX_OCC = 6;
+        const el = document.getElementById("fulltext-results");
+        el.style.display = "block";
+        el.innerHTML = hits.map(hit => {
+          const fmt = hit._formatted || {};
+          // No title highlighting — only article body text matches.
+          const titleRaw = hit.title || "";
+          const titleEsc = ftEscapeHtml(titleRaw);
+          const pr = hit.page_start === hit.page_end
+            ? `p.${hit.page_start}` : `pp.${hit.page_start}\u2013${hit.page_end}`;
+          // When the query matched the article title, skip the body
+          // occurrence enumeration and count badge — the user wants to
+          // see the article once, not "SHIPBUILDING" followed by six
+          // SHIPBUILDING text-hit lines.
+          const titleHit = (hit._titleMatches || 0) > 0;
+          // The quotes in a phrase query are delimiters — the occurrence
+          // extractor and the viewer's in-article highlight both match the
+          // PHRASE, never the literal quote characters.
+          const phrase = parsed.query.replace(/["“”]/g, "");
+          const occ = titleHit
+            ? { items: [], total: 0 }
+            : ftExtractOccurrences(hit.body || "", phrase, MAX_OCC);
+          const count = hit._matchCount;
+          const countBadge = (!titleHit && count > 0)
+            ? ` <span class="ft-count">${count} match${count === 1 ? "" : "es"}</span>`
+            : "";
+          let occHtml = "";
+          if (occ.items.length) {
+            const url = viewerUrl(hit.filename);
+            const q = encodeURIComponent(phrase);
+            const liHtml = occ.items.map(item => {
+              const href = `${url}${url.includes("?") ? "&" : "?"}q=${q}&match=${item.matchIdx}`;
+              return `<li><a href="${href}" class="ft-occ-link">${item.html}</a></li>`;
+            }).join("");
+            occHtml = `<ul class="ft-occurrences">${liHtml}</ul>`;
+            if (occ.total > MAX_OCC) {
+              occHtml += `<div class="ft-more">\u2026 and ${occ.total - MAX_OCC} more in this article</div>`;
+            }
+          }
+          return `<div class="result">
+            <div class="result-title"><a href="${viewerUrl(hit.filename)}">${titleEsc}</a>${countBadge}</div>
+            <div class="result-meta">Volume ${hit.volume} \u00b7 ${pr}</div>
+            ${occHtml}
+          </div>`;
+        }).join("");
+      } catch (err) {
+        emptyEl.style.display = "block";
+        emptyEl.textContent = `Search error: ${err.message}`;
+      }
+    }
+
+    // ── Contributor search ──
+    function searchContributors(query) {
+      hideAllResults();
+      resultsCard.style.display = "block"; resultsDivider.style.display = "block";
+
+      const q = query.toLowerCase();
+      // Empty query = browse all contributors
+      const matches = q
+        ? contributors.filter(c =>
+            c.full_name.toLowerCase().includes(q)
+            || (c.initials || "").toLowerCase().includes(q)
+          )
+        : contributors;
+
+      setResultCount(matches.length);
+      if (matches.length === 0) {
+        emptyEl.style.display = "block";
+        emptyEl.textContent = "No contributors found.";
+        return;
+      }
+
+      const el = document.getElementById("contrib-results");
+      el.style.display = "block";
+      el.innerHTML = matches.map(c => {
+        const artLinks = (c.articles || [])
+          .sort((a, b) => a.title.localeCompare(b.title))
+          .map(a => {
+            const full = articles.find(x => x.filename === a.filename);
+            return `<a href="${viewerUrl(a.filename)}">${escapeHtml(a.title)}</a>`;
+          })
+          .join(", ");
+
+        let bioLink = "";
+        if (c.bio_article_filename) {
+          bioLink = ` \u00b7 <a href="${viewerUrl(c.bio_article_filename)}">Biographical entry</a>`;
+        }
+
+        return `<div class="result">
+          <div class="result-title">${escapeHtml(c.display_name || c.full_name)} <span style="color:var(--muted);font-size:0.85em;">(${escapeHtml(c.initials || "")})</span></div>
+          <div class="result-meta">${c.credentials ? escapeHtml(c.credentials) : ""}${bioLink}</div>
+          <div class="result-snippet">${artLinks}</div>
+        </div>`;
+      }).join("");
+    }
+
+    // ── Volume browse ──
+    function iaUrl(vol) {
+      const padded = String(vol).padStart(2, "0");
+      return "@@volume_scans_url|js@@".replace("{vol}", padded);
+    }
+
+    function iaPageUrl(vol, page) {
+      return `${iaUrl(vol)}/page/n${page}`;
+    }
+
+    // ONE page-ordered article list per volume — the range shown anywhere
+    // (volume-bar button, volume header) derives from THIS list, never from
+    // volumes.json's first_title/last_title (stale orphaned data: it said
+    // vol 9 = "E"–"Evangelical Association" while the corpus starts at
+    // EDWARDES; no pipeline stage writes those fields).
+    function volArticles(vol) {
+      return articles
+        .filter(a => a.volume === vol && (a.article_type || "article") === "article")
+        .sort((a, b) => {
+          const sa = a.ws_page_start || a.page_start;
+          const sb = b.ws_page_start || b.page_start;
+          if (sa !== sb) return sa - sb;
+          // Tiebreak on ws_page_end so the article that ends later in
+          // the volume sorts last.  Without this, literal title order
+          // (alphabetic) wins, putting SAINTE-BEUVE before STE ANNE DE
+          // BEAUPRÉ even though the book ends with SAINTE-BEUVE — and
+          // "View volume scans" loses the trailing leaves.
+          return (a.ws_page_end || a.page_end) - (b.ws_page_end || b.page_end);
+        });
+    }
+
+    // First word of the first and last titles ("EDWARDES–EVANGELICAL").
+    function volRangeWords(volArts) {
+      const word = a => ((a || {}).title || "").split(",")[0].split(" ")[0];
+      return volArts.length
+        ? `${word(volArts[0])}–${word(volArts[volArts.length - 1])}`
+        : "";
+    }
+
+    function browseVolume(vol) {
+      browsingVolume = vol;
+      resultsCard.style.display = "none";
+
+      const meta = volumesMeta.find(v => v.volume === vol) || {};
+      const volArts = volArticles(vol);
+      const fmPages = (meta.front_matter_pages || []);
+      const iaLink = meta.ia_url || iaUrl(vol);
+
+      // Show front matter card
+      const fmCard = document.getElementById("frontmatter-card");
+      const fmContent = document.getElementById("frontmatter-content");
+      fmCard.style.display = "block";
+      fmContent.innerHTML = `
+        <h2 style="margin-top:0; font-size:1.2rem;">Volume ${vol}: ${escapeHtml(volRangeWords(volArts))}</h2>
+        ${fmPages.length
+          ? `<div style="color: var(--muted); font-size: 0.9rem;">
+               Front matter: pages 1\u2013${fmPages[fmPages.length - 1]}
+               (title page, editorial preface, contributor list)
+             </div>`
+          : ""}
+        <div style="margin-top: 8px; font-size: 0.9rem;">
+          ${volArts.length > 0 && volArts[0].leaf_start > 1
+            ? `<a href="scans.html?vol=${vol}&start=1&end=${volArts[0].leaf_start - 1}&label=Front+Matter" style="color: var(--link);">View front matter \u2192</a>`
+            : ""}
+          ${volArts.length > 0
+            ? ` &nbsp;\u00b7&nbsp; <a href="scans.html?vol=${vol}&start=${volArts[0].leaf_start}&end=${volArts[volArts.length - 1].leaf_end}&label=Volume+Scans&pinit=1" style="color: var(--link);">View volume scans \u2192</a>`
+            : ""}
+        </div>
+        <div style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">
+          ${meta.article_count || volArts.length} articles \u00b7 ${meta.total_pages || "?"} pages
+        </div>
+      `;
+
+      lastFiltered = volArts;
+      currentPage = 0;
+      showBrowseResults();
+    }
+
+    function showBrowseResults() {
+      browseCard.style.display = "block";
+      resultsDivider.style.display = "block";
+
+      const tbody = document.getElementById("browse-tbody");
+      const totalPages = Math.ceil(lastFiltered.length / PAGE_SIZE);
+      const start = currentPage * PAGE_SIZE;
+
+      tbody.innerHTML = lastFiltered.slice(start, start + PAGE_SIZE).map(articleRow).join("");
+
+      // Build alphabetic page index
+      const indexHtml = [];
+      for (let p = 0; p < totalPages; p++) {
+        const first = lastFiltered[p * PAGE_SIZE].title.slice(0, 3);
+        const lastIdx = Math.min((p + 1) * PAGE_SIZE, lastFiltered.length) - 1;
+        const last = lastFiltered[lastIdx].title.slice(0, 3);
+        const label = first === last ? first : `${first}\u2013${last}`;
+        const cls = p === currentPage ? ' class="active"' : "";
+        indexHtml.push(`<a${cls} data-page="${p}">${label}</a>`);
+      }
+      const html = indexHtml.join("");
+      for (const id of ["browse-page-index-top", "browse-page-index-bottom"]) {
+        const el = document.getElementById(id);
+        el.innerHTML = html;
+        el.querySelectorAll("a").forEach(a => {
+          a.addEventListener("click", () => {
+            currentPage = parseInt(a.dataset.page);
+            showBrowseResults();
+            document.getElementById("browse-page-index-top").scrollIntoView({behavior:'smooth',block:'start'});
+          });
+        });
+      }
+    }
+
+    // ── Helpers ──
+    const resultCountEl = document.getElementById("result-count");
+    function setResultCount(n) {
+      resultCountEl.textContent = n === 0 ? "No results" :
+        n === 1 ? "1 result" : `${n.toLocaleString()} results`;
+    }
+
+    function hideAllResults() {
+      emptyEl.style.display = "none";
+      emptyEl.textContent = "No results found.";
+      resultCountEl.textContent = "";
+      document.getElementById("title-results").style.display = "none";
+      document.getElementById("fulltext-results").style.display = "none";
+      document.getElementById("contrib-results").style.display = "none";
+      document.getElementById("frontmatter-card").style.display = "none";
+      browseCard.style.display = "none";
+      resultsDivider.style.display = "none";
+    }
+
+    function doSearch() {
+      const query = searchInput.value.trim();
+      const mode = getMode();
+      if (!query && mode !== "contributors") return;
+      browseCard.style.display = "none";
+      // Deselect volume buttons
+      document.querySelectorAll(".vol-btn").forEach(b => b.classList.remove("active"));
+
+      if (mode === "fulltext") {
+        // Operators with no text query and no by: → the full-index browse
+        // (complete answer); anything with text or by: → the server search.
+        const parsed = parseQuery(query);
+        if (!parsed.query && !parsed.by && parsed.indexOps) browseOperators(parsed);
+        else searchFulltext(query);
+      }
+      else if (mode === "contributors") searchContributors(query);
+    }
+
+    // ── Events ──
+    const hints = {
+      fulltext: "",
+      contributors: "",
+    };
+
+    // Toggle search help popup
+    document.getElementById("search-help-btn").addEventListener("click", () => {
+      const popup = document.getElementById("search-help-popup");
+      popup.style.display = popup.style.display === "none" ? "block" : "none";
+    });
+    const hintEl = document.getElementById("search-hint") || document.createElement("div");
+
+    const placeholders = {
+      fulltext: "Search articles...",
+      contributors: "Search contributors...",
+    };
+
+    function updateHint() {
+      hintEl.textContent = hints[getMode()] || "";
+      searchInput.placeholder = placeholders[getMode()] || "Search...";
+    }
+
+    updateHint();
+
+    searchBtn.addEventListener("click", doSearch);
+
+    // Live typeahead, shared with home.html via `typeahead.js`.  Title
+    // matches + Meili full-text hits in a dropdown; click / Enter on a
+    // highlighted item jumps straight to the article.
+    //
+    // Index-specific bits:
+    //   shouldSkip       — contributor-search mode is text-input but
+    //                      not article-search, so suppress typeahead.
+    //   onSubmitNoSel.   — Enter with no selection runs the in-page
+    //                      full search.  home.html omits this and
+    //                      lets its <form> submit naturally to
+    //                      index.html?q=… instead.
+    //   onInputAlso(q)   — also drive the bottom results panel,
+    //                      debounced slightly longer than the
+    //                      typeahead so we don't thrash the UI.
+    let fullResultsDebounce = null;
+    initTypeahead({
+      inputEl: searchInput,
+      dropdownEl: document.getElementById("search-typeahead"),
+      getArticles: () => articles,
+      shouldSkip: () => getMode() === "contributors",
+      onSubmitNoSelection: doSearch,
+      onInputAlso: (q) => {
+        clearTimeout(fullResultsDebounce);
+        fullResultsDebounce = setTimeout(() => {
+          if (searchInput.value.trim() === q) doSearch();
+        }, 400);
+      },
+    });
+
+    for (const suffix of ["", "-top"]) {
+      document.getElementById(`title-prev${suffix}`).addEventListener("click", () => {
+        if (currentPage > 0) { currentPage--; showTitleResults(); window.scrollTo(0, 0); }
+      });
+      document.getElementById(`title-next${suffix}`).addEventListener("click", () => {
+        const total = Math.ceil(lastFiltered.length / PAGE_SIZE);
+        if (currentPage < total - 1) { currentPage++; showTitleResults(); window.scrollTo(0, 0); }
+      });
+    }
+
+    // ── Load data ──
+    Promise.all([
+      fetch(`${DATA_BASE}/index.json`).then(r => r.json()),
+      fetch(`${DATA_BASE}/contributors.json`).then(r => r.json()).catch(() => []),
+      fetch("/data/volumes.json").then(r => r.json()).catch(() => []),
+    ]).then(([articleData, contribData, volumesData]) => {
+      articles = articleData;
+      contributors = contribData;
+      volumesMeta = volumesData;
+
+      const artCount = articles.filter(a => (a.article_type || "article") === "article").length;
+      statsEl.textContent = `${artCount.toLocaleString()} articles \u00b7 ${contributors.length.toLocaleString()} contributors`;
+
+
+      // Build volume bar
+      const volumes = [...new Set(articles.map(a => a.volume))].sort((a, b) => a - b);
+      const volBar = document.getElementById("volume-bar");
+
+      for (const v of volumes) {
+        const volArts = volArticles(v);
+        const range = volRangeWords(volArts);
+        const label = range ? `${v}. ${range}` : `Vol ${v}`;
+
+        const btn = document.createElement("button");
+        btn.className = "vol-btn";
+        btn.textContent = label;
+        btn.title = `Volume ${v} (${volArts.length} articles)`;
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".vol-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          hideAllResults();
+          browseVolume(v);
+        });
+        volBar.appendChild(btn);
+      }
+
+      // Handle URL ?q= for direct article search
+      const params = new URLSearchParams(window.location.search);
+      const urlQuery = params.get("q");
+      if (urlQuery) {
+        searchInput.value = urlQuery;
+        doSearch();
+      }
+    }).catch(err => {
+      statsEl.textContent = `Failed to load: ${err.message}`;
+    });
+  </script>
+<script src="/gc-gate.js"></script>
+<script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
+</body>
+</html>

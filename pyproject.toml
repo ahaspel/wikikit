@@ -50,6 +50,7 @@ where = ["src"]
                  "installer/*.cjs", "installer/*.json", "installer/Install.command",
                  "installer/.gitignore"]
 "wikikit.diagnostics" = ["tei_all.rng"]
+"wikikit.site" = ["pages/*.html", "pages/*.js"]
 
 [dependency-groups]
 dev = [

@@ -18,8 +18,9 @@ that encodes a RULE and appears in more than one maintained location, and fails 
 a literal joins that set. The count can fall freely; it cannot rise without a
 deliberate `--accept`.
 
-Scope note: generated pages under tools/viewer are excluded. 87 identical copies of
-one boilerplate line across the Reader's Guide is a builder repeating itself, not a
+Scope note: of the site, only the engine's hand-written pages are read, never a
+book's site folder — most of that is generated, and 87 identical copies of one
+boilerplate line across the Reader's Guide is a builder repeating itself, not a
 constant anyone can drift.
 """
 import argparse
@@ -37,9 +38,8 @@ from wikikit.audits._ast_shapes import docstring_ids          # noqa: E402
 # wikikit; a book audits the book — one copy of this code, two trees.
 ROOT = Path.cwd().resolve()
 from wikikit.audits import audited_files
-# Hand-written viewer sources only; the rest of tools/viewer is generated (Phase 6.2).
-VIEWER_KEEP = {"viewer.html", "index.html", "contributors.html", "maps.html",
-               "scans.html"}
+# The engine's site pages (`wikikit.site`) — present only in the engine's tree.
+SITE_PAGES = ROOT / "src" / "wikikit" / "site" / "pages"
 BASELINE = ROOT / "tests" / "ledgers" / "dup_constants.json"
 
 MIN_LEN = 6
@@ -128,9 +128,7 @@ def collect() -> dict[str, list[str]]:
                 sk = _skeleton(node)
                 if sk is not None and _keep(sk):
                     hits[sk].append(f"{rel}:{node.lineno}")
-    for p in sorted((ROOT / "tools" / "viewer").rglob("*")):
-        if p.suffix not in (".js", ".html") or p.name not in VIEWER_KEEP:
-            continue
+    for p in sorted(SITE_PAGES.glob("*.html")) if SITE_PAGES.is_dir() else ():
         rel = p.relative_to(ROOT).as_posix()
         for i, line in enumerate(p.read_text(encoding="utf-8",
                                              errors="replace").splitlines(), 1):

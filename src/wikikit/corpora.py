@@ -180,6 +180,16 @@ class Corpus:
     subtitle: str | None = None
     years: str | None = None
     article_volumes: int | None = None
+    #: The site (`wikikit.site`): the names its pages wear, and the folder of
+    #: the book's OWN pages, served beside the engine's.
+    work_name: str | None = None        # "Encyclopædia Britannica" — page titles
+    edition_label: str | None = None    # "11th Edition" — titles, page headers
+    monogram: str | None = None         # "EB" — the header's boxed mark
+    search_key: str | None = None       # the PUBLIC search-only key the pages send
+    analytics_code: str | None = None   # "britannica11" — the GoatCounter site
+    volume_scans_url: str | None = None  # one volume's scans; `{vol}` = 2 digits
+    contributor_example: str | None = None  # "Chisholm" — the search help's `by:`
+    site_dir: str | None = None         # "tools/viewer" — the book's own pages
 
     def data_path(self, name: str) -> Path:
         """Where a declared data file LIVES, whether or not it exists yet — for

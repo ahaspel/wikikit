@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Scans - @@work_name@@, @@edition_label@@</title>
+<style>
+  :root { --bg: #f5f0e8; --text: #2c2416; --muted: #6b5d4d; --link: #8b4513; }
+  body { font-family: Georgia, serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+  .back-bar { margin-bottom: 12px; }
+  .back-bar a { color: var(--link); text-decoration: none; }
+  .back-bar a:hover { text-decoration: underline; }
+  .header { text-align: center; margin-bottom: 20px; }
+  .header h1 { font-size: 1.3rem; margin: 0; }
+  .header .subtitle { color: var(--muted); font-size: 0.9rem; }
+  .nav { text-align: center; margin: 16px 0; }
+  .nav button { font-family: Georgia, serif; font-size: 1.5rem; padding: 6px 18px; margin: 0 4px;
+    background: transparent; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color: var(--text); }
+  .nav button:hover { background: rgba(0,0,0,0.05); }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+  .nav .page-info { display: inline-block; min-width: 120px; text-align: center; }
+  .nav .jump { display: inline-flex; align-items: center; gap: 6px; margin-left: 16px; font-size: 0.95rem; color: var(--muted); }
+  .nav .jump input { font-family: Georgia, serif; font-size: 1rem; width: 70px; padding: 4px 6px;
+    border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+  .nav .jump button { font-size: 0.95rem; padding: 4px 10px; }
+  .scan-container { text-align: center; }
+  .scan-container img { max-width: 100%; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .scan-container .error { color: var(--muted); font-style: italic; padding: 40px; }
+  a { color: var(--link); }
+</style>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+<div class="back-bar">
+  <a id="backLink" href="index.html">&larr; Back to index</a>
+</div>
+<div class="header">
+  <h1 id="title">Page Scans</h1>
+  <div class="subtitle" id="subtitle"></div>
+</div>
+<div class="nav">
+  <button id="firstBtn" onclick="goTo(startLeaf)">&laquo;</button>
+  <button id="prevBtn" onclick="go(-1)">&lsaquo;</button>
+  <span class="page-info" id="pageInfo"></span>
+  <button id="nextBtn" onclick="go(1)">&rsaquo;</button>
+  <button id="lastBtn" onclick="goTo(endLeaf)">&raquo;</button>
+  <span class="jump">
+    <label for="jumpInput">Go to page</label>
+    <input id="jumpInput" type="text" inputmode="numeric" autocomplete="off"
+           onkeydown="if(event.key==='Enter')jumpToPrinted()" />
+  </span>
+</div>
+<div class="scan-container" id="scanContainer"></div>
+<script>
+  // Leaf-only scan viewer.  The URL provides a leaf range; every
+  // label comes from printed_pages_leaf.json (int → "p. N",
+  // "fm N" / any string → verbatim, missing → "(unnumbered)").
+  // No ws translation, no modes, no fallback offsets.  Fix label
+  // errors by editing the map, not the viewer.
+  const params = new URLSearchParams(location.search);
+  const vol = parseInt(params.get("vol")) || 1;
+  // startLeaf is mutable: after the printed-pages map loads we
+  // advance it past leading null leaves (cover, blanks) so the user
+  // can't scroll backward off the labeled range.
+  let startLeaf = parseInt(params.get("start")) || 1;
+  let endLeaf = parseInt(params.get("end")) || startLeaf;
+  const label = params.get("label") || "Pages";
+
+  let currentLeaf = startLeaf;
+  const initPrinted = parseInt(params.get("pinit")) || 0;
+
+  document.getElementById("title").textContent = `Volume ${vol}: ${label}`;
+
+  const backUrl = params.get("back");
+  if (backUrl) {
+    document.getElementById("backLink").href = backUrl;
+    document.getElementById("backLink").innerHTML = "&larr; Back to article";
+  } else {
+    document.getElementById("backLink").href = "/index.html";
+  }
+
+  let printedPages = null;
+
+  async function loadPrintedPages() {
+    try {
+      const url = "/data/printed_pages_leaf.json";
+      const resp = await fetch(url);
+      if (resp.ok) printedPages = await resp.json();
+    } catch (e) { /* map missing → everything labels as (unnumbered) */ }
+  }
+
+  function labelForLeaf(leaf) {
+    if (!printedPages || !printedPages[String(vol)]) return null;
+    const v = printedPages[String(vol)][String(leaf)];
+    return v === undefined ? null : v;
+  }
+
+  function displayLabel(leaf) {
+    const v = labelForLeaf(leaf);
+    if (v === null) return "(unnumbered)";
+    if (typeof v === "number") return `p. ${v}`;
+    return String(v);
+  }
+
+  function updateSubtitle() {
+    const first = displayLabel(startLeaf);
+    const last = displayLabel(endLeaf);
+    document.getElementById("subtitle").textContent = `${first} – ${last}`;
+  }
+
+  function scanUrl(leaf) {
+    const padVol = String(vol).padStart(2, "0");
+    const padLeaf = String(leaf).padStart(4, "0");
+    const name = `vol${padVol}_leaf${padLeaf}.jpg`;
+    return `/data/scans/${name}`;
+  }
+
+  function render() {
+    const container = document.getElementById("scanContainer");
+    const img = new Image();
+    img.alt = `Volume ${vol}, leaf ${currentLeaf}`;
+    img.loading = "eager";
+    img.onload = () => { container.innerHTML = ""; container.appendChild(img); };
+    img.onerror = () => { container.innerHTML = `<div class="error">Scan not available for leaf ${currentLeaf}</div>`; };
+    img.src = scanUrl(currentLeaf);
+    container.innerHTML = `<div class="error">Loading...</div>`;
+
+    document.getElementById("pageInfo").textContent = displayLabel(currentLeaf);
+    document.getElementById("firstBtn").disabled = currentLeaf <= startLeaf;
+    document.getElementById("prevBtn").disabled = currentLeaf <= startLeaf;
+    document.getElementById("nextBtn").disabled = currentLeaf >= endLeaf;
+    document.getElementById("lastBtn").disabled = currentLeaf >= endLeaf;
+  }
+
+  function go(delta) {
+    currentLeaf = Math.max(startLeaf, Math.min(endLeaf, currentLeaf + delta));
+    render();
+  }
+
+  function goTo(leaf) {
+    currentLeaf = Math.max(startLeaf, Math.min(endLeaf, leaf));
+    render();
+  }
+
+  // Jump resolves entered text against the map: prefer integer
+  // match (printed page), else string match ("fm 3"), else treat as
+  // a leaf number.  Whatever matches first wins.
+  function jumpToPrinted() {
+    const input = document.getElementById("jumpInput");
+    const raw = input.value.trim();
+    if (!raw) return;
+
+    if (printedPages && printedPages[String(vol)]) {
+      const volMap = printedPages[String(vol)];
+      const asInt = parseInt(raw, 10);
+      for (let leaf = startLeaf; leaf <= endLeaf; leaf++) {
+        const v = volMap[String(leaf)];
+        if (v === undefined) continue;
+        if (typeof v === "number" && !Number.isNaN(asInt) && v === asInt) {
+          goTo(leaf);
+          return;
+        }
+        if (typeof v === "string" && v.toLowerCase() === raw.toLowerCase()) {
+          goTo(leaf);
+          return;
+        }
+      }
+    }
+
+    const n = parseInt(raw, 10);
+    if (!Number.isNaN(n)) goTo(n);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") go(-1);
+    if (e.key === "ArrowRight") go(1);
+    if (e.key === "Home") goTo(startLeaf);
+    if (e.key === "End") goTo(endLeaf);
+  });
+
+  loadPrintedPages().then(() => {
+    // Constrain start/end past leading and trailing null leaves
+    // (cover, blanks, post-text fly-leaves) so the navigation range
+    // contains only labeled pages.  Front-matter view should start
+    // on "fm 1" and end on the last labeled fm page; volume-scans
+    // view inherits the same protection at the trailing end.
+    while (startLeaf < endLeaf && labelForLeaf(startLeaf) === null) {
+      startLeaf += 1;
+    }
+    while (endLeaf > startLeaf && labelForLeaf(endLeaf) === null) {
+      endLeaf -= 1;
+    }
+    if (currentLeaf < startLeaf) currentLeaf = startLeaf;
+    if (currentLeaf > endLeaf) currentLeaf = endLeaf;
+    updateSubtitle();
+    if (initPrinted > 0) {
+      document.getElementById("jumpInput").value = String(initPrinted);
+      jumpToPrinted();
+      document.getElementById("jumpInput").value = "";
+    } else {
+      render();
+    }
+  });
+</script>
+<script src="/gc-gate.js"></script>
+<script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
+</body>
+</html>

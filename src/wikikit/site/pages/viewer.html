@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@@work_name@@, @@edition_label@@</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Egyptian+Hieroglyphs&display=swap">
+  <style>
+    :root {
+      --bg: #f5f1eb;
+      --panel: #fdfcf9;
+      --text: #2c2416;
+      --muted: #6b5e4f;
+      --border: #d4cab8;
+      --link: #7b3f00;
+      --unresolved: #b42318;
+      --resolved-bg: #f5f0e8;
+      --unresolved-bg: #fff1f1;
+      --code-bg: #f0ebe3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Plate pages have no marginal furniture (page numbers, shoulder
+       headers) — drop the reading-column cap and give the viewport to
+       the display.  Toggled by renderArticle on article_type==="plate". */
+    body.plate-page .page {
+      max-width: none;
+      padding-left: 2vw;
+      padding-right: 2vw;
+    }
+
+    /* Transliteration tooltip: the romanization of a Greek/Hebrew word, carried
+       from the source's `<span title="…">` and shown on hover.  Dotted underline
+       + help cursor signal it's hover-able (the print offered no such aid). */
+    .xlit {
+      border-bottom: 1px dotted currentColor;
+      cursor: help;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .header-divider {
+      text-align: center;
+      color: #8b7355;
+      font-size: 1.6rem;
+      margin: -6px 0 14px;
+      letter-spacing: 0.3em;
+      user-select: none;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      font-variant: small-caps;
+      letter-spacing: 0.06em;
+      color: #2c2416;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    input[type="text"] {
+      flex: 1 1 380px;
+      min-width: 240px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font: inherit;
+      background: var(--panel);
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #8b7355;
+      box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.12);
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:hover { background: var(--code-bg); }
+
+    .body-text {
+      font-size: 1.08rem;
+      margin-left: 6.5em;
+      margin-right: 160px;
+      position: relative;
+      /* Contain floats: a float-right contributor signoff after a final
+         TABLE has no following prose to sit beside, and without a BFC it
+         hangs below the body block into the notes bar (CONSTELLATION).
+         flow-root contains it without clipping the absolutely-positioned
+         margin page-numbers (overflow:hidden would). */
+      display: flow-root;
+    }
+
+    @media (max-width: 900px) {
+      .body-text {
+        margin-right: 0;
+      }
+    }
+
+    /* The scans indent a new paragraph about two characters, and that indent is
+       the ONLY signal the page gives — printed paragraphs carry no vertical gap.
+       We keep the gap (a web convention that earns its keep on screen) and add
+       the indent back, which is what this rule said until 2026-06-13: it was
+       deleted as collateral in c9115a8, a commit about making produce_title the
+       sole title decider, whose message never mentions the CSS.
+       The first paragraph stays flush, as the printed page runs it on from the
+       headword.
+       NOT TRUE of a paragraph broken by a block: the producer emits <p> as a
+       SEPARATOR, so a paragraph interrupted by display math resumes as its own
+       <p> and takes an indent it should not (MENSURATION §24 (ii)), while a new
+       item arriving straight after a table has no <p> at all and stays flush
+       when it should indent.  CSS cannot tell the two apart — the discriminator
+       is whether the text starts lowercase — and measurement rejects the one
+       rule that might have: a <p> after a centred block is a continuation only
+       21% of the time (1,482 of 7,028), so flushing them all would mis-set
+       5,546 genuine paragraphs to fix 1,482.  This wants a producer fix. */
+    .body-text p {
+      text-indent: 1.5em;
+      margin: 0 0 0.5em 0;
+      position: relative;
+    }
+
+    /* `> p`, not `p`: `:first-of-type` is per PARENT, so the first paragraph of
+       every NESTED block matched it too and went flush.  That was 100 of 3,573
+       paragraphs in a 600-article sample, 98 of them the opening paragraph of a
+       small-type extract — and vol 1 p. 390 shows the scan indenting every
+       paragraph of such an extract, the first included. */
+    .body-text > p:first-of-type {
+      text-indent: 0;
+    }
+
+    /* An extract block opens with bare text rather than a <p>, so its first
+       paragraph is unreachable from a `p` rule and the indent has to come from
+       the block itself.  Safe: 293 of 293 such openings in the sample begin a
+       new sentence, never a continuation.  In `em` it scales with the 83% type,
+       which is what the scan's proportionally smaller indent does. */
+    .body-text div[style*="font-size:83%"] {
+      text-indent: 1.5em;
+    }
+
+    /* Where the SOURCE states its own indentation the indent is not ours to
+       impose.  FIBRES wraps a hanging `text-indent:-2em` list whose paragraphs
+       we were rendering at 0 and 1.5em — our value, twice, neither the
+       source's. */
+    .body-text [style*="text-indent"] p {
+      text-indent: inherit;
+    }
+
+    /* Centred display material takes no paragraph indent: an indent shifts the
+       centred line right.  The reset has to sit on the BLOCK, not just its <p> —
+       MENSURATION centres a formula inside a small-type extract, so a `p` rule
+       saying `inherit` would have picked up that extract's 1.5em. */
+    .body-text .centered,
+    .body-text .centered p {
+      text-indent: 0;
+    }
+
+    /* A float is not prose, and `text-indent` INHERITS.  A floated figure box
+       took the paragraph's indent and shifted its own image out of the box the
+       text wraps around — PRIMULACEAE Fig. 2 stood 26px into the prose, which is
+       exactly the 1.5em.  The legend inside it was pushed off centre by the same
+       amount.  `.math-system` / `.section-heading` / `.shoulder-heading` already
+       carry this reset for the same reason; the floats were never covered. */
+    .body-text [style*="float"],
+    .body-text .float-left,
+    .body-text .float-right {
+      text-indent: 0;
+    }
+
+    /* A carried `float:left` brings a width but no GUTTER, so the prose ran
+       straight up against the cut.  The scan leaves about 1em beside it
+       (vol 22 p. 341, Fig. 2), which is already what the class floats above use
+       — so this is the same gutter, extended to the floats that carry their
+       style inline.  A float that carries its OWN margin keeps it: an inline
+       `margin` beats this rule. */
+    .body-text [style*="float:left"],
+    .body-text [style*="float: left"] {
+      margin-right: 1em;
+    }
+
+    .body-text [style*="float:right"],
+    .body-text [style*="float: right"] {
+      margin-left: 1em;
+    }
+
+
+    .body-text .katex-display {
+      text-indent: 0;
+      max-width: 100%;
+      /* Clipping as a safety net for any equation that escaped the
+         build-time width measurement (new LaTeX added since the last
+         `measure_math_widths.py` run).  Normal display math fits at
+         natural size; wide math is pre-scaled via `«MATH[fs=N]:`
+         hints (see `wikikit.math_widths`); really wide math uses
+         the pop-out link (see `renderMathPopout`).  This `overflow:
+         hidden` only matters for the uncached-residual case. */
+      overflow: hidden;
+    }
+    /* Tier 2: scaled math.  `«MATH[fs=N]:` wraps the KaTeX render in
+       a span with `font-size: N%`.  KaTeX em-based widths resolve to
+       the smaller base so the math is rendered at the smaller size
+       from initial paint (no thrash). */
+    .math-scaled {
+      display: inline-block;
+    }
+    /* Tier 3: popout link for math too wide to scale into the
+       column.  Renders as an italic anchor; click opens the popout
+       modal which renders at viewport-fitting font-size. */
+    .math-popout-link {
+      font-style: italic;
+      color: #6b5a3f;
+      text-decoration: underline dotted;
+      cursor: zoom-in;
+      font-size: 0.92em;
+    }
+    .math-popout-link:hover {
+      color: #2c2416;
+      background: #ebe4d6;
+    }
+    /* Standalone display-math context: render the popout link as a
+       block element in the math column position, so it occupies the
+       same visual slot the equation would have — centred, with
+       display-math margins — rather than sitting inline within the
+       surrounding prose paragraph.  An adjacent label (handled by
+       the EQNGROUP renderer) still goes in the right-margin label
+       column. */
+    .math-popout-link.popout-display {
+      display: block;
+      text-align: center;
+      margin: 1em 0;
+    }
+    .math-popout-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 16, 10, 0.6);
+      z-index: 9100;
+      padding: 2em;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .math-popout-panel {
+      position: relative;
+      max-width: calc(100vw - 4em);
+      max-height: calc(100vh - 4em);
+      background: var(--panel);
+      border: 1px solid #c4b49a;
+      border-radius: 4px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      padding: 2em 2.5em 1.5em;
+      overflow: auto;
+    }
+    .math-popout-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font: inherit;
+      font-size: 1.1rem;
+      line-height: 1;
+      color: #8b7355;
+      background: transparent;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .math-popout-close:hover { background: #ddd4c4; color: #3a2f20; }
+    .math-popout-host .katex-display {
+      overflow: visible;
+      margin: 0;
+    }
+    /* KaTeX auto-numbers rows of `\begin{align}` with CSS counters
+       — that's a KaTeX-rendering convention, not anything in the
+       1911 source.  No EB1911 article uses explicit `\tag{}`, so
+       suppressing the auto-numbering entirely is the right call. */
+    .katex .eqn-num,
+    .katex .mml-eqn-num {
+      display: none !important;
+    }
+
+    /* Numbered display equation(s).  Three-column grid: a flexible
+       gutter on the left, the math content centred in the auto
+       column, and the (N) label flush right.  `minmax(0, 1fr)` on
+       the side gutters lets the math shrink rather than pushing the
+       label off the page when an equation is unusually wide; very
+       wide rows then scroll horizontally inside katex-display's
+       overflow-x: auto (set on .body-text .katex-display).
+       align-items: center on the grid puts the label at the
+       vertical centre of the row stack, matching the original
+       publication's rowspan-spanning label placement. */
+    /* Math-system layout — flex with reserved label space so wide
+       math can never overlap the (N) label.  The math-rows column
+       claims the remaining space (flex:1 with min-width:0 so it can
+       shrink below its content's natural width) and clips overflow.
+       Earlier grid layout
+       (`minmax(0,1fr) auto minmax(0,1fr)`) let the auto math column
+       eat the 1fr label gutter when math was wider than the line. */
+    .body-text .math-system {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      margin: 1em 0;
+      text-indent: 0;
+    }
+    .body-text .math-system-rows {
+      flex: 1 1 0;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+      align-items: center;
+    }
+    .body-text .math-system-rows .math-system-row {
+      text-indent: 0;
+      text-align: center;
+      max-width: 100%;
+    }
+    /* Cancel KaTeX's default block margins so multi-row systems sit
+       tight inside the flex column rather than picking up an extra
+       1em of leading per row. */
+    .body-text .math-system-rows .katex-display {
+      margin: 0;
+    }
+    .body-text .math-system-label {
+      flex: 0 0 auto;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+
+    .xref-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      columns: 2;
+      column-gap: 2em;
+    }
+
+    .xref-item {
+      padding: 2px 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .xref-item.unresolved {
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      background: rgba(139, 115, 85, 0.08);
+      border-radius: 2px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .segments {
+      display: grid;
+      gap: 12px;
+    }
+
+    .segment {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fafbfc;
+    }
+
+    .segment-meta {
+      color: var(--muted);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .message {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .error {
+      color: var(--unresolved);
+      background: var(--unresolved-bg);
+      border-color: #f0c4c4;
+    }
+
+    code {
+      background: var(--code-bg);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .article-image {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .article-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .article-image figcaption {
+      padding: 8px 10px;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      font-size: 0.82rem;
+      font-style: italic;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    .article-image figcaption.filename {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-style: normal;
+      word-break: break-all;
+    }
+
+    /* No blanket frame.  `border: 1px solid #c4b49a` boxed all 11,814 data
+       tables in the UI CHROME tone (the same #c4b49a as modal edges, buttons and
+       the wide-table scroll container) whether or not the printed table has a
+       frame — and where the source DID draw its own rules, in currentColor, the
+       two disagreed.  A frame is content: it comes from the source's own
+       `_tablecolhdborder` / `_tablegridhdborder` classes, or from the Ts border
+       codes it puts on individual cells. */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+      font-size: 0.93rem;
+    }
+
+    /* Chemistry-layout tables: spatial diagrams of 2-D reaction
+       schemes (FULMINIC ACID, POLYMETHYLENES, …).  Strip the data-
+       table chrome — no borders, no full-width stretch — and centre
+       the grid like a math display.  Cells flow on a single text
+       baseline so the angle-bracket valence glyphs (⟨ / ⟩) sit
+       inline with atom labels and arrows. */
+    .chem-grid {
+      margin: 1em auto;
+      border-collapse: collapse;
+      border: none;
+      font-size: 0.95rem;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .chem-grid td, .chem-grid th {
+      border: none;
+      padding: 0.1em 0.3em;
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+    }
+    /* Internal-line variants of the valence chevron.  The Python
+       emitter turns LangleIT.svg / RangleIT.svg into
+       <span class="chem-bracket-it">❮</span> (or ❯), and the IB
+       variant into <span class="chem-bracket-ib">…</span>.  The
+       horizontal bar is drawn as a ::before pseudo-element so the
+       glyph itself doesn't have to be a different Unicode point
+       (none exists for these). */
+    .chem-bracket-it, .chem-bracket-ib {
+      display: inline-block;
+      position: relative;
+      line-height: 1;
+      padding: 0 1px;
+    }
+    .chem-bracket-it::before {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      border-top: 1px solid currentColor;
+    }
+    .chem-bracket-ib::after {
+      content: "";
+      display: block;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-bottom: 1px solid currentColor;
+    }
+
+    /* Figure-tables = the author's class-less {| ("layout, not data").  The
+       producer mints no class, so a figure is recognized by the ABSENCE of one,
+       :not([class]), and no output attribute is added.  POSITION rides on the
+       carried margin:auto / {{ts|ma}}; the viewer's ONLY opinions here are
+       VIEWPORT-RESPONSIVE (cf. wide-table): the figure fills the reading column,
+       a floated one takes half so prose wraps, the image scales -- plus the
+       figure basics it owns: borders off, vertical breathing room, column gap. */
+.body-text table:not([class]) {
+      /* Top and bottom only.  `margin: 1.2em 0` also declared the SIDES as zero,
+         and this rule outranks the float gutter, so a floated figure-table had
+         the prose hard against its edge.  A table that carries its own
+         `margin:auto` still wins — that is an inline style. */
+      margin-top: 1.2em;
+      margin-bottom: 1.2em;
+      border-collapse: collapse;
+      border: none;
+      max-width: 100%;
+    }
+    /* A non-float figure fills the reading column.  A FLOAT honors its carried
+       width:Npx — that's an inline style, so it beats this non-!important rule —
+       and falls back to half-column only when the source carried no width, so the
+       prose has room to wrap either way.  max-width:100% (above) still caps it. */
+    .body-text table:not([class]):not([style*="float"]) {
+      width: 100% !important;
+    }
+.body-text table:not([class])[style*="float"] {
+      width: 50%;
+      /* Top and bottom only.  `margin: 0.4em 0` set the SIDES to zero too, and
+         this rule outranks the float gutter below it, so every figure-table
+         floated against the prose lost its 1em and the text ran up against the
+         cut — 21 of the 162 floats in a 600-article sample. */
+      margin-top: 0.4em;
+      margin-bottom: 0.4em;
+    }
+.body-text table:not([class]) td,
+.body-text table:not([class]) th {
+      border: none;
+      padding: 1px 12px;
+    }
+    /* An image carries NO layout of its own — its placement is its surrounding
+       context (a «CTR» block, line-breaks, the table cell), per markers.py: "an
+       image's layout is ... never a property of the image".  These are ONLY
+       responsive caps.  Do NOT re-add display:block / margin:auto here — that made
+       centering a property of the IMAGE, block-centering EVERY class-less-table
+       image and so breaking inline glyphs (ABBREVIATIONS' per-symbol dropped onto
+       its own centered line).  the baked render already centers align=center; the
+       surrounding context centers the rest. */
+.body-text table:not([class]):not([style*="float"]) img {
+      max-height: none !important;
+      max-width: 100% !important;
+      height: auto;
+    }
+    /* An image that SHARES its row with a text cell (the chess end-game boards:
+       a position beside its solution) must hold its OWN width.  Left shrinkable
+       by max-width:100%, the auto-layout hands the width to the prose and
+       squeezes the board to nothing; max-width:none makes it non-shrinkable, so
+       the table reserves the board's column and the prose wraps in what's left.
+       A board alone in its cell (:only-child) never hits this. */
+    .body-text table:not([class]):not([style*="float"]) td:not(:only-child) img {
+      max-width: none !important;
+    }
+    /* PLATE full-bleed: the source's fixed px (e.g. width:1000px, cell images
+       at 450px) is the PRINT width.  On a plate page the column cap is gone
+       (body.plate-page .page), so let the grid and its images fill the
+       viewport — the table stretches and the cells scale proportionally,
+       overriding formatCell's inline max-width:Npx cap (same !important
+       pattern as the height cap above). */
+    body.plate-page table:not([class]) {
+      width: 100%;
+    }
+    body.plate-page table:not([class]) img {
+      max-width: 100% !important;
+      width: 100%;
+    }
+
+    /* Wide data tables: shown inline but horizontally scrollable, with an
+       Expand button that pops them into a full-viewport modal. */
+    .wide-table-wrap {
+      margin: 1em 0;
+      position: relative;
+    }
+    .wide-table-inline {
+      overflow-x: auto;
+      border: 1px solid #c4b49a;
+      background: var(--panel);
+    }
+    .wide-table-inline .data-table {
+      margin: 0;
+      border: none;
+      min-width: max-content;
+    }
+    .expand-table-btn {
+      display: inline-block;
+      font: inherit;
+      font-size: 0.75rem;
+      color: #8b7355;
+      background: #ebe4d6;
+      border: 1px solid #c4b49a;
+      padding: 2px 10px;
+      margin-bottom: 4px;
+      border-radius: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .expand-table-btn:hover { background: #ddd4c4; }
+
+    .wide-table-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 16, 10, 0.6);
+      z-index: 9000;
+      padding: 2em;
+      box-sizing: border-box;
+    }
+    .wide-table-modal.fullscreen {
+      padding: 0;
+    }
+    .wide-table-modal-panel {
+      position: absolute;
+      inset: 2em;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid #c4b49a;
+      border-radius: 4px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      resize: both;
+      min-width: 320px;
+      min-height: 240px;
+      max-width: calc(100vw - 2em);
+      max-height: calc(100vh - 2em);
+    }
+    .wide-table-modal.fullscreen .wide-table-modal-panel {
+      inset: 0;
+      border: none;
+      border-radius: 0;
+      resize: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+    .wide-table-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #ebe4d6;
+      border-bottom: 1px solid #c4b49a;
+      font-weight: 600;
+      color: #5a4a35;
+    }
+    .wide-table-modal-title {
+      font-variant: small-caps;
+      letter-spacing: 0.04em;
+    }
+    .wide-table-modal-btn {
+      font: inherit;
+      font-size: 1.1rem;
+      line-height: 1;
+      color: #8b7355;
+      background: transparent;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .wide-table-modal-btn:hover {
+      background: #ddd4c4;
+      color: #3a2f20;
+    }
+    .wide-table-modal-actions {
+      display: flex;
+      gap: 2px;
+    }
+    .wide-table-modal-body {
+      flex: 1;
+      overflow: auto;
+      padding: 1em;
+    }
+    .wide-table-modal-body .data-table {
+      margin: 0;
+      min-width: max-content;
+    }
+    .wide-table-trailing {
+      margin-top: 1em;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    /* Tables are FAITHFUL to the scan: padding for legibility, no invented
+       borders/shading.  The scans are mostly borderless and never shaded —
+       alignment alone carries the structure. */
+    .data-table td {
+      padding: 5px 10px;
+      vertical-align: top;
+    }
+
+    .data-table th {
+      padding: 6px 10px;
+      vertical-align: top;
+      font-weight: normal;   /* scans show plain (not bold) headers */
+    }
+
+    /* `class="wikitable"` is a FULL GRID in MediaWiki -- render it as one.
+       (AUSTRIA "Administrative Territories" reads as "header + total rules
+       only" in the scan NOT because it's verticals-only, but because its data
+       rows are <br>-collapsed into ONE row per column -- so a full grid draws
+       rules around the two header rows, the single data block, and the total,
+       with nothing between the <br> lines: exactly the scan.  The old
+       verticals-only dropped those real header/total rules.) */
+    .data-table.wikitable {
+      border-collapse: collapse;
+      border: 1px solid #c4b49a;          /* frame */
+    }
+    .data-table.wikitable td,
+    .data-table.wikitable th {
+      border: 1px solid #c4b49a;          /* full grid: the class MediaWiki renders */
+    }
+
+    /* `_tablecolhdborder` / `_tablegridhdborder` -- Wikisource's OWN bordered-table
+       classes, carried on 758 of our tables and until now styled nowhere, so the
+       rules they draw were simply lost.  Ported verbatim from the TemplateStyles
+       en.wikisource serves with the page (fetched from
+       Page:EB1911 - Volume 01.djvu/439):
+
+         ._tablecolhdborder{border-collapse:collapse;border:1px solid;...}
+         ._tablecolhdborder th{border-bottom:1px solid;border-left:1px solid}
+         ._tablecolhdborder td{border-left:1px solid;padding-left:5px}
+
+       This is where AGRICULTURE Table IX's full-height column rules come from:
+       the transcriber marks only the HEADER cells with `{{Ts|ba}}` because the
+       class draws a left rule on every body cell.  We drew neither, and framed
+       the table in the UI chrome tone instead.
+       `border:1px solid` with no colour is currentColor -- the same ink as the
+       text, which is what the scans show.  Do not substitute the chrome tone. */
+    .data-table._tablecolhdborder,
+    .data-table._tablegridhdborder {
+      border-collapse: collapse;
+      border: 1px solid;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .data-table._tablecolhdborder th {
+      border-bottom: 1px solid;
+      border-left: 1px solid;
+      text-align: center;
+    }
+    .data-table._tablecolhdborder td {
+      border-left: 1px solid;
+      padding-left: 5px;
+    }
+    .data-table._tablegridhdborder th {
+      border-left: 1px solid;
+      border-right: 1px solid;
+      border-bottom: 1px solid;
+      text-align: center;
+    }
+    .data-table._tablegridhdborder td {
+      border-left: 1px solid;
+      border-right: 1px solid;
+      border-bottom: 1px solid;
+      padding-left: 5px;
+    }
+
+    .small-caps {
+      font-variant: small-caps;
+    }
+
+    /* Centered display block — `{{center|...}}` and variants.  Mostly
+       used for math equations and decorative title blocks.  Paragraph-
+       level centering via text-align on a wrapping div. */
+    .centered {
+      text-align: center;
+      margin: 0.5em 0;
+    }
+
+    /* {{float right}}/{{float left}} — margin-floated inline content
+       (contributor-initial signatures like "(A. P. C.)", right-floated
+       marginal status notes). */
+    .float-right { float: right; margin-left: 1em; }
+    .float-left  { float: left;  margin-right: 1em; }
+
+    /* A whole styling vocabulary is GONE, measured at 0 uses across 37,226
+       rendered articles: `.sans-serif` / `.explicit-serif` (the «SS»/«SR»
+       markers), the six `.size-*` steps (the «XXS»…«XXL»/«FS»/«LH» family),
+       `.underline` («U»), `.brace2` («BRACE2»).  Nothing was lost with them —
+       every one of those source constructs is still carried, by the STYLE-SPAN
+       path, which arrives as an inline `style` carrying the source's own value
+       ({{x-larger}} → font-size:144%) instead of a bucket name we had to invent.
+       See markers.py for the full list and the measurement. */
+
+    /* Horizontal rule — `{{bar|N}}` renders an N-em underline,
+       typically for column-sum underlines in tables (AFRICA / GREAT
+       BRITAIN territorial summaries). */
+    .inline-bar {
+      display: inline-block;
+      border-bottom: 1px solid currentColor;
+      vertical-align: middle;
+    }
+
+    /* Display horizontal rule (vertical spacer) — `{{dhr|N%}}` adds
+       block-level vertical space between sections (ABBEY) or inline
+       between list items in cells (AFRICA tribal tables). */
+    .dhr-block {
+      display: block;
+      height: 1em;
+    }
+    .dhr-inline {
+      display: inline-block;
+      width: 0;
+      height: 1em;
+    }
+
+    /* Horizontally mirrored glyph — source uses
+       `<span style="{{mirrorH}}">…</span>` in ALPHABET to show
+       left-right-flipped letters of early/regional alphabets
+       (Etruscan, Italic, Cleonae's reversed E).  The pipeline emits
+       «MIRROR:…«/MIRROR»; we apply transform: scaleX(-1) here. */
+    .mirror-h {
+      display: inline-block;
+      transform: scaleX(-1);
+    }
+
+    .verse {
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      margin: 1em 2em;
+      line-height: 1.6;
+      text-align: left;
+    }
+    /* Inline/cell verse — a «VERSE» inside prose, a table cell, or a «CTR».
+       Verse is flush-left BY DEFINITION, so its lines never inherit a container's
+       centering; but a centred container (a «CTR» wrapper, a centred figure cell)
+       may still center the verse block AS A UNIT.  inline-block makes those two
+       independent: text-align:left flushes the lines, the block stays centerable. */
+    .cell-verse {
+      display: inline-block;
+      text-align: left;
+    }
+
+
+    .page-marker {
+      /* ABSOLUTE, not float — the twin of `.shoulder-heading` on the other
+         margin.  A float is re-contained by whatever block it lands in, so a
+         marker for a page that begins mid-table was trapped inside its `<td>`
+         and could never reach the margin.  The DOM position now sets only the
+         VERTICAL placement, so the marker can sit exactly where the break falls
+         — mid-table included — and still render in the margin beside that row.
+
+         It resolves against its nearest POSITIONED ancestor, which is
+         `.body-text` only when the marker sits between blocks; in a paragraph
+         it is `.body-text p`, and in a wide table `.wide-table-wrap`.  All
+         three share `.body-text`'s left content edge (`p` has `margin-left: 0`,
+         `.wide-table-wrap` has `margin: 1em 0`), so `-7em` lands in the same
+         margin whichever one wins.  `.body-text`'s `flow-root` comment already
+         says it must not clip "the absolutely-positioned margin page-numbers";
+         `.wide-table-inline`'s `overflow-x` does not clip either, because the
+         containing block is its PARENT, outside the scroll box. */
+      position: absolute;
+      left: -7em;
+      width: 5.5em;
+      text-align: right;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      font-size: 0.65rem;
+      font-style: italic;
+      color: #8b7355;
+      padding-right: 1em;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      text-decoration: none;
+    }
+    /* The 'vol:page' label is generated content, so it is excluded from
+       in-article / browser find and from textContent — the marker is furniture,
+       not searchable text (a search for 'an oath' matches across the break). */
+    .page-marker::after {
+      content: attr(data-vol) ":" attr(data-page);
+    }
+    a.page-marker:hover {
+      color: var(--link);
+      text-decoration: underline;
+    }
+
+    .page-marker.unproofed {
+      color: #d04000;
+      font-weight: 700;
+    }
+    a.page-marker.unproofed:hover {
+      color: #b42318;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+      .body-text { margin-left: 0; }
+      .page-marker { display: none; }
+    }
+
+    .hieroglyph {
+      font-family: "Noto Sans Egyptian Hieroglyphs", serif;
+      font-size: 1.4em;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    .hieroglyph-fallback {
+      font-family: monospace;
+      font-size: 0.85em;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 4px;
+      color: var(--muted);
+    }
+
+    .text-block {
+      font-family: inherit;
+      font-size: inherit;
+      margin: 0.8em 2em;
+      padding: 0;
+      background: none;
+      border: none;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .structural-formula {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.95em;
+      margin: 0.8em 2em;
+      padding: 0.5em 1em;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      line-height: 1.4;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .section-heading {
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      font-size: 1.1rem;
+      font-variant: small-caps;
+      letter-spacing: 0.04em;
+      margin-top: 1.8em;
+      margin-bottom: 0.4em;
+      color: #5c4a32;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .section-heading::before,
+    .section-heading::after {
+      content: "\2014\2014\2014";
+      display: block;
+      text-align: center;
+      color: #b89a6b;
+    }
+
+    .body-text p {
+      position: relative;
+    }
+
+    .shoulder-heading {
+      position: absolute;
+      right: -170px;
+      width: 150px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--muted);
+      text-align: left;
+      text-indent: 0;
+    }
+
+    /* On narrow screens, inline the shoulder headings */
+    @media (max-width: 900px) {
+      .shoulder-heading {
+        position: static;
+        display: block;
+        width: auto;
+        margin: 0.5em 0 0.2em;
+        font-weight: 600;
+        color: var(--text);
+      }
+    }
+
+    .toc {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+    }
+
+    .toc h3 {
+      margin: 0 0 8px 0;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .toc ol, .toc ul.toc-contents {
+      margin: 0;
+      padding-left: 20px;
+      columns: 2;
+      column-gap: 24px;
+    }
+
+    .toc ul.toc-contents {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .toc ul.toc-contents ul {
+      list-style: none;
+      padding-left: 20px;
+      columns: 1;
+    }
+
+    .toc li {
+      margin-bottom: 3px;
+    }
+
+    .toc a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    .article-link {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px dotted #b89a6b;
+    }
+
+    .article-link:hover {
+      border-bottom-style: solid;
+    }
+
+    .search-highlight {
+      background: #ffe033;
+      padding: 1px 2px;
+      border-radius: 2px;
+    }
+    .search-highlight-current {
+      background: #ffe033;
+      outline: 2px solid #b38600;
+    }
+    #jumpResults mark { background: #ffe033; padding: 0 2px; border-radius: 2px; color: inherit; }
+    .nav-arrow {
+      position: fixed;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      z-index: 50;
+      color: #8b7355;
+      padding: 4px;
+      line-height: 1;
+    }
+    .nav-arrow:hover { color: #5c4a32; }
+    .nav-arrow { top: 50%; }
+    .scan-toggle {
+      position: fixed;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-56px);
+      background: rgba(253, 252, 249, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 0.65rem;
+      font-variant: small-caps;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      z-index: 50;
+      color: #8b7355;
+      line-height: 1.1;
+    }
+    .scan-toggle:hover { color: #5c4a32; border-color: #8b7355; }
+    .scan-toggle.active {
+      color: #fdfcf9;
+      background: #5c4a32;
+      border-color: #5c4a32;
+    }
+    .scan-pane {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 50vw;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: none;
+      z-index: 40;
+      overflow: auto;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .scan-pane img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+    .scan-pane .scan-msg {
+      color: var(--muted);
+      font-style: italic;
+      text-align: center;
+      padding: 40px 12px;
+      font-size: 0.9rem;
+    }
+    body.scan-mode .scan-pane { display: block; }
+    body.scan-mode .page {
+      max-width: calc(50vw - 48px);
+      margin-left: 24px;
+      margin-right: calc(50vw + 24px);
+    }
+    @media (max-width: 1100px) {
+      .scan-toggle { display: none; }
+      body.scan-mode .scan-pane { display: none; }
+      body.scan-mode .page { max-width: 960px; margin: 0 auto; }
+    }
+    #matchList .match-item {
+      padding: 4px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.4;
+    }
+    #matchList .match-item:last-child { border-bottom: none; }
+    #matchList .match-item:hover { background: #f0ebe0; }
+    #matchList .match-item.active { background: #ffe0b2; }
+    #matchList .match-item mark { background: #ffe033; padding: 0 1px; border-radius: 2px; }
+
+    .footnote-ref {
+      position: relative;
+      display: inline;
+    }
+
+    .footnote-ref a {
+      color: #7b3f00;
+      text-decoration: none;
+      /* Absolute size so a body/cell footnote ref renders identically — but the
+         title H1 is the EXCEPTION (rule below), where the ref scales to title font. */
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0 2px;
+      cursor: pointer;
+    }
+
+    /* EXCEPTION (title footnote): the ref NUMBER in the title H1 renders in TITLE
+       font — a title-proportional superscript (1em inherits the heading size) —
+       not the body 0.8rem.  The note popup (.fn-popup) keeps its standard 0.85rem,
+       so the on-click note stays in normal footnote font. */
+    h1 .footnote-ref a {
+      font-size: 1em;
+    }
+
+    .fn-popup {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 360px;
+      max-width: 80vw;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--panel);
+      border: 1px solid #8b7355;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 200;
+      /* Full context reset: a title-footnote popup lives inside the h1's «B» (bold)
+         + small-caps + letter-spacing, yet the note must read as ordinary footnote
+         prose.  letter-spacing was the last leak — the h1's 0.06em spread made the
+         note look heavier ("bold") though its weight is already normal (confirmed via
+         getComputedStyle: weight 400, only letterSpacing differed). */
+      font-style: normal;
+      font-variant: normal;
+      font-weight: normal;
+      letter-spacing: normal;
+      text-indent: 0;
+      text-transform: none;
+    }
+
+    .fn-popup.visible {
+      display: block;
+    }
+
+    .fn-popup-num {
+      font-weight: 600;
+      color: #8b7355;
+      margin-right: 4px;
+    }
+
+    .footnotes {
+      border-top: 1px solid #8b7355;
+      margin-top: 32px;
+      padding-top: 16px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .footnotes h3 {
+      font-size: 0.85rem;
+      font-variant: small-caps;
+      letter-spacing: 0.05em;
+      color: #8b7355;
+      margin-bottom: 10px;
+    }
+
+    .footnotes ol {
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .footnotes li {
+      margin-bottom: 6px;
+      text-indent: -1.5em;
+      padding-left: 1.5em;
+    }
+
+    .footnotes li a {
+      color: #8b7355;
+      text-decoration: none;
+      font-weight: 600;
+      margin-right: 2px;
+    }
+
+    .figure-legend {
+      margin: -0.6em auto 1.4em;
+      max-width: 640px;
+      font-family: Georgia, "Times New Roman", "Cambria Math", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      column-count: 2;
+      column-gap: 24px;
+    }
+    @media (max-width: 640px) {
+      .figure-legend { column-count: 1; }
+    }
+    .figure-legend .legend-subhead {
+      font-size: 0.85rem;
+      font-variant: small-caps;
+      letter-spacing: 0.04em;
+      margin: 0 0 4px;
+      break-after: avoid-column;
+    }
+    .figure-legend .legend-entry {
+      break-inside: avoid-column;
+      text-indent: -1.2em;
+      padding-left: 1.2em;
+    }
+    .figure-legend .legend-entry + .legend-subhead {
+      margin-top: 10px;
+    }
+
+    /* Lists the SOURCE marks as lists — `#`, <ol>, {{ordered list}} (EGYPT's
+       population groups, HERCULES's twelve labours, GEOLOGY's A/B/C, ALBUMIN's
+       roman-numbered proteins).  The marker carries the numbering as the list's
+       own `list-style-type`, so the browser numbers the items: the numeral is
+       structure, not text.  It used to be MINTED into the item ("I. ", "A. ")
+       and the list drawn with `list-style-type:none`, which made the numeral
+       prose and the list not a list.  A `:`-indented paragraph is NOT here — it
+       is an indent, carried as one. */
+    .body-text ol,
+    .body-text ul {
+      margin: 1em 0;
+      padding-left: 2.2em;
+    }
+    .body-text ol ol,
+    .body-text ol ul,
+    .body-text ul ul,
+    .body-text ul ol {
+      margin: 0.2em 0;
+    }
+    .body-text li {
+      margin: 0.15em 0;
+    }
+
+    .contributors {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+  </style>
+  <!-- NOT deferred: inline scripts below call createSearchClient() /
+       BritannicaUrls at module load time, so these must finish loading
+       first. -->
+  <!-- Absolute srcs: viewer.html is served from both "/viewer.html" and
+       "/article/<id>/<slug>", so a relative src would resolve differently
+       depending on URL depth. -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="/article-urls.js"></script>
+  <script src="/search-api.js"></script>
+  <!-- Corpus fingerprint (window.BUILD_V), regenerated by
+       tools/viewer/build_stamp.py whenever the article bytes change and served
+       no-cache, so it is always current.  `loadArticle` appends it to the
+       article fetch — without it a returning reader keeps pre-deploy article
+       bytes for up to a year, because the JSONs ship `immutable` under a key
+       that is a hash of the SECTION SLUG, not of the content. -->
+  <script src="/build-stamp.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <h1 style="margin: 0; font-variant: normal; letter-spacing: 0.02em; font-size: 1.3rem; font-style: italic; color: #5c4a32;"><a href="/home.html" style="color: inherit; text-decoration: none; font-style: normal;"><svg viewBox="0 0 32 32" width="32" height="32" style="vertical-align: middle; margin-right: 10px;" aria-hidden="true"><rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1"/><rect x="3.5" y="3.5" width="25" height="25" fill="none" stroke="currentColor" stroke-width="0.6"/><text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="currentColor" style="letter-spacing:-0.3px">@@monogram@@</text></svg><span style="font-style: italic;">@@work_name@@, @@edition_label@@</span></a></h1>
+        <div style="font-size: 0.9rem;">
+          <a href="/index.html" style="color: var(--link); text-decoration: none;">Articles</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/topics.html" style="color: var(--link); text-decoration: none;">Topics</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/contributors.html" style="color: var(--link); text-decoration: none;">Contributors</a>
+        </div>
+      </div>
+      <div class="controls">
+        <div style="position: relative; flex: 0 1 280px; min-width: 180px;">
+          <input id="jumpTo" type="text" placeholder="Search titles &amp; full text..." style="width: 100%;" autocomplete="off" />
+          <ul id="jumpResults" style="display:none; position:absolute; top:100%; left:0; right:0; margin:0; padding:0; list-style:none; background:var(--panel); border:1px solid var(--border); border-top:none; border-radius:0 0 6px 6px; max-height:240px; overflow-y:auto; z-index:100; font-size:0.9rem;"></ul>
+        </div>
+        <input id="articleSearch" type="text" placeholder="Search within article..." style="flex: 0 1 260px; min-width: 160px;" />
+        <span id="matchCount" style="color: var(--muted); font-size: 0.85rem;"></span>
+        <button id="prevMatch" style="display:none; padding: 2px 8px; font-size: 0.85rem;" title="Previous match (Shift+Enter)">&#x25B2;</button>
+        <button id="nextMatch" style="display:none; padding: 2px 8px; font-size: 0.85rem;" title="Next match (Enter)">&#x25BC;</button>
+      </div>
+      <div id="matchList" style="display:none; max-height: 200px; overflow-y: auto; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 6px; padding: 4px 0; background: var(--bg);"></div>
+    </div>
+    <div class="header-divider">&#x223C;&#x25C6;&#x223C;</div>
+    <div id="app"></div>
+  </div>
+  <button class="nav-arrow" style="transform:translateY(-20px)" onclick="window.scrollTo({top:0,behavior:'instant'})" title="Top">&#x25B2;</button>
+  <button class="nav-arrow" style="transform:translateY(12px)" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'instant'})" title="Bottom">&#x25BC;</button>
+  <button id="scanToggle" class="scan-toggle" title="Show scan of current page alongside text">Scan</button>
+  <aside class="scan-pane" id="scanPane" aria-label="Page scan"><div class="scan-msg">No scan loaded</div></aside>
+
+  <script>
+    const app = document.getElementById("app");
+
+    function toggleFnPopup(event, popupId) {
+      event.stopPropagation();
+      // Accept either a bare number (legacy: ``fnpop-${num}``) or the
+      // unique popup ID emitted by ``renderFnMarker`` for shared-name
+      // ref reuses (``fnpop-${num}-${instance}``). Numeric form keeps
+      // existing call paths working.
+      const id = (typeof popupId === "number") ? ('fnpop-' + popupId) : popupId;
+      // Popups are instantiated ON DEMAND from the inert <template> beside the
+      // marker (render_fn_marker), so a footnoted <table> parses cleanly.  Only
+      // one open at a time: remove any open popup first, then re-open unless the
+      // click just closed this same one.
+      const open = document.querySelector('.fn-popup.visible');
+      const wasThis = open && open.id === id;
+      document.querySelectorAll('.fn-popup.visible').forEach(p => p.remove());
+      if (wasThis) return;
+      const sup = event.target.closest('.footnote-ref');
+      const tpl = sup && sup.querySelector('template.fn-popup-tpl');
+      if (!tpl) return;
+      const popup = document.createElement('span');
+      popup.className = 'fn-popup visible';
+      popup.id = id;
+      popup.appendChild(tpl.content.cloneNode(true));
+      sup.appendChild(popup);
+    }
+
+    // Close popups when clicking elsewhere
+    document.addEventListener('click', (ev) => {
+      const expandBtn = ev.target.closest('.expand-table-btn');
+      if (expandBtn) {
+        ev.stopPropagation();
+        openWideTableModal(expandBtn.dataset.wt);
+        return;
+      }
+      document.querySelectorAll('.fn-popup.visible').forEach(p => p.remove());
+    });
+
+    function openWideTableModal(id) {
+      const src = wideTableSources[id];
+      if (!src) return;
+      const modal = document.createElement('div');
+      modal.className = 'wide-table-modal';
+      const trailingPart = src.trailing ? `<div class="wide-table-trailing">${src.trailing}</div>` : "";
+      modal.innerHTML = `
+        <div class="wide-table-modal-panel">
+          <div class="wide-table-modal-header">
+            <span class="wide-table-modal-title">Table (expanded view)</span>
+            <span class="wide-table-modal-actions">
+              <button class="wide-table-modal-btn js-fullscreen" title="Toggle full screen">⛶</button>
+              <button class="wide-table-modal-btn js-close" title="Close">✕</button>
+            </span>
+          </div>
+          <div class="wide-table-modal-body">${src.table}${trailingPart}</div>
+        </div>`;
+      const close = () => modal.remove();
+      modal.querySelector('.js-close').onclick = close;
+      const fsBtn = modal.querySelector('.js-fullscreen');
+      fsBtn.onclick = () => {
+        const full = modal.classList.toggle('fullscreen');
+        fsBtn.textContent = full ? '⛶' : '⛶';
+        fsBtn.title = full ? 'Exit full screen' : 'Full screen';
+      };
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) close();
+      });
+      document.addEventListener('keydown', function escOnce(e) {
+        if (e.key === 'Escape') {
+          close();
+          document.removeEventListener('keydown', escOnce);
+        }
+      });
+      document.body.appendChild(modal);
+    }
+
+    // Math too wide to scale into the column at any usable font-size
+    // (~6 markers corpus-wide; ALGEBRAIC FORMS big determinants,
+    // NUMBER, RAILWAYS, DIFFERENCES — see
+    // `src/wikikit/diagnostics/measure_math_widths.py`).  The Python render bakes a
+    // compact clickable placeholder carrying its LaTeX in `data-latex`; the
+    // click opens a modal that renders the math at natural size.
+    // Parse a MATH marker's `[hint]` slot — a comma-separated list of
+    // build-time directives the producer baked in: `display` (block vs
+    // inline, carried from the source `<math display="block">` / `\begin{…}`),
+    // `fs=N` (in-column scale), `popout` (too wide → click-to-modal).  ONE
+    // tokenizer so a combined hint (`display,fs=80`) parses everywhere; the
+    // viewer reads displayMode off the carried token instead of guessing from
+    // paragraph context.
+    function openMathPopout(el) {
+      const latex = el && el.dataset ? el.dataset.latex : "";
+      if (!latex) return;
+      const modal = document.createElement("div");
+      modal.className = "math-popout-modal";
+      const panel = document.createElement("div");
+      panel.className = "math-popout-panel";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "math-popout-close";
+      closeBtn.title = "Close (Esc)";
+      closeBtn.textContent = "✕";
+      panel.appendChild(closeBtn);
+      const host = document.createElement("div");
+      host.className = "math-popout-host";
+      panel.appendChild(host);
+      modal.appendChild(panel);
+      const close = () => modal.remove();
+      closeBtn.onclick = close;
+      modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+      document.addEventListener("keydown", function escOnce(e) {
+        if (e.key === "Escape") { close(); document.removeEventListener("keydown", escOnce); }
+      });
+      document.body.appendChild(modal);
+      // Render at NATURAL size.  The math is unscalable — the whole
+      // reason we routed to popout is that shrinking it produces
+      // illegible glyphs.  Let the panel scroll horizontally if the
+      // expression is wider than the viewport.  Trades the article-
+      // column scrollbar (forbidden) for a modal scrollbar (clearly
+      // a separate view, like the wide-table popout).
+      if (typeof katex === "undefined") {
+        host.textContent = latex;
+        return;
+      }
+      host.style.fontSize = "100%";
+      try {
+        host.innerHTML = katex.renderToString(latex, {
+          throwOnError: false, displayMode: true,
+        });
+      } catch (e) {
+        host.textContent = latex;
+      }
+    }
+
+    // Wide display-math: clipped at column boundary by CSS
+    // (`.body-text .katex-display { overflow: hidden }` and
+    // `.math-system-rows { overflow: hidden }`).  We exhausted every
+    // CSS-based scaling option to do better — see memory
+    // `project_wide_math_dead_end.md`.  Pipeline-side LaTeX
+    // rewriting (splitting `\begin{align}` rows at `&=` boundaries)
+    // is the proposed real fix; not done yet.
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    // Render an article title for display.  Titles may carry inline
+    // formatting markers from the pipeline: `«B»…«/B»` (bold, mixed
+    // bold/plain in multi-part bio titles), `«I»…«/I»` (italic — for
+    // foreign-language alternates), `«SC»…«/SC»` (small-caps —
+    // converted from `{{small-caps|…}}` and renders as small-caps
+    // with drop-cap on the first letter).  Use everywhere we display
+    // a title: H1, TOC, parent-plate link, search results, etc.
+    function unescapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&#39;", "'")
+        .replaceAll("&quot;", '"')
+        .replaceAll("&lt;", "<")
+        .replaceAll("&gt;", ">")
+        .replaceAll("&amp;", "&");
+    }
+
+    // Gardiner Sign List -> Unicode Egyptian Hieroglyphs (U+13000 block)
+    // Each category starts at a known base offset; sign number maps to base + (n-1).
+    const GARDINER_BASES = {
+      A:0x13000,B:0x13032,C:0x13037,D:0x13044,E:0x130A4,F:0x130C6,
+      G:0x130F9,H:0x13131,I:0x1313B,K:0x1314D,L:0x13153,M:0x1315C,
+      N:0x13189,O:0x131B3,P:0x131E7,Q:0x131F0,R:0x131F7,S:0x13210,
+      T:0x1323D,U:0x13260,V:0x13286,W:0x132A9,X:0x132C2,Y:0x132CA,
+      Z:0x132CF,Aa:0x132DB,
+    };
+
+    // Manuel de Codage phonetic abbreviations -> Gardiner codes
+    const MDC_TO_GARDINER = {
+      A:"G53",  // Abbreviation for the A-vulture (G53)
+      H:"O4",   // reed shelter
+      S:"S29",  // folded cloth
+      s:"S29",
+      t:"X1",   // bread loaf
+      q:"Q3",   // stool
+      sw:"M23", // sedge
+      pr:"O1",  // house
+      anx:"S34",// ankh
+      nH:"S3",  // Red Crown
+      zA:"V17", // sa (protection)
+      aA:"G25", // jabiru
+      xpr:"L1", // scarab
+      nDs:"N33",// grain
+      Hm:"U36", // pestle
+      Xrd:"A17",// child
+      DA:"I10", // cobra
+      "N35A":"N35","N35B":"N35","V10A":"V10", // variants
+    };
+
+    // Named refs (`«FN[NAME]:body«/FN»`) share a footnote number across
+    // all anchors with the same name, matching Wikisource convention
+    // (one entry in the footer list, N superscripts in body text).
+    // The first anchor per name uses unsuffixed IDs; reuses get a
+    // ``-${instance}`` suffix so each anchor's popup is independently
+    // addressable. The back-link from the footer list keeps targeting
+    // the unsuffixed (first) anchor.
+    const ScanMode = (() => {
+      const KEY = "viewer.scanMode";
+      const btn = document.getElementById("scanToggle");
+      const pane = document.getElementById("scanPane");
+      let active = localStorage.getItem(KEY) === "1";
+      let leafMap = null;
+      let loadingPromise = null;
+      let printedToLeaf = {};
+      let currentLeaf = null;
+      let currentArticle = null;
+      let scrollHandler = null;
+
+      function loadMap() {
+        if (loadingPromise) return loadingPromise;
+        loadingPromise = fetch("/data/printed_pages_leaf.json")
+          .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+          .then(d => { leafMap = d; })
+          .catch(() => { leafMap = {}; });
+        return loadingPromise;
+      }
+
+      function buildIndex(article) {
+        printedToLeaf = {};
+        if (!leafMap) return;
+        const vmap = leafMap[String(article.volume)];
+        if (!vmap || !article.leaf_start || !article.leaf_end) return;
+        for (let leaf = article.leaf_start; leaf <= article.leaf_end; leaf++) {
+          const p = vmap[String(leaf)];
+          if (typeof p === "number" && !(p in printedToLeaf)) {
+            printedToLeaf[p] = leaf;
+          }
+        }
+      }
+
+      function urlForLeaf(vol, leaf) {
+        const padVol = String(vol).padStart(2, "0");
+        const padLeaf = String(leaf).padStart(4, "0");
+        const name = `vol${padVol}_leaf${padLeaf}.jpg`;
+        return `/data/scans/${name}`;
+      }
+
+      function showLeaf(leaf) {
+        if (!currentArticle || leaf == null || leaf === currentLeaf) return;
+        currentLeaf = leaf;
+        const img = new Image();
+        img.alt = `Volume ${currentArticle.volume}, leaf ${leaf}`;
+        img.onload = () => {
+          if (currentLeaf !== leaf) return;  // newer load won the race
+          pane.innerHTML = "";
+          pane.appendChild(img);
+          pane.scrollTop = 0;
+        };
+        img.onerror = () => {
+          if (currentLeaf !== leaf) return;
+          pane.innerHTML = `<div class="scan-msg">Scan not available for leaf ${leaf}</div>`;
+        };
+        img.src = urlForLeaf(currentArticle.volume, leaf);
+      }
+
+      // Each "page-marker" anchors the START of a printed page. The
+      // page currently dominating the viewport is the one whose marker
+      // most recently passed the reading line (~1/3 down the viewport)
+      // — i.e. the LATEST marker still above that line. Before any
+      // marker has crossed it (article just opened), use the first.
+      function findVisiblePage() {
+        const markers = document.querySelectorAll('a.page-marker[data-page]');
+        if (!markers.length) return null;
+        const readingLine = window.innerHeight * 0.33;
+        let active = markers[0];
+        for (const m of markers) {
+          const r = m.getBoundingClientRect();
+          if (r.top <= readingLine) active = m;
+          else break;
+        }
+        return parseInt(active.getAttribute("data-page"), 10);
+      }
+
+      function refresh() {
+        if (!active || !currentArticle) return;
+        const printed = findVisiblePage();
+        if (printed != null && printedToLeaf[printed] != null) {
+          showLeaf(printedToLeaf[printed]);
+        } else if (currentLeaf == null && currentArticle.leaf_start) {
+          showLeaf(currentArticle.leaf_start);
+        }
+      }
+
+      function attachScroll() {
+        if (scrollHandler) return;
+        let pending = false;
+        scrollHandler = () => {
+          if (pending) return;
+          pending = true;
+          requestAnimationFrame(() => { pending = false; refresh(); });
+        };
+        window.addEventListener("scroll", scrollHandler, { passive: true });
+      }
+
+      function detachScroll() {
+        if (!scrollHandler) return;
+        window.removeEventListener("scroll", scrollHandler);
+        scrollHandler = null;
+      }
+
+      async function setActive(on) {
+        active = on;
+        localStorage.setItem(KEY, on ? "1" : "0");
+        btn.classList.toggle("active", on);
+        document.body.classList.toggle("scan-mode", on);
+        currentLeaf = null;
+        if (on) {
+          pane.innerHTML = `<div class="scan-msg">Loading scan…</div>`;
+          await loadMap();
+          if (currentArticle) buildIndex(currentArticle);
+          attachScroll();
+          refresh();
+        } else {
+          detachScroll();
+          pane.innerHTML = `<div class="scan-msg">No scan loaded</div>`;
+        }
+      }
+
+      btn.addEventListener("click", () => setActive(!active));
+      if (active) btn.classList.add("active");
+
+      return {
+        onArticleRendered(article) {
+          currentArticle = article;
+          currentLeaf = null;
+          if (!active) return;
+          document.body.classList.add("scan-mode");
+          loadMap().then(() => {
+            buildIndex(article);
+            attachScroll();
+            refresh();
+          });
+        },
+      };
+    })();
+    let unproofedPages = {};
+    const wideTableSources = {};
+    const TITLE_OPEN = "\u00abTITLE:";
+    const TITLE_CLOSE = "\u00ab/TITLE\u00bb";
+
+    // Block-element marker patterns the body can contain.  When a
+    // paragraph mixes one of these with surrounding prose, the
+    // renderer splits the paragraph at marker boundaries and renders
+    // each chunk in isolation — block markers become block HTML, prose
+    // chunks get their own ``<p>`` wrap.  This lets producers stop
+    // emitting ``\n\n`` borders around their markers: source structure
+    // (where the placeholder was) determines placement, the renderer
+    // handles paragraph rendering regardless.
+    //
+    // IMG is NOT here.  An image is not block-by-nature: its placement is
+    // its carried `align` — `inline` → an inline glyph in the prose flow;
+    // otherwise → a `<figure>` whose block-ness the surrounding `«P»`/`«CTR»`
+    // already expresses.  Listing it here chopped the prose around every
+    // inline letterform image and wrapped the fragments in separate `<p>`s,
+    // forcing the image onto its own line (ALPHABET's β/λ/σ glyphs).
+
+    function articleUrl(filename) {
+      return BritannicaUrls.filenameToUrl(filename);
+    }
+
+    function renderError(message) {
+      app.innerHTML = `<div class="card"><div class="message error">${escapeHtml(message)}</div></div>`;
+    }
+
+    function scanUrl(article) {
+      const back = encodeURIComponent(location.href);
+      const base = '/scans.html';
+      const start = article.leaf_start;
+      const end = article.leaf_end;
+      return `${base}?vol=${article.volume}&start=${start}&end=${end}&label=${encodeURIComponent(article.title)}&back=${back}`;
+    }
+
+    function hydrateMath(root) {
+      // Python emits math as `.tex-math` placeholders carrying the LaTeX + display mode; run KaTeX
+      // over them after the page is inserted — the same engine and cleaning the inline render used.
+      // Popout links and the fs-scaling wrapper are already in the baked HTML; this fills the math.
+      root.querySelectorAll(".tex-math").forEach(el => {
+        const display = el.dataset.display === "1";
+        const tmp = document.createElement("textarea");
+        tmp.innerHTML = el.textContent;
+        let raw = tmp.value.replace(/\\mbox\b/g, "\\text");
+        // Display math also normalizes carried unicode spaces (the old renderDisplayMath did; the
+        // inline path did NOT) — keep the split so production math stays byte-identical.
+        if (display) raw = raw.replace(/[          ​]/g, " ");
+        let html;
+        try {
+          html = (typeof katex === "undefined")
+            ? `<code class="math-fallback">${escapeHtml(raw)}</code>`
+            : katex.renderToString(raw, { throwOnError: false, displayMode: display });
+        } catch (e) {
+          html = `<code class="math-fallback">${escapeHtml(raw)}</code>`;
+        }
+        el.outerHTML = html;
+      });
+    }
+
+    function fixScanHrefs(root, article) {
+      // The scan `back` param is location.href — a runtime value, not bakeable — so Python bakes a
+      // placeholder and we set the real scan href here.  Page markers carry data-page → &pinit=N;
+      // the card's scan link is the bare base.
+      const su = scanUrl(article);
+      root.querySelectorAll('a[href*="scans.html"]').forEach(a => {
+        const page = a.dataset.page;
+        a.setAttribute("href", page ? `${su}&pinit=${page}` : su);
+      });
+    }
+
+    // WHETHER A TABLE OVERFLOWS IS A LAYOUT FACT, AND THE BROWSER IS THE ONLY
+    // THING THAT KNOWS IT.  Python used to bake a `|wide` flag from a build-time
+    // measurement cached by span bytes — so every producer change that rewrote a
+    // table invalidated the cache silently (194 spans lost their hint in August,
+    // 47 more in the rebuild before this one), and the answer was measured once
+    // against a 590px desktop column, which is simply wrong on a phone, where
+    // every one of these tables overflows and none of them said so.
+    //
+    // A table clips when its right edge passes the CARD's content edge — which
+    // is what the old 751px constant meant. Measured from the elements
+    // themselves, so it needs no constant and is right at every viewport.
+    let wideTableSeq = 0;
+
+    function wrapWideTables(root) {
+      const card = root.querySelector(".card");
+      if (!card) return;
+
+      // Unwrap first: a viewport that grew may no longer need the treatment, and
+      // measuring a table already inside an `overflow-x` box reads the box, not
+      // the table.
+      root.querySelectorAll(".wide-table-wrap").forEach(fig => {
+        const inline = fig.querySelector(".wide-table-inline");
+        if (inline && inline.firstElementChild) fig.replaceWith(inline.firstElementChild);
+      });
+
+      const cs = getComputedStyle(card);
+      const cardRight = card.getBoundingClientRect().right - parseFloat(cs.paddingRight);
+      root.querySelectorAll(".body-text table").forEach(t => {
+        if (t.parentElement && t.parentElement.closest("table")) return;   // top level only
+        const left = t.getBoundingClientRect().left;
+        if (t.offsetWidth <= cardRight - left) return;                     // fits; spilling into
+                                                                           // the empty margin is fine
+        const cols = t.rows && t.rows[0] ? t.rows[0].cells.length : 0;
+        const fig = document.createElement("figure");
+        fig.className = "wide-table-wrap";
+        const id = "wt-" + (++wideTableSeq);
+        fig.innerHTML = '<button class="expand-table-btn" data-wt="' + id +
+                        '" title="Open full-width view">⤡ Expand' +
+                        (cols ? " (" + cols + " columns)" : "") + '</button>' +
+                        '<div class="wide-table-inline"></div>';
+        t.replaceWith(fig);
+        fig.querySelector(".wide-table-inline").appendChild(t);
+      });
+    }
+
+    function captureWideTables(root) {
+      // The expand-table modal reads wideTableSources; populate it from whatever
+      // `wrapWideTables` just decided.
+      root.querySelectorAll(".wide-table-wrap").forEach(fig => {
+        const btn = fig.querySelector(".expand-table-btn");
+        const inline = fig.querySelector(".wide-table-inline");
+        if (btn && inline) wideTableSources[btn.dataset.wt] = { table: inline.innerHTML, trailing: "" };
+      });
+    }
+
+    // Re-decide on resize (and orientation change): the answer is per-viewport.
+    let _wtResizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(_wtResizeTimer);
+      _wtResizeTimer = setTimeout(() => {
+        const app = document.getElementById("app");
+        if (!app) return;
+        wrapWideTables(app);
+        captureWideTables(app);
+      }, 150);
+    });
+
+    // The article's topic memberships are a client-side overlay: they come from a
+    // reverse-lookup of classified_toc.json (topicMap), NOT from the article JSON, so
+    // Python's render can't emit them.  The render-unification (059a5a0) moved the header
+    // to Python and dropped this line with the old JS header; re-add it here, in its
+    // original slot (after the "By …" byline), from the surviving topicMap.
+    function injectTopics(app, article) {
+      const topics = (topicMap && article.filename) ? (topicMap[article.filename] || []) : [];
+      if (!topics.length) return;
+      const card = app.querySelector(".card");
+      if (!card) return;
+      const sep = ` <span style="color:var(--muted);">›</span> `;
+      const topicsBase = "/topics.html";
+      const linkSeg = (full, label) =>
+        `<a href="${topicsBase}#${encodeURIComponent(full)}" style="color:var(--link);">${escapeHtml(label)}</a>`;
+      const list = topics.map(t => {
+        // The bucket the article is actually in — no special-casing.  A sole
+        // 'General' used to be dropped as noise, which was inconsistent (the
+        // equally generic 'Subjects', 15 of them, and 'General list' stayed) and
+        // it lied about where the article sits: 'Astronomy › General' is a real
+        // bucket on the topics page, and the tag is a link to it.
+        const segs = [t.category, ...(t.path || [])];
+        const links = [];
+        for (let i = 0; i < segs.length; i++) {
+          const full = segs.slice(0, i + 1).join(" > ");
+          links.push(linkSeg(full, segs[i]));
+        }
+        return links.join(sep);
+      }).join("; ");
+      const div = document.createElement("div");
+      div.className = "contributors";
+      div.innerHTML = "In: " + list;
+      // Original slot: right after the "By …" contributors line.  If the article has no
+      // byline, fall back to just under the vol/pages metadata row (h1's next sibling).
+      const byline = Array.from(card.querySelectorAll(".contributors"))
+        .find(d => /^\s*By\b/.test(d.textContent || ""));
+      if (byline) {
+        byline.after(div);
+      } else {
+        const h1 = card.querySelector("h1");
+        const meta = h1 && h1.nextElementSibling;
+        if (meta) meta.after(div);
+        else if (h1) h1.after(div);
+        else card.prepend(div);
+      }
+    }
+
+    // ── Map overlay ─────────────────────────────────────────────────────
+    // Like the topics line, the Map link is a client-side overlay from a
+    // hand-curated registry (/data/maps.json), NOT article-JSON: registry
+    // edits take effect without a rebuild.
+    let mapsRegistry = null;
+    function loadMapsRegistry() {
+      if (!mapsRegistry) {
+        mapsRegistry = fetch("/data/maps.json")
+          .then(r => r.ok ? r.json() : { maps: [] })
+          .catch(() => ({ maps: [] }));
+      }
+      return mapsRegistry;
+    }
+
+    async function injectMapLink(app, article) {
+      const stem = String(article.filename || "").replace(/\.json$/, "");
+      if (!stem) return;
+      const reg = await loadMapsRegistry();
+      const rows = (reg.maps || []).filter(m => (m.articles || []).includes(stem));
+      if (!rows.length) return;
+      const card = app.querySelector(".card");
+      if (!card) return;
+      const links = rows.map(m =>
+        `<a href="/maps.html#${encodeURIComponent(m.id)}">${escapeHtml(m.title)}</a>`).join(", ");
+      const div = document.createElement("div");
+      div.className = "contributors";
+      div.innerHTML = (rows.length > 1 ? "Maps: " : "Map: ") + links;
+      // Slot: with the Plates line when present, else after the topics/byline
+      // lines, else under the vol/pages metadata row.
+      const contribs = Array.from(card.querySelectorAll(".contributors"));
+      const anchor = contribs.find(d => /^\s*Plates:/.test(d.textContent || ""))
+                  || contribs.find(d => /^\s*In:/.test(d.textContent || ""))
+                  || contribs.find(d => /^\s*By\b/.test(d.textContent || ""));
+      if (anchor) {
+        anchor.after(div);
+      } else {
+        const h1 = card.querySelector("h1");
+        const meta = h1 && h1.nextElementSibling;
+        if (meta) meta.after(div);
+        else if (h1) h1.after(div);
+        else card.prepend(div);
+      }
+      // Double-click on the inline thumbnail (where the article carries one)
+      // jumps to the same map.
+      rows.forEach(m => {
+        if (!m.inline_file) return;
+        // Images resolve via the Commons path rules: spaces → underscores,
+        // then encodeURIComponent (see commons_url in the Python render).
+        const tail = "/" + encodeURIComponent(m.inline_file.replace(/ /g, "_"));
+        app.querySelectorAll(".body-text img").forEach(img => {
+          const src = img.getAttribute("src") || "";
+          if (!src.endsWith(tail)) return;
+          img.style.cursor = "zoom-in";
+          img.title = "Double-click to open the full color map";
+          img.addEventListener("dblclick", () => {
+            location.href = `/maps.html#${encodeURIComponent(m.id)}`;
+          });
+        });
+      });
+    }
+
+    function renderArticle(article) {
+      currentVolume = article.volume || "?";
+      currentScanUrl = scanUrl(article);
+      unproofedPages = (article.source_quality && article.source_quality.unproofed_pages) ? article.source_quality.unproofed_pages : {};
+      // Plate pages carry no marginal furniture — drop the reading-column cap (see body.plate-page CSS).
+      document.body.classList.toggle("plate-page", article.article_type === "plate");
+      // Python is the sole renderer now: insert its pre-rendered HTML, then hydrate math (KaTeX
+      // over `.tex-math`) and fix up the runtime-only scan `back`.  The marker→HTML JS below is dead.
+      app.innerHTML = article.rendered_html || "";
+      injectTopics(app, article);
+      injectMapLink(app, article);
+      hydrateMath(app);
+      fixScanHrefs(app, article);
+      wrapWideTables(app);
+      captureWideTables(app);
+      ScanMode.onArticleRendered(article);
+    }
+
+    async function loadArticle(path) {
+      if (!path) {
+        renderError("No article path provided.");
+        return;
+      }
+
+      try {
+        // Cache-bust on the CORPUS fingerprint, not on every load: within a
+        // build the URL is stable and caches hard (the JSONs are `immutable`),
+        // and it changes exactly once per corpus change.  Degrade to the bare
+        // path if the stamp is missing, so a stale shell still loads articles.
+        const fetchUrl = window.BUILD_V ? `${path}?v=${window.BUILD_V}` : path;
+        const [response] = await Promise.all([fetch(fetchUrl), loadTopicMap()]);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} loading ${path}`);
+        }
+
+        const article = await response.json();
+        // Derive filename from path so topicMap lookup works
+        const fnMatch = path.match(/([^/]+\.json)$/);
+        if (fnMatch) article.filename = fnMatch[1];
+        renderArticle(article);
+
+        // Update URL: production uses clean /article/{id}/{slug}, local uses ?article=
+        // In both cases, preserve q / match params so search-result
+        // links (viewer.html?article=…&q=term&match=3) survive the
+        // rewrite and can drive the in-article search below.
+        // Capture the #section-<slug> fragment BEFORE the URL rewrite below
+        // strips it -- we still need it to scroll, and to keep in the URL.
+        const hash = window.location.hash;
+        const existingParams = new URLSearchParams(window.location.search);
+        const preserved = new URLSearchParams();
+        for (const k of ["q", "match"]) {
+          const v = existingParams.get(k);
+          if (v !== null) preserved.set(k, v);
+        }
+        const suffix = preserved.toString() ? "?" + preserved.toString() : "";
+        // The cosmetic name slug comes from the loaded (corrected) title — routing is the
+        // hash id, so the slug is decorative and free to show the real name with accents.
+        const cleanUrl = BritannicaUrls.jsonPathToCleanUrl(path, suffix, article.title);
+        if (cleanUrl) {
+          window.history.replaceState({}, "", cleanUrl + hash);
+        }
+
+        // Re-fire the browser's NATIVE fragment jump.  Its load-time attempt
+        // ran against an empty page, and the URL rewrite above (a replaceState
+        // during load) cancels the still-pending scroll.  Defer ONE frame so
+        // layout is computed -- doing it synchronously here lands nowhere
+        // (getBoundingClientRect is 0 before layout).  Then re-navigate to the
+        // fragment: location.hash already equals it, so blank it via
+        // replaceState (no scroll, no history entry) and reassign, an instant
+        // native jump identical to the in-article TOC's <a href="#section-…">.
+        if (hash && document.getElementById(hash.slice(1))) {
+          const id = hash.slice(1);
+          requestAnimationFrame(() => {
+            history.replaceState(null, "", location.pathname + location.search);
+            location.hash = id;
+          });
+        }
+      } catch (error) {
+        renderError(`Could not load article JSON from \"${path}\". ${error.message}`);
+      }
+    }
+
+    // Determine article path: local uses ?article= param, production uses /article/{id}/{slug}
+    // Production URL space, one form everywhere — locally tools/serve.py maps
+    // these paths onto the working tree.
+    const DATA_BASE = "/data/articles";
+    const TOC_URL = "/data/classified_toc.json";
+
+    // Reverse-index of classified_toc.json: filename → [{category, path}].
+    // `path` is the full sub-tree trail (["Zoology","Systematic","Invertebrata"])
+    // so deeper-nested leaves are addressable, not just level-2.
+    let topicMap = null;
+    async function loadTopicMap() {
+      if (topicMap !== null) return topicMap;
+      try {
+        const resp = await fetch(TOC_URL);
+        if (!resp.ok) { topicMap = {}; return topicMap; }
+        const data = await resp.json();
+        topicMap = {};
+        function walk(cat, node, path) {
+          const newPath = path.concat([node.name]);
+          for (const art of node.articles || []) {
+            if (!art.filename) continue;
+            (topicMap[art.filename] = topicMap[art.filename] || [])
+              .push({ category: cat, path: newPath });
+          }
+          for (const child of node.children || []) {
+            walk(cat, child, newPath);
+          }
+        }
+        for (const cat of data.categories || []) {
+          // A CATEGORY is a bucket too.  Articles hang off it directly when it
+          // has no subdivision — Sports and Pastimes has 264 articles and 0
+          // subsections — and entering the walk only from `subsections` left
+          // every one of them with no topic tag at all.
+          for (const art of cat.articles || []) {
+            if (!art.filename) continue;
+            (topicMap[art.filename] = topicMap[art.filename] || [])
+              .push({ category: cat.name, path: [] });
+          }
+          for (const sub of cat.subsections || []) {
+            walk(cat.name, sub, []);
+          }
+        }
+      } catch (e) {
+        topicMap = {};
+      }
+      return topicMap;
+    }
+    let initialPath = new URLSearchParams(window.location.search).get("article");
+    if (!initialPath) {
+      // Clean URL: /article/16-0670-lighthouse/LIGHTHOUSE ->
+      //   /data/articles/16-0670-lighthouse-LIGHTHOUSE.json
+      // (stable IDs: {vol:02d}-{page:04d}-{section-slug}, durable across rebuilds)
+      initialPath = BritannicaUrls.pathnameToJsonPath(
+        window.location.pathname, DATA_BASE);
+    }
+    if (initialPath) {
+      loadArticle(initialPath).then(() => {
+        // If the URL carries ?q=…[&match=N], pre-populate the
+        // in-article search box and jump to the Nth match. This is
+        // how search.html / index.html's occurrence-click handoff
+        // lands the reader right on the hit.
+        const p = new URLSearchParams(window.location.search);
+        const q = p.get("q");
+        const matchParam = parseInt(p.get("match") || "1", 10);
+        if (q) {
+          articleSearchInput.value = q;
+          runArticleSearch();
+          const matches = document.querySelectorAll(".body-text .search-highlight");
+          if (matches.length) {
+            const n = Math.min(Math.max(1, matchParam || 1), matches.length);
+            currentMatchIdx = n - 1;
+            updateMatchNav();
+          }
+        }
+      });
+    }
+
+    // In-article search
+    const articleSearchInput = document.getElementById("articleSearch");
+    const matchCountEl = document.getElementById("matchCount");
+    const prevBtn = document.getElementById("prevMatch");
+    const nextBtn = document.getElementById("nextMatch");
+    const matchListEl = document.getElementById("matchList");
+    let currentMatchIdx = -1;
+
+    function buildMatchList() {
+      const matches = document.querySelectorAll(".body-text .search-highlight");
+      matchListEl.innerHTML = "";
+      if (matches.length === 0) {
+        matchListEl.style.display = "none";
+        return;
+      }
+      matchListEl.style.display = "block";
+      // Group matches by parent paragraph to avoid duplicate snippets
+      const seen = new Map();  // parent element → first match index
+      matches.forEach((el, i) => {
+        const parent = el.closest("p, td, blockquote, h3, li") || el.parentNode;
+        if (seen.has(parent)) return;
+        seen.set(parent, i);
+
+        const fullText = parent.textContent || "";
+        const matchText = el.textContent;
+        const pos = fullText.indexOf(matchText);
+        const ctxStart = Math.max(0, pos - 50);
+        const ctxEnd = Math.min(fullText.length, pos + matchText.length + 50);
+        // Highlight ALL occurrences of the query in the snippet
+        const query = articleSearchInput.value.trim();
+        const snippetRaw = (ctxStart > 0 ? "\u2026" : "") +
+          fullText.slice(ctxStart, ctxEnd) +
+          (ctxEnd < fullText.length ? "\u2026" : "");
+        const snippetHtml = snippetRaw.replace(
+          new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"),
+          "<mark>$1</mark>"
+        );
+
+        const item = document.createElement("div");
+        item.className = "match-item";
+        item.innerHTML = snippetHtml;
+        item.addEventListener("click", () => {
+          currentMatchIdx = i;
+          updateMatchNav();
+        });
+        matchListEl.appendChild(item);
+      });
+    }
+
+    function updateMatchNav() {
+      const matches = document.querySelectorAll(".body-text .search-highlight");
+      const total = matches.length;
+      if (total === 0) {
+        matchCountEl.textContent = "No matches";
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        matchListEl.style.display = "none";
+        currentMatchIdx = -1;
+        return;
+      }
+      prevBtn.style.display = "";
+      nextBtn.style.display = "";
+      matchCountEl.textContent = `${currentMatchIdx + 1} of ${total}`;
+      matches.forEach((m, i) => {
+        m.classList.toggle("search-highlight-current", i === currentMatchIdx);
+      });
+      // Update active state in match list
+      matchListEl.querySelectorAll(".match-item").forEach((item, i) => {
+        item.classList.toggle("active", i === currentMatchIdx);
+      });
+      if (currentMatchIdx >= 0 && currentMatchIdx < total) {
+        matches[currentMatchIdx].scrollIntoView({ behavior: "instant", block: "center" });
+        // Scroll match list panel (not the page) to keep active item visible
+        const activeItem = matchListEl.querySelector(".match-item.active");
+        if (activeItem) {
+          const listTop = matchListEl.scrollTop;
+          const listHeight = matchListEl.clientHeight;
+          const itemTop = activeItem.offsetTop - matchListEl.offsetTop;
+          if (itemTop < listTop || itemTop + activeItem.offsetHeight > listTop + listHeight) {
+            matchListEl.scrollTop = itemTop - listHeight / 2;
+          }
+        }
+      }
+    }
+
+    function goToMatch(delta) {
+      const matches = document.querySelectorAll(".body-text .search-highlight");
+      if (!matches.length) return;
+      currentMatchIdx = (currentMatchIdx + delta + matches.length) % matches.length;
+      updateMatchNav();
+    }
+
+    prevBtn.addEventListener("click", () => goToMatch(-1));
+    nextBtn.addEventListener("click", () => goToMatch(1));
+
+    function runArticleSearch() {
+      const query = articleSearchInput.value.trim();
+      lastSearchedQuery = query;
+      const bodyEl = document.querySelector(".body-text");
+      if (!bodyEl) return;
+
+      // Remove existing highlights
+      bodyEl.querySelectorAll(".search-highlight").forEach(el => {
+        el.replaceWith(el.textContent);
+      });
+      bodyEl.normalize();
+
+      if (!query) {
+        matchCountEl.textContent = "";
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        matchListEl.style.display = "none";
+        matchListEl.innerHTML = "";
+        currentMatchIdx = -1;
+        return;
+      }
+
+      // Walk text nodes and highlight matches
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+
+      function highlightNode(node) {
+        if (node.nodeType === 3) {
+          const text = node.textContent;
+          if (regex.test(text)) {
+            regex.lastIndex = 0;
+            const span = document.createElement("span");
+            span.innerHTML = text.replace(regex, (match) => {
+              return `<span class="search-highlight">${match}</span>`;
+            });
+            node.parentNode.replaceChild(span, node);
+          }
+        } else if (node.nodeType === 1 && !node.classList?.contains("search-highlight")) {
+          Array.from(node.childNodes).forEach(highlightNode);
+        }
+      }
+
+      highlightNode(bodyEl);
+      buildMatchList();
+      currentMatchIdx = -1;
+      // Show count and list but don't scroll — let the user pick a match
+      const total = document.querySelectorAll(".body-text .search-highlight").length;
+      matchCountEl.textContent = total ? `${total} match${total !== 1 ? "es" : ""}` : "No matches";
+      prevBtn.style.display = total ? "" : "none";
+      nextBtn.style.display = total ? "" : "none";
+    }
+
+    articleSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const query = articleSearchInput.value.trim();
+        if (!query) {
+          // Empty query: clear everything
+          runArticleSearch();
+          return;
+        }
+        const matches = document.querySelectorAll(".body-text .search-highlight");
+        if (matches.length === 0) {
+          // First Enter: run the search (no scroll)
+          runArticleSearch();
+        } else {
+          // Subsequent Enter: navigate/scroll
+          goToMatch(e.shiftKey ? -1 : 1);
+        }
+      } else if (e.key === "Escape") {
+        articleSearchInput.value = "";
+        runArticleSearch();
+        articleSearchInput.blur();
+      }
+    });
+
+    // If query text changes from what was last searched, clear old results
+    let lastSearchedQuery = "";
+    articleSearchInput.addEventListener("input", () => {
+      const current = articleSearchInput.value.trim();
+      if (current === lastSearchedQuery) return;
+      const bodyEl = document.querySelector(".body-text");
+      if (!bodyEl) return;
+      bodyEl.querySelectorAll(".search-highlight").forEach(el => {
+        el.replaceWith(el.textContent);
+      });
+      bodyEl.normalize();
+      matchCountEl.textContent = "";
+      prevBtn.style.display = "none";
+      nextBtn.style.display = "none";
+      matchListEl.style.display = "none";
+      matchListEl.innerHTML = "";
+      currentMatchIdx = -1;
+    });
+    // --- Top/bottom navigation arrows ---
+    // --- Jump-to-article autocomplete ---
+    (function() {
+      const input = document.getElementById("jumpTo");
+      const results = document.getElementById("jumpResults");
+      let articles = null;
+      let selected = -1;
+
+      async function ensureIndex() {
+        if (articles) return;
+        const resp = await fetch(`${DATA_BASE}/index.json`);
+        const data = await resp.json();
+        articles = data
+          .filter(a => a.article_type === "article")
+          .map(a => ({
+            title: a.title,
+            filename: a.filename,
+            body_start: a.body_start || "",
+          }));
+      }
+
+      function show(items) {
+        selected = -1;
+        if (!items.length) { results.style.display = "none"; return; }
+        // Items may carry `_kind: "title" | "fulltext"` and `_snippet`
+        // (for full-text hits). Title hits show body_start; full-text
+        // hits show a snippet with the match.
+        results.innerHTML = items.slice(0, 16).map((a, i) => {
+          const kindBadge = a._kind === "fulltext"
+            ? `<span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-right:6px;">text</span>`
+            : "";
+          const sub = a._snippet
+            ? `<div style="font-size:0.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a._snippet}</div>`
+            : (a.body_start
+               ? `<div style="font-size:0.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.body_start)}</div>`
+               : "");
+          return `<li data-idx="${i}" style="padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--border);">
+            <div>${kindBadge}${escapeHtml(a.title)}</div>
+            ${sub}
+          </li>`;
+        }).join("");
+        results.style.display = "block";
+        results.querySelectorAll("li").forEach(li => {
+          li.addEventListener("mousedown", e => {
+            e.preventDefault();
+            go(items[+li.dataset.idx]);
+          });
+        });
+      }
+
+      // Full-text search state (async, debounced)
+      const MEILI_URL = "/search-api";
+      const MEILI_KEY = "@@search_key|js@@";
+      // Shared Meilisearch client — see /search-api.js.
+      const searchClient = createSearchClient(MEILI_URL, MEILI_KEY);
+      let ftToken = 0;
+      let ftDebounce = null;
+      let lastQuery = "";
+      let lastTitleHits = [];
+
+      function makeSnippet(body, q) {
+        if (!body) return "";
+        const lower = body.toLowerCase();
+        const ql = q.toLowerCase();
+        const idx = lower.indexOf(ql);
+        if (idx < 0) return "";
+        const start = Math.max(0, idx - 30);
+        const end = Math.min(body.length, idx + ql.length + 50);
+        const before = escapeHtml(body.slice(start, idx));
+        const match = escapeHtml(body.slice(idx, idx + ql.length));
+        const after = escapeHtml(body.slice(idx + ql.length, end));
+        return (start > 0 ? "…" : "") + before + `<mark>${match}</mark>` + after + (end < body.length ? "…" : "");
+      }
+
+      async function runFulltext(q, myToken) {
+        if (q.length < 3) return;
+        try {
+          const hits = await searchClient.searchFulltext(q, {
+            limit: 8,
+            excludeFilenames: new Set(lastTitleHits.map(a => a.filename)),
+          });
+          if (myToken !== ftToken) return;  // newer query in flight
+          const ftHits = hits
+            .map(h => ({
+              title: h.title,
+              filename: h.filename,
+              _kind: "fulltext",
+              _snippet: makeSnippet(h.body || "", q),
+              _query: q,
+            }))
+            .slice(0, 8);
+          show([...lastTitleHits, ...ftHits]);
+        } catch (e) {
+          // keep the title-only list
+        }
+      }
+
+      function highlight(idx) {
+        results.querySelectorAll("li").forEach((li, i) => {
+          li.style.background = i === idx ? "var(--resolved-bg)" : "";
+        });
+      }
+
+      function go(item) {
+        results.style.display = "none";
+        input.value = "";
+        let url = articleUrl(item.filename);
+        if (item._kind === "fulltext") {
+          const q = encodeURIComponent(item._query || "");
+          url += (url.includes("?") ? "&" : "?") + `q=${q}&match=1`;
+        }
+        location.href = url;
+      }
+
+      // 5-tier ranking for title autocomplete.
+      //   0  exact title match           "PAUL"
+      //   1  first word match            "PAUL, SAINT"
+      //   2  any full-word match         "ST PAUL"
+      //   3  title starts with query     "PAULINIUS"
+      //   4  substring match anywhere    "SAO PAULO"
+      function titleRank(title, q) {
+        const t = title.toLowerCase();
+        if (t === q) return 0;
+        const words = t.split(/[\s,.'\u2019()\-]+/).filter(Boolean);
+        if (words[0] === q) return 1;
+        if (words.includes(q)) return 2;
+        if (t.startsWith(q)) return 3;
+        return 4;
+      }
+
+      input.addEventListener("input", async () => {
+        await ensureIndex();
+        const q = input.value.trim();
+        const qLower = q.toLowerCase();
+        if (!q) { results.style.display = "none"; return; }
+        // Title matches (local, instant)
+        const titleMatches = articles.filter(a => a.title.toLowerCase().includes(qLower));
+        titleMatches.sort((a, b) => {
+          const ra = titleRank(a.title, qLower);
+          const rb = titleRank(b.title, qLower);
+          return ra - rb || a.title.localeCompare(b.title);
+        });
+        lastTitleHits = titleMatches.slice(0, 8).map(a => ({
+          title: a.title,
+          filename: a.filename,
+          body_start: a.body_start,
+          _kind: "title",
+        }));
+        lastQuery = q;
+        // Show title matches immediately; fulltext results stream in below.
+        show(lastTitleHits);
+        // Debounced full-text search
+        if (ftDebounce) clearTimeout(ftDebounce);
+        const myToken = ++ftToken;
+        ftDebounce = setTimeout(() => runFulltext(q, myToken), 250);
+      });
+
+      input.addEventListener("keydown", e => {
+        const items = results.querySelectorAll("li");
+        if (e.key === "ArrowDown" && items.length) { e.preventDefault(); selected = Math.min(selected + 1, items.length - 1); highlight(selected); }
+        else if (e.key === "ArrowUp" && items.length) { e.preventDefault(); selected = Math.max(selected - 1, 0); highlight(selected); }
+        else if (e.key === "Enter") {
+          e.preventDefault();
+          if (items.length) {
+            // Activate whichever row is highlighted, or the first one
+            // if the user hasn't arrowed down. Matches the natural
+            // "type, see results, press Enter" flow — no one expects
+            // to have to arrow-select the top hit.
+            const idx = selected >= 0 ? selected : 0;
+            items[idx].dispatchEvent(new MouseEvent("mousedown"));
+          } else {
+            // Typeahead empty — send the user to the index page with
+            // the query prefilled so they can run a full search.
+            const q = input.value.trim();
+            if (q) {
+              input.blur();
+              location.href = `/index.html?q=${encodeURIComponent(q)}`;
+            }
+          }
+        }
+        else if (e.key === "Escape") { results.style.display = "none"; }
+      });
+
+      input.addEventListener("blur", () => { setTimeout(() => results.style.display = "none", 150); });
+
+      // iPad/touch fallback: blur isn't always fired when tapping
+      // outside a focused input. Close on any outside pointer down.
+      document.addEventListener("pointerdown", e => {
+        if (e.target !== input && !results.contains(e.target)) {
+          results.style.display = "none";
+        }
+      });
+    })();
+  </script>
+<script src="/gc-gate.js"></script>
+<script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
+</body>
+</html>

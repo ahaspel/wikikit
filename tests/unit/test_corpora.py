@@ -87,7 +87,14 @@ def test_every_field_is_read_by_something():
     #   article_pages  volumes.article_ws_range / in_article_range — the walk's span
     #   empty_records  mdx.build (the gate + exclusions), mdx.release (the count)
     #   sampler_volume  the book's deploy — the sampler EPUB it builds and uploads
-    assert fields == {"key", "title", "scan_name", "article_starts",
+    #   work_name, edition_label, monogram, search_key, analytics_code,
+    #   volume_scans_url, contributor_example  site.build.fill — the tokens
+    #               of the engine's site pages
+    #   site_dir    site.build — the book's own pages, served beside them
+    assert fields == {"work_name", "edition_label", "monogram", "search_key",
+                      "analytics_code", "volume_scans_url", "contributor_example",
+                      "site_dir",
+                      "key", "title", "scan_name", "article_starts",
                       "is_plate", "plate_title", "alias_sources",
                       "bind_contributors", "ancillary",
                       "article_pages", "empty_records", "sampler_volume",
