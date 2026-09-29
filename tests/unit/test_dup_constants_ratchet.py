@@ -13,11 +13,7 @@ about to be copied. It is the same move the leak oracle made — stop relying on
 anyone noticing, and make the unnoticed case fail.
 """
 import json
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "tools" / "diagnostics"))
 
 from wikikit.audits.dup_constants import BASELINE, collect, collect_symbols  # noqa: E402
 

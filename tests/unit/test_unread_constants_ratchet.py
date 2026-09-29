@@ -18,11 +18,7 @@ The baseline is a record of what was already there, not an endorsement of it.
 and referred to by three separate comments as though it were live.
 """
 import json
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "tools" / "diagnostics"))
 
 from wikikit.audits.unread_constants import BASELINE, collect  # noqa: E402
 

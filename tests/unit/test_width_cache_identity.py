@@ -18,12 +18,7 @@ the EPUB targets have no JS and genuinely need a baked hint.
 """
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-for _p in ("src", "tools/diagnostics", "tools/pipeline"):
-    sys.path.insert(0, str(ROOT / _p))
 
 from wikikit import markers, math_widths  # noqa: E402
 
