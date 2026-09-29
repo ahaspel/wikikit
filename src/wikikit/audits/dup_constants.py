@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Duplicated literal constants — the drift ratchet.
 
-    uv run python tools/diagnostics/dup_constants.py            # report
-    uv run python tools/diagnostics/dup_constants.py --check    # fail on a NEW duplicate
-    uv run python tools/diagnostics/dup_constants.py --accept   # rewrite the baseline
+    uv run python -m wikikit.audits.dup_constants            # report
+    uv run python -m wikikit.audits.dup_constants --check    # fail on a NEW duplicate
+    uv run python -m wikikit.audits.dup_constants --accept   # rewrite the baseline
 
 The recurring defect in this codebase is not a bad implementation, it is a SECOND
 implementation: `«[^«»]*»` in five modules, `<[^>]+>` in twenty, `[^a-z0-9]+` in
@@ -31,16 +31,16 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _ast_shapes import docstring_ids          # noqa: E402
+from wikikit.audits._ast_shapes import docstring_ids          # noqa: E402
 
-ROOT = Path(__file__).resolve().parents[2]
-ROOTS = [ROOT / "src", ROOT / "tools"]
-SKIP_DIRS = {"__pycache__", "_scratch", "node_modules"}
+# The repository being audited: wherever the audit is RUN.  wikikit audits
+# wikikit; a book audits the book — one copy of this code, two trees.
+ROOT = Path.cwd().resolve()
+from wikikit.audits import audited_files
 # Hand-written viewer sources only; the rest of tools/viewer is generated (Phase 6.2).
 VIEWER_KEEP = {"viewer.html", "index.html", "contributors.html", "maps.html",
                "scans.html"}
-BASELINE = Path(__file__).with_name("dup_constants_baseline.json")
+BASELINE = ROOT / "tests" / "ledgers" / "dup_constants.json"
 
 MIN_LEN = 6
 # A literal worth tracking encodes a RULE: regex metacharacters, a marker
@@ -110,27 +110,24 @@ def _keep(value: str) -> bool:
 
 def collect() -> dict[str, list[str]]:
     hits: dict[str, list[str]] = defaultdict(list)
-    for root in ROOTS:
-        for p in sorted(root.rglob("*.py")):
-            if any(s in p.parts for s in SKIP_DIRS):
-                continue
-            try:
-                tree = ast.parse(p.read_text(encoding="utf-8"))
-            except (SyntaxError, UnicodeDecodeError):
-                continue
-            skip = docstring_ids(tree) | _annotation_ids(tree)
-            rel = p.relative_to(ROOT).as_posix()
-            inner = _fstring_part_ids(tree)
-            for node in ast.walk(tree):
-                if (isinstance(node, ast.Constant)
-                        and isinstance(node.value, str)
-                        and id(node) not in skip and id(node) not in inner
-                        and _keep(node.value)):
-                    hits[node.value].append(f"{rel}:{node.lineno}")
-                elif isinstance(node, ast.JoinedStr):
-                    sk = _skeleton(node)
-                    if sk is not None and _keep(sk):
-                        hits[sk].append(f"{rel}:{node.lineno}")
+    for p in audited_files(ROOT):
+        try:
+            tree = ast.parse(p.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        skip = docstring_ids(tree) | _annotation_ids(tree)
+        rel = p.relative_to(ROOT).as_posix()
+        inner = _fstring_part_ids(tree)
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Constant)
+                    and isinstance(node.value, str)
+                    and id(node) not in skip and id(node) not in inner
+                    and _keep(node.value)):
+                hits[node.value].append(f"{rel}:{node.lineno}")
+            elif isinstance(node, ast.JoinedStr):
+                sk = _skeleton(node)
+                if sk is not None and _keep(sk):
+                    hits[sk].append(f"{rel}:{node.lineno}")
     for p in sorted((ROOT / "tools" / "viewer").rglob("*")):
         if p.suffix not in (".js", ".html") or p.name not in VIEWER_KEEP:
             continue
@@ -163,9 +160,7 @@ def collect_symbols() -> dict[str, list[str]]:
     switched off.
     """
     names: dict[str, list[str]] = defaultdict(list)
-    for p in sorted((ROOT / "src").rglob("*.py")):
-        if any(s in p.parts for s in SKIP_DIRS):
-            continue
+    for p in audited_files(ROOT, ("src",)):
         try:
             tree = ast.parse(p.read_text(encoding="utf-8"))
         except (SyntaxError, UnicodeDecodeError):

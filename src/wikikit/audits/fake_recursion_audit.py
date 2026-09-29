@@ -1,6 +1,6 @@
 """The scoreboard `canonical_path.md` specified and nobody built.
 
-    uv run python tools/diagnostics/fake_recursion_audit.py [--all] [--json]
+    uv run python -m wikikit.audits.fake_recursion_audit [--all] [--json]
 
 FAKE RECURSION is a pattern that recognises NESTED structure by writing the
 levels out.  It handles the depths its author typed and fails at the next one —
@@ -62,14 +62,13 @@ truncating idiom by quoting it, and a scanner that matched that sentence would
 accuse the one module that fixed the problem.  String literals stay — the
 pattern IS a string literal — so only docstrings are excluded.
 
-Acknowledge a finding in `data/fake_recursion_exceptions.json` as
+Acknowledge a finding in `tests/ledgers/fake_recursion.json` as
 ``{"<path>::<sha8-of-pattern>": "<why it stays>"}``.  The key carries a hash of
 the pattern rather than a line number, so moving code keeps its acknowledgement
 and EDITING the pattern revokes it — a changed pattern is a new decision.
 """
 from __future__ import annotations
 
-from wikikit.corpora import current_corpus
 import argparse
 import ast
 import hashlib
@@ -77,15 +76,17 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _ast_shapes import docstring_ids          # noqa: E402
+from wikikit.audits._ast_shapes import docstring_ids          # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-ROOT = Path(__file__).resolve().parents[2]
+# The repository being audited: wherever the audit is RUN.  wikikit audits
+# wikikit; a book audits the book — one copy of this code, two trees.
+ROOT = Path.cwd().resolve()
+from wikikit.audits import audited_files
 SCOPE = ("src", "tools")   # the engine AND the books, which sit beside it
-SKIP_PARTS = {"__pycache__", ".venv", "_scratch", "node_modules"}
-EXCEPTIONS = ROOT / current_corpus().data("fake_recursion_exceptions.json")
+# A code-hygiene ledger of THIS repository's acknowledged patterns — not book data.
+EXCEPTIONS = ROOT / "tests" / "ledgers" / "fake_recursion.json"
 
 # This file quotes every idiom it hunts for; scanning itself would report each
 # detector as a finding.
@@ -235,20 +236,10 @@ def _hand_walk(fn: ast.AST) -> "int | None":
     return None
 
 
-def _files():
-    for scope in SCOPE:
-        for p in sorted((ROOT / scope).rglob("*.py")):
-            if any(part in SKIP_PARTS for part in p.parts):
-                continue
-            if p.resolve() == SELF:
-                continue
-            yield p
-
-
 def audit() -> list[dict]:
     """Every depth-enumerating pattern in scope, worst kind first."""
     findings = []
-    for path in _files():
+    for path in audited_files(ROOT, SCOPE, exclude=(SELF,)):
         try:
             src = path.read_text(encoding="utf-8")
             tree = ast.parse(src)
@@ -319,7 +310,7 @@ def main() -> int:
     shape = [f for f in findings if f["kind"] == "FIXED_SHAPE"]
     ack = [f for f in findings if f["acknowledged"]]
 
-    print(f"  scanned {sum(1 for _ in _files())} files in {' + '.join(SCOPE)}")
+    print(f"  scanned {len(audited_files(ROOT, SCOPE, exclude=(SELF,)))} files in {' + '.join(SCOPE)}")
     if ack:
         print(f"  {len(ack)} acknowledged in {EXCEPTIONS.name}")
     if shape and (args.all or not gated):

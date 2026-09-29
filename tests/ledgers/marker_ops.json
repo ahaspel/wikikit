@@ -1,0 +1,38 @@
+{
+ "owners": {
+  "src/wikikit/markers.py": "the marker lexicon",
+  "src/wikikit/render/inline.py": "the site/epub decoder",
+  "src/wikikit/render/article.py": "the render shell (TITLE/SH peels)",
+  "src/wikikit/export/markdown.py": "the markdown decoder",
+  "src/wikikit/export/tei.py": "the TEI decoder",
+  "src/wikikit/pipeline/stages/elements/__init__.py": "walker + body/sub-sup producers",
+  "src/wikikit/pipeline/stages/elements/_anchor.py": "anchor producer",
+  "src/wikikit/pipeline/stages/elements/_classifier.py": "TITLE peel",
+  "src/wikikit/pipeline/stages/elements/_link.py": "link wire form",
+  "src/wikikit/pipeline/stages/elements/_section_anchors.py": "section-anchor producer",
+  "src/wikikit/pipeline/stages/elements/_shapes.py": "TITLE peel",
+  "src/wikikit/pipeline/stages/elements/_title.py": "title producer",
+  "src/wikikit/pipeline/stages/elements/_walker.py": "the walker",
+  "src/wikikit/pipeline/stages/quote_runs.py": "quote-run producer («B»)",
+  "src/eb1911/boundaries.py": "EB1911 article-heading scan («B»)",
+  "src/eb1911/plates.py": "EB1911 plate-title projection (strips «B»/«I» from a heading field)",
+  "src/wikikit/pipeline/stages/transform_articles/__init__.py": "title-node reader",
+  "src/wikikit/diagnostics/measure_math_widths.py": "«MATH» reader (width cache)",
+  "src/wikikit/diagnostics/quality_report.py": "«MATH» strip on a metrics copy",
+  "src/wikikit/audits/dup_constants.py": "literal classifier (reads «»)",
+  "src/wikikit/audits/marker_emitters.py": "construction recognizer (reads «NAME:)",
+  "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
+  "tools/viewer/ancillary_render.py": "ancillary page policy"
+ },
+ "py_globs": [
+  "src/**/*.py",
+  "tools/pipeline/*.py",
+  "tools/viewer/*.py",
+  "tools/*.py"
+ ],
+ "js_globs": [
+  "tools/viewer/*.js",
+  "tools/viewer/*.html"
+ ],
+ "anchor": "src/wikikit/markers.py"
+}

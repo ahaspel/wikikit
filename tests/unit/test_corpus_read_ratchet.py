@@ -1,202 +1,34 @@
-"""Each corpus has ONE reader, and neither of them skips.
+"""Each corpus is read through its ONE reader — the ratchet.
 
-Two collections, one rule.  `export.corpus.load_corpus` reads the EXPORTED
-articles; `source_pages.load_pages` reads the RAW wikisource pages.  Both are
-total: they apply their own exclusion rule and RAISE on a payload they cannot
-read, because "a file missing them is a FAILURE, not a silent skip (that is how
-an article with no `id` used to drop out of a phase unnoticed)".
-
-Fifteen modules wrote the exported read themselves and nine wrote the raw read —
-a glob, a hand-spelled exclusion list, and `except Exception: continue` — and
-that last line is a lie: a page the tool could not read becomes a page the tool
-reports nothing about.  For a leak finder that is a false CLEAN; for
-`export_fingerprint`, the tool a rebuild is adjudicated against, an article
-missing from BOTH fingerprints is neither "changed" nor "disappeared" — it is
-invisible ([[feedback_audit_against_source]]).
-
-The raw side had a second failure the exported side does not: FOUR postures
-across nine modules (`except Exception: continue`, `except (OSError,
-json.JSONDecodeError): continue`, `if p.exists():`, and no guard at all), plus
-two different globs, plus a corrections rule that three of them had to remember
-to re-apply by hand and the rest silently skipped ([[feedback_dissolve_dont_fix]]).
-
-DETECTION IS FILE-LEVEL ON PURPOSE.  The first version of this test matched the
-path and the `glob(` on ONE LINE, so `ART = "data/derived/articles"` two lines
-up defeated it — and it passed while `export_fingerprint`, both phase-7 gates and
-the search indexer read the directory directly.  The ratchet had exactly the
-weakness it was written to catch.  A module that NAMES a corpus directory and
-ENUMERATES a directory is presumed to be reading that corpus, whatever the
-spelling.
-
-Each ledger below is the honest exception: a few readers do go direct, and each
-states its own coverage instead — which is the rule this arc actually enforces.
-Reading through the one reader is how a tool gets that for free; a tool that opts
-out has to provide it itself, in the open, with the reason written down.
+The instrument and its history are `wikikit.audits.corpus_reads`; this
+repository's honest exceptions (collection -> {file: why it reads the directory
+itself, and how it stays honest}) are tests/ledgers/corpus_reads.json.  The
+readers' own behaviour — they refuse to skip, the raw one applies corrections —
+is tested with the engine, in test_corpus_readers.py.
 """
 from __future__ import annotations
 
-import ast
-import re
 from pathlib import Path
 
+from wikikit.audits import ledger
+from wikikit.audits.corpus_reads import problems, stale
+
 ROOT = Path(__file__).resolve().parents[2]
-
-# file (repo-relative) -> why it reads the directory itself, and how it stays honest.
-EXPORTED_DIRECT = {
-    "src/wikikit/export/corpus.py":
-        "IS the reader",
-    "tools/diagnostics/export_fingerprint.py":
-        "hashes 37k payloads in a ProcessPoolExecutor over PATHS; carries each "
-        "failure back with its reason and ABORTS rather than emit a partial "
-        "fingerprint",
-    "src/wikikit/diagnostics/mangled_markers.py":
-        "parallel scan; an unreadable payload is returned as an 'unreadable' "
-        "FINDING, not skipped",
-    "tools/diagnostics/output_leaks.py":
-        "'a corrupt JSON is a finding' — recorded as a row, not skipped",
-    "tools/diagnostics/link_census.py":
-        "samples N stems and compares against production; prints "
-        "'(fetch failures N)' so a dropped pair is visible",
-    "tools/pipeline/index_search_ec2.py":
-        "streams files to Meilisearch; prints 'Found N' and 'Indexed N'",
-    "tools/diagnostics/baseline_article_bodies.py":
-        "copies the directory as a backup; counts what it wrote",
-    "tools/viewer/build_stamp.py":
-        "hashes files for a build stamp — never reads a payload",
-    "tools/diagnostics/corpus_stamp.py":
-        "STATS files (name/size/mtime) to answer 'has anything written here since "
-        "the rebuild finished' — never opens a payload, and must not: reading "
-        "through load_corpus would parse 37k JSONs (~90s) and turn a 40ms deploy "
-        "gate into one worth skipping.  Reports its own count in both the stamp "
-        "and the refusal message",
-    "src/wikikit/epub/build.py":
-        "enumerates article STEMS for the EPUB (`_STEM_RE` excludes the "
-        "non-articles); reads no payload here — the build reports its own counts",
-    "src/wikikit/export/download.py":
-        "reads the corpus through load_corpus; its globs are over the download "
-        "OUTPUT dir, not the article dir",
-    "tools/pipeline/download_images.py":
-        "reads the corpus through load_corpus; its `iterdir` counts files in the "
-        "IMAGE dir",
-    "src/wikikit/mdx/navigation.py":
-        "reads no payload at all: it names ONE file in the article dir, the "
-        "contributor roster `contributors.json`, and its only glob is over "
-        "`tools/viewer/readers-guide*.html`.  The file-level rule pairs those two "
-        "unrelated facts — which is the price of the coarseness that keeps it "
-        "from being defeated by a constant two lines up",
-}
-
-RAW_DIRECT = {
-    "src/wikikit/source_pages.py":
-        "IS the reader",
-}
-
-# A collection is (label, what names it, its one reader, the allow-ledger).
-COLLECTIONS = (
-    # `derived("articles"…)` since wikikit step 3: the book owns its output
-    # root, so a reader now NAMES the directory through it.  Without this
-    # spelling the ratchet would go blind to every reader the step converted.
-    ("exported articles", re.compile(r"data/derived/articles|ARTICLES_DIR|derived\(\s*[\"']articles[\"']"),
-     "export.corpus.load_corpus", EXPORTED_DIRECT),
-    ("raw source pages", re.compile(r"data/raw/wikisource|RAW_DIR"),
-     "source_pages.load_pages", RAW_DIRECT),
-)
-
-_ENUMERATES = re.compile(r"\.glob\(|glob\.glob\(|os\.listdir\(|\.iterdir\(|os\.scandir\(")
-
-
-def _code_only(src: str) -> str:
-    """`src` with comments and docstrings blanked, everything else intact.
-
-    The detector must read CODE, not prose: `source_pages.py`'s docstring
-    explains itself by contrast with `data/derived/articles`, and matching that
-    sentence accused the raw reader of reading the exported corpus.  String
-    LITERALS stay — `Path("data/derived/articles")` is the very thing being
-    looked for — so only comments and free-standing strings go.
-    """
-    try:
-        tree = ast.parse(src)
-    except SyntaxError:
-        return src
-    lines = src.split("\n")
-    for node in ast.walk(tree):
-        if (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
-                and isinstance(node.value.value, str)):
-            for i in range(node.lineno - 1, (node.end_lineno or node.lineno)):
-                lines[i] = ""
-    return "\n".join(re.sub(r"#.*$", "", ln) for ln in lines)
-
-
-def _sources():
-    for pat in ("src/**/*.py", "tools/**/*.py"):
-        for f in ROOT.glob(pat):
-            if "__pycache__" in str(f) or "_scratch" in str(f):
-                continue
-            yield (str(f.relative_to(ROOT)).replace("\\", "/"),
-                   _code_only(f.read_text(encoding="utf-8", errors="replace")))
-
-
-def _strays(names, ledger):
-    return {rel: len(_ENUMERATES.findall(src))
-            for rel, src in _sources()
-            if rel not in ledger and names.search(src) and _ENUMERATES.search(src)}
+LEDGER = ledger(ROOT, "corpus_reads")
 
 
 def test_each_corpus_is_read_through_its_one_reader():
-    problems = []
-    for label, names, reader, ledger in COLLECTIONS:
-        strays = _strays(names, ledger)
-        if strays:
-            problems.append(
-                "%s — these name the %s directory AND enumerate a directory, so "
-                "they are presumed to read it outside `%s`:\n%s"
-                % (label, label, reader,
-                   "\n".join("  %s (%d call(s))" % (f, n)
-                             for f, n in sorted(strays.items()))))
-    assert not problems, (
-        "\n\n".join(problems) +
+    found = problems(ROOT, LEDGER)
+    assert not found, (
+        "\n\n".join(found) +
         "\n\nEither read through the one reader — which applies the exclusion rule "
         "and RAISES on an unreadable payload — or add the file to that "
         "collection's ledger with the reason it can be trusted to state its own "
         "coverage.")
 
 
-def test_both_readers_still_refuse_to_skip():
-    """Guard on the guard: if either loader ever became lenient, the ratchet above
-    would be enforcing a rule that no longer buys anything."""
-    import inspect
-
-    from wikikit.export.corpus import load_corpus
-    from wikikit.source_pages import load_pages
-
-    for fn, name in ((load_corpus, "load_corpus"), (load_pages, "load_pages")):
-        src = inspect.getsource(fn)
-        assert "failures.append" in src, "%s no longer records failures" % name
-        assert "raise" in src, "%s no longer raises on failure — the skip is back" % name
-
-
-def test_the_raw_reader_applies_corrections():
-    """Corrections are part of READING, not something each caller re-applies.
-    `corrections.py` names three stages that "must re-apply" them and warns that a
-    stage which forgets "silently no-ops corrections on its path" — the reader is
-    what makes that unforgettable ([[feedback_corrections_json]])."""
-    import inspect
-
-    from wikikit.source_pages import load_pages
-    assert "apply_corrections" in inspect.getsource(load_pages)
-
-
 def test_no_ledger_carries_ghosts():
     """A ledger entry for a file that no longer reads the directory is a stale
     claim — the same rot as a doc asserting a net that does not run."""
-    ghosts = []
-    for label, names, _reader, ledger in COLLECTIONS:
-        for rel in ledger:
-            f = ROOT / rel
-            if not f.exists():
-                ghosts.append("%s: %s (file is gone)" % (label, rel))
-                continue
-            src = f.read_text(encoding="utf-8", errors="replace")
-            if not names.search(src):
-                ghosts.append("%s: %s (no longer names the directory)" % (label, rel))
-    assert not ghosts, "stale ledger entries:\n  " + "\n  ".join(ghosts)
+    found = stale(ROOT, LEDGER)
+    assert not found, "stale ledger entries:\n  " + "\n  ".join(found)

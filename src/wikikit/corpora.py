@@ -67,7 +67,6 @@ KNOWN_DATA = frozenset({
     "templates/mdx_about.html",        # the help page's paragraph about the book: $site $host
     "templates/mdx_help_sample.html",  # the sample's help heading + intro: $short_name
     "mdx_phrases.json",          # the book's own nouns inside the engine's README sentences
-    "fake_recursion_exceptions.json",  # findings the recursion audit acknowledges
     "reference_link_overrides.json",   # the viewer's Reader's Guide link overrides
 })
 

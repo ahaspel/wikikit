@@ -1,7 +1,7 @@
 """A module-level name that is assigned and never read again.
 
-    uv run python tools/diagnostics/unread_constants.py            # report
-    uv run python tools/diagnostics/unread_constants.py --accept   # rewrite baseline
+    uv run python -m wikikit.audits.unread_constants            # report
+    uv run python -m wikikit.audits.unread_constants --accept   # rewrite baseline
 
 WHY THIS EXISTS.  On 2026-08-24 `populate_classified_toc.py` was found carrying
 seven of them — three `Path(...)` constants naming inputs it no longer read (one
@@ -35,20 +35,11 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
-ROOT = Path(__file__).resolve().parents[2]
-ROOTS = [ROOT / "src", ROOT / "tools"]
-BASELINE = Path(__file__).with_name("unread_constants_baseline.json")
-SKIP_PARTS = {"__pycache__", "_scratch", ".git", "node_modules"}
-
-
-def _files() -> list[Path]:
-    out: list[Path] = []
-    for base in ROOTS:
-        for p in base.rglob("*.py"):
-            if SKIP_PARTS & set(p.parts):
-                continue
-            out.append(p)
-    return sorted(out)
+# The repository being audited: wherever the audit is RUN.  wikikit audits
+# wikikit; a book audits the book — one copy of this code, two trees.
+ROOT = Path.cwd().resolve()
+from wikikit.audits import audited_files
+BASELINE = ROOT / "tests" / "ledgers" / "unread_constants.json"
 
 
 def _module_names(tree: ast.AST) -> dict[str, int]:
@@ -80,7 +71,7 @@ def _read_names(tree: ast.AST) -> set[str]:
 
 
 def collect() -> dict[str, list[str]]:
-    files = _files()
+    files = audited_files(ROOT)
     trees: dict[Path, ast.AST] = {}
     for p in files:
         try:

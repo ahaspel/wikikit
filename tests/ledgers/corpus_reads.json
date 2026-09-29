@@ -1,0 +1,20 @@
+{
+ "exported articles": {
+  "src/wikikit/export/corpus.py": "IS the reader",
+  "tools/diagnostics/export_fingerprint.py": "hashes 37k payloads in a ProcessPoolExecutor over PATHS; carries each failure back with its reason and ABORTS rather than emit a partial fingerprint",
+  "src/wikikit/diagnostics/mangled_markers.py": "parallel scan; an unreadable payload is returned as an 'unreadable' FINDING, not skipped",
+  "tools/diagnostics/output_leaks.py": "'a corrupt JSON is a finding' — recorded as a row, not skipped",
+  "tools/diagnostics/link_census.py": "samples N stems and compares against production; prints '(fetch failures N)' so a dropped pair is visible",
+  "tools/pipeline/index_search_ec2.py": "streams files to Meilisearch; prints 'Found N' and 'Indexed N'",
+  "tools/diagnostics/baseline_article_bodies.py": "copies the directory as a backup; counts what it wrote",
+  "tools/viewer/build_stamp.py": "hashes files for a build stamp — never reads a payload",
+  "tools/diagnostics/corpus_stamp.py": "STATS files (name/size/mtime) to answer 'has anything written here since the rebuild finished' — never opens a payload, and must not: reading through load_corpus would parse 37k JSONs (~90s) and turn a 40ms deploy gate into one worth skipping.  Reports its own count in both the stamp and the refusal message",
+  "src/wikikit/epub/build.py": "enumerates article STEMS for the EPUB (`_STEM_RE` excludes the non-articles); reads no payload here — the build reports its own counts",
+  "src/wikikit/export/download.py": "reads the corpus through load_corpus; its globs are over the download OUTPUT dir, not the article dir",
+  "tools/pipeline/download_images.py": "reads the corpus through load_corpus; its `iterdir` counts files in the IMAGE dir",
+  "src/wikikit/mdx/navigation.py": "reads no payload at all: it names ONE file in the article dir, the contributor roster `contributors.json`, and its only glob is over `tools/viewer/readers-guide*.html`.  The file-level rule pairs those two unrelated facts — which is the price of the coarseness that keeps it from being defeated by a constant two lines up"
+ },
+ "raw source pages": {
+  "src/wikikit/source_pages.py": "IS the reader"
+ }
+}

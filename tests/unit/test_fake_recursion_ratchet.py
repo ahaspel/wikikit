@@ -25,27 +25,21 @@ missing-image log line went unread for months.
 """
 from __future__ import annotations
 
-import importlib.util
 import json
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-TOOL = ROOT / "tools" / "diagnostics" / "fake_recursion_audit.py"
-EXCEPTIONS = ROOT / "data" / "fake_recursion_exceptions.json"
+from wikikit.audits import fake_recursion_audit as mod
+
+# THIS repository's ledger (tests/ledgers/fake_recursion.json), as the audit
+# names it.  REQUIRED: it used to be read "if it exists", so a lost ledger
+# turned every acknowledged pattern into a failure — or, in the staleness test,
+# silently skipped the check.
+EXCEPTIONS = mod.EXCEPTIONS
 
 GATED = {"TRUNCATING", "ENUMERATED", "UNREADABLE"}
 
 
-def _audit_module():
-    spec = importlib.util.spec_from_file_location("fake_recursion_audit", TOOL)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 def test_no_pattern_enumerates_nesting_depth():
-    mod = _audit_module()
-    allowed = json.loads(EXCEPTIONS.read_text(encoding="utf-8")) if EXCEPTIONS.exists() else {}
+    allowed = json.loads(EXCEPTIONS.read_text(encoding="utf-8"))
     findings = [f for f in mod.audit() if f["kind"] in GATED]
     unacknowledged = [f for f in findings if mod.key_for(f) not in allowed]
 
@@ -69,9 +63,6 @@ def test_every_acknowledgement_still_matches_a_pattern():
     on purpose — which only works if a key that no longer matches anything is
     noticed rather than accumulating as a permanent free pass.
     """
-    mod = _audit_module()
-    if not EXCEPTIONS.exists():
-        return
     allowed = json.loads(EXCEPTIONS.read_text(encoding="utf-8"))
     live = {mod.key_for(f) for f in mod.audit()}
     stale = sorted(set(allowed) - live)

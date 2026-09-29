@@ -6,9 +6,9 @@ drifts when someone edits one copy, but a duplicated function drifts the
 moment either copy grows a branch — and the copies are usually far enough
 apart that nobody notices they were ever the same.
 
-    uv run python tools/diagnostics/dup_functions.py            # exact clones
-    uv run python tools/diagnostics/dup_functions.py --near     # + near-clones
-    uv run python tools/diagnostics/dup_functions.py --min 4    # size floor
+    uv run python -m wikikit.audits.dup_functions            # exact clones
+    uv run python -m wikikit.audits.dup_functions --near     # + near-clones
+    uv run python -m wikikit.audits.dup_functions --min 4    # size floor
 
 METHOD.  Each `def` is reduced to a STRUCTURAL fingerprint: the AST dumped
 with every identifier, constant, and docstring erased, so two functions match
@@ -41,9 +41,11 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+# The repository being audited: wherever the audit is RUN.  wikikit audits
+# wikikit; a book audits the book — one copy of this code, two trees.
+ROOT = Path.cwd().resolve()
+from wikikit.audits import audited_files
 SCOPE = ("src", "tools")
-SKIP_PARTS = ("__pycache__", "_scratch", "tests")
 
 
 class _Blank(ast.NodeTransformer):
@@ -104,18 +106,10 @@ def _fingerprints(fn: ast.AST) -> "tuple[str, str]":
     return h(structure), h(with_consts)
 
 
-def _files():
-    for scope in SCOPE:
-        for p in sorted((ROOT / scope).rglob("*.py")):
-            if any(part in SKIP_PARTS for part in p.parts):
-                continue
-            yield p
-
-
 def collect(min_stmts: int):
     exact = defaultdict(list)     # (structure, consts) -> [(file, line, name)]
     near = defaultdict(list)      # structure -> [...]
-    for path in _files():
+    for path in audited_files(ROOT, SCOPE):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
         except SyntaxError:

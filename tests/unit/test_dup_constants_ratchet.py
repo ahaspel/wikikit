@@ -3,7 +3,7 @@
 The count of duplicated rule-encoding literals may fall freely. It may not rise
 without someone deliberately accepting it:
 
-    uv run python tools/diagnostics/dup_constants.py --accept
+    uv run python -m wikikit.audits.dup_constants --accept
 
 Why a ratchet rather than a rule: every duplicate found in this codebase was found
 by a human reading code, usually after it had shipped a defect. `tests/unit/
@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "diagnostics"))
 
-from dup_constants import BASELINE, collect, collect_symbols  # noqa: E402
+from wikikit.audits.dup_constants import BASELINE, collect, collect_symbols  # noqa: E402
 
 
 def _baseline() -> dict:
@@ -43,7 +43,7 @@ def test_no_symbol_has_become_a_second_implementation():
         f"{len(new)} function name(s) now defined in more than one library "
         f"module:\n{detail}\nIf it is the same job, give it one owner and import "
         "it. If the collision is genuinely coincidental, run "
-        "tools/diagnostics/dup_constants.py --accept.")
+        "src/wikikit/audits/dup_constants.py --accept.")
 
 
 def test_no_literal_has_joined_the_duplicated_set():
@@ -55,7 +55,7 @@ def test_no_literal_has_joined_the_duplicated_set():
     assert not new, (
         f"{len(new)} literal(s) became a second implementation:\n{detail}\n"
         "Give it ONE owner and import it. If the duplication is genuinely "
-        "intended, run tools/diagnostics/dup_constants.py --accept.")
+        "intended, run src/wikikit/audits/dup_constants.py --accept.")
 
 
 def test_the_baseline_is_not_vacuous():

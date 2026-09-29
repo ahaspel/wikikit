@@ -3,7 +3,7 @@
 The count of unread module-level constants may fall freely. It may not rise
 without someone deliberately accepting it:
 
-    uv run python tools/diagnostics/unread_constants.py --accept
+    uv run python -m wikikit.audits.unread_constants --accept
 
 Why a ratchet rather than a rule: the seven found in
 `populate_classified_toc.py` on 2026-08-24 were inert for months, and inert is
@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "diagnostics"))
 
-from unread_constants import BASELINE, collect  # noqa: E402
+from wikikit.audits.unread_constants import BASELINE, collect  # noqa: E402
 
 
 def _baseline() -> dict:
@@ -48,7 +48,7 @@ def test_no_constant_has_become_unread():
         + "\n  Delete them, or use them.  An unread constant is not harmless: it "
           "answers\n  searches and anchors comments on behalf of code that no "
           "longer runs.\n  If it is deliberate, run "
-          "tools/diagnostics/unread_constants.py --accept"
+          "src/wikikit/audits/unread_constants.py --accept"
     )
 
 
@@ -66,5 +66,5 @@ def test_the_baseline_does_not_name_things_that_are_now_used():
     assert not stale, (
         f"{len(stale)} baseline entr(y/ies) no longer unread — fixed, good:\n    "
         + "\n    ".join(stale)
-        + "\n  Run tools/diagnostics/unread_constants.py --accept to bank the win."
+        + "\n  Run src/wikikit/audits/unread_constants.py --accept to bank the win."
     )
