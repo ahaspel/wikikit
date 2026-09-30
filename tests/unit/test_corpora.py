@@ -80,6 +80,7 @@ def test_every_field_is_read_by_something():
     #   derived_dir, images_dir  `derived()` / `images()` — every output and
     #               image path in the engine
     #   article_starts  super_detect.detect_boundaries — the boundaries hook
+    #   heading_end  elements._title._title_span — where a heading ends
     #   is_plate, plate_title  detect_boundaries._split_out_plates — the inserts hook
     #   alias_sources  link_resolver._overlay_aliases — the aliases hook
     #   bind_contributors  wikikit.pipeline.post_export — the contributors hook
@@ -102,7 +103,7 @@ def test_every_field_is_read_by_something():
                       "site", "short_name", "file_stem", "slug", "key_prefix",
                       "urn", "source_url", "search_name", "concept_doi",
                       "cover_volumes", "subtitle", "years", "article_volumes",
-                      "derived_dir", "images_dir"}, (
+                      "derived_dir", "images_dir", "heading_end"}, (
         "a field was added or removed — is its consumer written?")
 
 

@@ -12,6 +12,7 @@ in ``eb1911/boundaries._heading_text``.)
 from __future__ import annotations
 
 import re
+from wikikit.corpora import current_corpus
 from wikikit.util.strings import HTML_TAG_RE
 from wikikit.wikitext import (TEMPLATE_CLOSE, TEMPLATE_OPEN,
                                  split_top_pipes, template_end)
@@ -237,7 +238,9 @@ def _run_continues(gap: str, next_bold: str) -> bool:
 def _title_span(opening: str) -> tuple[str, str]:
     """Split a raw article opening into (title_span, rest).  The title is the
     heading RUN: the first `«B»` through the LAST `«B»` reachable across
-    connective gaps; it stops where the descriptive body begins."""
+    connective gaps; it stops where the descriptive body begins — unless the
+    book says its heading runs on past the bold (`Corpus.heading_end`: the DNB
+    bolds only the surname, and its title is the subject's full name)."""
     s = opening.lstrip()
     lead = len(opening) - len(s)
     m = _BOLD.match(s)
@@ -256,7 +259,11 @@ def _title_span(opening: str) -> tuple[str, str]:
         cm = re.match(r"[^«(]*?\)", opening[lead + end:])
         if cm:
             end += cm.end()
-    return opening[:lead + end], opening[lead + end:]
+    cut = lead + end
+    heading_end = current_corpus().heading_end
+    if heading_end is not None:
+        cut = heading_end(opening, cut)
+    return opening[:cut], opening[cut:]
 
 
 def _letter_title_span(opening: str) -> tuple[str, str] | None:

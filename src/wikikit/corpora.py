@@ -110,6 +110,14 @@ class Corpus:
     #: the DNB will answer from its explicit ``<section>`` runs.  None = the
     #: book has no detector yet, and detection refuses it loudly.
     article_starts: Callable[[str, list, list], list[int]] | None = None
+    #: WHERE AN ARTICLE'S HEADING ENDS.  ``heading_end(opening, bold_end)`` —
+    #: given the opening and the end of its bold heading run, the book says where
+    #: the heading really ends.  None: the heading IS the bold run.  Books differ
+    #: in what their bold marks: EB1911 bolds the whole name, so what follows the
+    #: bold (``BARON``) is body; the DNB bolds only the surname it alphabetises
+    #: by, and a biographical dictionary's title is its subject's full name, so
+    #: its forenames run on in plain capitals (``ROTHSCHILD, LIONEL NATHAN de``).
+    heading_end: Callable[[str, int], int] | None = None
     #: PLATES — the inserts hook, a classifier and its producer.  ``is_plate``
     #: reads one raw leaf and says whether it is a plate insert (a page that
     #: stands apart from the running text as its own article); ``plate_title``
