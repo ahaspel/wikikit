@@ -8,6 +8,9 @@
 // this module only ever sees hash ids.
 
 (function () {
+  // The site's path under its host ("" at a domain's root, "/dnb" under one).
+  const ROOT = "@@root|js@@";
+
   // Cosmetic, readable slug from a title.  Purely decorative (routing is the id), so it keeps
   // accented letters; lowercased, runs of non-letter/digit collapsed to a single hyphen.
   function slugify(s) {
@@ -28,16 +31,17 @@
   }
 
   // filename (+ optional title for a cosmetic slug) → clean `/article/{id}[/name]` URL.
-  // One form everywhere: the local server speaks production's URL space (tools/serve.py).
+  // One form everywhere: the local server speaks production's URL space (wikikit.site.serve).
   function filenameToUrl(filename, title) {
     const id = stableIdOf(filename);
-    return "/article/" + id + (title ? "/" + slugify(title) : "");
+    return ROOT + "/article/" + id + (title ? "/" + slugify(title) : "");
   }
 
   // /article/{id}[/cosmetic] → {dataBase}/{id}.json.  Routes on the id (first path segment
   // after /article/), ignoring the cosmetic slug; old two-segment URLs resolve the same way.
   function pathnameToJsonPath(pathname, dataBase) {
-    const m = pathname.match(/^\/article\/([^/?#]+)/);
+    if (!pathname.startsWith(ROOT + "/article/")) return null;
+    const m = pathname.slice(ROOT.length).match(/^\/article\/([^/?#]+)/);
     if (!m) return null;
     return `${dataBase}/${decodeURIComponent(m[1])}.json`;
   }

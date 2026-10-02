@@ -194,6 +194,7 @@ class Corpus:
     edition_label: str | None = None    # "11th Edition" — titles, page headers
     monogram: str | None = None         # "EB" — the header's boxed mark
     search_key: str | None = None       # the PUBLIC search-only key the pages send
+    search_index: str | None = None     # "articles" — the book's search index name
     analytics_code: str | None = None   # "britannica11" — the GoatCounter site
     volume_scans_url: str | None = None  # one volume's scans; `{vol}` = 2 digits
     contributor_example: str | None = None  # "Chisholm" — the search help's `by:`
@@ -231,6 +232,14 @@ class Corpus:
     def images(self, *parts) -> Path:
         """A path under this book's image store."""
         return Path(self.need("images_dir"), *parts)
+
+    @property
+    def root(self) -> str:
+        """The site's path under its host, without a trailing slash: "" for
+        https://britannica11.org, "/dnb" for https://reference.aaronhaspel.com/dnb.
+        Every root-relative address the site and the export write starts with it."""
+        from urllib.parse import urlsplit
+        return urlsplit(self.need("site")).path.rstrip("/")
 
     def need(self, name: str) -> str:
         """A branding value this book must have for the artifact asking."""

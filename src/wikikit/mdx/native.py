@@ -33,12 +33,12 @@ def package_search(output, entries, display_keys, articles, aliases, css):
     conn.close()
     # The lookup helper, its installer and the site's search API are all the
     # ENGINE's: the first two beside this module, the last among the site pages.
-    from wikikit.site.build import PAGES as SITE_PAGES
+    from wikikit.site.build import page as site_page
     here = Path(__file__).resolve().parent
     for source, target in [(here/'mdx-title-search.cjs', 'lookup.cjs'),
-                           (SITE_PAGES/'search-api.js', 'search-api.js'),
                            (here/'install_search.py', 'install.py')]:
         shutil.copyfile(source, folder/target)
+    (folder/'search-api.js').write_bytes(site_page('search-api.js'))
     # The lookup helper runs per query on the reader's machine, without this
     # package: it reads the book's key prefix and CSS scope from here instead
     # of carrying `EB1911:` and `eb1911` in its own source.

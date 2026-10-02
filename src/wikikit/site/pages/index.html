@@ -276,24 +276,24 @@
   <!-- NOT deferred: inline scripts below call createSearchClient() /
        BritannicaUrls at module load time, so these must finish loading
        first. -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <script src="/article-urls.js"></script>
-  <script src="/search-api.js"></script>
-  <script src="/typeahead.js"></script>
+  <link rel="icon" type="image/svg+xml" href="@@root@@/favicon.svg">
+  <script src="@@root@@/article-urls.js"></script>
+  <script src="@@root@@/search-api.js"></script>
+  <script src="@@root@@/typeahead.js"></script>
 </head>
 <body>
   <div class="page">
     <div class="card">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-        <h1 style="margin: 0; font-size: 1.3rem; color: #5c4a32;"><a href="/home.html" style="color: inherit; text-decoration: none;"><svg viewBox="0 0 32 32" width="32" height="32" style="vertical-align: middle; margin-right: 10px;" aria-hidden="true"><rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1"/><rect x="3.5" y="3.5" width="25" height="25" fill="none" stroke="currentColor" stroke-width="0.6"/><text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="currentColor" style="letter-spacing:-0.3px">@@monogram@@</text></svg><span style="font-variant: small-caps; letter-spacing: 0.06em;">Articles</span> <span style="font-variant: normal; font-style: italic; letter-spacing: 0.02em;">&mdash; @@edition_label@@</span></a></h1>
+        <h1 style="margin: 0; font-size: 1.3rem; color: #5c4a32;"><a href="@@root@@/home.html" style="color: inherit; text-decoration: none;"><svg viewBox="0 0 32 32" width="32" height="32" style="vertical-align: middle; margin-right: 10px;" aria-hidden="true"><rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1"/><rect x="3.5" y="3.5" width="25" height="25" fill="none" stroke="currentColor" stroke-width="0.6"/><text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="currentColor" style="letter-spacing:-0.3px">@@monogram@@</text></svg><span style="font-variant: small-caps; letter-spacing: 0.06em;">Articles</span> <span style="font-variant: normal; font-style: italic; letter-spacing: 0.02em;">&mdash; @@edition_label@@</span></a></h1>
         <div style="font-size: 0.9rem;">
-          <a href="/contributors.html" style="color: var(--link); text-decoration: none;">Contributors</a>
+          <a href="@@root@@/contributors.html" style="color: var(--link); text-decoration: none;">Contributors</a>
           &nbsp;&middot;&nbsp;
-          <a href="/topics.html" style="color: var(--link); text-decoration: none;">Topics</a>
+          <a href="@@root@@/topics.html" style="color: var(--link); text-decoration: none;">Topics</a>
           &nbsp;&middot;&nbsp;
-          <a href="/ancillary.html" style="color: var(--link); text-decoration: none;">Ancillary</a>
+          <a href="@@root@@/ancillary.html" style="color: var(--link); text-decoration: none;">Ancillary</a>
           &nbsp;&middot;&nbsp;
-          <a href="/download.html" style="color: var(--link); text-decoration: none;">Download</a>
+          <a href="@@root@@/download.html" style="color: var(--link); text-decoration: none;">Download</a>
         </div>
       </div>
       <div id="stats" class="stats">Loading...</div>
@@ -372,10 +372,10 @@
   </div>
 
   <script>
-    // Production URL space, one form everywhere — locally tools/serve.py maps
+    // Production URL space, one form everywhere — locally wikikit.site.serve maps
     // these paths onto the working tree (and swaps the search key in its proxy).
-    const DATA_BASE = "/data/articles";
-    const MEILI_URL = "/search-api";
+    const DATA_BASE = "@@root|js@@/data/articles";
+    const MEILI_URL = "@@root|js@@/search-api";
     const MEILI_KEY = "@@search_key|js@@";
     // Shared Meilisearch client — see /search-api.js.  Both
     // index.html's main-search typeahead and viewer.html's in-article
@@ -973,7 +973,7 @@
     Promise.all([
       fetch(`${DATA_BASE}/index.json`).then(r => r.json()),
       fetch(`${DATA_BASE}/contributors.json`).then(r => r.json()).catch(() => []),
-      fetch("/data/volumes.json").then(r => r.json()).catch(() => []),
+      fetch("@@root|js@@/data/volumes.json").then(r => r.json()).catch(() => []),
     ]).then(([articleData, contribData, volumesData]) => {
       articles = articleData;
       contributors = contribData;
@@ -1016,7 +1016,7 @@
       statsEl.textContent = `Failed to load: ${err.message}`;
     });
   </script>
-<script src="/gc-gate.js"></script>
+<script src="@@root@@/gc-gate.js"></script>
 <script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
 </body>
 </html>

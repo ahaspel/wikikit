@@ -35,7 +35,7 @@ from wikikit.export.download import _topic_index
 from wikikit import provenance as _prov
 from wikikit.markers import strip_title_markers
 from wikikit.render.article import render_article, _section_slug
-from wikikit.render.inline import _article_url
+from wikikit.render.inline import _article_url, images_url
 from wikikit.util.strings import fold_accents, strip_html_tags
 from wikikit.xrefs.normalizer import normalize_xref_target
 from wikikit.provenance import digest
@@ -203,11 +203,11 @@ def list_links(items):
 def bundle_body(body: str, resources: dict[str, bytes], source_assets: dict, *, sample=True) -> str:
     def image_src(m):
         url = html.unescape(m[2])
-        if not url.startswith("/data/images/"):
+        if not url.startswith(images_url()):
             if url in resources or url.startswith("data:") or url.startswith("#"):
                 return m[0]
             raise ValueError(f"Unbundled image/resource: {url}")
-        name = unquote(url.removeprefix("/data/images/"))
+        name = unquote(url.removeprefix(images_url()))
         # Hand back the quote character the source used, both ways out.
         def attr(value):
             return f'src={m[1]}{value}{m[1]}'

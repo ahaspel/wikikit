@@ -22,10 +22,12 @@ PAGES = Path(__file__).resolve().parent / "pages"
 
 #: The book's names a page may ask for — the only tokens `fill` accepts.
 FIELDS = frozenset({"work_name", "edition_label", "monogram", "search_key",
-                    "analytics_code", "volume_scans_url", "contributor_example"})
+                    "search_index", "analytics_code", "volume_scans_url",
+                    "contributor_example", "root"})
 
 #: What the engine's pages link to that only the book can supply.
-BOOK_PAGES = frozenset({"home.html", "ancillary.html", "download.html", "favicon.svg"})
+BOOK_PAGES = frozenset({"home.html", "ancillary.html", "download.html", "topics.html",
+                        "favicon.svg"})
 
 #: The kinds of file a book's site folder serves; its builders stay behind.
 SERVED = frozenset({".html", ".js", ".css", ".svg", ".jpg", ".png"})

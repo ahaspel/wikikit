@@ -19,10 +19,22 @@ target-specific resolver.  The default matches the jsdom reference stub.
 """
 import re
 
+from wikikit.corpora import current_corpus
 from wikikit.image_assets import local_image_filename
 from wikikit.markers import (DHR_RE, DHRI_RE, OL_OPEN_RE,
                                 balanced_end, strip_marker_tokens)
 from urllib.parse import quote
+
+def site_url(path):
+    """A root-relative address on the book's site: `path` ("/article/…") under the
+    site's root — "" at a domain's root, "/dnb" under one (`Corpus.root`)."""
+    return current_corpus().root + path
+
+
+def images_url():
+    """Where the site serves images: the prefix of every rendered <img> src."""
+    return site_url("/data/images/")
+
 
 # ── escapeHtml — the {escape:true} boundary (plain marker string vs DOM innerHTML) ──
 _ESCAPE = (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ('"', "&quot;"), ("'", "&#39;"))
@@ -42,14 +54,14 @@ def _article_url(filename, bundled=None):
     article link (inline «LN», xref panel, plate/parent).  URLs route on the stable_id
     ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title is not
     in the key); the viewer canonicalises a readable slug into the address bar after load.
-    One form everywhere: the local server speaks production's URL space (tools/serve.py).
+    One form everywhere: the local server speaks production's URL space (wikikit.site.serve).
     ``bundled`` (the EPUB link policy, ``epub.pack.LINK_TOKENS``) emits a canonical
     ``epublink:`` token instead — the packer alone knows chunk assignment and
     materializes the real href (in-book chunk#anchor, else the live-site URL)."""
     stem = re.sub(r"\.json$", "", str(filename or ""))
     if bundled is not None:
         return bundled.url_for(stem)
-    return "/article/" + stem
+    return site_url("/article/" + stem)
 
 
 def _encode_uri_component(s):
@@ -84,7 +96,7 @@ def commons_url(filename):
     # same /data/images/ on S3, so one path serves both — no local-vs-web branch to bake in
     # (the imageless-local bug was this path frozen to the web form at export while the files
     # lived under data/derived/images/).
-    return "/data/images/" + _encode_uri_component(name)
+    return images_url() + _encode_uri_component(name)
 
 
 def parse_img_meta(meta_block):
@@ -229,7 +241,7 @@ def _ln_open_factory(article_url, book=False):
             # closes it.
             return f'<a class="article-link" title="{target}">'
         else:
-            href = "/search.html?q=" + _encode_uri_component(target)
+            href = site_url("/search.html?q=" + _encode_uri_component(target))
         return f'<a href="{href}" class="article-link" title="{target}">'
     return _ln_open
 

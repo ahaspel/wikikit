@@ -20,6 +20,7 @@ import re
 import unicodedata
 
 from wikikit.render.inline import (
+    site_url,
     decode_inline,
     escape_html,
     format_footnote_text,
@@ -572,7 +573,7 @@ def render_article(article, *, target="site", epub_bundled=None):
             # missing field is a producer bug that should be loud, not papered over
             # with a fallback to the search link we are removing.
             href = (epub_bundled.contrib_url(_section_slug(name)) if epub_bundled is not None
-                    else "/contributors.html#" + c["slug"])
+                    else site_url("/contributors.html#" + c["slug"]))
             return (f'<a href="{href}" style="color: var(--muted);">{escape_html(name)}</a> '
                     f'<span style="color: var(--muted); font-size: 0.85em;">({escape_html(c.get("initials", ""))})</span>')
         parts = [_contrib_link(c) for c in contributors]

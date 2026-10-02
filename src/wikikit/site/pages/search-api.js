@@ -119,7 +119,7 @@
         else if (clauses.length > 1) body.filter = clauses;
         if (by && !q) body.attributesToSearchOn = ["contributors"];
         const resp = await fetch(
-          `${meiliUrl}/indexes/articles/search`,
+          `${meiliUrl}/indexes/@@search_index|js@@/search`,
           {
             method: "POST",
             headers: {

@@ -8,7 +8,7 @@
     // (search UI + modes + URL param handling all live there).
     // Preserve the query string and add mode=fulltext.
     (function () {
-      const url = new URL("/index.html", location.href);
+      const url = new URL("@@root|js@@/index.html", location.href);
       const q = new URLSearchParams(location.search).get("q");
       if (q) url.searchParams.set("q", q);
       url.searchParams.set("mode", "fulltext");
@@ -20,9 +20,9 @@
   <p style="font-family: Georgia, serif;">Redirecting to search…
     <a id="fallback">click here if you are not redirected</a>.</p>
   <script>
-    document.getElementById("fallback").href = "/index.html?mode=fulltext";
+    document.getElementById("fallback").href = "@@root|js@@/index.html?mode=fulltext";
   </script>
-<script src="/gc-gate.js"></script>
+<script src="@@root@@/gc-gate.js"></script>
 <script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
 </body>
 </html>

@@ -3,9 +3,15 @@
 // counted; count.js's own on-load count is disabled below (no_onload).
 // Deliberately NOT 'scroll': the browser fires it with no human present on
 // #fragment auto-scroll and scroll restoration.
+//
+// Automation that drives the mouse passes the input gate (its events are
+// isTrusted), so headless Chrome's default 800x600 screen is not counted
+// either.  2026-09-30: a scraper sent 271 such hits in 3 days, against 5 at
+// 800px wide in the month before; real 800-wide tablets are 1280 tall.
 window.goatcounter = { no_onload: true };
 (function () {
   'use strict';
+  if (screen.width === 800 && screen.height === 600) return;
   var events = ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart'];
   var ready = false, seen = false, fired = false;
 

@@ -28,7 +28,7 @@
   .scan-container .error { color: var(--muted); font-style: italic; padding: 40px; }
   a { color: var(--link); }
 </style>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="@@root@@/favicon.svg">
 </head>
 <body>
 <div class="back-bar">
@@ -76,14 +76,14 @@
     document.getElementById("backLink").href = backUrl;
     document.getElementById("backLink").innerHTML = "&larr; Back to article";
   } else {
-    document.getElementById("backLink").href = "/index.html";
+    document.getElementById("backLink").href = "@@root|js@@/index.html";
   }
 
   let printedPages = null;
 
   async function loadPrintedPages() {
     try {
-      const url = "/data/printed_pages_leaf.json";
+      const url = "@@root|js@@/data/printed_pages_leaf.json";
       const resp = await fetch(url);
       if (resp.ok) printedPages = await resp.json();
     } catch (e) { /* map missing → everything labels as (unnumbered) */ }
@@ -112,7 +112,7 @@
     const padVol = String(vol).padStart(2, "0");
     const padLeaf = String(leaf).padStart(4, "0");
     const name = `vol${padVol}_leaf${padLeaf}.jpg`;
-    return `/data/scans/${name}`;
+    return `@@root|js@@/data/scans/${name}`;
   }
 
   function render() {
@@ -202,7 +202,7 @@
     }
   });
 </script>
-<script src="/gc-gate.js"></script>
+<script src="@@root@@/gc-gate.js"></script>
 <script data-goatcounter="https://@@analytics_code@@.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="if(window.__gcReady)__gcReady()"></script>
 </body>
 </html>

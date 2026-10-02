@@ -49,10 +49,11 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 
 from wikikit.export.corpus import load_corpus     # noqa: E402
+from wikikit.render.inline import images_url      # noqa: E402
 
 IMAGE_DIR = current_corpus().images()
 EXCEPTIONS = Path("data/image_exceptions.json")
-SITE_PREFIX = "/data/images/"
+SITE_PREFIX = images_url()
 
 # `src` of every rendered image.  Quote-delimited, so a filename with spaces or
 # an apostrophe (`EB1911_Boraginaceae_Fig._1_Viper's_Bugloss.jpg`) survives.

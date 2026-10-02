@@ -65,7 +65,9 @@ def test_every_field_is_read_by_something():
     # xref adjudications, maps, link exceptions, genealogy crops, MDX sample).
     # Branding, via `brand()` / `need()`:
     #   site        mdx.build, epub.front_matter, epub.pack, export.tei,
-    #               export.download, mdx.navigation (host check)
+    #               export.download, mdx.navigation (host check); its path
+    #               is `root`, which prefixes every site address (render.inline
+    #               site_url, the pages' @@root@@, site.serve)
     #   short_name  the dictionary's title, sample note, help word
     #   file_stem   dictionary_basename (the .mdx/.mdd/.png names)
     #   slug        the dictionary's CSS scope and wrap(), EPUB file name,
@@ -88,11 +90,11 @@ def test_every_field_is_read_by_something():
     #   article_pages  volumes.article_ws_range / in_article_range — the walk's span
     #   empty_records  mdx.build (the gate + exclusions), mdx.release (the count)
     #   sampler_volume  the book's deploy — the sampler EPUB it builds and uploads
-    #   work_name, edition_label, monogram, search_key, analytics_code,
+    #   work_name, edition_label, monogram, search_key, search_index, analytics_code,
     #   volume_scans_url, contributor_example  site.build.fill — the tokens
     #               of the engine's site pages
     #   site_dir    site.build — the book's own pages, served beside them
-    assert fields == {"work_name", "edition_label", "monogram", "search_key",
+    assert fields == {"work_name", "edition_label", "monogram", "search_key", "search_index",
                       "analytics_code", "volume_scans_url", "contributor_example",
                       "site_dir",
                       "key", "title", "scan_name", "article_starts",
@@ -111,7 +113,7 @@ def test_a_book_without_a_name_cannot_print_none():
     """A book with no domain yet: asking for one must fail, not print 'None'
     into a published file."""
     with pytest.raises(LookupError):
-        BARE.need("site")
+        dataclasses.replace(BARE, site=None).need("site")
     assert dataclasses.replace(BARE, site="https://fixture.example").need("site") \
         == "https://fixture.example"
 

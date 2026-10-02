@@ -44,8 +44,9 @@ from wikikit.epub import pack
 from wikikit.epub import math_assets as MA
 from wikikit.markers import markers_to_text
 from wikikit.render.article import insert_after_byline, topic_trail_html
+from wikikit.render.inline import images_url
 from wikikit.render.article import render_article, _section_slug
-from wikikit.site.build import PAGES as SITE_PAGES
+from wikikit.site.build import page as site_page
 
 ROOT = str(book_root())   # the BOOK's repository — see wikikit.corpora.book_root
 ARTICLES_DIR = os.path.join(ROOT, current_corpus().derived("articles"))
@@ -59,7 +60,6 @@ MATH_PNG_SRC = os.path.join(ROOT, current_corpus().derived("math_png"))
 import datetime as _dt
 from wikikit.util.strings import fold_accents
 _MODIFIED = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-_IMG_SRC_RE = re.compile(r'src="/data/images/([^"]+)"')
 _MATH_SRC_RE = re.compile(r'src="math/([0-9a-f]+\.png)"')
 _MEDIA = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
           "gif": "image/gif", "svg": "image/svg+xml"}
@@ -424,7 +424,7 @@ def bundle_images(body, dst_dir, seen, missing, diet=True):
     # the missing-image placeholder "until they're mirrored into the image
     # store" — they were mirrored, and the eleven musical-notation figures in
     # BAG-PIPE, BINIOU and CITTERN shipped as placeholders anyway.
-    return _IMG_SRC_RE.sub(repl, body)
+    return re.sub(r'src="' + re.escape(images_url()) + r'([^"]+)"', repl, body)
 
 
 def bundle_math_png(body, dst_dir, seen):
@@ -859,12 +859,12 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
                      load(s).get("body") or "")
         asset = coll.asset_js()
         open(os.path.join(oebps, "fts-data.js"), "w", encoding="utf-8").write(asset)
-        # The site's ranking, carried in verbatim rather than retyped — same file
+        # The site's ranking, carried in as the site serves it rather than retyped — same file
         # `mdx/native.py` copies into the dictionary package.  Safe to load here:
         # it defines functions and assigns `window.BritannicaSearch`; its only
         # `fetch` lives inside `createSearchClient`'s closure and never runs.
-        shutil.copyfile(SITE_PAGES / "search-api.js",
-                        os.path.join(oebps, "search-api.js"))
+        with open(os.path.join(oebps, "search-api.js"), "wb") as f:
+            f.write(site_page("search-api.js"))
         log(f"fts: {len(fts_docs)} docs, {len(coll.by_term):,} terms, "
             f"asset {len(asset)/1e6:.1f}MB")
         ft_script = (
