@@ -239,8 +239,15 @@ def _resolve_cross_work(target, display, body):
 
     Returning an empty target is the whole producer: `_link_wrap` renders a
     targetless link as its recursed display, so `''Dict. Nat. Biog.''` keeps its
-    italics and simply stops being a link. The page name in the first slot is a
-    DNB address and is deliberately dropped rather than shown.
+    italics and simply stops being a link. With a printed display, the page name
+    in the first slot is an address and is dropped rather than shown.
+
+    With NO display the name is all there is, and it is shown — as Wikisource
+    shows it (`peel_target_when_bare`, as every other template link form).  It
+    used to vanish: three EB1911 bibliographies read "See the article “,” in the
+    Dict. of Nat. Biography" where the page prints “Burgh, Ulick de” (also
+    Edward I, Sandys, George), and a bare `{{w|battle of Bannockburn}}` lost its
+    words.
 
     When the DNB sister site is up, this is where a destination goes.
     """
@@ -318,7 +325,8 @@ _LINK_FORMS = {
                                      peel_target_when_bare=True),
     "TARGET_FIRST_LINK":   _LinkForm(_slots_target_first, _resolve_target_first,
                                      peel_target_when_bare=True),
-    "CROSS_WORK_LINK":     _LinkForm(_slots_target_first, _resolve_cross_work),
+    "CROSS_WORK_LINK":     _LinkForm(_slots_target_first, _resolve_cross_work,
+                                     peel_target_when_bare=True),
     "INTRA_ARTICLE_LINK":  _LinkForm(_slots_target_first, _resolve_intra,
                                      peel_target_when_bare=True),
     "EB1911_SELFREF":      _LinkForm(_slots_bracket, _resolve_selfref),

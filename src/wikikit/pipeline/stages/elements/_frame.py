@@ -23,10 +23,15 @@ from wikikit.wikitext import split_top_pipes
 
 def _main_other_content(raw: str) -> str:
     """Peel `{{main other|main-NS|other-NS}}` → its main-namespace copy (param 1).  Shared so
-    `_classify_main_other_composite` recurses the SAME copy the producer wraps."""
+    `_classify_main_other_composite` recurses the SAME copy the producer wraps.
+
+    `{{#ifeq:{{NAMESPACE}}|Page|A|B}}` is the same switch spelt as a parser function:
+    A on the Page: view, B everywhere else — so the main-namespace copy is B (param 3)."""
     inner = re.sub(r"^\{\{", "", raw)
     inner = re.sub(r"\}\}\s*$", "", inner)
     parts = split_top_pipes(inner)
+    if re.match(r"\s*#ifeq\s*:", inner, re.IGNORECASE):
+        return parts[3] if len(parts) > 3 else ""
     return parts[1] if len(parts) > 1 else ""
 
 

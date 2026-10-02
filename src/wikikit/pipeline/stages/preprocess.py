@@ -69,8 +69,16 @@ _PAGE_KEY_RE = re.compile(r"\x01PAGE:(\d+)\x01")
 # behind.  (It was written to match the deleted `super_detect._SECTAG_DROP`
 # verbatim; that copied `\n?` also ate the page-join newline, which the seam rule
 # in `stream_with_keys` now re-establishes.)
+#
+# WHAT IS A SECTION TAG is MediaWiki's answer, not ours: ANY `<section …>` —
+# whatever its attribute — is the transclusion tag and renders nothing.  The DNB
+# has 20 with a misspelt attribute (`<section emd=Cowper, Charles/>`, `begib=`,
+# `start=`), invisible on Wikisource and literal text in ours until they were
+# matched.  And a tag never reaches past its own PAGE (Wikisource parses each
+# page alone): one left unclosed at a page's end ends there, instead of running
+# on to the next page's `>` and swallowing the page token between.
 _SECTION_TAG_RE = re.compile(
-    r"[ \t]*<section\s+(?:begin|end)\b[^>]*?/?>[ \t]*\n?", re.IGNORECASE)
+    r"[ \t]*<section\b[^>\x01]*(?:>|(?=\x01))[ \t]*\n?", re.IGNORECASE)
 _SECTION_NAME_RE = re.compile(
     r'<section\s+begin\s*=\s*"?([^">]*)"?\s*/?>', re.IGNORECASE)
 

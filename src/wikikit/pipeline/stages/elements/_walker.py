@@ -109,7 +109,9 @@ _BR_RE = re.compile(r"<br\b[^>]*/?>", re.IGNORECASE)
 # A self-closing structural tag carrying boundary identity (the name), no inner
 # content.  Recognized so it becomes an owned SECTION element carried raw, rather
 # than being swept by the text producer's catch-all HTML strip.
-_SECTION_RE = re.compile(r"<section\s+(?:begin|end)\b[^>]*>", re.IGNORECASE)
+# ANY `<section …>` is the tag, whatever its attribute: MediaWiki renders a
+# misspelt one (`emd=`, `begib=`) as nothing too (see preprocess._SECTION_TAG_RE).
+_SECTION_RE = re.compile(r"<section\b[^>]*>", re.IGNORECASE)
 
 # `<noinclude>` tags are stripped upstream in `_transform_text_v2`
 # before the article walker runs — see the comment there.  The article
@@ -236,7 +238,7 @@ _OPENER_HINT_RE = re.compile(
     r"|<ref\b"                      # HTML_SELF_CLOSING ref / HTML_TAG ref
     r"|<pagequality\b"              # HTML_SELF_CLOSING pagequality metadata
     r"|<br\b"                       # HTML_SELF_CLOSING line break → «BR»
-    r"|<section\s+(?:begin|end)\b"  # SECTION transclusion marker
+    r"|<section\b"                  # SECTION transclusion marker (any attribute)
     r"|<(?:table|poem|math|score|hiero|nowiki|includeonly|ol|blockquote)\b"  # HTML_TAG tag variants
     r"|<span\s+style\s*=\s*\"[^\"]*\{\{mirrorH"  # MIRROR_GLYPH span
     r"|<(?:span|div)\b[^>]*\bfloat\s*:"  # FIGURE HTML float-wrapper

@@ -334,3 +334,32 @@ def test_nop_survives_the_seam_rule():
     assert "{{nop}}" in stream, f"the seam rule ate {{nop}}: {stream!r}"
     off = page_keys[1][0]
     assert stream[:off].rstrip("\n").endswith("{{nop}}")
+
+
+@pytest.mark.parametrize("tag", [
+    # misspelt attributes, all from the DNB — MediaWiki renders each as nothing
+    "<section emd=Cowper, Charles/>", "<section begib=Durant, John/>",
+    '<section start="Brydges, James" />', "<section en=Row, John (1598?-1672?)/>",
+    '<section table="Palmer, Samuel (d.1724)"/>',
+])
+def test_any_section_tag_is_lifted_whatever_its_attribute(tag):
+    stream, page_keys, sections = P.stream_with_keys([
+        _Pg(1, f"the end of one entry.{tag}\n"),
+        _Pg(2, "The next page."),
+    ])
+    assert "<section" not in stream, stream
+    assert len(page_keys) == 2 and stream[page_keys[1][0]:].startswith("The next page.")
+    assert sections == []           # not a begin: it names nothing
+
+
+def test_an_unclosed_section_tag_ends_at_its_page():
+    """DNB vol 21: `<section end=Geffrey, Robert/` with no `>`.  Wikisource parses
+    each page alone, so the tag cannot reach the next page's `>`; it must not
+    swallow the page break (which made the page-key check refuse the volume)."""
+    stream, page_keys, _sections = P.stream_with_keys([
+        _Pg(115, "there being assertions on<section end=Geffrey, Robert/"),
+        _Pg(116, '<section begin=Geffrey, Robert/>which nothing turned.'),
+    ])
+    assert [p for _, p in page_keys] == [115, 116]
+    assert "<section" not in stream, stream
+    assert stream[page_keys[1][0]:].startswith("which nothing turned.")

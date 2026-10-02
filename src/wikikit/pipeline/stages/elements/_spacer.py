@@ -22,6 +22,13 @@ _SPACER_NAMES: frozenset[str] = frozenset({
     # Spacers / glyph escapes
     "nop", "nopt", "nopf", "spaces", "fsp", "pad thin", "brace", "unicode",
     "nbsp", "parabr", "br", "-", ". . .", "’ ”", "\" '", "ae",
+    # `{{--}}` an em dash, `{{peh}}` a hyphen (the DNB's; EB1911 uses neither).
+    "--", "peh",
+    # `{{user annotation|…}}` — a Wikisource transcriber's note about the scanned
+    # COPY ("Adhered onto the page of the work is a typed correction"), not the
+    # book.  Wikicruft: our readers don't care about the scanned copy (user,
+    # 2026-10-02).  Dropped by name, like the no-ops.
+    "user annotation",
     # Pure cell/table style-code carriers — NO content (the codes are presentation
     # shorthand consumed by the table producer when inside a `{|`; as a standalone
     # DOUBLE_BRACE they carry nothing to render).  → empty.
@@ -121,6 +128,12 @@ def process_spacer(raw: str, ctx=None) -> str:
         return "***"
     if low == "shy":
         return "­"  # soft hyphen
+    if name == "--":
+        return "—"  # em dash, as Wikisource renders {{--}}
+    if low == "peh":
+        return "-"  # hyphen, as Wikisource renders {{peh}}
+    if low == "user annotation":
+        return ""   # a transcriber's note on the scanned copy, not the book
     if low == "ae":
         return "æ"  # æ ligature glyph
     if name in _ESCAPE:

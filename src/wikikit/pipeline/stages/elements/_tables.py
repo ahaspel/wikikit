@@ -550,8 +550,10 @@ _TEMPLATE_PARAM_STYLE_RE = re.compile(
 # `{{Fs}}` became an element).
 # `heading\w*` matches every suffix the old prefix-match caught — bare `Heading`,
 # `HeadingSmall`, `HeadingFine`, … — so none fall through to the catch-all sweeper.
+# `{{PT Shoulder Heading|LABEL}}` is the DNB's (415 uses, VICTORIA's margin
+# headings among them; EB1911 uses none) — the same marginal label.
 _SHOULDER_HEADING_RE = re.compile(
-    r"\{\{\s*(?:EB1911\s+shoulder\s+heading\w*|EB9\s+margin\s+note)\s*\|",
+    r"\{\{\s*(?:(?:EB1911|PT)\s+shoulder\s+heading\w*|EB9\s+margin\s+note)\s*\|",
     re.IGNORECASE)
 # Running header — `{{rh|left|center|right}}` and its `{{Running header|…}}`
 # alias: a 3-COLUMN left|center|right frame.  Page-furniture rh is stripped

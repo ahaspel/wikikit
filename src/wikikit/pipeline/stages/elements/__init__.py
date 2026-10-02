@@ -835,11 +835,11 @@ def _wrap_subsup(raw, body, ctx):
     letters while element markers (`«…»`) pass through verbatim (their digits would else be
     mangled).  Bold/italic inside is dropped (it doesn't render in super/subscript).  Carries
     in every context — was body-text's `_convert_sub_sup`, which leaked inside math/centred."""
-    m = re.match(r"\{\{\s*(sub|sup)\s*\|(.*)\}\}\s*$", raw,
+    m = re.match(r"\{\{\s*(sub|sups?)\s*\|(.*)\}\}\s*$", raw,
                  re.IGNORECASE | re.DOTALL)
     if not m:
         return raw
-    table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP
+    table = _SUB_MAP if m.group(1).lower() == "sub" else _SUP_MAP   # sup / sups
     body = (body.replace("«B»", "").replace("«/B»", "")
                 .replace("«I»", "").replace("«/I»", ""))
     out, last = [], 0
@@ -1254,7 +1254,7 @@ def _recurse_slot_content(raw, label):
     if label == "ANCHOR":                     # `{{anchor+|id|display}}` → the display (else "")
         return _anchor_display(raw)
     if label == "SUBSUP":                     # `{{sub|x}}`/`{{sup|x}}` → x (translated by the wrap)
-        m = re.match(r"\{\{\s*(?:sub|sup)\s*\|(.*)\}\}\s*$", raw, re.IGNORECASE | re.DOTALL)
+        m = re.match(r"\{\{\s*(?:sub|sups?)\s*\|(.*)\}\}\s*$", raw, re.IGNORECASE | re.DOTALL)
         return m.group(1) if m else ""
     if label == "SPAN_TITLE":                 # `<span title=T>X</span>` → X (the wrap adds title)
         return _span_title_slot(raw)
@@ -1270,8 +1270,14 @@ def _recurse_slot_content(raw, label):
             _TEMPLATE_STYLE_RE, _TEMPLATE_STYLE_WRAPPERS)
         if _TEMPLATE_STYLE_RE.match(raw):
             return _strip_peel(raw)[1]
-        name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
-        return _TEMPLATE_STYLE_WRAPPERS[name].get("bare", "")
+        bare = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw)
+        if bare is None:
+            # Neither `{{name|X}}` nor bare `{{name}}`: a malformed styler in the
+            # SOURCE (the DNB's `{{sc}Will. Malm.}}`, a `}` typed for `|`).  Name it,
+            # so the fix — a correction — is findable; it used to die as a bare
+            # AttributeError on `None.group`.
+            raise ValueError(f"malformed styler template in the source: {raw[:80]!r}")
+        return _TEMPLATE_STYLE_WRAPPERS[bare.group(1).strip().lower()].get("bare", "")
     args = re.sub(r"\}\}\s*$", "", re.sub(r"^\{\{", "", raw))
     if label == "LB":                         # `{{lb-|N}}` → the quantity N
         return re.sub(r"^\s*lb-?\s*\|?\s*", "", args,

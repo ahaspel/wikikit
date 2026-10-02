@@ -321,6 +321,20 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
                 r"|EB9link|9link|1911\s+article\s+link|EB9\s+intra-article\s+link|linktext)\b",
                 raw, re.IGNORECASE):
         return "TARGET_FIRST_LINK"
+    # Every OTHER `{{… lkpl|Target|Display}}` cites another work on Wikisource
+    # (`{{DAB lkpl}}` the Dictionary of Australasian Biography, `{{Men-at-the-Bar
+    # lkpl}}`, `{{The Times lkpl}}`, a `{{DNB_lkpl}}` spelt with an underscore …):
+    # the same cross-work citation as `{{DNB lkpl}}` above, rendered as its printed
+    # display.  `{{w|Target|Display}}` is a Wikipedia link in that same shape.
+    # (Measured 2026-10-02: EB1911 uses none of these; the DNB, 13 names and `w`.)
+    if re.match(r"\{\{\s*(?:[^|{}]*?[\s_]lkpl|w)\s*\|", raw, re.IGNORECASE):
+        return "CROSS_WORK_LINK"
+    # `{{#ifeq:{{NAMESPACE}}|Page|A|B}}` — the parser-function spelling of `{{main
+    # other}}`: A on the Page: view, B on the article.  Our entries are the article
+    # view, so it joins that family (`_main_other_content` takes B).
+    if re.match(r"\{\{\s*#ifeq\s*:\s*\{\{\s*NAMESPACE\s*\}\}\s*\|\s*Page\s*\|", raw,
+                re.IGNORECASE):
+        return "MAIN_OTHER"
     # `{{EB1911 footer …}}` — the contributor signature footer.  RECOGNIZED as a bounded
     # CONTRIBUTOR_FOOTER node; the byline + removal are the decorator's job, not here.
     if re.match(r"\{\{\s*EB1911\s+footer\b", raw, re.IGNORECASE):
@@ -397,7 +411,8 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
         return "CITE"
     # `{{sub|x}}` / `{{sup|x}}` — sub/superscript typography (out of body-text's
     # `_convert_sub_sup`); the producer recurses the slot + Unicode-translates.
-    if name in {"sub", "sup"}:
+    # `{{sups|x}}` is Wikisource's smaller superscript (`Hon{{sups|ble}}`) — a sup.
+    if name in {"sub", "sup", "sups"}:
         return "SUBSUP"
     # `{{img float|…}}` / `{{figure|…}}` / `{{FI|…}}` — a captioned figure → IMAGE; the one
     # producer lays the caption out centered below the plate (no float).  (`img float`
@@ -453,7 +468,7 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # Shoulder-heading / running-header in the bare form (regexes above are pipe-form).
     # Prefix match (not anchored) tolerates an OCR `&nbsp;`/nbsp tail on the name
     # (`{{EB1911 Shoulder Heading&nbsp;|…}}`).
-    if re.match(r"(?:eb1911 shoulder heading|eb9 margin note)", full):
+    if re.match(r"(?:(?:eb1911|pt) shoulder heading|eb9 margin note)", full):
         return "SHOULDER"
     if full in ("rh", "running header", "runningheader"):
         return "RUNNING_HEADER"
