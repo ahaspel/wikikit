@@ -70,7 +70,9 @@ Output exactly {{{{RunningHeader|left|number|right}}}} with the printed text.
 If that top line is not a running head — a title or heading, as on a page that
 opens a section — transcribe it as printed instead, like any text.
 {notation}
-Output only the wikitext, nothing else."""
+Output only the wikitext, nothing else. If nothing is printed in the image
+(blank paper, a speck, the page's edge), output nothing at all — never a
+sentence about the image."""
 
 STRIP = "This image is a STRIP. Transcribe it."
 CAPTION = "This image is a CAPTION. Transcribe it."
@@ -123,10 +125,14 @@ class Unread(Exception):
         self.reason, self.answer = reason, answer
 
 
-#: A reading this many characters per inked column or fewer is not a reading.
-#: Measured on 33 Century strips of 3+ lines (2026-10-03): 0.101 to 0.321,
-#: median 0.143; a strip that lost half its text reads about 0.07.
-MIN_CHARS_PER_INK_COLUMN = 0.06
+#: A reading with fewer characters than this per line-height of printed ink
+#: is not a reading.  Measured in the type's own units, so a scan's resolution
+#: does not move it (in pixels, a 2482-px scan made complete readings look
+#: short).  Accepted readings of 3+ lines (2026-10-03): DNB 510, lowest 1.8,
+#: median 2.5; Century 63, lowest 2.0, median 3.3.  At 1.0 a reading that
+#: lost about 60% of its text fails; letterspaced display capitals read
+#: about 0.9 and are flagged for a person.
+MIN_CHARS_PER_LINE_HEIGHT = 1.0
 _MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub)\b[^>]*>|" + PARA)
 RUNNING_HEADER = "{{RunningHeader"
 _HEAD = re.compile(r"^\{\{RunningHeader\|([^{}]*)\}\}$")
@@ -151,8 +157,27 @@ def _type_lines(level: Image.Image, item: Item) -> tuple[list[tuple[int, int]], 
             if e - s >= 6 and dark[s:e].any(axis=0).sum() >= spread], dark
 
 
+#: The model describing its image instead of reading it ("The strip is blank:
+#: there is no printed text to transcribe") — 22 times in 147 DNB list pages,
+#: always on a strip with nothing printed.  No page prints these phrases.
+_COMMENTARY = re.compile(r"(?i)^\s*(?:the|this) (?:strip|image)\b.*\b(?:blank|no (?:printed|legible|visible) text|"
+                         r"nothing to transcribe)")
+
+
+def settle(level: Image.Image, item: Item, text: str) -> tuple[str, str | None]:
+    """The reading to keep, and why it is not a reading (None if it is).  A
+    description of the image where the ink shows nothing printed is the
+    model saying "nothing here" in words: the reading is empty.  Where type
+    IS printed, a description is no reading at all."""
+    if _COMMENTARY.search(text):
+        lines, _ = _type_lines(level, item)
+        return ("", None) if not lines else (text, "a description of the image, not a reading")
+    return text, check_reading(level, item, text)
+
+
 def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
     """Why a reading is not a reading of its image, or None if it is."""
+    import numpy as np
     lines, dark = _type_lines(level, item)
     if not text.strip():
         # nothing read is the right reading of a strip with nothing printed in
@@ -167,9 +192,10 @@ def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
         return None
     if len(lines) < 3:
         return None
-    ink = sum(int(dark[s:e].any(axis=0).sum()) for s, e in lines)
-    ratio = plain_length(text) / max(1, ink)
-    if ratio < MIN_CHARS_PER_INK_COLUMN:
+    line_height = float(np.median([e - s for s, e in lines]))
+    ink = sum(int(dark[s:e].any(axis=0).sum()) for s, e in lines) / line_height
+    ratio = plain_length(text) / max(1.0, ink)
+    if ratio < MIN_CHARS_PER_LINE_HEIGHT:
         return f"too short for its ink ({plain_length(text)} characters for {len(lines)} printed lines)"
     return None
 
@@ -192,7 +218,7 @@ def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
     reason = text = None
     for _ in range(2):
         text = ask(crop, prompt_for(item, is_caption), instructions=instructions())
-        reason = check_reading(level, item, text)
+        text, reason = settle(level, item, text)
         if reason is None:
             return text
     raise Unread(reason, text)
@@ -278,6 +304,10 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
                 paras.append(piece)
             open_para = True
 
+    # Type set across the columns (column 0, `cut.plan`) is a block of its own:
+    # a title above the columns does not run on into them, nor a column's
+    # last line into a footnote or a library's number below.
+    last_column = None
     i = 0
     while i < len(items):
         it = items[i]
@@ -299,7 +329,9 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
             text = texts.get(it.name, "")
             begins = text.lstrip().startswith(PARA)
             text = re.sub(rf"^\s*{PARA}[ \t]*\n?", "", text).strip()
-            add(text, continues=not begins)
+            across = it.column == 0 or last_column == 0
+            add(text, continues=not begins and not across)
+            last_column = it.column
         i += 1
     boundary()
     who = "transcriber" if level <= 1 else "proofreader"

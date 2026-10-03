@@ -153,6 +153,32 @@ def _lines_inked(dark, top, bottom, left, right):
     return np.array([block[s:e].any(axis=0) for s, e in lines]).mean(axis=0)
 
 
+#: A printed column rule runs down at least this share of the columns' height
+#: unbroken; no letter, leader or justified line-end does.  Measured on the 147
+#: DNB list pages (2026-10-03): rules, even broken ones, 0.20-1.00; pages
+#: without a rule 0.05 at most; every cut this moved was checked by eye.
+RULE_SHARE = 0.2
+
+
+def _column_rule(dark, top, bottom, a, b) -> int | None:
+    """The x of a printed column rule between `a` and `b`: the longest
+    near-vertical run of ink (a 5px band follows a scan's slight tilt) if it
+    runs down `RULE_SHARE` of the height; else None."""
+    h = bottom - top
+    if h <= 0 or b - a < 5:
+        return None
+    band = dark[top:bottom, a:b]
+    best, at = 0, None
+    for x in range(2, band.shape[1] - 2):
+        col = band[:, x - 2:x + 3].any(axis=1)
+        d = np.diff(np.concatenate(([0], col.astype(np.int8), [0])))
+        s, e = np.where(d == 1)[0], np.where(d == -1)[0]
+        run = int((e - s).max()) if len(s) else 0
+        if run > best:
+            best, at = run, a + x
+    return at if best >= RULE_SHARE * h else None
+
+
 def columns(dark, top, bottom, left, right, n_columns: int | None = None) -> list[tuple[int, int]]:
     """Columns from the ink: gutters are where the ink falls far below the
     page's typical density — relative, because skew and hanging headwords leave
@@ -183,6 +209,10 @@ def columns(dark, top, bottom, left, right, n_columns: int | None = None) -> lis
         cuts = []
         for i in range(1, n_columns):
             lo, hi = int(width * (i / n_columns - 0.15)), int(width * (i / n_columns + 0.15))
+            rx = _column_rule(dark, top, bottom, left + lo, left + hi)
+            if rx is not None:                 # the book drew the division: cut on it
+                cuts.append(rx)
+                continue
             near = free[lo:hi]
             s, e = min((r for r in runs(near <= near.min() + 0.01)),
                        key=lambda r: abs(lo + (r[0] + r[1]) / 2 - width * i / n_columns))

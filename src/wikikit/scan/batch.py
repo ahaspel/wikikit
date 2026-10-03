@@ -8,7 +8,7 @@ in STAGES, every page's next stage sent together:
     locate    one call per page: are there figures, roughly where
     refine    one call per figure: exact edges
     (cut)     local: the page cut into items with its figures
-    read      one call per text item; an answer failing `check_reading` is
+    read      one call per text item; an answer failing `settle` is
               sent once more, then recorded as unread
     (done)    local: the supplied page built, written, its figures cropped
 
@@ -31,7 +31,7 @@ from wikikit.scan import cut, figures, supplied
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
-from wikikit.scan.transcribe import captions, check_reading, read_request
+from wikikit.scan.transcribe import captions, read_request, settle
 
 #: Requests per batch are bounded by size: base64 images, ~0.5 MB per strip.
 MAX_BATCH_BYTES = 200 * 1024 * 1024
@@ -101,7 +101,7 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
                 continue
             level = _level(ps, scans)
             item = next(it for it in _items(ps) if it.name == key)
-            why = check_reading(level, item, text)
+            text, why = settle(level, item, text)
             if why is None:
                 ps["readings"][key] = text
             else:

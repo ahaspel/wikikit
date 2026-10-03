@@ -93,3 +93,13 @@ def test_a_title_in_the_head_position_is_page_text_not_a_header():
     page = assemble_page(items, {"head": "LIST OF WRITERS", "a": f"{PARA}\nG. A. A. . . G. A. Aitken."}, {}, 300)
     assert page.startswith('<noinclude><pagequality level="1" user="transcriber" /></noinclude>')
     assert body(page) == "LIST OF WRITERS\n\nG. A. A. . . G. A. Aitken."
+
+
+def test_type_across_the_columns_never_joins_a_column():
+    """A library's number below the columns is not the end of the last row,
+    and a title above them does not run on into the first."""
+    items = [Item("text", (0, 0, 100, 10), 0, "c0s1"), Item("text", (0, 10, 50, 90), 1, "c1s1"),
+             Item("text", (0, 90, 100, 100), 0, "c0s2")]
+    texts = {"c0s1": "LIST OF WRITERS", "c1s1": "E. H. M. . . . E. H. Marshall.", "c0s2": "79293"}
+    page = assemble_page(items, texts, {}, 50)
+    assert "LIST OF WRITERS\n\nE. H. M." in page and "Marshall.\n\n79293" in page

@@ -69,3 +69,30 @@ def test_a_rejected_answer_is_kept_for_whoever_settles_it(monkeypatch):
     with pytest.raises(Unread) as e:
         read_item(strip_image(), STRIP)
     assert e.value.reason.startswith("too short") and e.value.answer == "far too little"
+
+
+@pytest.mark.parametrize("scale", [1, 2])
+def test_the_guard_does_not_depend_on_the_scans_resolution(scale):
+    """The same strip scanned at twice the resolution: a complete reading
+    passes and a fragment fails, both times (a pixel measure made a 2482-px
+    scan's complete readings fail)."""
+    im = strip_image(lines=8)
+    im = im.resize((im.width * scale, im.height * scale))
+    item = Item("text", (0, 0, im.width, im.height), 1, "c1s1")
+    complete = " ".join(["word"] * 80)                 # 8 lines of ~10 words
+    assert check_reading(im, item, complete) is None
+    assert "too short" in check_reading(im, item, "word word word")
+
+
+def test_a_description_of_a_blank_strip_is_an_empty_reading():
+    blank = Image.new("L", (700, 120), 255)
+    item = Item("text", (0, 0, 700, 120), 1, "c2s3")
+    said = "The strip is blank: there is no printed text to transcribe."
+    assert transcribe.settle(blank, item, said) == ("", None)
+
+
+def test_a_description_where_type_is_printed_is_no_reading():
+    said = "The strip appears to be blank: there is no printed text in it to transcribe."
+    text, why = transcribe.settle(strip_image(), STRIP, said)
+    assert why == "a description of the image, not a reading"
+    assert transcribe.settle(strip_image(), STRIP, GOOD) == (GOOD, None)
