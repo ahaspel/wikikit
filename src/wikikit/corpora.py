@@ -50,6 +50,7 @@ KNOWN_DATA = frozenset({
     "corrections.json",          # source typos, applied as the page is read
     "hyphen_map.json",           # corpus-frequency dehyphenation
     "contributor_aliases.json",  # contributor name adjudications
+    "signatures.json",           # signature templates -> the initials the page prints
     "xref_adjudications.json",   # cross-reference picks made by hand
     "maps.json",                 # the map-plate bundle's manifest
     "link_exceptions.json",      # audited source links with no destination

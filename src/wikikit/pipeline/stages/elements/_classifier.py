@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import re
 
+from wikikit.contributors.signatures import printed_signature
 from wikikit.pipeline.stages.elements._registry import (
     ClassifiedElement,
     ElementRegistry,
@@ -335,6 +336,10 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     if re.match(r"\{\{\s*#ifeq\s*:\s*\{\{\s*NAMESPACE\s*\}\}\s*\|\s*Page\s*\|", raw,
                 re.IGNORECASE):
         return "MAIN_OTHER"
+    # A book's own signature template (`{{DNB AHG}}`), from the table it declares
+    # (`wikikit.contributors.signatures`) — the same node as the EB1911 forms below.
+    if printed_signature(raw) is not None:
+        return "CONTRIBUTOR_FOOTER"
     # `{{EB1911 footer …}}` — the contributor signature footer.  RECOGNIZED as a bounded
     # CONTRIBUTOR_FOOTER node; the byline + removal are the decorator's job, not here.
     if re.match(r"\{\{\s*EB1911\s+footer\b", raw, re.IGNORECASE):

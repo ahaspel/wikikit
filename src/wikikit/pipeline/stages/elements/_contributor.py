@@ -40,8 +40,14 @@ def _process_contributor_footer(raw: str) -> str:
     Either way the harvest binds the contributor off the rendered initials via the
     index, so this emits the initials and nothing else.
     """
+    from wikikit.contributors.signatures import printed_signature
     from wikikit.pipeline.stages.extract_contributors import (
         _first_footer, _parse_contributors)
+    # A book's declared signature template prints exactly what its table says
+    # the page shows — no parentheses added: those are EB1911's print, below.
+    printed = printed_signature(raw)
+    if printed is not None:
+        return f"«SPAN[style:float:right]»{printed}«/SPAN»"
     content = _first_footer(raw)
     if content:
         inits = [c["initials"] for c in _parse_contributors(content)]

@@ -29,3 +29,8 @@ BARE = Corpus(
 UNDER_A_PATH = dataclasses.replace(BARE, site="https://host.example/fixture/")
 
 NOT_A_BOOK = {1: 10}
+
+#: The same book signed through one template per contributor, as the DNB is:
+#: its declared table says what each prints.
+SIGNED = dataclasses.replace(BARE, key="fixture-signed", data_dir="tests/fixture_data",
+                             data_files=frozenset({"signatures.json"}))
