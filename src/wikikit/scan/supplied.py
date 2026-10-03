@@ -29,6 +29,11 @@ from wikikit.scan.transcribe import Unread, assemble_page, captions, read_item
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
+def page_id(volume: int, page: int) -> str:
+    """A page's id wherever pages are tracked (the desk, a batch run)."""
+    return f"v{volume:02d}-p{page:04d}"
+
+
 def figure_file(volume: int, page: int, item_name: str) -> str:
     """A figure's image name: the book's key, volume, page and item — stable
     while the page's cut is."""
@@ -39,13 +44,14 @@ def path_for(volume: int, page: int) -> Path:
     return book_root() / volume_dir(volume, SUPPLIED_DIR) / page_filename(volume, page)
 
 
-def transcribe_page(img: Image.Image, volume: int, page: int, scan: str) -> dict:
+def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
+                    single_column: bool = False) -> dict:
     """Scan -> a supplied page: cut, read every text item, assemble.  `scan`
     names the image it came from (e.g. an Internet Archive item and leaf).  A
     refused item is recorded and its reading left empty — the page is still
     written, and the refusal is listed for a person to transcribe."""
     with metered() as finding:
-        cp = cut_page(img)
+        cp = cut_page(img, single_column=single_column)
     caps = captions(cp.plan.items)
     readings, refused, unread = {}, [], {}
     with metered() as reading:
@@ -58,22 +64,32 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str) -> dict
                 readings[it.name], refused = "", refused + [it.name]
             except Unread as e:
                 readings[it.name], unread[it.name] = "", str(e)
+    return build_payload(volume, page, scan, cp.level, cp.plan, cp.figures, readings,
+                         refused, unread, {"figures": finding.record(), "text": reading.record()})
+
+
+def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: cut.Plan,
+                  figures: list[dict], readings: dict, refused: list, unread: dict,
+                  usage: dict) -> dict:
+    """The supplied page from its cut and readings — the one builder, whether
+    the page was read now (`transcribe_page`) or in batches
+    (`wikikit.scan.batch`)."""
     files = {it.name: figure_file(volume, page, it.name)
-             for it in cp.plan.items if it.kind == "figure"}
+             for it in plan.items if it.kind == "figure"}
     payload = {
         "volume": volume, "page_number": page, "source": "scan", "title": scan,
         "provenance": {
             "scan": scan, "model": MODEL, "transcribed": date.today().isoformat(),
-            "angle": cp.plan.angle,
-            "column_width": max(b - a for a, b in cut.page_columns(cp.level)),
+            "angle": plan.angle,
+            "column_width": max(b - a for a, b in cut.page_columns(level)),
             "items": [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
-                      for it in cp.plan.items],
-            "readings": readings, "figure_files": files, "figures": cp.figures,
+                      for it in plan.items],
+            "readings": readings, "figure_files": files, "figures": figures,
             "refused": refused, "unread": unread,
-            "disagreements": {str(k): list(v) for k, v in cp.plan.disagreements.items()},
+            "disagreements": {str(k): list(v) for k, v in plan.disagreements.items()},
             # what the page cost, as the API counted it: finding its figures
             # and reading its text
-            "usage": {"figures": finding.record(), "text": reading.record()},
+            "usage": usage,
         },
     }
     reassemble(payload)

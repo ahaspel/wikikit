@@ -17,10 +17,12 @@ class CutPage:
     figures: list[dict]       # as located and refined, for the record
 
 
-def cut_page(img: Image.Image, max_h: int = cut.MAX_H) -> CutPage:
+def cut_page(img: Image.Image, max_h: int = cut.MAX_H, single_column: bool = False) -> CutPage:
+    """`single_column`: the book says the page is read across its full width
+    (`cut.plan`)."""
     angle = cut.skew_angle(img)
     level = cut.deskew(img, angle)
-    figs = figures.find(level, cut.page_columns(level))
-    p = cut.plan(level, figs, max_h=max_h, angle=0.0)
+    figs = figures.find(level, cut.page_columns(level, single_column))
+    p = cut.plan(level, figs, max_h=max_h, angle=0.0, single_column=single_column)
     p.angle = angle
     return CutPage(level, p, figs)

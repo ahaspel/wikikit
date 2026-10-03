@@ -81,38 +81,83 @@ class metered:
         _meters.pop()
 
 
-def ask(img: Image.Image, prompt: str, max_tokens: int = 4000, instructions: str | None = None) -> str:
-    """The model's text answer about one image.
+def request(img: Image.Image, prompt: str, max_tokens: int = 4000,
+            instructions: str | None = None, cache_ttl: str | None = None) -> dict:
+    """The parameters of one call — the same whether it is made now (`ask`)
+    or in a batch (`submit`), so a batched call is the call `ask` would make.
 
     `instructions` are the fixed part of a prompt — the same for every strip of
     every page (rules, vocabulary, the book's notation: two-thirds of a strip
     call's input, measured 2026-10-03).  They go in the system prompt, marked
-    for caching, so after the first call they are read from the cache instead
-    of paid for again; `prompt` is the short part that follows the image."""
-    import anthropic
-    extra = {}
+    for caching; `prompt` is the short part that follows the image.
+    `cache_ttl` "1h" keeps them cached through a batch's own pace."""
+    params = {"model": MODEL, "max_tokens": max_tokens, "messages": [{
+        "role": "user", "content": [
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png",
+                                         "data": base64.b64encode(png(img)).decode()}},
+            {"type": "text", "text": prompt}]}]}
     if instructions:
-        extra["system"] = [{"type": "text", "text": instructions,
-                            "cache_control": {"type": "ephemeral"}}]
+        cache = {"type": "ephemeral", **({"ttl": cache_ttl} if cache_ttl else {})}
+        params["system"] = [{"type": "text", "text": instructions, "cache_control": cache}]
+    return params
+
+
+def _text(msg) -> str:
+    return "".join(b.text for b in msg.content if b.type == "text").strip()
+
+
+def ask(img: Image.Image, prompt: str, max_tokens: int = 4000, instructions: str | None = None) -> str:
+    """The model's text answer about one image, now (`request` for the call)."""
+    import anthropic
     try:
-        msg = _client().messages.create(model=MODEL, max_tokens=max_tokens, **extra, messages=[{
-            "role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png",
-                                             "data": base64.b64encode(png(img)).decode()}},
-                {"type": "text", "text": prompt}]}])
+        msg = _client().messages.create(**request(img, prompt, max_tokens, instructions))
     except anthropic.BadRequestError as e:
         if "content filtering" in str(e):
             raise Refused(str(e)) from e
         raise
     for m in _meters:
         m.add(msg.usage)
-    return "".join(b.text for b in msg.content if b.type == "text").strip()
+    return _text(msg)
 
 
-def ask_json(img: Image.Image, prompt: str, max_tokens: int = 2000) -> dict:
-    """`ask`, for prompts that answer with one JSON object."""
-    text = ask(img, prompt, max_tokens)
+def parse_json(text: str) -> dict:
+    """The one JSON object a JSON-answering prompt returns."""
     m = re.search(r"\{.*\}", text, re.S)
     if not m:
         raise ValueError(f"expected a JSON object from the model, got: {text[:200]!r}")
     return json.loads(m.group(0))
+
+
+def ask_json(img: Image.Image, prompt: str, max_tokens: int = 2000) -> dict:
+    """`ask`, for prompts that answer with one JSON object."""
+    return parse_json(ask(img, prompt, max_tokens))
+
+
+# ── the Batch API: the same calls, run when Anthropic has capacity, at half
+#    the price of every token (input and output); results within 24 hours ──
+def submit(requests: dict[str, dict]) -> str:
+    """One batch of calls, keyed by our own ids (letters, digits, - and _)."""
+    batch = _client().messages.batches.create(
+        requests=[{"custom_id": cid, "params": params} for cid, params in requests.items()])
+    return batch.id
+
+
+def batch_status(batch_id: str) -> tuple[str, dict]:
+    """("in_progress" | "canceling" | "ended", request counts)."""
+    b = _client().messages.batches.retrieve(batch_id)
+    return b.processing_status, b.request_counts.model_dump()
+
+
+def collect(batch_id: str) -> dict[str, tuple[str, str, object]]:
+    """An ended batch's outcomes: id -> ("ok", text, usage) | ("refused", why, None)
+    | ("failed", why, None).  A refusal is recognised as `ask` recognises it."""
+    out = {}
+    for r in _client().messages.batches.results(batch_id):
+        res = r.result
+        if res.type == "succeeded":
+            out[r.custom_id] = ("ok", _text(res.message), res.message.usage)
+        elif res.type == "errored" and "content filtering" in str(res.error):
+            out[r.custom_id] = ("refused", str(res.error), None)
+        else:
+            out[r.custom_id] = ("failed", f"{res.type}: {getattr(res, 'error', '')}", None)
+    return out

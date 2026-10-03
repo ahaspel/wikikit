@@ -25,7 +25,7 @@ from PIL import Image
 
 from wikikit.corpora import current_corpus
 from wikikit.scan.cut import Item
-from wikikit.scan.model import ask
+from wikikit.scan.model import ask, request
 from wikikit.scan.vocabulary import VOCABULARY, prompt_text
 
 PARA = "¶"
@@ -67,6 +67,8 @@ A CAPTION is the text printed beneath an illustration: wrap it in
 A RUNNING HEAD is the line at the top of a page: a guide word at the left, the
 page number in the middle, a guide word at the right (one may be empty).
 Output exactly {{{{RunningHeader|left|number|right}}}} with the printed text.
+If that top line is not a running head — a title or heading, as on a page that
+opens a section — transcribe it as printed instead, like any text.
 {notation}
 Output only the wikitext, nothing else."""
 
@@ -119,6 +121,7 @@ class Unread(Exception):
 #: median 0.143; a strip that lost half its text reads about 0.07.
 MIN_CHARS_PER_INK_COLUMN = 0.06
 _MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub)\b[^>]*>|" + PARA)
+RUNNING_HEADER = "{{RunningHeader"
 _HEAD = re.compile(r"^\{\{RunningHeader\|([^{}]*)\}\}$")
 
 
@@ -135,7 +138,7 @@ def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
     if item.kind == "head":
         m = _HEAD.match(text.strip())
         if not m:
-            return "not a running head"
+            return None if not text.strip().startswith(RUNNING_HEADER) else "a malformed running head"
         if {f.strip().lower() for f in m.group(1).split("|")} & {"left", "right", "number"}:
             return "the prompt's placeholder, not the printed head"
         return None
@@ -151,6 +154,15 @@ def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
     if ratio < MIN_CHARS_PER_INK_COLUMN:
         return f"too short for its ink ({plain_length(text)} characters for {len(lines)} printed lines)"
     return None
+
+
+def read_request(level: Image.Image, item: Item, is_caption: bool = False,
+                 cache_ttl: str | None = None) -> dict:
+    """The call that reads one text item — made now by `read_item`, or in a
+    batch (`wikikit.scan.batch`), where `cache_ttl` "1h" keeps the cached
+    instructions alive through the batch's own pace."""
+    return request(level.crop(item.box), prompt_for(item, is_caption),
+                   instructions=instructions(), cache_ttl=cache_ttl)
 
 
 def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
@@ -253,6 +265,9 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         it = items[i]
         if it.kind == "head":
             head = texts.get(it.name, "").strip()
+            if head and not head.startswith(RUNNING_HEADER):
+                add(head, continues=False)       # a title, not a running head: it is page text
+                head = ""
         elif it.kind == "figure":
             w = it.box[2] - it.box[0]
             px = max(60, round(w / column_width * COLUMN_DISPLAY_PX))

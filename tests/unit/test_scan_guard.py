@@ -36,7 +36,7 @@ def test_a_real_reading_passes():
 @pytest.mark.parametrize("item, text, why", [
     (STRIP, "   ", "empty"),
     (HEAD, "{{RunningHeader|left|181|right}}", "placeholder"),
-    (HEAD, "abacus 4 abannition", "not a running head"),
+    (HEAD, "{{RunningHeader|abacus|4", "malformed"),
     (STRIP, "¶\n'''abacus''' (ab′a̤-kus), ''n.''", "too short"),
 ])
 def test_what_is_not_a_reading(item, text, why):

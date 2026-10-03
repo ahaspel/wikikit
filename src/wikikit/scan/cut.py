@@ -280,24 +280,30 @@ def _frame(dark):
     return top, _head_split(dark, top, bottom), bottom, int(cols_any.min()), int(cols_any.max()) + 1
 
 
-def page_columns(level: Image.Image) -> list[tuple[int, int]]:
-    """The column extents of a deskewed page."""
+def page_columns(level: Image.Image, single_column: bool = False) -> list[tuple[int, int]]:
+    """The column extents of a deskewed page — one, the whole text width, when
+    the book says the page is read across (`single_column`)."""
     dark = np.asarray(level.convert("L")) < INK
     _, split, bottom, left, right = _frame(dark)
-    return columns(dark, split, bottom, left, right)
+    return [(left, right)] if single_column else columns(dark, split, bottom, left, right)
 
 
 def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
-         angle: float | None = None) -> Plan:
+         angle: float | None = None, single_column: bool = False) -> Plan:
     """The page cut into reading-order items.  `figures` are the located figures
     (`wikikit.scan.figures`), in page pixels of the DESKEWED page: each
-    {"box", "caption" | None, "inset"}; an empty list is a page with none."""
+    {"box", "caption" | None, "inset"}; an empty list is a page with none.
+
+    `single_column`: the book says this page is read across its full width —
+    a table of short independent rows (a list of writers), whose dot leaders
+    inside each column look to the ink like gutters and would be cut through."""
     if angle is None:
         angle = skew_angle(img)
     dark = np.asarray(deskew(img.convert("L"), angle)) < INK
     top, split, bottom, left, right = _frame(dark)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
-    for ci, (a, b) in enumerate(columns(dark, split, bottom, left, right), 1):
+    cols = [(left, right)] if single_column else columns(dark, split, bottom, left, right)
+    for ci, (a, b) in enumerate(cols, 1):
         mine = [f for f in figures if a <= (f["box"][0] + f["box"][2]) / 2 < b]
         seen = len(ink_figures(dark, split, bottom, a, b))
         if seen != len(mine):

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
-from wikikit.scan.model import ask_json
+from wikikit.scan.model import ask, parse_json
 
 PAGE_LONG_EDGE = 1500
 GRID_PAGE, GRID_WINDOW = 100, 50
@@ -60,25 +60,35 @@ def _gridded(img: Image.Image, step: int) -> Image.Image:
     return img
 
 
-def locate_figures(page: Image.Image) -> list[dict]:
-    """The first look: rough figures in page pixels ([] for a page with none)."""
+# Each look is a request built here and an answer read here, so it runs the
+# same way now (`ask`) or in a batch (`wikikit.scan.batch`).
+def locate_request(page: Image.Image) -> tuple[Image.Image, str, int, float]:
+    """The first look's (image, prompt, max_tokens, scale to page pixels)."""
     small = page.convert("RGB").copy()
     small.thumbnail((PAGE_LONG_EDGE, PAGE_LONG_EDGE))
-    scale = page.width / small.width
-    data = ask_json(_gridded(small, GRID_PAGE),
-                    PAGE_PROMPT.format(w=small.width, h=small.height, g=GRID_PAGE))
+    return (_gridded(small, GRID_PAGE),
+            PAGE_PROMPT.format(w=small.width, h=small.height, g=GRID_PAGE), 2000,
+            page.width / small.width)
 
+
+def locate_answer(text: str, scale: float) -> list[dict]:
+    """The first look's answer: rough figures in page pixels."""
     def up(box):
         return [round(v * scale) for v in box] if box else None
-
     return [{"box": up(f["box"]), "caption": up(f.get("caption")),
              "column": f.get("column"), "inset": bool(f.get("inset"))}
-            for f in data.get("figures", [])]
+            for f in parse_json(text).get("figures", [])]
 
 
-def refine(page: Image.Image, fig: dict, column: tuple[int, int]) -> dict:
-    """The close look at one figure: exact edges, in page pixels.  The rough
-    box is kept as `page_box` for the record."""
+def locate_figures(page: Image.Image) -> list[dict]:
+    """The first look, now: rough figures ([] for a page with none)."""
+    img, prompt, max_tokens, scale = locate_request(page)
+    return locate_answer(ask(img, prompt, max_tokens), scale)
+
+
+def refine_request(page: Image.Image, fig: dict, column: tuple[int, int]):
+    """The close look's (image, prompt, max_tokens, window) — the window is
+    what `refine_answer` needs to turn the answer into page pixels."""
     a, b = column
     bx0, by0, bx1, by1 = fig["box"]
     cap = fig.get("caption")
@@ -89,24 +99,39 @@ def refine(page: Image.Image, fig: dict, column: tuple[int, int]) -> dict:
     shrink = min(1.0, PAGE_LONG_EDGE / max(win.size))
     if shrink < 1.0:
         win = win.resize((round(win.width * shrink), round(win.height * shrink)), Image.LANCZOS)
-    got = ask_json(_gridded(win, GRID_WINDOW),
-                   WINDOW_PROMPT.format(w=win.width, h=win.height, g=GRID_WINDOW), 800)
+    return (_gridded(win, GRID_WINDOW),
+            WINDOW_PROMPT.format(w=win.width, h=win.height, g=GRID_WINDOW), 800,
+            {"x0": x0w, "y0": lo, "shrink": shrink})
+
+
+def refine_answer(text: str, fig: dict, window: dict) -> dict:
+    """The close look's answer: the figure with exact edges, in page pixels;
+    the rough box kept as `page_box` for the record."""
+    got = parse_json(text)
 
     def to_page(box):
-        x0, y0, x1, y1 = (v / shrink for v in box)
-        return [round(x0 + x0w), round(y0 + lo), round(x1 + x0w), round(y1 + lo)]
+        x0, y0, x1, y1 = (v / window["shrink"] for v in box)
+        return [round(x0 + window["x0"]), round(y0 + window["y0"]),
+                round(x1 + window["x0"]), round(y1 + window["y0"])]
 
     return {**fig, "page_box": fig["box"], "box": to_page(got["box"]),
             "caption": to_page(got["caption"]) if got.get("caption") else None}
 
 
+def refine(page: Image.Image, fig: dict, column: tuple[int, int]) -> dict:
+    """The close look, now."""
+    img, prompt, max_tokens, window = refine_request(page, fig, column)
+    return refine_answer(ask(img, prompt, max_tokens), fig, window)
+
+
+def column_of(fig: dict, columns: list[tuple[int, int]]) -> tuple[int, int]:
+    """The column a figure sits in (all of them, if its centre falls outside)."""
+    cx = (fig["box"][0] + fig["box"][2]) / 2
+    return next(((a, b) for a, b in columns if a <= cx < b),
+                (min(a for a, _ in columns), max(b for _, b in columns)))
+
+
 def find(page: Image.Image, columns: list[tuple[int, int]]) -> list[dict]:
-    """Both looks: the page's figures with exact edges.  `columns` are the
+    """Both looks, now: the page's figures with exact edges.  `columns` are the
     page's column extents (`wikikit.scan.cut.columns`), for the close looks."""
-    out = []
-    for f in locate_figures(page):
-        cx = (f["box"][0] + f["box"][2]) / 2
-        col = next(((a, b) for a, b in columns if a <= cx < b),
-                   (min(a for a, _ in columns), max(b for _, b in columns)))
-        out.append(refine(page, f, col))
-    return out
+    return [refine(page, f, column_of(f, columns)) for f in locate_figures(page)]

@@ -30,6 +30,7 @@ from PIL import Image
 
 from wikikit.corpora import current_corpus
 from wikikit.scan import cut, supplied
+from wikikit.scan.supplied import page_id
 from wikikit.scan.transcribe import PARA
 from wikikit.scan.vocabulary import _render, render_table
 
@@ -38,11 +39,7 @@ _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
 
 
 def strip_id(volume: int, page: int, name: str) -> str:
-    return f"v{volume:02d}-p{page:04d}-{name}"
-
-
-def page_id(volume: int, page: int) -> str:
-    return f"v{volume:02d}-p{page:04d}"
+    return f"{page_id(volume, page)}-{name}"
 
 
 def notation() -> list:

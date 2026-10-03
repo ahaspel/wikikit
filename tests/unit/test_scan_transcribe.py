@@ -84,3 +84,12 @@ def test_readings_join_across_a_cut(before, after, joined):
 def test_the_book_declares_its_notation_or_the_prompt_omits_it():
     p = instructions()
     assert "own notation" not in p          # the fixture book declares none
+
+
+def test_a_title_in_the_head_position_is_page_text_not_a_header():
+    """A page that opens a section ("LIST OF WRITERS") has no running head:
+    its first line is printed text, and stays in the page."""
+    items = [H, t("a")]
+    page = assemble_page(items, {"head": "LIST OF WRITERS", "a": f"{PARA}\nG. A. A. . . G. A. Aitken."}, {}, 300)
+    assert page.startswith('<noinclude><pagequality level="1" user="transcriber" /></noinclude>')
+    assert body(page) == "LIST OF WRITERS\n\nG. A. A. . . G. A. Aitken."
