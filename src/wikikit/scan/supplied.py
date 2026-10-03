@@ -25,7 +25,7 @@ from wikikit.scan import cut
 from wikikit.scan.cut import Item
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
-from wikikit.scan.transcribe import assemble_page, captions, read_item
+from wikikit.scan.transcribe import Unread, assemble_page, captions, read_item
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
@@ -47,7 +47,7 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str) -> dict
     with metered() as finding:
         cp = cut_page(img)
     caps = captions(cp.plan.items)
-    readings, refused = {}, []
+    readings, refused, unread = {}, [], {}
     with metered() as reading:
         for it in cp.plan.items:
             if it.kind == "figure":
@@ -56,6 +56,8 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str) -> dict
                 readings[it.name] = read_item(cp.level, it, is_caption=it.name in caps)
             except Refused:
                 readings[it.name], refused = "", refused + [it.name]
+            except Unread as e:
+                readings[it.name], unread[it.name] = "", str(e)
     files = {it.name: figure_file(volume, page, it.name)
              for it in cp.plan.items if it.kind == "figure"}
     payload = {
@@ -67,7 +69,7 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str) -> dict
             "items": [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                       for it in cp.plan.items],
             "readings": readings, "figure_files": files, "figures": cp.figures,
-            "refused": refused,
+            "refused": refused, "unread": unread,
             "disagreements": {str(k): list(v) for k, v in cp.plan.disagreements.items()},
             # what the page cost, as the API counted it: finding its figures
             # and reading its text

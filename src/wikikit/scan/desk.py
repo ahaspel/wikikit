@@ -69,7 +69,8 @@ def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Imag
             strips.append({"id": strip_id(vol, pg, it.name), "name": it.name, "kind": it.kind,
                            "column": it.column, "img": rel,
                            "text": p["readings"].get(it.name, "") if it.kind != "figure" else None,
-                           "refused": it.name in p.get("refused", []),
+                           "refused": it.name in p.get("refused", []) or it.name in p.get("unread", {}),
+                           "unread": p.get("unread", {}).get(it.name),
                            "checked": it.name in p.get("checked", {})})
         head = (p["readings"].get("head") or "").strip()
         desk_pages.append({"id": page_id(vol, pg), "volume": vol, "page": pg,

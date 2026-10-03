@@ -108,10 +108,64 @@ def prompt_for(item: Item, is_caption: bool = False) -> str:
     return CAPTION if is_caption else STRIP
 
 
+class Unread(Exception):
+    """The model answered, but not with a reading of the image: empty, a
+    placeholder, or far too short for the ink.  Recorded against the page like
+    a refusal, never stored as text."""
+
+
+#: A reading this many characters per inked column or fewer is not a reading.
+#: Measured on 33 Century strips of 3+ lines (2026-10-03): 0.101 to 0.321,
+#: median 0.143; a strip that lost half its text reads about 0.07.
+MIN_CHARS_PER_INK_COLUMN = 0.06
+_MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub)\b[^>]*>|" + PARA)
+_HEAD = re.compile(r"^\{\{RunningHeader\|([^{}]*)\}\}$")
+
+
+def plain_length(text: str) -> int:
+    """Characters of printed text in a reading, its markup removed.  Only the
+    vocabulary's own markup: a `<` is often print (the etymology sign)."""
+    return len(_MARKUP.sub("", text).strip())
+
+
+def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
+    """Why a reading is not a reading of its image, or None if it is."""
+    if not text.strip():
+        return "empty"
+    if item.kind == "head":
+        m = _HEAD.match(text.strip())
+        if not m:
+            return "not a running head"
+        if {f.strip().lower() for f in m.group(1).split("|")} & {"left", "right", "number"}:
+            return "the prompt's placeholder, not the printed head"
+        return None
+    import numpy as np
+    from wikikit.scan.cut import INK, runs
+    x0, y0, x1, y1 = item.box
+    dark = np.asarray(level.convert("L").crop(item.box)) < INK
+    lines = [r for r in runs(dark.sum(axis=1) > (x1 - x0) * 0.02) if r[1] - r[0] >= 6]
+    if len(lines) < 3:
+        return None
+    ink = sum(int(dark[s:e].any(axis=0).sum()) for s, e in lines)
+    ratio = plain_length(text) / max(1, ink)
+    if ratio < MIN_CHARS_PER_INK_COLUMN:
+        return f"too short for its ink ({plain_length(text)} characters for {len(lines)} printed lines)"
+    return None
+
+
 def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
-    """One text item read by the model.  Raises `model.Refused` when the API
-    declines: the caller records it against the page."""
-    return ask(level.crop(item.box), prompt_for(item, is_caption), instructions=instructions())
+    """One text item read by the model, checked (`check_reading`) and read
+    once more if the first answer is not a reading.  Raises `model.Refused`
+    when the API declines and `Unread` when both answers fail the check: the
+    caller records either against the page."""
+    crop = level.crop(item.box)
+    reason = None
+    for _ in range(2):
+        text = ask(crop, prompt_for(item, is_caption), instructions=instructions())
+        reason = check_reading(level, item, text)
+        if reason is None:
+            return text
+    raise Unread(reason)
 
 
 def captions(items: list[Item]) -> set[str]:
