@@ -1,10 +1,11 @@
-"""A scanned page as reading-order items: the running head, then each column top
-to bottom — text strips cut only in the white space between lines, and figures,
-each with its caption and, for an inset, the text running beside it.
+"""A scanned page as reading-order items: the running head, any type set across
+the columns above them, then each column top to bottom — text strips cut only
+in the white space between lines, and figures, each with its caption and, for
+an inset, the text running beside it — then any type across below them.
 
-Pure pixels: no model is called here.  Where the figures are is decided before
-(`wikikit.scan.figures`, a vision model) and passed in; this module snaps each
-located figure to the ink.  The ink's own figure detector (`ink_figures`) is
+Pure pixels: no model is called here.  Where the figures are, and the type set
+across the columns, is decided before (`wikikit.scan.figures`, a vision model)
+and passed in; this module snaps each to the ink.  The ink's own figure detector (`ink_figures`) is
 kept only as a second opinion: it sees heavy woodcuts and misses light line
 engravings, so where it and the model disagree is a place to look, never an
 answer (`Plan.disagreements`).
@@ -41,7 +42,9 @@ class Item:
 @dataclass
 class Plan:
     """A cut page: the deskew applied, the items in reading order, and where the
-    model and the ink disagreed about figures (column -> (model, ink) counts)."""
+    model and the ink disagreed (column -> (model, ink) counts): figures in a
+    column; for column 0, blocks set across the columns against the columns'
+    edge lines the ink sees crossing a cut (`_crossing_edges`)."""
     angle: float
     items: list[Item]
     disagreements: dict[int, tuple[int, int]] = field(default_factory=dict)
@@ -369,47 +372,52 @@ RULE_WIDTH = 7
 RULE_REACH = 12
 
 
-def _across(dark, top, bottom, left, right, cols) -> tuple[int, int]:
-    """Where the columns begin and end: type set across them — a title over a
-    list, a line under it — is no column's.  A line set across is one whose
-    type crosses a column cut (a printed rule along the cut is not type), or a
-    centred one: ink on both sides of the cut, none at either margin, where a
-    column's lines begin (ink standing down most of the body — the binding's
-    shadow, the page's edge — is no line's).  Such a line in the body's first quarter puts
-    everything down to it above the columns; in its last quarter, everything
-    from it below them."""
-    cuts = [a for a, _ in cols[1:]]
-    if not cuts:
-        return top, bottom
-    crossing = np.zeros(bottom - top, bool)
-    for x in cuts:
-        # type at the cut has, in some row, ink running across it wider than a
-        # rule's — a rule, tilted or broken, is a few pixels wide in every row
-        window = dark[top:bottom, x - RULE_REACH:x + RULE_REACH + 1]
-        for r in range(window.shape[0]):
-            crossing[r] |= any(e - s >= RULE_WIDTH and s <= RULE_REACH + 3 and e > RULE_REACH - 3
-                               for s, e in runs(window[r]))
-    lines = [(s, e) for s, e in runs(dark[top:bottom, left:right].sum(axis=1) > (right - left) * 0.02)
-             if e - s >= 6]                                  # lines of type, not a rule or a speck
-    width, margin = right - left, (right - left) // 12
-    inked = dark[top:bottom, left:right]
-    standing = inked.mean(axis=0) > 0.5          # down most of the body: a shadow, an edge, a rule — not type
+def _white_row(dark, y, step, left, right, reach, top, bottom):
+    """The first row from `y` (moving by `step`) with no line's ink across the
+    text block, within `reach` rows; else `y`."""
+    for r in range(y, y + step * reach, step):
+        if top <= r < bottom and dark[r, left:right].sum() <= (right - left) * 0.003:
+            return r
+    return y
 
-    def centred(s, e):
-        across = inked[s:e].any(axis=0) & ~standing
-        return not across[:margin].any() and not across[-margin:].any() and             all(across[x - left - width // 4:x - left].any() and across[x - left:x - left + width // 4].any()
-                for x in cuts)
 
-    h = bottom - top
-    begin, end = top, bottom
-    for n, (s, e) in enumerate(lines):
-        if not (crossing[s:e].any() or centred(s, e)):
+def _bounds(dark, split, bottom, left, right, across, reach):
+    """Where the columns begin and end: the type the model saw set across them
+    (`figures.locate_answer`) is no column's — a block above the body's middle
+    puts the columns' top below it, one below puts their foot above it, each
+    edge snapped to the white beside the block.  A block in the running head
+    is the head's.  The ink measures nothing here: telling a title from a row
+    that runs up to the column rule is the model's judgement."""
+    begin, end = split, bottom
+    mid = (split + bottom) / 2
+    for x0, y0, x1, y1 in across:
+        centre = (y0 + y1) / 2
+        if centre < split:
             continue
-        if e <= h // 4 and n + 1 < len(lines):
-            begin = top + (e + lines[n + 1][0]) // 2
-        elif s >= h - h // 4 and n > 0 and end == bottom:
-            end = top + (lines[n - 1][1] + s) // 2
-    return begin, end
+        if centre < mid:
+            begin = max(begin, _white_row(dark, y1 - 3, 1, left, right, reach, split, bottom))
+        else:
+            end = min(end, _white_row(dark, y0 + 3, -1, left, right, reach, split, bottom))
+    return begin, max(begin, end)
+
+
+def _crossing_edges(dark, begin, end, left, right, cuts) -> int:
+    """The ink's second opinion on the type across the columns: of the
+    columns' first and last lines, how many cross a column cut (a printed
+    rule along it is not type).  A title the model missed would — unless a word
+    space falls on the cut; so may a row that runs up to the rule.  Weak, and
+    meant to be: a disagreement is for a person to look at, never an answer."""
+    lines = [(s, e) for s, e in runs(dark[begin:end, left:right].sum(axis=1) > (right - left) * 0.02)
+             if e - s >= 6]
+    n = 0
+    for s, e in {lines[0], lines[-1]} if lines else ():
+        for x in cuts:
+            window = dark[begin + s:begin + e, x - RULE_REACH:x + RULE_REACH + 1]
+            if any(e2 - s2 >= RULE_WIDTH and s2 <= RULE_REACH + 3 and e2 > RULE_REACH - 3
+                   for row in window for s2, e2 in runs(row)):
+                n += 1
+                break
+    return n
 
 
 def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple[int, int]]:
@@ -421,24 +429,28 @@ def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple
 
 
 def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
-         angle: float | None = None, n_columns: int | None = None) -> Plan:
+         angle: float | None = None, n_columns: int | None = None,
+         across: list | tuple = ()) -> Plan:
     """The page cut into reading-order items.  `figures` are the located figures
     (`wikikit.scan.figures`), in page pixels of the DESKEWED page: each
     {"box", "caption" | None, "inset"}; an empty list is a page with none.
 
+    `across`: the boxes of type set across the columns, as the same look
+    located them (`figures.locate_answer`) — read across, as column 0, before
+    and after the columns (`_bounds`).
     `n_columns`: how many columns the book says this page prints (`columns`) —
-    for a page whose ink misleads the gutter finder; None, as the ink shows.
-    Declared columns may have type set across them, above or below (`_across`):
-    read across, as column 0, before and after the columns."""
+    for a page whose ink misleads the gutter finder; None, as the ink shows."""
     if angle is None:
         angle = skew_angle(img)
     dark = np.asarray(deskew(img.convert("L"), angle)) < INK
     top, split, bottom, left, right = _frame(dark)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
-    cols = columns(dark, split, bottom, left, right, n_columns)
-    # where the book declares the columns, a line set across them is looked for;
-    # columns found in the ink run the body's full height, as they always have
-    begin, end = _across(dark, split, bottom, left, right, cols) if n_columns else (split, bottom)
+    line = _line_height(dark, split, bottom, left, right)
+    begin, end = _bounds(dark, split, bottom, left, right, across, int(2 * line))
+    cols = columns(dark, begin, end, left, right, n_columns)
+    seen = _crossing_edges(dark, begin, end, left, right, [a for a, _ in cols[1:]])
+    if seen:
+        out.disagreements[0] = (len(across), seen)
     # type across the columns is read across, column 0: above them first, below them last
     above = [Item("text", (left, s, right, e), 0, f"c0s{k}")
              for k, (s, e) in enumerate(strips(dark, split, begin, left, right, max_h), 1)]

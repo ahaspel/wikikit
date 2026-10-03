@@ -1,9 +1,16 @@
-"""Where are a page's figures?  A vision model answers in two looks:
+"""Where are a page's figures — and its type set across the columns?  A
+vision model answers in two looks:
 
 1. the whole page, reduced, with a labelled grid: is there any illustration,
    which column, inset or not, roughly where, and its caption.  Measured on 40
    Century pages (2026-10-02): every page with figures found, no false page,
-   all 67 figures found — so a page it calls empty costs one call and is done;
+   all 67 figures found — so a page it calls empty costs one call and is done.
+   The same look names the type set ACROSS the columns — a title above them,
+   a footnote or a library's number below — which the ink cannot tell from a
+   row that runs up to the column rule (three ink rules failed three ways).
+   Measured (2026-10-03) on 75 DNB list pages: every title, footnote and
+   number found, no row taken, nothing claimed on a page without; on the 40
+   Century pages, nothing claimed and the figures unchanged;
 2. per figure, a full-resolution window gridded in ITS OWN pixels: the exact
    edges (the model reads positions off a grid well; converting coordinates
    itself it does not — that is done here).
@@ -34,7 +41,16 @@ decorative initials. For each, give:
 - "inset": true if running text continues BESIDE the drawing on the same lines
   (the drawing occupies only part of the column's width), else false.
 
-Answer with JSON only: {{"figures": [ ... ]}} — an empty list if there are none."""
+Then list every block of TYPE SET ACROSS THE COLUMNS: printed type that
+belongs to no single column because it spans them, or is centred over them —
+a title or heading above the columns, a note, footnote or number printed
+below them. NOT the running head (the single top line with the page number),
+NOT a line inside a column that merely runs up to the column rule, NOT an
+illustration's caption. For each, give "box": [x0, y0, x1, y1] tight around
+the block's type.
+
+Answer with JSON only: {{"figures": [ ... ], "across": [ ... ]}} — empty lists
+where there are none."""
 
 WINDOW_PROMPT = """This is a crop of a scanned page, {w} x {h} pixels, around one
 illustration. A blue grid is drawn every {g} pixels of THIS image, each line
@@ -71,17 +87,20 @@ def locate_request(page: Image.Image) -> tuple[Image.Image, str, int, float]:
             page.width / small.width)
 
 
-def locate_answer(text: str, scale: float) -> list[dict]:
-    """The first look's answer: rough figures in page pixels."""
+def locate_answer(text: str, scale: float) -> tuple[list[dict], list[list[int]]]:
+    """The first look's answer, in page pixels: the rough figures, and the
+    boxes of type set across the columns."""
     def up(box):
         return [round(v * scale) for v in box] if box else None
-    return [{"box": up(f["box"]), "caption": up(f.get("caption")),
+    got = parse_json(text)
+    figs = [{"box": up(f["box"]), "caption": up(f.get("caption")),
              "column": f.get("column"), "inset": bool(f.get("inset"))}
-            for f in parse_json(text).get("figures", [])]
+            for f in got.get("figures", [])]
+    return figs, [up(a["box"]) for a in got.get("across", []) if a.get("box")]
 
 
-def locate_figures(page: Image.Image) -> list[dict]:
-    """The first look, now: rough figures ([] for a page with none)."""
+def locate_page(page: Image.Image) -> tuple[list[dict], list[list[int]]]:
+    """The first look, now: rough figures and the type across the columns."""
     img, prompt, max_tokens, scale = locate_request(page)
     return locate_answer(ask(img, prompt, max_tokens), scale)
 
@@ -131,7 +150,10 @@ def column_of(fig: dict, columns: list[tuple[int, int]]) -> tuple[int, int]:
                 (min(a for a, _ in columns), max(b for _, b in columns)))
 
 
-def find(page: Image.Image, columns: list[tuple[int, int]]) -> list[dict]:
-    """Both looks, now: the page's figures with exact edges.  `columns` are the
-    page's column extents (`wikikit.scan.cut.columns`), for the close looks."""
-    return [refine(page, f, column_of(f, columns)) for f in locate_figures(page)]
+def find(page: Image.Image, columns: list[tuple[int, int]]) -> tuple[list[dict], list[list[int]]]:
+    """Both looks, now: the page's figures with exact edges, and the type
+    across its columns (`cut.plan` snaps those to the ink).  `columns` are
+    the page's column extents (`wikikit.scan.cut.columns`), for the close
+    looks."""
+    rough, across = locate_page(page)
+    return [refine(page, f, column_of(f, columns)) for f in rough], across

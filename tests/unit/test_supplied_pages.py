@@ -1,6 +1,7 @@
 """Supplied pages — a book's own transcriptions from its scans — enter by the
 same door as fetched pages, and replace a fetched page only where it is
-missing, empty or not proofread (user, 2026-10-02)."""
+missing, empty or not proofread (user, 2026-10-02) — or found bad as data,
+whatever its level (user, 2026-10-03)."""
 import json
 
 import pytest
@@ -25,6 +26,16 @@ def test_which_page_a_book_reads(fetched_level, fetched_text, wins):
     supplied = page(1, "our transcription")
     assert prefer(fetched, supplied) is (supplied if wins == "supplied" else fetched)
     assert prefer(fetched, None) is fetched
+
+
+@pytest.mark.parametrize("fetched_level", [2, 3, 4])
+def test_a_page_found_bad_is_replaced_proofread_or_not(fetched_level):
+    """User, 2026-10-03: "if we can determine that the data is lousy, we
+    replace it, proofread or not" — the supplied page says why."""
+    fetched = page(fetched_level, "{| class=sortable |J.G.A. .. J.G. Aʟɢᴇʀ.")
+    supplied = {**page(1, "our transcription"),
+                "provenance": {"replaces": "the list reader parses 8 of 36 rows"}}
+    assert prefer(fetched, supplied) is supplied
 
 
 def write(base, vol, pg, text, source="wikisource"):

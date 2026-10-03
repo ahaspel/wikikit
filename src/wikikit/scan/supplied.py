@@ -45,11 +45,12 @@ def path_for(volume: int, page: int) -> Path:
 
 
 def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
-                    n_columns: int | None = None) -> dict:
+                    n_columns: int | None = None, replaces: str | None = None) -> dict:
     """Scan -> a supplied page: cut, read every text item, assemble.  `scan`
     names the image it came from (e.g. an Internet Archive item and leaf).  A
     refused item is recorded and its reading left empty — the page is still
-    written, and the refusal is listed for a person to transcribe."""
+    written, and the refusal is listed for a person to transcribe.  `replaces`:
+    as `build_payload`."""
     with metered() as finding:
         cp = cut_page(img, n_columns=n_columns)
     caps = captions(cp.plan.items)
@@ -68,15 +69,18 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
                     rejected[it.name] = e.answer
     return build_payload(volume, page, scan, cp.level, cp.plan, cp.figures, readings,
                          refused, unread, {"figures": finding.record(), "text": reading.record()},
-                         rejected)
+                         rejected, replaces, cp.across)
 
 
 def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: cut.Plan,
                   figures: list[dict], readings: dict, refused: list, unread: dict,
-                  usage: dict, rejected: dict | None = None) -> dict:
+                  usage: dict, rejected: dict | None = None,
+                  replaces: str | None = None, across: list | None = None) -> dict:
     """The supplied page from its cut and readings — the one builder, whether
     the page was read now (`transcribe_page`) or in batches
-    (`wikikit.scan.batch`)."""
+    (`wikikit.scan.batch`).  `replaces`: why the fetched page, proofread or
+    not, was found bad as data — the page then stands in for it at any level
+    (`wikikit.source_pages.prefer`)."""
     files = {it.name: figure_file(volume, page, it.name)
              for it in plan.items if it.kind == "figure"}
     payload = {
@@ -88,6 +92,9 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
             "items": [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                       for it in plan.items],
             "readings": readings, "figure_files": files, "figures": figures,
+            # the type set across the columns, as located: with `figures`, all
+            # a re-cut needs to cut the page again the same way
+            "across": across or [],
             "refused": refused, "unread": unread,
             # what the model answered for an unread item, kept for whoever
             # settles it — never page text
@@ -98,6 +105,8 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
             "usage": usage,
         },
     }
+    if replaces:
+        payload["provenance"]["replaces"] = replaces
     reassemble(payload)
     return payload
 

@@ -74,10 +74,13 @@ def page_level(raw_text: str) -> int | None:
 def prefer(fetched: dict | None, supplied: dict | None) -> dict | None:
     """Which page a book reads when it has both (user, 2026-10-02): a supplied
     transcription replaces a fetched page that is missing, empty, or not
-    proofread (level 0 or 1); a proofread fetched page always stands."""
+    proofread (level 0 or 1).  A proofread page stands — unless it was found
+    bad as data, and the supplied page says why (`replaces`, user 2026-10-03:
+    "if we can determine that the data is lousy, we replace it, proofread or
+    not")."""
     if supplied is None:
         return fetched
-    if fetched is None:
+    if fetched is None or supplied.get("provenance", {}).get("replaces"):
         return supplied
     text = fetched.get("raw_text") or ""
     level = page_level(text)

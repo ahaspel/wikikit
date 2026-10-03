@@ -82,7 +82,7 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
             if status != "ok":
                 ps["error"] = f"figure finding: {text}"
                 continue
-            ps["rough"] = figures.locate_answer(text, ps["loc_scale"])
+            ps["rough"], ps["across"] = figures.locate_answer(text, ps["loc_scale"])
             ps["refined"] = {}
         elif kind == "ref":
             i = int(key)
@@ -141,7 +141,8 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         return reqs
     if ps["items"] is None:                          # the cut, once the figures are known
         figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
-        plan = cut.plan(level, figs, angle=0.0, n_columns=ps.get("n_columns"))
+        plan = cut.plan(level, figs, angle=0.0, n_columns=ps.get("n_columns"),
+                        across=ps.get("across") or [])
         ps["figures"] = figs
         ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                        for it in plan.items]
@@ -188,7 +189,8 @@ def _finish(state: dict, scans) -> list[str]:
         readings = {it.name: ps["readings"].get(it.name, "") for it in texts}
         payload = supplied.build_payload(ps["volume"], ps["page"], ps["scan"], level, plan,
                                          ps["figures"], readings, ps["refused"], ps["unread"],
-                                         ps["usage"], ps.get("rejected", {}))
+                                         ps["usage"], ps.get("rejected", {}), ps.get("replaces"),
+                                         ps.get("across") or [])
         supplied.write(payload)
         supplied.materialize_figures(payload, scans(ps["volume"], ps["page"]))
         ps["stage"] = "done"
@@ -209,9 +211,11 @@ def _chunks(reqs: dict[str, dict]) -> list[dict[str, dict]]:
     return out
 
 
-def add_pages(pages: list[tuple[int, int, str]], scans, n_columns: int | None = None) -> None:
+def add_pages(pages: list[tuple[int, int, str]], scans, n_columns: int | None = None,
+              replaces: str | None = None) -> None:
     """Put pages (volume, page, scan name) into the run; already-present pages
-    are left as they are."""
+    are left as they are.  `replaces`: why the fetched pages were found bad
+    (`supplied.build_payload`)."""
     state = load()
     for vol, pg, scan in pages:
         pid = page_id(vol, pg)
@@ -219,8 +223,9 @@ def add_pages(pages: list[tuple[int, int, str]], scans, n_columns: int | None = 
             continue
         state["pages"][pid] = {
             "id": pid, "volume": vol, "page": pg, "scan": scan, "stage": "figures",
-            "n_columns": n_columns,
-            "angle": cut.skew_angle(scans(vol, pg)), "rough": None, "refined": {}, "windows": {},
+            "n_columns": n_columns, "replaces": replaces,
+            "angle": cut.skew_angle(scans(vol, pg)), "rough": None, "across": [], "refined": {},
+            "windows": {},
             "figures": None, "items": None, "disagreements": {}, "readings": {}, "tries": {},
             "refused": [], "unread": {},
             "usage": {"figures": _empty_usage(), "text": _empty_usage()}}

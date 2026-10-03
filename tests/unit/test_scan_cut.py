@@ -162,26 +162,49 @@ def test_one_declared_column_is_the_whole_width():
     assert len(_columns_of(p)) == 1
 
 
-def test_a_title_across_declared_columns_is_read_across_before_them():
-    p = plan(list_page(), [], angle=0.0, n_columns=2)
+# The title's box as the model gives it: roughly on the type, a little short of
+# its foot (snapping must find the white beside it, not cut through it).
+TITLE_BOX = [540, TOP - 5, 1260, TOP + 2 * LINE - 6]
+FOOTNOTE_BOX = [70, H - 296, 1730, H - 300 + LINE - 4]
+
+
+def test_a_title_across_the_columns_is_read_across_before_them():
+    p = plan(list_page(), [], angle=0.0, n_columns=2, across=[TITLE_BOX])
     names = [i.name for i in p.items]
     assert names[:2] == ["head", "c0s1"]
     span = p.items[1]
     assert span.box[0] <= 560 and span.box[2] >= 1240                 # the title whole
-    assert span.box[3] <= TOP + 3 * LEAD                             # and no row of the list
+    assert TOP + 2 * LINE <= span.box[3] <= TOP + 3 * LEAD            # and no row of the list
     assert all(i.box[1] >= span.box[3] for i in p.items if i.column > 0)
+    assert 0 not in p.disagreements
 
 
-def test_a_footnote_across_declared_columns_is_read_last():
-    p = plan(list_page(title=False, footnote=True), [], angle=0.0, n_columns=2)
+def test_a_footnote_across_the_columns_is_read_last():
+    p = plan(list_page(title=False, footnote=True), [], angle=0.0, n_columns=2, across=[FOOTNOTE_BOX])
     last = p.items[-1]
-    assert last.column == 0 and last.box[1] < H - 300 < last.box[3]
+    assert last.column == 0 and last.box[1] < H - 300 < H - 300 + LINE <= last.box[3]
     assert all(i.box[3] <= last.box[1] for i in p.items if i.column > 0)
+
+
+def test_a_title_the_model_missed_is_a_disagreement_not_a_guess():
+    im = list_page()
+    ImageDraw.Draw(im).rectangle((860, TOP, 940, TOP + 2 * LINE), fill=0)   # type across the cut
+    p = plan(im, [], angle=0.0, n_columns=2)
+    assert not [i for i in p.items if i.column == 0 and i.kind == "text"]   # the ink decides nothing
+    assert p.disagreements[0] == (0, 1)                                     # but says where to look
+
+
+def test_a_box_in_the_running_head_is_the_heads():
+    im = head_page()
+    p = plan(im, [], angle=0.0, n_columns=2, across=[[290, 115, 1510, 120 + 2 * LINE + 4]])
+    assert p.items[0].kind == "head" and p.items[0].box[3] >= 120 + 2 * LINE
+    assert not [i for i in p.items if i.column == 0 and i.kind == "text"]
 
 
 def test_a_rule_between_the_columns_is_not_type_across_them():
     p = plan(list_page(title=False), [], angle=0.0, n_columns=2)
     assert not [i for i in p.items if i.column == 0 and i.kind == "text"]
+    assert 0 not in p.disagreements
 
 
 # ── the running head: the first line of type, and nothing else ──────────────

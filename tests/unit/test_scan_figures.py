@@ -1,0 +1,21 @@
+"""The first look's answer: figures and the type set across the columns, in
+page pixels — and an answer without `across` (as older prompts gave) reads as
+none."""
+from wikikit.scan.figures import PAGE_PROMPT, locate_answer
+
+
+def test_the_answer_scales_figures_and_type_across_to_the_page():
+    figs, across = locate_answer(
+        '{"figures": [{"box": [10, 20, 30, 40], "caption": null, "column": 1, "inset": false}],'
+        ' "across": [{"box": [5, 6, 7, 8]}]}', 2.0)
+    assert figs == [{"box": [20, 40, 60, 80], "caption": None, "column": 1, "inset": False}]
+    assert across == [[10, 12, 14, 16]]
+
+
+def test_an_answer_without_type_across_has_none():
+    assert locate_answer('{"figures": []}', 2.0) == ([], [])
+
+
+def test_the_prompt_asks_for_both_and_keeps_its_braces():
+    text = PAGE_PROMPT.format(w=1000, h=1500, g=100)
+    assert '"across"' in text and '"figures"' in text and "{w}" not in text
