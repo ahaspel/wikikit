@@ -68,6 +68,9 @@ KNOWN_DATA = frozenset({
     "templates/mdx_help_sample.html",  # the sample's help heading + intro: $short_name
     "mdx_phrases.json",          # the book's own nouns inside the engine's README sentences
     "reference_link_overrides.json",   # the viewer's Reader's Guide link overrides
+    # A book transcribed from its scans (wikikit.scan):
+    "scan_notation.json",        # its own printed notation (a pronunciation key)
+    "templates/scan_page.md",    # its pages and its transcription rules, in its words: (none)
 })
 
 
