@@ -153,7 +153,7 @@ def _join_words(before: str, after: str) -> str:
 
 
 def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[str, str],
-                  column_width: int) -> str:
+                  column_width: int, level: int = 1) -> str:
     """The page's wikitext from its items and their readings.
 
     `texts` maps item name -> the model's (or a proofreader's) reading;
@@ -208,5 +208,6 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
             add(text, continues=not begins)
         i += 1
     boundary()
-    return (f'<noinclude><pagequality level="1" user="transcriber" />{head}</noinclude>'
+    who = "transcriber" if level <= 1 else "proofreader"
+    return (f'<noinclude><pagequality level="{level}" user="{who}" />{head}</noinclude>'
             + PARAGRAPH_SEP.join(paras) + "<noinclude><references/></noinclude>")

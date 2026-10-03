@@ -83,8 +83,16 @@ def reassemble(payload: dict) -> dict:
     correction a proofreader makes to a reading."""
     p = payload["provenance"]
     payload["raw_text"] = assemble_page(items_of(payload), p["readings"], p["figure_files"],
-                                        p["column_width"])
+                                        p["column_width"], level=level(payload))
     return payload
+
+
+def level(payload: dict) -> int:
+    """Wikisource's proofreading level for the page: 3 (proofread) once a
+    person has checked every text item, else 1 (not proofread)."""
+    checked = payload["provenance"].get("checked", {})
+    texts = [it.name for it in items_of(payload) if it.kind != "figure"]
+    return 3 if texts and all(n in checked for n in texts) else 1
 
 
 def write(payload: dict) -> Path:

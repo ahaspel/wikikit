@@ -64,15 +64,21 @@ def _render(wikitext: str) -> str:
 
 def render_table() -> dict:
     """What the engine renders for each construct, measured, as
-    {name: [html_open, html_close]} plus "paragraph": html between two
-    paragraphs.  The desk applies this table and nothing else."""
+    {name: [html_open, html_close, after_newline]} plus "paragraph": html
+    between two paragraphs.  `after_newline` is what a single newline right
+    after the construct becomes: a block that ends its paragraph makes it a new
+    one ("<p>"), anything else a space.  The desk applies this table and
+    nothing else."""
     table = {}
     for c in VOCABULARY:
         html = _render(f"A {c.open}{_PROBE}{c.close} Z")
         head, sep, tail = html.partition(_PROBE)
         if not sep:
             raise ValueError(f"the engine lost the content of {c.name}: {html!r}")
-        table[c.name] = [head.removeprefix("A").strip(), tail.removesuffix("Z").strip()]
+        close = tail.removesuffix("Z").strip()
+        after = _render(f"A {c.open}{_PROBE}{c.close}\nZ").partition(_PROBE)[2]
+        after = after.removeprefix(close).removesuffix("Z")
+        table[c.name] = [head.removeprefix("A").strip(), close, after if after.strip() else " "]
     para = _render(f"A{PARAGRAPH}Z")
     table["paragraph"] = para.removeprefix("A").removesuffix("Z")
     return table
