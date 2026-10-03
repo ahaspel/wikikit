@@ -13,9 +13,12 @@ import inspect
 
 def test_both_readers_still_refuse_to_skip():
     from wikikit.export.corpus import load_corpus
-    from wikikit.source_pages import load_pages
+    from wikikit.source_pages import load_pages, load_payloads
 
-    for fn, name in ((load_corpus, "load_corpus"), (load_pages, "load_pages")):
+    # load_pages reads through load_payloads, which owns the failure rule
+    # (it lays the book's supplied pages over its fetched ones).
+    assert "load_payloads(" in inspect.getsource(load_pages)
+    for fn, name in ((load_corpus, "load_corpus"), (load_payloads, "load_payloads")):
         src = inspect.getsource(fn)
         assert "failures.append" in src, "%s no longer records failures" % name
         assert "raise" in src, "%s no longer raises on failure — the skip is back" % name

@@ -53,8 +53,37 @@ def page_filename(volume: int, page: int) -> str:
 
 
 RAW_DIR = raw_dir()
+#: Pages the BOOK supplies — transcribed from its scans (`wikikit.scan`) where
+#: Wikisource has no page or only an unproofread one.  Committed in the book's
+#: repository, in the same file shape as a fetched page, so they enter by the
+#: same door: this loader, and the importer that reads through it.
+SUPPLIED_DIR = Path("data/supplied")
 _VOL_DIR_RE = re.compile(r"^vol_(\d+)$")
 _PAGE_FILE_RE = re.compile(r"^vol(\d+)-page(\d+)\.json$")
+_LEVEL_RE = re.compile(r'pagequality level="(\d)"')
+_NOINCLUDE_RE = re.compile(r"<noinclude>.*?</noinclude>", re.S)
+
+
+def page_level(raw_text: str) -> int | None:
+    """A page's proofreading level as Wikisource records it (0 without text,
+    1 not proofread, 2 problematic, 3 proofread, 4 validated), or None."""
+    m = _LEVEL_RE.search(raw_text or "")
+    return int(m.group(1)) if m else None
+
+
+def prefer(fetched: dict | None, supplied: dict | None) -> dict | None:
+    """Which page a book reads when it has both (user, 2026-10-02): a supplied
+    transcription replaces a fetched page that is missing, empty, or not
+    proofread (level 0 or 1); a proofread fetched page always stands."""
+    if supplied is None:
+        return fetched
+    if fetched is None:
+        return supplied
+    text = fetched.get("raw_text") or ""
+    level = page_level(text)
+    if not _NOINCLUDE_RE.sub("", text).strip() or (level is not None and level <= 1):
+        return supplied
+    return fetched
 
 
 class SourceLoadError(PartialLoadError):
@@ -74,34 +103,24 @@ class SourcePage(NamedTuple):
     text: str
 
 
-def load_pages(volume: int | None = None, *,
-               pages: Iterable[int] | None = None,
-               raw_dir: Path | str = RAW_DIR,
-               strict: bool = True) -> tuple[list[SourcePage], list[tuple[Path, str]]]:
-    """Load raw pages in (volume, page) order → ``(pages, failures)``.
-
-    ``volume`` limits to one volume, ``pages`` to specific page numbers within it.
-    A file that will not parse, carries no ``raw_text``, is not a page at all, or
-    whose in-file ``volume``/``page_number`` disagree with its filename is a
-    FAILURE — collected, reported with its reason, and (``strict``) raised.  The
-    filename/field cross-check is free here and catches the one corruption a
-    parse test cannot: a page filed under the wrong number, which would put its
-    text in the wrong article's source.
-    """
-    raw_dir = Path(raw_dir)
-    want = set(pages) if pages is not None else None
-    out: list[SourcePage] = []
-    failures: list[tuple[Path, str]] = []
-
+def _scan_dir(base: Path, volume: int | None, want: set[int] | None,
+              failures: list[tuple[Path, str]], required: bool) -> dict[tuple[int, int], tuple[Path, dict]]:
+    """Every readable page file under one base, keyed (volume, page).  A file
+    that will not parse, carries no ``raw_text``, is not a page at all, or whose
+    in-file ``volume``/``page_number`` disagree with its filename is a FAILURE.
+    The filename/field cross-check catches the one corruption a parse test
+    cannot: a page filed under the wrong number, which would put its text in
+    the wrong article's source."""
+    out: dict[tuple[int, int], tuple[Path, dict]] = {}
     if volume is not None:
-        vol_dirs = [volume_dir(volume, raw_dir)]
+        vol_dirs = [volume_dir(volume, base)]
         if not vol_dirs[0].is_dir():
-            failures.append((vol_dirs[0], "volume directory does not exist"))
-            vol_dirs = []
+            if required:
+                failures.append((vol_dirs[0], "volume directory does not exist"))
+            return out
     else:
-        vol_dirs = sorted(d for d in raw_dir.iterdir()
-                          if d.is_dir() and _VOL_DIR_RE.match(d.name))
-
+        vol_dirs = sorted(d for d in base.iterdir()
+                          if d.is_dir() and _VOL_DIR_RE.match(d.name)) if base.is_dir() else []
     for vd in vol_dirs:
         vol_from_dir = int(_VOL_DIR_RE.match(vd.name).group(1))
         for f in sorted(vd.glob("*.json")):
@@ -125,8 +144,31 @@ def load_pages(volume: int | None = None, *,
                                     f"file says vol {d.get('volume')} page "
                                     f"{d.get('page_number')}"))
                 continue
-            out.append(SourcePage(vol_from_dir, pg, f,
-                                  apply_corrections(d["raw_text"], vol_from_dir)))
+            out[(vol_from_dir, pg)] = (f, d)
+    return out
+
+
+def load_payloads(volume: int | None = None, *,
+                  pages: Iterable[int] | None = None,
+                  raw_dir: Path | str = RAW_DIR,
+                  supplied_dir: Path | str = SUPPLIED_DIR,
+                  strict: bool = True) -> tuple[list[tuple[Path, dict]], list[tuple[Path, str]]]:
+    """The page files a book reads, in (volume, page) order → ``([(path, payload)],
+    failures)``: its fetched pages with its supplied pages laid over them by
+    `prefer`.  Payloads are as filed — corrections are `load_pages`' business —
+    which is what the importer stores.  A book with no fetched pages at all
+    (every page supplied) has no fetched volume directory, and that is not a
+    failure; a book with neither is."""
+    raw_dir, supplied_dir = Path(raw_dir), Path(supplied_dir)
+    want = set(pages) if pages is not None else None
+    failures: list[tuple[Path, str]] = []
+    supplied = _scan_dir(supplied_dir, volume, want, failures, required=False)
+    fetched = _scan_dir(raw_dir, volume, want, failures, required=not supplied)
+    out = []
+    for key in sorted(fetched.keys() | supplied.keys()):
+        f, s = fetched.get(key), supplied.get(key)
+        chosen = prefer(f[1] if f else None, s[1] if s else None)
+        out.append(s if s and chosen is s[1] else f)
 
     # A page you ASKED FOR and did not get is a failure, not a shorter result.
     # The callers this replaces all wrote `if p.exists():` around a named page —
@@ -134,15 +176,30 @@ def load_pages(volume: int | None = None, *,
     # so a page that vanished produced a preface with a hole in it and no
     # complaint.  Enumeration has no such expectation and stays silent.
     if want is not None:
-        got = {p.page for p in out}
+        got = {p for (_, p) in fetched.keys() | supplied.keys()}
         for pg in sorted(want - got):
-            failures.append((raw_dir / ("vol_%02d" % volume) /
-                             ("vol%02d-page%04d.json" % (volume, pg)),
+            failures.append((volume_dir(volume, raw_dir) / page_filename(volume, pg),
                              "requested page is missing"))
 
     if failures and strict:
         raise SourceLoadError(failures)
     return out, failures
+
+
+def load_pages(volume: int | None = None, *,
+               pages: Iterable[int] | None = None,
+               raw_dir: Path | str = RAW_DIR,
+               supplied_dir: Path | str = SUPPLIED_DIR,
+               strict: bool = True) -> tuple[list[SourcePage], list[tuple[Path, str]]]:
+    """Load the book's pages in (volume, page) order → ``(pages, failures)``,
+    corrections applied (`load_payloads` for which page is read).  ``volume``
+    limits to one volume, ``pages`` to page numbers within it; failures are
+    collected, reported with their reasons, and (``strict``) raised."""
+    payloads, failures = load_payloads(volume, pages=pages, raw_dir=raw_dir,
+                                       supplied_dir=supplied_dir, strict=strict)
+    return [SourcePage(d["volume"], d["page_number"], path,
+                       apply_corrections(d["raw_text"], d["volume"]))
+            for path, d in payloads], failures
 
 
 def volume_text(volume: int, *, sep: str = "\n") -> str:
