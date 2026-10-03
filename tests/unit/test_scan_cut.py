@@ -109,3 +109,123 @@ def test_a_light_engraving_the_ink_cannot_see_is_a_disagreement():
     p = plan(im, located, angle=0.0)
     assert [i for i in p.items if i.kind == "figure"]
     assert p.disagreements == {1: (1, 0)}
+
+
+# ── a list of writers: two declared columns of short rows ───────────────────
+
+LIST_COLS = [(60, 880), (920, 1740)]
+RULE_X = 900
+
+
+def list_page(title=True, footnote=False, rule=True):
+    """Rows of "initials . . . name": the initials, dot leaders, the name — a
+    blank as wide as a gutter inside every row, where a finder looks for one.
+    A centred title across both columns, a footnote across the foot, a rule
+    (tilted a little, as scanned rules are) between the columns."""
+    im = Image.new("L", (W, H), 255)
+    d = ImageDraw.Draw(im)
+    d.rectangle((60, 60, 400, 60 + LINE), fill=0)                     # the running head
+    top = TOP
+    if title:
+        d.rectangle((560, top, 860, top + 2 * LINE), fill=0)          # LIST OF
+        d.rectangle((940, top, 1240, top + 2 * LINE), fill=0)         # WRITERS: its word space on the cut
+        top += 3 * LEAD
+    first = top
+    last = H - 400 if footnote else H - 120
+    for x0, x1 in LIST_COLS:
+        for y in range(top, last, LEAD):
+            d.rectangle((x0, y, x0 + 110, y + LINE), fill=0)          # initials
+            for dx in range(x0 + 300, x0 + 360, 15):                  # leaders
+                d.rectangle((dx, y + LINE - 4, dx + 3, y + LINE), fill=0)
+            d.rectangle((x0 + 380, y, x1 - 140, y + LINE), fill=0)    # the name
+    if rule:
+        d.line((RULE_X, first, RULE_X + 4, last), fill=0, width=3)
+    if footnote:
+        d.rectangle((60, H - 300, 1740, H - 300 + LINE), fill=0)
+    return im
+
+
+def _columns_of(p):
+    return sorted({(i.box[0], i.box[2]) for i in p.items if i.column > 0})
+
+
+def test_declared_columns_are_cut_at_their_division_not_beside_the_leaders():
+    found = plan(list_page(title=False), [], angle=0.0)
+    assert len(_columns_of(found)) > 2                               # the ink alone is misled
+    p = plan(list_page(title=False), [], angle=0.0, n_columns=2)
+    (a0, a1), (b0, b1) = _columns_of(p)
+    assert 880 - 140 <= a1 == b0 <= 920                             # in the white between them
+
+
+def test_one_declared_column_is_the_whole_width():
+    p = plan(list_page(title=False), [], angle=0.0, n_columns=1)
+    assert len(_columns_of(p)) == 1
+
+
+def test_a_title_across_declared_columns_is_read_across_before_them():
+    p = plan(list_page(), [], angle=0.0, n_columns=2)
+    names = [i.name for i in p.items]
+    assert names[:2] == ["head", "c0s1"]
+    span = p.items[1]
+    assert span.box[0] <= 560 and span.box[2] >= 1240                 # the title whole
+    assert span.box[3] <= TOP + 3 * LEAD                             # and no row of the list
+    assert all(i.box[1] >= span.box[3] for i in p.items if i.column > 0)
+
+
+def test_a_footnote_across_declared_columns_is_read_last():
+    p = plan(list_page(title=False, footnote=True), [], angle=0.0, n_columns=2)
+    last = p.items[-1]
+    assert last.column == 0 and last.box[1] < H - 300 < last.box[3]
+    assert all(i.box[3] <= last.box[1] for i in p.items if i.column > 0)
+
+
+def test_a_rule_between_the_columns_is_not_type_across_them():
+    p = plan(list_page(title=False), [], angle=0.0, n_columns=2)
+    assert not [i for i in p.items if i.column == 0 and i.kind == "text"]
+
+
+# ── the running head: the first line of type, and nothing else ──────────────
+
+def head_page(tint=0, edge=False, rule=True):
+    """A running head with a rule under it, then rows set closer to the head
+    than to each other — where "the largest gap near the top" falls AFTER the
+    first row.  `tint` greys the paper (a toned scan); `edge` darkens a faint
+    band along the image's top (the scan's edge)."""
+    im = Image.new("L", (W, H), 255 - tint)
+    d = ImageDraw.Draw(im)
+    if edge:
+        rng = np.random.default_rng(11)
+        for _ in range(900):                                      # speckle: ink, but faint
+            x, y = int(rng.integers(0, W)), int(rng.integers(0, 30))
+            d.point((x, y), fill=0)
+    d.rectangle((300, 120, 1500, 120 + 2 * LINE), fill=0)          # the running head
+    if rule:
+        d.rectangle((200, 190, 1600, 194), fill=0)                 # its rule
+    for y in range(225, H - 120, 70):                              # rows, 70 apart
+        d.rectangle((60, y, 860, y + 30), fill=0)
+        d.rectangle((940, y, 1740, y + 30), fill=0)
+    return im
+
+
+def _head(im):
+    return plan(im, [], angle=0.0).items[0]
+
+
+def test_the_head_is_the_first_line_even_when_the_widest_gap_follows_the_first_row():
+    h = _head(head_page())
+    assert h.kind == "head" and h.box[1] <= 120 and 194 <= h.box[3] <= 225
+
+
+def test_a_toned_scan_has_the_same_head():
+    h = _head(head_page(tint=60))
+    assert 194 <= h.box[3] <= 225
+
+
+def test_the_scans_edge_is_not_the_head():
+    h = _head(head_page(edge=True))
+    assert 194 <= h.box[3] <= 225
+
+
+def test_without_a_rule_the_head_ends_before_the_first_row():
+    h = _head(head_page(rule=False))
+    assert 120 + 2 * LINE <= h.box[3] <= 225

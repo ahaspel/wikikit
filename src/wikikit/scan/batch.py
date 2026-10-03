@@ -108,7 +108,8 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
                 ps["tries"][key] = ps["tries"].get(key, 0) + 1
                 if ps["tries"][key] >= 2:
                     ps["unread"][key] = why
-
+                    if text.strip():
+                        ps.setdefault("rejected", {})[key] = text
 
 _LEVELS: dict[str, Image.Image] = {}
 
@@ -131,7 +132,7 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         reqs[f"{pid}_loc_0"] = request(img, prompt, max_tokens)
         return reqs
     if len(ps["refined"]) < len(ps["rough"]):
-        cols = cut.page_columns(level, ps.get("single_column", False))
+        cols = cut.page_columns(level, ps.get("n_columns"))
         for i, f in enumerate(ps["rough"]):
             if str(i) not in ps["refined"]:
                 img, prompt, max_tokens, window = figures.refine_request(level, f, figures.column_of(f, cols))
@@ -140,7 +141,7 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         return reqs
     if ps["items"] is None:                          # the cut, once the figures are known
         figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
-        plan = cut.plan(level, figs, angle=0.0, single_column=ps.get("single_column", False))
+        plan = cut.plan(level, figs, angle=0.0, n_columns=ps.get("n_columns"))
         ps["figures"] = figs
         ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                        for it in plan.items]
@@ -187,7 +188,7 @@ def _finish(state: dict, scans) -> list[str]:
         readings = {it.name: ps["readings"].get(it.name, "") for it in texts}
         payload = supplied.build_payload(ps["volume"], ps["page"], ps["scan"], level, plan,
                                          ps["figures"], readings, ps["refused"], ps["unread"],
-                                         ps["usage"])
+                                         ps["usage"], ps.get("rejected", {}))
         supplied.write(payload)
         supplied.materialize_figures(payload, scans(ps["volume"], ps["page"]))
         ps["stage"] = "done"
@@ -208,7 +209,7 @@ def _chunks(reqs: dict[str, dict]) -> list[dict[str, dict]]:
     return out
 
 
-def add_pages(pages: list[tuple[int, int, str]], scans, single_column: bool = False) -> None:
+def add_pages(pages: list[tuple[int, int, str]], scans, n_columns: int | None = None) -> None:
     """Put pages (volume, page, scan name) into the run; already-present pages
     are left as they are."""
     state = load()
@@ -218,7 +219,7 @@ def add_pages(pages: list[tuple[int, int, str]], scans, single_column: bool = Fa
             continue
         state["pages"][pid] = {
             "id": pid, "volume": vol, "page": pg, "scan": scan, "stage": "figures",
-            "single_column": single_column,
+            "n_columns": n_columns,
             "angle": cut.skew_angle(scans(vol, pg)), "rough": None, "refined": {}, "windows": {},
             "figures": None, "items": None, "disagreements": {}, "readings": {}, "tries": {},
             "refused": [], "unread": {},

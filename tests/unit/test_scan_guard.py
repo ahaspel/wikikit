@@ -34,7 +34,7 @@ def test_a_real_reading_passes():
 
 
 @pytest.mark.parametrize("item, text, why", [
-    (STRIP, "   ", "empty"),
+    (STRIP, "   ", "empty"),                      # a strip with type in it, read as nothing
     (HEAD, "{{RunningHeader|left|181|right}}", "placeholder"),
     (HEAD, "{{RunningHeader|abacus|4", "malformed"),
     (STRIP, "¶\n'''abacus''' (ab′a̤-kus), ''n.''", "too short"),
@@ -56,3 +56,16 @@ def test_a_bad_answer_is_read_again_then_recorded(monkeypatch):
     monkeypatch.setattr(transcribe, "ask", lambda *a, **k: "")
     with pytest.raises(Unread, match="empty"):
         read_item(strip_image(), STRIP)
+
+
+def test_nothing_read_is_right_for_a_strip_with_nothing_printed():
+    blank = Image.new("L", (700, 300), 255)
+    ImageDraw.Draw(blank).point([(100, 50), (400, 200)], fill=0)        # dust
+    assert check_reading(blank, Item("text", (0, 0, 700, 300), 1, "c1s3"), "") is None
+
+
+def test_a_rejected_answer_is_kept_for_whoever_settles_it(monkeypatch):
+    monkeypatch.setattr(transcribe, "ask", lambda *a, **k: "far too little")
+    with pytest.raises(Unread) as e:
+        read_item(strip_image(), STRIP)
+    assert e.value.reason.startswith("too short") and e.value.answer == "far too little"

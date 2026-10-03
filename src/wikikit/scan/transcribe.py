@@ -113,7 +113,14 @@ def prompt_for(item: Item, is_caption: bool = False) -> str:
 class Unread(Exception):
     """The model answered, but not with a reading of the image: empty, a
     placeholder, or far too short for the ink.  Recorded against the page like
-    a refusal, never stored as text."""
+    a refusal, never stored as text — but the rejected answer is kept beside
+    the reason (`answer`): the check can be wrong (a library's handwritten
+    shelf marks counted as lines of type), and whoever settles the item sees
+    what the model said."""
+
+    def __init__(self, reason: str, answer: str | None = None):
+        super().__init__(reason)
+        self.reason, self.answer = reason, answer
 
 
 #: A reading this many characters per inked column or fewer is not a reading.
@@ -131,10 +138,26 @@ def plain_length(text: str) -> int:
     return len(_MARKUP.sub("", text).strip())
 
 
+def _type_lines(level: Image.Image, item: Item) -> tuple[list[tuple[int, int]], object]:
+    """The rows of an item that hold a line of ink, and the ink itself."""
+    import numpy as np
+    from wikikit.scan.cut import INK, runs
+    x0, y0, x1, y1 = item.box
+    dark = np.asarray(level.convert("L").crop(item.box)) < INK
+    # a line of type spreads across the strip; the page's dark edge, a blot or
+    # bleed-through occupies a narrow band and is not one
+    spread = (x1 - x0) * 0.2
+    return [(s, e) for s, e in runs(dark.sum(axis=1) > (x1 - x0) * 0.02)
+            if e - s >= 6 and dark[s:e].any(axis=0).sum() >= spread], dark
+
+
 def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
     """Why a reading is not a reading of its image, or None if it is."""
+    lines, dark = _type_lines(level, item)
     if not text.strip():
-        return "empty"
+        # nothing read is the right reading of a strip with nothing printed in
+        # it (a blank page foot, dust, the page's edge)
+        return "empty" if lines else None
     if item.kind == "head":
         m = _HEAD.match(text.strip())
         if not m:
@@ -142,11 +165,6 @@ def check_reading(level: Image.Image, item: Item, text: str) -> str | None:
         if {f.strip().lower() for f in m.group(1).split("|")} & {"left", "right", "number"}:
             return "the prompt's placeholder, not the printed head"
         return None
-    import numpy as np
-    from wikikit.scan.cut import INK, runs
-    x0, y0, x1, y1 = item.box
-    dark = np.asarray(level.convert("L").crop(item.box)) < INK
-    lines = [r for r in runs(dark.sum(axis=1) > (x1 - x0) * 0.02) if r[1] - r[0] >= 6]
     if len(lines) < 3:
         return None
     ink = sum(int(dark[s:e].any(axis=0).sum()) for s, e in lines)
@@ -171,13 +189,13 @@ def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
     when the API declines and `Unread` when both answers fail the check: the
     caller records either against the page."""
     crop = level.crop(item.box)
-    reason = None
+    reason = text = None
     for _ in range(2):
         text = ask(crop, prompt_for(item, is_caption), instructions=instructions())
         reason = check_reading(level, item, text)
         if reason is None:
             return text
-    raise Unread(reason)
+    raise Unread(reason, text)
 
 
 def captions(items: list[Item]) -> set[str]:

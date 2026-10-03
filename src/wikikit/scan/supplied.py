@@ -45,15 +45,15 @@ def path_for(volume: int, page: int) -> Path:
 
 
 def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
-                    single_column: bool = False) -> dict:
+                    n_columns: int | None = None) -> dict:
     """Scan -> a supplied page: cut, read every text item, assemble.  `scan`
     names the image it came from (e.g. an Internet Archive item and leaf).  A
     refused item is recorded and its reading left empty — the page is still
     written, and the refusal is listed for a person to transcribe."""
     with metered() as finding:
-        cp = cut_page(img, single_column=single_column)
+        cp = cut_page(img, n_columns=n_columns)
     caps = captions(cp.plan.items)
-    readings, refused, unread = {}, [], {}
+    readings, refused, unread, rejected = {}, [], {}, {}
     with metered() as reading:
         for it in cp.plan.items:
             if it.kind == "figure":
@@ -63,14 +63,17 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
             except Refused:
                 readings[it.name], refused = "", refused + [it.name]
             except Unread as e:
-                readings[it.name], unread[it.name] = "", str(e)
+                readings[it.name], unread[it.name] = "", e.reason
+                if e.answer:
+                    rejected[it.name] = e.answer
     return build_payload(volume, page, scan, cp.level, cp.plan, cp.figures, readings,
-                         refused, unread, {"figures": finding.record(), "text": reading.record()})
+                         refused, unread, {"figures": finding.record(), "text": reading.record()},
+                         rejected)
 
 
 def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: cut.Plan,
                   figures: list[dict], readings: dict, refused: list, unread: dict,
-                  usage: dict) -> dict:
+                  usage: dict, rejected: dict | None = None) -> dict:
     """The supplied page from its cut and readings — the one builder, whether
     the page was read now (`transcribe_page`) or in batches
     (`wikikit.scan.batch`)."""
@@ -86,6 +89,9 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
                       for it in plan.items],
             "readings": readings, "figure_files": files, "figures": figures,
             "refused": refused, "unread": unread,
+            # what the model answered for an unread item, kept for whoever
+            # settles it — never page text
+            "rejected": rejected or {},
             "disagreements": {str(k): list(v) for k, v in plan.disagreements.items()},
             # what the page cost, as the API counted it: finding its figures
             # and reading its text

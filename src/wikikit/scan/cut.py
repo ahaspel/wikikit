@@ -82,27 +82,110 @@ def _body_rows(dark):
     return int(rows.min()), int(rows.max()) + 1
 
 
+#: Rows either side over which the paper's own floor of ink is the least found.
+FLOOR_REACH = 50
+#: A rule printed under a running head is no taller than this; a line of type
+#: is (the DNB's small-capital list rows measure 28px and more).
+RULE_HEIGHT = 15
+#: Faint ink (less than this share of a row) beginning in this top fraction of
+#: the image is the scan's edge or tint, not type: a running head, even one
+#: cropped close, is darker (the faintest measured, 0.04, sits well below).
+SCAN_EDGE = 0.01
+EDGE_INK = 0.08
+
+
 def _head_split(dark, top, bottom):
-    """The running head is the first line, set off by the largest gap in the
-    page's first tenth."""
-    per_row = dark[top:bottom].sum(axis=1) > dark.shape[1] * 0.004
-    gaps = [(e - s, s, e) for s, e in runs(~per_row[:(bottom - top) // 10]) if s > 0]
-    if not gaps:
+    """The running head is the first line of type; the head ends in the white
+    after it — after a rule printed under it, which goes with the head.
+
+    Not "the largest gap near the top": under a running head set close to its
+    page, the widest gap can follow the page's FIRST LINE, and a head read as
+    a running head keeps nothing else — the line would be lost.  A line is
+    ink above the paper's floor nearby (a tinted scan has ink in every row),
+    at least 6 pixels tall (a speck is not a line); ink standing down most of
+    the page (the binding's shadow) is no line's."""
+    body = dark[top:bottom] & ~(dark[top:bottom].mean(axis=0) > 0.5)
+    ink = body.sum(axis=1) / dark.shape[1]
+    window = np.lib.stride_tricks.sliding_window_view(np.pad(ink, FLOOR_REACH, mode="edge"),
+                                                      2 * FLOOR_REACH + 1)
+    lines = [(s, e) for s, e in runs(ink > window.min(axis=1) + 0.01) if e - s >= 6]
+
+    def rule(line):                                # whole, dashed or broken: thinner than type
+        s, e = line
+        return e - s <= RULE_HEIGHT
+
+    def edge(line):                                # faint, at the image's very top: the scan's edge
+        s, e = line
+        return top + s < dark.shape[0] * SCAN_EDGE and ink[s:e].max() < EDGE_INK
+
+    first = next((k for k, ln in enumerate(lines) if not (rule(ln) or edge(ln))), None)
+    if first is None or first + 1 >= len(lines):
         return top
-    _, s, e = max(gaps)
-    return top + (s + e) // 2
+    e0, n = lines[first][1], first + 1
+    while n + 1 < len(lines) and rule(lines[n]):                 # the rules under the head
+        e0, n = lines[n][1], n + 1
+    return top + (e0 + lines[n][0]) // 2
 
 
-def columns(dark, top, bottom, left, right) -> list[tuple[int, int]]:
-    """Columns from the ink: gutters are where the ink falls far below the
-    page's typical density — relative, because skew and hanging headwords leave
-    some ink in them — with a hairline column rule smoothed away beside them."""
+def _ink_across(dark, top, bottom, left, right):
+    """The ink across the text block, column by column: smoothed, and its
+    floor — the least ink near each point, so a hairline column rule is
+    smoothed away into the blank beside it."""
     per_col = dark[top:bottom, left:right].sum(axis=0) / max(1, bottom - top)
     width = right - left
     k = max(3, width // 150)
     smooth = np.convolve(per_col, np.ones(k) / k, mode="same")
     win = max(5, width // 120)
     floor = np.array([smooth[max(0, i - win):i + win].min() for i in range(width)])
+    return smooth, floor
+
+
+def _lines_inked(dark, top, bottom, left, right):
+    """For each pixel column of the text block, the share of its lines with
+    any ink there."""
+    block = dark[top:bottom, left:right]
+    lines = runs(block.sum(axis=1) > (right - left) * 0.003)
+    if not lines:
+        return np.zeros(right - left)
+    return np.array([block[s:e].any(axis=0) for s, e in lines]).mean(axis=0)
+
+
+def columns(dark, top, bottom, left, right, n_columns: int | None = None) -> list[tuple[int, int]]:
+    """Columns from the ink: gutters are where the ink falls far below the
+    page's typical density — relative, because skew and hanging headwords leave
+    some ink in them.
+
+    `n_columns`: how many columns the book says the page prints.  Then the
+    gutters are not looked for everywhere but at the page's divisions — each the
+    blankest place near where an equal division falls — because a table of
+    short rows (a list of writers) leaves blanks inside a column, beside its dot
+    leaders, that look to the ink like gutters."""
+    width = right - left
+    if n_columns == 1:
+        return [(left, right)]
+    smooth, floor = _ink_across(dark, top, bottom, left, right)
+    if n_columns:
+        # Not how MUCH ink, but how many lines have any: a column's leader dots
+        # are sparse ink in every line, a gutter is white in almost every line.
+        # A rule along the gutter, inked in every line but a few pixels wide,
+        # is opened away (anything narrower than 7px goes: leader dots ALIGNED
+        # line under line would go too — the DNB's are not; a book whose are
+        # needs the rule told apart by the white beside it).  Then the share
+        # is averaged: the blankest stretch, not the blankest pixel.
+        share = _lines_inked(dark, top, bottom, left, right)
+        view = np.lib.stride_tricks.sliding_window_view
+        opened = view(np.pad(view(np.pad(share, 3, mode="edge"), 7).min(axis=1), 3, mode="edge"), 7).max(axis=1)
+        win = max(5, width // 120)
+        free = np.convolve(opened, np.ones(2 * win + 1) / (2 * win + 1), mode="same")
+        cuts = []
+        for i in range(1, n_columns):
+            lo, hi = int(width * (i / n_columns - 0.15)), int(width * (i / n_columns + 0.15))
+            near = free[lo:hi]
+            s, e = min((r for r in runs(near <= near.min() + 0.01)),
+                       key=lambda r: abs(lo + (r[0] + r[1]) / 2 - width * i / n_columns))
+            cuts.append(left + lo + (s + e) // 2)
+        edges = [left] + cuts + [right]
+        return list(zip(edges[:-1], edges[1:]))
     blank = floor < np.median(smooth) * 0.5
     gutters = [(s, e) for s, e in runs(blank) if s > width * 0.12 and e < width * 0.88]
     cuts = [left + int(s + np.argmin(smooth[s:e])) for s, e in gutters]
@@ -280,39 +363,99 @@ def _frame(dark):
     return top, _head_split(dark, top, bottom), bottom, int(cols_any.min()), int(cols_any.max()) + 1
 
 
-def page_columns(level: Image.Image, single_column: bool = False) -> list[tuple[int, int]]:
-    """The column extents of a deskewed page — one, the whole text width, when
-    the book says the page is read across (`single_column`)."""
+#: A printed column rule is narrower than this in any one row; type crossing a
+#: column cut is wider somewhere (a serif, a bar, a bowl).
+RULE_WIDTH = 7
+RULE_REACH = 12
+
+
+def _across(dark, top, bottom, left, right, cols) -> tuple[int, int]:
+    """Where the columns begin and end: type set across them — a title over a
+    list, a line under it — is no column's.  A line set across is one whose
+    type crosses a column cut (a printed rule along the cut is not type), or a
+    centred one: ink on both sides of the cut, none at either margin, where a
+    column's lines begin (ink standing down most of the body — the binding's
+    shadow, the page's edge — is no line's).  Such a line in the body's first quarter puts
+    everything down to it above the columns; in its last quarter, everything
+    from it below them."""
+    cuts = [a for a, _ in cols[1:]]
+    if not cuts:
+        return top, bottom
+    crossing = np.zeros(bottom - top, bool)
+    for x in cuts:
+        # type at the cut has, in some row, ink running across it wider than a
+        # rule's — a rule, tilted or broken, is a few pixels wide in every row
+        window = dark[top:bottom, x - RULE_REACH:x + RULE_REACH + 1]
+        for r in range(window.shape[0]):
+            crossing[r] |= any(e - s >= RULE_WIDTH and s <= RULE_REACH + 3 and e > RULE_REACH - 3
+                               for s, e in runs(window[r]))
+    lines = [(s, e) for s, e in runs(dark[top:bottom, left:right].sum(axis=1) > (right - left) * 0.02)
+             if e - s >= 6]                                  # lines of type, not a rule or a speck
+    width, margin = right - left, (right - left) // 12
+    inked = dark[top:bottom, left:right]
+    standing = inked.mean(axis=0) > 0.5          # down most of the body: a shadow, an edge, a rule — not type
+
+    def centred(s, e):
+        across = inked[s:e].any(axis=0) & ~standing
+        return not across[:margin].any() and not across[-margin:].any() and             all(across[x - left - width // 4:x - left].any() and across[x - left:x - left + width // 4].any()
+                for x in cuts)
+
+    h = bottom - top
+    begin, end = top, bottom
+    for n, (s, e) in enumerate(lines):
+        if not (crossing[s:e].any() or centred(s, e)):
+            continue
+        if e <= h // 4 and n + 1 < len(lines):
+            begin = top + (e + lines[n + 1][0]) // 2
+        elif s >= h - h // 4 and n > 0 and end == bottom:
+            end = top + (lines[n - 1][1] + s) // 2
+    return begin, end
+
+
+def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple[int, int]]:
+    """The column extents of a deskewed page — as many as the book says it
+    prints (`n_columns`), else as the ink shows (`columns`)."""
     dark = np.asarray(level.convert("L")) < INK
     _, split, bottom, left, right = _frame(dark)
-    return [(left, right)] if single_column else columns(dark, split, bottom, left, right)
+    return columns(dark, split, bottom, left, right, n_columns)
 
 
 def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
-         angle: float | None = None, single_column: bool = False) -> Plan:
+         angle: float | None = None, n_columns: int | None = None) -> Plan:
     """The page cut into reading-order items.  `figures` are the located figures
     (`wikikit.scan.figures`), in page pixels of the DESKEWED page: each
     {"box", "caption" | None, "inset"}; an empty list is a page with none.
 
-    `single_column`: the book says this page is read across its full width —
-    a table of short independent rows (a list of writers), whose dot leaders
-    inside each column look to the ink like gutters and would be cut through."""
+    `n_columns`: how many columns the book says this page prints (`columns`) —
+    for a page whose ink misleads the gutter finder; None, as the ink shows.
+    Declared columns may have type set across them, above or below (`_across`):
+    read across, as column 0, before and after the columns."""
     if angle is None:
         angle = skew_angle(img)
     dark = np.asarray(deskew(img.convert("L"), angle)) < INK
     top, split, bottom, left, right = _frame(dark)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
-    cols = [(left, right)] if single_column else columns(dark, split, bottom, left, right)
+    cols = columns(dark, split, bottom, left, right, n_columns)
+    # where the book declares the columns, a line set across them is looked for;
+    # columns found in the ink run the body's full height, as they always have
+    begin, end = _across(dark, split, bottom, left, right, cols) if n_columns else (split, bottom)
+    # type across the columns is read across, column 0: above them first, below them last
+    above = [Item("text", (left, s, right, e), 0, f"c0s{k}")
+             for k, (s, e) in enumerate(strips(dark, split, begin, left, right, max_h), 1)]
+    below = [Item("text", (left, s, right, e), 0, f"c0s{k}")
+             for k, (s, e) in enumerate(strips(dark, end, bottom, left, right, max_h), len(above) + 1)]
+    out.items += above
     for ci, (a, b) in enumerate(cols, 1):
         mine = [f for f in figures if a <= (f["box"][0] + f["box"][2]) / 2 < b]
-        seen = len(ink_figures(dark, split, bottom, a, b))
+        seen = len(ink_figures(dark, begin, end, a, b))
         if seen != len(mine):
             out.disagreements[ci] = (len(mine), seen)
         n = {"text": 0, "figure": 0}
-        for kind, box in _column_items(dark, split, bottom, a, b, mine, max_h):
+        for kind, box in _column_items(dark, begin, end, a, b, mine, max_h):
             n[kind] += 1
             out.items.append(Item(kind, tuple(int(v) for v in box), ci,
                                   f"c{ci}{'s' if kind == 'text' else 'f'}{n[kind]}"))
+    out.items += below
     # An item with no area is not an item: a page with no gap under its first
     # line (a title page) has no separate running head, and a band can close
     # where it opened.  Nothing on the page lies in it.
