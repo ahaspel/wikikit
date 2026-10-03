@@ -313,4 +313,8 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
             n[kind] += 1
             out.items.append(Item(kind, tuple(int(v) for v in box), ci,
                                   f"c{ci}{'s' if kind == 'text' else 'f'}{n[kind]}"))
+    # An item with no area is not an item: a page with no gap under its first
+    # line (a title page) has no separate running head, and a band can close
+    # where it opened.  Nothing on the page lies in it.
+    out.items = [it for it in out.items if it.box[2] > it.box[0] and it.box[3] > it.box[1]]
     return out

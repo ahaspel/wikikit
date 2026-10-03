@@ -120,42 +120,54 @@ def _level(ps: dict, scans) -> Image.Image:
     return _LEVELS[pid]
 
 
-def _next_requests(state: dict, scans) -> dict[str, dict]:
-    """Every page moved as far as local work allows, and the calls its next
+def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
+    """One page moved as far as local work allows, and the calls its next
     stage needs."""
+    reqs: dict[str, dict] = {}
+    level = _level(ps, scans)
+    if ps["rough"] is None:
+        img, prompt, max_tokens, scale = figures.locate_request(level)
+        ps["loc_scale"] = scale
+        reqs[f"{pid}_loc_0"] = request(img, prompt, max_tokens)
+        return reqs
+    if len(ps["refined"]) < len(ps["rough"]):
+        cols = cut.page_columns(level, ps.get("single_column", False))
+        for i, f in enumerate(ps["rough"]):
+            if str(i) not in ps["refined"]:
+                img, prompt, max_tokens, window = figures.refine_request(level, f, figures.column_of(f, cols))
+                ps["windows"][str(i)] = window
+                reqs[f"{pid}_ref_{i}"] = request(img, prompt, max_tokens)
+        return reqs
+    if ps["items"] is None:                          # the cut, once the figures are known
+        figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
+        plan = cut.plan(level, figs, angle=0.0, single_column=ps.get("single_column", False))
+        ps["figures"] = figs
+        ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
+                       for it in plan.items]
+        ps["disagreements"] = {str(k): list(v) for k, v in plan.disagreements.items()}
+        ps["stage"] = "read"
+    items = _items(ps)
+    caps = captions(items)
+    for it in items:
+        if it.kind == "figure" or it.name in ps["readings"] or it.name in ps["unread"] \
+                or it.name in ps["refused"]:
+            continue
+        reqs[f"{pid}_read_{it.name}"] = read_request(level, it, it.name in caps, cache_ttl=CACHE_TTL)
+    return reqs
+
+
+def _next_requests(state: dict, scans) -> dict[str, dict]:
+    """Every page's next calls.  A page whose calls cannot be prepared is set
+    aside with its error — reported, never silently dropped — and the rest
+    go on: one bad page does not hold up a run."""
     reqs: dict[str, dict] = {}
     for pid, ps in state["pages"].items():
         if ps["stage"] == "done" or ps.get("error"):
             continue
-        level = _level(ps, scans)
-        if ps["rough"] is None:
-            img, prompt, max_tokens, scale = figures.locate_request(level)
-            ps["loc_scale"] = scale
-            reqs[f"{pid}_loc_0"] = request(img, prompt, max_tokens)
-            continue
-        if len(ps["refined"]) < len(ps["rough"]):
-            cols = cut.page_columns(level, ps.get("single_column", False))
-            for i, f in enumerate(ps["rough"]):
-                if str(i) not in ps["refined"]:
-                    img, prompt, max_tokens, window = figures.refine_request(level, f, figures.column_of(f, cols))
-                    ps["windows"][str(i)] = window
-                    reqs[f"{pid}_ref_{i}"] = request(img, prompt, max_tokens)
-            continue
-        if ps["items"] is None:                          # the cut, once the figures are known
-            figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
-            plan = cut.plan(level, figs, angle=0.0, single_column=ps.get("single_column", False))
-            ps["figures"] = figs
-            ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
-                           for it in plan.items]
-            ps["disagreements"] = {str(k): list(v) for k, v in plan.disagreements.items()}
-            ps["stage"] = "read"
-        items = _items(ps)
-        caps = captions(items)
-        for it in items:
-            if it.kind == "figure" or it.name in ps["readings"] or it.name in ps["unread"] \
-                    or it.name in ps["refused"]:
-                continue
-            reqs[f"{pid}_read_{it.name}"] = read_request(level, it, it.name in caps, cache_ttl=CACHE_TTL)
+        try:
+            reqs.update(_page_requests(pid, ps, scans))
+        except Exception as e:
+            ps["error"] = f"preparing its calls: {type(e).__name__}: {e}"
     return reqs
 
 
