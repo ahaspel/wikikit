@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,6 +27,12 @@ class Settings(BaseSettings):
     #: NO DEFAULT: it was "eb1911", which was the engine naming a book.  The
     #: book's repository names itself in its committed ``book.env``.
     corpus: str
+    #: The vision model's key, for books transcribed from their scans
+    #: (`wikikit.scan`).  Optional: no other book needs it.  Private — set it in
+    #: the book's `.env` — and a SecretStr, so no settings dump or error prints it.
+    anthropic_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("WIKIKIT_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"))
 
 
 settings = Settings()

@@ -31,6 +31,8 @@ wikikit = "wikikit.cli.main:run"
 
 [project.optional-dependencies]
 mdx = ["mdict-utils==1.3.14"]
+# Books transcribed from their scans (wikikit.scan): the vision model's SDK.
+scan = ["anthropic>=0.40"]
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
