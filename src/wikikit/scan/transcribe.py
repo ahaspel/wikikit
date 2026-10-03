@@ -44,32 +44,35 @@ at a line end inside the image is joined without the hyphen, unless the hyphen
 belongs to the word. A new paragraph starts on a new line with a blank line
 before it."""
 
-STRIP = """This image is one horizontal strip cut from one column of a scanned
-page. Transcribe it into Wikisource wikitext, exactly as printed.
+#: The fixed instructions: the same for every image of every page, so they are
+#: sent once per page run as a cached system prompt (`model.ask`), not with
+#: every call.  Each call then names its kind of image in one line.
+INSTRUCTIONS = """You transcribe images cut from scanned pages into Wikisource
+wikitext, exactly as printed. Each image is one of three kinds, named in the
+request that comes with it.
 
 {book}
 
 {rules}
 
-Strip edges: if the strip's FIRST line begins a new paragraph (a bold
-title-word at the margin, or an indented first line), start your output with
-{para} on its own line. If its LAST line ends with a word broken by a hyphen,
-end your output with that fragment and the hyphen, e.g. "diffi-".
+A STRIP is one horizontal strip cut from one column of a page. Strip edges: if
+the strip's FIRST line begins a new paragraph (a bold title-word at the margin,
+or an indented first line), start your output with {para} on its own line. If
+its LAST line ends with a word broken by a hyphen, end your output with that
+fragment and the hyphen, e.g. "diffi-".
+
+A CAPTION is the text printed beneath an illustration: wrap it in
+{{{{c|...}}}}, keeping its italics and small capitals.
+
+A RUNNING HEAD is the line at the top of a page: a guide word at the left, the
+page number in the middle, a guide word at the right (one may be empty).
+Output exactly {{{{RunningHeader|left|number|right}}}} with the printed text.
 {notation}
-Output only the wikitext."""
+Output only the wikitext, nothing else."""
 
-CAPTION = """This image is the caption printed beneath an illustration on a
-scanned page. Transcribe it into Wikisource wikitext, exactly as printed,
-wrapped in {{{{c|...}}}}; keep its italics and small capitals.
-
-{rules}
-{notation}
-Output only the wikitext."""
-
-HEAD = """This image is the running head of a scanned page: a guide word at the
-left, the page number in the middle, a guide word at the right (one may be
-empty). Output exactly {{{{RunningHeader|left|number|right}}}} with the printed
-text. Nothing else."""
+STRIP = "This image is a STRIP. Transcribe it."
+CAPTION = "This image is a CAPTION. Transcribe it."
+HEAD = "This image is a RUNNING HEAD. Transcribe it."
 
 
 def notation_text() -> str:
@@ -92,19 +95,23 @@ def book_text() -> str:
     return book.template("templates/scan_page.md").strip() if book.has_data("templates/scan_page.md") else ""
 
 
+def instructions() -> str:
+    """The fixed instructions, the same for every call (cached)."""
+    return INSTRUCTIONS.format(book=book_text(), rules=_RULES.format(vocabulary=prompt_text()),
+                               para=PARA, notation=notation_text())
+
+
 def prompt_for(item: Item, is_caption: bool = False) -> str:
-    rules = _RULES.format(vocabulary=prompt_text())
+    """The one line that names an image's kind."""
     if item.kind == "head":
         return HEAD
-    if is_caption:
-        return CAPTION.format(rules=rules, notation=notation_text())
-    return STRIP.format(book=book_text(), rules=rules, para=PARA, notation=notation_text())
+    return CAPTION if is_caption else STRIP
 
 
 def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
     """One text item read by the model.  Raises `model.Refused` when the API
     declines: the caller records it against the page."""
-    return ask(level.crop(item.box), prompt_for(item, is_caption))
+    return ask(level.crop(item.box), prompt_for(item, is_caption), instructions=instructions())
 
 
 def captions(items: list[Item]) -> set[str]:

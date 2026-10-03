@@ -46,11 +46,56 @@ def png(img: Image.Image) -> bytes:
     return buf.getvalue()
 
 
-def ask(img: Image.Image, prompt: str, max_tokens: int = 4000) -> str:
-    """The model's text answer about one image."""
+#: What the model is billed by, as the API reports it on every call.
+USAGE_FIELDS = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
+
+
+class Meter:
+    """Token counts of every call made while it is open (`metered`): the
+    figures a page's cost is computed from, recorded in its provenance."""
+
+    def __init__(self):
+        self.calls = 0
+        self.tokens = dict.fromkeys(USAGE_FIELDS, 0)
+
+    def add(self, usage) -> None:
+        self.calls += 1
+        for f in USAGE_FIELDS:
+            self.tokens[f] += getattr(usage, f, 0) or 0
+
+    def record(self) -> dict:
+        return {"model": MODEL, "calls": self.calls, **self.tokens}
+
+
+_meters: list[Meter] = []
+
+
+class metered:
+    """`with metered() as m:` — every model call inside is counted in `m`."""
+
+    def __enter__(self) -> Meter:
+        _meters.append(Meter())
+        return _meters[-1]
+
+    def __exit__(self, *exc) -> None:
+        _meters.pop()
+
+
+def ask(img: Image.Image, prompt: str, max_tokens: int = 4000, instructions: str | None = None) -> str:
+    """The model's text answer about one image.
+
+    `instructions` are the fixed part of a prompt — the same for every strip of
+    every page (rules, vocabulary, the book's notation: two-thirds of a strip
+    call's input, measured 2026-10-03).  They go in the system prompt, marked
+    for caching, so after the first call they are read from the cache instead
+    of paid for again; `prompt` is the short part that follows the image."""
     import anthropic
+    extra = {}
+    if instructions:
+        extra["system"] = [{"type": "text", "text": instructions,
+                            "cache_control": {"type": "ephemeral"}}]
     try:
-        msg = _client().messages.create(model=MODEL, max_tokens=max_tokens, messages=[{
+        msg = _client().messages.create(model=MODEL, max_tokens=max_tokens, **extra, messages=[{
             "role": "user", "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": "image/png",
                                              "data": base64.b64encode(png(img)).decode()}},
@@ -59,6 +104,8 @@ def ask(img: Image.Image, prompt: str, max_tokens: int = 4000) -> str:
         if "content filtering" in str(e):
             raise Refused(str(e)) from e
         raise
+    for m in _meters:
+        m.add(msg.usage)
     return "".join(b.text for b in msg.content if b.type == "text").strip()
 
 

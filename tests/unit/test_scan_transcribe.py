@@ -4,7 +4,7 @@ boundary with their captions.  No model is called."""
 import pytest
 
 from wikikit.scan.cut import Item
-from wikikit.scan.transcribe import PARA, assemble_page, captions, join_across_cut, prompt_for
+from wikikit.scan.transcribe import PARA, assemble_page, captions, instructions, join_across_cut, prompt_for
 from wikikit.scan.vocabulary import VOCABULARY
 
 H = Item("head", (0, 0, 900, 40), 0, "head")
@@ -23,7 +23,7 @@ def body(page):
 
 
 def test_the_strip_prompt_states_the_engine_vocabulary_and_the_edge_signals():
-    p = prompt_for(t("c1s1"))
+    p = instructions()
     for c in VOCABULARY:
         assert f"{c.open}text{c.close}" in p
     assert PARA in p and '"diffi-"' in p
@@ -82,5 +82,5 @@ def test_readings_join_across_a_cut(before, after, joined):
 
 
 def test_the_book_declares_its_notation_or_the_prompt_omits_it():
-    p = prompt_for(t("c1s1"))
+    p = instructions()
     assert "own notation" not in p          # the fixture book declares none
