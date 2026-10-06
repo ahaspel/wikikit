@@ -17,8 +17,10 @@ class Settings(BaseSettings):
     data_dir: Path = Path("./data")
     #: NO DEFAULT, for the same reason as ``corpus``: the default named EB1911's
     #: database, so a process whose URL went missing quietly connected to it.
-    #: Set ``WIKIKIT_DATABASE_URL`` in the private ``.env``.
-    database_url: str
+    #: Set ``WIKIKIT_DATABASE_URL`` in the private ``.env``.  Absent is allowed
+    #: — a contributor transcribing scans has no database — and connecting
+    #: without it raises (`wikikit.db.session`); it never falls back to one.
+    database_url: str | None = None
     log_level: str = "INFO"
     #: Which book this process is building, by import path —
     #: ``eb1911:EB1911`` — see ``wikikit.corpora``.  It sits

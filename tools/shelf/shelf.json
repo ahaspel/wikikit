@@ -1,0 +1,10 @@
+{
+ "_about": "The reference shelf: one host, one S3 bucket, one CloudFront distribution, a prefix per book. Read by tools/shelf/setup_shelf.py. `books` maps each book's URL prefix to its Meilisearch index (the shared search host the Britannica uses).",
+ "host": "reference.aaronhaspel.com",
+ "zone": "aaronhaspel.com",
+ "bucket": "reference.aaronhaspel.com",
+ "region": "us-east-1",
+ "search_origin": "ec2-44-222-119-72.compute-1.amazonaws.com",
+ "search_port": 7700,
+ "books": {"dnb": "dnb", "century": "century"}
+}

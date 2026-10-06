@@ -226,11 +226,41 @@ def columns(dark, top, bottom, left, right, n_columns: int | None = None) -> lis
     return [(a, b) for a, b in zip(edges[:-1], edges[1:]) if b - a > width * 0.12]
 
 
+def _standing(block, reach: float):
+    """Which pixel columns of `block` hold a vertical run of ink longer than
+    `reach` — a scan's edge, a rule: no letter's stroke is that long."""
+    padded = np.vstack([np.zeros((1, block.shape[1]), bool), block, np.zeros((1, block.shape[1]), bool)])
+    out = np.zeros(block.shape[1], bool)
+    d = np.diff(padded.astype(np.int8), axis=0)
+    for x in np.where(block.any(axis=0))[0]:
+        s, e = np.where(d[:, x] == 1)[0], np.where(d[:, x] == -1)[0]
+        out[x] = (e - s).max() > reach
+    return out
+
+
 def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
     """Rows [top, bottom) of one column cut into strips of at most `max_h`,
-    each cut in the middle of a white band — never through a line."""
-    per_row = dark[top:bottom, a:b].sum(axis=1) > (b - a) * 0.003
+    each cut in the middle of a white band — never through a line.  Ink
+    standing down most of the column (a scan's dark edge, a rule at the
+    column's side) is no line's, and would leave no white band anywhere:
+    it is set aside before rows are measured."""
+    block = dark[top:bottom, a:b]
+    if bottom - top > 0:
+        block = block[:, ~_standing(block, 4 * _line_height(dark, top, bottom, a, b))]
+    ink = block.sum(axis=1)
+    per_row = ink > (b - a) * 0.003
     cuts = [top + (s + e) // 2 for s, e in runs(~per_row) if e - s >= 3]
+    # Type set tight leaves no white row where descenders meet the next line's
+    # ascenders.  Only where the white rows leave a stretch longer than a strip
+    # may be, the least-inked row between two lines serves instead: it touches
+    # a tail or two, never a line's body.
+    marks = [top] + [c for c in cuts if top < c < bottom] + [bottom]
+    for s, e in zip(marks, marks[1:]):
+        if e - s > max_h:
+            lines = runs(ink[s - top:e - top] > (b - a) * 0.02)
+            cuts += [s + gs + int(np.argmin(ink[s - top + gs:s - top + ge])) for (_, gs), (ge, _)
+                     in zip(lines, lines[1:]) if ge > gs]
+    cuts.sort()
     candidates = [c for c in cuts if top < c < bottom] + [bottom]
     out, start, last_ok = [], top, None
     for c in candidates:
