@@ -50,14 +50,20 @@ def notation() -> list:
 
 
 def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Image],
-           out: Path) -> Path:
-    """Write the desk's files for these supplied pages into `out`."""
+           out: Path, flags=None) -> Path:
+    """Write the desk's files for these supplied pages into `out`.
+
+    `flags`: the book's own checks, `payload -> {strip name: [{"text",
+    "start", "end", "reason"}]}` — readings worth a second look, found from
+    what only the book knows (a dictionary's order, its notation).  The desk
+    marks each and says why; the engine does not judge them."""
     out.mkdir(parents=True, exist_ok=True)
     desk_pages = []
     for vol, pg in pages:
         payload = supplied.read(vol, pg)
         p = payload["provenance"]
         level = cut.deskew(scans[(vol, pg)].convert("L"), p["angle"])
+        page_flags = flags(payload) if flags else {}
         strips = []
         for it in supplied.items_of(payload):
             rel = f"strips/{page_id(vol, pg)}/{it.name}.png"
@@ -68,7 +74,8 @@ def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Imag
                            "text": p["readings"].get(it.name, "") if it.kind != "figure" else None,
                            "refused": it.name in p.get("refused", []) or it.name in p.get("unread", {}),
                            "unread": p.get("unread", {}).get(it.name),
-                           "checked": it.name in p.get("checked", {})})
+                           "checked": it.name in p.get("checked", {}),
+                           "flags": page_flags.get(it.name, [])})
         head = (p["readings"].get("head") or "").strip()
         desk_pages.append({"id": page_id(vol, pg), "volume": vol, "page": pg,
                            "label": f"Vol. {vol}, page {pg}", "running_head": head,
