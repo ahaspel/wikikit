@@ -26,7 +26,29 @@ SAME = [
     "When <math>\\text{R}=0</math>, the covariant <math>\\alpha_x</math> is a factor of <math>f</math>.",
     "The two equations\n\n{{block center|<math>\\frac{\\partial f}{\\partial \\delta} = 5\\text{B}\\delta^4</math>,}}\n"
     "{{block center|<math>a < b</math>.}}\n\nyield by elimination",
+    # tables: a formula set out in rows (FULMINIC ACID), spans and all
+    "who proposed the formulae:\n\n{| style=\"margin:auto\"\n|C : N·OH||rowspan=2|O||N : CH\n|-\n"
+    "|C : N·OH||N : C·OH\n|-\n|Steiner||colspan=2|Divers\n|}\n\nThe formulae of Kekulé",
+    # a constitution with upright bonds, subscripts, a formula and italic in its cells
+    "may be represented as\n\n{| style=\"margin:auto\"\n|H<sub>2</sub>C||CH—CH<sub>2</sub>\n|-\n"
+    "|│||│\n|-\n|<math>a_1</math>||''Tropine''\n|}\n\nThese compounds",
+    # a plain table of figures
+    "{|\n|As||12||1\n|-\n|Decunx||11||11/12\n|}",
+    # a formula as a compact grid, its connectors in cells of their own
+    "represented as\n\n{| class=\"chem-grid\"\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n"
+    "|rowspan=3|│||||│||||│\n|-\n|||NMe||||CHOH\n|-\n|||│||||║\n|-\n|colspan=5|Tropine\n|}\n\nThese",
 ]
+
+
+def test_a_table_is_laid_out_as_the_engine_lays_it_out():
+    [shown] = desk_render(["A\n\n{| style=\"margin:auto\"\n|x||rowspan=2|y\n|-\n|z\n|}\n\nB"], render_table())
+    assert shown["leaks"] == []
+    assert '<td rowspan="2">y</td>' in shown["html"] and shown["html"].startswith("A<p><table")
+
+
+def test_a_table_with_attributes_outside_the_vocabulary_leaks():
+    [shown] = desk_render(["{| class=\"wikitable\"\n|a\n|}"], render_table())
+    assert shown["leaks"]
 
 
 def test_a_formula_is_left_whole_for_the_page_to_typeset():

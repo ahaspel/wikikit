@@ -6,7 +6,7 @@ from wikikit.scan.vocabulary import TYPESET, VOCABULARY, prompt_text, render_tab
 
 def test_every_construct_renders_through_the_engine_and_nothing_leaks():
     table = render_table()
-    assert set(table) == {c.name for c in VOCABULARY} | {"paragraph"}
+    assert set(table) == {c.name for c in VOCABULARY} | {"paragraph", "table"}
     for name, value in table.items():
         if name in TYPESET:
             continue

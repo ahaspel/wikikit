@@ -557,7 +557,13 @@ def _resolve_bio_articles(session, contrib_map: dict[str, dict],
 
 
 def _source_quality(session, article: Article) -> dict:
-    """Build source quality metadata from page quality levels."""
+    """Build source quality metadata from page quality levels.
+
+    A page the BOOK transcribed from its scan (`wikikit.scan`, source "scan")
+    is no OCR: complete, it carries no warning and no margin marker, only a
+    quiet note (`transcribed_pages`) that it is not yet proofread by a person;
+    incomplete — a strip refused or unread — it is level 2, "problematic", and
+    marked like any other (user, 2026-10-07)."""
     pages = (
         session.query(SourcePage)
         .filter(
@@ -568,27 +574,27 @@ def _source_quality(session, article: Article) -> dict:
         .all()
     )
     levels = Counter()
+    page_quality = {}           # per-page map for margin indicators (only non-validated)
+    transcribed = []
     for page in pages:
         m = re.search(r'pagequality level="(\d)"', page.wikitext or page.raw_text or "")
         level = int(m.group(1)) if m else 3  # default to proofread
+        if page.source_name == "scan" and level == 1:
+            transcribed.append(page.page_number)
+            level = 3                         # warns of nothing: not OCR
         levels[level] += 1
+        if level < 3:
+            page_quality[str(page.page_number)] = level
 
     lowest = min(levels.keys()) if levels else 3
     note = _QUALITY_NOTES.get(lowest)
-
-    # Per-page quality map for margin indicators (only include non-validated)
-    page_quality = {}
-    for page in pages:
-        m = re.search(r'pagequality level="(\d)"', page.wikitext or page.raw_text or "")
-        level = int(m.group(1)) if m else 3
-        if level < 3:
-            page_quality[str(page.page_number)] = level
 
     return {
         "page_levels": {str(k): v for k, v in sorted(levels.items())},
         "lowest_level": lowest,
         "note": note,
         "unproofed_pages": page_quality,
+        "transcribed_pages": sorted(transcribed),
     }
 
 

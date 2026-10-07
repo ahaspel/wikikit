@@ -194,11 +194,14 @@ def _split_cells(row_body: str) -> list[Cell]:
             line_start = False
             continue
         if line_start and row_body[i:i + 1] in ("|", "!"):
-            # A line-start `||`/`!!` is ONE cell start -- an author's redundant
-            # double delimiter (ARENIG GROUP's `|| ''Dicranograptus''…` beside
-            # a sibling `| Derfel…`).  Consume BOTH pipes so the second doesn't
-            # leak into the cell content.
-            width = 2 if two in ("||", "!!") else 1
+            # A line starts ONE cell with ONE `|`, as MediaWiki reads it: the
+            # rest of the line splits at `||` like any other.  So `|||NMe` is an
+            # empty cell, then NMe (55 rows on 13 EB1911 pages, every one shifted
+            # a column left when the line-start `||` was eaten whole), and
+            # ARENIG GROUP's `|| ''Dicranograptus''…` is one cell whose body
+            # opens with the lone `|` that `_wiki_attr_split` reads as an empty
+            # attribute slot.  A header line's `!!` stays one start.
+            width = 2 if two == "!!" else 1
             sep = row_body[i]
             events.append(("cell", i, i + width, sep, None))
             i += width
@@ -235,7 +238,9 @@ def _wiki_attr_split(raw: str) -> tuple[str, str]:
             continue
         if raw[i] == "|":
             prefix = raw[:i]
-            if _CELL_ATTR_RE.match(prefix):
+            # an empty slot is still the slot: MediaWiki reads `| X` as no
+            # attributes and the content X — a cell cannot open with a bare `|`
+            if not prefix.strip() or _CELL_ATTR_RE.match(prefix):
                 return prefix, raw[i + 1:]
             return "", raw
         i += 1

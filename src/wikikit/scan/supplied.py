@@ -105,6 +105,9 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
             # what the page cost, as the API counted it: finding its figures
             # and reading its text
             "usage": usage,
+            # its captions are the cutter's caption items, not guessed by
+            # position (`transcribe.captions`)
+            "captions_marked": True,
         },
     }
     if replaces:
@@ -123,16 +126,26 @@ def reassemble(payload: dict) -> dict:
     correction a proofreader makes to a reading."""
     p = payload["provenance"]
     payload["raw_text"] = assemble_page(items_of(payload), p["readings"], p["figure_files"],
-                                        p["column_width"], level=level(payload))
+                                        p["column_width"], level=level(payload),
+                                        legacy_captions=not p.get("captions_marked"))
     return payload
 
 
 def level(payload: dict) -> int:
     """Wikisource's proofreading level for the page: 3 (proofread) once a
-    person has checked every text item, else 1 (not proofread)."""
-    checked = payload["provenance"].get("checked", {})
-    texts = [it.name for it in items_of(payload) if it.kind != "figure"]
-    return 3 if texts and all(n in checked for n in texts) else 1
+    person has checked every text item; 2 (problematic: Wikisource's word for
+    a page with text missing) while any text item the model refused or left
+    unread is unchecked — the reader is told the page is incomplete; else 1
+    (not proofread)."""
+    p = payload["provenance"]
+    checked = p.get("checked", {})
+    items = [it for it in items_of(payload) if it.kind != "figure"]
+    texts = [it.name for it in items]
+    if texts and all(n in checked for n in texts):
+        return 3
+    body = {it.name for it in items if it.kind != "head"}       # a lost running head loses no text
+    gaps = [n for n in [*p.get("refused", []), *p.get("unread", {})] if n in body and n not in checked]
+    return 2 if gaps else 1
 
 
 def write(payload: dict) -> Path:

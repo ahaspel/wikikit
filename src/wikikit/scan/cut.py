@@ -30,9 +30,11 @@ MAX_H = 1100
 
 @dataclass(frozen=True)
 class Item:
-    """One reading-order piece of a page: `kind` is "head", "text" or "figure";
-    `box` is (x0, y0, x1, y1) on the deskewed page; `name` is stable within the
-    page ("head", "c1s3" — column 1 strip 3 —, "c2f1" — column 2 figure 1)."""
+    """One reading-order piece of a page: `kind` is "head", "text", "figure"
+    or "caption" (a figure's, cut from the caption the model located: text,
+    read as a caption and kept with its figure); `box` is (x0, y0, x1, y1) on
+    the deskewed page; `name` is stable within the page ("head", "c1s3" —
+    column 1 strip 3 —, "c2f1" — column 2 figure 1 —, "c2c1" — its caption)."""
     kind: str
     box: tuple[int, int, int, int]
     column: int
@@ -291,9 +293,38 @@ def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
     return [(s, e) for s, e in out if e - s > 20]
 
 
+#: The line pitch is sought between these, in pixels (a fleck's height below,
+#: a heading set apart above).
+PITCH_MIN, PITCH_MAX = 8, 300
+#: A peak matching at least this share of the best is a candidate pitch.
+PEAK_SHARE = 0.7
+
+
 def _line_height(dark, top, bottom, a, b):
-    rr = runs(dark[top:bottom, a:b].sum(axis=1) > (b - a) * 0.003)
-    return float(np.median([e - s for s, e in rr])) if rr else 30.0
+    """The pitch of the block's lines of type: the spacing at which its
+    row-by-row ink best matches itself.  Lines repeat; a column rule, the
+    scan's dark edge or toned paper add the same ink to every row, which the
+    mean takes away; type set so close that no row between lines is white
+    repeats all the same.  Measured as runs of inked rows instead, Anthon's
+    leaf 401 gave one 2,080-pixel "line" (a rule in every row) and leaf 1450
+    6.5 (flecks)."""
+    profile = dark[top:bottom, a:b].sum(axis=1).astype(float)
+    n = len(profile)
+    hi = min(PITCH_MAX, n // 3)
+    if hi <= PITCH_MIN or not profile.any():
+        return 30.0
+    profile -= profile.mean()
+    ac = np.correlate(profile, profile, mode="full")[n - 1:]
+    if ac[0] <= 0:
+        return 30.0
+    # Every multiple of the pitch matches too, and a page broken by displays
+    # or set in list rows can match best at two lines or five: the pitch is
+    # the FIRST peak that matches nearly as well as the best.
+    window = ac[PITCH_MIN:hi]
+    best = window.max()
+    peaks = [i for i in range(1, len(window) - 1)
+             if window[i] >= window[i - 1] and window[i] >= window[i + 1] and window[i] >= PEAK_SHARE * best]
+    return float(PITCH_MIN + (peaks[0] if peaks else int(np.argmax(window))))
 
 
 # ── the ink's own opinion of where the figures are (a cross-check only) ─────
@@ -315,12 +346,16 @@ def ink_figures(dark, top, bottom, a, b) -> list[tuple[int, int]]:
 def _grow(dark, y0, y1, a, b, line, lo, hi):
     """Take in a woodcut's pale fringe and its frame: neighbouring inked runs
     that are thin (under a third of a line) or hold a long horizontal rule, and
-    sit within ¾ of a line of the figure.  Type is neither."""
+    sit within ¾ of a line of the figure.  Type is neither: a rule is one
+    unbroken stroke, a line of type is broken between its letters — measured
+    as the TOTAL ink in a row, a line of type in the narrow band of an inset
+    (EB1911 vol 22 p706, 177 px) passed for a rule, and the figure grew up
+    through a column of text."""
     rr = [(lo + s, lo + e) for s, e in runs(dark[lo:hi, a:b].any(axis=1))]
 
     def picture(s, e):
-        widest = dark[s:e, a:b].sum(axis=1).max() / (b - a)
-        return e - s <= 0.35 * line or widest >= 0.45
+        stroke = max((x1 - x0 for r in range(s, e) for x0, x1 in runs(dark[r, a:b])), default=0)
+        return e - s <= 0.35 * line or stroke / (b - a) >= 0.45
 
     for s, e in reversed([r for r in rr if r[1] <= y0]):
         if y0 - e <= 0.75 * line and picture(s, e):
@@ -427,7 +462,7 @@ def _column_items(dark, top, bottom, a, b, figs, max_h):
         items += [("text", (a, s, b, e)) for s, e in strips(dark, y, region_top, a, b, max_h)]
         items.append(("figure", fig_box))
         if cap_box:
-            items.append(("text", cap_box))
+            items.append(("caption", cap_box))
         if side_box:
             items.append(("text", side_box))
         y = y_end
@@ -457,6 +492,38 @@ def _white_row(dark, y, step, left, right, reach, top, bottom):
     return y
 
 
+#: An item's kind, as its name spells it: c1s3, c2f1, c2c1.
+ITEM_LETTER = {"text": "s", "figure": "f", "caption": "c"}
+
+#: Two located figures overlapping by more than this share of the smaller are
+#: one figure.
+SAME_FIGURE = 0.5
+
+
+def _distinct(figures):
+    """The located figures, one per drawing: boxes that mostly overlap are
+    merged into their union (a caption kept from either).  Four small rings in
+    a row, located one by one, each came back from its close look as the whole
+    row (EB1911 vol 22 p706): four copies of one figure, and the later copies
+    cut the column into nonsense."""
+    out = []
+    for f in sorted(figures, key=lambda f: (f["box"][1], f["box"][0])):
+        x0, y0, x1, y1 = f["box"]
+        for g in out:
+            gx0, gy0, gx1, gy1 = g["box"]
+            ix = max(0, min(x1, gx1) - max(x0, gx0))
+            iy = max(0, min(y1, gy1) - max(y0, gy0))
+            smaller = min((x1 - x0) * (y1 - y0), (gx1 - gx0) * (gy1 - gy0))
+            if smaller > 0 and ix * iy > SAME_FIGURE * smaller:
+                g["box"] = [min(x0, gx0), min(y0, gy0), max(x1, gx1), max(y1, gy1)]
+                g["caption"] = g.get("caption") or f.get("caption")
+                g["inset"] = bool(g.get("inset")) or bool(f.get("inset"))   # text beside, if either saw it
+                break
+        else:
+            out.append(dict(f))
+    return out
+
+
 def _crossing_a_gutter(across, cols):
     """The model's boxes of type set across the columns that do cross one.  A
     box inside a single column is that column's, whatever the model called it:
@@ -470,24 +537,39 @@ def _crossing_a_gutter(across, cols):
     return [b for b in across if any(b[0] < g < b[2] for g in gutters)]
 
 
-def _bounds(dark, split, bottom, left, right, across, reach):
-    """Where the columns begin and end: the type the model saw set across them
-    (`figures.locate_answer`) is no column's — a block above the body's middle
-    puts the columns' top below it, one below puts their foot above it, each
-    edge snapped to the white beside the block.  A block in the running head
-    is the head's.  The ink measures nothing here: telling a title from a row
-    that runs up to the column rule is the model's judgement."""
-    begin, end = split, bottom
-    mid = (split + bottom) / 2
+def _blocks_across(dark, split, bottom, left, right, across, spanning, reach):
+    """The blocks set across the columns, top to bottom, as (top, bottom,
+    figure | None): the type the model saw across them (`figures.locate_answer`)
+    and the figures whose boxes cross a gutter — each edge snapped to the white
+    beside it, overlapping blocks merged.  A block in the running head is the
+    head's.  The ink measures nothing here: telling a title from a row that runs
+    up to the column rule is the model's judgement."""
+    blocks = []
     for x0, y0, x1, y1 in across:
-        centre = (y0 + y1) / 2
-        if centre < split:
-            continue
-        if centre < mid:
-            begin = max(begin, _white_row(dark, y1 - 3, 1, left, right, reach, split, bottom))
+        if (y0 + y1) / 2 >= split:
+            blocks.append((y0, y1, None))
+    for f in spanning:
+        y0, y1 = f["box"][1], max(f["box"][3], (f.get("caption") or f["box"])[3])
+        blocks.append((y0, y1, f))
+    out = []
+    for y0, y1, f in sorted(blocks, key=lambda b: b[0]):
+        top = _white_row(dark, y0 + 3, -1, left, right, reach, split, bottom)
+        end = _white_row(dark, y1 - 3, 1, left, right, reach, split, bottom)
+        # No white row between the block and the body's edge (a footnote on
+        # the last line): the block runs to that edge.
+        if top == y0 + 3 and y0 - split <= reach:
+            top = split
+        if end == y1 - 3 and bottom - y1 <= reach:
+            end = bottom
+        # Overlapping, or too near to leave room for columns between them (a
+        # line or two: the heading of Anthon's family tree, between its title
+        # and its drawing): one block, read across.
+        if out and top < out[-1][1] + 3 * reach // 2:
+            t, e, g = out[-1]
+            out[-1] = (t, max(e, end), g or f)
         else:
-            end = min(end, _white_row(dark, y0 + 3, -1, left, right, reach, split, bottom))
-    return begin, max(begin, end)
+            out.append((max(top, split), min(end, bottom), f))
+    return out
 
 
 def _crossing_edges(dark, begin, end, left, right, cuts) -> int:
@@ -525,39 +607,63 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     {"box", "caption" | None, "inset"}; an empty list is a page with none.
 
     `across`: the boxes of type set across the columns, as the same look
-    located them (`figures.locate_answer`) — read across, as column 0, before
-    and after the columns (`_bounds`).
+    located them (`figures.locate_answer`) — read across, as column 0.
     `n_columns`: how many columns the book says this page prints (`columns`) —
-    for a page whose ink misleads the gutter finder; None, as the ink shows."""
+    for a page whose ink misleads the gutter finder; None, as the ink shows.
+
+    The page is cut into BANDS down its height: each block set across the
+    columns — type the model saw across them, or a figure whose box crosses a
+    gutter — is a band of its own, read across as column 0; between them, each
+    band is cut into its own columns, read column by column.  A title at the
+    top and a footnote at the foot are such blocks; so is a family tree in the
+    middle of a page (Anthon leaf 1450), with columns above it and below."""
     if angle is None:
         angle = skew_angle(img)
     dark = np.asarray(deskew(img.convert("L"), angle)) < INK
     top, split, bottom, left, right = _frame(dark)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
     line = _line_height(dark, split, bottom, left, right)
-    across = _crossing_a_gutter(across, columns(dark, split, bottom, left, right, n_columns))
-    begin, end = _bounds(dark, split, bottom, left, right, across, int(2 * line))
-    cols = columns(dark, begin, end, left, right, n_columns)
-    seen = _crossing_edges(dark, begin, end, left, right, [a for a, _ in cols[1:]])
-    if seen:
-        out.disagreements[0] = (len(across), seen)
-    # type across the columns is read across, column 0: above them first, below them last
-    above = [Item("text", (left, s, right, e), 0, f"c0s{k}")
-             for k, (s, e) in enumerate(strips(dark, split, begin, left, right, max_h), 1)]
-    below = [Item("text", (left, s, right, e), 0, f"c0s{k}")
-             for k, (s, e) in enumerate(strips(dark, end, bottom, left, right, max_h), len(above) + 1)]
-    out.items += above
-    for ci, (a, b) in enumerate(cols, 1):
-        mine = [f for f in figures if a <= (f["box"][0] + f["box"][2]) / 2 < b]
-        seen = len(ink_figures(dark, begin, end, a, b))
-        if seen != len(mine):
-            out.disagreements[ci] = (len(mine), seen)
-        n = {"text": 0, "figure": 0}
-        for kind, box in _column_items(dark, begin, end, a, b, mine, max_h):
-            n[kind] += 1
-            out.items.append(Item(kind, tuple(int(v) for v in box), ci,
-                                  f"c{ci}{'s' if kind == 'text' else 'f'}{n[kind]}"))
-    out.items += below
+    figures = _distinct(figures)
+    whole = columns(dark, split, bottom, left, right, n_columns)
+    gutters = [a for a, _ in whole[1:]]
+    across = _crossing_a_gutter(across, whole)
+    spanning = [f for f in figures if any(f["box"][0] < g < f["box"][2] for g in gutters)]
+    in_column = [f for f in figures if f not in spanning]
+    blocks = _blocks_across(dark, split, bottom, left, right, across, spanning, int(2 * line))
+    counts: dict[tuple[int, str], int] = {}
+    model_ink: dict[int, list[int]] = {}
+
+    def add(kind, box, ci):
+        key = (ci, kind)
+        counts[key] = counts.get(key, 0) + 1
+        out.items.append(Item(kind, tuple(int(v) for v in box), ci,
+                              f"c{ci}{ITEM_LETTER[kind]}{counts[key]}"))
+
+    def columned(y0, y1):
+        if y1 - y0 < line or not (dark[y0:y1, left:right].sum(axis=1) > (right - left) * 0.003).any():
+            return
+        cols = columns(dark, y0, y1, left, right, n_columns)
+        model_ink.setdefault(0, [0, 0])[1] += _crossing_edges(dark, y0, y1, left, right, [a for a, _ in cols[1:]])
+        for ci, (a, b) in enumerate(cols, 1):
+            mine = [f for f in in_column if a <= (f["box"][0] + f["box"][2]) / 2 < b
+                    and y0 <= (f["box"][1] + f["box"][3]) / 2 < y1]
+            mi = model_ink.setdefault(ci, [0, 0])
+            mi[0] += len(mine)
+            mi[1] += len(ink_figures(dark, y0, y1, a, b))
+            for kind, box in _column_items(dark, y0, y1, a, b, mine, max_h):
+                add(kind, box, ci)
+
+    y = split
+    for b0, b1, fig in blocks:
+        columned(y, b0)
+        for kind, box in _column_items(dark, b0, b1, left, right, [fig] if fig else [], max_h):
+            add(kind, box, 0)
+        y = max(y, b1)
+    columned(y, bottom)
+    model_ink.setdefault(0, [0, 0])[0] = len(across)
+    for ci, (model, ink) in model_ink.items():
+        if (ci == 0 and ink) or (ci > 0 and model != ink):
+            out.disagreements[ci] = (model, ink)
     # An item with no area is not an item: a page with no gap under its first
     # line (a title page) has no separate running head, and a band can close
     # where it opened.  Nothing on the page lies in it.

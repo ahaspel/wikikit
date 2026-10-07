@@ -80,7 +80,7 @@ def test_a_full_width_figure_is_one_item_and_no_strip_crosses_it():
     assert p.disagreements == {}                      # the ink sees it too
 
 
-def test_a_caption_is_its_own_text_item_after_the_figure():
+def test_a_caption_is_its_own_caption_item_after_the_figure():
     im = page(figures=[(630, 900, 1170, 1200)])
     d = ImageDraw.Draw(im)
     d.rectangle((760, 1215, 1040, 1215 + LINE), fill=0)           # the caption line
@@ -88,7 +88,7 @@ def test_a_caption_is_its_own_text_item_after_the_figure():
     items = [i for i in plan(im, located, angle=0.0).items if i.column == 2]
     k = next(n for n, i in enumerate(items) if i.kind == "figure")
     cap = items[k + 1]
-    assert cap.kind == "text" and cap.box[1] <= 1215 and cap.box[3] >= 1215 + LINE
+    assert cap.kind == "caption" and cap.box[1] <= 1215 and cap.box[3] >= 1215 + LINE
     assert items[k].box[3] <= cap.box[1]
 
 
@@ -263,6 +263,62 @@ def test_a_dark_edge_touching_the_images_top_is_not_the_head():
 def test_without_a_rule_the_head_ends_before_the_first_row():
     h = _head(head_page(rule=False))
     assert 120 + 2 * LINE <= h.box[3] <= 225
+
+
+def test_figures_located_twice_are_one_figure():
+    # four rings located one by one, each refined to the whole row (EB1911
+    # vol 22 p706): one figure, no copy cutting the column into nonsense
+    from wikikit.scan.cut import _distinct
+    row = [100, 200, 900, 380]
+    figs = [{"box": list(row), "caption": None, "inset": False} for _ in range(4)]
+    figs.append({"box": [120, 700, 300, 860], "caption": None, "inset": True})
+    out = _distinct(figs)
+    assert [f["box"] for f in out] == [row, [120, 700, 300, 860]]
+
+
+def test_an_inset_does_not_grow_up_through_the_text_above_it():
+    # a small drawing inset at a column's foot, text beside it and above it:
+    # in its narrow band a line of type is no frame rule (EB1911 vol 22 p706)
+    im = Image.new("L", (W, H), 255)
+    d = ImageDraw.Draw(im)
+    d.rectangle((60, 60, 400, 60 + LINE), fill=0)                       # the running head
+    for y in range(TOP, 1400, LEAD):                                    # type, full width: letters
+        for x in range(60, 860, 26):
+            d.rectangle((x, y, x + 18, y + LINE), fill=0)
+    d.ellipse((70, 1420, 230, 1580), outline=0, width=5)               # the drawing, inset
+    for y in range(1420, 1580, LEAD):                                   # the text beside it
+        for x in range(280, 860, 26):
+            d.rectangle((x, y, x + 18, y + LINE), fill=0)
+    located = [{"box": [70, 1420, 230, 1580], "caption": None, "inset": True}]
+    p = plan(im, located, angle=0.0, n_columns=1)
+    fig = next(i for i in p.items if i.kind == "figure")
+    assert fig.box[1] >= 1400 - LEAD, fig.box                         # not up through the type above
+
+
+def test_a_figure_across_the_columns_mid_page_has_columns_above_and_below():
+    # two columns of type, a figure across both in the middle of the page
+    # (Anthon's family tree, leaf 1450): read the columns above, the figure,
+    # then the columns below — never a column running through the figure
+    im = Image.new("L", (W, H), 255)
+    d = ImageDraw.Draw(im)
+    d.rectangle((60, 60, 400, 60 + LINE), fill=0)                       # the running head
+    fig = (100, 1000, 1700, 1500)
+    for x0, x1 in ((60, 860), (940, 1740)):
+        for y in list(range(TOP, 900, LEAD)) + list(range(1600, H - 120, LEAD)):
+            d.rectangle((x0, y, x1, y + LINE), fill=0)
+    d.rectangle(fig, outline=0, width=6)
+    d.line((300, 1100, 1500, 1400), fill=0, width=6)
+    located = [{"box": [100, 1000, 1700, 1500], "caption": None, "inset": False}]
+    p = plan(im, located, angle=0.0, n_columns=2)
+    figs = [i for i in p.items if i.kind == "figure"]
+    assert len(figs) == 1 and figs[0].column == 0
+    fy0, fy1 = figs[0].box[1], figs[0].box[3]
+    assert fy0 <= 1000 and fy1 >= 1500 and figs[0].box[0] <= 100 and figs[0].box[2] >= 1700
+    k = p.items.index(figs[0])
+    before, after = p.items[1:k], p.items[k + 1:]
+    assert {i.column for i in before} == {1, 2} and all(i.box[3] <= fy0 for i in before)
+    assert {i.column for i in after} == {1, 2} and all(i.box[1] >= fy1 for i in after)
+    assert len({i.name for i in p.items}) == len(p.items)            # every item named once
 
 
 def test_no_strip_is_cut_between_a_fraction_and_its_bar():

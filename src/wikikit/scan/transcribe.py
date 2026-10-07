@@ -135,6 +135,8 @@ class Unread(Exception):
 MIN_CHARS_PER_LINE_HEIGHT = 1.0
 _MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub|math)\b[^>]*>|" + PARA)
 RUNNING_HEADER = "{{RunningHeader"
+#: A table, as the vocabulary writes one, opens and closes so: a block.
+TABLE_START, TABLE_END = "{|", "|}"
 _HEAD = re.compile(r"^\{\{RunningHeader\|([^{}]*)\}\}$")
 
 
@@ -224,9 +226,18 @@ def read_item(level: Image.Image, item: Item, is_caption: bool = False) -> str:
     raise Unread(reason, text)
 
 
-def captions(items: list[Item]) -> set[str]:
-    """Names of the text items that are figure captions: a text item directly
-    after a figure, inside the figure's own horizontal extent."""
+def captions(items: list[Item], legacy: bool = False) -> set[str]:
+    """Names of the items that are figure captions: those the cutter cut as
+    captions (`cut.Item` kind "caption").
+
+    `legacy`: a page cut before the cutter marked its captions — guessed as
+    any text directly after a figure inside its horizontal extent.  The guess
+    also takes the next strip of a column after an uncaptioned figure (Anthon
+    leaf 1450: the entry below the family tree, read as its caption, let the
+    column's next strip run on from the text above the tree); it is kept only
+    so that pages cut before stay as they were assembled."""
+    if not legacy:
+        return {it.name for it in items if it.kind == "caption"}
     out = set()
     for prev, it in zip(items, items[1:]):
         if prev.kind == "figure" and it.kind == "text" and \
@@ -270,7 +281,7 @@ def _join_words(before: str, after: str) -> str:
 
 
 def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[str, str],
-                  column_width: int, level: int = 1) -> str:
+                  column_width: int, level: int = 1, legacy_captions: bool = False) -> str:
     """The page's wikitext from its items and their readings.
 
     `texts` maps item name -> the model's (or a proofreader's) reading;
@@ -279,7 +290,7 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
     paras: list[str] = []         # the page's blocks: paragraphs and figures
     open_para = False             # is the last paragraph still running?
     pending: list[str] = []       # figure blocks waiting for a paragraph boundary
-    caps = captions(items)
+    caps = captions(items, legacy=legacy_captions)
 
     def boundary():
         """A paragraph has ended: waiting figures take their place here."""
@@ -293,7 +304,10 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         nonlocal open_para
         for n, piece in enumerate(text.split(PARAGRAPH_SEP)):
             piece = piece.strip()
-            joins = n == 0 and continues and open_para
+            # a table is a block: it runs on from nothing, and nothing runs on
+            # from it (Anthon leaf 1459: a table read in its own strip had
+            # joined the sentence before it, "{|" mid-line)
+            joins = n == 0 and continues and open_para and not piece.startswith(TABLE_START)
             if not joins:
                 boundary()                      # whatever ran before has ended
             if not piece:
@@ -302,7 +316,7 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
                 paras[-1] = join_across_cut(paras[-1], piece)
             else:
                 paras.append(piece)
-            open_para = True
+            open_para = not piece.endswith(TABLE_END)
 
     # Type set across the columns (column 0, `cut.plan`) is a block of its own:
     # a title above the columns does not run on into them, nor a column's
@@ -334,6 +348,6 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
             last_column = it.column
         i += 1
     boundary()
-    who = "transcriber" if level <= 1 else "proofreader"
+    who = "proofreader" if level >= 3 else "transcriber"
     return (f'<noinclude><pagequality level="{level}" user="{who}" />{head}</noinclude>'
             + PARAGRAPH_SEP.join(paras) + "<noinclude><references/></noinclude>")

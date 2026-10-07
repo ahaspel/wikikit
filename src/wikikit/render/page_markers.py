@@ -308,7 +308,10 @@ def inject(html: str, keys, ctx, body_span: int = 0) -> str:
             tag = (f'<span class="{cls}" data-page="{pg}" data-vol="{vol}">'
                    f'</span>')
         else:
-            title = (f"Volume {vol}, page {pg} (unproofed source) — click to view scan"
+            # the page's level, in Wikisource's words: 2 is "problematic"
+            # (with a transcription of ours: text the model refused or left unread)
+            state = {0: "untranscribed", 2: "problematic"}.get(unproofed.get(pg), "unproofed")
+            title = (f"Volume {vol}, page {pg} ({state} source) — click to view scan"
                      if pg in unproofed else
                      f"Volume {vol}, page {pg} — click to view scan")
             tag = (f'<a class="{cls}" data-page="{pg}" data-vol="{vol}" '

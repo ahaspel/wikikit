@@ -40,9 +40,23 @@ def test_strips_join_across_cuts_and_break_where_the_model_says():
     assert body(page) == "'''one''' runs on and is difficult to end here.\n\n'''two''' begins anew."
 
 
+def test_a_table_is_a_block_of_its_own_between_strips():
+    # Anthon leaf 1459: the table, read in its own strip, ran on from the
+    # sentence before it; and the text after it is a paragraph of its own
+    items = [Item("text", (0, 0, 300, 50), 1, "s1"), Item("text", (0, 50, 300, 100), 1, "s2"),
+             Item("text", (0, 100, 300, 150), 1, "s3")]
+    table = '{| style="margin:auto"\n|As||12\n|}'
+    texts = {"s1": f"{PARA}\nThe following table exhibits the parts.", "s2": table,
+             "s3": "The Romans made their weights of marble."}
+    out = body(assemble_page(items, texts, {}, 300))
+    assert out == "\n\n".join(["The following table exhibits the parts.", table,
+                               "The Romans made their weights of marble."])
+
+
 def test_a_figure_waits_for_the_paragraph_to_end_and_takes_its_caption():
     # an inset interrupts a hyphenated word: "mold-" [figure + caption] "ings"
-    items = [t("s1"), f("f1", 0, 100, 150, 300), t("cap", 0, 300, 150, 330), t("side", 160, 100, 300, 400),
+    items = [t("s1"), f("f1", 0, 100, 150, 300), Item("caption", (0, 300, 150, 330), 1, "cap"),
+             t("side", 160, 100, 300, 400),
              t("s2", 0, 400, 300, 500)]
     texts = {"s1": f"{PARA}\nornamented with mold-",
              "cap": "{{c|Capital of the Parthenon.}}",
@@ -53,6 +67,21 @@ def test_a_figure_waits_for_the_paragraph_to_end_and_takes_its_caption():
     assert out == ("ornamented with moldings on the sides.\n\n"
                    "[[File:Century v01 n0029 c1f1.png|center|180px]]\n{{c|Capital of the Parthenon.}}\n\n"
                    "A new paragraph continues here.")
+
+
+def test_the_strip_after_an_uncaptioned_figure_is_text_not_its_caption():
+    # Anthon leaf 1450: the entry below the family tree, taken for its caption,
+    # let the column's next strip run on from the text above the tree
+    items = [t("s1"), f("f1", 0, 100, 300, 300), t("s2", 0, 300, 300, 400), t("s3", 0, 400, 300, 500)]
+    texts = {"s1": f"{PARA}\nthe following genealogical table.",
+             "s2": f"{PARA}\n{{{{sc|Alexămenus}}}}, of Teos, natural ad-",
+             "s3": "vantages of manner."}
+    assert captions(items) == set()
+    out = body(assemble_page(items, texts, {"f1": "x.png"}, 300))
+    assert out == ("the following genealogical table.\n\n[[File:x.png|center|360px]]\n\n"
+                   "{{sc|Alexămenus}}, of Teos, natural advantages of manner.")
+    # a page cut before captions were marked keeps its old assembly
+    assert captions(items, legacy=True) == {"s2"}
 
 
 def test_a_figure_at_the_end_of_the_page_is_not_lost():

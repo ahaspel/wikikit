@@ -523,6 +523,9 @@
        baseline so the angle-bracket valence glyphs (⟨ / ⟩) sit
        inline with atom labels and arrows. */
     .chem-grid {
+      /* the engine renders a classed wikitable as "data-table chem-grid": the
+         grid's own width, or .data-table's 100% stretches it across the column */
+      width: auto;
       margin: 1em auto;
       border-collapse: collapse;
       border: none;

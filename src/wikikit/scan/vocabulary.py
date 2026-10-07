@@ -49,15 +49,39 @@ TYPESET = frozenset({"math"})
 #: The HTML among the constructs: the only HTML the prompt allows.
 _HTML = [c.open for c in VOCABULARY if c.open.startswith("<")]
 
-#: A blank line between paragraphs; the only structure besides the constructs.
+#: A blank line between paragraphs; the only structure besides the constructs
+#: and the table.
 PARAGRAPH = "\n\n"
+
+#: TABLES, in the two wikitable forms allowed, borderless, their cells spanning
+#: rows or columns and holding inline constructs:
+#: - a table printed as one: centred, set as the site sets its tables;
+#: - a FORMULA set out in rows of type (a chemical constitution: TROPINE,
+#:   FULMINIC ACID) as a compact grid at its own width, the site's existing
+#:   "chem-grid", so an upright bond stands under the atom it joins.
+#: Not open/close pairs around text: the desk lays them out (desk_render.js)
+#: from their measured openings (`render_table()["table"]`), and the parity
+#: gate holds the result to the engine's.  An upright bond is a box-drawing
+#: line, never "|", which a wikitable reads as its own syntax.
+TABLE_STYLE = 'style="margin:auto"'
+FORMULA_CLASS = 'class="chem-grid"'
+TABLE = f"{{| {TABLE_STYLE}\n|cell||cell\n|-\n|rowspan=2|cell||cell\n|}}"
+FORMULA = f"{{| {FORMULA_CLASS}\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n|│||||│||||║\n|}}"
 
 
 def prompt_text() -> str:
     """The vocabulary as the transcriber's prompt states it."""
     lines = [f"- {c.says}: {c.open}text{c.close}" for c in VOCABULARY]
     lines.append("- a new paragraph: a blank line before it")
-    lines.append(f"- nothing else: no other templates, no HTML but {', '.join(_HTML)}, no tables, no lists")
+    lines.append("- a table, on lines of its own with a blank line before and after; |- begins each "
+                 "new row, || divides the cells, and a cell spanning rows or columns begins rowspan=2| "
+                 "or colspan=2|; nothing else on a table, row or cell:\n" + TABLE)
+    lines.append("- a formula set out in rows of type (atoms above and below one another, joined by "
+                 "upright bonds) is a table of its own form, a compact grid: each atom group in its "
+                 "own cell, and each bond printed between groups in a row (—, ·, :) in a cell of its "
+                 "own too, so that an upright bond (│, a double one ║, each in a cell of its own) "
+                 "stands under the group it joins:\n" + FORMULA)
+    lines.append(f"- nothing else: no other templates, no HTML but {', '.join(_HTML)}, no lists")
     return "\n".join(lines)
 
 
@@ -100,4 +124,16 @@ def render_table() -> dict:
         table[c.name] = [head.removeprefix("A").strip(), close, after if after.strip() else " "]
     para = _render(f"A{PARAGRAPH}Z")
     table["paragraph"] = para.removeprefix("A").removesuffix("Z")
+    # the tables: each allowed opening as the engine renders it, and the close
+    # — measured; rows and cells are the plain <tr>/<td> the parity gate checks.
+    # {"open": {opening as written: html}, "close": html}
+    openings = {}
+    for attrs in ("", TABLE_STYLE, FORMULA_CLASS):
+        html = _render(f"A{PARAGRAPH}{{| {attrs}\n|{_PROBE}||rowspan=2|{_PROBE}\n|-\n|{_PROBE}\n|}}{PARAGRAPH}Z")
+        body = html.removeprefix("A" + table["paragraph"]).removesuffix(table["paragraph"] + "Z")
+        opening, sep, _ = body.partition("<tr>")
+        if not sep or not body.endswith("</table>") or 'rowspan="2"' not in body:
+            raise ValueError(f"the engine no longer renders the vocabulary's table as a table: {html!r}")
+        openings[attrs] = opening
+    table["table"] = {"open": openings, "close": "</table>"}
     return table

@@ -33,7 +33,11 @@ coordinate: read positions off the grid.
 
 List every ILLUSTRATION on it: a picture, engraving, woodcut, diagram or map —
 anything drawn rather than set in type. Not text, not rules or borders, not
-decorative initials. For each, give:
+decorative initials. A diagram whose words are type but whose LINES are drawn
+is an illustration: a family tree with its branches, a chemical formula drawn
+as a ring or with slanting or curved bonds. A formula set out in rows of type,
+its atoms joined only by straight upright and level bonds, is not — it is type
+(like a table), and so is any table. For each illustration, give:
 - "box": [x0, y0, x1, y1] in this image's pixels, tight around the drawing
   itself, including any letters or labels drawn inside it, but NOT its caption;
 - "caption": [x0, y0, x1, y1] around its caption text, or null if it has none;
@@ -133,7 +137,13 @@ def refine_answer(text: str, fig: dict, window: dict) -> dict:
         return [round(x0 + window["x0"]), round(y0 + window["y0"]),
                 round(x1 + window["x0"]), round(y1 + window["y0"])]
 
-    return {**fig, "page_box": fig["box"], "box": to_page(got["box"]),
+    box = to_page(got["box"])
+    rx0, ry0, rx1, ry1 = fig["box"]
+    if box[2] <= rx0 or box[0] >= rx1 or box[3] <= ry0 or box[1] >= ry1:
+        # the close look settled on ANOTHER drawing in its window (EB1911
+        # vol 22 p706): the first look's box stands, and its caption
+        return {**fig, "page_box": fig["box"]}
+    return {**fig, "page_box": fig["box"], "box": box,
             "caption": to_page(got["caption"]) if got.get("caption") else None}
 
 
@@ -144,10 +154,15 @@ def refine(page: Image.Image, fig: dict, column: tuple[int, int]) -> dict:
 
 
 def column_of(fig: dict, columns: list[tuple[int, int]]) -> tuple[int, int]:
-    """The column a figure sits in (all of them, if its centre falls outside)."""
-    cx = (fig["box"][0] + fig["box"][2]) / 2
-    return next(((a, b) for a, b in columns if a <= cx < b),
-                (min(a for a, _ in columns), max(b for _, b in columns)))
+    """The column a figure sits in — all of them if it spans a gutter (Anthon's
+    family tree, the width of the page: looked at inside one column, its crop
+    lost half the tree) or its centre falls outside every column."""
+    whole = (min(a for a, _ in columns), max(b for _, b in columns))
+    x0, _, x1, _ = fig["box"]
+    if any(x0 < a < x1 for a, _ in columns[1:]):
+        return whole
+    cx = (x0 + x1) / 2
+    return next(((a, b) for a, b in columns if a <= cx < b), whole)
 
 
 def find(page: Image.Image, columns: list[tuple[int, int]]) -> tuple[list[dict], list[list[int]]]:

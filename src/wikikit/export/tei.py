@@ -478,10 +478,14 @@ def _header(article: dict) -> str:
     # AN EMPTY ELEMENT IS NOT A NEUTRAL ELEMENT.  Emitting <editorialDecl/> when
     # there is no notice invalidated 271 of 300 — TEI requires content, so the
     # wrapper is written only when it has something to say.
-    edecl = ("<editorialDecl><p>This article spans pages whose Wikisource "
-             "transcription is unproofread; mathematics in particular may be "
-             "corrupt.</p></editorialDecl>"
-             if sq is not None and sq <= 1 else "")
+    notes = []
+    if sq is not None and sq <= 1:
+        notes.append("This article spans pages whose Wikisource transcription is "
+                     "unproofread; mathematics in particular may be corrupt.")
+    if (article.get("source_quality") or {}).get("transcribed_pages"):
+        notes.append("Some of its pages were transcribed from the page scans for this "
+                     "edition and have not yet been proofread.")
+    edecl = "<editorialDecl>" + "".join(f"<p>{n}</p>" for n in notes) + "</editorialDecl>" if notes else ""
     return f"""<teiHeader>
 <fileDesc>
 <titleStmt><title>{escape_body(t)}</title>{authors}<respStmt xml:id="wikisource"><resp>transcription</resp><orgName>the contributors to Wikisource</orgName></respStmt></titleStmt>

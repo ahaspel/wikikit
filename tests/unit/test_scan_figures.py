@@ -23,6 +23,18 @@ def test_the_prompt_asks_for_both_and_keeps_its_braces():
     assert '"across"' in text and '"figures"' in text and "{w}" not in text
 
 
+def test_a_close_look_that_settles_on_another_drawing_keeps_the_first_box():
+    # the window held two drawings and the close look boxed the other one
+    # (EB1911 vol 22 p706): the first look's box stands
+    from wikikit.scan.figures import refine_answer
+    fig = {"box": [100, 1281, 600, 1352], "caption": None, "column": 2, "inset": False}
+    window = {"x0": 0, "y0": 1000, "shrink": 1.0}
+    out = refine_answer('{"box": [100, 617, 600, 702], "caption": null}', fig, window)
+    assert out["box"] == [100, 1281, 600, 1352]
+    near = refine_answer('{"box": [96, 278, 604, 356], "caption": null}', fig, window)
+    assert near["box"] == [96, 1278, 604, 1356]
+
+
 def test_an_answer_corrected_in_words_is_read_as_its_correction():
     # EB1911 vol 26 ws p863, verbatim: an answer, a second thought, an answer
     text = ('{"figures":[{"box":[36,565,182,912],"caption":[50,915,170,948],"column":1,"inset":true}],'

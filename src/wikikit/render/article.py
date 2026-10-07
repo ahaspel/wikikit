@@ -605,6 +605,13 @@ def render_article(article, *, target="site", epub_bundled=None):
             "pages with unproofread transcriptions.\n"
             "                 </div>\n"
             "               </div>")
+    elif sq.get("transcribed_pages"):
+        # the book's own transcription, complete: no warning, a quiet word of
+        # what it is (user, 2026-10-07)
+        source_notice = (
+            '<div style="text-align: center; margin: 10px 0; font-size: 0.85rem; color: #6b5e4f;">'
+            "Some pages of this article were transcribed from the scan for this edition "
+            "and have not yet been proofread.</div>")
 
     body_section = _render_body(article, ctx)
     footnotes_html = ""

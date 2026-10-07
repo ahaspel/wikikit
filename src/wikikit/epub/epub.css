@@ -124,7 +124,10 @@ td, th { padding: 0.15em 0.5em; vertical-align: top; }
    we draw those and nothing else.  This is the site's model, which epub.css had
    never followed: the grid-from-CSS spelling here is the ORIGINAL 2026-04 design,
    left behind when the viewer moved on. */
-.chem-grid td { border: 0; text-align: center; }
+/* A formula set out in rows (TROPINE): centred at its own width, its cells
+   tight, as the site sets it. */
+.chem-grid { margin: 0.8em auto; border-collapse: collapse; }
+.chem-grid td { border: 0; text-align: center; padding: 0.1em 0.3em; white-space: nowrap; }
 
 /* `_tablecolhdborder` / `_tablegridhdborder` — Wikisource's own bordered-table
    classes, carried on 758 of our tables and styled nowhere until now, so
