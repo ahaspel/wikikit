@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import Callable
 
@@ -28,6 +29,7 @@ from PIL import Image
 
 from wikikit.corpora import book_root
 from wikikit.scan import cut, figures, supplied
+from wikikit.scan.layout import layout_for
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
@@ -82,14 +84,23 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
             if status != "ok":
                 ps["error"] = f"figure finding: {text}"
                 continue
-            ps["rough"], ps["across"] = figures.locate_answer(text, ps["loc_scale"])
+            # an answer that cannot be read sets its page aside, reported, like
+            # a failed call: one page's answer never stops the run
+            try:
+                ps["rough"], ps["across"] = figures.locate_answer(text, ps["loc_scale"])
+            except ValueError as e:
+                ps["error"] = f"figure finding, unreadable answer: {e}"
+                continue
             ps["refined"] = {}
         elif kind == "ref":
             i = int(key)
             if status != "ok":
                 ps["error"] = f"figure {i}: {text}"
                 continue
-            ps["refined"][str(i)] = figures.refine_answer(text, ps["rough"][i], ps["windows"][str(i)])
+            try:
+                ps["refined"][str(i)] = figures.refine_answer(text, ps["rough"][i], ps["windows"][str(i)])
+            except ValueError as e:
+                ps["error"] = f"figure {i}, unreadable answer: {e}"
         elif kind == "read":
             if status == "refused":
                 ps["refused"].append(key)
@@ -111,13 +122,23 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
                     if text.strip():
                         ps.setdefault("rejected", {})[key] = text
 
-_LEVELS: dict[str, Image.Image] = {}
+#: Levelled pages, the last few only.  A full-resolution leaf levelled is
+#: ~23 MB (EB1911: 2340 x 3334 in colour); kept for every page of a 406-page
+#: run that was ~9.5 GB, and the run was killed for want of memory.  A run's
+#: passes walk the pages in turn, so a larger cache would never hit anyway:
+#: these cover a page used twice in a row, and the rest are levelled again.
+_LEVELS: OrderedDict[str, Image.Image] = OrderedDict()
+LEVELS_KEPT = 4
 
 
 def _level(ps: dict, scans) -> Image.Image:
     pid = ps["id"]
-    if pid not in _LEVELS:
+    if pid in _LEVELS:
+        _LEVELS.move_to_end(pid)
+    else:
         _LEVELS[pid] = cut.deskew(scans(ps["volume"], ps["page"]), ps["angle"])
+        while len(_LEVELS) > LEVELS_KEPT:
+            _LEVELS.popitem(last=False)
     return _LEVELS[pid]
 
 
@@ -132,7 +153,7 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         reqs[f"{pid}_loc_0"] = request(img, prompt, max_tokens)
         return reqs
     if len(ps["refined"]) < len(ps["rough"]):
-        cols = cut.page_columns(level, ps.get("n_columns"))
+        cols = cut.page_columns(level, layout_for(ps["volume"], ps["page"]).columns)
         for i, f in enumerate(ps["rough"]):
             if str(i) not in ps["refined"]:
                 img, prompt, max_tokens, window = figures.refine_request(level, f, figures.column_of(f, cols))
@@ -141,8 +162,8 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         return reqs
     if ps["items"] is None:                          # the cut, once the figures are known
         figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
-        plan = cut.plan(level, figs, angle=0.0, n_columns=ps.get("n_columns"),
-                        across=ps.get("across") or [])
+        plan = cut.plan(level, figs, angle=0.0, across=ps.get("across") or [],
+                        n_columns=layout_for(ps["volume"], ps["page"]).columns)
         ps["figures"] = figs
         ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                        for it in plan.items]
@@ -211,19 +232,21 @@ def _chunks(reqs: dict[str, dict]) -> list[dict[str, dict]]:
     return out
 
 
-def add_pages(pages: list[tuple[int, int, str]], scans, n_columns: int | None = None,
-              replaces: str | None = None) -> None:
-    """Put pages (volume, page, scan name) into the run; already-present pages
-    are left as they are.  `replaces`: why the fetched pages were found bad
-    (`supplied.build_payload`)."""
+def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = None) -> None:
+    """Put pages (volume, page, scan name) into the run; a page still in
+    flight is left as it is, and a finished page asked for again is read
+    afresh (the caller decided to overwrite its supplied page).  `replaces`:
+    why the fetched pages were found bad (`supplied.build_payload`).  A page's
+    layout is the book's to declare (`wikikit.scan.layout`), asked when the
+    page is cut."""
     state = load()
     for vol, pg, scan in pages:
         pid = page_id(vol, pg)
-        if pid in state["pages"]:
+        if pid in state["pages"] and state["pages"][pid]["stage"] != "done":
             continue
         state["pages"][pid] = {
             "id": pid, "volume": vol, "page": pg, "scan": scan, "stage": "figures",
-            "n_columns": n_columns, "replaces": replaces,
+            "replaces": replaces,
             "angle": cut.skew_angle(scans(vol, pg)), "rough": None, "across": [], "refined": {},
             "windows": {},
             "figures": None, "items": None, "disagreements": {}, "readings": {}, "tries": {},

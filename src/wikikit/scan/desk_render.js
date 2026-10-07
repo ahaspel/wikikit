@@ -15,13 +15,27 @@
   }
 
   // Template constructs are `{{name|body}}`; the others are spelled out.
-  const SPELLED = { bold: true, italic: true, sup: true, paragraph: true };
+  const SPELLED = { bold: true, italic: true, sup: true, sub: true, math: true, paragraph: true };
+
+  // A formula, lifted out whole as the engine lifts it, comes back as a span
+  // of its (escaped) LaTeX for the page to typeset with KaTeX, as the viewer
+  // does.  The parity gate reads this class.
+  const TEX_OPEN = '<span class="tex">', TEX_CLOSE = "</span>";
 
   function render(text, table) {
     let t = String(text).replace(/\r/g, "").trim();
     t = escapeHtml(t);
-    // <sup> is the one HTML the vocabulary allows
-    t = t.replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/g, (m, x) => table.sup[0] + x + table.sup[1]);
+    // formulas first: their braces are LaTeX's, never a template's
+    const tex = [];
+    t = t.replace(/&lt;math&gt;([\s\S]*?)&lt;\/math&gt;/g, (m, x) => {
+      tex.push(x.trim());
+      return "\u0002" + (tex.length - 1) + "\u0003";
+    });
+    // the vocabulary's HTML
+    for (const tag of ["sup", "sub"]) {
+      t = t.replace(new RegExp("&lt;" + tag + "&gt;([\\s\\S]*?)&lt;\\/" + tag + "&gt;", "g"),
+                    (m, x) => table[tag][0] + x + table[tag][1]);
+    }
     // templates, innermost first; a block that ends its paragraph (the table's
     // third column) leaves a mark, so a newline right after it is a paragraph
     const END = "\u0001";
@@ -43,7 +57,7 @@
            .replace(/''([\s\S]*?)''/g, (m, x) => table.italic[0] + x + table.italic[1]);
       const found = p.match(/\{\{|\}\}|\[\[|\]\]|''+/g);
       if (found) leaks.push(...found);
-      return p;
+      return p.replace(/\u0002(\d+)\u0003/g, (m, i) => TEX_OPEN + tex[+i] + TEX_CLOSE);
     });
     return { html: out.filter(p => p !== "").join(table.paragraph), leaks: leaks };
   }

@@ -71,6 +71,23 @@ def test_a_page_runs_through_the_stages_to_a_supplied_page(tmp_path, monkeypatch
     assert page["raw_text"].startswith('<noinclude><pagequality level="1" user="transcriber" />'
                                        "{{RunningHeader|abacus|4|abannition}}")
 
+    # asked for again: in flight, it is left alone; finished, it is read afresh
+    batch.add_pages([(1, 7, "scan of page 7")], scans)
+    s5 = batch.advance(scans)
+    assert [n for _, n in s5["sent"]] == [1]                # finding figures again
+    in_flight = batch.load()["pages"]["v01-p0007"]
+    batch.add_pages([(1, 7, "scan of page 7")], scans)
+    assert batch.load()["pages"]["v01-p0007"] == in_flight
+
+
+def test_levelled_pages_are_kept_for_the_last_few_only():
+    # a 406-page run kept every levelled leaf (~23 MB each) and ran out of memory
+    batch._LEVELS.clear()
+    img = test_scan_cut.page()
+    for n in range(10):
+        batch._level({"id": f"v01-p{n:04d}", "volume": 1, "page": n, "angle": 0.0}, lambda v, p: img)
+    assert list(batch._LEVELS) == [f"v01-p{n:04d}" for n in range(10 - batch.LEVELS_KEPT, 10)]
+
 
 def test_a_strip_empty_twice_is_recorded_unread_not_stored(tmp_path, monkeypatch):
     (tmp_path / "book.env").write_text("")

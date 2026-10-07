@@ -21,7 +21,17 @@ SAME = [
     "a quotation\n{{right|''Shak.'', As you Like it, ii. 4.}}\nand on",        # right does not
     "{{c|Capital of the Parthenon. ''A'', abacus.}}",
     "[< Gr. βαθύς, deep, + μέτρον, a measure.] (ka̤l) < > & †",
+    "the coefficients ''a''<sub>0</sub>, ''a''<sub>1</sub> of the quantic",
+    # formulas: braces are LaTeX's, inside a display or not
+    "When <math>\\text{R}=0</math>, the covariant <math>\\alpha_x</math> is a factor of <math>f</math>.",
+    "The two equations\n\n{{block center|<math>\\frac{\\partial f}{\\partial \\delta} = 5\\text{B}\\delta^4</math>,}}\n"
+    "{{block center|<math>a < b</math>.}}\n\nyield by elimination",
 ]
+
+
+def test_a_formula_is_left_whole_for_the_page_to_typeset():
+    [shown] = desk_render(["of <math>\\frac{a}{b} < c^{2}</math> and"], render_table())
+    assert shown == {"html": 'of <span class="tex">\\frac{a}{b} &lt; c^{2}</span> and', "leaks": []}
 
 
 @pytest.mark.parametrize("text", SAME)

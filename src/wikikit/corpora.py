@@ -149,6 +149,19 @@ class Corpus:
     #: are built from (``epub.front_matter.Ancillary``).  Read by the EPUB and
     #: the dictionary through ``epub.front_matter.book_pages``.  None = none.
     ancillary: Callable[[], object] | None = None
+    #: SCANS — for the pages the book transcribes itself (``wikikit.scan``,
+    #: run as ``python -m wikikit.scan``).  ``page_scan(volume, page)`` is the
+    #: page's image; ``page_scan_url(volume, page)`` is the scan a transcription
+    #: names as its source.  Each book takes the best scan it can find, whoever
+    #: holds it (``wikikit.scan.wikisource`` renders the volume's DjVu).  Both
+    #: or neither: None = the book transcribes nothing.
+    page_scan: Callable[[int, int], object] | None = None
+    page_scan_url: Callable[[int, int], str] | None = None
+    #: LAYOUT — what the book knows of a page's layout, for the cutter:
+    #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
+    #: (its column count, …).  The cutter measures the ink only where the book
+    #: declares nothing.  None = nothing declared on any page.
+    page_layout: Callable[[int, int], object] | None = None
     #: volume -> the inclusive (first, last) page span that holds ARTICLES, in
     #: the book's page space (``SourcePage.page_number``).  Pages outside it are
     #: front or back matter and never enter the walk.  A volume not listed
@@ -260,6 +273,9 @@ class Corpus:
             raise ValueError(f"{self.key} names only one of is_plate / plate_title: "
                              "a plate the book can recognize but not name, or the "
                              "reverse, is half a hook")
+        if (self.page_scan is None) != (self.page_scan_url is None):
+            raise ValueError(f"{self.key} names only one of page_scan / page_scan_url: "
+                             "a transcription must name the scan it was read from")
 
     def has_data(self, name: str) -> bool:
         """Does this book have ``name``?  False means the feature is off."""

@@ -12,7 +12,6 @@ from __future__ import annotations
 import base64
 import io
 import json
-import re
 from functools import lru_cache
 
 from PIL import Image
@@ -121,11 +120,23 @@ def ask(img: Image.Image, prompt: str, max_tokens: int = 4000, instructions: str
 
 
 def parse_json(text: str) -> dict:
-    """The one JSON object a JSON-answering prompt returns."""
-    m = re.search(r"\{.*\}", text, re.S)
-    if not m:
+    """The JSON object a JSON-answering prompt returns — the LAST complete one
+    when there are several: the model sometimes answers, then corrects itself
+    in words and answers again ("Wait, ... Corrected: {...}", 1 of 405 EB1911
+    figure answers), and the correction is its answer."""
+    decoder, found, i = json.JSONDecoder(), None, text.find("{")
+    while i != -1:
+        try:
+            obj, end = decoder.raw_decode(text, i)
+        except json.JSONDecodeError:
+            i = text.find("{", i + 1)
+            continue
+        if isinstance(obj, dict):
+            found = obj
+        i = text.find("{", end)
+    if found is None:
         raise ValueError(f"expected a JSON object from the model, got: {text[:200]!r}")
-    return json.loads(m.group(0))
+    return found
 
 
 def ask_json(img: Image.Image, prompt: str, max_tokens: int = 2000) -> dict:

@@ -1,6 +1,8 @@
 """The first look's answer: figures and the type set across the columns, in
 page pixels — and an answer without `across` (as older prompts gave) reads as
 none."""
+import pytest
+
 from wikikit.scan.figures import PAGE_PROMPT, locate_answer
 
 
@@ -19,3 +21,18 @@ def test_an_answer_without_type_across_has_none():
 def test_the_prompt_asks_for_both_and_keeps_its_braces():
     text = PAGE_PROMPT.format(w=1000, h=1500, g=100)
     assert '"across"' in text and '"figures"' in text and "{w}" not in text
+
+
+def test_an_answer_corrected_in_words_is_read_as_its_correction():
+    # EB1911 vol 26 ws p863, verbatim: an answer, a second thought, an answer
+    text = ('{"figures":[{"box":[36,565,182,912],"caption":[50,915,170,948],"column":1,"inset":true}],'
+            '"across":[{"box":[36,1210,1000,1300],"caption":null}]}\n\nWait, the "across" entries should '
+            'only have "box". Corrected:\n\n{"figures":[{"box":[36,565,182,912],"caption":[50,915,170,948],'
+            '"column":1,"inset":true}],"across":[{"box":[36,1210,1000,1300]}]}')
+    figs, across = locate_answer(text, 1.0)
+    assert len(figs) == 1 and len(across) == 1
+
+
+def test_an_answer_with_no_object_is_refused():
+    with pytest.raises(ValueError):
+        locate_answer("I cannot see any figures.", 1.0)

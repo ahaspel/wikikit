@@ -209,13 +209,19 @@ def test_a_rule_between_the_columns_is_not_type_across_them():
 
 # ── the running head: the first line of type, and nothing else ──────────────
 
-def head_page(tint=0, edge=False, rule=True):
+def head_page(tint=0, edge=False, rule=True, dark_edge=False):
     """A running head with a rule under it, then rows set closer to the head
     than to each other — where "the largest gap near the top" falls AFTER the
     first row.  `tint` greys the paper (a toned scan); `edge` darkens a faint
-    band along the image's top (the scan's edge)."""
+    band along the image's top (the scan's edge); `dark_edge` a dark one, as
+    dark as Anthon's (leaf 401: 14% ink in rows 0-29)."""
     im = Image.new("L", (W, H), 255 - tint)
     d = ImageDraw.Draw(im)
+    if dark_edge:
+        rng = np.random.default_rng(12)
+        for _ in range(8000):
+            x, y = int(rng.integers(0, W)), int(rng.integers(0, 30))
+            d.point((x, y), fill=0)
     if edge:
         rng = np.random.default_rng(11)
         for _ in range(900):                                      # speckle: ink, but faint
@@ -249,6 +255,28 @@ def test_the_scans_edge_is_not_the_head():
     assert 194 <= h.box[3] <= 225
 
 
+def test_a_dark_edge_touching_the_images_top_is_not_the_head():
+    h = _head(head_page(dark_edge=True))
+    assert 194 <= h.box[3] <= 225, h.box
+
+
 def test_without_a_rule_the_head_ends_before_the_first_row():
     h = _head(head_page(rule=False))
     assert 120 + 2 * LINE <= h.box[3] <= 225
+
+
+def test_no_strip_is_cut_between_a_fraction_and_its_bar():
+    # eight lines of type, a display fraction (numerator, a thin bar,
+    # denominator, white between each), then more type; at this height the
+    # last white band that fits is the one above the bar (ALGEBRAIC FORMS)
+    from wikikit.scan.cut import strips
+    d = np.zeros((700, 500), dtype=bool)
+    for y in range(0, 8 * LEAD, LEAD):
+        d[y:y + LINE, 20:480] = True
+    d[260:280, 190:310] = True          # numerator
+    d[286:289, 150:350] = True          # the bar
+    d[295:315, 190:310] = True          # denominator
+    for y in range(330, 650, LEAD):
+        d[y:y + LINE, 20:480] = True
+    cuts = [e for _, e in strips(d, 0, 700, 0, 500, max_h=290)][:-1]
+    assert cuts and not any(260 <= c <= 315 for c in cuts), cuts

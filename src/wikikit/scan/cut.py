@@ -117,9 +117,12 @@ def _head_split(dark, top, bottom):
         s, e = line
         return e - s <= RULE_HEIGHT
 
-    def edge(line):                                # faint, at the image's very top: the scan's edge
+    def edge(line):                                # at the image's very top: the scan's edge
         s, e = line
-        return top + s < dark.shape[0] * SCAN_EDGE and ink[s:e].max() < EDGE_INK
+        # Ink touching the image's first row is the scan's edge however dark
+        # (Anthon leaf 401: 14%) — no page prints type against the border;
+        # just below it, only a faint band is.
+        return top + s < dark.shape[0] * SCAN_EDGE and (top + s == 0 or ink[s:e].max() < EDGE_INK)
 
     first = next((k for k, ln in enumerate(lines) if not (rule(ln) or edge(ln))), None)
     if first is None or first + 1 >= len(lines):
@@ -243,13 +246,26 @@ def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
     each cut in the middle of a white band — never through a line.  Ink
     standing down most of the column (a scan's dark edge, a rule at the
     column's side) is no line's, and would leave no white band anywhere:
-    it is set aside before rows are measured."""
+    it is set aside before rows are measured.
+
+    A white band beside a THIN run of ink is no place to cut: a fraction's
+    bar, or an overline, belongs with what it divides or marks.  At full
+    resolution the white between a display fraction's numerator and its bar
+    is a band like any other, and a cut there (ALGEBRAIC FORMS, ws p670)
+    gave one strip four bare numerators and the next their denominators."""
     block = dark[top:bottom, a:b]
+    line = _line_height(dark, top, bottom, a, b)
     if bottom - top > 0:
-        block = block[:, ~_standing(block, 4 * _line_height(dark, top, bottom, a, b))]
+        block = block[:, ~_standing(block, 4 * line)]
     ink = block.sum(axis=1)
     per_row = ink > (b - a) * 0.003
-    cuts = [top + (s + e) // 2 for s, e in runs(~per_row) if e - s >= 3]
+    thin = max(3.0, line / 4)
+    inked = runs(per_row)
+    ends_at = {e: s for s, e in inked}         # an inked run, by the row it ends at
+    starts_at = {s: e for s, e in inked}
+    cuts = [top + (s + e) // 2 for s, e in runs(~per_row) if e - s >= 3
+            and (s not in ends_at or s - ends_at[s] >= thin)
+            and (e not in starts_at or starts_at[e] - e >= thin)]
     # Type set tight leaves no white row where descenders meet the next line's
     # ascenders.  Only where the white rows leave a stretch longer than a strip
     # may be, the least-inked row between two lines serves instead: it touches
@@ -441,6 +457,19 @@ def _white_row(dark, y, step, left, right, reach, top, bottom):
     return y
 
 
+def _crossing_a_gutter(across, cols):
+    """The model's boxes of type set across the columns that do cross one.  A
+    box inside a single column is that column's, whatever the model called it:
+    Anthon's page number at the foot of column 2 (ws leaf 1457), taken for type
+    across, put the columns' foot at its top edge — a cut through column 1's
+    last line, read twice.  The columns here are the whole body's, cut before
+    the across type is set aside; one column has no gutter to cross."""
+    gutters = [a for a, _ in cols[1:]]
+    if not gutters:
+        return list(across)
+    return [b for b in across if any(b[0] < g < b[2] for g in gutters)]
+
+
 def _bounds(dark, split, bottom, left, right, across, reach):
     """Where the columns begin and end: the type the model saw set across them
     (`figures.locate_answer`) is no column's — a block above the body's middle
@@ -506,6 +535,7 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     top, split, bottom, left, right = _frame(dark)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
     line = _line_height(dark, split, bottom, left, right)
+    across = _crossing_a_gutter(across, columns(dark, split, bottom, left, right, n_columns))
     begin, end = _bounds(dark, split, bottom, left, right, across, int(2 * line))
     cols = columns(dark, begin, end, left, right, n_columns)
     seen = _crossing_edges(dark, begin, end, left, right, [a for a, _ in cols[1:]])

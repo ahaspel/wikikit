@@ -36,6 +36,8 @@ from wikikit.scan.vocabulary import _render, render_table
 
 DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
+#: A formula as desk_render.js leaves it for KaTeX (its LaTeX escaped, so no "<").
+_TEX_RE = re.compile(r'<span class="tex">[^<]*</span>')
 
 
 def strip_id(volume: int, page: int, name: str) -> str:
@@ -150,7 +152,9 @@ def parity(texts: list[str]) -> list[tuple[str, str, str]]:
         # A link is not typography: links are resolved at export, from the
         # whole corpus, and the desk shows the text a reader sees.
         engine = _LINK_RE.sub(r"\1", _render(text)).strip()
-        desk = html.unescape(d["html"])
+        # A formula is typeset by the reader — KaTeX in the viewer and on the
+        # desk — so both sides hold the engine's stand-in for it.
+        desk = html.unescape(_TEX_RE.sub(table["math"][0], d["html"]))
         if d["leaks"] or desk != engine:
             out.append((text, desk, engine))
     return out

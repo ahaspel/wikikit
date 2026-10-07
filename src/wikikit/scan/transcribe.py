@@ -133,7 +133,7 @@ class Unread(Exception):
 #: lost about 60% of its text fails; letterspaced display capitals read
 #: about 0.9 and are flagged for a person.
 MIN_CHARS_PER_LINE_HEIGHT = 1.0
-_MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub)\b[^>]*>|" + PARA)
+_MARKUP = re.compile(r"\{\{[^|{}]*\||\}\}|'''|''|</?(?:sup|sub|math)\b[^>]*>|" + PARA)
 RUNNING_HEADER = "{{RunningHeader"
 _HEAD = re.compile(r"^\{\{RunningHeader\|([^{}]*)\}\}$")
 

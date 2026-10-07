@@ -23,6 +23,7 @@ from wikikit.corpora import book_root, current_corpus
 from wikikit.image_assets import local_image_filename
 from wikikit.scan import cut
 from wikikit.scan.cut import Item
+from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
 from wikikit.scan.transcribe import Unread, assemble_page, captions, read_item
@@ -45,14 +46,15 @@ def path_for(volume: int, page: int) -> Path:
 
 
 def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
-                    n_columns: int | None = None, replaces: str | None = None) -> dict:
+                    replaces: str | None = None) -> dict:
     """Scan -> a supplied page: cut, read every text item, assemble.  `scan`
     names the image it came from (e.g. an Internet Archive item and leaf).  A
     refused item is recorded and its reading left empty — the page is still
-    written, and the refusal is listed for a person to transcribe.  `replaces`:
-    as `build_payload`."""
+    written, and the refusal is listed for a person to transcribe.  The page
+    is cut as the book declares its layout (`wikikit.scan.layout`).
+    `replaces`: as `build_payload`."""
     with metered() as finding:
-        cp = cut_page(img, n_columns=n_columns)
+        cp = cut_page(img, n_columns=layout_for(volume, page).columns)
     caps = captions(cp.plan.items)
     readings, refused, unread, rejected = {}, [], {}, {}
     with metered() as reading:
