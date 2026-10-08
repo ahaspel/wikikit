@@ -154,12 +154,15 @@ def refine(page: Image.Image, fig: dict, column: tuple[int, int]) -> dict:
 
 
 def column_of(fig: dict, columns: list[tuple[int, int]]) -> tuple[int, int]:
-    """The column a figure sits in — all of them if it spans a gutter (Anthon's
-    family tree, the width of the page: looked at inside one column, its crop
-    lost half the tree) or its centre falls outside every column."""
+    """The column a figure sits in — all of them if it spans the columns
+    (Anthon's family tree, the width of the page: looked at inside one column,
+    its crop lost half the tree) by the cutter's own test, or if its centre
+    falls outside every column.  A box drawn a little past a gutter is its
+    column's (EB1911 vol 24 p1051)."""
+    from wikikit.scan.cut import spans_columns
     whole = (min(a for a, _ in columns), max(b for _, b in columns))
     x0, _, x1, _ = fig["box"]
-    if any(x0 < a < x1 for a, _ in columns[1:]):
+    if spans_columns(fig["box"], columns):
         return whole
     cx = (x0 + x1) / 2
     return next(((a, b) for a, b in columns if a <= cx < b), whole)

@@ -295,6 +295,16 @@ def test_an_inset_does_not_grow_up_through_the_text_above_it():
     assert fig.box[1] >= 1400 - LEAD, fig.box                         # not up through the type above
 
 
+def test_a_figure_drawn_a_little_past_the_gutter_stays_in_its_column():
+    # EB1911 vol 24 p1051: a column-2 figure whose box crosses the gutter by a
+    # few dozen pixels is column 2's — not a band across the page
+    from wikikit.scan.cut import spans_columns
+    cols = [(60, 860), (940, 1740)]
+    assert not spans_columns([890, 300, 1700, 900], cols)          # 50 px over: column 2's
+    assert spans_columns([100, 300, 1700, 900], cols)              # across both: a band
+    assert not spans_columns([100, 300, 820, 900], cols)           # column 1's
+
+
 def test_a_figure_across_the_columns_mid_page_has_columns_above_and_below():
     # two columns of type, a figure across both in the middle of the page
     # (Anthon's family tree, leaf 1450): read the columns above, the figure,

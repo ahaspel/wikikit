@@ -524,6 +524,26 @@ def _distinct(figures):
     return out
 
 
+#: A figure spans the columns only if it reaches this share of a column's
+#: width into the columns on BOTH sides of a gutter.
+SPAN_REACH = 0.25
+
+
+def spans_columns(box, cols) -> bool:
+    """Does a located figure span the columns (a band of its own, the columns
+    above and below it), rather than sit in one?  Its box must reach well into
+    both sides of a gutter: a column's figure whose box the model drew a few
+    dozen pixels past the gutter (EB1911 vol 24 p1051) is that column's — read
+    as spanning, it took the other column's text into its image and the page
+    below it was read across both columns at once."""
+    x0, _, x1, _ = box
+    for (a0, a1), (b0, b1) in zip(cols, cols[1:]):
+        g = b0
+        if g - x0 >= SPAN_REACH * (a1 - a0) and x1 - g >= SPAN_REACH * (b1 - b0):
+            return True
+    return False
+
+
 def _crossing_a_gutter(across, cols):
     """The model's boxes of type set across the columns that do cross one.  A
     box inside a single column is that column's, whatever the model called it:
@@ -627,7 +647,7 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     whole = columns(dark, split, bottom, left, right, n_columns)
     gutters = [a for a, _ in whole[1:]]
     across = _crossing_a_gutter(across, whole)
-    spanning = [f for f in figures if any(f["box"][0] < g < f["box"][2] for g in gutters)]
+    spanning = [f for f in figures if spans_columns(f["box"], whole)]
     in_column = [f for f in figures if f not in spanning]
     blocks = _blocks_across(dark, split, bottom, left, right, across, spanning, int(2 * line))
     counts: dict[tuple[int, str], int] = {}

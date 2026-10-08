@@ -63,7 +63,8 @@ class Meter:
             self.tokens[f] += getattr(usage, f, 0) or 0
 
     def record(self) -> dict:
-        return {"model": MODEL, "calls": self.calls, **self.tokens}
+        # read now, at the standard rate; a batch's record says True
+        return {"model": MODEL, "batch": False, "calls": self.calls, **self.tokens}
 
 
 _meters: list[Meter] = []

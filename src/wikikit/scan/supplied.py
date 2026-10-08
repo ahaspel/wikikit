@@ -21,13 +21,13 @@ from PIL import Image
 
 from wikikit.corpora import book_root, current_corpus
 from wikikit.image_assets import local_image_filename
-from wikikit.scan import cut
+from wikikit.scan import carry, cut
 from wikikit.scan.cut import Item
 from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
 from wikikit.scan.transcribe import Unread, assemble_page, captions, read_item
-from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
+from wikikit.source_pages import SUPPLIED_DIR, fetched_text, page_filename, volume_dir
 
 
 def page_id(volume: int, page: int) -> str:
@@ -112,8 +112,18 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
     }
     if replaces:
         payload["provenance"]["replaces"] = replaces
+    carry_from_fetched(payload)
     reassemble(payload)
     return payload
+
+
+def carry_from_fetched(payload: dict) -> None:
+    """Record the editorial markup of the fetched page this one replaces —
+    its section tags and links (`wikikit.scan.carry`) — to be laid on at
+    every assembly.  A page the book never fetched carries nothing."""
+    fetched = fetched_text(payload["volume"], payload["page_number"])
+    if fetched is not None:
+        payload["provenance"]["carried"] = carry.marks(fetched)
 
 
 def items_of(payload: dict) -> list[Item]:
@@ -125,9 +135,13 @@ def reassemble(payload: dict) -> dict:
     """`raw_text` from the readings — after transcription, and after every
     correction a proofreader makes to a reading."""
     p = payload["provenance"]
-    payload["raw_text"] = assemble_page(items_of(payload), p["readings"], p["figure_files"],
-                                        p["column_width"], level=level(payload),
-                                        legacy_captions=not p.get("captions_marked"))
+    raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
+                        p["column_width"], level=level(payload),
+                        legacy_captions=not p.get("captions_marked"))
+    if p.get("carried") is not None:
+        raw, unplaced = carry.lay_on(raw, p["carried"])
+        p["carried_unplaced"] = unplaced          # reported, never dropped silently
+    payload["raw_text"] = raw
     return payload
 
 

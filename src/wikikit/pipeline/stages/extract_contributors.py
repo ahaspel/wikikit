@@ -28,7 +28,7 @@ def _first_footer(text: str):
     element render producer wants."""
     return next(_iter_footers(text), None)
 
-def _unwrap_templates(s: str) -> str:
+def unwrap_templates(s: str) -> str:
     """Unwrap an inline presentation template to its DISPLAY text — the LAST
     positional arg: ``{{sc|Wi}}`` → ``Wi``, ``{{Fs|108%|K.}}`` → ``K.``.
 
@@ -53,7 +53,7 @@ def _clean_footer_initials(initials: str) -> list[str]:
     # Decode HTML entities
     s = s.replace("&thinsp;", "").replace("&nbsp;", " ")
     # Unwrap wiki templates (e.g. {{small-caps|He}} → He, {{Fs|108%|K.}} → K.)
-    s = _unwrap_templates(s)
+    s = unwrap_templates(s)
     s = re.sub(r"\{\{[^{}]*\}\}", "", s)
     s = re.sub(r"\{\{[^{}]*", "", s)
     s = re.sub(r"\}\}", "", s)
@@ -83,7 +83,7 @@ def _parse_contributors(template_content: str) -> list[dict[str, str]]:
     # mid-token, so "C. {{sc|Wi}}." would parse as a bare "C." and collide
     # Pitcher with Crewe.  The content is brace-balanced upstream (_iter_footers),
     # so the whole template survives intact to be unwrapped here.
-    template_content = _unwrap_templates(template_content)
+    template_content = unwrap_templates(template_content)
     template_content = re.sub(r"\[\[[^\]|]*\|([^\]]*)\]\]", r"\1", template_content)
     parts = template_content.split("|")
 
@@ -175,7 +175,7 @@ def _normalize_initials(initials: str) -> str:
     # Strip leaked wiki/HTML markup.  Unwrap `{{X|Y}}` template forms
     # to their inner text first (so `{{unicode|✠}}` → `✠`), then drop
     # any remaining template residue and HTML tags.
-    s = _unwrap_templates(initials)
+    s = unwrap_templates(initials)
     s = re.sub(r"\{\{[^{}]*", "", s)
     s = strip_html_tags(s)
     s = re.sub(r"\}\}", "", s)

@@ -151,6 +151,16 @@ def _scan_dir(base: Path, volume: int | None, want: set[int] | None,
     return out
 
 
+def fetched_text(volume: int, page: int, raw_dir: Path | str = RAW_DIR) -> str | None:
+    """The FETCHED page's text as filed — no supplied page laid over it — or
+    None if the book fetched no such page.  For the markup a supplied page
+    carries over from the page it replaces (`wikikit.scan.carry`)."""
+    path = volume_dir(volume, raw_dir) / page_filename(volume, page)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8")).get("raw_text")
+
+
 def load_payloads(volume: int | None = None, *,
                   pages: Iterable[int] | None = None,
                   raw_dir: Path | str = RAW_DIR,
