@@ -37,6 +37,13 @@ SAME = [
     # a formula as a compact grid, its connectors in cells of their own
     "represented as\n\n{| class=\"chem-grid\"\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n"
     "|rowspan=3|│||||│||||│\n|-\n|||NMe||||CHOH\n|-\n|||│||||║\n|-\n|colspan=5|Tropine\n|}\n\nThese",
+    # lines the book keeps as lines: verse in stanzas, centred, in small type,
+    # with inline constructs and a source on its line; a list set line by line
+    "Before the verse.\n\n<poem>line one\nline two\n\nstanza two</poem>\n\nAfter it.",
+    "{{block center|<poem>line one\nline two</poem>}}",
+    "{{smaller block|<poem>line one\nline two</poem>}}",
+    "<poem>'''bold''' and ''it'' {{sc|Sc}} x<sup>2</sup> and <math>a^2</math>\n{{right|—Author}}</poem>",
+    "<poem>Pike . . . . Turkey . . See ''Dir'aa''.\nPint . . . U. States . 0·8325 imperial pint.</poem>",
 ]
 
 
@@ -44,6 +51,12 @@ def test_a_table_is_laid_out_as_the_engine_lays_it_out():
     [shown] = desk_render(["A\n\n{| style=\"margin:auto\"\n|x||rowspan=2|y\n|-\n|z\n|}\n\nB"], render_table())
     assert shown["leaks"] == []
     assert '<td rowspan="2">y</td>' in shown["html"] and shown["html"].startswith("A<p><table")
+
+
+def test_a_poem_keeps_its_lines_where_a_paragraph_joins_them():
+    [shown] = desk_render(["one\ntwo\n\n<poem>one\ntwo</poem>"], render_table())
+    assert shown["leaks"] == []
+    assert shown["html"].startswith("one two<p>") and "one<br>two" in shown["html"]
 
 
 def test_a_table_with_attributes_outside_the_vocabulary_leaks():

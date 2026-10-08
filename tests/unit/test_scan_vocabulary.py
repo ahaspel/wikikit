@@ -17,6 +17,12 @@ def test_every_construct_renders_through_the_engine_and_nothing_leaks():
     assert table["paragraph"] == "<p>"
 
 
+def test_a_poem_is_measured_as_lines_the_engine_keeps():
+    assert render_table()["poem"] == {"open": '<blockquote class="verse">', "line": "<br>",
+                                      "stanza": "<p>", "close": "</blockquote>"}
+    assert "<poem>" in prompt_text()
+
+
 def test_math_is_lifted_out_for_the_reader_to_typeset():
     assert render_table()["math"] == ["«MATHPH»"]
     assert "no HTML but <sup>, <sub>, <math>," in prompt_text()

@@ -15,7 +15,8 @@
   }
 
   // Template constructs are `{{name|body}}`; the others are spelled out.
-  const SPELLED = { bold: true, italic: true, sup: true, sub: true, math: true, paragraph: true };
+  const SPELLED = { bold: true, italic: true, sup: true, sub: true, math: true, paragraph: true,
+                    poem: true };
 
   // A formula, lifted out whole as the engine lifts it, comes back as a span
   // of its (escaped) LaTeX for the page to typeset with KaTeX, as the viewer
@@ -83,6 +84,18 @@
     return (open || table.table.open[""]) + trs + table.table.close;
   }
 
+  // A block of lines (<poem>): each line rendered as running text is, joined
+  // by what the engine was measured to put between two lines and between two
+  // stanzas (the table's "poem" entry).
+  function linesHtml(body, table, tex, leaks) {
+    const p = table.poem;
+    return p.open + body.replace(/^\n+|\n+$/g, "").split(/\n[ \t]*\n\s*/).map(stanza =>
+      stanza.split("\n").map(line =>
+        inline(templates(line, table).split(END).join(""), table, tex, leaks).trim()
+      ).join(p.line)
+    ).join(p.stanza) + p.close;
+  }
+
   function render(text, table) {
     let t = String(text).replace(/\r/g, "").trim();
     t = escapeHtml(t);
@@ -97,8 +110,17 @@
       t = t.replace(new RegExp("&lt;" + tag + "&gt;([\\s\\S]*?)&lt;\\/" + tag + "&gt;", "g"),
                     (m, x) => table[tag][0] + x + table[tag][1]);
     }
-    // tables, lifted out whole: a block of their own
     const leaks = [];
+    // blocks of lines, lifted out whole: their newlines are lines, not spaces
+    // (a table measured before the engine kept lines has none: shown as typed)
+    const poems = [];
+    if (table.poem) {
+      t = t.replace(/&lt;poem&gt;([\s\S]*?)&lt;\/poem&gt;/g, (m, body) => {
+        poems.push(linesHtml(body, table, tex, leaks));
+        return "\u0005" + (poems.length - 1) + "\u0005";
+      });
+    }
+    // tables, lifted out whole: a block of their own
     const tables = [];
     t = t.replace(/(^|\n)\{\|([^\n]*)\n([\s\S]*?)\n\|\}(?=\n|$)/g, (m, lead, attrs, body) => {
       tables.push(tableHtml(attrs, body, table, tex, leaks));
@@ -112,7 +134,9 @@
       const lone = p.trim().match(/^\u0004(\d+)\u0004$/);
       return lone ? tables[+lone[1]] : inline(p, table, tex, leaks);
     });
-    return { html: out.filter(p => p !== "").join(table.paragraph), leaks: leaks };
+    const html = out.filter(p => p !== "").join(table.paragraph)
+      .replace(/\u0005(\d+)\u0005/g, (m, i) => poems[+i]);
+    return { html: html, leaks: leaks };
   }
 
   const api = { render: render };

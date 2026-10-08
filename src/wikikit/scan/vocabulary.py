@@ -13,6 +13,7 @@ a reason to grow a producer.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -40,12 +41,21 @@ VOCABULARY: tuple[Construct, ...] = (
               "a display formula set apart on its own line, centred: one display, one block"),
     Construct("math", "<math>", "</math>",
               "a mathematical formula or symbol, in LaTeX, inline or inside a display"),
+    Construct("poem", "<poem>", "</poem>",
+              "verse, or any run of lines the book keeps as lines (a list set line by line, a "
+              "recipe, entries joined by leaders): one printed line to a line, a blank line "
+              "between stanzas; centred, inside {{block center|…}}"),
 )
 
 #: Constructs the engine's chain lifts out whole for the reader to typeset
 #: (KaTeX in the viewer and on the desk): their content never reaches the
 #: inline render, which shows a stand-in.
 TYPESET = frozenset({"math"})
+#: Constructs whose LINES the engine keeps: not an open/close pair around text
+#: but a block of lines, measured as one — its opening, the break between two
+#: lines, the break between two stanzas, its close.  The desk lays it out
+#: (desk_render.js) from those measurements.
+LINES = frozenset({"poem"})
 #: The HTML among the constructs: the only HTML the prompt allows.
 _HTML = [c.open for c in VOCABULARY if c.open.startswith("<")]
 
@@ -89,13 +99,27 @@ _PROBE = "QQPROBEQQ"
 
 
 def _render(wikitext: str) -> str:
-    """One snippet through the engine's own chain, as an article body is."""
+    """One snippet through the engine's own chain, as an article body is —
+    with the body's block forms decoded (a verse is a blockquote only there)."""
     from wikikit.db.models import SourcePage
     from wikikit.pipeline.stages.elements import ElementContext, process_elements
     from wikikit.pipeline.stages.preprocess import stream_with_keys
     from wikikit.render.inline import decode_inline
     stream, _, _ = stream_with_keys([SourcePage(volume=1, page_number=1, wikitext=wikitext)], 1)
-    return decode_inline(process_elements(stream, ElementContext(volume=1)))
+    return decode_inline(process_elements(stream, ElementContext(volume=1)), body_blocks=True)
+
+
+def _measure_lines(c: Construct) -> dict:
+    """A block of lines as the engine renders it, set as a paragraph of its
+    own: {"open", "line", "stanza", "close"} — the html before its first line,
+    between two lines, between two stanzas, after its last."""
+    para = _render(f"A{PARAGRAPH}Z").removeprefix("A").removesuffix("Z")
+    html = _render(f"A{PARAGRAPH}{c.open}{_PROBE}1\n{_PROBE}2\n\n{_PROBE}3{c.close}{PARAGRAPH}Z")
+    body = html.removeprefix("A" + para).removesuffix(para + "Z")
+    parts = re.split(f"{_PROBE}[123]", body)
+    if len(parts) != 4:
+        raise ValueError(f"the engine no longer keeps the lines of {c.name}: {html!r}")
+    return dict(zip(("open", "line", "stanza", "close"), parts))
 
 
 def render_table() -> dict:
@@ -114,6 +138,9 @@ def render_table() -> dict:
             if _PROBE in stand_in or not stand_in:
                 raise ValueError(f"the engine no longer lifts {c.name} out: {html!r}")
             table[c.name] = [stand_in]
+            continue
+        if c.name in LINES:
+            table[c.name] = _measure_lines(c)
             continue
         head, sep, tail = html.partition(_PROBE)
         if not sep:
