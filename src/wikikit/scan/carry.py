@@ -50,6 +50,11 @@ def _headword_after(body: str, i: int) -> str | None:
                         break
                 else:
                     i += 1
+        elif body.startswith("<section", i):
+            # the section ended before any headword: it is headless (vol 26
+            # p464, TARTAGLIA's tail in fine print) — the next bold run is the
+            # NEXT section's
+            return None
         elif body[i] == "<":
             end = body.find(">", i)
             i = n if end < 0 else end + 1
@@ -131,6 +136,10 @@ def lay_on(raw_text: str, page_marks: list[dict] | None) -> tuple[str, list[dict
     body = raw_text[start:foot]
     bold_runs = list(_BOLD.finditer(body))
     out, cursor, pending, unplaced = [], 0, [], []
+    # where the last begin was placed: a headword opens one section, so the
+    # next begin looks past it — else SEWERAGE, whose letters start with
+    # SEWER's, takes SEWER's run and leaves SEWER's section empty
+    opened = -1
     for i, mark in enumerate(page_marks):
         if mark["kind"] == "end":
             pending.append(mark["markup"])
@@ -142,7 +151,7 @@ def lay_on(raw_text: str, page_marks: list[dict] | None) -> tuple[str, list[dict
                 at = None
                 # the page's bold runs, found from its top: a cursor left inside a
                 # run (a link placed on a headword) must not pair its closing quotes
-                for b in (b for b in bold_runs if b.start() >= cursor):
+                for b in (b for b in bold_runs if b.start() >= cursor and b.start() > opened):
                     if _letters(b.group(1)).startswith(mark["headword"][:20]) or \
                             mark["headword"].startswith(_letters(b.group(1))[:20] or "\0"):
                         at = b.start()
@@ -154,6 +163,8 @@ def lay_on(raw_text: str, page_marks: list[dict] | None) -> tuple[str, list[dict
             out.append("".join(pending) + mark["markup"])
             pending = []
             cursor = at
+            if mark["headword"]:        # a headless begin opens no headword
+                opened = at
             continue
         m = _pattern(mark["text"]).search(body, cursor) if mark["text"] else None
         if m is None:

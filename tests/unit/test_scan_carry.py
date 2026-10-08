@@ -41,6 +41,32 @@ def test_a_headword_is_found_inside_a_link_and_past_nested_templates():
     assert [m["headword"] for m in marks(fetched) if m["kind"] == "begin"] == ["STILESEZRA", "STILLICIDIUM"]
 
 
+def test_a_headword_opens_one_section_even_when_the_next_begins_with_it():
+    # vol 24 p765: SEWER, then SEWERAGE — whose letters start with SEWER's.
+    # SEWERAGE's begin must not take SEWER's run, emptying SEWER's section
+    # and giving the two articles one id.
+    fetched = ("<section begin=\"s3\" />'''SEWER,''' a large drain.\n<section end=\"s3\" />\n"
+               "<section begin=\"s4\" />'''SEWERAGE,''' a general term.\n<section end=\"s4\" />")
+    ours = "'''SEWER,''' a large drain.\n\n'''SEWERAGE,''' a general term."
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == []
+    assert out.startswith("<section begin=\"s3\" />'''SEWER,'''")
+    assert "drain.\n\n<section end=\"s3\" /><section begin=\"s4\" />'''SEWERAGE,'''" in out
+
+
+def test_a_section_of_templated_words_is_headless():
+    # vol 26 p464: s1 is the last article's tail in {{EB1911 Fine Print|…}};
+    # its headword is not TARTAN, which is past its end, in s2
+    fetched = ("<section begin=\"s1\" />{{EB1911 Fine Print|Tartaglia's own account.}}<section end=\"s1\" />\n"
+               "<section begin=\"s2\" />'''TARTAN''' (from F.)<section end=\"s2\" />")
+    assert [m["headword"] for m in marks(fetched) if m["kind"] == "begin"] == ["", "TARTAN"]
+    ours = "{{smaller block|Tartaglia's own account.}}\n\n'''TARTAN''' (from F.)"
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == []
+    assert out.startswith("<section begin=\"s1\" />{{smaller block|Tartaglia")
+    assert "<section end=\"s1\" /><section begin=\"s2\" />'''TARTAN'''" in out
+
+
 def test_a_page_without_marks_is_untouched():
     assert lay_on(OURS, []) == (OURS, [])
     assert lay_on(OURS, None) == (OURS, [])
