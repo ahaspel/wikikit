@@ -51,6 +51,48 @@ def test_figures_are_regenerated_from_the_scan(tmp_path, monkeypatch):
     assert crop.convert("L").getpixel((130, 90)) == 0           # the picture is in it
 
 
+def _reading_stub(monkeypatch, read):
+    def fake(level, item, is_caption=False):
+        read.append(item.name)
+        return f"read again: {item.name}"
+    monkeypatch.setattr(supplied, "read_item", fake)
+
+
+def test_a_named_strip_is_read_again_and_the_rest_kept(monkeypatch):
+    read = []
+    _reading_stub(monkeypatch, read)
+    p = payload()
+    p["provenance"]["refused"] = ["c1s2"]
+    p["provenance"]["checked"] = {"c1s1": True, "c1s2": True}
+    assert supplied.reread(p, Image.new("RGB", (600, 450), "white"), names=["c1s2"]) == ["c1s2"]
+    pv = p["provenance"]
+    assert read == ["c1s2"] and pv["refused"] == []
+    assert pv["readings"]["c1s1"] == "¶\n'''abacus''' (ab′ạ-kus), ''n.''"       # kept, as was its check
+    assert "c1s1" in pv["checked"] and "c1s2" not in pv["checked"]
+    assert "read again: c1s2" in p["raw_text"]
+    assert pv["reread"][0]["names"] == ["c1s2"] and "reread 1" in pv["usage"]
+
+
+def test_a_recut_reads_only_the_strips_whose_boxes_moved(monkeypatch):
+    # the head the cutter once took from the margin now reaches lower: the head
+    # and the strip under it move; the strip below the figure does not
+    from wikikit.scan import cut
+    from wikikit.scan.cut import Item, Plan
+    from wikikit.scan.layout import PageLayout
+    read = []
+    _reading_stub(monkeypatch, read)
+    monkeypatch.setattr(supplied, "layout_for", lambda v, p: PageLayout(columns=1))
+    monkeypatch.setattr(cut, "plan", lambda img, figures, **kw: Plan(0.0, [
+        Item("head", (0, 0, 600, 45), 0, "head"), Item("text", (0, 45, 300, 200), 1, "c1s1"),
+        Item("figure", (20, 200, 280, 380), 1, "c1f1"), Item("text", (20, 380, 280, 410), 1, "c1s2")]))
+    p = payload()
+    p["provenance"]["figures"] = []
+    names = supplied.reread(p, Image.new("RGB", (600, 450), "white"), recut=True)
+    assert names == ["head", "c1s1"] and read == ["head", "c1s1"]
+    assert p["provenance"]["readings"]["c1s2"] == "{{c|Capital of the Parthenon.}}"
+    assert p["provenance"]["items"][0]["box"] == [0, 0, 600, 45]
+
+
 def test_a_supplied_page_round_trips(tmp_path, monkeypatch):
     (tmp_path / "book.env").write_text("")
     monkeypatch.chdir(tmp_path)

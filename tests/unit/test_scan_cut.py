@@ -209,14 +209,22 @@ def test_a_rule_between_the_columns_is_not_type_across_them():
 
 # ── the running head: the first line of type, and nothing else ──────────────
 
-def head_page(tint=0, edge=False, rule=True, dark_edge=False):
+def head_page(tint=0, edge=False, rule=True, dark_edge=False, shade=False):
     """A running head with a rule under it, then rows set closer to the head
     than to each other — where "the largest gap near the top" falls AFTER the
     first row.  `tint` greys the paper (a toned scan); `edge` darkens a faint
     band along the image's top (the scan's edge); `dark_edge` a dark one, as
-    dark as Anthon's (leaf 401: 14% ink in rows 0-29)."""
+    dark as Anthon's (leaf 401: 14% ink in rows 0-29); `shade` lays mottled
+    grey bands across the margin below the edge, darker than the ink threshold
+    but nowhere black — EB1911 vol 28's tinted tops and show-through (p487)."""
     im = Image.new("L", (W, H), 255 - tint)
     d = ImageDraw.Draw(im)
+    if shade:
+        rng = np.random.default_rng(13)
+        for y0, y1 in ((45, 70), (80, 105)):
+            for _ in range(5000):
+                x, y = int(rng.integers(0, W)), int(rng.integers(y0, y1))
+                d.point((x, y), fill=INK - 30)
     if dark_edge:
         rng = np.random.default_rng(12)
         for _ in range(8000):
@@ -257,6 +265,11 @@ def test_the_scans_edge_is_not_the_head():
 
 def test_a_dark_edge_touching_the_images_top_is_not_the_head():
     h = _head(head_page(dark_edge=True))
+    assert 194 <= h.box[3] <= 225, h.box
+
+
+def test_a_shaded_margin_above_the_head_is_paper_not_the_head():
+    h = _head(head_page(shade=True))
     assert 194 <= h.box[3] <= 225, h.box
 
 

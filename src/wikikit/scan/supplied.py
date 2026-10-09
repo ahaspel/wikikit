@@ -74,6 +74,73 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
                          rejected, replaces, cp.across)
 
 
+def reread(payload: dict, img: Image.Image, names: tuple[str, ...] | list[str] = (),
+           recut: bool = False) -> list[str]:
+    """Read again only what is at fault, keeping every other reading.
+
+    `names`: the strips to read again (a refused one, one that held a list
+    the vocabulary could not then keep as lines).  `recut`: the page cut again
+    — from its recorded figures and type across, as the cutter now cuts (a
+    running head it once missed) — and a strip read only where its box moved
+    or it is new; a strip whose box is unchanged keeps its reading, and with it
+    any proofreader's check.  The re-read strips' refusals and unread reasons
+    are replaced, their tokens added to the page's usage, and the re-read
+    recorded.  Returns the names read."""
+    p = payload["provenance"]
+    v, pg = payload["volume"], payload["page_number"]
+    if recut:
+        plan = cut.plan(img, p["figures"], angle=p["angle"], n_columns=layout_for(v, pg).columns,
+                        across=p.get("across", []))
+        was = {(i["kind"], tuple(i["box"])): i["name"] for i in p["items"]}
+        rename = {}
+        for it in plan.items:
+            old = was.get((it.kind, tuple(it.box)))
+            if old is not None and old not in names:
+                rename[it.name] = old
+        todo = [it for it in plan.items if it.kind != "figure" and it.name not in rename]
+        moved = lambda d: {new: d[old] for new, old in rename.items() if old in d}
+        p["readings"] = moved(p["readings"])
+        p["checked"] = moved(p.get("checked", {}))
+        p["rejected"] = moved(p.get("rejected", {}))
+        p["unread"] = moved(p.get("unread", {}))
+        p["refused"] = [new for new, old in rename.items() if old in p.get("refused", [])]
+        p["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
+                      for it in plan.items]
+        p["figure_files"] = {it.name: figure_file(v, pg, it.name) for it in plan.items if it.kind == "figure"}
+        p["disagreements"] = {str(k): list(x) for k, x in plan.disagreements.items()}
+        items = plan.items
+    else:
+        items = items_of(payload)
+        todo = [it for it in items if it.name in names]
+        for n in names:
+            p.get("checked", {}).pop(n, None)
+    level_img = cut.deskew(img, p["angle"])
+    caps = captions(items)
+    with metered() as reading:
+        for it in todo:
+            p["refused"] = [n for n in p.get("refused", []) if n != it.name]
+            p.get("unread", {}).pop(it.name, None)
+            p.get("rejected", {}).pop(it.name, None)
+            try:
+                p["readings"][it.name] = read_item(level_img, it, is_caption=it.name in caps)
+            except Refused:
+                p["readings"][it.name] = ""
+                p["refused"].append(it.name)
+            except Unread as e:
+                p["readings"][it.name] = ""
+                p.setdefault("unread", {})[it.name] = e.reason
+                if e.answer:
+                    p.setdefault("rejected", {})[it.name] = e.answer
+    # a record of its own: a usage record carries one rate (`Meter.record`),
+    # and the page's first reading may have been a batch's
+    usage = p.setdefault("usage", {})
+    usage[f"reread {len(p.get('reread', [])) + 1}"] = reading.record()
+    p.setdefault("reread", []).append({"date": date.today().isoformat(), "model": MODEL, "recut": recut,
+                                       "names": [it.name for it in todo]})
+    reassemble(payload)
+    return [it.name for it in todo]
+
+
 def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: cut.Plan,
                   figures: list[dict], readings: dict, refused: list, unread: dict,
                   usage: dict, rejected: dict | None = None,

@@ -4,12 +4,18 @@ source has only as raw OCR, or not at all.  Run from the book's checkout:
     uv run python -m wikikit.scan VOLUME PAGE [PAGE ...] [--force]
     uv run python -m wikikit.scan VOLUME PAGE [PAGE ...] --batch [--wait]
     uv run python -m wikikit.scan --batch [--wait]        # just advance the run
+    uv run python -m wikikit.scan VOLUME PAGE --strips c1s2,c2s1   # read those strips again
+    uv run python -m wikikit.scan VOLUME PAGE [PAGE ...] --recut   # cut again, read what moved
 
 For each page: fetch its scan (the book's ``page_scan``, cached in data/scans/,
 never committed), cut it, locate its figures, read every text item, write
 data/supplied/vol_NN/volNN-pagePPPP.json, and regenerate its figure crops into
 data/images/.  A page already supplied is left alone unless --force: its
 readings may hold a proofreader's corrections.
+
+--strips and --recut mend a page already supplied, keeping every reading not
+at fault (`supplied.reread`): the named strips read again; or the page cut
+again as the cutter now cuts, and only the strips whose boxes moved read.
 
 --batch sends the same calls through the Batch API (half the price, answered
 within a day): the pages join the run in data/derived/scan_batch/, one step is
@@ -48,7 +54,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--replaces", default=None, metavar="REASON",
                     help="the fetched pages were found bad as data, proofread or not: why "
                          "(recorded; the transcription then stands in for them)")
+    ap.add_argument("--strips", default=None, metavar="NAMES",
+                    help="comma-separated strips of a supplied page to read again, the rest kept")
+    ap.add_argument("--recut", action="store_true",
+                    help="cut supplied pages again and read only the strips whose boxes moved")
     a = ap.parse_args(argv)
+    if a.strips or a.recut:
+        names = [n.strip() for n in (a.strips or "").split(",") if n.strip()]
+        for page in a.pages:
+            payload = supplied.read(a.volume, page)
+            img = scan(a.volume, page)
+            done = supplied.reread(payload, img, names=names, recut=a.recut)
+            path = supplied.write(payload)
+            figs = supplied.materialize_figures(payload, img)
+            print(f"{report(payload, figs)}; read again {done or 'nothing'}; written to {path}", flush=True)
+        return 0
     todo = []
     for page in a.pages:
         if supplied.path_for(a.volume, page).exists() and not a.force:

@@ -26,6 +26,19 @@ def test_sections_and_links_go_back_where_their_words_are():
     assert body.endswith('<section end="s3" />')
 
 
+def test_an_article_link_goes_on_its_printed_words_either_way_it_was_filed():
+    # vol 25 p109 (SILICA): {{EB1911 article link|nosc=x|onyx|Onyx}} prints its
+    # FIRST positional argument; nosc=x is an option, not words; and a link filed
+    # the other way round is found by its other argument
+    fetched = ("{{EB1911 article link|nosc=x|onyx|Onyx}} and {{EB1911 article link|Sard|sard}}, "
+               "with {{1911link|Opal|opal}} ")
+    ours = "onyx and sard, with opal (qq.v.)"
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == []
+    assert out == ("{{EB1911 article link|nosc=x|onyx|Onyx}} and {{EB1911 article link|Sard|sard}}, "
+                   "with {{1911link|Opal|opal}} (qq.v.)")
+
+
 def test_a_mark_whose_words_are_not_found_is_reported():
     ours = OURS.replace("see Etruria", "see the region")
     out, unplaced = lay_on(ours, marks(FETCHED))
@@ -65,6 +78,52 @@ def test_a_section_of_templated_words_is_headless():
     assert unplaced == []
     assert out.startswith("<section begin=\"s1\" />{{smaller block|Tartaglia")
     assert "<section end=\"s1\" /><section begin=\"s2\" />'''TARTAN'''" in out
+
+
+def test_a_shoulder_heading_goes_back_where_it_stood_and_ours_gives_way():
+    # vol 24 p768 (SEWERAGE): Wikisource sets {{EB1911 Shoulder HeadingFine|Traps.}}
+    # between two lines; our transcriber, with no shoulder construct, set it as
+    # bold italic at the paragraph's start
+    fetched = ("litate clearing when a stoppage occurs.\n{{EB1911 Shoulder HeadingFine|Traps.}}\n"
+               "Their object is to hold a quantity of water sufficient\nto prevent the access of foul air.")
+    ours = ("litate clearing when a stoppage occurs.\n\n'''''Traps.''''' Their object is to hold a quantity "
+            "of water sufficient to prevent the access of foul air.")
+    [mark] = [m for m in marks(fetched) if m["kind"] == "shoulder"]
+    assert mark["letters"] == "TRAPS" and mark["before"] == "when a stoppage occurs."
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == []
+    assert "occurs.\n{{EB1911 Shoulder HeadingFine|Traps.}}\n" in out
+    assert "'''''Traps.'''''" not in out and "Their object is to hold" in out
+
+
+def test_a_shoulder_heading_with_no_rendering_of_ours_is_still_laid_on():
+    fetched = "the end of a line\n{{EB1911 Shoulder Heading|Gulleys.}}\nthe gulleys are made deep"
+    ours = "the end of a line the gulleys are made deep"
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == [] and out == "the end of a line\n{{EB1911 Shoulder Heading|Gulleys.}}\n the gulleys are made deep"
+
+
+def test_an_italic_phrase_in_running_text_is_not_taken_for_a_shoulder_heading():
+    # the fetched page has the words as running text too: ours are that text
+    fetched = "words before it\n{{EB1911 Shoulder Heading|Traps.}}\nwords after, and of ''Traps.'' we say more."
+    ours = "words before it words after, and of ''Traps.'' we say more."
+    out, _ = lay_on(ours, marks(fetched))
+    assert "''Traps.''" in out
+
+
+def test_a_margin_note_goes_before_a_headword_and_our_inline_copy_gives_way():
+    # vol 27 p941, VARIATIONS, CALCULUS OF: {{EB9 Margin Note}} stands before the
+    # headword; ours read the note inline, mid-sentence, beside its line
+    fetched = ('<section begin="s2" />{{EB9 Margin Note|Origin of the Calculus.}}\n'
+               "'''VARIATIONS, CALCULUS OF,''' in mathematics. The calculus\nof variations arose from "
+               "the attempts that were made by\nmathematicians in the 17th century")
+    ours = ("'''VARIATIONS, CALCULUS OF,''' in mathematics. The calculus of variations arose from the "
+            "attempts that were made by ''Origin of the Calculus.'' mathematicians in the 17th century")
+    out, unplaced = lay_on(ours, marks(fetched))
+    assert unplaced == []
+    assert out.startswith('<section begin="s2" />\n{{EB9 Margin Note|Origin of the Calculus.}}\n'
+                          "'''VARIATIONS, CALCULUS OF,'''")
+    assert "''Origin of the Calculus.''" not in out
 
 
 def test_a_page_without_marks_is_untouched():

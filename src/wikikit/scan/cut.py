@@ -97,9 +97,16 @@ RULE_HEIGHT = 15
 #: cropped close, is darker (the faintest measured, 0.04, sits well below).
 SCAN_EDGE = 0.01
 EDGE_INK = 0.08
+#: Type is black ink: its darkest pixels are darker than this (grey 18-64
+#: measured, a running head as sparse as WAVE's "WAVE  425" included); a tinted
+#: margin or the next leaf's type showing through is paper a shade darker
+#: (111-140), with none.  BLACK_SHARE is the least share of a band's ink that
+#: is black for the band to be type: type's measured 0.08 and up, paper's 0.00.
+BLACK = INK // 2
+BLACK_SHARE = 0.02
 
 
-def _head_split(dark, top, bottom):
+def _head_split(dark, top, bottom, black):
     """The running head is the first line of type; the head ends in the white
     after it — after a rule printed under it, which goes with the head.
 
@@ -108,9 +115,14 @@ def _head_split(dark, top, bottom):
     a running head keeps nothing else — the line would be lost.  A line is
     ink above the paper's floor nearby (a tinted scan has ink in every row),
     at least 6 pixels tall (a speck is not a line); ink standing down most of
-    the page (the binding's shadow) is no line's."""
-    body = dark[top:bottom] & ~(dark[top:bottom].mean(axis=0) > 0.5)
+    the page (the binding's shadow) is no line's; and a band with no black in
+    it is the paper — a tinted margin, the next leaf showing through (vol 28
+    p487: WEIGHING MACHINES's head lost to the margin above it) — not type."""
+    shadow = dark[top:bottom].mean(axis=0) > 0.5
+    body = dark[top:bottom] & ~shadow
     ink = body.sum(axis=1) / dark.shape[1]
+    black_rows = (black[top:bottom] & ~shadow).sum(axis=1)
+    ink_rows = body.sum(axis=1)
     window = np.lib.stride_tricks.sliding_window_view(np.pad(ink, FLOOR_REACH, mode="edge"),
                                                       2 * FLOOR_REACH + 1)
     lines = [(s, e) for s, e in runs(ink > window.min(axis=1) + 0.01) if e - s >= 6]
@@ -126,6 +138,11 @@ def _head_split(dark, top, bottom):
         # just below it, only a faint band is.
         return top + s < dark.shape[0] * SCAN_EDGE and (top + s == 0 or ink[s:e].max() < EDGE_INK)
 
+    def paper(line):                               # a shade, not ink: tint, show-through
+        s, e = line
+        return black_rows[s:e].sum() < BLACK_SHARE * max(1, ink_rows[s:e].sum())
+
+    lines = [ln for ln in lines if not paper(ln)]
     first = next((k for k, ln in enumerate(lines) if not (rule(ln) or edge(ln))), None)
     if first is None or first + 1 >= len(lines):
         return top
@@ -470,11 +487,14 @@ def _column_items(dark, top, bottom, a, b, figs, max_h):
     return items
 
 
-def _frame(dark):
-    """(top, head split, bottom, left, right) of the page's text block."""
+def _frame(grey):
+    """(top, head split, bottom, left, right) of the page's text block, from
+    the page's grey levels."""
+    dark = grey < INK
     top, bottom = _body_rows(dark)
     cols_any = np.where(dark[top:bottom].sum(axis=0) > (bottom - top) * 0.002)[0]
-    return top, _head_split(dark, top, bottom), bottom, int(cols_any.min()), int(cols_any.max()) + 1
+    return (top, _head_split(dark, top, bottom, grey < BLACK), bottom,
+            int(cols_any.min()), int(cols_any.max()) + 1)
 
 
 #: A printed column rule is narrower than this in any one row; type crossing a
@@ -614,9 +634,9 @@ def _crossing_edges(dark, begin, end, left, right, cuts) -> int:
 def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple[int, int]]:
     """The column extents of a deskewed page — as many as the book says it
     prints (`n_columns`), else as the ink shows (`columns`)."""
-    dark = np.asarray(level.convert("L")) < INK
-    _, split, bottom, left, right = _frame(dark)
-    return columns(dark, split, bottom, left, right, n_columns)
+    grey = np.asarray(level.convert("L"))
+    _, split, bottom, left, right = _frame(grey)
+    return columns(grey < INK, split, bottom, left, right, n_columns)
 
 
 def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
@@ -639,8 +659,9 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     middle of a page (Anthon leaf 1450), with columns above it and below."""
     if angle is None:
         angle = skew_angle(img)
-    dark = np.asarray(deskew(img.convert("L"), angle)) < INK
-    top, split, bottom, left, right = _frame(dark)
+    grey = np.asarray(deskew(img.convert("L"), angle))
+    dark = grey < INK
+    top, split, bottom, left, right = _frame(grey)
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
     line = _line_height(dark, split, bottom, left, right)
     figures = _distinct(figures)
