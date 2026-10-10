@@ -464,6 +464,17 @@ _SEE_STAMP_RE = re.compile(
     r"(?P<lead>(?:the\s+)?(?:articles?\s+(?:on\s+)?)?)"
     r"(?P<win>[^«»\x01\x03|.;:!?()\n]{1,80})")
 _SEE_SEG_SPLIT_RE = re.compile(r"(,|\s+and\s+)")
+# The same cue, ending the LEFT NEIGHBOUR of a small-capitals styler: the book
+# prints a cross-reference's NAME in small capitals ("see {{sc|Hydromechanics}}"),
+# which the walker produces as its own element — so the window above, which
+# sees one text run, never meets the name (131 such on 91 articles went
+# unlinked).  The small-caps producer reads this off `ctx.prev_marker`.
+_SEE_CUE_BEFORE_RE = re.compile(
+    r"\b(?P<cue>[Ss]ee\s+also|[Ss]ee|[Cc]f\.|[Cc]ompare)\s+"
+    r"(?:the\s+)?(?:articles?\s+(?:on\s+)?)?$")
+# An enumeration's separator, and a small-caps name stamped just before it.
+_SEE_ENUM_SEP_RE = re.compile(r",\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+")
+_SEE_NAME_STAMPED_RE = re.compile(r"«SC»«LN\[(?P<kind>see|see_also)\]:[^«]*«/LN»«/SC»$")
 
 
 def _stamp_see_windows(text: str) -> str:
@@ -1180,6 +1191,33 @@ def _strip_peel(raw):
     return tm.group(1).lower(), inner_raw, param_css
 
 
+def _see_name_in_small_caps(body, spec, ctx):
+    """A cross-reference's name, printed in small capitals after a see/cf./
+    compare cue ("see {{sc|Hydromechanics}}"): stamped as the see window would
+    stamp it, INSIDE the small capitals — the shape the source's own linked
+    ones take ({{sc|{{1911link|X}}}}).  The cue is the left neighbour's
+    (`ctx.prev_marker`); a centred small-caps heading, or content already
+    holding a marker (a link the source made), is left as it is.  Same kind,
+    same untrusted resolve policy as every see stamp."""
+    if ctx is None:
+        return body
+    name = body.strip()
+    if (not spec.get("sc") or spec.get("ctr") or not name[:1].isalpha()
+            or "«" in name or "\x01" in name or len(name) > 80):
+        return body
+    m = _SEE_CUE_BEFORE_RE.search(ctx.prev_marker or "")
+    if m is not None:
+        kind = "see_also" if "also" in m.group("cue").lower() else "see"
+    else:
+        # a later name of an enumeration: the left neighbour only a separator,
+        # the sibling before it a name this stamped ("see A, B and C")
+        before = _SEE_NAME_STAMPED_RE.search(ctx.prev2_marker or "")
+        if before is None or not _SEE_ENUM_SEP_RE.fullmatch(ctx.prev_marker or ""):
+            return body
+        kind = before.group("kind")
+    return f"«LN[{kind}]:{name}|{name}«/LN»"
+
+
 def _wrap_strip(raw, body, ctx):
     """STRIP wrap (a `_PR_WRAP` row): the template-form styler `{{center|…}}` / `{{block center|…}}`
     / `{{Fine block|…}}` / `{{csc|…}}` / ….  Style ⊥ content.  The peel already gave `body` the
@@ -1193,6 +1231,7 @@ def _wrap_strip(raw, body, ctx):
         name = re.match(r"\{\{\s*([^|{}]+?)\s*\}\}", raw).group(1).strip().lower()
         param_css = []
     spec = _TEMPLATE_STYLE_WRAPPERS[name]
+    body = _see_name_in_small_caps(body, spec, ctx)
     css = ";".join(c for c in [spec.get("css", ""), *param_css] if c)
     # A carried param on a tag-less script wrapper ({{Hebrew}} = {}) decorates an
     # inline glyph → SPAN, not the block DIV default.

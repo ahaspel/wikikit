@@ -1454,6 +1454,7 @@ def produce_tree(
     prev_label: str | None = None
     prev_marker: str = ""
     prev_raw: str = ""
+    prev2_marker: str = ""             # the sibling before the left neighbour
 
     for ph, ce in tree.items():
         # Recurse first — children's markers must be populated
@@ -1475,7 +1476,8 @@ def produce_tree(
         )
         handler = _PRODUCER_DISPATCH.get(ce.label, _passthrough_inner)
         sib_ctx = (replace(node_ctx, prev_label=prev_label,
-                           prev_marker=prev_marker, prev_raw=prev_raw)
+                           prev_marker=prev_marker, prev_raw=prev_raw,
+                           prev2_marker=prev2_marker)
                    if prev_label is not None else node_ctx)
         marker = handler(
             ce.raw, ce.inner_text, sib_ctx, legacy_inner_reg)
@@ -1500,6 +1502,7 @@ def produce_tree(
                 lambda: [(ph, c.marker) for ph, c in ce.inner_registry.items()])
 
         ce.marker = marker
+        prev2_marker = prev_marker
         prev_label, prev_marker, prev_raw = ce.label, marker, ce.raw
 
 

@@ -151,3 +151,44 @@ def test_extract_xrefs_deduplicates_same_target() -> None:
     results = _stamped("Aristotle (q.v.) wrote. Aristotle (q.v.) expanded.")
     assert len(results) == 1
     assert results[0]["normalized_target"] == "ARISTOTLE"
+
+
+# --- See + a name in small capitals: the small-caps producer stamps it ---
+#
+# The book prints a cross-reference's name in small capitals ("see
+# {{sc|Hydromechanics}}"); the walker produces it as its own element, so the
+# body producer's window never meets it.  The small-caps producer reads the cue
+# off its left neighbour (and, for an enumeration's later names, the sibling
+# before) and stamps the name inside the small capitals.
+
+
+def _chain(wikitext: str) -> str:
+    from wikikit.db.models import SourcePage
+    from wikikit.pipeline.stages.elements import ElementContext, process_elements
+    from wikikit.pipeline.stages.preprocess import stream_with_keys
+    stream, _, _ = stream_with_keys([SourcePage(volume=1, page_number=1, wikitext=wikitext)], 1)
+    return process_elements(stream, ElementContext(volume=1))
+
+
+def test_see_with_a_small_caps_name_is_stamped_inside_it() -> None:
+    out = _chain("the equation of continuity (see {{sc|Hydromechanics}}) is")
+    assert "(see «SC»«LN[see]:Hydromechanics|Hydromechanics«/LN»«/SC»)" in out
+    assert [(x["xref_type"], x["normalized_target"]) for x in extract_xrefs(out)] == \
+        [("see", "HYDROMECHANICS")]
+
+
+def test_see_the_article_and_an_enumeration_of_small_caps_names() -> None:
+    out = _chain("See the article {{sc|Harmonic Analysis}}; see {{sc|Gyroscope}} and {{sc|Gyrostat}}.")
+    assert {x["normalized_target"] for x in extract_xrefs(out)} == \
+        {"HARMONIC ANALYSIS", "GYROSCOPE", "GYROSTAT"}
+
+
+def test_a_small_caps_name_the_source_linked_is_left_as_it_made_it() -> None:
+    out = _chain("see {{sc|Light}}, and {{sc|{{1911link|Electric Waves}}}}.")
+    assert "«SC»«LN:Electric Waves|Electric Waves«/LN»«/SC»" in out
+    assert {(x["xref_type"], x["normalized_target"]) for x in extract_xrefs(out)} == \
+        {("see", "LIGHT"), ("link", "ELECTRIC WAVES")}
+
+
+def test_small_caps_without_a_cue_is_not_a_reference() -> None:
+    assert extract_xrefs(_chain("in {{sc|Rome}} and {{sc|Paris}} alike")) == []

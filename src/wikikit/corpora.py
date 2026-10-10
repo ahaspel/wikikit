@@ -162,6 +162,12 @@ class Corpus:
     #: (its column count, …).  The cutter measures the ink only where the book
     #: declares nothing.  None = nothing declared on any page.
     page_layout: Callable[[int, int], object] | None = None
+    #: MARKUP the book prints that the engine reads but the shared transcription
+    #: vocabulary does not name — its own templates, e.g. EB1911's margin
+    #: heading {{EB1911 Shoulder Heading|…}}: ``wikikit.scan.vocabulary.Construct``s
+    #: added to the vocabulary for this book's pages only (prompt, desk, parity
+    #: gate alike).  Empty = the shared vocabulary is all the book needs.
+    scan_constructs: tuple = ()
     #: volume -> the inclusive (first, last) page span that holds ARTICLES, in
     #: the book's page space (``SourcePage.page_number``).  Pages outside it are
     #: front or back matter and never enter the walk.  A volume not listed

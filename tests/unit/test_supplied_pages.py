@@ -38,6 +38,22 @@ def test_a_page_found_bad_is_replaced_proofread_or_not(fetched_level):
     assert prefer(fetched, supplied) is supplied
 
 
+@pytest.mark.parametrize("fetched_level, fetched_text, wins", [
+    (None, None, "supplied"),          # nothing else: an incomplete page beats none
+    (0, "", "supplied"),               # nor does an empty one
+    (1, "Tub latb Rbt.", "fetched"),   # raw OCR with all its text beats a page with a hole
+    (3, "proofread", "fetched"),
+])
+def test_an_incomplete_page_never_replaces_text(fetched_level, fetched_text, wins):
+    """A strip the model refused leaves our page level 2, text missing; it
+    replaced complete OCR pages and shipped the hole (2026-10-10)."""
+    fetched = None if fetched_level is None else page(fetched_level, fetched_text)
+    supplied = page(2, "our transcription, a strip missing")
+    assert prefer(fetched, supplied) is (supplied if wins == "supplied" else fetched)
+    found_bad = {**supplied, "provenance": {"replaces": "found lousy"}}
+    assert prefer(fetched, found_bad) is (found_bad if wins == "supplied" else fetched)
+
+
 def write(base, vol, pg, text, source="wikisource"):
     d = base / f"vol_{vol:02d}"
     d.mkdir(parents=True, exist_ok=True)

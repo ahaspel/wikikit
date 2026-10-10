@@ -26,7 +26,7 @@ from PIL import Image
 from wikikit.corpora import current_corpus
 from wikikit.scan.cut import Item
 from wikikit.scan.model import ask, request
-from wikikit.scan.vocabulary import VOCABULARY, prompt_text
+from wikikit.scan.vocabulary import constructs, prompt_text
 
 PARA = "¶"
 PARAGRAPH_SEP = "\n\n"
@@ -246,8 +246,9 @@ def captions(items: list[Item], legacy: bool = False) -> set[str]:
     return out
 
 
-#: The constructs' closers, longest first: what a reading may end with.
-_CLOSERS = sorted({c.close for c in VOCABULARY}, key=len, reverse=True)
+def _closers() -> list[str]:
+    """The constructs' closers, longest first: what a reading may end with."""
+    return sorted({c.close for c in constructs()}, key=len, reverse=True)
 
 
 def join_across_cut(before: str, after: str) -> str:
@@ -260,10 +261,18 @@ def join_across_cut(before: str, after: str) -> str:
     closing markup the next strip did not reopen — the word stays whole; where
     the markup then ends is for the proofreader to see and settle."""
     before, after = before.rstrip(), after.lstrip()
+    vocab = constructs()
+    for c in vocab:
+        # the word's hyphen set AFTER its construct's close ("{{sc|Bi}}-" then
+        # "{{sc|metallism}}": SILVER's Bimetallism): it belongs inside, where
+        # the joins below meet it
+        if c.close and before.endswith(c.close + "-") and after.startswith(c.open):
+            before = before[:-len(c.close) - 1] + "-" + c.close
+            break
     merged = True
     while merged:                             # constructs continuing across the cut, innermost first
         merged = False
-        for c in VOCABULARY:
+        for c in vocab:
             if before.endswith(c.close) and after.startswith(c.open):
                 before, after = before[:-len(c.close)], after[len(c.open):]
                 merged = True
@@ -272,7 +281,7 @@ def join_across_cut(before: str, after: str) -> str:
 
 
 def _join_words(before: str, after: str) -> str:
-    closers = "|".join(re.escape(c) for c in _CLOSERS)
+    closers = "|".join(re.escape(c) for c in _closers())
     m = re.search(rf"(\w)-((?:{closers})*)$", before)
     if not m:
         return before + " " + after

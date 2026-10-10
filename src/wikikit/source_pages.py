@@ -77,14 +77,26 @@ def prefer(fetched: dict | None, supplied: dict | None) -> dict | None:
     proofread (level 0 or 1).  A proofread page stands — unless it was found
     bad as data, and the supplied page says why (`replaces`, user 2026-10-03:
     "if we can determine that the data is lousy, we replace it, proofread or
-    not")."""
+    not").
+
+    A supplied page that declares itself INCOMPLETE (level 2: a text item the
+    model refused or left unread, unchecked by a person) never replaces a
+    fetched page that has text, whatever the reason given: it enters only where
+    there is nothing else.  Fifteen such pages, each with a strip empty,
+    replaced complete raw-OCR pages and shipped with ~3,300 words missing
+    (2026-10-10) — the door read the fetched page's level and never its own."""
     if supplied is None:
         return fetched
-    if fetched is None or supplied.get("provenance", {}).get("replaces"):
+    if fetched is None:
         return supplied
     text = fetched.get("raw_text") or ""
+    has_text = bool(_NOINCLUDE_RE.sub("", text).strip())
+    if has_text and page_level(supplied.get("raw_text") or "") == 2:
+        return fetched
+    if supplied.get("provenance", {}).get("replaces"):
+        return supplied
     level = page_level(text)
-    if not _NOINCLUDE_RE.sub("", text).strip() or (level is not None and level <= 1):
+    if not has_text or (level is not None and level <= 1):
         return supplied
     return fetched
 
@@ -153,8 +165,8 @@ def _scan_dir(base: Path, volume: int | None, want: set[int] | None,
 
 def fetched_text(volume: int, page: int, raw_dir: Path | str = RAW_DIR) -> str | None:
     """The FETCHED page's text as filed — no supplied page laid over it — or
-    None if the book fetched no such page.  For the markup a supplied page
-    carries over from the page it replaces (`wikikit.scan.carry`)."""
+    None if the book fetched no such page: what a transcription is compared
+    with."""
     path = volume_dir(volume, raw_dir) / page_filename(volume, page)
     if not path.exists():
         return None

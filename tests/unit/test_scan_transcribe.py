@@ -105,6 +105,9 @@ def test_a_figure_at_the_end_of_the_page_is_not_lost():
      "{{smaller|''Shak.'', As you ''Like it''}}"),
     # a hyphen that is not at a word's end is left alone
     ("a compound —", "next", "a compound — next"),
+    # the hyphen set after the construct's close (SILVER: "{{sc|Bi}}-")
+    ("the articles {{sc|Money}} and {{sc|Bi}}-", "{{sc|metallism}}; the reader",
+     "the articles {{sc|Money}} and {{sc|Bimetallism}}; the reader"),
 ])
 def test_readings_join_across_a_cut(before, after, joined):
     assert join_across_cut(before, after) == joined

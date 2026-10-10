@@ -48,6 +48,12 @@ class ElementContext:
     # only in the raw, and the BODY producer needs it to tell a NOTE ending from
     # any other div ending.
     prev_raw: str = ""
+    # The sibling BEFORE the left neighbour, its produced marker — threaded the
+    # same way, for a decision two siblings wide: the later names of an
+    # enumerated cross-reference ("see {{sc|Gyroscope}} and {{sc|Gyrostat}}"),
+    # whose left neighbour is only the separator and whose own cue is the name
+    # stamped before it.
+    prev2_marker: str = ""
     # STICKY (set once a TABLE/REF ancestor is entered, inherited by every descendant):
     # this node's content is decoded wholesale by ``decode_inline`` (a table is one
     # decode pass; a footnote body is another), so a verse / outline here must render in

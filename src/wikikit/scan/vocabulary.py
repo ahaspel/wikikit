@@ -56,8 +56,18 @@ TYPESET = frozenset({"math"})
 #: lines, the break between two stanzas, its close.  The desk lays it out
 #: (desk_render.js) from those measurements.
 LINES = frozenset({"poem"})
-#: The HTML among the constructs: the only HTML the prompt allows.
-_HTML = [c.open for c in VOCABULARY if c.open.startswith("<")]
+def constructs() -> tuple[Construct, ...]:
+    """The vocabulary for the current book's pages: the shared constructs,
+    then the book's own (`Corpus.scan_constructs` — EB1911's margin heading).
+    Every reader of the vocabulary asks this: the prompt, the desk's measured
+    table, the joins across a cut — one set, never two."""
+    from wikikit.corpora import current_corpus
+    return VOCABULARY + tuple(current_corpus().scan_constructs)
+
+
+def _allowed_html() -> list[str]:
+    """The HTML among the constructs: the only HTML the prompt allows."""
+    return [c.open for c in constructs() if c.open.startswith("<")]
 
 #: A blank line between paragraphs; the only structure besides the constructs
 #: and the table.
@@ -81,7 +91,7 @@ FORMULA = f"{{| {FORMULA_CLASS}\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|
 
 def prompt_text() -> str:
     """The vocabulary as the transcriber's prompt states it."""
-    lines = [f"- {c.says}: {c.open}text{c.close}" for c in VOCABULARY]
+    lines = [f"- {c.says}: {c.open}text{c.close}" for c in constructs()]
     lines.append("- a new paragraph: a blank line before it")
     lines.append("- a table, on lines of its own with a blank line before and after; |- begins each "
                  "new row, || divides the cells, and a cell spanning rows or columns begins rowspan=2| "
@@ -91,7 +101,7 @@ def prompt_text() -> str:
                  "own cell, and each bond printed between groups in a row (—, ·, :) in a cell of its "
                  "own too, so that an upright bond (│, a double one ║, each in a cell of its own) "
                  "stands under the group it joins:\n" + FORMULA)
-    lines.append(f"- nothing else: no other templates, no HTML but {', '.join(_HTML)}, no lists")
+    lines.append(f"- nothing else: no other templates, no HTML but {', '.join(_allowed_html())}, no lists")
     return "\n".join(lines)
 
 
@@ -130,7 +140,7 @@ def render_table() -> dict:
     one ("<p>"), anything else a space.  The desk applies this table and
     nothing else."""
     table = {}
-    for c in VOCABULARY:
+    for c in constructs():
         html = _render(f"A {c.open}{_PROBE}{c.close} Z")
         if c.name in TYPESET:
             # the reader typesets it; the engine's chain shows its stand-in
@@ -146,6 +156,10 @@ def render_table() -> dict:
         if not sep:
             raise ValueError(f"the engine lost the content of {c.name}: {html!r}")
         close = tail.removesuffix("Z").strip()
+        # an attribute made FROM the content (a margin heading's anchor,
+        # id="section-<its words>") is a link target, not the construct's look:
+        # the desk shows the look, and leaves the anchor to the engine
+        head = re.sub(rf'\s+id="[^"]*{_PROBE.lower()}[^"]*"', "", head)
         after = _render(f"A {c.open}{_PROBE}{c.close}\nZ").partition(_PROBE)[2]
         after = after.removeprefix(close).removesuffix("Z")
         table[c.name] = [head.removeprefix("A").strip(), close, after if after.strip() else " "]
