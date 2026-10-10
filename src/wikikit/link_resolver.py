@@ -1007,7 +1007,21 @@ class LinkResolver:
         if not trusted:
             fn, cut = self.resolve_see(target, display, self_fn=self_fn,
                                        window=window)
-            return (fn, None, cut) if fn else (None, None, None)
+            if fn:
+                return fn, None, cut
+            # Where no article binds, a see that names one of the referring
+            # article's OWN headings ("see Part VIII", "see also Probable
+            # Sources" in SHAKESPEARE) points within it — the same-article
+            # `#section` form the colon path already yields.  Fallback only:
+            # measured corpus-wide (2026-10-10), section-first re-pointed real
+            # article references (see CAESAR in GERMANY, see OUDENARDE).
+            if self_fn:
+                secs = self._article_sections(self_fn)
+                for name in (n for n in (target, display) if n):
+                    sec = match_section(secs, name, strict=True)
+                    if sec and sec.get("slug"):
+                        return self_fn, sec["slug"], name
+            return None, None, None
         names = [n for n in (target, display) if n]
         # Prefer the MORE-SPECIFIC name first: the side carrying more content
         # words identifies the reference better (target `SAY` vs display

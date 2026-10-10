@@ -86,9 +86,19 @@ def section_key(text: str) -> str:
 
 
 _ROMAN_PREFIX_RE = re.compile(r"^[ivxlcdm]+")
+# A heading's printed NUMBERING, read off its raw title: "VIII. Probable
+# Sources", "Part VIII.—Physiographical Geology", "VII".
+_NUMBERING_RE = re.compile(r"^\s*((?:part\s+)?[ivxlc]+)\b[.\s:—–-]*(.*)$", re.I)
 
 
-def match_section(sections, name: str, *, aggressive: bool = False):
+def _numbering(title: str) -> tuple[str, str]:
+    """``(numbering key, rest key)`` of a section title; ``("", key)`` when it
+    prints no numbering."""
+    m = _NUMBERING_RE.match(title or "")
+    return (section_key(m.group(1)), section_key(m.group(2))) if m else ("", section_key(title))
+
+
+def match_section(sections, name: str, *, aggressive: bool = False, strict: bool = False):
     """Resolve a section reference `name` to the matching section — a
     ``{"title", "slug", …}`` dict — within `sections`, or None.  Callers read
     its ``slug`` and/or ``title``.
@@ -99,9 +109,25 @@ def match_section(sections, name: str, *, aggressive: bool = False):
 
     ``aggressive=False`` (Reader's Guide, precise): abstain on any tie — a wrong
     deep-link is a visible error, better skipped.  ``aggressive=True`` (topic
-    index, recall): take the tightest (shortest-title) match on a tie."""
+    index, recall): take the tightest (shortest-title) match on a tie.
+
+    ``strict=True`` (a see-reference to the referring article's OWN section):
+    the name must BE the heading — whole, without its numbering, or only its
+    numbering ("see Part VIII", "see XIX") — and unique; no suffix or
+    substring tier.  Measured corpus-wide (2026-10-10): the substring tier sent
+    "see Oman" to "The Roman Imperial Army" and "see Lam" to "Rise of Islam";
+    the strict forms bound only real headings."""
     target = section_key(name)
     if not target:
+        return None
+    if strict:
+        keyed = [(sec, section_key(sec.get("title", "")), *_numbering(sec.get("title", "")))
+                 for sec in sections]
+        for tier in (lambda k, n, r: k == target, lambda k, n, r: bool(n) and r == target,
+                     lambda k, n, r: n == target):
+            bucket = [sec for sec, k, n, r in keyed if k and tier(k, n, r)]
+            if bucket:
+                return bucket[0] if len(bucket) == 1 else None
         return None
     exact: list = []
     prefix: list = []

@@ -839,8 +839,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
     export_articles_to_json: resolve the 2-part «LN»/«EB9» PRODUCER markers
     to 3-part filename links FIRST, then wrap resolved qv/see prose in place.
     Order matters — see the comment on the resolve pass below."""
-    # normalized_target → (filename, matched_cut) — the cut rides along so a
-    # window-stamp's bake can shorten the display to the words that bound.
+    # normalized_target → (filename, matched_cut, section) — the cut rides along
+    # so a window-stamp's bake can shorten the display to the words that bound;
+    # the section so a reference the RESOLVER bound to a heading (a see naming
+    # its own article's section) links to that heading, as a source `#` does.
     link_targets: dict[str, tuple] = {}
     for xref in xrefs:
         if xref.target_article_id is not None and xref.normalized_target:
@@ -849,6 +851,7 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                 link_targets[xref.normalized_target.lower()] = (
                     _safe_filename(target, target.title),
                     getattr(xref, "matched_cut", None),
+                    xref.target_section,
                 )
 
     # Resolve the 2-part producer markers («LN:target|display», «EB9:…») BEFORE any
@@ -887,7 +890,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
 
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
-            fn, cut = hit
+            fn, cut, section = hit
+            # A source `#section` already rides in the target; a resolver-bound
+            # section is written there the same way.
+            anchor = f"#{section}" if section and "#" not in target_text else ""
             if kind in _WINDOW_KINDS and cut:
                 # A window-stamp: the resolver bound a CUT of the window (a
                 # suffix for (q.v.), any span for see) — link exactly those
@@ -896,10 +902,10 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                 if span:
                     a, b = span
                     return (display[:a]
-                            + ln_marker(cut, display[a:b], fn)
+                            + ln_marker(cut + anchor, display[a:b], fn)
                             + display[b:])
-                return ln_marker(cut, display, fn)
-            return ln_marker(target_text, display, fn)   # internal — the link target
+                return ln_marker(cut + anchor, display, fn)
+            return ln_marker(target_text + anchor, display, fn)   # internal — the link target
         if kind in _WINDOW_KINDS:
             # An unresolved window-stamp strips WHOLE, never the WS fallback:
             # the window is OUR guess at a reference, not the author's page
