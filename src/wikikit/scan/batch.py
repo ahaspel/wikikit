@@ -33,7 +33,7 @@ from wikikit.scan.layout import layout_for
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
-from wikikit.scan.transcribe import figures_of, read_request, settle
+from wikikit.scan.transcribe import figures_of, read_request, settle, small_type_of
 
 #: Requests per batch are bounded by size: base64 images, ~0.5 MB per strip.
 MAX_BATCH_BYTES = 200 * 1024 * 1024
@@ -192,11 +192,12 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
         ps["stage"] = "read"
     if ps.get("special"):
         return reqs
-    for it in _items(ps):
-        if it.kind == "figure" or it.name in ps["readings"] or it.name in ps["unread"] \
-                or it.name in ps["refused"]:
-            continue
-        reqs[f"{pid}_read_{it.name}"] = read_request(level, it, cache_ttl=CACHE_TTL)
+    items = _items(ps)
+    pending = [it for it in items if not (it.kind == "figure" or it.name in ps["readings"]
+                                          or it.name in ps["unread"] or it.name in ps["refused"])]
+    small = small_type_of(level, items, layout) if pending else {}
+    for it in pending:
+        reqs[f"{pid}_read_{it.name}"] = read_request(level, it, cache_ttl=CACHE_TTL, small=small.get(it.name))
     return reqs
 
 

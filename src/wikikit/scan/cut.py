@@ -355,6 +355,172 @@ def _line_height(dark, top, bottom, a, b):
     return float(PITCH_MIN + (peaks[0] if peaks else int(np.argmax(window))))
 
 
+# ── type size: a print fact the pixels measure, the eye misses ───────────────
+#: A window this tall slides down a column, a quarter of it at a step: its
+#: line pitch is measured by `_line_height` (autocorrelation — the touching
+#: lines of small type do not matter, as they do to a white-row count).
+PITCH_WINDOW = 160
+#: Smaller type: a pitch between these shares of the body type's.  EB1911,
+#: 2026-10-11: body 40-41 px, small 32-33 (0.80); below, a table's rules or a
+#: figure's hatching, which have no line pitch.
+SMALL_TYPE_SHARE = (0.65, 0.9)
+
+
+def _pitches(dark, box) -> list[tuple[int, float]]:
+    x0, y0, x1, y1 = box
+    step = PITCH_WINDOW // 4
+    return [(y, _line_height(dark, y, y + PITCH_WINDOW, x0, x1))
+            for y in range(y0, max(y0 + 1, y1 - PITCH_WINDOW), step)]
+
+
+#: The body type is the largest pitch at least this share of a page's windows
+#: share (within 2 px): a heading or a display is too rare to pass for it, and
+#: a page mostly in small type still shows its body type in a few paragraphs.
+BODY_SHARE = 0.05
+
+
+def small_type(level: Image.Image, boxes) -> list[list[tuple[int, int]]]:
+    """For each column box, (y0, y1) of each run of SMALLER type in it (page
+    pixels).  The body type is the PAGE's (`BODY_SHARE`) — a column mostly in
+    small type (vol 18 p296's second) is measured against the page's body,
+    not its own commonest pitch; a window whose pitch is a share of the body's
+    in `SMALL_TYPE_SHARE` is small type.  Measured, not judged: the model,
+    reading or judging, took a column's opening lines in body type for small
+    (vol 18 p296) and missed small type running on at a column's head (vol 26
+    p169, vol 24 p251)."""
+    dark = np.asarray(level.convert("L")) < INK
+    per = [_pitches(dark, b) for b in boxes]
+    usable = sorted(p for ps in per for _, p in ps if p >= 15)
+    if not usable:
+        return [[] for _ in boxes]
+    need = BODY_SHARE * len(usable)
+    body = max(p for p in usable if sum(1 for q in usable if abs(q - p) <= 2) >= need)
+    lo, hi = SMALL_TYPE_SHARE
+    step = PITCH_WINDOW // 4
+    out = []
+    for ps in per:
+        runs: list[tuple[int, int]] = []
+        for y, p in ps:
+            if not lo * body <= p <= hi * body:
+                continue
+            a, b = y + step, y + PITCH_WINDOW - step    # the window's middle: where it is sure
+            if runs and a <= runs[-1][1] + step:
+                runs[-1] = (runs[-1][0], b)
+            else:
+                runs.append((a, b))
+        box = boxes[len(out)]
+        out.append([(_edge(dark, box, a, body, rising=True), _edge(dark, box, b, body, rising=False))
+                    for a, b in runs if b - a >= 2 * step])
+    return out
+
+
+#: An edge between sizes, found to within a few pixels: a window about two
+#: lines tall slides across the coarse edge (± REACH), `FINE_STEP` at a time.
+FINE_WINDOW, FINE_STEP, REACH = 80, 6, 120
+
+
+def _edge(dark, box, y, body, rising: bool) -> int:
+    """Where the small type really begins (`rising`) or ends near `y`: the
+    first centre, scanning down, at which a narrow window's pitch turns small
+    (or back to body).  The coarse window places an edge only to a line or
+    two (vol 18 p296: "Rain and Snow Gauge", in body type, fell a line inside
+    the small run); a bar a line too long invites the very mismarking it is
+    there to prevent."""
+    x0, y0, x1, y1 = box
+    lo, hi = SMALL_TYPE_SHARE
+    half = FINE_WINDOW // 2
+    for c in range(max(y0 + half, y - REACH), min(y1 - half, y + REACH), FINE_STEP):
+        p = _line_height(dark, c - half, c + half, x0, x1)
+        small = lo * body <= p <= hi * body
+        if small == rising and p >= 15:
+            return c
+    return y
+
+
+
+
+def type_pitches(level: Image.Image, boxes) -> tuple[float, float] | None:
+    """(body pitch, small pitch) of a page by `small_type`'s rule — the body
+    the page's (`BODY_SHARE`), the small the median of the windows in
+    `SMALL_TYPE_SHARE` of it (the body's share, when none are) — or None for a
+    page with no measurable type."""
+    dark = np.asarray(level.convert("L")) < INK
+    usable = sorted(p for b in boxes for _, p in _pitches(dark, b) if p >= 15)
+    if not usable:
+        return None
+    need = BODY_SHARE * len(usable)
+    body = max(p for p in usable if sum(1 for q in usable if abs(q - p) <= 2) >= need)
+    lo, hi = SMALL_TYPE_SHARE
+    small = [p for p in usable if lo * body <= p <= hi * body]
+    return body, (float(np.median(small)) if small else (lo + hi) / 2 * body)
+
+
+#: A paragraph is measured over its first lines only — at most this many
+#: pixels from where it begins: a paragraph's opening is text, and a display
+#: further on would disturb the pitch.
+PARAGRAPH_PROBE = 200
+#: A measured pitch within this many pixels of the body's or the small's is
+#: that size; between, the paragraph is not measured.
+PITCH_TOLERANCE = 3
+
+
+def paragraph_type(level: Image.Image, box, starts: list[int], pitches) -> list[str | None]:
+    """Each paragraph's type, "body" or "small", MEASURED: its line pitch over
+    its own first lines, from `starts` (page y, where the reading records each
+    paragraph begins) — never a column's, never the eye's.  A paragraph too
+    short to measure before the next begins (two may share a tick) is measured
+    a `PARAGRAPH_PROBE` on from its start; still unmeasured, None — the caller
+    decides by the book's rules (a paragraph continued across a column keeps
+    its size; a display takes the size of the text before it).  Checked
+    against the print on five paragraphs (EB1911, 2026-10-11): all five right,
+    where the model reading and the model judging each erred."""
+    if pitches is None:
+        return [None] * len(starts)
+    body, small = pitches
+    x0, y0, x1, y1 = box
+    dark = np.asarray(level.convert("L")) < INK
+    out: list[str | None] = []
+    for k, y in enumerate(starts):
+        nxt = starts[k + 1] if k + 1 < len(starts) else y1
+        a = max(y, y0)
+        b = min(nxt, a + PARAGRAPH_PROBE, y1)
+        if b - a < 2.5 * small:
+            b = min(a + PARAGRAPH_PROBE, y1)
+        pitch = _line_height(dark, a, b, x0, x1) if b - a >= 2.5 * small else None
+        out.append("body" if pitch is not None and abs(pitch - body) <= PITCH_TOLERANCE else
+                   "small" if pitch is not None and abs(pitch - small) <= PITCH_TOLERANCE else None)
+    return out
+
+
+#: The margin added to the left of the image the model reads: white, never on
+#: the column itself, so nothing drawn there can touch the print.  In it, a
+#: tick every TICK_EVERY page pixels labelled with its page y (the reading
+#: records where each paragraph begins by these), and a mid-grey bar beside
+#: measured small type (never ink: INK is darker).
+MARGIN_PX, TICK_EVERY = 72, 100
+TYPE_BAR_PX, TYPE_BAR_GREY = 8, 170
+
+
+def margin_marks(crop: Image.Image, box, runs) -> Image.Image:
+    """The image the model reads: the column, and to its left a white margin
+    holding page-y ticks (`TICK_EVERY`) and a grey bar beside each run of
+    small type (`small_type`) — measured facts shown where they are, so the
+    reading can record them and the judge check them."""
+    from PIL import ImageDraw
+    img = Image.new("RGB", (crop.width + MARGIN_PX, crop.height), "white")
+    img.paste(crop.convert("RGB"), (MARGIN_PX, 0))
+    d = ImageDraw.Draw(img)
+    top = box[1]
+    for y in range((top // TICK_EVERY + 1) * TICK_EVERY, box[3], TICK_EVERY):
+        r = y - top
+        d.line((MARGIN_PX - 26, r, MARGIN_PX - 14, r), fill=(60, 60, 60), width=2)
+        d.text((2, max(0, r - 6)), str(y), fill=(60, 60, 60))
+    for a, b in runs:
+        d.rectangle((MARGIN_PX - TYPE_BAR_PX - 2, max(0, a - top), MARGIN_PX - 2, min(img.height, b - top)),
+                    fill=(TYPE_BAR_GREY,) * 3)
+    return img
+
+
 # ── the ink's own opinion of where the figures are (a cross-check only) ─────
 INK_FIGURE_LINES = 3      # taller than this many text lines …
 INK_FIGURE_DENSITY = 0.20  # … and denser than any text (text measures ≤ ~0.16)

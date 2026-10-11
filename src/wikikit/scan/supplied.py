@@ -26,7 +26,7 @@ from wikikit.scan.cut import Item
 from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
-from wikikit.scan.transcribe import Unread, assemble_page, figures_of, read_item
+from wikikit.scan.transcribe import Unread, assemble_page, figures_of, read_item, small_type_of
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
@@ -60,12 +60,13 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
         cp = cut_page(img, layout)
     special = cp.plan.crossing if layout.columns_only else []
     readings, refused, unread, rejected = {}, [], {}, {}
+    small = small_type_of(cp.level, cp.plan.items, layout)
     with metered() as reading:
         for it in cp.plan.items:
             if it.kind == "figure" or special:
                 continue
             try:
-                readings[it.name] = read_item(cp.level, it, figures_of(cp.plan.items, it))
+                readings[it.name] = read_item(cp.level, it, figures_of(cp.plan.items, it), small.get(it.name))
             except Refused:
                 readings[it.name], refused = "", refused + [it.name]
             except Unread as e:
@@ -127,6 +128,7 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
     if special:
         reassemble(payload)
     else:
+        measure_type(payload, level)
         name_sections(payload)
     return payload
 
@@ -143,10 +145,39 @@ def reassemble(payload: dict) -> dict:
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
                         legacy_captions=not p.get("captions_marked"),
-                        sections=p.get("sections"))
+                        sections=p.get("sections"), types=p.get("type"))
     payload["raw_text"] = raw
     return payload
 
+
+def measure_type(payload: dict, level: Image.Image) -> dict:
+    """Each recorded paragraph's type, MEASURED (`cut.paragraph_type`), stored
+    with the page (`type`: item name -> sizes, one per recorded paragraph
+    start) for assembly to set — for a book whose layout marks small type.
+    Unmeasurable, by the book's rules: a column's first paragraph, unless it
+    opens with a title, continues the column before and keeps its size; any
+    other takes the size of the text before it (a display, a line between
+    displays, belongs to the paragraph it sits in).  Stored once: a
+    reassembly never measures again."""
+    from wikikit.scan.transcribe import positions
+    p = payload["provenance"]
+    if not layout_for(payload["volume"], payload["page_number"]).marks_small_type:
+        return payload
+    texts = [it for it in items_of(payload) if it.kind == "text" and it.column > 0]
+    pitches = cut.type_pitches(level, [it.box for it in texts])
+    types, prev = {}, None
+    for it in texts:
+        reading = p["readings"].get(it.name, "")
+        starts = positions(reading)
+        sizes = cut.paragraph_type(level, it.box, [y for _, y in starts], pitches)
+        for k, (off, _) in enumerate(starts):
+            if sizes[k] is None:
+                title = reading[off:].split("⟧", 1)[-1].lstrip().startswith("'''")
+                sizes[k] = None if (k == 0 and title) else prev
+            prev = sizes[k] or prev
+        types[it.name] = sizes
+    p["type"] = types
+    return payload
 
 def name_sections(payload: dict) -> dict:
     """The page's section addresses, from the book (`Corpus.page_sections`):

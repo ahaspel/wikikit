@@ -23,6 +23,9 @@ class Construct:
     open: str
     close: str
     says: str            # what it is for, as the prompt states it
+    #: page FURNITURE — recorded in the reading where it is printed (a sheet
+    #: signature), set by assembly in the page's footer, never page text
+    furniture: bool = False
 
 
 VOCABULARY: tuple[Construct, ...] = (
@@ -44,7 +47,7 @@ VOCABULARY: tuple[Construct, ...] = (
     Construct("poem", "<poem>", "</poem>",
               "verse, or any run of lines the book keeps as lines (a list set line by line, a "
               "recipe, entries joined by leaders): one printed line to a line, a blank line "
-              "between stanzas; centred, inside {{block center|…}}"),
+              "between stanzas"),
 )
 
 #: Constructs the engine's chain lifts out whole for the reader to typeset
@@ -85,7 +88,9 @@ PARAGRAPH = "\n\n"
 #: line, never "|", which a wikitable reads as its own syntax.
 TABLE_STYLE = 'style="margin:auto"'
 FORMULA_CLASS = 'class="chem-grid"'
-TABLE = f"{{| {TABLE_STYLE}\n|cell||cell\n|-\n|rowspan=2|cell||cell\n|}}"
+#: The table as the transcriber writes it: structure only.  How a table is
+#: SET (centred: TABLE_STYLE) is assembly's decision, not the reading's.
+TABLE = "{|\n|cell||cell\n|-\n|rowspan=2|cell||cell\n|}"
 FORMULA = f"{{| {FORMULA_CLASS}\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n|│||||│||||║\n|}}"
 
 
@@ -93,9 +98,9 @@ def prompt_text() -> str:
     """The vocabulary as the transcriber's prompt states it."""
     lines = [f"- {c.says}: {c.open}text{c.close}" for c in constructs()]
     lines.append("- a new paragraph: a blank line before it")
-    lines.append("- a table, on lines of its own with a blank line before and after; |- begins each "
-                 "new row, || divides the cells, and a cell spanning rows or columns begins rowspan=2| "
-                 "or colspan=2|; nothing else on a table, row or cell:\n" + TABLE)
+    lines.append("- a table, on lines of its own where it is printed; |- begins each new row, || "
+                 "divides the cells, and a cell spanning rows or columns begins rowspan=2| or "
+                 "colspan=2|; nothing else on a table, row or cell:\n" + TABLE)
     lines.append("- a formula set out in rows of type (atoms above and below one another, joined by "
                  "upright bonds) is a table of its own form, a compact grid: each atom group in its "
                  "own cell, and each bond printed between groups in a row (—, ·, :) in a cell of its "
@@ -141,6 +146,11 @@ def render_table() -> dict:
     nothing else."""
     table = {}
     for c in constructs():
+        if c.furniture:
+            # page furniture never reaches the engine (assembly sets it in the
+            # page's footer): the desk shows it set apart, as furniture
+            table[c.name] = ['<span class="furniture">', "</span>", " "]
+            continue
         html = _render(f"A {c.open}{_PROBE}{c.close} Z")
         if c.name in TYPESET:
             # the reader typesets it; the engine's chain shows its stand-in

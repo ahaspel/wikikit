@@ -147,12 +147,47 @@ def test_a_figure_mark_becomes_its_crop_with_the_caption_the_model_read():
                    "Second one.")
 
 
-def test_a_figure_interrupting_a_paragraph_floats_to_its_end():
-    # the mark set mid-paragraph, the paragraph's words on both sides of it
+def test_a_figure_interrupting_a_sentence_goes_to_its_end():
+    # the reading records the mark where it stands, mid-sentence; assembly
+    # sets it after the sentence it interrupts, and the paragraph's text
+    # after that begins a new one
     items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 150, 500)]
-    texts = {"c1s1": f"{PARA}\nornamented with\n[[FIGURE]]\nmoldings on the sides.\n\nNext."}
+    texts = {"c1s1": f"{PARA}\nornamented with\n[[FIGURE]]\nmoldings on the sides. Then more.\n\nNext."}
     out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300))
-    assert out == "ornamented with\nmoldings on the sides.\n\n[[File:x.png|center|180px]]\n\nNext."
+    assert out == ("ornamented with moldings on the sides.\n\n[[File:x.png|center|180px]]\n\n"
+                   "Then more.\n\nNext.")
+
+
+def test_a_table_where_the_sentence_has_ended_stays_there_and_is_set():
+    # "printed with:—" then the table, then the text runs on: the table stays,
+    # is centred, and a printed brace at a cell's start is the character
+    items = [t("c1s1", 0, 0, 300, 900)]
+    texts = {"c1s1": f"{PARA}\nThe cloth is printed with:—\n{{|\n|rowspan=2|{{||36||parts.\n|-\n|100||ice.\n|}}\n"
+                     "Mix and add quickly."}
+    out = body(assemble_page(items, texts, {}, 300))
+    assert out == ('The cloth is printed with:—\n\n{| style="margin:auto"\n|rowspan=2|&#123;||36||parts.\n'
+                   "|-\n|100||ice.\n|}\n\nMix and add quickly.")
+
+
+def test_a_margin_heading_breaks_no_paragraph_and_no_word():
+    # vol 26 p169: "deter-" | margin heading | "mining": one paragraph, the
+    # word whole, the heading set before it
+    items = [t("c1s1", 0, 0, 300, 900)]
+    texts = {"c1s1": f"{PARA}\nthe route in advance and of deter-\n{{{{X heading|Triangulation.}}}}\n"
+                     "mining the positions."}
+    out = body(assemble_page(items, texts, {}, 300))
+    assert out == "the route in advance and of\n{{X heading|Triangulation.}}\ndetermining the positions."
+
+
+def test_a_sheet_signature_is_furniture_set_in_the_footer(monkeypatch):
+    from wikikit.scan import transcribe as T
+    from wikikit.scan.vocabulary import Construct
+    sig = Construct("signature", "{{Sig|", "}}", "a sheet signature", furniture=True)
+    monkeypatch.setattr(T, "constructs", lambda: T.VOCABULARY + (sig,))
+    items = [t("c1s1", 0, 0, 300, 900)]
+    page = assemble_page(items, {"c1s1": f"{PARA}\nThe last line of the column.\n{{{{Sig|XXIV. 31 a}}}}"}, {}, 300)
+    assert body(page) == "The last line of the column."
+    assert page.endswith("<noinclude>{{Sig|XXIV. 31 a}}<references/></noinclude>")
 
 
 def test_a_figure_at_a_columns_head_lets_the_paragraph_run_on():
@@ -171,3 +206,21 @@ def test_two_figures_in_one_column_take_their_crops_in_order():
     out = body(assemble_page(items, texts, {"c1f1": "1.png", "c1f2": "2.png"}, 300))
     assert out == ("A.\n\n[[File:1.png|center|360px]]\n\nB.\n\n"
                    "[[File:2.png|center|360px]]\n{{c|Fig. 2.}}\n\nC.")
+
+
+def test_measured_type_replaces_the_readings_own_marks():
+    from wikikit.scan.transcribe import apply_type
+    reading = ("⟦200⟧ {{smaller block|A body paragraph the reader marked small.}}\n\n"
+               "⟦700⟧ A small paragraph the reader left plain.\n\n"
+               "{| \n|cell\n|}\n\n"
+               "⟦900⟧ {{smaller block|<sup>1</sup> A footnote.}}")
+    out = apply_type(reading, ["body", "small", "small"])
+    assert "⟦200⟧ A body paragraph the reader marked small." in out
+    assert "⟦700⟧ {{smaller block|A small paragraph the reader left plain.}}" in out
+    assert "{| \n|cell\n|}" in out and "{{smaller block|{|" not in out      # a table is never wrapped
+    assert "{{smaller block|<sup>1</sup> A footnote.}}" in out               # a footnote as it was
+
+
+def test_no_sizes_leave_the_reading_alone():
+    from wikikit.scan.transcribe import apply_type
+    assert apply_type("⟦200⟧ {{smaller block|x}}", None) == "⟦200⟧ {{smaller block|x}}"

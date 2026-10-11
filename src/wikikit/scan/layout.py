@@ -28,6 +28,10 @@ class PageLayout:
     #: across them (`cut.Plan.crossing`) is filed for special handling, never
     #: read — every way of reading across columns has failed one way or another
     columns_only: bool = False
+    #: the book prints in two sizes of type: the smaller is measured from the
+    #: line pitch and marked beside it in the image read (`cut.small_type`);
+    #: the book's page notes say what the mark means
+    marks_small_type: bool = False
 
     @property
     def max_h(self) -> int | None:

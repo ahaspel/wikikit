@@ -43,14 +43,31 @@ COLUMN_DISPLAY_PX = 360
 
 _RULES = """Transcribe only what is printed: never correct, modernise, complete
 or add. Keep the printed spelling, punctuation and every diacritic.
+Read each accent as it is printed: an acute (é) is not a circumflex (ê) nor a
+grave (è); a letter printed plain has none. Words in another language stay
+exactly as printed, never translated or anglicised ("fonctions" stays
+"fonctions").
 
 Markup — use only this:
 {vocabulary}
 
+Record the print; never rearrange it. Everything is written where it is
+printed, in the order it is printed: nothing is moved, left out, or set
+differently because it would read better.
+
 Lines: join the printed lines of a paragraph into one line. A word hyphenated
 at a line end inside the image is joined without the hyphen, unless the hyphen
-belongs to the word. A new paragraph starts on a new line with a blank line
-before it."""
+belongs to the word.
+
+Paragraphs: a blank line means that a new paragraph begins in the print, and
+nothing else. A block printed WITHIN a paragraph — a table, an illustration,
+verse, a margin heading — is written on lines of its own exactly where it
+stands among the printed lines, even in the middle of a sentence, with NO
+blank line before or after it: the paragraph's text goes on, on the next line.
+
+Type: mark every piece of text as it is printed. Text in smaller type, or in
+italic, that runs on from the column before is marked so again where it
+continues."""
 
 #: The fixed instructions: the same for every image of every page, so they are
 #: sent once per page run as a cached system prompt (`model.ask`), not with
@@ -71,8 +88,9 @@ with that fragment and the hyphen, e.g. "diffi-".
 
 Illustrations: a strip may hold a picture, engraving, diagram or map. Do not
 transcribe the drawing, or any letters, numbers or labels drawn inside it.
-Write {mark} on a line of its own where it stands — after the paragraph it
-interrupts — and on the next line its caption, if it has one, wrapped in
+Write {mark} on a line of its own exactly where it stands among the printed
+lines — in the middle of a paragraph if that is where it is printed, with no
+blank line around it — and on the next line its caption, if it has one, wrapped in
 {{{{c|...}}}} with its italics and small capitals. Transcribe every line of
 text around and beside an illustration: text running beside an inset
 illustration belongs where it falls in its paragraph.
@@ -92,6 +110,15 @@ HEAD = "This image is a RUNNING HEAD. Transcribe it."
 #: Where a figure stands in a reading: a line of its own.
 FIGURE_MARK = "[[FIGURE]]"
 _MARK_LINE = re.compile(r"^[ \t]*" + re.escape(FIGURE_MARK) + r"[ \t]*$", re.M)
+#: Where a paragraph begins on the page, as the reading records it: the label
+#: of the margin tick beside its first line (`cut.margin_marks`), ⟦y⟧ before
+#: its first word.  A print fact for assembly's measurements, never page text.
+POSITION = re.compile(r"⟦(\d+)⟧[ \t]*")
+
+
+def positions(text: str) -> list[tuple[int, int]]:
+    """(offset in the reading, page y) of each paragraph's recorded start."""
+    return [(m.start(), int(m.group(1))) for m in POSITION.finditer(text)]
 
 
 def notation_text() -> str:
@@ -239,11 +266,33 @@ def check_reading(level: Image.Image, item: Item, text: str, figures: list[Item]
     return None
 
 
-def read_request(level: Image.Image, item: Item, cache_ttl: str | None = None) -> dict:
+def item_image(level: Image.Image, item: Item, small: list | None = None) -> Image.Image:
+    """The image the model reads for an item: its crop — with, for a page the
+    book measures (`small` not None, even empty), a margin of page-y ticks and
+    a bar beside the measured small type (`cut.margin_marks`)."""
+    if small is None or item.kind != "text":
+        return level.crop(item.box)
+    from wikikit.scan.cut import margin_marks
+    return margin_marks(level.crop(item.box), item.box, small)
+
+
+def small_type_of(level: Image.Image, items: list[Item], layout) -> dict[str, list]:
+    """Each text item's measured runs of small type (`cut.small_type`), for a
+    book that marks it (`layout.marks_small_type`); else none."""
+    if not getattr(layout, "marks_small_type", False):
+        return {}
+    from wikikit.scan.cut import small_type
+    texts = [it for it in items if it.kind == "text"]
+    return {it.name: runs for it, runs in zip(texts, small_type(level, [it.box for it in texts]))}
+
+
+def read_request(level: Image.Image, item: Item, cache_ttl: str | None = None,
+                 small: list | None = None) -> dict:
     """The call that reads one text item — made now by `read_item`, or in a
     batch (`wikikit.scan.batch`), where `cache_ttl` "1h" keeps the cached
-    instructions alive through the batch's own pace."""
-    return request(level.crop(item.box), prompt_for(item), max_tokens=READ_MAX_TOKENS,
+    instructions alive through the batch's own pace.  `small`: the item's
+    measured runs of small type (`cut.small_type`)."""
+    return request(item_image(level, item, small), prompt_for(item), max_tokens=READ_MAX_TOKENS,
                    instructions=instructions(), cache_ttl=cache_ttl)
 
 
@@ -252,12 +301,13 @@ def read_request(level: Image.Image, item: Item, cache_ttl: str | None = None) -
 READ_MAX_TOKENS = 12000
 
 
-def read_item(level: Image.Image, item: Item, figures: list[Item] = ()) -> str:
+def read_item(level: Image.Image, item: Item, figures: list[Item] = (), small: list | None = None) -> str:
     """One text item read by the model, checked (`check_reading`) and read
     once more if the first answer is not a reading.  Raises `model.Refused`
     when the API declines and `Unread` when both answers fail the check: the
-    caller records either against the page.  `figures`: those it holds."""
-    crop = level.crop(item.box)
+    caller records either against the page.  `figures`: those it holds;
+    `small`: its measured runs of small type."""
+    crop = item_image(level, item, small)
     reason = text = None
     for _ in range(2):
         text = ask(crop, prompt_for(item), max_tokens=READ_MAX_TOKENS, instructions=instructions())
@@ -468,19 +518,232 @@ def place_sections(body: str, sections: list[dict]) -> tuple[str, list[str]]:
     return PARAGRAPH_SEP.join(paras), left
 
 
+# ── editorial assembly: what the reading records, set as our page sets it ────
+#: A sentence ends at a full stop, query or exclamation (closing quotes or
+#: brackets after it) before the next sentence's capital.
+_SENTENCE_END = re.compile(r"[.!?][\"”’)\]]*(?=\s+[\"“‘(\[]?[A-Z])")
+#: The text before a block already ends a sentence, or a clause the block
+#: completes ("printed with:—").
+_ENDS_SENTENCE = re.compile(r"[.!?:;—][\"”’)\]]*\s*$")
+_WORD_BROKEN = re.compile(r"(\S+)-\s*$")
+#: A table cell opening with a printed brace: "{" there would open a table.
+#: Inside a row a table cannot open (only at a line's start), so a "{" right
+#: after a cell's start is the printed brace — unless it opens a template.
+_CELL_BRACE = re.compile(r"(\|)(\s*)\{(?!\{)")
+
+
+def _set_table(block: str) -> str:
+    """A table as our page sets it: centred where the reading gives it no
+    attributes (`vocabulary.TABLE_STYLE`), and a brace printed at the start of
+    a cell written as the character, never as "{" (vol 26 p735: "|rowspan=4|{"
+    opened a table inside the cell, and the recipe after it was lost)."""
+    from wikikit.scan.vocabulary import TABLE_STYLE
+    head, _, rest = block.partition("\n")
+    if head.strip() == TABLE_START:
+        head = f"{TABLE_START} {TABLE_STYLE}"
+    rows = [line if line.startswith(("{|", "|}", "|-")) else _CELL_BRACE.sub(r"\1\2&#123;", line)
+            for line in rest.split("\n")]
+    return "\n".join([head] + rows)
+
+
+def _units(piece: str) -> list[tuple[str, str]]:
+    """A paragraph as the reading records it, in printed order: its text
+    lines, and the blocks standing among them — ("table" | "verse" | "small" |
+    "figure" | "text", the lines)."""
+    lines, out, k = piece.split("\n"), [], 0
+    while k < len(lines):
+        line = lines[k]
+        s = line.strip()
+        if s.startswith(TABLE_START):
+            j = next((j for j in range(k, len(lines)) if lines[j].strip().startswith(TABLE_END)), len(lines) - 1)
+            out.append(("table", _set_table("\n".join(lines[k:j + 1]))))
+            k = j + 1
+        elif s.startswith("<poem>"):
+            j = next((j for j in range(k, len(lines)) if "</poem>" in lines[j]), len(lines) - 1)
+            out.append(("verse", "\n".join(lines[k:j + 1])))
+            k = j + 1
+        elif _MARK_LINE.fullmatch(line):
+            cap = lines[k + 1] if k + 1 < len(lines) and lines[k + 1].lstrip().startswith("{{c|") else None
+            out.append(("figure", line + ("\n" + cap if cap else "")))
+            k += 2 if cap else 1
+        else:
+            out.append(("text", line))
+            k += 1
+    # a centred line printed directly above a table or verse is its title: it
+    # goes where the block goes (vol 18 p296: "Marvin's Table for the
+    # Reduction of Velocities…" had stayed mid-sentence when its table moved)
+    centred = next(c.open for c in VOCABULARY if c.name == "c")
+    merged: list[tuple[str, str]] = []
+    for kind, s in out:
+        if kind in ("table", "verse") and merged and merged[-1][0] == "text" \
+                and merged[-1][1].strip().startswith(centred):
+            merged[-1] = (kind, merged[-1][1].strip() + "\n" + s)
+        else:
+            merged.append((kind, s))
+    return merged
+
+
+def _is_anchor_line(line: str) -> bool:
+    """A line that is one construct standing apart, not a display: a margin
+    heading.  It goes where it stands and breaks nothing."""
+    s = line.strip()
+    apart = tuple(c.open for c in VOCABULARY if c.name in ("block center", "c", "smaller block"))
+    return (s.startswith("{{") and s.endswith("}}") and _balanced_end(s, 0) == len(s)
+            and not s.startswith(apart))
+
+
+def _join_text(lines: list[str]) -> str:
+    """A paragraph's text lines as one: lines kept apart by a newline (a
+    margin heading on its own line, a display); a word broken at a line end
+    joined across whatever stands between its halves, the margin heading set
+    before the broken word ("deter-" | heading | "mining": vol 26 p169)."""
+    out, held = "", []
+    for line in lines:
+        if not line.strip():
+            continue
+        if _is_anchor_line(line) and _WORD_BROKEN.search(out):
+            held.append(line.strip())
+            continue
+        if held:
+            m = _WORD_BROKEN.search(out)
+            head = out[:m.start()].rstrip()
+            out = (head + "\n" if head else "") + "\n".join(held) + "\n" \
+                + _join_words(out[m.start():].rstrip(), line.lstrip())
+            held = []
+            continue
+        if out and _WORD_BROKEN.search(out) and not _is_anchor_line(line):
+            out = _join_words(out.rstrip(), line.lstrip())
+            continue
+        out = f"{out}\n{line}" if out else line
+    if held:
+        out += "\n" + "\n".join(held)
+    return out
+
+
+def _segments(piece: str, continues: bool = False) -> list[tuple[str, str]]:
+    """A paragraph as our page sets it: ("text" | "block" | "figure", …) in
+    order.  A block the print sets WITHIN the paragraph (a table, verse, an
+    illustration) moves to the end of the sentence it interrupts — or stays,
+    if the text before it already ends one — and the paragraph's text after
+    it begins a new one.  The reading recorded where it stood; this is the
+    one place that decides where it goes."""
+    units = _units(piece)
+    segs: list[tuple[str, str]] = []
+    text: list[str] = []
+    k = 0
+    while k < len(units):
+        kind, s = units[k]
+        if kind == "text":
+            text.append(s)
+            k += 1
+            continue
+        before = _join_text(text)
+        text = []
+        # the text that follows, up to the next block, in which the sentence ends
+        j, after = k + 1, []
+        while j < len(units) and units[j][0] == "text":
+            after.append(units[j][1])
+            j += 1
+        rest = _join_text(after)
+        if rest and ((before and not _ENDS_SENTENCE.search(before)) or (not before and continues and not segs)):
+            m = _SENTENCE_END.search(rest)
+            cut_at = m.end() if m else len(rest)
+            before = _join_words(before.rstrip(), rest[:cut_at].lstrip()) if before.rstrip().endswith("-") \
+                else (before.rstrip() + " " + rest[:cut_at].lstrip()).strip()
+            rest = rest[cut_at:].lstrip()
+        if before:
+            segs.append(("text", before))
+        segs.append(("figure" if kind == "figure" else "block", s))
+        text = [rest] if rest else []
+        k = j
+    if text:
+        segs.append(("text", _join_text(text)))
+    return segs
+
+
+def _is_note(piece: str) -> bool:
+    """A footnote, as printed at a column's foot: small type by definition."""
+    body = piece.strip()
+    for o in _SMALL_OPEN:
+        if body.startswith(o):
+            body = body[len(o):]
+            break
+    return bool(re.match(r"\s*" + _NOTE_MARK.pattern, body))
+
+
+def _unwrapped(piece: str) -> str:
+    """A piece without the whole-piece small-type wrapper the reading gave it."""
+    p = piece.strip()
+    o = _SMALL["smaller block"].open
+    if p.startswith(o) and _balanced_end(p, 0) == len(p):
+        return p[len(o):-2].strip()
+    return piece
+
+
+def apply_type(text: str, sizes: list | None) -> str:
+    """A reading with each paragraph set in its MEASURED type (`sizes`, one per
+    recorded paragraph start — `positions`): the reading's own whole-paragraph
+    size marks taken off, and every piece of a paragraph measured "small"
+    wrapped in small type.  A table or verse is never wrapped (a template
+    cannot hold a table), nor a footnote (small by definition, placed apart).
+    No sizes: the reading as it is."""
+    if not sizes:
+        return text
+    ms = list(POSITION.finditer(text))
+    if not ms:
+        return text
+    out = [text[:ms[0].start()]]
+    block = _SMALL["smaller block"]
+    for k, m in enumerate(ms):
+        seg = text[m.end():ms[k + 1].start() if k + 1 < len(ms) else len(text)]
+        small = k < len(sizes) and sizes[k] == "small"
+        pieces = []
+        for piece in seg.split(PARAGRAPH_SEP):
+            if not piece.strip() or _is_note(piece) or piece.lstrip().startswith((TABLE_START, "<poem>")) \
+                    or _MARK_LINE.match(piece.strip()):
+                pieces.append(piece)
+                continue
+            p = _unwrapped(piece).strip()
+            pieces.append(block.open + p + block.close if small else p)
+        out.append(m.group(0) + PARAGRAPH_SEP.join(pieces).strip() + (PARAGRAPH_SEP if k + 1 < len(ms) else ""))
+    return "".join(out)
+
+
+def take_furniture(text: str, into: list[str]) -> str:
+    """A reading with its page furniture taken out (`Construct.furniture`: a
+    sheet signature), each kept in `into` for the page's footer — recorded
+    where it was printed, set where Wikisource sets it: outside the text.  The
+    text either side keeps the break it had (a paragraph's, or a line's)."""
+    for c in constructs():
+        if not c.furniture:
+            continue
+        while (i := text.find(c.open)) >= 0:
+            end = _balanced_end(text, i) if c.close == "}}" else text.find(c.close, i) + len(c.close)
+            if end <= i:
+                break
+            into.append(text[i:end])
+            before, after = text[:i], text[end:]
+            gap = PARAGRAPH_SEP if before.endswith(PARAGRAPH_SEP) and after.startswith(PARAGRAPH_SEP) else "\n"
+            before, after = before.rstrip(), after.lstrip()
+            text = before + (gap if before and after else "") + after
+    return text
+
+
 def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[str, str],
                   column_width: int, level: int = 1, legacy_captions: bool = False,
-                  sections: list[dict] | None = None) -> str:
+                  sections: list[dict] | None = None, types: dict | None = None) -> str:
     """The page's wikitext from its items and their readings.
 
     `texts` maps item name -> the model's (or a proofreader's) reading;
     `figure_files` maps figure item name -> its image file name;
-    `sections` the page's section addresses (`place_sections`)."""
+    `sections` the page's section addresses (`place_sections`); `types` item
+    name -> each recorded paragraph's measured type (`apply_type`)."""
     head = ""
     paras: list[str] = []         # the page's blocks: paragraphs and figures
     open_para = False             # is the last paragraph still running?
     pending: list[str] = []       # figure blocks waiting for a paragraph boundary
     notes: list[tuple[str, str]] = []   # the page's footnotes, from its columns' feet
+    furniture: list[str] = []     # the printer's marks the readings record: the footer's
     caps = captions(items, legacy=legacy_captions)
 
     def boundary():
@@ -495,49 +758,50 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         px = max(60, round(w / column_width * COLUMN_DISPLAY_PX))
         return f"[[File:{figure_files[fig.name]}|center|{px}px]]" + (f"\n{caption}" if caption else "")
 
-    def pull_figures(piece: str, figs: list[Item]) -> tuple[str, list[str]]:
-        """A piece with its figure marks (and the caption line after each)
-        taken out, and the figure blocks they stand for."""
-        lines, rest, blocks = piece.split("\n"), [], []
-        k = 0
-        while k < len(lines):
-            if _MARK_LINE.fullmatch(lines[k]):
-                caption = ""
-                if k + 1 < len(lines) and lines[k + 1].lstrip().startswith("{{c|"):
-                    caption, k = lines[k + 1].strip(), k + 1
-                # a mark with no figure left (a proofreader's): its caption alone
-                blocks.append(figure_block(figs.pop(0), caption) if figs else caption)
-            else:
-                rest.append(lines[k])
-            k += 1
-        return "\n".join(rest).strip(), blocks
+    def marked_figure(unit: str, figs: list[Item]) -> str:
+        """A figure mark (and the caption line after it) as the crop it stands
+        for; a mark with no figure left (a proofreader's): its caption alone."""
+        _, _, caption = unit.partition("\n")
+        return figure_block(figs.pop(0), caption.strip()) if figs else caption.strip()
 
     def add(text: str, continues: bool, figs: list[Item] = ()):
         """Append one reading; `continues` = it carries on the open paragraph.
-        `figs`: the figure items its marks stand for, in order."""
+        `figs`: the figure items its marks stand for, in order.  What the
+        reading records, set by `_segments`: a block standing within a
+        paragraph goes to the end of its sentence."""
         nonlocal open_para
         figs = list(figs)
         first = True
         for raw in text.split(PARAGRAPH_SEP):
-            piece, blocks = pull_figures(raw.strip(), figs) if _MARK_LINE.search(raw) else (raw.strip(), [])
-            if not piece and blocks:
-                pending.extend(blocks)          # a figure alone: the paragraph runs on past it
+            piece = raw.strip()
+            segs = _segments(piece, continues=first and continues and open_para)
+            if len(segs) == 1 and segs[0][0] == "figure":
+                # a figure alone between blank lines (a reading made before
+                # blocks were written where they stand): the paragraph runs
+                # on past it, and the figure waits for its end
+                pending.append(marked_figure(segs[0][1], figs))
                 continue
-            # a table is a block: it runs on from nothing, and nothing runs on
-            # from it (Anthon leaf 1459: a table read in its own strip had
-            # joined the sentence before it, "{|" mid-line)
-            joins = first and continues and open_para and not piece.startswith(TABLE_START)
-            first = False
-            if not joins:
-                boundary()                      # whatever ran before has ended
-            pending.extend(blocks)              # this paragraph's figures wait for its end
-            if not piece:
-                continue
-            if joins:
-                paras[-1] = join_across_cut(paras[-1], piece)
-            else:
-                paras.append(piece)
-            open_para = not piece.endswith(TABLE_END)
+            for n, (kind, s) in enumerate(segs):
+                if kind in ("figure", "block"):
+                    # a block is a paragraph of its own: it runs on from
+                    # nothing, and nothing runs on from it (Anthon leaf 1459:
+                    # a table had joined the sentence before it, "{|" mid-line)
+                    boundary()
+                    paras.append(marked_figure(s, figs) if kind == "figure" else s)
+                    first = False
+                    continue
+                joins = first and n == 0 and continues and open_para
+                first = False
+                if not joins:
+                    boundary()                  # whatever ran before has ended
+                if joins:
+                    paras[-1] = join_across_cut(paras[-1], s)
+                else:
+                    paras.append(s)
+                open_para = True
+            if not segs:
+                first, open_para = False, False
+                boundary()
 
     # Type set across the columns (column 0, `cut.plan`) is a block of its own:
     # a title above the columns does not run on into them, nor a column's
@@ -559,11 +823,14 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
                 i += 1
             pending.append(figure_block(it, caption))
         else:
-            text = texts.get(it.name, "")
+            # the paragraph positions the reading records are facts for
+            # assembly's measurements, never page text (`positions`)
+            text = POSITION.sub("", apply_type(texts.get(it.name, ""), (types or {}).get(it.name)))
             begins = text.lstrip().startswith(PARA)
             text = re.sub(rf"^\s*{PARA}[ \t]*\n?", "", text).strip()
             text, got = take_footnotes(text)     # placed at their marks below
             notes += got
+            text = take_furniture(text, furniture)  # set in the page's footer
             across = it.column == 0 or last_column == 0
             figs = figures_of(items, it) if _MARK_LINE.search(text) else []
             add(text, continues=not begins and not across, figs=figs)
@@ -580,4 +847,4 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         body += PARAGRAPH_SEP + block.open + "\n".join(f"<sup>{n}</sup> {t}" for n, t in left) + block.close
     who = "proofreader" if level >= 3 else "transcriber"
     return (f'<noinclude><pagequality level="{level}" user="{who}" />{head}</noinclude>'
-            + body + "<noinclude><references/></noinclude>")
+            + body + f"<noinclude>{''.join(furniture)}<references/></noinclude>")
