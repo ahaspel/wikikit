@@ -469,11 +469,24 @@ _SEE_SEG_SPLIT_RE = re.compile(r"(,|\s+and\s+)")
 # which the walker produces as its own element — so the window above, which
 # sees one text run, never meets the name (131 such on 91 articles went
 # unlinked).  The small-caps producer reads this off `ctx.prev_marker`.
+#
+# The book points at an article with more words than "see": "the article
+# PROJECTION", "treated under ELEMENT", "(q.v. under …)".  A NAME IN SMALL
+# CAPITALS after one of them is the same printed cross-reference — the small
+# capitals are the book's mark, the cue only says which way it points — so
+# these are cues here, and only here: in plain text ("The article was
+# manufactured …") the see-window above keeps to "see" / "cf." / "compare".
+# Of the links Wikisource's editors put on the supplied pages, 42 were such
+# names, behind cues this did not know (2026-10-11).
 _SEE_CUE_BEFORE_RE = re.compile(
-    r"\b(?P<cue>[Ss]ee\s+also|[Ss]ee|[Cc]f\.|[Cc]ompare)\s+"
+    r"\b(?P<cue>[Ss]ee\s+also|[Ss]ee|[Cc]f\.|[Cc]ompare|q\.\s?v\.(?:\s+under)?"
+    r"|(?:[Tt]he|[Oo]ur)(?=\s+articles?\b)"
+    r"|(?:treated|discussed|described|dealt\s+with|given|considered|noticed|explained|"
+    r"mentioned|further|also|fully)\s+(?:under|in))\s+"
     r"(?:the\s+)?(?:articles?\s+(?:on\s+)?)?$")
-# An enumeration's separator, and a small-caps name stamped just before it.
-_SEE_ENUM_SEP_RE = re.compile(r",\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+")
+# An enumeration's separator, and a small-caps name stamped just before it —
+# a semicolon too: "see ARTIODACTYLA; HIPPOPOTAMUS; PECCARY".
+_SEE_ENUM_SEP_RE = re.compile(r"[,;]\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+")
 _SEE_NAME_STAMPED_RE = re.compile(r"«SC»«LN\[(?P<kind>see|see_also)\]:[^«]*«/LN»«/SC»$")
 
 

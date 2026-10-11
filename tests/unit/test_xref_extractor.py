@@ -192,3 +192,25 @@ def test_a_small_caps_name_the_source_linked_is_left_as_it_made_it() -> None:
 
 def test_small_caps_without_a_cue_is_not_a_reference() -> None:
     assert extract_xrefs(_chain("in {{sc|Rome}} and {{sc|Paris}} alike")) == []
+
+
+# The book points at an article with more words than "see" — and the small
+# capitals are still its mark (the links Wikisource's editors put on the
+# supplied pages: 42 behind such cues, 2026-10-11).
+
+def test_the_article_and_treated_under_cue_a_small_caps_name() -> None:
+    out = _chain("is given in the article {{sc|Projection}}, and the subject is treated "
+                 "under {{sc|Element}}; compare (q.v. under {{sc|Hippopotamus}}).")
+    assert {x["normalized_target"] for x in extract_xrefs(out)} == \
+        {"PROJECTION", "ELEMENT", "HIPPOPOTAMUS"}
+
+
+def test_a_semicolon_continues_an_enumeration() -> None:
+    out = _chain("(see {{sc|Artiodactyla}}; {{sc|Hippopotamus}}; {{sc|Peccary}}).")
+    assert {x["normalized_target"] for x in extract_xrefs(out)} == \
+        {"ARTIODACTYLA", "HIPPOPOTAMUS", "PECCARY"}
+
+
+def test_the_new_cues_are_small_caps_only() -> None:
+    # in plain text "the article" is prose, not a pointer
+    assert extract_xrefs(_chain("The article Projection was printed in 1910.")) == []
