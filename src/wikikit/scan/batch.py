@@ -33,7 +33,7 @@ from wikikit.scan.layout import layout_for
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
-from wikikit.scan.transcribe import captions, read_request, settle
+from wikikit.scan.transcribe import figures_of, read_request, settle
 
 #: Requests per batch are bounded by size: base64 images, ~0.5 MB per strip.
 MAX_BATCH_BYTES = 200 * 1024 * 1024
@@ -76,11 +76,19 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
     for cid, (status, text, usage) in results.items():
         pid, kind, key = cid.split("_", 2)
         ps = state["pages"][pid]
-        if kind in ("loc", "ref") and usage is not None:
+        if kind in ("loc", "ref", "gut") and usage is not None:
             _add_usage(ps["usage"]["figures"], usage)
         if kind == "read" and usage is not None:
             _add_usage(ps["usage"]["text"], usage)
-        if kind == "loc":
+        if kind == "gut":
+            if status != "ok":
+                ps["error"] = f"gutter look: {text}"
+                continue
+            try:
+                ps["gutter"] = figures.gutter_answer(text)
+            except ValueError as e:
+                ps["error"] = f"gutter look, unreadable answer: {e}"
+        elif kind == "loc":
             if status != "ok":
                 ps["error"] = f"figure finding: {text}"
                 continue
@@ -111,8 +119,9 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
                     ps["unread"][key] = text
                 continue
             level = _level(ps, scans)
-            item = next(it for it in _items(ps) if it.name == key)
-            text, why = settle(level, item, text)
+            items = _items(ps)
+            item = next(it for it in items if it.name == key)
+            text, why = settle(level, item, text, figures_of(items, item))
             if why is None:
                 ps["readings"][key] = text
             else:
@@ -147,35 +156,47 @@ def _page_requests(pid: str, ps: dict, scans) -> dict[str, dict]:
     stage needs."""
     reqs: dict[str, dict] = {}
     level = _level(ps, scans)
+    layout = layout_for(ps["volume"], ps["page"])
+    # a book reading only pages set in columns asks the gutter look beside
+    # the figures' (`figures.gutter`), once
+    if layout.columns_only and ps.get("gutter") is None and not ps.get("gut_sent"):
+        img, prompt, max_tokens = figures.gutter_request(level)
+        reqs[f"{pid}_gut_0"] = request(img, prompt, max_tokens)
+        ps["gut_sent"] = True
     if ps["rough"] is None:
         img, prompt, max_tokens, scale = figures.locate_request(level)
         ps["loc_scale"] = scale
         reqs[f"{pid}_loc_0"] = request(img, prompt, max_tokens)
         return reqs
     if len(ps["refined"]) < len(ps["rough"]):
-        cols = cut.page_columns(level, layout_for(ps["volume"], ps["page"]).columns)
+        cols = cut.page_columns(level, layout.columns)
         for i, f in enumerate(ps["rough"]):
             if str(i) not in ps["refined"]:
                 img, prompt, max_tokens, window = figures.refine_request(level, f, figures.column_of(f, cols))
                 ps["windows"][str(i)] = window
                 reqs[f"{pid}_ref_{i}"] = request(img, prompt, max_tokens)
         return reqs
+    if layout.columns_only and ps.get("gutter") is None:
+        return reqs                                  # the gutter look still out
     if ps["items"] is None:                          # the cut, once the figures are known
         figs = [ps["refined"][str(i)] for i in range(len(ps["rough"]))]
-        plan = cut.plan(level, figs, angle=0.0, across=ps.get("across") or [],
-                        n_columns=layout_for(ps["volume"], ps["page"]).columns)
+        plan = cut.plan(level, figs, max_h=layout.max_h, angle=0.0, across=ps.get("across") or [],
+                        n_columns=layout.columns, gutter=ps.get("gutter") or [])
         ps["figures"] = figs
         ps["items"] = [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
                        for it in plan.items]
         ps["disagreements"] = {str(k): list(v) for k, v in plan.disagreements.items()}
+        # a page the book reads only in columns, with anything across them:
+        # filed for special handling, never read (`layout.columns_only`)
+        ps["special"] = plan.crossing if layout.columns_only else []
         ps["stage"] = "read"
-    items = _items(ps)
-    caps = captions(items)
-    for it in items:
+    if ps.get("special"):
+        return reqs
+    for it in _items(ps):
         if it.kind == "figure" or it.name in ps["readings"] or it.name in ps["unread"] \
                 or it.name in ps["refused"]:
             continue
-        reqs[f"{pid}_read_{it.name}"] = read_request(level, it, it.name in caps, cache_ttl=CACHE_TTL)
+        reqs[f"{pid}_read_{it.name}"] = read_request(level, it, cache_ttl=CACHE_TTL)
     return reqs
 
 
@@ -202,8 +223,9 @@ def _finish(state: dict, scans) -> list[str]:
             continue
         items = _items(ps)
         texts = [it for it in items if it.kind != "figure"]
-        if not all(it.name in ps["readings"] or it.name in ps["unread"] or it.name in ps["refused"]
-                   for it in texts):
+        if not ps.get("special") and not all(
+                it.name in ps["readings"] or it.name in ps["unread"] or it.name in ps["refused"]
+                for it in texts):
             continue
         level = _level(ps, scans)
         plan = cut.Plan(ps["angle"], items, {int(k): tuple(v) for k, v in ps["disagreements"].items()})
@@ -211,7 +233,7 @@ def _finish(state: dict, scans) -> list[str]:
         payload = supplied.build_payload(ps["volume"], ps["page"], ps["scan"], level, plan,
                                          ps["figures"], readings, ps["refused"], ps["unread"],
                                          ps["usage"], ps.get("rejected", {}), ps.get("replaces"),
-                                         ps.get("across") or [])
+                                         ps.get("across") or [], ps.get("special"), ps.get("gutter"))
         supplied.write(payload)
         supplied.materialize_figures(payload, scans(ps["volume"], ps["page"]))
         ps["stage"] = "done"
@@ -232,26 +254,43 @@ def _chunks(reqs: dict[str, dict]) -> list[dict[str, dict]]:
     return out
 
 
-def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = None) -> None:
+def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = None,
+              located: dict[str, dict] | None = None) -> None:
     """Put pages (volume, page, scan name) into the run; a page still in
     flight is left as it is, and a finished page asked for again is read
     afresh (the caller decided to overwrite its supplied page).  `replaces`:
     why the fetched pages were found bad (`supplied.build_payload`).  A page's
     layout is the book's to declare (`wikikit.scan.layout`), asked when the
-    page is cut."""
+    page is cut.
+
+    `located`: page id -> its supplied page's provenance, for a page read
+    again whose figures were located before: its deskew, figures and type
+    across are taken as they stand (the boxes are in that deskew's pixels),
+    and only its text is read — what locating cost is kept, not paid twice.
+    Its "gutter", if given, is the gutter look's answer (`figures.gutter`)."""
     state = load()
     for vol, pg, scan in pages:
         pid = page_id(vol, pg)
         if pid in state["pages"] and state["pages"][pid]["stage"] != "done":
             continue
-        state["pages"][pid] = {
+        ps = state["pages"][pid] = {
             "id": pid, "volume": vol, "page": pg, "scan": scan, "stage": "figures",
             "replaces": replaces,
-            "angle": cut.skew_angle(scans(vol, pg)), "rough": None, "across": [], "refined": {},
+            "angle": None, "rough": None, "across": [], "refined": {},
             "windows": {},
             "figures": None, "items": None, "disagreements": {}, "readings": {}, "tries": {},
             "refused": [], "unread": {},
             "usage": {"figures": _empty_usage(), "text": _empty_usage()}}
+        known = (located or {}).get(pid)
+        if known:
+            figs = known.get("figures") or []
+            ps.update(angle=known["angle"], rough=figs, refined={str(i): f for i, f in enumerate(figs)},
+                      across=known.get("across") or [])
+            if "gutter" in known:                    # the gutter look, asked before
+                ps["gutter"] = known["gutter"]
+            ps["usage"]["figures"] = known["usage"]["figures"]
+        else:
+            ps["angle"] = cut.skew_angle(scans(vol, pg))
     save(state)
 
 

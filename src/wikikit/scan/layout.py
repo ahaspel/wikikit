@@ -21,6 +21,19 @@ from wikikit.corpora import current_corpus
 class PageLayout:
     #: how many columns the page prints; None: as the ink shows
     columns: int | None = None
+    #: each column read in one call, not in strips: type large enough to read
+    #: at the scale a whole column arrives at (`wikikit.scan.cut`)
+    whole_columns: bool = False
+    #: the book reads only pages set purely in columns: a page with anything
+    #: across them (`cut.Plan.crossing`) is filed for special handling, never
+    #: read — every way of reading across columns has failed one way or another
+    columns_only: bool = False
+
+    @property
+    def max_h(self) -> int | None:
+        """The tallest strip the cutter cuts (`cut.plan`): None, the column."""
+        from wikikit.scan.cut import MAX_H
+        return None if self.whole_columns else MAX_H
 
 
 def layout_for(volume: int, page: int) -> PageLayout:

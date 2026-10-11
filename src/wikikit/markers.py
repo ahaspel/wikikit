@@ -683,11 +683,18 @@ def countable_words(text: str) -> int:
     and legends whole, which silently omits the poems from CHANT ROYAL and the
     figure keys from TOOL.
     """
+    return len(countable_word_list(text))
+
+
+def countable_word_list(text: str) -> list[str]:
+    """The words :func:`countable_words` counts, in reading order — for a
+    question about WHICH words (a transcription that lost a strip of the page),
+    by the same policy as the count."""
     text = _UNCOUNTABLE_RE.sub(" ", text or "")
     text = collapse_links(text)               # a link's target is an address
     text = _RAW_HTML_RE.sub("", text)         # `H<sub>2</sub>O` stays ONE word
     text = _RAW_BR_RE.sub(" ", text)
-    return len(WORD_RE.findall(strip_marker_tokens(text, " ")))
+    return WORD_RE.findall(strip_marker_tokens(text, " "))
 
 
 def markers_to_text(text: str, *, sep: str = " ") -> str:

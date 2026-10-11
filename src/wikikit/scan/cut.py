@@ -1,19 +1,22 @@
 """A scanned page as reading-order items: the running head, any type set across
-the columns above them, then each column top to bottom — text strips cut only
-in the white space between lines, and figures, each with its caption and, for
-an inset, the text running beside it — then any type across below them.
+the columns above them, then each column top to bottom — read whole, or in
+strips cut only in the white space between lines — then any type across below
+them.  Figures are READ where they stand, inside the column or strip that holds
+them, and each follows that item as the crop the page shows: nothing is cut
+out of what the model reads (`_column_items`).
 
 Pure pixels: no model is called here.  Where the figures are, and the type set
 across the columns, is decided before (`wikikit.scan.figures`, a vision model)
-and passed in; this module snaps each to the ink.  The ink's own figure detector (`ink_figures`) is
-kept only as a second opinion: it sees heavy woodcuts and misses light line
-engravings, so where it and the model disagree is a place to look, never an
-answer (`Plan.disagreements`).
+and passed in.  The ink's own figure detector (`ink_figures`) is kept only as
+a second opinion: it sees heavy woodcuts and misses light line engravings, so
+where it and the model disagree is a place to look, never an answer
+(`Plan.disagreements`).
 
-Why strips, not whole columns: the model reads an image of at most ~1568 px on
-its long side, and a dictionary column is ~3100 px tall — whole, it arrives at
-half resolution, where a double dot under a vowel is a pixel.  A strip of at
-most `max_h` rows arrives near native resolution.
+Whole columns or strips is the book's to declare (`layout.PageLayout`): a
+column read whole arrives scaled to what the model accepts — an EB1911 column,
+1100 x 2940, at about 0.87 (Opus 5.5, 2026-10-11: five columns read, nothing
+lost) — but a dictionary's small type, a double dot under a vowel, wants the
+native resolution a strip of at most `max_h` rows keeps.
 """
 from __future__ import annotations
 
@@ -30,11 +33,12 @@ MAX_H = 1100
 
 @dataclass(frozen=True)
 class Item:
-    """One reading-order piece of a page: `kind` is "head", "text", "figure"
-    or "caption" (a figure's, cut from the caption the model located: text,
-    read as a caption and kept with its figure); `box` is (x0, y0, x1, y1) on
-    the deskewed page; `name` is stable within the page ("head", "c1s3" —
-    column 1 strip 3 —, "c2f1" — column 2 figure 1 —, "c2c1" — its caption)."""
+    """One reading-order piece of a page: `kind` is "head", "text" or "figure"
+    (the crop shown for a figure the text item before it marks); `box` is
+    (x0, y0, x1, y1) on the deskewed page; `name` is stable within the page
+    ("head", "c1s3" — column 1 strip 3 —, "c2f1" — column 2 figure 1).
+    Pages cut before figures were read in place also hold "caption" items
+    ("c2c1"), read on their own; they assemble as they always did."""
     kind: str
     box: tuple[int, int, int, int]
     column: int
@@ -46,10 +50,12 @@ class Plan:
     """A cut page: the deskew applied, the items in reading order, and where the
     model and the ink disagreed (column -> (model, ink) counts): figures in a
     column; for column 0, blocks set across the columns against the columns'
-    edge lines the ink sees crossing a cut (`_crossing_edges`)."""
+    edge lines the ink sees crossing a cut (`_crossing_edges`).  `crossing`:
+    why the page is not set purely in columns, or empty (`_crossing`)."""
     angle: float
     items: list[Item]
     disagreements: dict[int, tuple[int, int]] = field(default_factory=dict)
+    crossing: list[str] = field(default_factory=list)
 
 
 def runs(mask) -> list[tuple[int, int]]:
@@ -260,9 +266,11 @@ def _standing(block, reach: float):
     return out
 
 
-def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
-    """Rows [top, bottom) of one column cut into strips of at most `max_h`,
-    each cut in the middle of a white band — never through a line.  Ink
+def strips(dark, top, bottom, a, b, max_h=MAX_H, keep=()) -> list[tuple[int, int]]:
+    """Rows [top, bottom) of one column cut into strips of at most `max_h`
+    (None: the column whole, one strip), each cut in the middle of a white
+    band — never through a line, and never inside a `keep` span (y0, y1): a
+    figure and its caption, which a strip holds whole, however tall.  Ink
     standing down most of the column (a scan's dark edge, a rule at the
     column's side) is no line's, and would leave no white band anywhere:
     it is set aside before rows are measured.
@@ -272,6 +280,8 @@ def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
     resolution the white between a display fraction's numerator and its bar
     is a band like any other, and a cut there (ALGEBRAIC FORMS, ws p670)
     gave one strip four bare numerators and the next their denominators."""
+    if max_h is None:
+        return [(top, bottom)] if bottom - top > 20 else []
     block = dark[top:bottom, a:b]
     line = _line_height(dark, top, bottom, a, b)
     if bottom - top > 0:
@@ -296,7 +306,8 @@ def strips(dark, top, bottom, a, b, max_h=MAX_H) -> list[tuple[int, int]]:
             cuts += [s + gs + int(np.argmin(ink[s - top + gs:s - top + ge])) for (_, gs), (ge, _)
                      in zip(lines, lines[1:]) if ge > gs]
     cuts.sort()
-    candidates = [c for c in cuts if top < c < bottom] + [bottom]
+    candidates = [c for c in cuts if top < c < bottom
+                  and not any(y0 - 3 <= c <= y1 + 3 for y0, y1 in keep)] + [bottom]
     out, start, last_ok = [], top, None
     for c in candidates:
         if c - start <= max_h:
@@ -359,131 +370,42 @@ def ink_figures(dark, top, bottom, a, b) -> list[tuple[int, int]]:
             if e - s > INK_FIGURE_LINES * line and region[s:e].mean() > INK_FIGURE_DENSITY]
 
 
-# ── snapping a located figure to the ink ─────────────────────────────────────
-def _grow(dark, y0, y1, a, b, line, lo, hi):
-    """Take in a woodcut's pale fringe and its frame: neighbouring inked runs
-    that are thin (under a third of a line) or hold a long horizontal rule, and
-    sit within ¾ of a line of the figure.  Type is neither: a rule is one
-    unbroken stroke, a line of type is broken between its letters — measured
-    as the TOTAL ink in a row, a line of type in the narrow band of an inset
-    (EB1911 vol 22 p706, 177 px) passed for a rule, and the figure grew up
-    through a column of text."""
-    rr = [(lo + s, lo + e) for s, e in runs(dark[lo:hi, a:b].any(axis=1))]
-
-    def picture(s, e):
-        stroke = max((x1 - x0 for r in range(s, e) for x0, x1 in runs(dark[r, a:b])), default=0)
-        return e - s <= 0.35 * line or stroke / (b - a) >= 0.45
-
-    for s, e in reversed([r for r in rr if r[1] <= y0]):
-        if y0 - e <= 0.75 * line and picture(s, e):
-            y0 = s
-        else:
-            break
-    for s, e in [r for r in rr if r[0] >= y1]:
-        if s - y1 <= 0.75 * line and picture(s, e):
-            y1 = e
-        else:
-            break
-    return y0, y1
+# ── figures: read where they stand, cropped after ───────────────────────────
+#: A figure's display crop reaches this many pixels past its located box.
+FIGURE_PAD = 12
 
 
-def _inset_gutter(dark, y0, y1, side, fig_x0, fig_x1):
-    """The white vertical band between an inset figure and the text beside it:
-    the widest run of ink-free columns between them, or None."""
-    lo, hi = (side[1], fig_x0) if side[1] <= fig_x0 else (fig_x1, side[0])
-    lo, hi = min(lo, hi) - 30, max(lo, hi) + 30
-    rr = runs(~dark[y0:y1, lo:hi].any(axis=0))
-    if not rr:
-        return None
-    s, e = max(rr, key=lambda r: r[1] - r[0])
-    return lo + s, lo + e
-
-
-def _snap(dark, a, b, top, bottom, fig, line):
-    """One located figure (rough boxes, page pixels) snapped to the ink.
-
-    The figure's edges move OUTWARD from the model's to the nearest white row
-    (a framed picture has white rows inside it), then through its pale fringe.
-    An inset is split from the text beside it at the white gutter, and its
-    region begins at a row white across the whole column so no line is halved.
-    Returns (figure, caption | None, text beside | None, region_top, y_end)."""
-    bx0, by0, bx1, by1 = fig["box"]
-    if fig.get("inset"):
-        side_left = (bx0 - a) > (b - bx1)          # the text runs on the wider side
-        side = (a, bx0) if side_left else (bx1, b)
-        g = _inset_gutter(dark, by0, by1, side, bx0, bx1)
-        gx = (g[0] + g[1]) // 2 if g else (bx0 if side_left else bx1)
-        crossing = dark[:, gx - 2:gx + 3].any(axis=1)
-        fig_x = (gx, b) if side_left else (a, gx)
-        text_x = (a, gx) if side_left else (gx, b)
-    else:
-        fig_x, text_x, crossing = (a, b), None, None
-    white = ~dark[:, fig_x[0]:fig_x[1]].any(axis=1)
-    slack = int(1.2 * line)
-
-    def white_out(y, step, reach, allow=3):
-        """The first white row from just inside the model's edge outward, at
-        most `reach` rows beyond it (up when step is -1, down when +1)."""
-        start = y - step * allow
-        stop = y + step * reach + (step if step < 0 else 0)
-        for r in range(start, stop, step):
-            if top <= r < bottom and white[r]:
-                return r
-        return None
-
-    w0, w1 = white_out(by0, -1, slack), white_out(by1, 1, slack)
-    y0 = w0 + 1 if w0 is not None else by0
-    y1 = w1 if w1 is not None else by1
-    cap_top = fig["caption"][1] if fig.get("caption") else bottom
-    y0, y1 = _grow(dark, y0, y1, fig_x[0], fig_x[1], line, top, min(bottom, cap_top - 2))
-    pad = 3
-    fig_box = (fig_x[0], max(top, y0 - pad), fig_x[1], min(bottom, y1 + pad))
-    y_end = fig_box[3]
-
-    def white_near(y, lo_off, hi_off):
-        cands = [r for r in range(max(top, y + lo_off), min(bottom, y + hi_off)) if white[r]]
-        return min(cands, key=lambda r: abs(r - y)) if cands else None
-
-    cap_box = None
-    if fig.get("caption"):
-        _, cy0, _, cy1 = fig["caption"]
-        c0, c1 = white_near(cy0, -slack // 2, slack // 3), white_near(cy1, -(slack // 3), slack // 2)
-        cap_box = (fig_x[0], max(fig_box[3], c0 if c0 is not None else cy0), fig_x[1],
-                   c1 if c1 is not None else cy1)
-        y_end = cap_box[3]
-    region_top, side_box = fig_box[1], None
-    if text_x:
-        whole_white = ~dark[:, a:b].any(axis=1)
-        for r in range(fig_box[1], max(top, fig_box[1] - 3 * int(line)) - 1, -1):
-            if whole_white[r]:
-                region_top = r
-                break
-        end = y_end                       # the text beside runs on until a line crosses the gutter
-        for s, e in runs(dark[y_end:bottom, a:b].any(axis=1)):
-            s, e = y_end + s, y_end + e
-            if crossing[s:e].any():
-                break
-            end = e
-        side_box = (text_x[0], region_top, text_x[1], end)
-        y_end = max(y_end, end)
-    return fig_box, cap_box, side_box, region_top, y_end
+def _figure_span(fig) -> tuple[int, int]:
+    """Rows a figure holds, its caption with it: no cut falls inside them."""
+    cap = fig.get("caption") or fig["box"]
+    return fig["box"][1], max(fig["box"][3], cap[3])
 
 
 def _column_items(dark, top, bottom, a, b, figs, max_h):
-    """("text" | "figure", box) for one column, in reading order: strips down to
-    each figure, the figure, its caption, the text beside an inset, then on."""
-    line = _line_height(dark, top, bottom, a, b)
-    items, y = [], top
-    for fig in sorted(figs, key=lambda f: f["box"][1]):
-        fig_box, cap_box, side_box, region_top, y_end = _snap(dark, a, b, y, bottom, fig, line)
-        items += [("text", (a, s, b, e)) for s, e in strips(dark, y, region_top, a, b, max_h)]
-        items.append(("figure", fig_box))
-        if cap_box:
-            items.append(("caption", cap_box))
-        if side_box:
-            items.append(("text", side_box))
-        y = y_end
-    items += [("text", (a, s, b, e)) for s, e in strips(dark, y, bottom, a, b, max_h)]
+    """("text" | "figure", box) for one column, in reading order.
+
+    The column is read with its figures IN it: strips are cut only between
+    lines and never through a figure or its caption (`strips`' `keep`), so a
+    figure, its caption and the text beside it reach the model together, and
+    the model marks where the figure stands (`transcribe.FIGURE_MARK`).  Each
+    figure follows the strip that holds it, as the crop the page shows for
+    that mark — never a hole cut in what is read.  Cutting figures OUT before
+    reading lost text in every way a box can be wrong (EB1911, 2026-10): a
+    box grown over type (SOUND, vol 25 p460), two figures merged over the
+    paragraph between them (TIRE, vol 26 p1049), type below a caption left in
+    no strip (SHIPBUILDING, vol 24 p1052), letters sliced at a box's edge."""
+    keep = [_figure_span(f) for f in figs]
+    cut_rows = strips(dark, top, bottom, a, b, max_h, keep=keep)
+    items = []
+    for n, (s, e) in enumerate(cut_rows):
+        items.append(("text", (a, s, b, e)))
+        last = n == len(cut_rows) - 1
+        for f in sorted(figs, key=lambda f: f["box"][1]):
+            cy = (f["box"][1] + f["box"][3]) / 2
+            if s <= cy < e or (last and cy >= e) or (n == 0 and cy < s):
+                x0, y0, x1, y1 = f["box"]
+                items.append(("figure", (max(a, x0 - FIGURE_PAD), max(top, y0 - FIGURE_PAD),
+                                         min(b, x1 + FIGURE_PAD), min(bottom, y1 + FIGURE_PAD))))
     return items
 
 
@@ -512,8 +434,8 @@ def _white_row(dark, y, step, left, right, reach, top, bottom):
     return y
 
 
-#: An item's kind, as its name spells it: c1s3, c2f1, c2c1.
-ITEM_LETTER = {"text": "s", "figure": "f", "caption": "c"}
+#: An item's kind, as its name spells it: c1s3, c2f1.
+ITEM_LETTER = {"text": "s", "figure": "f"}
 
 #: Two located figures overlapping by more than this share of the smaller are
 #: one figure.
@@ -631,6 +553,28 @@ def _crossing_edges(dark, begin, end, left, right, cuts) -> int:
     return n
 
 
+def _crossing(across, spanning, gutter) -> list[str]:
+    """Why a page is not set purely in columns — every sign, none ranked: type
+    the model located across them, a figure spanning them, or what the model
+    saw crossing a gutter when asked (`figures.gutter`).  Empty for a page of
+    columns.  The ink cannot answer this: measured on 16 EB1911 pages checked
+    by eye (2026-10-11), a stroke-through-the-gutter test missed drawings in
+    thin or broken lines (vol 24 p1000, p1038, vol 26 p1047), and ink near the
+    gutter rated a plain page (TIRE, vol 26 p1049) above one a drawing crosses
+    — a speck, a drawing's edge beside the gutter and a stroke across it are
+    the same pixels to a threshold.  The model's look named all 16 right."""
+    why = []
+    if across:
+        why.append(f"type across the columns ({len(across)})")
+    if spanning:
+        why.append(f"a figure across the columns ({len(spanning)})")
+    for g in gutter:
+        why.append(f"across the gutter: {g.get('kind', '?')} ({g.get('where', '?')}): {g.get('detail', '')}")
+    return why
+
+
+
+
 def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple[int, int]]:
     """The column extents of a deskewed page — as many as the book says it
     prints (`n_columns`), else as the ink shows (`columns`)."""
@@ -639,15 +583,18 @@ def page_columns(level: Image.Image, n_columns: int | None = None) -> list[tuple
     return columns(grey < INK, split, bottom, left, right, n_columns)
 
 
-def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
+def plan(img: Image.Image, figures: list[dict], max_h: int | None = MAX_H,
          angle: float | None = None, n_columns: int | None = None,
-         across: list | tuple = ()) -> Plan:
+         across: list | tuple = (), gutter: list | tuple = ()) -> Plan:
     """The page cut into reading-order items.  `figures` are the located figures
     (`wikikit.scan.figures`), in page pixels of the DESKEWED page: each
     {"box", "caption" | None, "inset"}; an empty list is a page with none.
+    `max_h`: the tallest strip, or None to read each column whole.
 
     `across`: the boxes of type set across the columns, as the same look
     located them (`figures.locate_answer`) — read across, as column 0.
+    `gutter`: what the model saw crossing a gutter (`figures.gutter`), for
+    `Plan.crossing`; it moves no cut.
     `n_columns`: how many columns the book says this page prints (`columns`) —
     for a page whose ink misleads the gutter finder; None, as the ink shows.
 
@@ -665,7 +612,20 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     out = Plan(angle, [Item("head", (left, top, right, split), 0, "head")])
     line = _line_height(dark, split, bottom, left, right)
     figures = _distinct(figures)
-    whole = columns(dark, split, bottom, left, right, n_columns)
+    # The gutters are where the TYPE parts: measured on the rows no figure
+    # holds.  A drawing near or across the gutter fills it, and measured
+    # through the drawing the gutter moved into a column (EB1911 vol 24
+    # p1052, 127 px: column 2's first letters cut off down the page).
+    type_ink = dark.copy()
+    for f in figures:
+        y0, y1 = _figure_span(f)
+        type_ink[max(0, y0 - FIGURE_PAD):y1 + FIGURE_PAD] = False
+
+    def columns_of(y0, y1):
+        ink = type_ink if type_ink[y0:y1, left:right].any() else dark
+        return columns(ink, y0, y1, left, right, n_columns)
+
+    whole = columns_of(split, bottom)
     gutters = [a for a, _ in whole[1:]]
     across = _crossing_a_gutter(across, whole)
     spanning = [f for f in figures if spans_columns(f["box"], whole)]
@@ -683,7 +643,7 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     def columned(y0, y1):
         if y1 - y0 < line or not (dark[y0:y1, left:right].sum(axis=1) > (right - left) * 0.003).any():
             return
-        cols = columns(dark, y0, y1, left, right, n_columns)
+        cols = columns_of(y0, y1)
         model_ink.setdefault(0, [0, 0])[1] += _crossing_edges(dark, y0, y1, left, right, [a for a, _ in cols[1:]])
         for ci, (a, b) in enumerate(cols, 1):
             mine = [f for f in in_column if a <= (f["box"][0] + f["box"][2]) / 2 < b
@@ -705,6 +665,7 @@ def plan(img: Image.Image, figures: list[dict], max_h: int = MAX_H,
     for ci, (model, ink) in model_ink.items():
         if (ci == 0 and ink) or (ci > 0 and model != ink):
             out.disagreements[ci] = (model, ink)
+    out.crossing = _crossing(across, spanning, gutter)
     # An item with no area is not an item: a page with no gap under its first
     # line (a title page) has no separate running head, and a band can close
     # where it opened.  Nothing on the page lies in it.

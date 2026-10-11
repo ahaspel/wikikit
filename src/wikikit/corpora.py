@@ -162,6 +162,12 @@ class Corpus:
     #: (its column count, …).  The cutter measures the ink only where the book
     #: declares nothing.  None = nothing declared on any page.
     page_layout: Callable[[int, int], object] | None = None
+    #: SECTIONS of a transcribed page: ``page_sections(volume, page, raw_text)``
+    #: -> ``([{"name", "before"}], None)`` — the `<section begin>` addresses its
+    #: articles' ids hang on, and the headword each opens at (None: the page's
+    #: top) — or ``(None, why)``.  ``wikikit.scan.supplied.name_sections``.
+    #: None = the book's ids hang on no section names a page must keep.
+    page_sections: Callable[[int, int, str], tuple] | None = None
     #: MARKUP the book prints that the engine reads but the shared transcription
     #: vocabulary does not name — its own templates, e.g. EB1911's margin
     #: heading {{EB1911 Shoulder Heading|…}}: ``wikikit.scan.vocabulary.Construct``s

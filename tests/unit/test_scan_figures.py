@@ -48,3 +48,13 @@ def test_an_answer_corrected_in_words_is_read_as_its_correction():
 def test_an_answer_with_no_object_is_refused():
     with pytest.raises(ValueError):
         locate_answer("I cannot see any figures.", 1.0)
+
+
+def test_the_gutter_look_names_what_crosses_or_nothing():
+    from wikikit.scan.figures import gutter_answer
+    assert gutter_answer('{"crosses": false, "what": []}') == []
+    what = [{"kind": "table", "where": "bottom", "detail": "E.H.P. table over the rule"}]
+    assert gutter_answer('{"crosses": true, "what": [{"kind": "table", "where": "bottom", '
+                         '"detail": "E.H.P. table over the rule"}]}') == what
+    # crossing said, nothing named: still a crossing, never taken for plain columns
+    assert gutter_answer('{"crosses": true, "what": []}')[0]["kind"] == "other"

@@ -26,7 +26,7 @@ from wikikit.scan.cut import Item
 from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
-from wikikit.scan.transcribe import Unread, assemble_page, captions, read_item
+from wikikit.scan.transcribe import Unread, assemble_page, figures_of, read_item
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
@@ -51,18 +51,21 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
     names the image it came from (e.g. an Internet Archive item and leaf).  A
     refused item is recorded and its reading left empty — the page is still
     written, and the refusal is listed for a person to transcribe.  The page
-    is cut as the book declares its layout (`wikikit.scan.layout`).
+    is cut as the book declares its layout (`wikikit.scan.layout`); a page the
+    book reads only in columns, with anything across them, is filed — written
+    unread, held for special handling (`special`) — never read.
     `replaces`: as `build_payload`."""
+    layout = layout_for(volume, page)
     with metered() as finding:
-        cp = cut_page(img, n_columns=layout_for(volume, page).columns)
-    caps = captions(cp.plan.items)
+        cp = cut_page(img, layout)
+    special = cp.plan.crossing if layout.columns_only else []
     readings, refused, unread, rejected = {}, [], {}, {}
     with metered() as reading:
         for it in cp.plan.items:
-            if it.kind == "figure":
+            if it.kind == "figure" or special:
                 continue
             try:
-                readings[it.name] = read_item(cp.level, it, is_caption=it.name in caps)
+                readings[it.name] = read_item(cp.level, it, figures_of(cp.plan.items, it))
             except Refused:
                 readings[it.name], refused = "", refused + [it.name]
             except Unread as e:
@@ -71,18 +74,21 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
                     rejected[it.name] = e.answer
     return build_payload(volume, page, scan, cp.level, cp.plan, cp.figures, readings,
                          refused, unread, {"figures": finding.record(), "text": reading.record()},
-                         rejected, replaces, cp.across)
+                         rejected, replaces, cp.across, special, cp.gutter if layout.columns_only else None)
 
 
 def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: cut.Plan,
                   figures: list[dict], readings: dict, refused: list, unread: dict,
                   usage: dict, rejected: dict | None = None,
-                  replaces: str | None = None, across: list | None = None) -> dict:
+                  replaces: str | None = None, across: list | None = None,
+                  special: list[str] | None = None, gutter: list | None = None) -> dict:
     """The supplied page from its cut and readings — the one builder, whether
     the page was read now (`transcribe_page`) or in batches
     (`wikikit.scan.batch`).  `replaces`: why the fetched page, proofread or
     not, was found bad as data — the page then stands in for it at any level
-    (`wikikit.source_pages.prefer`)."""
+    (`wikikit.source_pages.prefer`).  `special`: why the page was filed for
+    special handling instead of read (`cut.Plan.crossing`).  `gutter`: the
+    gutter look's answer, when it was asked (`figures.gutter`)."""
     files = {it.name: figure_file(volume, page, it.name)
              for it in plan.items if it.kind == "figure"}
     payload = {
@@ -112,7 +118,16 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
     }
     if replaces:
         payload["provenance"]["replaces"] = replaces
-    reassemble(payload)
+    if special:
+        payload["provenance"]["special"] = list(special)
+    if gutter is not None:
+        # with `figures` and `across`, what a re-cut needs to file the page
+        # again the same way
+        payload["provenance"]["gutter"] = list(gutter)
+    if special:
+        reassemble(payload)
+    else:
+        name_sections(payload)
     return payload
 
 
@@ -127,8 +142,36 @@ def reassemble(payload: dict) -> dict:
     p = payload["provenance"]
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
-                        legacy_captions=not p.get("captions_marked"))
+                        legacy_captions=not p.get("captions_marked"),
+                        sections=p.get("sections"))
     payload["raw_text"] = raw
+    return payload
+
+
+def name_sections(payload: dict) -> dict:
+    """The page's section addresses, from the book (`Corpus.page_sections`):
+    where its articles start, read off the page as assembled, and the name
+    each address must keep so its article keeps its id.  Stored with the
+    page, so a reassembly never asks again.  A page the book cannot name — or
+    whose names do not all land on their articles — is filed for special
+    handling (`special`), never shipped with an article misaddressed."""
+    hook = current_corpus().page_sections
+    p = payload["provenance"]
+    if hook is None:
+        return reassemble(payload)
+    p.pop("sections", None)
+    reassemble(payload)
+    secs, why = hook(payload["volume"], payload["page_number"], payload["raw_text"])
+    if secs is None:
+        p["special"] = sorted(set(p.get("special") or []) | {f"sections: {why}"})
+    else:
+        p["sections"] = secs
+    reassemble(payload)
+    placed = payload["raw_text"].count("<section begin=")
+    if secs is not None and placed != len(secs):
+        p["special"] = sorted(set(p.get("special") or [])
+                              | {f"sections: {placed} of {len(secs)} placed at their articles"})
+        reassemble(payload)
     return payload
 
 
@@ -136,14 +179,17 @@ def level(payload: dict) -> int:
     """Wikisource's proofreading level for the page: 3 (proofread) once a
     person has checked every text item; 2 (problematic: Wikisource's word for
     a page with text missing) while any text item the model refused or left
-    unread is unchecked — the reader is told the page is incomplete; else 1
-    (not proofread)."""
+    unread is unchecked, or while the page is filed for special handling
+    (`special`: set across its columns) — the reader is told the page is
+    incomplete; else 1 (not proofread)."""
     p = payload["provenance"]
     checked = p.get("checked", {})
     items = [it for it in items_of(payload) if it.kind != "figure"]
     texts = [it.name for it in items]
     if texts and all(n in checked for n in texts):
         return 3
+    if p.get("special"):
+        return 2
     body = {it.name for it in items if it.kind != "head"}       # a lost running head loses no text
     gaps = [n for n in [*p.get("refused", []), *p.get("unread", {})] if n in body and n not in checked]
     return 2 if gaps else 1

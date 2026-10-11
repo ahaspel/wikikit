@@ -135,3 +135,39 @@ def test_type_across_the_columns_never_joins_a_column():
     texts = {"c0s1": "LIST OF WRITERS", "c1s1": "E. H. M. . . . E. H. Marshall.", "c0s2": "79293"}
     page = assemble_page(items, texts, {}, 50)
     assert "LIST OF WRITERS\n\nE. H. M." in page and "Marshall.\n\n79293" in page
+
+
+# ── figures read in place: a mark in the reading, the crop after its item ───
+
+def test_a_figure_mark_becomes_its_crop_with_the_caption_the_model_read():
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 300, 500)]
+    texts = {"c1s1": f"{PARA}\nFirst paragraph.\n\n[[FIGURE]]\n{{{{c|{{{{sc|Fig.}}}} 14.}}}}\n\nSecond one."}
+    out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300))
+    assert out == ("First paragraph.\n\n[[File:x.png|center|360px]]\n{{c|{{sc|Fig.}} 14.}}\n\n"
+                   "Second one.")
+
+
+def test_a_figure_interrupting_a_paragraph_floats_to_its_end():
+    # the mark set mid-paragraph, the paragraph's words on both sides of it
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 150, 500)]
+    texts = {"c1s1": f"{PARA}\nornamented with\n[[FIGURE]]\nmoldings on the sides.\n\nNext."}
+    out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300))
+    assert out == "ornamented with\nmoldings on the sides.\n\n[[File:x.png|center|180px]]\n\nNext."
+
+
+def test_a_figure_at_a_columns_head_lets_the_paragraph_run_on():
+    # column 1 ends mid-sentence; column 2 opens with a figure, then the rest
+    items = [t("c1s1", 0, 0, 300, 900), t("c2s1", 300, 0, 600, 900), f("c2f1", 300, 0, 600, 200, col=2)]
+    texts = {"c1s1": f"{PARA}\nThe sentence runs",
+             "c2s1": "[[FIGURE]]\n{{c|Fig. 2.}}\n\non into column two.\n\nAnother."}
+    out = body(assemble_page(items, texts, {"c2f1": "y.png"}, 300))
+    assert out == ("The sentence runs on into column two.\n\n"
+                   "[[File:y.png|center|360px]]\n{{c|Fig. 2.}}\n\nAnother.")
+
+
+def test_two_figures_in_one_column_take_their_crops_in_order():
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 100, 300, 200), f("c1f2", 0, 500, 300, 600)]
+    texts = {"c1s1": f"{PARA}\nA.\n\n[[FIGURE]]\n\nB.\n\n[[FIGURE]]\n{{{{c|Fig. 2.}}}}\n\nC."}
+    out = body(assemble_page(items, texts, {"c1f1": "1.png", "c1f2": "2.png"}, 300))
+    assert out == ("A.\n\n[[File:1.png|center|360px]]\n\nB.\n\n"
+                   "[[File:2.png|center|360px]]\n{{c|Fig. 2.}}\n\nC.")

@@ -15,8 +15,15 @@ vision model answers in two looks:
    edges (the model reads positions off a grid well; converting coordinates
    itself it does not — that is done here).
 
-The boxes are then snapped to the ink by `wikikit.scan.cut`.  Works on the
-DESKEWED page, so figures and cuts share coordinates.
+For a book that reads only pages set purely in columns (`layout.columns_only`)
+a third look asks one bright-line question of the whole page: does anything
+cross a gutter (`gutter`)?  A box can be narrower than its drawing, and the
+ink cannot tell a speck from a stroke; the look named all 16 EB1911 pages
+checked by eye (2026-10-11), drawings in broken lines and specks on the rule
+alike.
+
+The boxes say where no cut may fall (`wikikit.scan.cut`), and what to crop.
+Works on the DESKEWED page, so figures and cuts share coordinates.
 """
 from __future__ import annotations
 
@@ -175,3 +182,54 @@ def find(page: Image.Image, columns: list[tuple[int, int]]) -> tuple[list[dict],
     looks."""
     rough, across = locate_page(page)
     return [refine(page, f, column_of(f, columns)) for f in rough], across
+
+
+# ── the gutter: does anything cross it? ──────────────────────────────────────
+#: The page is shown at this long edge, in greyscale: a crossing stroke a few
+#: pixels wide must survive the reduction (a colour PNG at this size passed
+#: the API's 10 MB limit).
+GUTTER_LONG_EDGE = 2400
+
+GUTTER_PROMPT = """This is a scanned page printed in two columns. The GUTTER is
+the narrow white space between the two columns, often with a thin printed
+vertical rule down it.
+
+Does any printed element CROSS the gutter — start in one column and continue
+across the gutter into the other column's area? For example: a table, or one
+of its rules, set across both columns; part of an illustration (a line, a
+label, an edge of the drawing) reaching over the gutter into the other column;
+a caption or heading centred across both columns; a line of text running from
+one column into the other.
+
+These do NOT cross: the running head at the top of the page; the vertical
+column rule itself; a speck, stain or blot; faint show-through from the other
+side of the paper; anything that comes up to the gutter or the rule and stops
+there; an illustration that stays within its own column.
+
+Look along the whole length of the gutter, top to bottom. Answer with JSON
+only: {"crosses": true or false, "what": [{"kind": "table" | "illustration" |
+"caption" | "heading" | "text" | "other", "where": "top" | "middle" |
+"bottom", "detail": "a few words"}]} — "what" empty when nothing crosses."""
+
+
+def gutter_request(page: Image.Image) -> tuple[Image.Image, str, int]:
+    """The gutter look's (image, prompt, max_tokens)."""
+    img = page.convert("L").copy()
+    img.thumbnail((GUTTER_LONG_EDGE, GUTTER_LONG_EDGE))
+    return img, GUTTER_PROMPT, 800
+
+
+def gutter_answer(text: str) -> list[dict]:
+    """What crosses the gutter — empty when nothing does.  An answer that says
+    it crosses but names nothing is still a crossing: the page is not taken
+    for one set purely in columns on the model's silence."""
+    got = parse_json(text)
+    if not got.get("crosses"):
+        return []
+    return got.get("what") or [{"kind": "other", "where": "?", "detail": "the model said so"}]
+
+
+def gutter(page: Image.Image) -> list[dict]:
+    """The gutter look, now."""
+    img, prompt, max_tokens = gutter_request(page)
+    return gutter_answer(ask(img, prompt, max_tokens))

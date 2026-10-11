@@ -1,8 +1,9 @@
 """wikikit.scan.cut on drawn pages: three columns of "type" (blocks a line
 high, white between lines), a running head, and figures placed where a
 locator would report them.  The rules the cutter promises: columns from the
-gutters, strips never cut through a line, a figure is one item with its
-caption and inset text separate, and the ink's second opinion is reported."""
+gutters, strips never cut through a line nor through a figure, a figure read
+inside the strip that holds it and following it as a crop, and the ink's
+second opinion reported."""
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -65,42 +66,58 @@ def test_three_columns_and_strips_cut_only_in_white():
         assert not d[b.box[1], b.box[0]:b.box[2]].any(), (a, b)
 
 
-def test_a_full_width_figure_is_one_item_and_no_strip_crosses_it():
+def test_a_figure_is_read_inside_its_strip_and_follows_it_as_a_crop():
     fig = (630, 900, 1170, 1250)
     im = page(figures=[fig])
     located = [{"box": [640, 905, 1160, 1245], "caption": None, "inset": False}]
-    p = plan(im, located, angle=0.0)
+    p = plan(im, located, max_h=700, angle=0.0)
     figs = [i for i in p.items if i.kind == "figure"]
     assert len(figs) == 1 and figs[0].column == 2
+    holder = p.items[p.items.index(figs[0]) - 1]
+    assert holder.kind == "text" and holder.column == 2
+    hx0, hy0, hx1, hy1 = holder.box
+    assert hy0 <= 900 and hy1 >= 1250                  # the strip holds the whole figure
     fx0, fy0, fx1, fy1 = figs[0].box
-    assert fy0 <= fig[1] and fy1 >= fig[3]          # the whole picture, edges snapped outward
-    for i in p.items:
-        if i.kind == "text" and i.column == 2:
-            assert i.box[3] <= fy0 or i.box[1] >= fy1, i
+    assert fx0 <= 640 and fy0 <= 905 and fx1 >= 1160 and fy1 >= 1245   # the crop: the located box
     assert p.disagreements == {}                      # the ink sees it too
 
 
-def test_a_caption_is_its_own_caption_item_after_the_figure():
+def test_no_strip_is_cut_through_a_figure_or_its_caption():
     im = page(figures=[(630, 900, 1170, 1200)])
     d = ImageDraw.Draw(im)
     d.rectangle((760, 1215, 1040, 1215 + LINE), fill=0)           # the caption line
     located = [{"box": [640, 905, 1160, 1195], "caption": [760, 1213, 1040, 1239], "inset": False}]
-    items = [i for i in plan(im, located, angle=0.0).items if i.column == 2]
-    k = next(n for n, i in enumerate(items) if i.kind == "figure")
-    cap = items[k + 1]
-    assert cap.kind == "caption" and cap.box[1] <= 1215 and cap.box[3] >= 1215 + LINE
-    assert items[k].box[3] <= cap.box[1]
+    for max_h in (300, 700, 1100):
+        p = plan(im, located, max_h=max_h, angle=0.0)
+        for i in p.items:
+            if i.kind == "text" and i.column == 2:
+                assert not (900 < i.box[3] < 1239), (max_h, i)      # no cut inside figure + caption
+        assert not [i for i in p.items if i.kind == "caption"]
 
 
-def test_an_inset_figure_yields_figure_then_the_text_beside_it():
+def test_an_inset_and_the_text_beside_it_are_one_strip():
     im = page(figures=[(1450, 1000, 1740, 1300)])
     located = [{"box": [1455, 1005, 1735, 1295], "caption": None, "inset": True}]
-    items = [i for i in plan(im, located, angle=0.0).items if i.column == 3]
+    items = [i for i in plan(im, located, max_h=700, angle=0.0).items if i.column == 3]
     k = next(n for n, i in enumerate(items) if i.kind == "figure")
-    fig, beside = items[k], items[k + 1]
-    assert beside.kind == "text"
-    assert beside.box[2] <= fig.box[0]                # the text runs on the left
-    assert beside.box[1] <= 1000 <= fig.box[3]
+    holder = items[k - 1]
+    assert holder.kind == "text" and holder.box[0] == items[0].box[0]   # the column's full width
+    assert holder.box[1] <= 1000 and holder.box[3] >= 1300
+
+
+def test_a_column_read_whole_is_one_strip_with_its_figures_after_it():
+    im = page(figures=[(630, 900, 1170, 1250), (630, 1600, 1170, 1900)])
+    located = [{"box": [640, 905, 1160, 1245], "caption": None, "inset": False},
+               {"box": [640, 1605, 1160, 1895], "caption": None, "inset": False}]
+    p = plan(im, located, max_h=None, angle=0.0)
+    col2 = [i for i in p.items if i.column == 2]
+    assert [i.kind for i in col2] == ["text", "figure", "figure"]
+    assert [i.name for i in col2] == ["c2s1", "c2f1", "c2f2"]
+    assert [i.box[1] < 1000 for i in col2[1:]] == [True, False]       # in reading order
+    assert {i.column for i in p.items if i.kind == "text"} == {1, 2, 3}
+    assert all(len([i for i in p.items if i.column == c]) >= 1 for c in (1, 3))
+
+
 
 
 def test_a_light_engraving_the_ink_cannot_see_is_a_disagreement():
@@ -289,23 +306,6 @@ def test_figures_located_twice_are_one_figure():
     assert [f["box"] for f in out] == [row, [120, 700, 300, 860]]
 
 
-def test_an_inset_does_not_grow_up_through_the_text_above_it():
-    # a small drawing inset at a column's foot, text beside it and above it:
-    # in its narrow band a line of type is no frame rule (EB1911 vol 22 p706)
-    im = Image.new("L", (W, H), 255)
-    d = ImageDraw.Draw(im)
-    d.rectangle((60, 60, 400, 60 + LINE), fill=0)                       # the running head
-    for y in range(TOP, 1400, LEAD):                                    # type, full width: letters
-        for x in range(60, 860, 26):
-            d.rectangle((x, y, x + 18, y + LINE), fill=0)
-    d.ellipse((70, 1420, 230, 1580), outline=0, width=5)               # the drawing, inset
-    for y in range(1420, 1580, LEAD):                                   # the text beside it
-        for x in range(280, 860, 26):
-            d.rectangle((x, y, x + 18, y + LINE), fill=0)
-    located = [{"box": [70, 1420, 230, 1580], "caption": None, "inset": True}]
-    p = plan(im, located, angle=0.0, n_columns=1)
-    fig = next(i for i in p.items if i.kind == "figure")
-    assert fig.box[1] >= 1400 - LEAD, fig.box                         # not up through the type above
 
 
 def test_a_figure_drawn_a_little_past_the_gutter_stays_in_its_column():
@@ -338,9 +338,12 @@ def test_a_figure_across_the_columns_mid_page_has_columns_above_and_below():
     fy0, fy1 = figs[0].box[1], figs[0].box[3]
     assert fy0 <= 1000 and fy1 >= 1500 and figs[0].box[0] <= 100 and figs[0].box[2] >= 1700
     k = p.items.index(figs[0])
-    before, after = p.items[1:k], p.items[k + 1:]
-    assert {i.column for i in before} == {1, 2} and all(i.box[3] <= fy0 for i in before)
-    assert {i.column for i in after} == {1, 2} and all(i.box[1] >= fy1 for i in after)
+    band = p.items[k - 1]                                              # read across, the figure in it
+    assert band.kind == "text" and band.column == 0
+    assert band.box[1] <= 1000 and band.box[3] >= 1500
+    before, after = p.items[1:k - 1], p.items[k + 1:]
+    assert {i.column for i in before} == {1, 2} and all(i.box[3] <= band.box[1] for i in before)
+    assert {i.column for i in after} == {1, 2} and all(i.box[1] >= band.box[3] for i in after)
     assert len({i.name for i in p.items}) == len(p.items)            # every item named once
 
 
@@ -359,3 +362,20 @@ def test_no_strip_is_cut_between_a_fraction_and_its_bar():
         d[y:y + LINE, 20:480] = True
     cuts = [e for _, e in strips(d, 0, 700, 0, 500, max_h=290)][:-1]
     assert cuts and not any(260 <= c <= 315 for c in cuts), cuts
+
+
+def test_a_drawing_in_the_gutter_does_not_move_it():
+    # EB1911 vol 24 p1052: a column-1 drawing reaching past the gutter, the
+    # text of column 2 set beside it; the gutter stays where the type parts
+    im = page(figures=[(300, 900, 690, 1700)])
+    located = [{"box": [300, 900, 690, 1700], "caption": None, "inset": True}]
+    plain = sorted({(i.box[0], i.box[2]) for i in plan(page(), [], angle=0.0).items if i.column > 0})
+    p = plan(im, located, angle=0.0)
+    assert sorted({(i.box[0], i.box[2]) for i in p.items if i.column > 0 and i.kind == "text"}) == plain
+
+
+def test_a_page_with_something_across_its_gutter_says_why():
+    seen = [{"kind": "illustration", "where": "top", "detail": "Fig. 3 reaches into column 1"}]
+    assert plan(page(), [], angle=0.0).crossing == []
+    assert plan(page(), [], angle=0.0, gutter=seen).crossing == [
+        "across the gutter: illustration (top): Fig. 3 reaches into column 1"]

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from PIL import Image
 
 from wikikit.scan import cut, figures
+from wikikit.scan.layout import PageLayout
 
 
 @dataclass
@@ -16,13 +17,17 @@ class CutPage:
     plan: cut.Plan
     figures: list[dict]       # as located and refined, for the record
     across: list              # type set across the columns, as located
+    gutter: list              # what crosses a gutter, as the model saw it (`figures.gutter`)
 
 
-def cut_page(img: Image.Image, max_h: int = cut.MAX_H, n_columns: int | None = None) -> CutPage:
-    """`n_columns`: how many columns the book says the page prints (`cut.plan`)."""
+def cut_page(img: Image.Image, layout: PageLayout = PageLayout()) -> CutPage:
+    """`layout`: what the book declares of the page (`wikikit.scan.layout`);
+    a book reading only pages set in columns asks the gutter look too."""
     angle = cut.skew_angle(img)
     level = cut.deskew(img, angle)
-    figs, across = figures.find(level, cut.page_columns(level, n_columns))
-    p = cut.plan(level, figs, max_h=max_h, angle=0.0, n_columns=n_columns, across=across)
+    figs, across = figures.find(level, cut.page_columns(level, layout.columns))
+    gut = figures.gutter(level) if layout.columns_only else []
+    p = cut.plan(level, figs, max_h=layout.max_h, angle=0.0, n_columns=layout.columns,
+                 across=across, gutter=gut)
     p.angle = angle
-    return CutPage(level, p, figs, across)
+    return CutPage(level, p, figs, across, gut)

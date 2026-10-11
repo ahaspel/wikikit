@@ -96,3 +96,21 @@ def test_a_description_where_type_is_printed_is_no_reading():
     text, why = transcribe.settle(strip_image(), STRIP, said)
     assert why == "a description of the image, not a reading"
     assert transcribe.settle(strip_image(), STRIP, GOOD) == (GOOD, None)
+
+
+def test_each_figure_the_strip_holds_is_marked_once():
+    fig = Item("figure", (400, 100, 690, 300), 1, "c1f1")
+    marked = GOOD + "\n\n[[FIGURE]]\n{{c|{{sc|Fig.}} 3.}}"
+    assert check_reading(strip_image(), STRIP, marked, [fig]) is None
+    assert check_reading(strip_image(), STRIP, GOOD, [fig]) == "0 figure mark(s) for 1 figure(s)"
+    assert check_reading(strip_image(), STRIP, marked) == "1 figure mark(s) for 0 figure(s)"
+
+
+def test_a_figures_ink_is_no_type():
+    """A strip that is half drawing: a reading of its type alone is complete."""
+    im = strip_image(lines=12)
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 200, 700, 400), fill=0)                       # the drawing
+    fig = Item("figure", (0, 200, 700, 400), 1, "c1f1")
+    half = " ".join(["word"] * 70) + "\n\n[[FIGURE]]"             # ~6 lines of type
+    assert check_reading(im, STRIP, half, [fig]) is None
