@@ -95,7 +95,8 @@ _INLINE = re.compile(r"'{2,5}|</?su[bp]>")
 FORMULA_TEMPLATES = {
     "polytonic", "greek", "eb1911 tfrac", "sfrac", "tfrac", "frac", "sub", "sup", "overline", "em",
     "gap", "ne", "uc", "brace2", "=", "...", "spaces", "nop", "hi", "fs", "lb-", "asc", "csc",
-    "subsup", "su", "sqrt", "radic", "math", "mvar", "var", "ell", "prime", "√", "abs", "e", "dual line"}
+    "subsup", "su", "sqrt", "radic", "math", "mvar", "var", "ell", "prime", "√", "abs", "e", "dual line",
+    "xx-larger", "sfrac nobar"}     # large brackets, binomials (ALGEBRAIC FORMS, vol 1 p. 629)
 #: Presentation wrappers: their syntax is structure, their contents text.
 WRAPPERS = {"center", "c", "centre", "block center", "nowrap", "sc", "smaller", "larger", "x-larger",
             "small", "x-smaller", "fine block", "smaller block"}
@@ -162,7 +163,7 @@ def structure(text: str) -> list[str]:
 
 
 #: Wrappers that display a formula: a formula patch sets its own.
-DISPLAY = {"center", "c", "centre", "block center", "nowrap", "x-larger", "larger"}
+DISPLAY = {"center", "c", "centre", "block center", "nowrap", "x-larger", "larger", "x-smaller"}
 #: html a fetched page sets a formula with — giving way to ours, as an
 #: unruled table laying out a formula does (the formula exception, 2026-10-12)
 _FORMULA_TAGS = {"br", "span", "sub", "sup", "big", "small", "center", "i", "b", "div", "tr", "td", "th"}
