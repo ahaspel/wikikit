@@ -190,10 +190,23 @@ def load_payloads(volume: int | None = None, *,
     supplied = _scan_dir(supplied_dir, volume, want, failures, required=False)
     fetched = _scan_dir(raw_dir, volume, want, failures, required=not supplied)
     out = []
+    from wikikit.scan.patches import apply_patches, patches_for
     for key in sorted(fetched.keys() | supplied.keys()):
         f, s = fetched.get(key), supplied.get(key)
         chosen = prefer(f[1] if f else None, s[1] if s else None)
-        out.append(s if s and chosen is s[1] else f)
+        if s and chosen is s[1]:
+            out.append(s)
+            continue
+        # a fetched page enters with the book's patches laid on it — words and
+        # formulas only (`wikikit.scan.patches`); a patch whose text no longer
+        # stands at its place is a failure, never a patch in the wrong place
+        ps = patches_for(*key) if f else []
+        if ps:
+            try:
+                f = (f[0], {**f[1], "raw_text": apply_patches(f[1]["raw_text"], ps), "patched": len(ps)})
+            except ValueError as e:
+                failures.append((f[0], f"patches: {e}"))
+        out.append(f)
 
     # A page you ASKED FOR and did not get is a failure, not a shorter result.
     # The callers this replaces all wrote `if p.exists():` around a named page —

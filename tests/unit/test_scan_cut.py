@@ -379,3 +379,11 @@ def test_a_page_with_something_across_its_gutter_says_why():
     assert plan(page(), [], angle=0.0).crossing == []
     assert plan(page(), [], angle=0.0, gutter=seen).crossing == [
         "across the gutter: illustration (top): Fig. 3 reaches into column 1"]
+
+
+def test_figures_side_by_side_are_read_left_to_right():
+    from wikikit.scan.cut import reading_order
+    right_higher = {"box": (1671, 2341, 2200, 2568)}           # vol 21 p. 508: Fig. 26
+    left = {"box": (1221, 2348, 1638, 2544)}                    # Fig. 25
+    below = {"box": (1221, 2700, 1638, 2900)}
+    assert reading_order([right_higher, below, left], key=lambda f: f["box"]) == [left, right_higher, below]

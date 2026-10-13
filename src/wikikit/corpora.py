@@ -48,6 +48,7 @@ from wikikit.settings import settings
 # an undeclared one means the feature is off for that book.
 KNOWN_DATA = frozenset({
     "corrections.json",          # source typos, applied as the page is read
+    "patches.json",              # words and formulas laid on fetched pages (wikikit.scan.patches)
     "hyphen_map.json",           # corpus-frequency dehyphenation
     "contributor_aliases.json",  # contributor name adjudications
     "signatures.json",           # signature templates -> the initials the page prints

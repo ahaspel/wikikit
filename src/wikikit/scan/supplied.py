@@ -130,6 +130,7 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
     else:
         measure_type(payload, level)
         name_sections(payload)
+        carry_images(payload, scan_width=level.size[0])
     return payload
 
 
@@ -138,45 +139,114 @@ def items_of(payload: dict) -> list[Item]:
             for i in payload["provenance"]["items"]]
 
 
-def reassemble(payload: dict) -> dict:
+def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) -> dict:
     """`raw_text` from the readings — after transcription, and after every
-    correction a proofreader makes to a reading."""
+    correction a proofreader makes to a reading — with the replaced page's
+    tables and links carried onto it when the page carries them
+    (`carry_markup`; `carried=False`: the readings alone).  `fetched`: the
+    replaced page's text (default: as filed)."""
     p = payload["provenance"]
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
                         legacy_captions=not p.get("captions_marked"),
-                        sections=p.get("sections"), types=p.get("type"))
+                        sections=p.get("sections"), types=p.get("type"),
+                        source_images=p.get("images"), regions=p.get("regions"))
+    if carried and "carried" in p:
+        from wikikit.scan.carry import carry
+        from wikikit.source_pages import fetched_text
+        if fetched is None:
+            fetched = fetched_text(payload["volume"], payload["page_number"]) or ""
+        raw, rep = carry(raw, fetched)
+        p["carried"] = {"tables": rep["tables"],     # kept: spans in the fetched page
+                        "tables kept": {k: [list(s) for s in v] for k, v in rep["tables kept"].items()},
+                        "links": rep["links"], "unplaced": rep["unplaced"]}
     payload["raw_text"] = raw
     return payload
+
+
+def carry_markup(payload: dict, fetched: str | None = None) -> dict:
+    """The replaced page's tables and links carried onto ours
+    (`wikikit.scan.carry`), from now on at every assembly: what a person built
+    on Wikisource's page — borders, spans, headers, links — that a reading
+    cannot make.  Recorded (`carried`: what was carried, what ours keeps, and
+    what could not be placed); the supplied-page gate fails a page with
+    anything unplaced."""
+    payload["provenance"]["carried"] = {}
+    return reassemble(payload, fetched=fetched)
+
+
+def carry_images(payload: dict, fetched: str | None = None, scan_width: int | None = None) -> dict:
+    """The replaced page's own images set where our figures are
+    (`wikikit.scan.images`): decided once, stored (`images`: our figure ->
+    the markup set in its place), and the page reassembled.  A page whose
+    images cannot all be placed keeps none of the pairing and lists why
+    (`images_unplaced`) — the supplied-page gate fails it until resolved:
+    never a guess, and never our crop silently standing for a wiki image.
+    `fetched`: the replaced page's text (default: as filed); `scan_width`:
+    the scan's width in pixels, needed only for an editor's region (default:
+    measured from the book's scan)."""
+    from wikikit.scan import images
+    from wikikit.source_pages import fetched_text
+    p = payload["provenance"]
+    if p.get("images_decided"):
+        # placed by a person or by looking at the scan, the reason recorded:
+        # kept, never recomputed (as a checked reading is never reread)
+        p.pop("images_unplaced", None)
+        return reassemble(payload)
+    p.pop("images", None)
+    p.pop("images_unplaced", None)
+    reassemble(payload, carried=False)         # our figures as read: no table
+    if fetched is None:                        # carried over them yet
+        fetched = fetched_text(payload["volume"], payload["page_number"]) or ""
+    source = images.source_images(fetched)
+    if source:
+        if scan_width is None and any(s["region"] for s in source):
+            scan_width = current_corpus().page_scan(payload["volume"], payload["page_number"]).size[0]
+        boxes = {i["name"]: i["box"] for i in p["items"] if i["kind"] == "figure"}
+        ours = images.our_figures(payload["raw_text"], p["figure_files"], boxes, scan_width)
+        placed, problems = images.pair(source, ours)
+        if problems:
+            p["images_unplaced"] = problems
+        else:
+            p["images"] = placed
+    return reassemble(payload, fetched=fetched)
 
 
 def measure_type(payload: dict, level: Image.Image) -> dict:
     """Each recorded paragraph's type, MEASURED (`cut.paragraph_type`), stored
     with the page (`type`: item name -> sizes, one per recorded paragraph
     start) for assembly to set — for a book whose layout marks small type.
-    Unmeasurable, by the book's rules: a column's first paragraph, unless it
-    opens with a title, continues the column before and keeps its size; any
-    other takes the size of the text before it (a display, a line between
-    displays, belongs to the paragraph it sits in).  Stored once: a
-    reassembly never measures again."""
-    from wikikit.scan.transcribe import positions
+    Unmeasurable, only by the book's rules: a footnote is small; a column's
+    first paragraph, unless it opens with a title, continues the column
+    before and keeps its size (a display needs no rule: it is inside its
+    paragraph).  Any other paragraph not measured is NOT inherited — "§ 14"
+    (vol 11 p317), a new paragraph in body type, came out small — but keeps
+    the size the reading gave it (`apply_type`), and is listed
+    (`type_unmeasured`).  Type size never holds a page: a wrong size loses no
+    text.  Stored once: a reassembly never measures again."""
+    from wikikit.scan.transcribe import POSITION, _is_note, positions
     p = payload["provenance"]
     if not layout_for(payload["volume"], payload["page_number"]).marks_small_type:
         return payload
     texts = [it for it in items_of(payload) if it.kind == "text" and it.column > 0]
     pitches = cut.type_pitches(level, [it.box for it in texts])
-    types, prev = {}, None
+    types, prev, unmeasured = {}, None, []
     for it in texts:
         reading = p["readings"].get(it.name, "")
         starts = positions(reading)
         sizes = cut.paragraph_type(level, it.box, [y for _, y in starts], pitches)
-        for k, (off, _) in enumerate(starts):
-            if sizes[k] is None:
-                title = reading[off:].split("⟧", 1)[-1].lstrip().startswith("'''")
-                sizes[k] = None if (k == 0 and title) else prev
+        for k, (off, y) in enumerate(starts):
+            para = POSITION.sub("", reading[off:].split("\n\n", 1)[0]).strip()
+            if _is_note(para):
+                sizes[k] = "small"
+            elif sizes[k] is None and k == 0 and not para.startswith("'''") and prev:
+                sizes[k] = prev
+            elif sizes[k] is None:
+                unmeasured.append(f"{it.name} y{y}")
             prev = sizes[k] or prev
         types[it.name] = sizes
     p["type"] = types
+    p["type_unmeasured"] = unmeasured      # kept as the reading set them; never a hold
     return payload
 
 def name_sections(payload: dict) -> dict:
@@ -245,8 +315,10 @@ def materialize_figures(payload: dict, img: Image.Image) -> list[Path]:
     store = book_root() / current_corpus().images()
     store.mkdir(parents=True, exist_ok=True)
     out = []
+    carried = {**(p.get("images") or {}), **(p.get("regions") or {})}
     for it in items_of(payload):
-        if it.kind == "figure":
+        # a figure the replaced page has its own image for is never cropped
+        if it.kind == "figure" and it.name not in carried:
             dest = store / local_image_filename(p["figure_files"][it.name])
             level.crop(it.box).save(dest)
             out.append(dest)

@@ -224,3 +224,139 @@ def test_measured_type_replaces_the_readings_own_marks():
 def test_no_sizes_leave_the_reading_alone():
     from wikikit.scan.transcribe import apply_type
     assert apply_type("⟦200⟧ {{smaller block|x}}", None) == "⟦200⟧ {{smaller block|x}}"
+
+
+def test_a_reading_wrapper_spanning_paragraphs_is_taken_off_once():
+    # vol 24 p601: the reader wrapped two paragraphs in one small-type block;
+    # taken off paragraph by paragraph it was missed and wrapped again
+    from wikikit.scan.transcribe import apply_type
+    reading = "⟦600⟧ {{smaller block|See Roscher.\n\n⟦800⟧ Selenga is a river.}}"
+    out = apply_type(reading, ["small", "body"])
+    assert out == "⟦600⟧ {{smaller block|See Roscher.}}\n\n⟦800⟧ Selenga is a river."
+    assert "{{smaller block|{{smaller block|" not in out
+
+
+def test_an_unmeasured_paragraph_keeps_the_readings_size():
+    from wikikit.scan.transcribe import apply_type
+    reading = ("⟦200⟧ {{smaller block|Short note, read small.\n\n"
+               "⟦300⟧ Measured body.}}\n\n⟦500⟧ Short, read body.")
+    out = apply_type(reading, [None, "body", None])
+    assert out == ("⟦200⟧ {{smaller block|Short note, read small.}}\n\n"
+                   "⟦300⟧ Measured body.\n\n⟦500⟧ Short, read body.")
+
+
+def test_a_paragraph_signal_mid_column_never_reaches_the_page():
+    # vol 24 p236: the reader wrote ¶ before a new article in mid-column
+    from wikikit.scan.cut import Item
+    from wikikit.scan.transcribe import assemble_page
+    items = [Item("text", (0, 0, 100, 100), 1, "c1s1")]
+    reading = "the end of one article.\n\n¶\n'''SAUMAREZ''', a man."
+    out = assemble_page(items, {"c1s1": reading}, {}, 100)
+    assert "¶" not in out
+    assert "the end of one article.\n\n'''SAUMAREZ''', a man." in out
+
+
+def test_a_formulas_braces_never_close_a_template():
+    # vol 1 p671: "\frac{d}{d\text{X}}" ends in "}}"; the small-type wrapper
+    # "closed" inside it and its real close leaked onto the page
+    from wikikit.scan.transcribe import apply_type
+    reading = ("⟦200⟧ {{smaller block|we find <math>\\frac{d}{d\\text{X}}</math> here.\n\n"
+               "⟦500⟧ Next.}}")
+    out = apply_type(reading, ["small", "body"])
+    assert out == ("⟦200⟧ {{smaller block|we find <math>\\frac{d}{d\\text{X}}</math> here.}}\n\n"
+                   "⟦500⟧ Next.")
+
+
+def test_a_block_that_ends_its_sentence_stays():
+    # vol 28 p508: "…the tables of" + verse, then a new sentence
+    from wikikit.scan.cut import Item
+    from wikikit.scan.transcribe import assemble_page
+    items = [Item("text", (0, 0, 100, 100), 1, "c1s1")]
+    reading = "learn the tables of\n<poem>ton, cwt.</poem>\nIn Code standards above the fifth, more."
+    out = assemble_page(items, {"c1s1": reading}, {}, 100)
+    assert out.index("the tables of") < out.index("<poem>ton") < out.index("In Code standards")
+
+
+def test_a_small_paragraph_holding_a_block_wraps_its_text_not_the_block():
+    from wikikit.scan.cut import Item
+    from wikikit.scan.transcribe import assemble_page
+    items = [Item("text", (0, 0, 100, 100), 1, "c1s1")]
+    reading = "⟦200⟧ learn the tables of\n<poem>ton, cwt.</poem>\nIn Code standards, more."
+    out = assemble_page(items, {"c1s1": reading}, {}, 100, types={"c1s1": ["small"]})
+    assert "{{smaller block|learn the tables of}}" in out
+    assert "{{smaller block|In Code standards, more.}}" in out
+    assert "{{smaller block|<poem>" not in out and "{{smaller block|{{smaller block|" not in out
+
+
+def test_small_type_continued_from_the_column_before_is_opened():
+    # vol 25 p130: the column begins inside small type, closed with no opening
+    from wikikit.scan.transcribe import apply_type
+    reading = "a row of settlers.}}\n\n⟦500⟧ {{smaller block|A 20-stamp mill.}}"
+    out = apply_type(reading, ["small"])
+    assert out == "{{smaller block|a row of settlers.}}\n\n⟦500⟧ {{smaller block|A 20-stamp mill.}}"
+
+
+def test_a_margin_heading_inside_an_italic_waits_for_it_to_close():
+    # vol 25 p463: "(''Phil." | heading | "Trans.'', 1880"
+    from wikikit.scan.transcribe import _join_text
+    out = _join_text(["memoir (''Phil.", "{{EB1911 Shoulder Heading|Stroboscopic Method.}}",
+                      "Trans.'', 1880), a cylinder."])
+    assert out == ("memoir (''Phil. Trans.'', 1880), a cylinder.\n"
+                   "{{EB1911 Shoulder Heading|Stroboscopic Method.}}")
+
+
+def test_a_lead_in_body_type_is_left_exactly_as_read():
+    # vol 26 p995: a margin heading, then text carrying on the column before
+    from wikikit.scan.transcribe import apply_type
+    reading = "{{EB1911 Shoulder Heading|Over-Tides.}}⟦200⟧arise from the potential."
+    assert apply_type(reading, ["body"]) == reading
+
+
+def test_a_start_recorded_inside_a_table_leaves_the_table_whole():
+    # vol 28 p511: a tick in a table's first cell
+    from wikikit.scan.transcribe import apply_type, POSITION
+    reading = "{{smaller block|\n{|\n|⟦300⟧Pouce||France\n|-\n|||Russia\n|}}}"
+    out = POSITION.sub("", apply_type(reading, ["small"]))
+    assert "{|\n|Pouce||France\n|-\n|||Russia\n|}" in out
+
+
+def test_a_small_paragraph_ending_in_a_figure_keeps_the_figure():
+    # vol 20 p453: "obtained:—" then the figure mark, the paragraph small
+    from wikikit.scan.cut import Item
+    from wikikit.scan.transcribe import assemble_page
+    items = [Item("text", (0, 0, 100, 100), 1, "c1s1"), Item("figure", (0, 40, 100, 60), 1, "c1f1")]
+    reading = "⟦10⟧ may be obtained:—\n[[FIGURE]]\n\n⟦70⟧ An ingenious application."
+    out = assemble_page(items, {"c1s1": reading}, {"c1f1": "f.png"}, 100, types={"c1s1": ["small", "small"]})
+    assert "[[File:f.png" in out and "[[FIGURE]]" not in out
+
+
+def test_short_notes_run_on_in_one_line_are_each_their_own():
+    from wikikit.scan.transcribe import place_footnotes, take_footnotes
+    text = ("being given.<sup>2</sup> More text, and V.<sup>1</sup>\n\n"
+            "{{smaller block|<sup>1</sup> See papers by Mr A. W. Johns. <sup>2</sup> See ''Trans.'', 1875.}}")
+    body, notes = take_footnotes(text)
+    assert notes == [("1", "See papers by Mr A. W. Johns."), ("2", "See ''Trans.'', 1875.")]
+    body, left = place_footnotes(body, notes)
+    assert left == [] and "given.<ref>See ''Trans.'', 1875.</ref>" in body
+
+
+def test_a_power_in_a_note_does_not_split_it():
+    from wikikit.scan.transcribe import take_footnotes
+    _, notes = take_footnotes("{{smaller block|<sup>1</sup> As 10<sup>2</sup> shows. The rest.}}")
+    assert notes == [("1", "As 10<sup>2</sup> shows. The rest.")]
+
+
+def test_a_legend_under_a_figures_caption_goes_with_the_figure():
+    from wikikit.scan.transcribe import _segments
+    piece = ("and it appears\n[[FIGURE]]\n{{c|{{sc|Fig.}} 2.—Imperial Standard Pound, 1844.}}\n"
+             "{{smaller block|Platinum pound avoirdupois, of cylindrical form.}}\n"
+             "probable that further experiments will succeed. Then more.")
+    segs = _segments(piece)
+    assert segs[0] == ("text", "and it appears probable that further experiments will succeed.")
+    assert segs[1][0] == "figure" and "Platinum pound" in segs[1][1]
+
+
+def test_small_type_carrying_on_the_sentence_is_not_a_legend():
+    from wikikit.scan.transcribe import _units
+    piece = "the flow\n[[FIGURE]]\n{{c|{{sc|Fig.}} 3.}}\n{{smaller block|also in air for low velocities.}}"
+    assert [k for k, _ in _units(piece)] == ["text", "figure", "text"]

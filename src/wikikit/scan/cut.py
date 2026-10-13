@@ -29,6 +29,9 @@ from PIL import Image
 INK = 150
 #: Strips are at most this many rows: near native resolution for the model.
 MAX_H = 1100
+#: Two figures share at least this much of the shorter one's height: they
+#: stand side by side, read left to right (`reading_order`).
+SIDE_BY_SIDE = 0.5
 
 
 @dataclass(frozen=True)
@@ -409,8 +412,11 @@ def small_type(level: Image.Image, boxes) -> list[list[tuple[int, int]]]:
             else:
                 runs.append((a, b))
         box = boxes[len(out)]
-        out.append([(_edge(dark, box, a, body, rising=True), _edge(dark, box, b, body, rising=False))
-                    for a, b in runs if b - a >= 2 * step])
+        refined = [(_edge(dark, box, a, body, rising=True), _edge(dark, box, b, body, rising=False))
+                   for a, b in runs if b - a >= 2 * step]
+        # edges that cross: the fine look found no small type where the coarse
+        # one did — no run (vol 18 p430: a drawing's "pitch", 1677..1643)
+        out.append([(a, b) for a, b in refined if b > a])
     return out
 
 
@@ -455,10 +461,13 @@ def type_pitches(level: Image.Image, boxes) -> tuple[float, float] | None:
     return body, (float(np.median(small)) if small else (lo + hi) / 2 * body)
 
 
-#: A paragraph is measured over its first lines only — at most this many
-#: pixels from where it begins: a paragraph's opening is text, and a display
-#: further on would disturb the pitch.
-PARAGRAPH_PROBE = 200
+#: A paragraph is measured over its first lines only: a paragraph's opening is
+#: text, and a display further on disturbs the pitch.  The shortest window
+#: that settles it is taken — about three lines first (vol 11 p317: a
+#: fraction in "Finally …"'s fifth line spoilt a 200-px window, and the
+#: paragraph inherited the wrong size), longer only where that cannot.
+PARAGRAPH_PROBES = (3.2, 4.5, 6.0)          # in lines of the page's body type
+PARAGRAPH_PROBE = 200                       # the longest, in pixels, for a tick shared
 #: A measured pitch within this many pixels of the body's or the small's is
 #: that size; between, the paragraph is not measured.
 PITCH_TOLERANCE = 3
@@ -480,15 +489,26 @@ def paragraph_type(level: Image.Image, box, starts: list[int], pitches) -> list[
     x0, y0, x1, y1 = box
     dark = np.asarray(level.convert("L")) < INK
     out: list[str | None] = []
+    def size_of(pitch):
+        return "body" if abs(pitch - body) <= PITCH_TOLERANCE else \
+            "small" if abs(pitch - small) <= PITCH_TOLERANCE else None
+
     for k, y in enumerate(starts):
         nxt = starts[k + 1] if k + 1 < len(starts) else y1
         a = max(y, y0)
-        b = min(nxt, a + PARAGRAPH_PROBE, y1)
-        if b - a < 2.5 * small:
-            b = min(a + PARAGRAPH_PROBE, y1)
-        pitch = _line_height(dark, a, b, x0, x1) if b - a >= 2.5 * small else None
-        out.append("body" if pitch is not None and abs(pitch - body) <= PITCH_TOLERANCE else
-                   "small" if pitch is not None and abs(pitch - small) <= PITCH_TOLERANCE else None)
+        room = nxt - a if nxt - a >= 2.5 * small else PARAGRAPH_PROBE   # a tick shared: look on
+        found = None
+        for lines in PARAGRAPH_PROBES:
+            b = min(a + int(lines * body), a + room, y1)
+            # three full lines at least: fewer give no true pitch (vol 24 p601's
+            # two-line "The commercial element …" at a column's foot measured
+            # small; it is body)
+            if b - a < PARAGRAPH_PROBES[0] * body:
+                continue
+            found = size_of(_line_height(dark, a, b, x0, x1))
+            if found:
+                break
+        out.append(found)
     return out
 
 
@@ -566,13 +586,32 @@ def _column_items(dark, top, bottom, a, b, figs, max_h):
     for n, (s, e) in enumerate(cut_rows):
         items.append(("text", (a, s, b, e)))
         last = n == len(cut_rows) - 1
-        for f in sorted(figs, key=lambda f: f["box"][1]):
+        for f in reading_order(figs, key=lambda f: f["box"]):
             cy = (f["box"][1] + f["box"][3]) / 2
             if s <= cy < e or (last and cy >= e) or (n == 0 and cy < s):
                 x0, y0, x1, y1 = f["box"]
                 items.append(("figure", (max(a, x0 - FIGURE_PAD), max(top, y0 - FIGURE_PAD),
                                          min(b, x1 + FIGURE_PAD), min(bottom, y1 + FIGURE_PAD))))
     return items
+
+
+def reading_order(figures: list, key=lambda f: f.box) -> list:
+    """Figures in the order the page is read: top to bottom, and figures
+    side by side — their heights mostly shared — left to right.  By top edge
+    alone the right-hand of two figures set in a row came first when it
+    stood a few pixels higher, and took the left one's caption (vol 21
+    p. 508, figs 23-26)."""
+    rows: list[list] = []
+    for f in sorted(figures, key=lambda f: key(f)[1]):
+        x0, y0, x1, y1 = key(f)
+        if rows:
+            r0 = min(key(g)[1] for g in rows[-1])
+            r1 = max(key(g)[3] for g in rows[-1])
+            if min(y1, r1) - max(y0, r0) >= SIDE_BY_SIDE * min(y1 - y0, r1 - r0):
+                rows[-1].append(f)
+                continue
+        rows.append([f])
+    return [f for row in rows for f in sorted(row, key=lambda f: key(f)[0])]
 
 
 def _frame(grey):

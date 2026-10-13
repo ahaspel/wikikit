@@ -42,7 +42,20 @@ def broken(root: Path, tool_dirs, packages) -> list[str]:
                                f"({type(e).__name__})")
                     continue
                 for alias in node.names:
-                    if alias.name != "*" and not hasattr(mod, alias.name):
+                    if alias.name != "*" and not _has(mod, node.module, alias.name):
                         out.append(f"{rel}: {node.module} has no "
                                    f"{alias.name!r}")
     return out
+
+
+def _has(mod, module: str, name: str) -> bool:
+    """Does `from module import name` resolve?  A package's submodule is no
+    attribute until something imports it: `from wikikit.scan import supplied`
+    read as broken whenever no earlier import had loaded it."""
+    if hasattr(mod, name):
+        return True
+    try:
+        importlib.import_module(f"{module}.{name}")
+    except ModuleNotFoundError:
+        return False
+    return True
