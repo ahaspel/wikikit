@@ -235,8 +235,17 @@ def _finish(state: dict, scans) -> list[str]:
                                          ps["figures"], readings, ps["refused"], ps["unread"],
                                          ps["usage"], ps.get("rejected", {}), ps.get("replaces"),
                                          ps.get("across") or [], ps.get("special"), ps.get("gutter"))
-        supplied.write(payload)
-        supplied.materialize_figures(payload, scans(ps["volume"], ps["page"]))
+        if ps.get("out"):
+            # a reading for another use (a book's patches): written to its own
+            # place, never the supplied pages a build reads, and no figure
+            # crops — those would overwrite the book's images
+            from wikikit.source_pages import page_filename, volume_dir
+            f = volume_dir(ps["volume"], ps["out"]) / page_filename(ps["volume"], ps["page"])
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+        else:
+            supplied.write(payload)
+            supplied.materialize_figures(payload, scans(ps["volume"], ps["page"]))
         ps["stage"] = "done"
         done.append(pid)
     return done
@@ -256,7 +265,7 @@ def _chunks(reqs: dict[str, dict]) -> list[dict[str, dict]]:
 
 
 def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = None,
-              located: dict[str, dict] | None = None) -> None:
+              located: dict[str, dict] | None = None, out: str | Path | None = None) -> None:
     """Put pages (volume, page, scan name) into the run; a page still in
     flight is left as it is, and a finished page asked for again is read
     afresh (the caller decided to overwrite its supplied page).  `replaces`:
@@ -268,7 +277,12 @@ def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = N
     again whose figures were located before: its deskew, figures and type
     across are taken as they stand (the boxes are in that deskew's pixels),
     and only its text is read — what locating cost is kept, not paid twice.
-    Its "gutter", if given, is the gutter look's answer (`figures.gutter`)."""
+    Its "gutter", if given, is the gutter look's answer (`figures.gutter`).
+
+    `out`: a directory the finished pages are written to (out/vol_NN/ID.json)
+    INSTEAD of the supplied pages, with no figure crops — a reading for another
+    use, e.g. a book re-reading pages for their tables.  Kept with each page, so
+    a resumed run writes where it was asked to."""
     state = load()
     for vol, pg, scan in pages:
         pid = page_id(vol, pg)
@@ -281,7 +295,8 @@ def add_pages(pages: list[tuple[int, int, str]], scans, replaces: str | None = N
             "windows": {},
             "figures": None, "items": None, "disagreements": {}, "readings": {}, "tries": {},
             "refused": [], "unread": {},
-            "usage": {"figures": _empty_usage(), "text": _empty_usage()}}
+            "usage": {"figures": _empty_usage(), "text": _empty_usage()},
+            "out": str(Path(out).resolve()) if out else None}
         known = (located or {}).get(pid)
         if known:
             figs = known.get("figures") or []

@@ -80,6 +80,28 @@ def test_a_page_runs_through_the_stages_to_a_supplied_page(tmp_path, monkeypatch
     assert batch.load()["pages"]["v01-p0007"] == in_flight
 
 
+def test_a_reading_for_another_use_is_written_only_where_asked(tmp_path, monkeypatch):
+    # a book re-reading pages for their tables: no supplied page (a build would
+    # read it), no figure crops (they would overwrite the book's images)
+    (tmp_path / "book.env").write_text("")
+    monkeypatch.chdir(tmp_path)
+    api = FakeAPI()
+    monkeypatch.setattr(batch, "submit", api.submit)
+    monkeypatch.setattr(batch, "batch_status", api.status)
+    monkeypatch.setattr(batch, "collect", api.collect)
+    crops = []
+    monkeypatch.setattr(supplied, "materialize_figures", lambda *a: crops.append(a))
+    batch._LEVELS.clear()
+    img = test_scan_cut.page()
+    scans = lambda v, p: img
+    batch.add_pages([(1, 9, "scan of page 9")], scans, out=tmp_path / "tables")
+    for _ in range(6):
+        batch.advance(scans)
+    f = tmp_path / "tables" / "vol_01" / "vol01-page0009.json"
+    assert json.loads(f.read_text(encoding="utf-8"))["raw_text"]
+    assert not supplied.path_for(1, 9).exists() and crops == []
+
+
 def test_levelled_pages_are_kept_for_the_last_few_only():
     # a 406-page run kept every levelled leaf (~23 MB each) and ran out of memory
     batch._LEVELS.clear()
