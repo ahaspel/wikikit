@@ -28,6 +28,7 @@ import re
 from collections import Counter
 
 from wikikit.scan.patches import balanced
+from wikikit.scan.vocabulary import TABLE_CLOSES, TABLE_OPENS
 
 #: Link forms carried, by opener: `[[target|display]]`, and the templates the
 #: walker reads as links (`_classifier`: target-first, and display-first).
@@ -64,8 +65,9 @@ def markup_balance(s: str) -> tuple:
     s = re.sub(r"(?s)<math[^>]*>.*?</math>", "", s)
     s = re.sub(r"<[^<>]*/>", "", s)
     net = Counter({o: s.count(o) - s.count(c) for o, c in _PAIRS})
-    net["{|"] = len(re.findall(r"(?m)^[ \t]*\{\|", s)) - len(re.findall(r"(?m)^[ \t]*\|\}", s))
-    for m in re.finditer(r"<(/?)([a-zA-Z]+)\b[^<>]*>", s):
+    net["{|"] = len(TABLE_OPENS.findall(s)) - len(TABLE_CLOSES.findall(s))
+    # a tag's name ends at a space, a slash or its close: OCR's `<s- s>` is text
+    for m in re.finditer(r"<(/?)([a-zA-Z]+)(?=[\s/>])[^<>]*>", s):
         if m.group(2).lower() in _HTML:
             net["<" + m.group(2).lower()] += -1 if m.group(1) else 1
     return tuple(sorted((k, v) for k, v in net.items() if v))

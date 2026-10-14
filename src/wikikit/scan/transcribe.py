@@ -872,14 +872,11 @@ def apply_type(text: str, sizes: list | None) -> str:
     return "".join(out)
 
 
-_TABLE_OPENS = re.compile(r"(?m)^[ \t]*\{\|")
-_TABLE_CLOSES = re.compile(r"(?m)^[ \t]*\|\}")
-
-
 def _in_table(text: str, at: int) -> bool:
     """Whether `at` falls inside a table (more opened before it than closed)."""
+    from wikikit.scan.vocabulary import TABLE_CLOSES, TABLE_OPENS
     before = text[:at]
-    return len(_TABLE_OPENS.findall(before)) > len(_TABLE_CLOSES.findall(before))
+    return len(TABLE_OPENS.findall(before)) > len(TABLE_CLOSES.findall(before))
 
 
 def _unopened_close(text: str) -> bool:

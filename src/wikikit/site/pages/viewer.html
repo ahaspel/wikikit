@@ -592,8 +592,13 @@
     /* A non-float figure fills the reading column.  A FLOAT honors its carried
        width:Npx — that's an inline style, so it beats this non-!important rule —
        and falls back to half-column only when the source carried no width, so the
-       prose has room to wrap either way.  max-width:100% (above) still caps it. */
-    .body-text table:not([class]):not([style*="float"]) {
+       prose has room to wrap either way.  max-width:100% (above) still caps it.
+       Only a table that HOLDS a figure: a table of text and figures keeps its own
+       width, its columns as wide as their contents, and a table wider than the
+       column scrolls in its frame (wrapWideTables) — forced to the column's
+       width, a six-column schedule wrapped every cell into a few letters a line
+       and its columns ran together (TIDE, 2026-10-13). */
+    .body-text table:not([class]):not([style*="float"]):has(img) {
       width: 100% !important;
     }
 .body-text table:not([class])[style*="float"] {
@@ -661,6 +666,14 @@
       margin: 0;
       border: none;
       min-width: max-content;
+    }
+    /* A class-less table of text in the frame takes its natural width too: at
+       auto width a table wider than the frame shrank to its NARROWEST layout,
+       every cell wrapped to its longest word (TIDE's schedules, 2026-10-13).
+       A table holding a figure still fills the column (above). */
+    .wide-table-inline table:not([class]):not(:has(img)) {
+      min-width: max-content;
+      max-width: none;
     }
     .expand-table-btn {
       display: inline-block;
@@ -1863,7 +1876,11 @@
         const left = t.getBoundingClientRect().left;
         if (t.offsetWidth <= cardRight - left) return;                     // fits; spilling into
                                                                            // the empty margin is fine
-        const cols = t.rows && t.rows[0] ? t.rows[0].cells.length : 0;
+        // its widest row, a spanning cell counted by its span: the first row
+        // alone said "1 columns" for a table opening on a heading across all
+        // six (TIDE's schedules)
+        const cols = Math.max(0, ...Array.from(t.rows || [], r =>
+          Array.from(r.cells).reduce((n, c) => n + (c.colSpan || 1), 0)));
         const fig = document.createElement("figure");
         fig.className = "wide-table-wrap";
         const id = "wt-" + (++wideTableSeq);

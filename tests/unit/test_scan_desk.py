@@ -34,6 +34,18 @@ SAME = [
     "|│||│\n|-\n|<math>a_1</math>||''Tropine''\n|}\n\nThese compounds",
     # a plain table of figures
     "{|\n|As||12||1\n|-\n|Decunx||11||11/12\n|}",
+    # a table set as the print sets it: a heading row, rules on rows and
+    # cells, figures set right, a span with a code, a brace over two rows
+    "{| style=\"margin:auto\"\n!Name.!!Initial.!!Speed.\n|-{{Ts|bt}}\n|Principal lunar||M<sub>2</sub>"
+    "||{{Ts|ar}}|28·9841042°\n|-\n|rowspan=2 {{Ts|ac}}|Lunar||{{Ts|ar|bb}}|·45426||1\n|-\n"
+    "|rowspan=2|{{brace2|2|r}}||x\n|-{{Ts|bt|bb}}\n|colspan=3|''Long period.''\n|}",
+    # a table the print frames and rules between its columns, and one ruled
+    # round every cell (Wikisource's own classes)
+    "{| class=\"_tablecolhdborder\"\n!Name.!!Speed.\n|-\n|Principal lunar||{{Ts|ar}}|28·98°\n|}",
+    "{| class=\"_tablegridhdborder\"\n|a||b\n|-\n|c||d\n|}",
+    # TIDE's schedule: a brace gathering the rows of one argument
+    "{| style=\"margin:auto\"\n!Descriptive Name.!!Argument.\n|-{{Ts|bb}}\n|Larger elliptic||"
+    "rowspan=3|{{brace2|3|l}}\n|-\n|Smaller elliptic\n|-\n|Variational\n|}",
     # a formula as a compact grid, its connectors in cells of their own
     "represented as\n\n{| class=\"chem-grid\"\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n"
     "|rowspan=3|│||||│||||│\n|-\n|||NMe||||CHOH\n|-\n|||│||||║\n|-\n|colspan=5|Tropine\n|}\n\nThese",
@@ -62,6 +74,21 @@ def test_a_poem_keeps_its_lines_where_a_paragraph_joins_them():
 def test_a_table_with_attributes_outside_the_vocabulary_leaks():
     [shown] = desk_render(["{| class=\"wikitable\"\n|a\n|}"], render_table())
     assert shown["leaks"]
+
+
+def test_a_table_style_code_outside_the_vocabulary_leaks():
+    # only the print's rules and alignment: no padding, no widths
+    [shown] = desk_render(["{|\n|{{Ts|pl2}}|a||b\n|}"], render_table())
+    assert shown["leaks"] == ["{{Ts|pl2}}"]
+
+
+def test_a_table_sets_its_headings_rules_figures_and_braces_as_the_engine_does():
+    [shown] = desk_render(["{|\n!a!!b\n|-{{Ts|bt}}\n|rowspan=2|{{brace2|2|l}}||{{Ts|ar}}|1·5\n|}"],
+                          render_table())
+    assert shown["leaks"] == []
+    html = shown["html"]
+    assert "<th>a</th><th>b</th>" in html and '<tr style="border-top:1px solid">' in html
+    assert '<td style="text-align:right">1·5</td>' in html and "scaleY(2)" in html
 
 
 def test_a_formula_is_left_whole_for_the_page_to_typeset():

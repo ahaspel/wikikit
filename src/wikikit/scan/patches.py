@@ -89,7 +89,8 @@ def balanced(text: str, i: int, open_: str, close: str) -> int:
     return len(text)
 
 
-_TAG = re.compile(r"</?[a-zA-Z]")
+#: a tag: its name ends at a space, a slash or its close — OCR's `<s- s>` is text
+_TAG = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?=[\s/>])")
 _INLINE = re.compile(r"'{2,5}|</?su[bp]>")
 #: A fetched page's formula-making templates: what a formula patch may replace.
 FORMULA_TEMPLATES = {
@@ -152,7 +153,7 @@ def structure(text: str) -> list[str]:
             j = len(text) if j < 0 else j + 3
             out.append(text[i:j])
             i = j
-        elif text[i] == "<" and not _INLINE.match(text, i) and _TAG.match(text[i:i + 3]):
+        elif text[i] == "<" and not _INLINE.match(text, i) and _TAG.match(text, i):
             j = text.find(">", i)
             j = len(text) if j < 0 else j + 1
             out.append(text[i:j])
@@ -210,15 +211,44 @@ def _built(pieces: list[str]) -> list[str]:
     return out
 
 
+#: a page's mark that a table belongs where it stands: a table patch fills it
+MISSING_TABLE = re.compile(r"\{\{\s*[Mm]issing[ _]table\s*(?:\|[^{}]*)?\}\}")
+
+
+def _one_table(text: str) -> bool:
+    """Is `text` exactly one table — `{|` at a line's start … `|}` — with
+    nothing outside it but what a formula patch may lay (a formula, its
+    display line, words): TIDE's "Universal Coefficient = …" heads its
+    schedule."""
+    from wikikit.scan.vocabulary import TABLE_CLOSES, TABLE_OPENS
+    opens, closes = list(TABLE_OPENS.finditer(text)), list(TABLE_CLOSES.finditer(text))
+    if len(opens) != 1 or len(closes) != 1 or closes[0].start() < opens[0].start():
+        return False
+    rest = text[:opens[0].start()] + "\n" + text[closes[0].end():]
+    return _built(structure(rest)) == []
+
+
 def check(raw: str, patches: list[dict]) -> list[str]:
     """What is wrong with laying `patches` on `raw`: a patch not at its place,
     or structure a person built changed (`_built`: a formula's own display
-    and layout give way to ours).  Empty: the page may be patched."""
+    and layout give way to ours).  A TABLE patch (kind "table") sets our table
+    where the page has only OCR text: it is checked as if it removed that text
+    — which must hold no structure of its own but a `{{missing table}}`, the
+    page's own mark that the table belongs there — and its own text must be
+    one whole table.  Empty: the page may be patched."""
     try:
-        new = apply_patches(raw, patches)
+        apply_patches(raw, patches)
     except PatchError as e:
         return [str(e)]
-    a, b = _built(structure(raw)), _built(structure(new))
+    problems = [f"table patch at {p['start']} is not one whole table" for p in patches
+                if p.get("kind") == "table" and not _one_table(p["new"])]
+    if problems:
+        return problems
+    as_removed = [dict(p, new="") if p.get("kind") == "table" else p for p in patches]
+    marked = raw
+    for p in sorted((p for p in patches if p.get("kind") == "table"), key=lambda p: -p["start"]):
+        marked = marked[:p["start"]] + MISSING_TABLE.sub("", raw[p["start"]:p["end"]]) + marked[p["end"]:]
+    a, b = _built(structure(marked)), _built(structure(apply_patches(raw, as_removed)))
     if a != b:
         k = next((n for n, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
         return [f"structure changed at piece {k}: {a[k][:50] if k < len(a) else '-'!r} -> "

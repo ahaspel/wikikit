@@ -88,9 +88,32 @@ PARAGRAPH = "\n\n"
 #: line, never "|", which a wikitable reads as its own syntax.
 TABLE_STYLE = 'style="margin:auto"'
 FORMULA_CLASS = 'class="chem-grid"'
-#: The table as the transcriber writes it: structure only.  How a table is
-#: SET (centred: TABLE_STYLE) is assembly's decision, not the reading's.
-TABLE = "{|\n|cell||cell\n|-\n|rowspan=2|cell||cell\n|}"
+#: A RULED table, in Wikisource's own classes (en.wikisource's TemplateStyles,
+#: styled by the site): a frame, a rule between every column and under the
+#: heading cells — the print's usual ruled table (TIDE's schedules); or every
+#: cell ruled.  Rules on single rows and cells (`TABLE_CODES`) add to these.
+COLUMN_RULED = 'class="_tablecolhdborder"'
+GRID_RULED = 'class="_tablegridhdborder"'
+#: A table opens and closes at a line's start — the `|}}` of
+#: `{{block center|<math>…</math>}}` closes none
+TABLE_OPENS = re.compile(r"(?m)^[ \t]*\{\|")
+TABLE_CLOSES = re.compile(r"(?m)^[ \t]*\|\}")
+#: What a printed table shows besides its cells, in the forms the engine's
+#: producers already render (`{{Ts|…}}` → CSS, `!` → <th>, `{{brace2|N|l/r}}`
+#: → a brace stretched over N rows) — and no others.  A bare grid lost the
+#: print's rules, its header rows, its columns of figures set right, and the
+#: braces that gather rows (TIDE's schedules, 2026-10-13): the table read as
+#: text run together.
+#: - a rule the print draws: on a row (`|-{{Ts|bt}}`) or a cell, above (bt),
+#:   below (bb), left (bl), right (br)
+#: - a column set as printed: right (ar), centred (ac), left (al)
+TABLE_CODES = ("bt", "bb", "bl", "br", "ar", "ac", "al")
+#: braces the desk is measured for: over 2 to 12 rows, opening left or right
+BRACE_SIZES = range(2, 13)
+#: The table as the transcriber writes it.  How a table is SET (centred:
+#: TABLE_STYLE) is assembly's decision, not the reading's.
+TABLE = (f"{{| {COLUMN_RULED}\n!heading!!heading!!heading\n|-{{{{Ts|bt}}}}\n|rowspan=2|cell||"
+         "rowspan=2|{{brace2|2|l}}||{{Ts|ar}}|12·5\n|-\n|{{Ts|ar}}|3·75\n|-{{Ts|bt|bb}}\n|colspan=3|cell\n|}")
 FORMULA = f"{{| {FORMULA_CLASS}\n|H<sub>2</sub>C||·||CH||—||CH<sub>2</sub>\n|-\n|│||||│||||║\n|}}"
 
 
@@ -100,7 +123,18 @@ def prompt_text() -> str:
     lines.append("- a new paragraph: a blank line before it")
     lines.append("- a table, on lines of its own where it is printed; |- begins each new row, || "
                  "divides the cells, and a cell spanning rows or columns begins rowspan=2| or "
-                 "colspan=2|; nothing else on a table, row or cell:\n" + TABLE)
+                 "colspan=2|. Set the table as the print sets it: a table the print frames and "
+                 f"rules between its columns opens {{| {COLUMN_RULED}; one ruled round every cell "
+                 f"opens {{| {GRID_RULED}; an unruled table opens {{| alone. A row of headings "
+                 "begins with ! and its cells are divided by !!; any other rule the print draws "
+                 "goes on its row, "
+                 "|-{{Ts|bt}} (a rule above the row; bb below), or on a cell (bt, bb, bl, br: above, "
+                 "below, left, right); a column of figures set right, or centred, gives each of its "
+                 "cells {{Ts|ar}} or {{Ts|ac}} (several codes in one: {{Ts|ar|bb}}), after the "
+                 "cell's spans and before its content: rowspan=2 {{Ts|ac}}|cell; a brace the print "
+                 "sets across rows is a cell of its own spanning them, holding {{brace2|N|l}} "
+                 "(opening left, over N rows) or {{brace2|N|r}}; nothing else on a table, row or "
+                 "cell:\n" + TABLE)
     lines.append("- a formula set out in rows of type (atoms above and below one another, joined by "
                  "upright bonds) is a table of its own form, a compact grid: each atom group in its "
                  "own cell, and each bond printed between groups in a row (—, ·, :) in a cell of its "
@@ -179,12 +213,40 @@ def render_table() -> dict:
     # — measured; rows and cells are the plain <tr>/<td> the parity gate checks.
     # {"open": {opening as written: html}, "close": html}
     openings = {}
-    for attrs in ("", TABLE_STYLE, FORMULA_CLASS):
+    for attrs in ("", TABLE_STYLE, FORMULA_CLASS, COLUMN_RULED, GRID_RULED):
         html = _render(f"A{PARAGRAPH}{{| {attrs}\n|{_PROBE}||rowspan=2|{_PROBE}\n|-\n|{_PROBE}\n|}}{PARAGRAPH}Z")
         body = html.removeprefix("A" + table["paragraph"]).removesuffix(table["paragraph"] + "Z")
         opening, sep, _ = body.partition("<tr>")
         if not sep or not body.endswith("</table>") or 'rowspan="2"' not in body:
             raise ValueError(f"the engine no longer renders the vocabulary's table as a table: {html!r}")
         openings[attrs] = opening
-    table["table"] = {"open": openings, "close": "</table>"}
+    table["table"] = {"open": openings, "close": "</table>", **_table_furniture()}
     return table
+
+
+def _table_furniture() -> dict:
+    """What a table's rules, headings, alignment and braces render as, each
+    measured through the engine's chain: {"ts": {code: css}, "th": [open,
+    close], "brace": {"Nl"|"Nr": html}}.  The desk joins a cell's codes'
+    css with ";" — and the parity gate holds that to the engine's own."""
+    def cell(row_attrs: str, cell_text: str) -> str:
+        return _render(f"{{|\n|-{row_attrs}\n{cell_text}\n|}}")
+
+    ts = {}
+    for code in TABLE_CODES:
+        m = re.search(rf'<td style="([^"]*)">{_PROBE}</td>', cell("", f"|{{{{Ts|{code}}}}}|{_PROBE}"))
+        r = re.search(rf'<tr style="([^"]*)"><td>{_PROBE}</td>', cell(f"{{{{Ts|{code}}}}}", f"|{_PROBE}"))
+        if not m or not r or m.group(1) != r.group(1):
+            raise ValueError(f"the engine no longer renders {{{{Ts|{code}}}}} as one style on a cell and a row")
+        ts[code] = m.group(1)
+    th = re.search(rf"(<th[^>]*>){_PROBE}(</th>)", cell("", f"!{_PROBE}"))
+    if not th:
+        raise ValueError("the engine no longer renders a heading cell (!) as <th>")
+    brace = {}
+    for n in BRACE_SIZES:
+        for d in "lr":
+            m = re.search(r'<td rowspan="\d+">(.*?)</td>', cell("", f"|rowspan={n}|{{{{brace2|{n}|{d}}}}}"))
+            if not m or not m.group(1):
+                raise ValueError(f"the engine no longer renders {{{{brace2|{n}|{d}}}}}")
+            brace[f"{n}{d}"] = m.group(1)
+    return {"ts": ts, "th": [th.group(1), th.group(2)], "brace": brace}

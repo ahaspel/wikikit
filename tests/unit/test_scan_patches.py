@@ -63,6 +63,50 @@ def test_a_formula_patch_never_takes_a_ruled_table_or_a_note():
         assert patches.check(raw, [{"start": a, "end": a + len(old), "old": old, "new": "<math>x</math>"}])
 
 
+TABLE = '{| class="_tablecolhdborder"\n!Year!!Tons\n|-\n|1869||{{Ts|ar}}|390\n|-\n|1870||{{Ts|ar}}|388\n|}'
+
+
+def _table_patch(raw, old, new=TABLE):
+    a = raw.index(old)
+    return [{"start": a, "end": a + len(old), "old": old, "new": new, "kind": "table"}]
+
+
+def test_a_table_patch_sets_our_table_where_the_page_has_only_ocr_text():
+    raw = "were as follows:\n\n1869 390 1889 1 76\n1870 388 1890 1 79\n\nIn the following year"
+    assert patches.check(raw, _table_patch(raw, "1869 390 1889 1 76\n1870 388 1890 1 79")) == []
+
+
+def test_a_table_patch_never_takes_structure_the_page_has():
+    raw = "as follows:\n\n1869 390 see [[Coal]]\n1870 388\n\nIn the year"
+    assert patches.check(raw, _table_patch(raw, "1869 390 see [[Coal]]\n1870 388"))
+
+
+def test_a_table_patch_must_be_one_whole_table():
+    raw = "as follows:\n\n1869 390\n1870 388\n\nIn the year"
+    assert patches.check(raw, _table_patch(raw, "1869 390\n1870 388", TABLE + "\nsee [[Coal]]"))
+    assert patches.check(raw, _table_patch(raw, "1869 390\n1870 388", TABLE + "\n" + TABLE))
+
+
+def test_a_table_patch_fills_the_pages_missing_table_mark_and_nothing_else():
+    raw = "as follows:\n\n{{missing table}}\n1869 390\n1870 388\n\nIn the year {{sc|Coal}}"
+    assert patches.check(raw, _table_patch(raw, "{{missing table}}\n1869 390\n1870 388")) == []
+    # a formula patch takes no such mark
+    a = raw.index("{{missing")
+    assert patches.check(raw, [{"start": a, "end": a + 17, "old": "{{missing table}}", "new": "<math>x</math>"}])
+
+
+def test_a_table_patch_may_bring_the_formula_display_heading_it():
+    raw = "as follows:\n\nUniversal Coefficient =§ - T 5) u.\n1869 390\n1870 388\n\nIn the year"
+    new = "{{block center|Universal Coefficient <math>=\\tfrac{3}{2}a</math>.}}\n\n" + TABLE
+    assert patches.check(raw, _table_patch(raw, raw[13:raw.index("\n\nIn")], new)) == []
+
+
+def test_ocr_angle_brackets_are_no_tags():
+    # `<s- s>` in a flattened table is OCR, not a strikethrough the page built
+    raw = "as follows:\n\n1869 -=<s- s>++ 390\n1870 388\n\nIn the year"
+    assert patches.check(raw, _table_patch(raw, "1869 -=<s- s>++ 390\n1870 388")) == []
+
+
 def test_a_patch_that_touches_a_link_is_refused():
     raw = "see [[Waves]] here"
     p = [{"start": 4, "end": 13, "old": "[[Waves]]", "new": "Waves"}]

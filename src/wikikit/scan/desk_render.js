@@ -55,32 +55,69 @@
   // wikitable forms the vocabulary allows (their openings measured, in the
   // table's "table" entry), its cells spanning rows or columns (rowspan=N| /
   // colspan=N|) and holding inline constructs.  Anything else on a table or a
-  // cell is a leak.
-  const SPAN = /^((?:\s*(?:rowspan|colspan)\s*=\s*"?\d+"?)+)\s*\|(?!\|)([\s\S]*)$/;
+  // cell is a leak.  A row or cell may also carry the print's rules and
+  // alignment as {{Ts|codes}}, a heading row begins with ! (cells divided by
+  // !!), and a cell may hold a brace over rows, {{brace2|N|l/r}} — each
+  // rendered from what the engine was measured to make of it (the table's
+  // "ts", "th" and "brace" entries), nothing else.
+  const SPAN_ATTR = /^\s*(rowspan|colspan)\s*=\s*"?(\d+)"?/;
+  const TS_ATTR = /^\s*\{\{Ts\|([^{}]*)\}\}/;
+
+  // The style a run of Ts codes makes, as measured; an unmeasured code leaks.
+  function tsStyle(codes, table, leaks) {
+    return codes.split("|").map(c => c.trim()).filter(c => c).map(c => {
+      const css = (table.table.ts || {})[c];
+      if (css === undefined) leaks.push("{{Ts|" + c + "}}");
+      return css;
+    }).filter(c => c).join(";");
+  }
+
+  // A cell: its spans and codes, then a single | and its content — or all content.
+  function cellHtml(cell, tag, table, tex, leaks) {
+    let rest = cell, spans = [], styles = [], m;
+    while ((m = rest.match(SPAN_ATTR) || rest.match(TS_ATTR))) {
+      if (m[0].trim().startsWith("{{")) styles.push(tsStyle(m[1], table, leaks));
+      else spans.push(m[1] + '="' + m[2] + '"');
+      rest = rest.slice(m[0].length);
+    }
+    const sep = rest.match(/^\s*\|(?!\|)/);
+    if ((spans.length || styles.length) && sep) rest = rest.slice(sep[0].length);
+    else { rest = cell; spans = []; styles = []; }
+    const style = styles.filter(s => s).join(";");
+    const attr = (spans.length ? " " + spans.join(" ") : "") + (style ? ' style="' + style + '"' : "");
+    const braced = rest.replace(/\{\{\s*brace2\s*\|\s*(\d+)\s*\|\s*([lr])\s*\}\}/g, (b, n, d) => {
+      const html = (table.table.brace || {})[n + d];
+      if (html === undefined) { leaks.push(b); return ""; }
+      return html;
+    });
+    const content = inline(templates(braced, table).split(END).join(""), table, tex, leaks);
+    const [open, close] = tag === "th" ? (table.table.th || ["<th>", "</th>"]) : ["<td>", "</td>"];
+    return open.replace(/>$/, attr + ">") + content.trim() + close;
+  }
 
   function tableHtml(attrs, body, table, tex, leaks) {
     const open = table.table.open[attrs.trim()];
     if (open === undefined) leaks.push("{|" + attrs);
-    const rows = [[]];
+    const rows = [{ style: "", cells: [] }];
     for (const line of body.split("\n")) {
       const l = line.trim();
       if (l === "") continue;
       if (l.startsWith("|-")) {
-        if (l.slice(2).trim()) leaks.push(l);
-        rows.push([]);
+        let rest = l.slice(2), styles = [], m;
+        while ((m = rest.match(TS_ATTR))) { styles.push(tsStyle(m[1], table, leaks)); rest = rest.slice(m[0].length); }
+        if (rest.trim()) leaks.push(l);
+        rows.push({ style: styles.filter(s => s).join(";"), cells: [] });
+      } else if (l.startsWith("!")) {
+        rows[rows.length - 1].cells.push(...l.slice(1).split("!!").map(c => ["th", c]));
       } else if (l.startsWith("|")) {
-        rows[rows.length - 1].push(...l.slice(1).split("||"));
+        rows[rows.length - 1].cells.push(...l.slice(1).split("||").map(c => ["td", c]));
       } else {
         leaks.push(l);
       }
     }
-    const trs = rows.filter(r => r.length).map(r => "<tr>" + r.map(cell => {
-      const m = cell.match(SPAN);
-      const attr = m ? " " + m[1].trim().split(/\s+(?=rowspan|colspan)/)
-        .map(a => a.replace(/\s*=\s*"?(\d+)"?/, '="$1"')).join(" ") : "";
-      const content = inline(templates(m ? m[2] : cell, table).split(END).join(""), table, tex, leaks);
-      return "<td" + attr + ">" + content.trim() + "</td>";
-    }).join("") + "</tr>").join("");
+    const trs = rows.filter(r => r.cells.length).map(r =>
+      (r.style ? '<tr style="' + r.style + '">' : "<tr>") +
+      r.cells.map(([tag, cell]) => cellHtml(cell, tag, table, tex, leaks)).join("") + "</tr>").join("");
     return (open || table.table.open[""]) + trs + table.table.close;
   }
 
