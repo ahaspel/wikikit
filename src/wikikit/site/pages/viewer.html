@@ -138,6 +138,13 @@
          flow-root contains it without clipping the absolutely-positioned
          margin page-numbers (overflow:hidden would). */
       display: flow-root;
+      /* A run the print sets without a space is one word to the browser, and
+         one wider than a phone pushed the whole page sideways: STEREO-ISOMERISM
+         p. 894's ·CHOH·C(H₂)ₙ₋₁CH₃,HO₂C·(CH₂)₂·CHOH…,&c. made it 604px in a
+         371px view.  `break-word` breaks only a word that cannot fit its line,
+         and leaves min-content alone, so tables size as before (`anywhere`
+         would shrink them). */
+      overflow-wrap: break-word;
     }
 
     @media (max-width: 900px) {
