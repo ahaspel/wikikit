@@ -51,6 +51,21 @@ def strip_id(volume: int, page: int, name: str) -> str:
     return f"{page_id(volume, page)}-{name}"
 
 
+def keep_version(out: Path, volume: int, page: int) -> Path:
+    """The supplied page as it is now, kept under `out`/history before the
+    desk writes it: what an undo puts back."""
+    from datetime import datetime, timezone
+    keep = out / "history" / page_id(volume, page) / f"{datetime.now(timezone.utc):%Y-%m-%dT%H-%M-%S-%fZ}.json"
+    keep.parent.mkdir(parents=True, exist_ok=True)
+    keep.write_bytes(supplied.path_for(volume, page).read_bytes())
+    return keep
+
+
+def saved_versions(out: Path, volume: int, page: int) -> list[Path]:
+    """The page as it was before each of its desk saves, oldest first."""
+    return sorted((out / "history" / page_id(volume, page)).glob("*.json"))
+
+
 def page_label(volume: int, page: int) -> str:
     """What the desk calls a page when the book names no label of its own."""
     return f"Vol. {volume}, page {page}"

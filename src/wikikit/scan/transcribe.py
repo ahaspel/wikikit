@@ -543,12 +543,9 @@ def place_sections(body: str, sections: list[dict]) -> tuple[str, list[str]]:
 
 
 # ── editorial assembly: what the reading records, set as our page sets it ────
-#: A sentence ends at a full stop, query or exclamation (closing quotes or
-#: brackets after it) before the next sentence's capital.
-_SENTENCE_END = re.compile(r"[.!?][\"”’)\]]*(?=\s+[\"“‘(\[]?[A-Z])")
-#: The text before a block already ends a sentence, or a clause the block
-#: completes ("printed with:—").
-_ENDS_SENTENCE = re.compile(r"[.!?:;—][\"”’)\]]*\s*$")
+#: The text before a figure or table introduces it ("shown below:—", "the
+#: following table:—"): it stands there, where the text points to it.
+_INTRODUCES = re.compile(r"[:—][\"”’)\]]*\s*$")
 _WORD_BROKEN = re.compile(r"(\S+)-\s*$")
 #: A centred line: over a table or verse, its title (`_units`).
 _CENTRED_OPEN = next(c.open for c in VOCABULARY if c.name == "c")
@@ -689,48 +686,50 @@ def _join_text(lines: list[str]) -> str:
 
 
 def _segments(piece: str, continues: bool = False) -> list[tuple[str, str]]:
-    """A paragraph as our page sets it: ("text" | "block" | "figure", …) in
-    order.  A block the print sets WITHIN the paragraph (a table, verse, an
-    illustration) moves to the end of the sentence it interrupts — or stays,
-    if the text before it already ends one — and the paragraph's text after
-    it begins a new one.  The reading recorded where it stood; this is the
-    one place that decides where it goes."""
+    """A paragraph as our page sets it: (kind, …) in printed order, kind
+    "text", "block", "figure", or a float — "figure float", "block float".
+
+    In place ("block" | "figure") — a block
+    without a title is in the text's flow, part of its sentence ("learn the
+    tables of" + verse: vol 28 p508; "by distilling acetoxime," + equation:
+    vol 22 p706), and stays where it is printed; so does an illustration or
+    titled table the text INTRODUCES ("shown below:—", "the following
+    table:—": TEMPERANCE p. 582), or that opens the paragraph.
+
+    Floats — an illustration, or a table or verse
+    under its own centred title (vol 18 p296's Marvin's Table), that
+    INTERRUPTS the text: the print set it wherever the page had room.  Each
+    is set AFTER its paragraph, and the text it interrupted runs on as one
+    (user, 2026-10-15): set inside the paragraph, it would end the line
+    before it short and start the text after it on a new line, a break the
+    print's lines made and ours do not (SIGNAL p. 72: "…almost every" /
+    Fig. 2 / "hill within range").  `continues`: the paragraph began in the
+    reading before, so a float first in this one interrupts it."""
     units = _units(piece)
+    if units and all(k == "figure" for k, _ in units):
+        # figures alone between blank lines (a reading made before blocks
+        # were written where they stand): the paragraph runs on past them
+        return [("figure float", s) for _, s in units]
     segs: list[tuple[str, str]] = []
-    text: list[str] = []
-    k = 0
-    while k < len(units):
-        kind, s = units[k]
+    text: list[str] = []           # runs on across a float: the float is not in it
+    started = False                # has the paragraph begun (text or a block in place)?
+    for kind, s in units:
         if kind == "text":
             text.append(s)
-            k += 1
             continue
-        before = _join_text(text)
-        text = []
-        # the text that follows, up to the next block, in which the sentence ends
-        j, after = k + 1, []
-        while j < len(units) and units[j][0] == "text":
-            after.append(units[j][1])
-            j += 1
-        rest = _join_text(after)
-        # only a FLOAT moves — a figure, or a table or verse under its own
-        # centred title (vol 18 p296's Marvin's Table), set wherever it fit.
-        # A block without a title is in the text's flow, part of its sentence
-        # ("learn the tables of" + verse: vol 28 p508; "by distilling
-        # acetoxime," + equation: vol 22 p706): it stays where it is printed
-        floats = kind == "figure" or s.lstrip().startswith(_CENTRED_OPEN)
-        if rest and floats and (
-                (before and not _ENDS_SENTENCE.search(before)) or (not before and continues and not segs)):
-            m = _SENTENCE_END.search(rest)
-            cut_at = m.end() if m else len(rest)
-            before = _join_words(before.rstrip(), rest[:cut_at].lstrip()) if before.rstrip().endswith("-") \
-                else (before.rstrip() + " " + rest[:cut_at].lstrip()).strip()
-            rest = rest[cut_at:].lstrip()
-        if before:
-            segs.append(("text", before))
-        segs.append(("figure" if kind == "figure" else "block", s))
-        text = [rest] if rest else []
-        k = j
+        name = "figure" if kind == "figure" else "block"
+        if kind == "figure" or s.lstrip().startswith(_CENTRED_OPEN):
+            before = _join_text(text) if text else ""
+            introduced = (bool(_INTRODUCES.search(before)) if before
+                          else not continues and not started)
+            if not introduced:
+                segs.append((name + " float", s))
+                continue
+        if text:
+            segs.append(("text", _join_text(text)))
+            text = []
+        segs.append((name, s))
+        started = True
     if text:
         segs.append(("text", _join_text(text)))
     return segs
@@ -945,6 +944,7 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
     head = ""
     paras: list[str] = []         # the page's blocks: paragraphs and figures
     open_para = False             # is the last paragraph still running?
+    ends_block = False            # … and does it end in a block (a table, a figure)?
     pending: list[str] = []       # figure blocks waiting for a paragraph boundary
     notes: list[tuple[str, str]] = []   # the page's footnotes, from its columns' feet
     furniture: list[str] = []     # the printer's marks the readings record: the footer's
@@ -977,10 +977,12 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
 
     def add(text: str, continues: bool, figs: list[Item] = ()):
         """Append one reading; `continues` = it carries on the open paragraph.
-        `figs`: the figure items its marks stand for, in order.  What the
-        reading records, set by `_segments`: a block standing within a
-        paragraph goes to the end of its sentence."""
-        nonlocal open_para
+        `figs`: the figure items its marks stand for, in order.  A float
+        (`_segments`) waits for its paragraph's end, however many readings
+        the paragraph runs across; a block in the text's flow is set on lines
+        of its own inside its paragraph, which runs on after it.  Only a
+        blank line in the reading, the print's own break, begins a paragraph."""
+        nonlocal open_para, ends_block
         figs = list(figs)
         first = True
         for raw in text.split(PARAGRAPH_SEP):
@@ -996,32 +998,44 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
             if small is not None:
                 segs = [(k, _SMALL["smaller block"].open + s + _SMALL["smaller block"].close if k == "text" else s)
                         for k, s in segs]
-            if len(segs) == 1 and segs[0][0] == "figure":
-                # a figure alone between blank lines (a reading made before
-                # blocks were written where they stand): the paragraph runs
-                # on past it, and the figure waits for its end
-                pending.append(marked_figure(segs[0][1], figs))
+            # each figure mark takes its own figure, in reading order
+            segs = [(k, marked_figure(s, figs) if k.startswith("figure") else s) for k, s in segs]
+            waiting = [s for k, s in segs if k.endswith(" float")]
+            segs = [(k, s) for k, s in segs if not k.endswith(" float")]
+            if not segs and waiting:
+                # floats alone between blank lines: the paragraph runs on
+                # past them, and they wait for its end
+                pending.extend(waiting)
                 continue
+            # this reading's paragraph carries on the one open before it (across a cut)
+            inside = first and continues and open_para
             for n, (kind, s) in enumerate(segs):
                 if kind in ("figure", "block"):
-                    # a block is a paragraph of its own: it runs on from
-                    # nothing, and nothing runs on from it (Anthon leaf 1459:
-                    # a table had joined the sentence before it, "{|" mid-line)
-                    boundary()
-                    block = marked_figure(s, figs) if kind == "figure" else s
-                    if block:
-                        paras.append(block)
+                    block = s
                     first = False
+                    if not block:
+                        continue                # a figure covered by an earlier image
+                    # where the print sets it: on lines of its own (a table's
+                    # "{|" opens a line — Anthon leaf 1459), inside its paragraph
+                    if inside:
+                        paras[-1] = paras[-1].rstrip() + "\n" + block
+                    else:
+                        boundary()
+                        paras.append(block)
+                    inside, open_para, ends_block = True, True, True
                     continue
-                joins = first and n == 0 and continues and open_para
-                first = False
-                if not joins:
-                    boundary()                  # whatever ran before has ended
-                if joins:
-                    paras[-1] = join_across_cut(paras[-1], s)
+                if n == 0 and first and continues and open_para:
+                    # across a cut: words join words; after a block, a line of its own
+                    paras[-1] = paras[-1].rstrip() + "\n" + s if ends_block else join_across_cut(paras[-1], s)
+                elif inside:
+                    paras[-1] = paras[-1].rstrip() + "\n" + s   # the paragraph runs on after a block
                 else:
+                    boundary()                  # whatever ran before has ended
                     paras.append(s)
-                open_para = True
+                first = False
+                inside, open_para, ends_block = True, True, False
+            # after this paragraph's text: set at its end (the next boundary)
+            pending.extend(waiting)
             if not segs:
                 first, open_para = False, False
                 boundary()

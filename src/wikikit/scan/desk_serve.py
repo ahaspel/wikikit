@@ -20,6 +20,11 @@ Routes, beside everything the site server answers (`wikikit.site.serve`):
     /desk/article/V-P.json          the page as it would enter, for the viewer
     POST /desk/api/preview          {volume, page, readings}: redraw from these
     POST /desk/api/save             {volume, page, strips: {name: {text, status}}}
+    POST /desk/api/undo             {volume, page}: the page as it was before its last save
+
+Every save first keeps the page as it was (`history/<page>/<time>.json` beside
+the strips): undo puts the latest back, one save at a time, back to the page
+as it came to the desk.
 """
 from __future__ import annotations
 
@@ -118,7 +123,8 @@ class Handler(site.Handler):
                             "checked": it.name in p.get("checked", {})}
                            for it in supplied.items_of(payload)],
                 "constructs": [{"name": c.name, "open": c.open, "close": c.close, "says": c.says,
-                                "args": list(c.args)} for c in constructs()]}
+                                "args": list(c.args)} for c in constructs()],
+                "saves": [h.stem for h in self._history(vol, pg)]}
 
     def _queue(self) -> list[dict]:
         out = []
@@ -149,14 +155,37 @@ class Handler(site.Handler):
         return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""),
                                  link=self.link)
 
-    def _save(self, vol: int, pg: int, strips: dict) -> str:
-        # A save assembles the page with the engine this process loaded: an
+    def _history(self, vol: int, pg: int) -> list[Path]:
+        return desk.saved_versions(self.strips_dir, vol, pg)
+
+    @staticmethod
+    def _engine_unchanged() -> None:
+        # A write assembles the page with the engine this process loaded: an
         # engine changed since would write the page as the old code sets it
         # (vol 26 p582, 2026-10-15: a fix to the assembler undone by a save)
         changed = [p for p in ENGINE.rglob("*.py") if p.stat().st_mtime > STARTED]
         if changed:
             raise RuntimeError(f"the engine has changed since the desk started ({changed[0].name}): "
-                               "restart the desk, then save again — nothing was written")
+                               "restart the desk, then try again — nothing was written")
+
+    def _undo(self, vol: int, pg: int) -> str:
+        """The page as it was before its last save, put back and reassembled
+        (by the engine as it is now)."""
+        self._engine_unchanged()
+        with self.lock:
+            history = self._history(vol, pg)
+            if not history:
+                raise RuntimeError("no save of this page to undo")
+            last = history[-1]
+            payload = json.loads(last.read_text(encoding="utf-8"))
+            supplied.write(supplied.reassemble(payload))
+            last.unlink()
+            self.drafts.pop((vol, pg), None)
+        return (f"restored the page as it was before the save of {last.stem} "
+                f"(level {supplied.level(payload)})")
+
+    def _save(self, vol: int, pg: int, strips: dict) -> str:
+        self._engine_unchanged()
         at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         rows = {desk.strip_id(vol, pg, name): {"text": s.get("text"), "status": s.get("status"),
                                                "updated_by": self.who, "updated_at": at}
@@ -170,6 +199,8 @@ class Handler(site.Handler):
             if moved:
                 raise RuntimeError(f"the page has changed since you opened it ({', '.join(moved)}): "
                                    "reload it and make your corrections again — nothing was written")
+            # the page as it was, kept before it is written: undo puts it back
+            desk.keep_version(self.strips_dir, vol, pg)
             [line] = desk.apply(rows)
             self.drafts.pop((vol, pg), None)
         return line
@@ -213,8 +244,14 @@ class Handler(site.Handler):
         vol, pg = int(body["volume"]), int(body["page"])
         try:
             if path == "/desk/api/preview":
-                self.drafts[(vol, pg)] = body["readings"]
+                on_file = supplied.read(vol, pg)["provenance"]["readings"]
+                if all(on_file.get(n) == t for n, t in body["readings"].items()):
+                    self.drafts.pop((vol, pg), None)        # back to the page as saved
+                else:
+                    self.drafts[(vol, pg)] = body["readings"]
                 self._json({"ok": True})
+            elif path == "/desk/api/undo":
+                self._json({"ok": True, "report": self._undo(vol, pg), "page": self._page(vol, pg)})
             elif path == "/desk/api/save":
                 self._json({"ok": True, "report": self._save(vol, pg, body["strips"]),
                             "page": self._page(vol, pg)})

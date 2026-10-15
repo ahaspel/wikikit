@@ -42,15 +42,17 @@ def test_strips_join_across_cuts_and_break_where_the_model_says():
 
 def test_a_table_is_a_block_of_its_own_between_strips():
     # Anthon leaf 1459: the table, read in its own strip, ran on from the
-    # sentence before it; and the text after it is a paragraph of its own
+    # sentence before it ("{|" mid-line): it opens a line of its own, inside
+    # the paragraph it stands in, and the strip after it, carrying on that
+    # paragraph (no ¶), runs on after it on a line of its own
     items = [Item("text", (0, 0, 300, 50), 1, "s1"), Item("text", (0, 50, 300, 100), 1, "s2"),
              Item("text", (0, 100, 300, 150), 1, "s3")]
     table = '{| style="margin:auto"\n|As||12\n|}'
     texts = {"s1": f"{PARA}\nThe following table exhibits the parts.", "s2": table,
              "s3": "The Romans made their weights of marble."}
     out = body(assemble_page(items, texts, {}, 300))
-    assert out == "\n\n".join(["The following table exhibits the parts.", table,
-                               "The Romans made their weights of marble."])
+    assert out == ("The following table exhibits the parts.\n" + table
+                   + "\nThe Romans made their weights of marble.")
 
 
 def test_a_figure_waits_for_the_paragraph_to_end_and_takes_its_caption():
@@ -147,15 +149,26 @@ def test_a_figure_mark_becomes_its_crop_with_the_caption_the_model_read():
                    "Second one.")
 
 
-def test_a_figure_interrupting_a_sentence_goes_to_its_end():
-    # the reading records the mark where it stands, mid-sentence; assembly
-    # sets it after the sentence it interrupts, and the paragraph's text
-    # after that begins a new one
+def test_a_figure_interrupting_a_paragraph_is_set_after_it_and_the_text_runs_on():
+    # the reading records the mark where it stands, mid-sentence: the text it
+    # interrupted runs on as one, every line full, and the figure follows the
+    # paragraph — set inside it, it would break the line before it short and
+    # start the text after it on a new line (SIGNAL p. 72; user, 2026-10-15)
     items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 150, 500)]
     texts = {"c1s1": f"{PARA}\nornamented with\n[[FIGURE]]\nmoldings on the sides. Then more.\n\nNext."}
     out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300))
-    assert out == ("ornamented with moldings on the sides.\n\n[[File:x.png|center|180px]]\n\n"
-                   "Then more.\n\nNext.")
+    assert out == ("ornamented with\nmoldings on the sides. Then more.\n\n"
+                   "[[File:x.png|center|180px]]\n\nNext.")
+
+
+def test_a_figure_the_text_introduces_stays_where_it_is_pointed_to():
+    # "shown below:—" (SIGNAL p. 72's semaphore): the figure stands there,
+    # and the paragraph runs on after it
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 150, 500)]
+    texts = {"c1s1": f"{PARA}\nThe code is shown below:—\n[[FIGURE]]\nIn using it the signaller faces him.\n\nNext."}
+    out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300))
+    assert out == ("The code is shown below:—\n[[File:x.png|center|180px]]\n"
+                   "In using it the signaller faces him.\n\nNext.")
 
 
 def test_a_table_where_the_sentence_has_ended_stays_there_and_is_set():
@@ -165,8 +178,8 @@ def test_a_table_where_the_sentence_has_ended_stays_there_and_is_set():
     texts = {"c1s1": f"{PARA}\nThe cloth is printed with:—\n{{|\n|rowspan=2|{{||36||parts.\n|-\n|100||ice.\n|}}\n"
                      "Mix and add quickly."}
     out = body(assemble_page(items, texts, {}, 300))
-    assert out == ('The cloth is printed with:—\n\n{| style="margin:auto"\n|rowspan=2|&#123;||36||parts.\n'
-                   "|-\n|100||ice.\n|}\n\nMix and add quickly.")
+    assert out == ('The cloth is printed with:—\n{| style="margin:auto"\n|rowspan=2|&#123;||36||parts.\n'
+                   "|-\n|100||ice.\n|}\nMix and add quickly.")
 
 
 def test_a_margin_heading_breaks_no_paragraph_and_no_word():
@@ -366,8 +379,8 @@ def test_a_legend_under_a_figures_caption_goes_with_the_figure():
              "{{smaller block|Platinum pound avoirdupois, of cylindrical form.}}\n"
              "probable that further experiments will succeed. Then more.")
     segs = _segments(piece)
-    assert segs[0] == ("text", "and it appears probable that further experiments will succeed.")
-    assert segs[1][0] == "figure" and "Platinum pound" in segs[1][1]
+    assert segs[0][0] == "figure float" and "Platinum pound" in segs[0][1]
+    assert segs[1] == ("text", "and it appears\nprobable that further experiments will succeed. Then more.")
 
 
 def test_a_table_title_of_several_lines_goes_with_its_table_and_the_table_stays():

@@ -73,6 +73,8 @@
     <button id="next" title="Next page">▶</button>
     <a id="ws" target="_blank" rel="noopener">Wikisource</a>
     <span id="status"></span>
+    <button id="revert" title="Throw away this page's unsaved changes: back to the page as saved">Revert</button>
+    <button id="undo" title="Put the page back as it was before its last save">Undo save</button>
     <button id="save" class="primary" title="Save (Ctrl+S)">Save</button>
   </div>
   <div class="palette" id="palette"></div>
@@ -199,7 +201,11 @@ function updateStatus() {
   const n = Object.keys(pageEdits() || {}).length;
   if (n) setStatus(`${n} strip(s) changed, unsaved`, "dirty");
   else setStatus(state.page.level >= 3 ? "Proofread (level 3)" : `Level ${state.page.level}`);
-  $("save").disabled = !n;
+  $("save").disabled = $("revert").disabled = !n;
+  const saves = state.page.saves || [];
+  $("undo").disabled = !saves.length;
+  $("undo").textContent = saves.length ? `Undo save (${saves.length})` : "Undo save";
+  state.undoArmed = false;
 }
 
 // ── the rendered pane: the site's own viewer, on the page as it would enter ──
@@ -207,11 +213,16 @@ function schedulePreview() {
   clearTimeout(state.previewTimer);
   state.previewTimer = setTimeout(preview, 700);
 }
-async function preview() {
+// the server draws the page from the readings this tab holds: tell it what
+// they are (the readings as saved, when the tab holds no edits, clear its draft)
+async function syncDraft() {
   const pg = state.page, readings = {};
   for (const [name, s] of Object.entries(currentStrips())) readings[name] = s.text;
+  await api("/desk/api/preview", { volume: pg.volume, page: pg.page, readings });
+}
+async function preview() {
   try {
-    await api("/desk/api/preview", { volume: pg.volume, page: pg.page, readings });
+    await syncDraft();
     refreshFrame(true);
   } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
 }
@@ -262,10 +273,14 @@ function wrap(c) {
     let placed = false;
     inner = c.args.map(x => { if (x && !placed) { placed = true; return sel; } return ""; }).join("|");
   }
-  ta.setRangeText(c.open + inner + c.close, a, z, "end");
-  if (!sel) ta.selectionStart = ta.selectionEnd = a + c.open.length;
+  // inserted as typing is, so Ctrl+Z takes it back
   ta.focus();
-  ta.dispatchEvent(new Event("input"));
+  ta.setSelectionRange(a, z);
+  if (!document.execCommand("insertText", false, c.open + inner + c.close)) {
+    ta.setRangeText(c.open + inner + c.close, a, z, "end");
+    ta.dispatchEvent(new Event("input"));
+  }
+  if (!sel) ta.selectionStart = ta.selectionEnd = a + c.open.length;
 }
 
 // ── saving ─────────────────────────────────────────────────────────────
@@ -289,9 +304,38 @@ async function openPage(i) {
   state.page = await api(`/desk/api/page/${q.volume}/${q.page}`);
   location.hash = key(q.volume, q.page);
   drawQueue();
+  try { await syncDraft(); } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
   drawPage();
-  if (pageEdits()) preview();
   window.scrollTo(0, 0);
+}
+
+// ── going back ─────────────────────────────────────────────────────────
+async function revert() {
+  delete state.edits[key(state.page.volume, state.page.page)];
+  try { await syncDraft(); } catch (e) { setStatus(`Revert failed: ${e.message}`, "error"); return; }
+  drawQueue();
+  drawPage();
+  setStatus("Reverted: the page as saved", "saved");
+}
+async function undoSave() {
+  const pg = state.page, saves = pg.saves || [];
+  if (!saves.length) return;
+  if (pageEdits()) { setStatus("Save or revert your unsaved changes first", "error"); return; }
+  if (!state.undoArmed) {
+    // a second click, not a dialog: undo puts back what the last save replaced
+    state.undoArmed = true;
+    $("undo").textContent = "Click again to undo the last save";
+    setTimeout(() => { if (state.undoArmed) updateStatus(); }, 5000);
+    return;
+  }
+  setStatus("Undoing…");
+  try {
+    const r = await api("/desk/api/undo", { volume: pg.volume, page: pg.page });
+    state.page = r.page;
+    await loadQueue();
+    drawPage();
+    setStatus(r.report, "saved");
+  } catch (e) { setStatus(`Not undone: ${e.message}`, "error"); }
 }
 
 function step(d) {
@@ -303,6 +347,8 @@ $("pages").addEventListener("change", e => openPage(Number(e.target.value)));
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
 $("save").addEventListener("click", save);
+$("revert").addEventListener("click", revert);
+$("undo").addEventListener("click", undoSave);
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); save(); }
 });

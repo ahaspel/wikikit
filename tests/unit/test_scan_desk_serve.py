@@ -102,3 +102,29 @@ def test_the_page_is_linked_as_the_build_links_its_article():
     article = desk.page_article(payload(), "T", link=lambda body, v, p: seen.append((v, p)) or
                                 body.replace("abacus", "abaca"))
     assert seen == [(1, 29)] and "<b>abaca</b>" in article["rendered_html"]
+
+
+def test_undo_puts_the_page_back_as_it_was_before_each_save(desk_at):
+    first = supplied.read(1, 29)["raw_text"]
+    opened = supplied.read(1, 29)["provenance"]["readings"]["c1s1"]
+    desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
+        "c1s1": {"text": "¶\n'''abaca''' one", "base": opened, "status": "unchecked"}}})
+    desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
+        "c1s1": {"text": "¶\n'''abaca''' two", "base": "¶\n'''abaca''' one", "status": "checked"}}})
+    assert len(desk_at("/desk/api/page/1/29")["saves"]) == 2
+    r = desk_at("/desk/api/undo", {"volume": 1, "page": 29})
+    assert "'''abaca''' one" in supplied.read(1, 29)["raw_text"] and len(r["page"]["saves"]) == 1
+    assert "c1s1" not in supplied.read(1, 29)["provenance"].get("checked", {})
+    desk_at("/desk/api/undo", {"volume": 1, "page": 29})
+    assert supplied.read(1, 29)["raw_text"] == first
+    with pytest.raises(urllib.error.HTTPError) as e:
+        desk_at("/desk/api/undo", {"volume": 1, "page": 29})
+    assert "no save of this page to undo" in json.loads(e.value.read())["error"]
+
+
+def test_readings_as_saved_clear_the_draft(desk_at):
+    saved = supplied.read(1, 29)["provenance"]["readings"]
+    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": "¶\nedited"}})
+    assert desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
+    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": saved["c1s1"]}})
+    assert not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
