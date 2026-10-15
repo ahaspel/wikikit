@@ -77,12 +77,16 @@ def cut_strips(payload: dict, scan: Image.Image, out: Path) -> dict[str, str]:
     return rels
 
 
-def page_article(payload: dict, title: str) -> dict:
+def page_article(payload: dict, title: str, link=None) -> dict:
     """The page as it would enter, as an article the site's viewer shows: its
     text through the engine's chain for an article body (preprocess, elements,
-    `render_article`) — the site's own renderer, not a copy of it.  What the
-    whole build adds beyond one page is not here: links resolved across the
-    corpus, contributors bound, the article cut at its headword."""
+    `render_article`) — the site's own renderer, not a copy of it.
+
+    `link(body, volume, page) -> body`: the build's xref resolution for the
+    article the page belongs to (`resolve_xrefs_post.Resolution`); without
+    it, a reference shows as a link to nothing — the build would drop it (ALGEBRAIC
+    FORMS's "see Gordan").  What the whole build adds beyond that is not
+    here: contributors bound, the article cut at its headword."""
     from wikikit.db.models import SourcePage
     from wikikit.pipeline.stages.elements import ElementContext, process_elements
     from wikikit.pipeline.stages.preprocess import stream_with_keys
@@ -90,8 +94,9 @@ def page_article(payload: dict, title: str) -> dict:
     vol, pg = payload["volume"], payload["page_number"]
     stream, _, _ = stream_with_keys([SourcePage(volume=vol, page_number=pg,
                                                 wikitext=payload["raw_text"])], vol)
+    body = process_elements(stream, ElementContext(volume=vol))
     article = {"id": page_id(vol, pg), "title": title, "volume": vol,
-               "body": process_elements(stream, ElementContext(volume=vol))}
+               "body": link(body, vol, pg) if link else body}
     article["rendered_html"] = render_article(article, target="site")
     return article
 

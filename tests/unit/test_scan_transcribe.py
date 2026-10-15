@@ -279,10 +279,10 @@ def test_a_block_that_ends_its_sentence_stays():
 
 def test_a_small_paragraph_holding_a_block_wraps_its_text_not_the_block():
     from wikikit.scan.cut import Item
-    from wikikit.scan.transcribe import assemble_page
+    from wikikit.scan.transcribe import apply_type, assemble_page
     items = [Item("text", (0, 0, 100, 100), 1, "c1s1")]
     reading = "⟦200⟧ learn the tables of\n<poem>ton, cwt.</poem>\nIn Code standards, more."
-    out = assemble_page(items, {"c1s1": reading}, {}, 100, types={"c1s1": ["small"]})
+    out = assemble_page(items, {"c1s1": apply_type(reading, ["small"])}, {}, 100)
     assert "{{smaller block|learn the tables of}}" in out
     assert "{{smaller block|In Code standards, more.}}" in out
     assert "{{smaller block|<poem>" not in out and "{{smaller block|{{smaller block|" not in out
@@ -323,11 +323,25 @@ def test_a_start_recorded_inside_a_table_leaves_the_table_whole():
 def test_a_small_paragraph_ending_in_a_figure_keeps_the_figure():
     # vol 20 p453: "obtained:—" then the figure mark, the paragraph small
     from wikikit.scan.cut import Item
-    from wikikit.scan.transcribe import assemble_page
+    from wikikit.scan.transcribe import apply_type, assemble_page
     items = [Item("text", (0, 0, 100, 100), 1, "c1s1"), Item("figure", (0, 40, 100, 60), 1, "c1f1")]
     reading = "⟦10⟧ may be obtained:—\n[[FIGURE]]\n\n⟦70⟧ An ingenious application."
-    out = assemble_page(items, {"c1s1": reading}, {"c1f1": "f.png"}, 100, types={"c1s1": ["small", "small"]})
+    out = assemble_page(items, {"c1s1": apply_type(reading, ["small", "small"])}, {"c1f1": "f.png"}, 100)
     assert "[[File:f.png" in out and "[[FIGURE]]" not in out
+
+
+def test_the_measured_size_is_set_into_the_reading_and_a_correction_there_stands():
+    # vol 1 p634: the reading gave "Taking the first polar" small, the print and
+    # the measurement body — the reading now carries the measured size, and a
+    # proofreader's correction to it stands (no measurement laid over it)
+    from wikikit.scan.cut import Item
+    from wikikit.scan.transcribe import apply_type, assemble_page
+    items = [Item("text", (0, 0, 100, 100), 1, "c1s1")]
+    measured = apply_type("⟦100⟧ {{smaller block|Taking the first polar.}}\n\n⟦300⟧ Moreover.", ["body", "small"])
+    assert "{{smaller block|Taking" not in measured and "{{smaller block|Moreover.}}" in measured
+    corrected = measured.replace("Taking the first polar.", "{{smaller block|Taking the first polar.}}")
+    out = assemble_page(items, {"c1s1": corrected}, {}, 100)
+    assert "{{smaller block|Taking the first polar.}}" in out and "{{smaller block|Moreover.}}" in out
 
 
 def test_short_notes_run_on_in_one_line_are_each_their_own():

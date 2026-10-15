@@ -43,9 +43,49 @@ ENGINE = Path(__file__).resolve().parents[1]
 STARTED = time.time()
 
 
+class _PageLinks:
+    """The build's xref resolution (`resolve_xrefs_post.Resolution`) for one
+    page: as the article the page belongs to would resolve it — the article
+    whose span holds the page, the latest to begin.  Reads the book's
+    database and exported index, as the build's pass does: not during a
+    rebuild."""
+
+    def __init__(self):
+        from wikikit.db.models import Article
+        from wikikit.db.session import SessionLocal
+        from wikikit.export.article_json import register_stable_id_dedup
+        from wikikit.pipeline.resolve_xrefs_post import Resolution
+        self.Article = Article
+        self.session = SessionLocal()
+        register_stable_id_dedup(self.session.query(Article).all())
+        self.resolution = Resolution(self.session)
+
+    def link(self, body: str, vol: int, pg: int) -> str:
+        from wikikit.export.article_json import _safe_filename
+        A = self.Article
+        art = (self.session.query(A).filter(A.volume == vol, A.page_start <= pg, A.page_end >= pg,
+                                            A.article_type != "plate")
+               .order_by(A.page_start.desc(), A.id.desc()).first())
+        if art is None:
+            raise LookupError(f"vol {vol} page {pg}: no article in the database holds this page")
+        return self.resolution.link(body, art.id, _safe_filename(art, art.title).removesuffix(".json"))[0]
+
+
+_LINKS: list = []
+
+
+def _page_links() -> _PageLinks:
+    """Built once, on the first page shown (it reads the whole corpus)."""
+    with Handler.lock:
+        if not _LINKS:
+            _LINKS.append(_PageLinks())
+    return _LINKS[0]
+
+
 class Handler(site.Handler):
     queue = staticmethod(lambda: [])            # () -> [(volume, page)], set by `serve`
     label = staticmethod(desk.page_label)
+    link = None                                 # (body, volume, page) -> body, set by `serve_desk`
     who = "proofreader"
     strips_dir: Path
     drafts: dict = {}                           # (volume, page) -> readings being edited
@@ -106,7 +146,8 @@ class Handler(site.Handler):
             payload = copy.deepcopy(payload)
             payload["provenance"]["readings"].update(draft)
             supplied.reassemble(payload)
-        return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""))
+        return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""),
+                                 link=self.link)
 
     def _save(self, vol: int, pg: int, strips: dict) -> str:
         # A save assembles the page with the engine this process loaded: an
@@ -121,6 +162,14 @@ class Handler(site.Handler):
                                                "updated_by": self.who, "updated_at": at}
                 for name, s in strips.items()}
         with self.lock:
+            # each strip's reading as the editor first had it must be the
+            # reading on file still: else the page changed under the editor
+            # (another tab, a fix written into it) and the save would undo that
+            readings = supplied.read(vol, pg)["provenance"]["readings"]
+            moved = [n for n, s in strips.items() if "base" in s and readings.get(n) != s["base"]]
+            if moved:
+                raise RuntimeError(f"the page has changed since you opened it ({', '.join(moved)}): "
+                                   "reload it and make your corrections again — nothing was written")
             [line] = desk.apply(rows)
             self.drafts.pop((vol, pg), None)
         return line
@@ -148,6 +197,8 @@ class Handler(site.Handler):
                 self.send_error(404)
         except FileNotFoundError as e:
             self._json({"error": str(e)}, 404)
+        except Exception as e:                      # surfaced on the desk, never swallowed
+            self._json({"error": f"{type(e).__name__}: {e}"}, 500)
         return True
 
     def do_GET(self):
@@ -173,10 +224,12 @@ class Handler(site.Handler):
             self._json({"ok": False, "error": f"{type(e).__name__}: {e}"}, 500)
 
 
-def serve_desk(queue, label, port: int = 8020, who: str = "proofreader") -> None:
+def serve_desk(queue, label, port: int = 8020, who: str = "proofreader", links: bool = True) -> None:
     """Serve the site with the desk beside it at http://localhost:PORT/desk.
     `queue`: () -> [(volume, page)], the pages waiting; `label`: (volume, page)
-    -> what the person calls the page; `who`: recorded as the checker."""
+    -> what the person calls the page; `who`: recorded as the checker;
+    `links`: resolve each page's xrefs as the build does (`_PageLinks`: needs
+    the book's database — run with its settings)."""
     corpus = current_corpus()
     site.Handler.root = corpus.root
     site.Handler.downloads = site._download_home()
@@ -184,6 +237,8 @@ def serve_desk(queue, label, port: int = 8020, who: str = "proofreader") -> None
     Handler.queue = staticmethod(queue)
     Handler.label = staticmethod(label)
     Handler.who = who
+    if links:
+        Handler.link = staticmethod(lambda body, vol, pg: _page_links().link(body, vol, pg))
     Handler.strips_dir = corpus.derived("desk")
     print(f"the desk: http://localhost:{port}{corpus.root}/desk")
     with site.Server(("127.0.0.1", port), Handler) as httpd:

@@ -923,15 +923,16 @@ def take_furniture(text: str, into: list[str]) -> str:
 
 def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[str, str],
                   column_width: int, level: int = 1, legacy_captions: bool = False,
-                  sections: list[dict] | None = None, types: dict | None = None,
+                  sections: list[dict] | None = None,
                   source_images: dict[str, list[str]] | None = None,
                   regions: dict[str, str] | None = None) -> str:
     """The page's wikitext from its items and their readings.
 
     `texts` maps item name -> the model's (or a proofreader's) reading;
     `figure_files` maps figure item name -> its image file name;
-    `sections` the page's section addresses (`place_sections`); `types` item
-    name -> each recorded paragraph's measured type (`apply_type`);
+    `sections` the page's section addresses (`place_sections`) — each
+    paragraph's type size is the reading's, measured into it once
+    (`supplied.measure_type`);
     `source_images` figure item name -> the replaced page's own image markup
     set in its place (`wikikit.scan.images.pair`; empty: covered by an image
     set at an earlier figure) — our crop stands only where it has none;
@@ -1047,7 +1048,7 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         else:
             # the paragraph positions the reading records are facts for
             # assembly's measurements, never page text (`positions`)
-            text = POSITION.sub("", apply_type(texts.get(it.name, ""), (types or {}).get(it.name)))
+            text = POSITION.sub("", texts.get(it.name, ""))
             begins = text.lstrip().startswith(PARA)
             # a ¶ is a signal, never page text: only the leading one means
             # anything (the reading begins a paragraph); one written anywhere

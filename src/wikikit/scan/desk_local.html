@@ -124,7 +124,10 @@ function currentStrips() {
   for (const s of state.page.strips) {
     if (s.kind === "figure") continue;
     const e = (pageEdits() || {})[s.name];
-    out[s.name] = { text: e ? e.text : s.text, status: (e ? e.checked : s.checked) ? "checked" : "unchecked" };
+    // base: the reading as this page was loaded — the server refuses the save
+    // if the reading on file is no longer it
+    out[s.name] = { text: e ? e.text : s.text, base: e ? e.base : s.text,
+                    status: (e ? e.checked : s.checked) ? "checked" : "unchecked" };
   }
   return out;
 }
@@ -182,7 +185,7 @@ function drawPage() {
 function edit(strip, change) {
   const k = key(state.page.volume, state.page.page);
   const edits = state.edits[k] = state.edits[k] || {};
-  const cur = edits[strip.name] || { text: strip.text || "", checked: strip.checked };
+  const cur = edits[strip.name] || { text: strip.text || "", checked: strip.checked, base: strip.text };
   edits[strip.name] = Object.assign(cur, change);
   // an edit that returns a strip to what is saved is no edit
   if (cur.text === (strip.text || "") && cur.checked === strip.checked) delete edits[strip.name];

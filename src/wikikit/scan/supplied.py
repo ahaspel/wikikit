@@ -149,7 +149,7 @@ def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) 
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
                         legacy_captions=not p.get("captions_marked"),
-                        sections=p.get("sections"), types=p.get("type"),
+                        sections=p.get("sections"),
                         source_images=p.get("images"), regions=p.get("regions"))
     if carried and "carried" in p:
         from wikikit.scan.carry import carry
@@ -213,9 +213,14 @@ def carry_images(payload: dict, fetched: str | None = None, scan_width: int | No
 
 
 def measure_type(payload: dict, level: Image.Image) -> dict:
-    """Each recorded paragraph's type, MEASURED (`cut.paragraph_type`), stored
-    with the page (`type`: item name -> sizes, one per recorded paragraph
-    start) for assembly to set — for a book whose layout marks small type.
+    """Each recorded paragraph's type, MEASURED (`cut.paragraph_type`), set
+    into its reading (`apply_type`) — for a book whose layout marks small
+    type.  Set once, into the reading: from then on the reading is the only
+    truth of the page's sizes, and what a proofreader corrects there stands
+    (2026-10-15: stored apart and laid over the reading at every assembly,
+    the measurement undid the desk's corrections, and the desk showed a
+    reading whose sizes were not the page's — vol 1 p634's "Taking the first
+    polar", small in the reading, body in print and on the page).
     Unmeasurable, only by the book's rules: a footnote is small; a column's
     first paragraph, unless it opens with a title, continues the column
     before and keeps its size (a display needs no rule: it is inside its
@@ -224,13 +229,13 @@ def measure_type(payload: dict, level: Image.Image) -> dict:
     the size the reading gave it (`apply_type`), and is listed
     (`type_unmeasured`).  Type size never holds a page: a wrong size loses no
     text.  Stored once: a reassembly never measures again."""
-    from wikikit.scan.transcribe import POSITION, _is_note, positions
+    from wikikit.scan.transcribe import POSITION, _is_note, apply_type, positions
     p = payload["provenance"]
     if not layout_for(payload["volume"], payload["page_number"]).marks_small_type:
         return payload
     texts = [it for it in items_of(payload) if it.kind == "text" and it.column > 0]
     pitches = cut.type_pitches(level, [it.box for it in texts])
-    types, prev, unmeasured = {}, None, []
+    prev, unmeasured = None, []
     for it in texts:
         reading = p["readings"].get(it.name, "")
         starts = positions(reading)
@@ -244,10 +249,9 @@ def measure_type(payload: dict, level: Image.Image) -> dict:
             elif sizes[k] is None:
                 unmeasured.append(f"{it.name} y{y}")
             prev = sizes[k] or prev
-        types[it.name] = sizes
-    p["type"] = types
+        p["readings"][it.name] = apply_type(reading, sizes)
     p["type_unmeasured"] = unmeasured      # kept as the reading set them; never a hold
-    return payload
+    return reassemble(payload)
 
 def name_sections(payload: dict) -> dict:
     """The page's section addresses, from the book (`Corpus.page_sections`):

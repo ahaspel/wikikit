@@ -81,3 +81,24 @@ def test_a_desk_older_than_the_engine_refuses_to_save(desk_at, monkeypatch):
                                    "strips": {"c1s1": {"text": "¶\nchanged", "status": "checked"}}})
     assert "restart the desk" in json.loads(e.value.read())["error"]
     assert supplied.read(1, 29)["raw_text"] == before
+
+
+def test_a_save_over_a_page_changed_since_it_was_opened_is_refused(desk_at):
+    opened = supplied.read(1, 29)["provenance"]["readings"]["c1s1"]
+    page = supplied.read(1, 29)
+    page["provenance"]["readings"]["c1s1"] = "¶\n'''abacus''' (ab′a̤-kus), ''n.'' fixed meanwhile"
+    supplied.write(supplied.reassemble(page))                    # written under the editor
+    with pytest.raises(urllib.error.HTTPError) as e:
+        desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
+            "c1s1": {"text": opened + " edited", "base": opened, "status": "checked"}}})
+    assert "changed since you opened it" in json.loads(e.value.read())["error"]
+    assert "fixed meanwhile" in supplied.read(1, 29)["raw_text"]
+
+
+def test_the_page_is_linked_as_the_build_links_its_article():
+    # the build's xref step, given: what it leaves is what the page shows (a
+    # reference resolving to nothing is text — ALGEBRAIC FORMS's "see Gordan")
+    seen = []
+    article = desk.page_article(payload(), "T", link=lambda body, v, p: seen.append((v, p)) or
+                                body.replace("abacus", "abaca"))
+    assert seen == [(1, 29)] and "<b>abaca</b>" in article["rendered_html"]

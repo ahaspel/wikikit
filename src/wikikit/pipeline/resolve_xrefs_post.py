@@ -31,6 +31,36 @@ ART = current_corpus().derived("articles")
 _SKIP = {"index.json", "contributors.json"}
 
 
+class Resolution:
+    """What resolving an article's xrefs reads, built once over the whole
+    corpus: the ONE name→article resolver, its picks' DB ids, and the export's
+    title index.  The build's pass and the desk's one page share it.  The
+    caller must have replayed ``register_stable_id_dedup`` first."""
+
+    def __init__(self, session):
+        from wikikit.export.article_json import article_sort_key
+        self.session = session
+        all_articles = sorted(session.query(Article).all(), key=article_sort_key)
+        # The ONE name→article resolver (reads the exported index.json — same
+        # filename space as _safe_filename post-dedup); fn_to_id maps its picks
+        # back to DB ids for the resolved Xref values.
+        self.resolver = LinkResolver(aliases=True)
+        self.fn_to_id = {_safe_filename(a, a.title): a.id for a in all_articles
+                         if a.article_type != "plate"}
+        # The export's own builder, not a mirror of it: the mirror kept plates and
+        # skipped article_sort_key, so the two indexes disagreed about which article
+        # owns a title.
+        self.g2f = build_title_index(all_articles)
+
+    def link(self, body: str, article_id: int, stable_id: str) -> tuple[str, list]:
+        """One article's body with its xrefs resolved and baked → (body, panel
+        entries).  A reference that resolves to nothing is left as its text."""
+        xrefs = _xrefs_from_body(body, article_id, self.resolver,
+                                 fn_to_id=self.fn_to_id, self_fn=stable_id + ".json")
+        xref_list = xref_panel_entries(xrefs, self.session)
+        return _link_xrefs_in_body(body, xrefs, stable_id, self.session, self.g2f), xref_list
+
+
 def resolve_and_render(session, payloads: dict, decorate=None) -> int:
     """Resolve every article's xrefs, bake the links, render — IN MEMORY.
 
@@ -52,31 +82,15 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
     ``_safe_filename`` call — otherwise a BOG/BOGÓ-type pair drops its -N suffix
     and bakes a dangling ``resolved_to``.
     """
-    from wikikit.export.article_json import article_sort_key
-    all_articles = sorted(session.query(Article).all(), key=article_sort_key)
-    # The ONE name→article resolver (reads the exported index.json — same
-    # filename space as _safe_filename post-dedup); fn_to_id maps its picks
-    # back to DB ids for the resolved Xref values.
-    resolver = LinkResolver(aliases=True)
-    fn_to_id = {_safe_filename(a, a.title): a.id for a in all_articles
-                if a.article_type != "plate"}
-    # The export's own builder, not a mirror of it: the mirror kept plates and
-    # skipped article_sort_key, so the two indexes disagreed about which article
-    # owns a title.
-    g2f = build_title_index(all_articles)
-
+    resolution = Resolution(session)
     xref_rows: list = []
     n = 0
     for d in payloads.values():
         article = session.get(Article, d["id"])
         if article is None:
             continue
-        body = d["body"]
-        xrefs = _xrefs_from_body(body, article.id, resolver,
-                                 fn_to_id=fn_to_id,
-                                 self_fn=d["stable_id"] + ".json")
-        xref_list = xref_panel_entries(xrefs, session)
         src = d["stable_id"]
+        body, xref_list = resolution.link(d["body"], article.id, src)
         for e in xref_list:
             xref_rows.append({
                 "source": src, "surface": e["surface_text"],
@@ -85,7 +99,6 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
                 **({"section": e["target_section"]}
                    if e.get("target_section") else {}),
             })
-        body = _link_xrefs_in_body(body, xrefs, src, session, g2f)
         if decorate is not None:
             body = decorate(body, d)
         d["body"] = body
