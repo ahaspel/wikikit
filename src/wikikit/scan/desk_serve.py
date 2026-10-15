@@ -28,6 +28,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,6 +38,9 @@ from wikikit.scan.vocabulary import constructs
 from wikikit.site import serve as site
 
 PAGE = Path(__file__).resolve().parent / "desk_local.html"
+#: The engine's code, and when this process loaded it (`Handler._save`).
+ENGINE = Path(__file__).resolve().parents[1]
+STARTED = time.time()
 
 
 class Handler(site.Handler):
@@ -105,6 +109,13 @@ class Handler(site.Handler):
         return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""))
 
     def _save(self, vol: int, pg: int, strips: dict) -> str:
+        # A save assembles the page with the engine this process loaded: an
+        # engine changed since would write the page as the old code sets it
+        # (vol 26 p582, 2026-10-15: a fix to the assembler undone by a save)
+        changed = [p for p in ENGINE.rglob("*.py") if p.stat().st_mtime > STARTED]
+        if changed:
+            raise RuntimeError(f"the engine has changed since the desk started ({changed[0].name}): "
+                               "restart the desk, then save again — nothing was written")
         at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         rows = {desk.strip_id(vol, pg, name): {"text": s.get("text"), "status": s.get("status"),
                                                "updated_by": self.who, "updated_at": at}

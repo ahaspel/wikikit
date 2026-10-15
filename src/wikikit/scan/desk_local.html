@@ -217,9 +217,12 @@ function refreshFrame(keepScroll) {
   let y = 0;
   try { y = keepScroll ? f.contentWindow.scrollY : 0; } catch (e) {}
   f.onload = () => {
-    // the site's own chrome (its masthead, search, article arrows) is not the page
+    // the site's own chrome (its masthead, search, article arrows) is not the
+    // page, nor is the article's header (its title and volume line): a page
+    // enters an article that has its own
     const d = f.contentDocument, st = d.createElement("style");
-    st.textContent = ".page > .card:first-child, .header-divider, .nav-arrow { display: none !important; }";
+    st.textContent = ".page > .card:first-child, .header-divider, .nav-arrow, "
+      + "#app .card > h1, #app .card > h1 + div { display: none !important; }";
     d.head.appendChild(st);
     if (!y) return;
     // the viewer draws after its fetch: restore the place once the body is there

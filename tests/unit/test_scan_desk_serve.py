@@ -3,6 +3,7 @@ readings being edited, and saved back into the supplied page."""
 import dataclasses
 import json
 import threading
+import urllib.error
 import urllib.request
 
 import pytest
@@ -69,3 +70,14 @@ def test_an_unsaved_edit_is_rendered_and_a_save_writes_it(desk_at):
     page = supplied.read(1, 29)
     assert "'''abaca'''" in page["raw_text"] and page["provenance"]["checked"]["c1s1"]["by"] == "tester"
     assert not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
+
+
+def test_a_desk_older_than_the_engine_refuses_to_save(desk_at, monkeypatch):
+    # its assembly would be the old code's (vol 26 p582, 2026-10-15)
+    monkeypatch.setattr(desk_serve, "STARTED", 0.0)
+    before = supplied.read(1, 29)["raw_text"]
+    with pytest.raises(urllib.error.HTTPError) as e:
+        desk_at("/desk/api/save", {"volume": 1, "page": 29,
+                                   "strips": {"c1s1": {"text": "¶\nchanged", "status": "checked"}}})
+    assert "restart the desk" in json.loads(e.value.read())["error"]
+    assert supplied.read(1, 29)["raw_text"] == before

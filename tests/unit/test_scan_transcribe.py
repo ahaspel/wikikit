@@ -356,6 +356,21 @@ def test_a_legend_under_a_figures_caption_goes_with_the_figure():
     assert segs[1][0] == "figure" and "Platinum pound" in segs[1][1]
 
 
+def test_a_table_title_of_several_lines_goes_with_its_table_and_the_table_stays():
+    # vol 26 p582 (TEMPERANCE): "…quoted above:—" introduces the table, whose
+    # title is printed in two centred lines; the sentence after the table stays
+    # after it (only the second title line went with the table, and the
+    # sentence was moved up before it)
+    from wikikit.scan.transcribe import _segments
+    piece = ("gives the following table:—\n{{c|''Consumption of Alcohol.''}}\n"
+             "{{c|''Annual Average per Head'', 1901–5.}}\n{|\n|France||9·69\n|}\n"
+             "Apart from the gaps, allowance must be made. In no case is it so.")
+    segs = _segments(piece)
+    assert segs[0] == ("text", "gives the following table:—")
+    assert segs[1][0] == "block" and segs[1][1].startswith("{{c|''Consumption of Alcohol.''}}\n{{c|")
+    assert segs[2] == ("text", "Apart from the gaps, allowance must be made. In no case is it so.")
+
+
 def test_small_type_carrying_on_the_sentence_is_not_a_legend():
     from wikikit.scan.transcribe import _units
     piece = "the flow\n[[FIGURE]]\n{{c|{{sc|Fig.}} 3.}}\n{{smaller block|also in air for low velocities.}}"

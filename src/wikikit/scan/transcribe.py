@@ -617,15 +617,18 @@ def _units(piece: str) -> list[tuple[str, str]]:
             k += 1
     # a centred line printed directly above a table or verse is its title: it
     # goes where the block goes (vol 18 p296: "Marvin's Table for the
-    # Reduction of Velocities…" had stayed mid-sentence when its table moved)
+    # Reduction of Velocities…" had stayed mid-sentence when its table moved),
+    # every line of it: a title may be printed in several (vol 26 p582's
+    # "Consumption of Alcohol…" over "Annual Average per Head" — its first
+    # line, left behind, read as text whose sentence had not ended, and the
+    # table was moved past the next sentence)
     centred = _CENTRED_OPEN
     merged: list[tuple[str, str]] = []
     for kind, s in out:
-        if kind in ("table", "verse") and merged and merged[-1][0] == "text" \
-                and merged[-1][1].strip().startswith(centred):
-            merged[-1] = (kind, merged[-1][1].strip() + "\n" + s)
-        else:
-            merged.append((kind, s))
+        if kind in ("table", "verse"):
+            while merged and merged[-1][0] == "text" and merged[-1][1].strip().startswith(centred):
+                s = merged.pop()[1].strip() + "\n" + s
+        merged.append((kind, s))
     return merged
 
 
