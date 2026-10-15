@@ -17,6 +17,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 from wikikit.corpora import book_root, current_corpus
@@ -129,6 +130,7 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
         reassemble(payload)
     else:
         measure_type(payload, level)
+        measure_insets(payload, level)
         name_sections(payload)
         carry_images(payload, scan_width=level.size[0])
     return payload
@@ -150,7 +152,8 @@ def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) 
                         p["column_width"], level=level(payload),
                         legacy_captions=not p.get("captions_marked"),
                         sections=p.get("sections"),
-                        source_images=p.get("images"), regions=p.get("regions"))
+                        source_images=p.get("images"), regions=p.get("regions"),
+                        insets=p.get("insets"))
     if carried and "carried" in p:
         from wikikit.scan.carry import carry
         from wikikit.source_pages import fetched_text
@@ -252,6 +255,38 @@ def measure_type(payload: dict, level: Image.Image) -> dict:
         p["readings"][it.name] = apply_type(reading, sizes)
     p["type_unmeasured"] = unmeasured      # kept as the reading set them; never a hold
     return reassemble(payload)
+
+def measure_insets(payload: dict, level: Image.Image) -> dict:
+    """Each figure the print sets with type beside it, and the side of its
+    column it stands on (`cut.inset_side`), MEASURED once and stored
+    (`insets`: figure item -> "left" | "right"): assembly floats it there, in
+    its place in the text (`transcribe.assemble_page`).  The vision read's own
+    `inset` is not the answer — it named some figures standing alone
+    (SOUND p. 454's Fig. 36) and missed one with type beside it (vol 25
+    p. 845's Fig. 59).  An item holding several figures is inset only when
+    every one stands on the same side with type beside it (SIGNAL p. 72's
+    semaphore plate is one figure, not three)."""
+    p = payload["provenance"]
+    dark = np.asarray(level.convert("L")) < cut.INK
+    columns = {it.column: it.box for it in items_of(payload) if it.kind == "text"}
+    insets = {}
+    for it in items_of(payload):
+        column = columns.get(it.column)
+        if it.kind != "figure" or column is None:
+            continue
+        inside = [f["page_box"] for f in p.get("figures", []) if f.get("page_box")
+                  and f.get("column") == it.column and _centre_in(f["page_box"], it.box)]
+        sides = {cut.inset_side(dark, column, box) for box in inside or [it.box]}
+        if len(sides) == 1 and None not in sides:
+            insets[it.name] = sides.pop()
+    p["insets"] = insets
+    return reassemble(payload)
+
+
+def _centre_in(box, outer) -> bool:
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    return outer[0] <= cx <= outer[2] and outer[1] <= cy <= outer[3]
+
 
 def name_sections(payload: dict) -> dict:
     """The page's section addresses, from the book (`Corpus.page_sections`):

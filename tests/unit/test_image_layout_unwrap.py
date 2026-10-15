@@ -850,3 +850,38 @@ def test_legend_entry_label_variants():
     assert_faithful(body, content=["Scriptorium", "Guest-house",
                                    "Mills", "Chambers"])
 
+
+
+# ── {{Css image crop}}: Location and Description ────────────────────────────
+_CROP = ("{{Css image crop|Image = EB1911 - Volume 25.djvu|Page = 469|bSize = 1200|cWidth = 73"
+         "|cHeight = 381|oTop = 138|oLeft = 63%s}}")
+
+
+def _crop_out(params):
+    return process_elements("slightly. " + _CROP % params + " If, however,", ElementContext(volume=25))
+
+
+def test_a_crop_set_left_floats_there_with_its_description_beneath():
+    # SOUND p. 453's Fig. 30: type runs down its right; the text runs on round it
+    out = _crop_out("|Location = left|Description = {{sc|Fig.}} 30.")
+    assert re.search(r"slightly\. «SPAN\[style:float:left;text-align:center\]»\{\{IMG:[^}]+\}\}«BR»"
+                     r"«SC»Fig\.«/SC» 30\.«/SPAN» If, however,", out)
+
+
+def test_a_crop_set_centre_with_a_description_is_a_centred_block():
+    out = _crop_out("|Location = center|Description = {{sc|Fig.}} 30.")
+    assert "float" not in out and "margin-left:auto;margin-right:auto" in out
+
+
+def test_a_crop_without_description_or_side_stands_where_it_is():
+    # the 207 centred crops on Wikisource's pages: as they always were
+    for params in ("", "|Location = center", "|Location = center|Description = "):
+        out = _crop_out(params)
+        assert "SPAN" not in out and re.search(r"slightly\. \{\{IMG:[^}]+\}\} If, however,", out)
+
+
+def test_an_uncaptioned_crop_set_left_stands_where_it_is():
+    # the ALPHABET plate (vol 1 p. 772): crops set left in table cells over a
+    # <br> and a centred caption — floated, the caption would climb beside it
+    out = _crop_out("|Location = left|Description = ")
+    assert "float" not in out and re.search(r"slightly\. \{\{IMG:[^}]+\}\} If, however,", out)

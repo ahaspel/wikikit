@@ -687,13 +687,42 @@ def _process_wrap_half(raw, opening):
 #                  (France1911topo at 810px, North America at 600px); floating
 #                  one to a side is simply not what the source asks for.
 #
-# Anything NOT listed (a bare `[[File:]]` glyph, a crop, a raw image) is inline
-# where it stands.  `align` alone cannot make this call: an `{{img float}}`
+#   {{Css image crop}}  a figure, captioned by its `Description`, floats at
+#                  its `Location` = left | right (our pages say so for a figure
+#                  the print sets with type beside it: `wikikit.scan.transcribe`).
+#                  Uncaptioned, it stands where it is, `Location` or not:
+#                  Wikisource's EB1911 pages state left/right on 6 uncaptioned
+#                  crops, the ALPHABET plate's (vol 1 p. 772) in table cells over
+#                  a `<br>` and a centred caption — floated, the caption would
+#                  climb beside the image.
+#
+# Anything NOT listed (a bare `[[File:]]` glyph, any other crop, a raw image) is
+# inline where it stands.  `align` alone cannot make this call: an `{{img float}}`
 # stating no align looks exactly like a bare `[[File:]]` by the time we see it.
 _FIGURE_PLACEMENT = (
     (re.compile(r"\{\{\s*(?:img float|figure)\s*\|", re.IGNORECASE), "left"),
     (re.compile(r"\{\{\s*FI\s*\|", re.IGNORECASE), "center"),
 )
+CSS_IMAGE_CROP = re.compile(r"\{\{\s*Css\s+image\s+crop\b", re.IGNORECASE)
+
+
+def _crop_params(raw):
+    """A `{{Css image crop}}`'s named parameters, split at its own pipes only
+    (a `Description` holds templates: `{{sc|Fig.}} 30.`)."""
+    from wikikit.wikitext import split_top_pipes
+    inner = re.sub(r"\}\}\s*$", "", CSS_IMAGE_CROP.sub("", raw.strip(), count=1))
+    params: dict[str, str] = {}
+    for part in split_top_pipes(inner):
+        k, eq, v = part.partition("=")
+        if eq:
+            params[k.strip().lower()] = v.strip()
+    return params
+
+
+def _crop_side(params):
+    """The side a crop floats to: its `Location`, when it is a figure (captioned)."""
+    side = params.get("location", "").lower()
+    return side if side in ("left", "right") and params.get("description") else None
 
 
 def _figure_placement(raw):
@@ -702,6 +731,8 @@ def _figure_placement(raw):
     for pattern, placement in _FIGURE_PLACEMENT:
         if pattern.match(stripped):
             return placement
+    if CSS_IMAGE_CROP.match(stripped):
+        return _crop_side(_crop_params(stripped))
     return None
 
 
@@ -717,12 +748,13 @@ def _parse_image(raw):
     if tmpl.startswith("[["):                        # [[File:…]] — caption only if thumb/frame
         fn, width, align = _img_bracket_meta(tmpl)
         return fn, width, align, _thumb_caption_raw(raw)
-    if re.match(r"\{\{\s*Css\s+image\s+crop", tmpl, re.IGNORECASE):   # DjVu crop — no caption
+    if CSS_IMAGE_CROP.match(tmpl):                            # DjVu crop — caption = its Description
         fn = djvu_crop_filename(tmpl)
         if fn is None:
             img = _parse_crop_param(tmpl, "Image")
             fn = img.replace(" ", "_") if img else ""
-        return fn, None, None, ""
+        params = _crop_params(tmpl)
+        return fn, None, _crop_side(params), params.get("description", "")
     if re.match(r"\{\{\s*plain image with caption\s*\|", tmpl, re.IGNORECASE):
         from wikikit.wikitext import split_top_pipes
         inner = re.sub(r"\}\}\s*$", "", re.sub(
@@ -790,7 +822,9 @@ def _process_image(raw, inner, context, inner_registry):
     # The source's own `align` first; then the CONSTRUCT's default, which differs per
     # template (see `_FIGURE_PLACEMENT`); `left` only for the captioned non-figure
     # spellings (`[[File:…|thumb|caption]]`) that reach here, whose behaviour is unchanged.
-    align = align or placement or "left"
+    # A crop floats only where its `Location` says so (`_figure_placement`):
+    # one captioned and set centre, or nowhere, is a centred block.
+    align = align or placement or ("center" if CSS_IMAGE_CROP.match(raw.strip()) else "left")
     box = (f"display:block;margin-left:auto;margin-right:auto{w}"
            if align == "center" else f"float:{align}{w}")
     # Through `styled_marker`, the ONE styled-wrapper marker — spelling the

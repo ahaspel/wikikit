@@ -556,6 +556,43 @@ def ink_figures(dark, top, bottom, a, b) -> list[tuple[int, int]]:
             if e - s > INK_FIGURE_LINES * line and region[s:e].mean() > INK_FIGURE_DENSITY]
 
 
+# ── type beside a figure: the print set it inset ────────────────────────────
+#: The share of ink, across the middle three fifths of a figure's height, in
+#: its column beside it, above which type runs there.  Measured on the EB1911
+#: desk's 53 figures (2026-10-15): type beside, 0.138-0.313; nothing beside,
+#: 0.023 at most.
+BESIDE_TYPE = 0.05
+BESIDE_GAP = 20       # pixels left clear of the figure's own edge
+#: Type beside a figure is never narrower than this share of its column — on
+#: the desk's figures, 0.35 at least.  A narrower gap holds no type, only the
+#: drawing running past its box: Fig. 114's stem (vol 24 p. 978, 0.14), Fig.
+#: 4's axis (vol 28 p. 429, 0.08), each read as type when it was not.
+BESIDE_MIN = 0.25
+
+
+def inset_side(dark, column, box) -> str | None:
+    """The side of its column a figure stands on when the print sets type
+    beside it — "left": the type runs down its right — or None: nothing is
+    printed beside it, and it stands across its column's lines alone.
+    `column` and `box` are (x0, y0, x1, y1) on the same page as `dark`."""
+    x0, y0, x1, y1 = box
+    h = y1 - y0
+    top, bottom = y0 + h // 5, y1 - h // 5
+    if bottom <= top:
+        return None
+
+    least = BESIDE_MIN * (column[2] - column[0])
+
+    def typed(a, b):
+        return b - a >= least and dark[top:bottom, a:b].mean() > BESIDE_TYPE
+
+    left = typed(column[0] + 10, x0 - BESIDE_GAP)
+    right = typed(x1 + BESIDE_GAP, column[2] - 10)
+    if left == right:
+        return None           # alone, or between type (never set so here)
+    return "left" if right else "right"
+
+
 # ── figures: read where they stand, cropped after ───────────────────────────
 #: A figure's display crop reaches this many pixels past its located box.
 FIGURE_PAD = 12

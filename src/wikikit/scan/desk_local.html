@@ -84,7 +84,7 @@
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const state = { queue: [], page: null, edits: {}, previewTimer: 0, previewN: 0, lastFocus: null };
+const state = { queue: [], page: null, edits: {}, previewTimer: 0, previewN: 0, lastFocus: null, led: null };
 const key = (v, p) => `${v}-${p}`;
 
 function setStatus(text, cls = "") { const s = $("status"); s.textContent = text; s.className = cls; }
@@ -179,7 +179,7 @@ function drawPage() {
   rendered.innerHTML = `<div><iframe title="The page rendered as it would enter"></iframe></div>`;
   main.appendChild(rendered);
   state.frame = rendered.querySelector("iframe");
-  refreshFrame(false);
+  refreshFrame();
   drawPalette();
   updateStatus();
 }
@@ -223,13 +223,27 @@ async function syncDraft() {
 async function preview() {
   try {
     await syncDraft();
-    refreshFrame(true);
+    refreshFrame();
   } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
 }
-function refreshFrame(keepScroll) {
+// One scroll: the rendered pane keeps the same place, as a share of its
+// length, as the original and the source beside it — scroll either, the
+// other follows.  A scroll set here is not followed back (`state.led`).
+function follow(from, to) {
+  if (state.led === from) { state.led = null; return; }
+  try {
+    const span = w => w.document.documentElement.scrollHeight - w.innerHeight;
+    const share = span(from) > 0 ? from.scrollY / span(from) : 0;
+    const y = Math.round(share * Math.max(0, span(to)));
+    if (Math.abs(to.scrollY - y) < 2) return;    // no move, so no echo to wait for
+    state.led = to;
+    to.scrollTo(0, y);
+  } catch (e) {}
+}
+window.addEventListener("scroll", () => { if (state.frame) follow(window, state.frame.contentWindow); });
+
+function refreshFrame() {
   const f = state.frame, pg = state.page;
-  let y = 0;
-  try { y = keepScroll ? f.contentWindow.scrollY : 0; } catch (e) {}
   f.onload = () => {
     // the site's own chrome (its masthead, search, article arrows) is not the
     // page, nor is the article's header (its title and volume line): a page
@@ -240,12 +254,16 @@ function refreshFrame(keepScroll) {
       // a page carrying on the paragraph of the page before opens unindented
       + ".body-text[data-runs-on] > :first-child { text-indent: 0 !important; }";
     d.head.appendChild(st);
-    if (!y) return;
-    // the viewer draws after its fetch: restore the place once the body is there
+    f.contentWindow.addEventListener("scroll", () => follow(f.contentWindow, window));
+    // the viewer draws after its fetch: take the page's place once the body is there
     let tries = 0;
     const t = setInterval(() => {
       const d = f.contentDocument;
-      if ((d && d.querySelector(".body-text")) || ++tries > 50) { clearInterval(t); f.contentWindow.scrollTo(0, y); }
+      if ((d && d.querySelector(".body-text")) || ++tries > 50) {
+        clearInterval(t);
+        state.led = null;
+        follow(window, f.contentWindow);
+      }
     }, 50);
   };
   f.src = `/article/desk?article=${encodeURIComponent(`/desk/article/${key(pg.volume, pg.page)}.json`)}&r=${++state.previewN}`;

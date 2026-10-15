@@ -416,3 +416,45 @@ def test_small_type_carrying_on_the_sentence_is_not_a_legend():
     from wikikit.scan.transcribe import _units
     piece = "the flow\n[[FIGURE]]\n{{c|{{sc|Fig.}} 3.}}\n{{smaller block|also in air for low velocities.}}"
     assert [k for k, _ in _units(piece)] == ["text", "figure", "text"]
+
+
+# ── a figure with type beside it: floated in its place ──────────────────────
+
+def test_a_figure_with_type_beside_it_floats_in_its_place_and_the_text_runs_on():
+    # SOUND p. 453's Fig. 30: type runs beside it down two paragraphs; a
+    # float ends no line, so the paragraph it stands in runs on whole
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 60, 500)]
+    texts = {"c1s1": f"{PARA}\nonly slightly.\n[[FIGURE]]\n{{{{c|{{{{sc|Fig.}}}} 30.}}}}\n"
+                     "If, however, the pipe.\n\nNext."}
+    out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300, insets={"c1f1": "left"}))
+    assert out == ("only slightly. {{img float|file=x.png|width=72px|align=left|cap={{sc|Fig.}} 30.}} "
+                   "If, however, the pipe.\n\nNext.")
+
+
+def test_an_inset_takes_the_replaced_pages_crop_told_its_side():
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 60, 500)]
+    crop = "{{Css image crop\n|Image = V.djvu\n|Page = 9\n|cWidth = 73\n|Location = center}}"
+    texts = {"c1s1": f"{PARA}\nmold-\n[[FIGURE]]\n{{{{c|{{{{sc|Fig.}}}} 3.}}}}\nings here."}
+    out = body(assemble_page(items, texts, {"c1f1": "x.png"}, 300,
+                             source_images={"c1f1": [crop]}, insets={"c1f1": "right"}))
+    # before the word the line broke, which joins whole
+    assert out == ("{{Css image crop|Image = V.djvu|Page = 9|cWidth = 73"
+                   "|Location = right|Description = {{sc|Fig.}} 3.}} moldings here.")
+
+
+def test_an_inset_on_a_page_without_marks_stands_at_the_end_of_the_text_before_it():
+    # vol 18 p272: figure and caption items, the type beside it the next reading
+    items = [t("c2s1", 0, 0, 300, 100), f("c2f1", 150, 100, 300, 300),
+             Item("caption", (150, 300, 300, 330), 1, "c2c1"), t("c2s2", 0, 100, 150, 330)]
+    texts = {"c2s1": f"{PARA}\ninto numerous minute par-", "c2c1": "{{c|{{sc|Fig.}} 1.}}",
+             "c2s2": "ticles of water."}
+    out = body(assemble_page(items, texts, {"c2f1": "x.png"}, 300, insets={"c2f1": "right"}))
+    assert out == ("into numerous minute {{img float|file=x.png|width=180px|align=right|cap={{sc|Fig.}} 1.}} "
+                   "particles of water.")
+
+
+def test_a_figure_not_inset_is_set_after_its_paragraph_as_before():
+    items = [t("c1s1", 0, 0, 300, 900), f("c1f1", 0, 300, 150, 500)]
+    texts = {"c1s1": f"{PARA}\nornamented with\n[[FIGURE]]\nmoldings.\n\nNext."}
+    plain = assemble_page(items, texts, {"c1f1": "x.png"}, 300)
+    assert assemble_page(items, texts, {"c1f1": "x.png"}, 300, insets={}) == plain

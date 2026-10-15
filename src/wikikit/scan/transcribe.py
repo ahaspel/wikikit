@@ -586,6 +586,70 @@ def _legend_line(line: str) -> bool:
     return bool(small) and not s[len(small):].lstrip()[:1].islower()
 
 
+def _figure_end(lines: list[str], k: int) -> int:
+    """Past the figure whose mark is `lines[k]`: the mark, its caption line,
+    and the caption's further lines (`_legend_line`)."""
+    j = k + 1
+    if j < len(lines) and lines[j].lstrip().startswith("{{c|"):
+        j += 1
+        while j < len(lines) and _legend_line(lines[j]):
+            j += 1
+    return j
+
+
+def _caption_of(lines: list[str]) -> str:
+    """A figure's caption lines as one caption: each line's own centring
+    taken off (the float centres its caption), the lines kept apart."""
+    from wikikit.wikitext import template_end
+    out = []
+    for line in (s.strip() for s in lines):
+        if line.startswith("{{c|") and template_end(line, 0) == len(line):
+            line = line[len("{{c|"):-2]
+        if line:
+            out.append(line)
+    return "<br />".join(out)
+
+
+_FILE_LINK = re.compile(r"\[\[(?:File|Image):([^|\]]+)[^\]]*\]\]", re.I)
+
+
+def _img_float(file: str, px: int | str | None, side: str, caption: str) -> str:
+    width = f"|width={px}px" if px else ""
+    return f"{{{{img float|file={file}{width}|align={side}|cap={caption}}}}}"
+
+
+def inset_markup(markup: str | None, caption: str, side: str,
+                 file: str = "", px: int | None = None) -> str | None:
+    """A figure the print sets with type beside it, as a float on `side`
+    with its caption, on one line so the text runs on around it: the
+    replaced page's crop (or a Commons region) told its `Location` and given
+    its caption as `Description`; a wiki-store file, or our own crop
+    (`markup` None: `file`, `px`), as `{{img float}}`.  None: the markup is
+    not one image this can float (several, or a crop already captioned)."""
+    from wikikit.pipeline.stages.elements import CSS_IMAGE_CROP
+    if markup is None:
+        return _img_float(file, px, side, caption)
+    m = markup.strip()
+    if CSS_IMAGE_CROP.match(m) and m.endswith("}}") and len(CSS_IMAGE_CROP.findall(m)) == 1:
+        m = re.sub(r"\s*\n\s*", "", m)
+        if re.search(r"\|\s*Description\s*=\s*[^|}\s]", m, re.I):
+            return None
+        m = re.sub(r"\|\s*(?:Location|Description)\s*=[^|}]*", "", m, flags=re.I)
+        return m[:-2] + f"|Location = {side}|Description = {caption}}}}}"
+    link = _FILE_LINK.fullmatch(m)
+    if link:
+        w = re.search(r"\|\s*(\d+)px", m)
+        return _img_float(link.group(1).strip(), w and w.group(1), side, caption)
+    return None
+
+
+def _before_last_word(text: str, made: str) -> str:
+    """`made` set before the text's last word — a word a line end broke,
+    which then joins whole ("mold-" | figure | "ings")."""
+    before, _, word = text.rstrip().rpartition(" ")
+    return f"{before} {made} {word}".lstrip()
+
+
 def _units(piece: str) -> list[tuple[str, str]]:
     """A paragraph as the reading records it, in printed order: its text
     lines, and the blocks standing among them — ("table" | "verse" | "small" |
@@ -603,12 +667,8 @@ def _units(piece: str) -> list[tuple[str, str]]:
             out.append(("verse", "\n".join(lines[k:j + 1])))
             k = j + 1
         elif _MARK_LINE.fullmatch(line):
-            cap = lines[k + 1] if k + 1 < len(lines) and lines[k + 1].lstrip().startswith("{{c|") else None
-            j = k + (2 if cap else 1)
-            if cap:
-                while j < len(lines) and _legend_line(lines[j]):
-                    j += 1                     # the caption's further lines go with it
-            out.append(("figure", "\n".join([line] + lines[k + 1:j])))
+            j = _figure_end(lines, k)
+            out.append(("figure", "\n".join(lines[k:j])))
             k = j
         else:
             out.append(("text", line))
@@ -925,7 +985,8 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
                   column_width: int, level: int = 1, legacy_captions: bool = False,
                   sections: list[dict] | None = None,
                   source_images: dict[str, list[str]] | None = None,
-                  regions: dict[str, str] | None = None) -> str:
+                  regions: dict[str, str] | None = None,
+                  insets: dict[str, str] | None = None) -> str:
     """The page's wikitext from its items and their readings.
 
     `texts` maps item name -> the model's (or a proofreader's) reading;
@@ -939,9 +1000,14 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
     `regions` figure item name -> a region of the clean Commons render of the
     volume (`{{Css image crop}}`) for a figure the replaced page has no image
     of, its box set by looking at the render; "" = no
-    figure there (a box that held none)."""
+    figure there (a box that held none);
+    `insets` figure item name -> the side of its column it stands on, for a
+    figure the print sets with type beside it (`supplied.measure_insets`):
+    floated there, in its place in the text.  Any other figure that
+    interrupts the text is set after its paragraph (`_segments`)."""
     source_images = source_images or {}
     regions = regions or {}
+    insets = insets or {}
     head = ""
     paras: list[str] = []         # the page's blocks: paragraphs and figures
     open_para = False             # is the last paragraph still running?
@@ -958,6 +1024,9 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         pending.clear()
         open_para = False
 
+    def display_px(fig: Item) -> int:
+        return max(60, round((fig.box[2] - fig.box[0]) / column_width * COLUMN_DISPLAY_PX))
+
     def figure_block(fig: Item, caption: str = "") -> str:
         if fig.name in source_images:
             # the replaced page's own images, as it set them (a wiki-store
@@ -966,9 +1035,61 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         if fig.name in regions:
             # a clean region of the volume's Commons render, never the IA scan
             return "\n".join(x for x in (regions[fig.name], caption) if x)
-        w = fig.box[2] - fig.box[0]
-        px = max(60, round(w / column_width * COLUMN_DISPLAY_PX))
-        return f"[[File:{figure_files[fig.name]}|center|{px}px]]" + (f"\n{caption}" if caption else "")
+        return f"[[File:{figure_files[fig.name]}|center|{display_px(fig)}px]]" + (f"\n{caption}" if caption else "")
+
+    def inset_of(fig: Item, caption_lines: list[str]) -> str | None:
+        """The figure as a float beside its type (`inset_markup`), or None."""
+        side, caption = insets[fig.name], _caption_of(caption_lines)
+        if fig.name in source_images:
+            imgs = [m for m in source_images[fig.name] if m.strip()]
+            return inset_markup(imgs[0], caption, side) if len(imgs) == 1 else None
+        if fig.name in regions:
+            return inset_markup(regions[fig.name], caption, side) if regions[fig.name] else None
+        return inset_markup(None, caption, side, file=figure_files[fig.name], px=display_px(fig))
+
+    def runs_on(line: str) -> bool:
+        """A line of running text, which a float can stand in."""
+        s = line.strip()
+        return bool(s) and not _MARK_LINE.fullmatch(line) and not _is_anchor_line(line) \
+            and not s.startswith((TABLE_START, "|", "!", "<poem", "{{c|"))
+
+    def set_insets(text: str, figs: list[Item]) -> tuple[str, list[Item]]:
+        """Each figure the print sets with type beside it (`insets`) as a
+        float standing IN the text where its mark is — a float ends no line,
+        so the text before and after it runs on as one (SOUND p. 453's Fig.
+        30 beside two paragraphs).  The figures left for the other marks."""
+        lines, out, kept, n, k = text.split("\n"), [], [], 0, 0
+        while k < len(lines):
+            if not _MARK_LINE.fullmatch(lines[k]):
+                out.append(lines[k])
+                k += 1
+                continue
+            j = _figure_end(lines, k)
+            fig = figs[n] if n < len(figs) else None
+            n += 1
+            made = inset_of(fig, lines[k + 1:j]) if fig and fig.name in insets else None
+            if made is None:
+                kept += [fig] if fig else []
+                out.extend(lines[k:j])
+                k = j
+                continue
+            after = lines[j] if j < len(lines) and runs_on(lines[j]) else None
+            if out and runs_on(out[-1]):
+                prev = out[-1].rstrip()
+                if after is not None and _WORD_BROKEN.search(prev):
+                    # "mold-" | figure | "ings": the float before the broken word
+                    out[-1] = _join_words(_before_last_word(prev, made), after.lstrip())
+                    k = j + 1
+                    continue
+                out[-1] = f"{prev} {made}" + (f" {after.lstrip()}" if after is not None else "")
+                k = j + (1 if after is not None else 0)
+            elif after is not None:
+                out.append(f"{made} {after.lstrip()}")
+                k = j + 1
+            else:
+                out.append(made)
+                k = j
+        return "\n".join(out), kept + list(figs[n:])
 
     def marked_figure(unit: str, figs: list[Item]) -> str:
         """A figure mark (and the caption line after it) as the crop it stands
@@ -988,7 +1109,7 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         nonlocal open_para, ends_block, opens
         if opens is None and text.strip():
             opens = not continues
-        figs = list(figs)
+        text, figs = set_insets(text, list(figs))
         first = True
         for raw in text.split(PARAGRAPH_SEP):
             piece = raw.strip()
@@ -1063,7 +1184,17 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
             if nxt is not None and nxt.name in caps:
                 caption = texts.get(nxt.name, "").strip()
                 i += 1
-            pending.append(figure_block(it, caption))
+            made = inset_of(it, caption.split("\n")) if it.name in insets else None
+            if made is not None and open_para and paras and runs_on(paras[-1].rsplit("\n", 1)[-1]):
+                # no mark to stand at: the type beside it is the reading that
+                # follows, so it stands at the end of the text before it —
+                # ahead of a word the cut broke ("par-" | "ticles": vol 18 p272)
+                if _WORD_BROKEN.search(paras[-1].rstrip()):
+                    paras[-1] = _before_last_word(paras[-1], made)
+                else:
+                    paras[-1] = f"{paras[-1].rstrip()} {made}"
+            else:
+                pending.append(figure_block(it, caption))
         else:
             # the paragraph positions the reading records are facts for
             # assembly's measurements, never page text (`positions`)

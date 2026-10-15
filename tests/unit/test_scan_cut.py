@@ -387,3 +387,29 @@ def test_figures_side_by_side_are_read_left_to_right():
     left = {"box": (1221, 2348, 1638, 2544)}                    # Fig. 25
     below = {"box": (1221, 2700, 1638, 2900)}
     assert reading_order([right_higher, below, left], key=lambda f: f["box"]) == [left, right_higher, below]
+
+
+def test_type_beside_a_figure_says_which_side_it_stands_on():
+    from wikikit.scan.cut import inset_side
+    dark = np.zeros((1000, 1100), dtype=bool)
+    column = (0, 0, 1100, 1000)
+    fig = (20, 200, 400, 800)
+    for y in range(100, 900, 32):                 # lines of type, right of the figure
+        dark[y:y + 14, 440:1090] = True
+    dark[200:800, 20:400] = True
+    assert inset_side(dark, column, fig) == "left"
+    assert inset_side(dark[:, ::-1], column, (700, 200, 1080, 800)) == "right"
+
+
+def test_a_figure_alone_across_its_lines_is_not_inset():
+    # a narrow figure set centred, white each side (SOUND p. 454's Fig. 36),
+    # and the drawing running past its box into a sliver (vol 24 p. 978's
+    # Fig. 114 stem, 0.14 of the column): no type beside either
+    from wikikit.scan.cut import inset_side
+    dark = np.zeros((1000, 1100), dtype=bool)
+    column = (0, 0, 1100, 1000)
+    dark[200:800, 350:750] = True
+    assert inset_side(dark, column, (350, 200, 750, 800)) is None
+    dark[:] = False
+    dark[200:800, 20:950] = True                  # the drawing: wider than its box
+    assert inset_side(dark, column, (20, 200, 800, 800)) is None
