@@ -221,15 +221,21 @@ def _render_math_markers(html, ctx):
         if ph["popout"] and ctx.target == "site":
             return render_math_popout(_process_latex(latex), ph["display"], ctx) + tied
         display = ph["display"] or ph["popout"]
-        result = _tex_math(latex, display, ctx)
+        # A rendered formula is one object, and a line may break after it: the
+        # full stop after "(1/2l)√(T/m)" began the next line (SOUND p. 454).
+        # On the site the punctuation is set INSIDE the formula, as text, so
+        # it stays with the formula's last term while the formula still breaks
+        # between its terms: the whole formula made unbreakable fell below
+        # Fig. 34 for want of room beside it, and the text after it followed.
+        # The EPUB's formula is one image either way: there the two are tied.
+        inside = tied and not display and ctx.target == "site"
+        result = _tex_math(latex + f"\\text{{{tied}}}" if inside else latex, display, ctx)
         fs = ph["fsPct"]
         if fs and 0 < fs < 100:
             result = f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
-        if tied and not display:
-            # a rendered formula is one object, and a line may break after it:
-            # the full stop after "(1/2l)√(T/m)" began the next line (SOUND
-            # p. 454).  The formula and its punctuation are set as one
-            # (`.math-tied`).
+        if inside or not tied:
+            return result
+        if not display:
             return f'<span class="math-tied">{result}{tied}</span>'
         return result + tied
     return _MATH_TIED_RE.sub(repl, html)

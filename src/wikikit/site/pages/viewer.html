@@ -259,14 +259,6 @@
     .math-scaled {
       display: inline-block;
     }
-    /* A formula and the punctuation printed after it are set as one: a
-       rendered formula is one object, and a line may break after it, so a
-       full stop began the next line (SOUND p. 454).  The formula does not
-       break within either: Chrome takes a break after a formula's last term
-       by the FORMULA's white-space, whatever follows (a word joiner too), so
-       a formula left breakable still shed its stop beside Fig. 34.  Measured
-       on DYNAMICS's 143 tied formulas: none overflows at 330px. */
-    .math-tied, .math-tied .katex { white-space: nowrap; }
     /* Tier 3: popout link for math too wide to scale into the
        column.  Renders as an italic anchor; click opens the popout
        modal which renders at viewport-fitting font-size. */
