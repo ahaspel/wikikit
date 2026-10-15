@@ -34,6 +34,7 @@ from PIL import Image
 from wikikit.corpora import current_corpus
 from wikikit.scan.cut import Item, reading_order
 from wikikit.scan.model import ask, request
+from wikikit.pipeline.stages.preprocess import PARAGRAPH_ENDS_WITH_PAGE
 from wikikit.scan.vocabulary import VOCABULARY, constructs, prompt_text
 
 PARA = "¶"
@@ -975,6 +976,8 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         _, _, caption = unit.partition("\n")
         return figure_block(figs.pop(0), caption.strip()) if figs else caption.strip()
 
+    opens: bool | None = None     # does the page's first text open a paragraph?
+
     def add(text: str, continues: bool, figs: list[Item] = ()):
         """Append one reading; `continues` = it carries on the open paragraph.
         `figs`: the figure items its marks stand for, in order.  A float
@@ -982,7 +985,9 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         the paragraph runs across; a block in the text's flow is set on lines
         of its own inside its paragraph, which runs on after it.  Only a
         blank line in the reading, the print's own break, begins a paragraph."""
-        nonlocal open_para, ends_block
+        nonlocal open_para, ends_block, opens
+        if opens is None and text.strip():
+            opens = not continues
         figs = list(figs)
         first = True
         for raw in text.split(PARAGRAPH_SEP):
@@ -1080,6 +1085,11 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
         i += 1
     boundary()
     body, _ = place_sections(PARAGRAPH_SEP.join(paras), sections or [])
+    if opens:
+        # the page opens a paragraph: said as Wikisource says it, so the
+        # build's page join is a paragraph break, not a run-on
+        # (`preprocess.stream_with_keys`)
+        body = PARAGRAPH_ENDS_WITH_PAGE + body
     body, left = place_footnotes(body, notes)
     if left:
         # a note with no single mark on the page (continued from the page

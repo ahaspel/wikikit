@@ -323,17 +323,47 @@ def test_seam_never_invents_a_paragraph_break():
     assert "and various\nexpeditions" in stream
 
 
-def test_nop_survives_the_seam_rule():
-    """`{{nop}}` is how Wikisource carries a paragraph that genuinely breaks
-    across a page — precisely because a page transition swallows a lone newline.
-    It is not whitespace, so the seam rule must leave it alone."""
-    stream, page_keys, _sections = P.stream_with_keys([
-        _Pg(16, 'the paragraph ends here.\n{{nop}}'),
-        _Pg(17, 'A new paragraph starts.'),
-    ])
-    assert "{{nop}}" in stream, f"the seam rule ate {{nop}}: {stream!r}"
-    off = page_keys[1][0]
-    assert stream[:off].rstrip("\n").endswith("{{nop}}")
+@pytest.mark.parametrize("a, b", [
+    ("the paragraph ends here.\n{{nop}}", "A new paragraph starts."),     # Wikisource's, at the end
+    ("the paragraph ends here.\n\n{{nop}}", "A new paragraph starts."),
+    ("the paragraph ends here.", "{{nop}}\nA new paragraph starts."),     # at the start (ours too)
+    ("the paragraph ends here.", "{{nop}}A new paragraph starts."),
+])
+def test_a_nop_at_the_seam_is_a_paragraph_break(a, b):
+    """`{{nop}}` is how Wikisource says a paragraph ends with its page — a
+    page transition is one line break, which runs paragraphs on.  The seam is
+    then a paragraph break, and the {{nop}} is spent on it: read as nothing,
+    it ran the next paragraph on at 1,749 seams (PORSON, 2026-10-15)."""
+    stream, page_keys, _sections = P.stream_with_keys([_Pg(16, a), _Pg(17, b)])
+    assert stream == "the paragraph ends here.\n\nA new paragraph starts.", stream
+    assert stream[page_keys[1][0]:].startswith("A new paragraph")
+
+
+def test_small_type_running_on_across_a_page_is_one_block():
+    # SOLUTION p. 374/375: our pages close and reopen their small type
+    stream, keys, _s = P.stream_with_keys([
+        _Pg(390, "{{smaller block|in equilibrium and through a}}"),
+        _Pg(391, "{{smaller block|semi-permeable membrane.}}")])
+    assert stream == "{{smaller block|in equilibrium and through a\nsemi-permeable membrane.}}", stream
+    assert stream[keys[1][0]:].startswith("semi-permeable")
+
+
+@pytest.mark.parametrize("a, b", [
+    # a paragraph ends with the page: two blocks, a break between
+    ("{{smaller block|the end.}}", "{{nop}}{{smaller block|A new one.}}"),
+    # the }} closes something else
+    ("{{smaller block|a}} and {{sc|b}}", "{{smaller block|c}}"),
+])
+def test_small_type_is_fused_only_where_one_block_runs_on(a, b):
+    stream, _k, _s = P.stream_with_keys([_Pg(1, a), _Pg(2, b)])
+    assert stream.count("{{smaller block|") == 2, stream
+
+
+def test_a_nop_keeping_a_list_across_the_page_is_left_alone():
+    # PATAGONIA v20 p962: `{{nop}}:2. …` continues the list (`_indent`)
+    stream, _keys, _sections = P.stream_with_keys([
+        _Pg(961, ":1. Lower beds."), _Pg(962, "{{nop}}:2. Patagonian Molasse.")])
+    assert stream == ":1. Lower beds.\n{{nop}}:2. Patagonian Molasse.", stream
 
 
 @pytest.mark.parametrize("tag", [

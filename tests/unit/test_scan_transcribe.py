@@ -3,6 +3,7 @@ readings — strips joined across cuts, figures floated to the next paragraph
 boundary with their captions.  No model is called."""
 import pytest
 
+from wikikit.pipeline.stages.preprocess import PARAGRAPH_ENDS_WITH_PAGE
 from wikikit.scan.cut import Item
 from wikikit.scan.transcribe import PARA, assemble_page, captions, instructions, join_across_cut, prompt_for
 from wikikit.scan.vocabulary import VOCABULARY
@@ -19,7 +20,20 @@ def f(name, x0=0, y0=0, x1=300, y1=100, col=1):
 
 
 def body(page):
-    return page.split("</noinclude>", 1)[1].rsplit("<noinclude>", 1)[0]
+    """The page's text, without the mark that it opens a paragraph (its own
+    test: `test_a_page_says_whether_it_opens_a_paragraph`)."""
+    text = page.split("</noinclude>", 1)[1].rsplit("<noinclude>", 1)[0]
+    return text.removeprefix(PARAGRAPH_ENDS_WITH_PAGE)
+
+
+def test_a_page_says_whether_it_opens_a_paragraph():
+    # the build's page join reads it: a paragraph break, or the paragraph
+    # running on from the page before (SOLUTION p. 374/375, 2026-10-15)
+    items = [Item("text", (0, 0, 300, 100), 1, "c1s1")]
+    opens = assemble_page(items, {"c1s1": f"{PARA}\nA new paragraph."}, {}, 300)
+    runs_on = assemble_page(items, {"c1s1": "carried on from the page before."}, {}, 300)
+    assert opens.split("</noinclude>", 1)[1].startswith(PARAGRAPH_ENDS_WITH_PAGE + "A new paragraph.")
+    assert runs_on.split("</noinclude>", 1)[1].startswith("carried on")
 
 
 def test_the_strip_prompt_states_the_engine_vocabulary_and_the_edge_signals():

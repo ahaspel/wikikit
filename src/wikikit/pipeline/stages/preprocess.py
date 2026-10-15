@@ -35,6 +35,8 @@ import html
 import re
 
 from wikikit.corrections import apply_corrections
+from wikikit.scan.vocabulary import VOCABULARY
+from wikikit.wikitext import template_end
 from wikikit.pipeline.stages.quote_runs import _convert_quote_runs
 from wikikit.pipeline.stages.source_cleanup import (
     strip_html_comments,
@@ -84,6 +86,61 @@ _SECTION_NAME_RE = re.compile(
 
 
 _SEAM_WS = " \t\n"
+#: Wikisource's mark that a paragraph ends with its page: `{{nop}}` at a
+#: page's end — or at the next page's start (71 of Wikisource's pages, and
+#: ours: `scan.transcribe`).
+PARAGRAPH_ENDS_WITH_PAGE = "{{nop}}"
+#: The incoming page opens with it, past any section tags — unless list or
+#: indent markup follows on its line: there it keeps a list running across
+#: the page (PATAGONIA v20 p962, `{{nop}}:2. Patagonian Molasse.`, `_indent`),
+#: and the seam is left as it was.
+_OPENS_WITH_NOP = re.compile(r"(?:[ \t\n]|<section\b[^>\x01]*>)*\{\{nop\}\}(?![ \t]*[:*#;])",
+                             re.IGNORECASE)
+
+
+#: Small type our pages open and close page by page (`scan.transcribe`).
+_SMALL_OPEN = next(c.open for c in VOCABULARY if c.name == "smaller block")
+_OPENS_WITH_SMALL = re.compile(r"(?:[ \t\n]|<section\b[^>\x01]*>)*" + re.escape(_SMALL_OPEN),
+                               re.IGNORECASE)
+
+
+def _closes_small_block(emitted: str) -> bool:
+    """Does the `}}` that ends `emitted` close a `{{smaller block|`?  The
+    opening whose balancing close is that one (`template_end`) — never the
+    nearest opening by name."""
+    if not emitted.endswith("}}"):
+        return False
+    i = emitted.rfind(_SMALL_OPEN)
+    while i >= 0:
+        if template_end(emitted, i) == len(emitted):
+            return True
+        i = emitted.rfind(_SMALL_OPEN, 0, i)
+    return False
+
+
+def _emitted_tail(out: list[str], n: int) -> str:
+    """The last `n` characters `out` has emitted (or all, if fewer)."""
+    tail, i = "", len(out)
+    while i and len(tail) < n:
+        i -= 1
+        tail = out[i] + tail
+    return tail[-n:]
+
+
+def _drop_emitted_suffix(out: list[str], suffix: str) -> int:
+    """Remove `suffix` from the end of what `out` has emitted, if it ends
+    there; return how much was removed (0 or len(suffix))."""
+    if not _emitted_tail(out, len(suffix)).endswith(suffix):
+        return 0
+    left = len(suffix)
+    while left:
+        chunk = out[-1]
+        take = min(left, len(chunk))
+        out[-1] = chunk[:len(chunk) - take]
+        left -= take
+        if not out[-1]:
+            out.pop()
+    return len(suffix)
 
 
 def _rstrip_emitted(out: list[str]) -> int:
@@ -148,12 +205,18 @@ def stream_with_keys(
     )
     strip_lead = False                   # a page key just closed; drop its
                                          # incoming page's leading whitespace
+    strip_nop = False                    # … and its opening {{nop}}, now the join
+    strip_small = False                  # … or its small type's reopening, fused
     for start, end, kind, payload in both:
         if start < last:                 # a page token inside a section tag's
             continue                     # whitespace run — already consumed
         chunk = processed[last:start]
         if strip_lead:
             kept = chunk.lstrip(_SEAM_WS)
+            if strip_nop and kept.startswith(PARAGRAPH_ENDS_WITH_PAGE):
+                kept, strip_nop = kept[len(PARAGRAPH_ENDS_WITH_PAGE):].lstrip(_SEAM_WS), False
+            if strip_small and kept.startswith(_SMALL_OPEN):
+                kept, strip_small = kept[len(_SMALL_OPEN):], False
             if kept:                     # only stop stripping once real content
                 strip_lead = False       # has been emitted, not at an empty gap
             chunk = kept
@@ -179,9 +242,33 @@ def stream_with_keys(
             # chrome is gone.  `{{nop}}` is not whitespace, so it survives and
             # keeps carrying the paragraph a page break cannot show by itself.
             clean_len -= _rstrip_emitted(out)
+            # `{{nop}}` at the page's end (Wikisource's) or the next page's
+            # start (ours) says a paragraph ends here: the join is then a
+            # paragraph break, and the {{nop}} is spent on it.  Read as
+            # nothing, it ran the next paragraph on at 1,749 seams ("…a book
+            # against Christianity. During the years that followed…", PORSON).
+            breaks = False
+            if _drop_emitted_suffix(out, PARAGRAPH_ENDS_WITH_PAGE):
+                clean_len -= len(PARAGRAPH_ENDS_WITH_PAGE)
+                clean_len -= _rstrip_emitted(out)
+                breaks = True
+            if _OPENS_WITH_NOP.match(processed, end):
+                breaks = strip_nop = True
+            # Small type our pages set page by page: a paragraph running on
+            # across the page in it closes on one and reopens on the next —
+            # one block, or the sentence breaks at the seam ("…through a" /
+            # "semi-permeable membrane", SOLUTION p. 374/375).  None of
+            # Wikisource's 29,659 seams has this shape (it writes /s … /e).
+            if not breaks and _OPENS_WITH_SMALL.match(processed, end) \
+                    and _closes_small_block(_emitted_tail(out, 20000)):
+                _drop_emitted_suffix(out, "}}")
+                clean_len -= 2
+                clean_len -= _rstrip_emitted(out)
+                strip_small = True
             if clean_len:                # the volume's first page opens the
-                out.append("\n")         # stream; there is no seam before it
-                clean_len += 1
+                join = "\n\n" if breaks else "\n"   # stream; there is no seam before it
+                out.append(join)
+                clean_len += len(join)
             page_keys.append((clean_len, int(payload)))
             strip_lead = True
         else:
@@ -190,7 +277,13 @@ def stream_with_keys(
                 section_keys.append((clean_len, (nm.group(1) or "").strip()))
         last = end
     tail = processed[last:]
-    out.append(tail.lstrip(_SEAM_WS) if strip_lead else tail)
+    if strip_lead:
+        tail = tail.lstrip(_SEAM_WS)
+        if strip_nop and tail.startswith(PARAGRAPH_ENDS_WITH_PAGE):
+            tail = tail[len(PARAGRAPH_ENDS_WITH_PAGE):].lstrip(_SEAM_WS)
+        if strip_small and tail.startswith(_SMALL_OPEN):
+            tail = tail[len(_SMALL_OPEN):]
+    out.append(tail)
 
     if len(page_keys) != expected:
         raise ValueError(

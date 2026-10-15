@@ -128,3 +128,13 @@ def test_readings_as_saved_clear_the_draft(desk_at):
     assert desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
     desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": saved["c1s1"]}})
     assert not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
+
+
+def test_a_page_carrying_on_a_paragraph_is_shown_without_opening_one():
+    opens = payload()                                  # its first reading begins ¶
+    assert '<div class="body-text"><p>' in desk.page_article(opens, "T")["rendered_html"]
+    runs_on = payload()
+    runs_on["provenance"]["readings"]["c1s1"] = "'''abacus''' carried on"
+    supplied.reassemble(runs_on)
+    html = desk.page_article(runs_on, "T")["rendered_html"]
+    assert '<div class="body-text" data-runs-on>' in html and "carried on" in html

@@ -236,7 +236,9 @@ function refreshFrame(keepScroll) {
     // enters an article that has its own
     const d = f.contentDocument, st = d.createElement("style");
     st.textContent = ".page > .card:first-child, .header-divider, .nav-arrow, "
-      + "#app .card > h1, #app .card > h1 + div { display: none !important; }";
+      + "#app .card > h1, #app .card > h1 + div { display: none !important; } "
+      // a page carrying on the paragraph of the page before opens unindented
+      + ".body-text[data-runs-on] > :first-child { text-indent: 0 !important; }";
     d.head.appendChild(st);
     if (!y) return;
     // the viewer draws after its fetch: restore the place once the body is there

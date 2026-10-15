@@ -32,6 +32,7 @@ from pathlib import Path
 from PIL import Image
 
 from wikikit.corpora import current_corpus
+from wikikit.pipeline.stages.preprocess import PARAGRAPH_ENDS_WITH_PAGE
 from wikikit.scan import cut, supplied
 from wikikit.scan.supplied import page_id
 from wikikit.scan.transcribe import PARA
@@ -112,7 +113,16 @@ def page_article(payload: dict, title: str, link=None) -> dict:
     body = process_elements(stream, ElementContext(volume=vol))
     article = {"id": page_id(vol, pg), "title": title, "volume": vol,
                "body": link(body, vol, pg) if link else body}
-    article["rendered_html"] = render_article(article, target="site")
+    html = render_article(article, target="site")
+    # An article opens with a paragraph; a page need not.  One that carries
+    # on the paragraph of the page before is shown so — no opening paragraph,
+    # no indent — as it will run on in its article (`stream_with_keys`): the
+    # proofreader sees what the reading's ¶ says (SOLUTION p. 375, 2026-10-15)
+    page_text = payload["raw_text"].split("</noinclude>", 1)[-1].lstrip()
+    if not page_text.startswith(PARAGRAPH_ENDS_WITH_PAGE):
+        # (the desk's page sets its first block unindented: data-runs-on)
+        html = html.replace('<div class="body-text"><p>', '<div class="body-text" data-runs-on>', 1)
+    article["rendered_html"] = html
     return article
 
 
