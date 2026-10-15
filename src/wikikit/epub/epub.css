@@ -190,6 +190,8 @@ blockquote.verse { margin: 1em 1.5em; font-style: italic; }
 
 /* ── math ── */
 .math-fallback { font-family: monospace; }
+/* a formula and the punctuation printed after it: one, never broken between */
+.math-tied { white-space: nowrap; }
 .math-system { text-align: center; margin: 1em 0; }
 /* Display math is an inline SVG sized in ex (the widest cached equation is
    ~100ex — two phone screens); without a clamp a narrow reader CLIPS it.

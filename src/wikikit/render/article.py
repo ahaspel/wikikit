@@ -31,6 +31,8 @@ from wikikit.markers import markers_to_text
 TITLE_OPEN, TITLE_CLOSE = "«TITLE:", "«/TITLE»"
 
 _MATH_RE = re.compile(r"«MATH(?:\[([^\]]*)\])?:(.*?)«/MATH»", re.S)
+# Punctuation printed straight after a formula, which a line may not begin with.
+_MATH_TIED_RE = re.compile(_MATH_RE.pattern + r"([.,;:!?)\]’”]+)?", re.S)
 # A genuine single-«MATH» EQN row: the content group must NOT cross an internal «/MATH», so a
 # multi-equation row («MATH:…«/MATH»  «MATH:…«/MATH») fails to match here (otherwise its close
 # backtracks to the LAST «/MATH», lumping every equation into one display span and leaking the
@@ -211,19 +213,26 @@ def _tex_math(latex, display, ctx):
 
 def _render_math_markers(html, ctx):
     def repl(m):
-        hint, latex = m.group(1), m.group(2)
+        hint, latex, tied = m.group(1), m.group(2), m.group(3) or ""
         ph = parse_math_hint(hint)
         # popout is a SITE policy (click-to-modal needs JS + a viewport that
         # can't fit the equation).  Every other target renders the equation
         # itself — a popout-hinted expression is display math there.
         if ph["popout"] and ctx.target == "site":
-            return render_math_popout(_process_latex(latex), ph["display"], ctx)
-        result = _tex_math(latex, ph["display"] or ph["popout"], ctx)
+            return render_math_popout(_process_latex(latex), ph["display"], ctx) + tied
+        display = ph["display"] or ph["popout"]
+        result = _tex_math(latex, display, ctx)
         fs = ph["fsPct"]
         if fs and 0 < fs < 100:
-            return f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
-        return result
-    return _MATH_RE.sub(repl, html)
+            result = f'<span class="math-scaled" style="font-size: {fs}%;">{result}</span>'
+        if tied and not display:
+            # a rendered formula is one object, and a line may break after it:
+            # the full stop after "(1/2l)√(T/m)" began the next line (SOUND
+            # p. 454).  The formula and its punctuation are set as one
+            # (`.math-tied`).
+            return f'<span class="math-tied">{result}{tied}</span>'
+        return result + tied
+    return _MATH_TIED_RE.sub(repl, html)
 
 
 def _render_display_math(latex, hint, ctx):
