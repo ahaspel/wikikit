@@ -27,12 +27,22 @@
   // mark, so a newline right after it is a paragraph.
   const END = "\u0001";
 
+  // A template of arguments, as measured (vocabulary._measure_args): the
+  // parts around and between the arguments the engine shows, in its order.
+  function withArgs(body, c) {
+    const args = body.split("|").map(a => a.trim());
+    let out = c.parts[0];
+    c.order.forEach((i, k) => { out += (args[i] || "") + c.parts[k + 1]; });
+    return out + (c.after && c.after.trim() ? END : "");
+  }
+
   // Templates, innermost first.
   function templates(t, table) {
     for (let i = 0; i < 12; i++) {
       const next = t.replace(/\{\{\s*([^{}|]+?)\s*\|([^{}]*)\}\}/g, (m, name, body) => {
         const key = name.trim().toLowerCase();
         const c = SPELLED[key] ? null : table[key];
+        if (c && c.parts) return withArgs(body, c);
         return c ? c[0] + body.trim() + c[1] + (c[2] && c[2].trim() ? END : "") : m;
       });
       if (next === t) break;

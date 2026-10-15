@@ -26,6 +26,16 @@ class Construct:
     #: page FURNITURE — recorded in the reading where it is printed (a sheet
     #: signature), set by assembly in the page's footer, never page text
     furniture: bool = False
+    #: ARGUMENTS — for a template of several arguments, or one whose argument
+    #: the engine does not print as written: a sample of each, in order, as a
+    #: reading would write it (`open` + the samples joined by | + `close`).
+    #: The desk is measured argument by argument: which samples the engine's
+    #: html shows, in what order, and the html between them; an argument it
+    #: never shows (a ditto's word) is not shown.  Each shown sample must be
+    #: unique and come through the engine as written — so a sample looks like
+    #: the real thing (a rule's "13.25em"; initials ending in their full stop,
+    #: as printed, because the engine adds one where it is missing).
+    args: tuple[str, ...] = ()
 
 
 VOCABULARY: tuple[Construct, ...] = (
@@ -171,9 +181,35 @@ def _measure_lines(c: Construct) -> dict:
     return dict(zip(("open", "line", "stanza", "close"), parts))
 
 
+def _measure_args(c: Construct) -> dict:
+    """A template of arguments as the engine renders it, from its samples
+    (`Construct.args`): {"parts": the html around and between the arguments it
+    shows, "order": which argument fills each gap, "after": what a newline
+    right after it becomes} — html = parts[0] + arg[order[0]] + parts[1] + …"""
+    written = f"{c.open}{'|'.join(c.args)}{c.close}"
+    body = _render(f"A {written} Z").removeprefix("A").removesuffix("Z").strip()
+    shown = []
+    for i, sample in enumerate(c.args):
+        if not sample or sample not in body:
+            continue                                    # the engine never prints it
+        if body.count(sample) > 1:
+            raise ValueError(f"{c.name}: sample {sample!r} shows twice: {body!r}")
+        shown.append((body.index(sample), i))
+    parts, order, at = [], [], 0
+    for pos, i in sorted(shown):
+        parts.append(body[at:pos])
+        order.append(i)
+        at = pos + len(c.args[i])
+    parts.append(body[at:])
+    after = _render(f"A {written}\nZ").removeprefix("A").removesuffix("Z").strip()
+    after = after[len(body):] if after.startswith(body) else ""
+    return {"parts": parts, "order": order, "after": after if after.strip() else " "}
+
+
 def render_table() -> dict:
     """What the engine renders for each construct, measured, as
-    {name: [html_open, html_close, after_newline]} plus "paragraph": html
+    {name: [html_open, html_close, after_newline]} — or, for a template of
+    arguments, {"parts", "order", "after"} (`_measure_args`) — plus "paragraph": html
     between two paragraphs.  `after_newline` is what a single newline right
     after the construct becomes: a block that ends its paragraph makes it a new
     one ("<p>"), anything else a space.  The desk applies this table and
@@ -184,6 +220,9 @@ def render_table() -> dict:
             # page furniture never reaches the engine (assembly sets it in the
             # page's footer): the desk shows it set apart, as furniture
             table[c.name] = ['<span class="furniture">', "</span>", " "]
+            continue
+        if c.args:
+            table[c.name] = _measure_args(c)
             continue
         html = _render(f"A {c.open}{_PROBE}{c.close} Z")
         if c.name in TYPESET:

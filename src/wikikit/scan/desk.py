@@ -38,6 +38,10 @@ DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
 #: A formula as desk_render.js leaves it for KaTeX (its LaTeX escaped, so no "<").
 _TEX_RE = re.compile(r'<span class="tex">[^<]*</span>')
+#: An anchor the engine makes FROM the content (a margin heading's
+#: id="section-<its words>") is a link target, not the construct's look:
+#: render_table leaves it out of the desk, so parity leaves it out of the engine.
+_ANCHOR_RE = re.compile(r'\s+id="section-[^"]*"')
 
 
 def strip_id(volume: int, page: int, name: str) -> str:
@@ -151,10 +155,12 @@ def parity(texts: list[str]) -> list[tuple[str, str, str]]:
     for text, d in zip(cleaned, shown):
         # A link is not typography: links are resolved at export, from the
         # whole corpus, and the desk shows the text a reader sees.
-        engine = _LINK_RE.sub(r"\1", _render(text)).strip()
+        engine = _ANCHOR_RE.sub("", _LINK_RE.sub(r"\1", _render(text))).strip()
         # A formula is typeset by the reader — KaTeX in the viewer and on the
-        # desk — so both sides hold the engine's stand-in for it.
+        # desk — so both sides hold the engine's stand-in for it.  Both sides
+        # are compared as characters: &nbsp; and \xa0 are one space.
         desk = html.unescape(_TEX_RE.sub(table["math"][0], d["html"]))
+        engine = html.unescape(engine)
         if d["leaks"] or desk != engine:
             out.append((text, desk, engine))
     return out

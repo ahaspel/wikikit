@@ -115,6 +115,42 @@ def test_the_joining_signal_is_not_text():
     assert parity(["¶\n'''abacus''' (ab′a̤-kus), ''n.''"]) == []
 
 
+@pytest.fixture
+def book_with_arguments(monkeypatch):
+    """A book whose own constructs take arguments (EB1911's, 2026-10-15): an
+    empty one, two shown, one never shown, one made an attribute — and a
+    margin heading, whose anchor the engine makes from its words."""
+    import dataclasses
+    from wikikit import corpora
+    from wikikit.scan.vocabulary import Construct
+    book = dataclasses.replace(corpora.current_corpus(), scan_constructs=(
+        Construct("eb1911 footer initials", "{{EB1911 footer initials|", "}}", "initials",
+                  args=("", "Q. X. Z.")),
+        Construct("dual line", "{{dual line|", "}}", "two lines", args=("QQA1QQ", "QQA2QQ")),
+        Construct("ditto", "{{ditto|", "}}", "a ditto mark", args=("QQA1QQ",)),
+        Construct("rule", "{{rule|", "}}", "a rule", args=("13em",)),
+        Construct("eb1911 shoulder heading", "{{EB1911 Shoulder Heading|", "}}", "margin")))
+    monkeypatch.setattr(corpora, "current_corpus", lambda: book)
+
+
+@pytest.mark.parametrize("text", [
+    "the last words.\n{{EB1911 footer initials||F. R. C.}}",
+    "{| style=\"margin:auto\"\n|{{dual line|Discharge immediately|after rest}}||48\n|}",
+    "{| style=\"margin:auto\"\n|1901||days\n|-\n|1902||{{ditto|days}}\n|}",
+    "A table follows.\n\n{{rule|8em}}\n\nAnd below it.",
+    "Body text {{EB1911 Shoulder Heading|Santa Laura.}}continues here.",
+])
+def test_a_template_of_arguments_renders_as_the_engine_renders_it(book_with_arguments, text):
+    assert parity([text]) == []
+
+
+def test_an_argument_the_engine_never_shows_is_not_shown(book_with_arguments):
+    entry = render_table()["ditto"]
+    assert entry["order"] == [] and entry["parts"] == ["″"]
+    [shown] = desk_render(["{{ditto|days}}"], render_table())
+    assert shown == {"html": "″", "leaks": []}
+
+
 def test_corrections_come_back_and_a_fully_checked_page_is_proofread(tmp_path, monkeypatch):
     from test_scan_supplied import payload
     from wikikit.scan import desk, supplied
