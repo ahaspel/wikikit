@@ -54,6 +54,27 @@ def test_an_incomplete_page_never_replaces_text(fetched_level, fetched_text, win
     assert prefer(fetched, found_bad) is (found_bad if wins == "supplied" else fetched)
 
 
+@pytest.mark.parametrize("ours_level, fetched_level, fetched_text, wins", [
+    (1, 1, "Tub latb Rbt.", "fetched"),   # unchecked: waits behind raw OCR
+    (3, 1, "Tub latb Rbt.", "supplied"),  # proofread at the desk: in
+    (1, 0, "", "supplied"),               # nothing fetched to wait behind
+    (1, None, None, "supplied"),
+])
+def test_a_book_may_hold_its_pages_until_proofread(monkeypatch, ours_level, fetched_level,
+                                                   fetched_text, wins):
+    """EB1911 (user, 2026-10-15): a whole page replaces Wikisource's text only
+    once a person has checked it — found bad or not."""
+    import dataclasses
+    from wikikit import corpora
+    book = dataclasses.replace(corpora.current_corpus(), supplied_replaces_text_at=3)
+    monkeypatch.setattr(corpora, "current_corpus", lambda: book)
+    fetched = None if fetched_level is None else page(fetched_level, fetched_text)
+    supplied = page(ours_level, "our transcription")
+    assert prefer(fetched, supplied) is (supplied if wins == "supplied" else fetched)
+    found_bad = {**supplied, "provenance": {"replaces": "found lousy"}}
+    assert prefer(fetched, found_bad) is (found_bad if wins == "supplied" else fetched)
+
+
 def write(base, vol, pg, text, source="wikisource"):
     d = base / f"vol_{vol:02d}"
     d.mkdir(parents=True, exist_ok=True)

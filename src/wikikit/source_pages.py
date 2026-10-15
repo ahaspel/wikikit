@@ -84,14 +84,23 @@ def prefer(fetched: dict | None, supplied: dict | None) -> dict | None:
     fetched page that has text, whatever the reason given: it enters only where
     there is nothing else.  Fifteen such pages, each with a strip empty,
     replaced complete raw-OCR pages and shipped with ~3,300 words missing
-    (2026-10-10) — the door read the fetched page's level and never its own."""
+    (2026-10-10) — the door read the fetched page's level and never its own.
+
+    And a book may say how far ours must be proofread before it replaces text
+    at all (`Corpus.supplied_replaces_text_at`): EB1911 lets a whole page in
+    only once a person has checked it at the desk (user, 2026-10-15)."""
     if supplied is None:
         return fetched
     if fetched is None:
         return supplied
     text = fetched.get("raw_text") or ""
     has_text = bool(_NOINCLUDE_RE.sub("", text).strip())
-    if has_text and page_level(supplied.get("raw_text") or "") == 2:
+    ours = page_level(supplied.get("raw_text") or "")
+    if has_text and ours == 2:
+        return fetched
+    # the book's door: below its level our page waits, found bad or not
+    from wikikit.corpora import current_corpus
+    if has_text and (ours or 0) < current_corpus().supplied_replaces_text_at:
         return fetched
     if supplied.get("provenance", {}).get("replaces"):
         return supplied

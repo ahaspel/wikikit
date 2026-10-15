@@ -91,6 +91,7 @@ def test_every_field_is_read_by_something():
     #   page_layout  wikikit.scan.layout.layout_for — what the book declares of a page's layout
     #   page_sections  wikikit.scan.supplied.name_sections — the section names a page keeps
     #   scan_constructs  wikikit.scan.vocabulary.constructs — the book's own transcription markup
+    #   supplied_replaces_text_at  source_pages.prefer — the level our page needs to replace text
     #   article_pages  volumes.article_ws_range / in_article_range — the walk's span
     #   empty_records  mdx.build (the gate + exclusions), mdx.release (the count)
     #   sampler_volume  the book's deploy — the sampler EPUB it builds and uploads
@@ -101,6 +102,7 @@ def test_every_field_is_read_by_something():
     assert fields == {"work_name", "edition_label", "monogram", "search_key", "search_index",
                       "analytics_code", "volume_scans_url", "contributor_example",
                       "site_dir", "page_scan", "page_scan_url", "page_layout", "page_sections", "scan_constructs",
+                      "supplied_replaces_text_at",
                       "key", "title", "scan_name", "article_starts",
                       "is_plate", "plate_title", "alias_sources",
                       "bind_contributors", "ancillary",

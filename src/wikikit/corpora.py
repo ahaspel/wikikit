@@ -158,6 +158,14 @@ class Corpus:
     #: or neither: None = the book transcribes nothing.
     page_scan: Callable[[int, int], object] | None = None
     page_scan_url: Callable[[int, int], str] | None = None
+    #: THE DOOR — the proofreading level a supplied page must reach before it
+    #: replaces a fetched page that has text (`source_pages.prefer`).  1: as
+    #: soon as it is complete, our first reading over Wikisource's raw OCR.
+    #: EB1911 says 3 (user, 2026-10-15): a whole page enters only once a person
+    #: has checked it at the desk — whole pages shipped unchecked brought their
+    #: own errors in with them (TIDE's footnotes mid-article, its schedules
+    #: ruled between every row).  A page with nothing fetched enters at once.
+    supplied_replaces_text_at: int = 1
     #: LAYOUT — what the book knows of a page's layout, for the cutter:
     #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
     #: (its column count, …).  The cutter measures the ink only where the book
