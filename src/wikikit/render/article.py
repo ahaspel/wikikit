@@ -40,6 +40,7 @@ _MATH_ONLY_RE = re.compile(
     r"^«MATH(?:\[([^\]]*)\])?:((?:(?!«/MATH»)[\s\S])*?)«/MATH»\s*[.,;:]?\s*$", re.S)
 _SH_RE = re.compile(r"«SH:([^»]*)»(.*?)«/SH»", re.S)
 _SH_STRIP_RE = re.compile(r"«/?[A-Za-z]+(?:\[[^\]]*\])?»")
+_SH_MATH_SPLIT_RE = re.compile(r"(«MATH(?:\[[^\]]*\])?:.*?«/MATH»)", re.S)
 _ANCHOR_RE = re.compile(r"«SEC:([^|»]*)\|([^»]*)»|«SH:([^»]*)»([\s\S]*?)«/SH»")
 _SECTION_ID_RE = re.compile(r'id="(section-[^"]+)"')
 
@@ -240,7 +241,11 @@ def _render_display_math(latex, hint, ctx):
 def _render_sh(html):
     def repl(m):
         slug, content = m.group(1), m.group(2)
-        display = _SH_STRIP_RE.sub("", content).strip()
+        # A formula in the heading (TRIGONOMETRY's "The nth Roots of Unity.")
+        # is part of its text: left whole for the math pass.  Stripping its
+        # close alone left its open to pair with the NEXT formula's close.
+        display = "".join(part if i % 2 else _SH_STRIP_RE.sub("", part)
+                          for i, part in enumerate(_SH_MATH_SPLIT_RE.split(content))).strip()
         return f'<span class="shoulder-heading" id="section-{slug}">{display}</span>'
     return _SH_RE.sub(repl, html)
 
