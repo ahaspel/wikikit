@@ -955,6 +955,11 @@
       font-variant-numeric: tabular-nums;
       user-select: none;
       text-decoration: none;
+      /* `.body-text`'s `overflow-wrap: break-word` is inherited, and the label
+         is one word wider than this box: it broke "26:954" at the colon onto
+         two lines.  The label never wraps. */
+      overflow-wrap: normal;
+      white-space: nowrap;
     }
     /* The 'vol:page' label is generated content, so it is excluded from
        in-article / browser find and from textContent — the marker is furniture,
