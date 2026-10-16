@@ -252,7 +252,11 @@ function refreshFrame() {
     st.textContent = ".page > .card:first-child, .header-divider, .nav-arrow, "
       + "#app .card > h1, #app .card > h1 + div { display: none !important; } "
       // a page carrying on the paragraph of the page before opens unindented
-      + ".body-text[data-runs-on] > :first-child { text-indent: 0 !important; }";
+      + ".body-text[data-runs-on] > :first-child { text-indent: 0 !important; } "
+      // ...and its first <p> is a new paragraph, indented as in its article —
+      // not the article's opening one the site sets flush (vol 25 p. 1017's
+      // "I. Iron bar in direct tension:—")
+      + ".body-text[data-runs-on] > p:first-of-type { text-indent: 1.5em; }";
     d.head.appendChild(st);
     f.contentWindow.addEventListener("scroll", () => follow(f.contentWindow, window));
     // the viewer draws after its fetch: take the page's place once the body is there

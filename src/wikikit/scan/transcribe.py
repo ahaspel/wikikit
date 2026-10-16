@@ -1122,7 +1122,11 @@ def assemble_page(items: list[Item], texts: dict[str, str], figure_files: dict[s
                 piece = small
             segs = _segments(piece, continues=first and continues and open_para)
             if small is not None:
-                segs = [(k, _SMALL["smaller block"].open + s + _SMALL["smaller block"].close if k == "text" else s)
+                # a table in small type is set small too, in a wrapper of its
+                # own, on lines of its own (vol 25 p. 1017's Wöhler tables)
+                o, c = _SMALL["smaller block"].open, _SMALL["smaller block"].close
+                segs = [(k, o + s + c if k == "text"
+                         else f"{o}\n{s}\n{c}" if k.startswith("block") and "<poem>" not in s else s)
                         for k, s in segs]
             # each figure mark takes its own figure, in reading order
             segs = [(k, marked_figure(s, figs) if k.startswith("figure") else s) for k, s in segs]
