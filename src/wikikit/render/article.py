@@ -284,6 +284,22 @@ def _section_title_text(raw):
     return markers_to_text(raw or "").strip()
 
 
+_TITLE_MATH_RE = re.compile(r"«MATH(?:\[[^\]]*\])?:(.*?)«/MATH»", re.S)
+
+
+def _section_title_html(raw, ctx):
+    """The TOC entry's HTML: the title as text (`_section_title_text`), with a
+    formula in it set as one, inline, as the heading sets it — plain text has
+    none, and TRIGONOMETRY's "The nth Roots of Unity." read "The  th" in the
+    contents."""
+    parts = _SH_MATH_SPLIT_RE.split(raw or "")
+    out = []
+    for i, part in enumerate(parts):
+        m = _TITLE_MATH_RE.fullmatch(part) if i % 2 else None
+        out.append(_tex_math(m.group(1), False, ctx) if m else escape_html(markers_to_text(part)))
+    return "".join(out).strip()
+
+
 def detect_sections(paragraphs, ctx):
     """Walk «SEC» (L1) and «SH» (L2) anchors in document order into ctx.collected_sections."""
     ctx.collected_sections = []
@@ -293,16 +309,17 @@ def detect_sections(paragraphs, ctx):
             if m.group(1) is not None:  # «SEC:slug|name» — major section
                 ctx.collected_sections.append(
                     {"id": dedupe_anchor_id(seen, f"section-{m.group(1)}"),
-                     "title": _section_title_text(m.group(2)), "level": 1})
+                     "title": _section_title_text(m.group(2)),
+                     "html": _section_title_html(m.group(2), ctx), "level": 1})
             else:                       # «SH:slug»…«/SH» — shoulder heading
                 display = _section_title_text(m.group(4))
                 ctx.collected_sections.append(
                     {"id": dedupe_anchor_id(seen, f"section-{m.group(3)}"),
-                     "title": display, "level": 2})
+                     "title": display, "html": _section_title_html(m.group(4), ctx), "level": 2})
 
 
 def _toc_link(s):
-    return f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a></li>'
+    return f'<li><a href="#{s["id"]}">{s["html"]}</a></li>'
 
 
 def _build_toc(sections):
@@ -324,7 +341,7 @@ def _build_toc(sections):
                     in_sub = False
                 elif seen_level1:
                     inner += "</li>"
-                inner += f'<li><a href="#{s["id"]}">{escape_html(s["title"])}</a>'
+                inner += f'<li><a href="#{s["id"]}">{s["html"]}</a>'
                 seen_level1 = True
             elif not seen_level1:
                 inner += _toc_link(s)
