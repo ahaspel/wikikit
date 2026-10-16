@@ -251,8 +251,11 @@ function refreshFrame() {
     const d = f.contentDocument, st = d.createElement("style");
     st.textContent = ".page > .card:first-child, .header-divider, .nav-arrow, "
       + "#app .card > h1, #app .card > h1 + div { display: none !important; } "
-      // a page carrying on the paragraph of the page before opens unindented
-      + ".body-text[data-runs-on] > :first-child { text-indent: 0 !important; } "
+      // a page carrying on the paragraph of the page before opens unindented:
+      // its opening text is bare, or a block (small type) — never a <p>, which
+      // is a new paragraph even when no tag stands before it (vol 26 p. 588's
+      // "Insanity.—")
+      + ".body-text[data-runs-on] > :first-child:not(p) { text-indent: 0 !important; } "
       // ...and its first <p> is a new paragraph, indented as in its article —
       // not the article's opening one the site sets flush (vol 25 p. 1017's
       // "I. Iron bar in direct tension:—")
