@@ -725,6 +725,28 @@ def _crop_side(params):
     return side if side in ("left", "right") and params.get("description") else None
 
 
+#: The page width a crop's `cWidth` is read against: the scale (`bSize`) nearly
+#: every EB1911 crop is cut at, and at which a column is about the site's own.
+CROP_PAGE_PX = 1200
+
+
+def _crop_width(params):
+    """A floated crop's width in pixels: its `cWidth` (the template displays
+    it so wide), on a page `CROP_PAGE_PX` wide.  The crop's file is cut about
+    1.6 times larger, and shown at that size a float took two thirds of the
+    column where the print gives it two fifths, the text squeezed beside it
+    (SOUND p. 457's Fig. 41: 496px of 590, printed at 0.52).  At its width
+    the floats measure 0.12-0.62 of the column, each as printed; the one cut
+    at another scale (vol 25 p. 845, `bSize` 820) is read at 1200."""
+    from wikikit.pipeline.stages.elements._image import _CROP_GEOM
+    try:
+        width = int(params.get("cwidth", ""))
+        page = int(params.get("bsize") or dict(_CROP_GEOM)["bSize"])   # the template's default
+    except ValueError:
+        return None
+    return round(width * CROP_PAGE_PX / page) if width > 0 and page > 0 else None
+
+
 def _figure_placement(raw):
     """The construct's own default placement, or None if it is not a figure."""
     stripped = raw.strip()
@@ -754,7 +776,8 @@ def _parse_image(raw):
             img = _parse_crop_param(tmpl, "Image")
             fn = img.replace(" ", "_") if img else ""
         params = _crop_params(tmpl)
-        return fn, None, _crop_side(params), params.get("description", "")
+        side = _crop_side(params)
+        return fn, _crop_width(params) if side else None, side, params.get("description", "")
     if re.match(r"\{\{\s*plain image with caption\s*\|", tmpl, re.IGNORECASE):
         from wikikit.wikitext import split_top_pipes
         inner = re.sub(r"\}\}\s*$", "", re.sub(

@@ -864,7 +864,7 @@ def _crop_out(params):
 def test_a_crop_set_left_floats_there_with_its_description_beneath():
     # SOUND p. 453's Fig. 30: type runs down its right; the text runs on round it
     out = _crop_out("|Location = left|Description = {{sc|Fig.}} 30.")
-    assert re.search(r"slightly\. «SPAN\[style:float:left;text-align:center\]»\{\{IMG:[^}]+\}\}«BR»"
+    assert re.search(r"slightly\. «SPAN\[style:float:left;width:73px;text-align:center\]»\{\{IMG:[^}|]+\|width=73\}\}«BR»"
                      r"«SC»Fig\.«/SC» 30\.«/SPAN» If, however,", out)
 
 
@@ -885,3 +885,13 @@ def test_an_uncaptioned_crop_set_left_stands_where_it_is():
     # <br> and a centred caption — floated, the caption would climb beside it
     out = _crop_out("|Location = left|Description = ")
     assert "float" not in out and re.search(r"slightly\. \{\{IMG:[^}]+\}\} If, however,", out)
+
+
+def test_a_floated_crop_is_as_wide_as_its_cwidth_on_a_1200px_page():
+    # its file is cut ~1.6x larger: at that size SOUND p. 457's Fig. 41 took
+    # 496px of a 590px column, printed at 0.52; one cut at bSize 820 is
+    # scaled to the 1200 the others are cut at (vol 25 p. 845)
+    crop = ("{{Css image crop|Image = EB1911 - Volume 25.djvu|Page = 867|bSize = 820|cWidth = 209"
+            "|cHeight = 89|oTop = 430|oLeft = 32|Location = left|Description = {{sc|Fig.}} 59.}}")
+    out = process_elements("x " + crop + " y", ElementContext(volume=25))
+    assert "float:left;width:306px" in out
