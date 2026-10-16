@@ -116,7 +116,8 @@ def source_images(text: str) -> list[dict]:
                 x, y = _param(body, "oLeft") or 0, _param(body, "oTop") or 0
                 w, h = _param(body, "cWidth") or 0, _param(body, "cHeight") or 0
                 region = [x / b, y / b, (x + w) / b, (y + h) / b]
-            out.append({"markup": body, "numbers": sorted(caption_numbers(after)), "region": region})
+            out.append({"markup": body, "numbers": sorted(caption_numbers(after)), "region": region,
+                        "at": m.start()})
         else:
             stem = (m.group("file") or m.group("raw")).strip().rsplit(".", 1)[0]
             nums = {n for a, b in _NAME_NUM.findall(stem) for n in _figure_range(a, b)}
@@ -124,7 +125,90 @@ def source_images(text: str) -> list[dict]:
                 alt = [p for p in m.group(0)[2:-2].split("|")[1:]
                        if not p.strip().endswith("px") and p.strip().lower() not in _LAYOUT]
                 nums = caption_numbers(" ".join(alt)) or caption_numbers(after)
-            out.append({"markup": m.group(0), "numbers": sorted(nums), "region": None})
+            out.append({"markup": m.group(0), "numbers": sorted(nums), "region": None, "at": m.start()})
+    for at, file, px, cap in _img_floats(text):
+        # a wiki-store file floated with its caption (vol 18 p. 272's Fig. 1,
+        # vol 27 p. 401's Fig. 2): set as the file it is — assembly floats it
+        # beside its type as the print does, under our reading's caption
+        stem = file.rsplit(".", 1)[0]
+        nums = {n for a, b in _NAME_NUM.findall(stem) for n in _figure_range(a, b)} or caption_numbers(cap)
+        out.append({"markup": f"[[File:{file}|center" + (f"|{px}px" if px else "") + "]]",
+                    "numbers": sorted(nums), "region": None, "at": at})
+    out.sort(key=lambda s: s["at"])
+    for s in out:
+        del s["at"]
+    return out
+
+
+_IMG_FLOAT = re.compile(r"\{\{\s*img float\s*\|", re.I)
+_CROP_AT = ("page", "otop", "oleft", "cwidth", "cheight")
+
+
+def identity(markup: str) -> tuple:
+    """What an image IS, however it is set: a wiki-store file by its name
+    (a link, `{{raw image}}`, `{{img float}}`), an editor's region by where
+    it is on the page — a float beside type, or a caption given, changes
+    neither."""
+    from wikikit.pipeline.stages.elements import CSS_IMAGE_CROP
+    s = markup.strip()
+    if CSS_IMAGE_CROP.match(s):
+        p = _template_params(s)                 # names and values come stripped
+        return ("crop",) + tuple(p.get(k, "") for k in _CROP_AT)
+    floats = _img_floats(s)
+    if floats:
+        return _file_identity(floats[0][1])
+    m = SOURCE_IMAGE.match(s)
+    name = m and (m.group("file") or m.group("raw"))
+    return _file_identity(name) if name else ("markup", s)
+
+
+def _file_identity(name: str) -> tuple:
+    return ("file", name.strip().replace("_", " ").lower())
+
+
+def identities_on(text: str) -> set[tuple]:
+    """Every image set in `text`, by `identity`."""
+    from wikikit.pipeline.stages.elements import CSS_IMAGE_CROP
+    from wikikit.wikitext import template_end
+    out = {identity(m.group(0)) for m in SOURCE_IMAGE.finditer(text)}
+    out |= {_file_identity(f) for _, f, _, _ in _img_floats(text)}
+    for m in CSS_IMAGE_CROP.finditer(text):
+        end = template_end(text, m.start())
+        if end:
+            out.add(identity(text[m.start():end]))
+    return out
+
+
+def _template_params(body: str) -> dict[str, str]:
+    """A template's named parameters (`body` its whole text), split at the
+    top-level bars only: a caption's own `{{sc|Fig}}` stays whole."""
+    params, depth, cur = [], 0, ""
+    for ch in body[2:-2]:
+        if ch == "|" and depth == 0:
+            params.append(cur)
+            cur = ""
+            continue
+        depth += {"{": 1, "}": -1, "[": 1, "]": -1}.get(ch, 0)
+        cur += ch
+    params.append(cur)
+    named = (p.split("=", 1) for p in params[1:] if "=" in p)
+    return {k.strip().lower(): v.strip() for k, v in named}
+
+
+def _img_floats(text: str) -> list[tuple[int, str, int | None, str]]:
+    """Each `{{img float}}` in the text: where it starts, its file, its width
+    in px, its caption."""
+    from wikikit.wikitext import template_end
+    out = []
+    for m in _IMG_FLOAT.finditer(text):
+        end = template_end(text, m.start())
+        if end is None:
+            continue
+        p = _template_params(text[m.start():end])
+        if not p.get("file"):
+            continue
+        px = re.match(r"(\d+)", p.get("width", ""))
+        out.append((m.start(), p["file"], int(px.group(1)) if px else None, p.get("cap", "")))
     return out
 
 
@@ -140,7 +224,19 @@ def our_figures(raw_text: str, figure_files: dict[str, str], boxes: dict[str, li
             continue
         box = boxes.get(name)
         out.append({"item": name, "numbers": sorted(caption_numbers(m.group("cap"))),
-                    "rel": [c / scan_width for c in box] if box and scan_width else None})
+                    "rel": [c / scan_width for c in box] if box and scan_width else None,
+                    "at": m.start()})
+    for at, file, _px, cap in _img_floats(raw_text):
+        # our crop floated beside its type (`inset_markup`), its caption inside
+        name = by_file.get(file.strip())
+        if name is None:
+            continue
+        box = boxes.get(name)
+        out.append({"item": name, "numbers": sorted(caption_numbers(cap)),
+                    "rel": [c / scan_width for c in box] if box and scan_width else None, "at": at})
+    out.sort(key=lambda o: o["at"])
+    for o in out:
+        del o["at"]
     return out
 
 

@@ -198,20 +198,27 @@ def carry_images(payload: dict, fetched: str | None = None, scan_width: int | No
         return reassemble(payload)
     p.pop("images", None)
     p.pop("images_unplaced", None)
-    reassemble(payload, carried=False)         # our figures as read: no table
-    if fetched is None:                        # carried over them yet
+    # our figures as read: no table carried over them yet, and no Commons
+    # region set for one — a region stands only for a figure Wikisource's
+    # page has no image of (vol 27 p. 401's Fig. 2, set before its
+    # `{{img float}}` was seen)
+    bare = {**payload, "provenance": {**p, "regions": None}}
+    reassemble(bare, carried=False)
+    if fetched is None:
         fetched = fetched_text(payload["volume"], payload["page_number"]) or ""
     source = images.source_images(fetched)
     if source:
         if scan_width is None and any(s["region"] for s in source):
             scan_width = current_corpus().page_scan(payload["volume"], payload["page_number"]).size[0]
         boxes = {i["name"]: i["box"] for i in p["items"] if i["kind"] == "figure"}
-        ours = images.our_figures(payload["raw_text"], p["figure_files"], boxes, scan_width)
+        ours = images.our_figures(bare["raw_text"], p["figure_files"], boxes, scan_width)
         placed, problems = images.pair(source, ours)
         if problems:
             p["images_unplaced"] = problems
         else:
             p["images"] = placed
+            if p.get("regions"):
+                p["regions"] = {k: v for k, v in p["regions"].items() if k not in placed}
     return reassemble(payload, fetched=fetched)
 
 

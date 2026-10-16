@@ -338,14 +338,12 @@ def _words_outside_notes(text: str) -> Counter:
     return Counter(w for w, *_ in word_tokens(re.sub(r"<ref\b[^>/]*>[\s\S]*?</ref>", "", text)))
 
 
-def _image_names(text: str) -> set[str]:
-    """The images a span sets: wiki-store files (linked, or set bare by
-    `{{raw image|…}}`) and scan regions, by name."""
-    files = {(link or raw).strip().replace("_", " ").lower()
-             for link, raw in re.findall(r"\[\[\s*(?:File|Image)\s*:([^|\]]+)|\{\{\s*raw image\s*\|([^{}|]+)\}\}",
-                                         text, re.I)}
-    regions = {re.sub(r"\s+", "", m) for m in re.findall(r"\{\{\s*Css image crop([\s\S]*?)\}\}", text, re.I)}
-    return files | regions
+def _image_names(text: str) -> set[tuple]:
+    """The images a span sets: wiki-store files and scan regions, each as
+    what it IS (`images.identity`) — ours floats Wikisource's crop beside its
+    type, and it is still that crop (STEAM ENGINE p. 845's Fig. 59)."""
+    from wikikit.scan.images import identities_on
+    return identities_on(text)
 
 
 def _our_table(ours: str, ot: list, amap: dict, own: list[int]) -> tuple[int, int] | None:
