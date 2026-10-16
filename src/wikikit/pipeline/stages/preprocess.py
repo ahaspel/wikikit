@@ -464,8 +464,12 @@ _STRAIGHT_PAIR = re.compile(r'(?<![\w"=|\[])"(?=[\w‘\'(\[¿¡])([^"“”\n<>|
 _HALF_OPEN = re.compile(r'(?<![\w"=|\[])"(?=[\w‘\'(\[])([^"“”\n<>|{}=\0]{1,240}?”)')
 _HALF_CLOSE = re.compile(r'(“[^"“”\n<>|{}=\0]{1,240}?)(?<=\S)"(?![\w"])')
 #: Where a straight " is markup, never a quotation: a formula, an HTML tag (its
-#: attributes), an attribute value anywhere (style="…", Description = "…").
-_QUOTE_MASK = re.compile(r"<math[^>]*>.*?</math>|<[^<>\n]*>|=\s*\"[^\"\n]*\"", re.S)
+#: attributes), an attribute value anywhere (style="…", Description = "…"), a
+#: link's or file's own name — `[[File:Sail plan of the "Santa Maria", 1893.png`
+#: (RIGGING) set curly named no file in the store, and `[[The Nigger of the
+#: "Narcissus"` no page — and a template's file or image parameter.
+_QUOTE_MASK = re.compile(r"<math[^>]*>.*?</math>|<[^<>\n]*>|=\s*\"[^\"\n]*\""
+                         r"|\[\[[^\]|\n]*|\b(?:file|image)\s*=[^|}\n]*", re.S | re.I)
 #: A wikitable's own lines of attributes: `{|`, `|-`, a caption `|+`.
 _TABLE_ATTR_LINE = re.compile(r"^[ \t]*(?:\{\||\|-|\|\+)")
 

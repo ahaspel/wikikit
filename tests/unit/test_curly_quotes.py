@@ -36,6 +36,15 @@ def test_markup_is_never_touched():
         assert curly_quotes(s) == s
 
 
+def test_a_file_or_link_name_is_never_touched():
+    for s in ('[[File:Sail plan of the "Santa Maria", 1893.png|center|400px]]',
+              '[[The Nigger of the "Narcissus"]]',
+              '{{img float|file=The "Iowa".jpg|cap=x}}'):
+        assert curly_quotes(s) == s
+    # the words a link shows are text
+    assert curly_quotes('[[Conrad|The "Narcissus"]]') == "[[Conrad|The “Narcissus”]]"
+
+
 def test_a_pair_never_spans_markup():
     s = 'he said "first<ref>a note</ref> second" then'
     assert curly_quotes(s) == s

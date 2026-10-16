@@ -33,7 +33,7 @@ from wikikit.scan.layout import layout_for
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
-from wikikit.scan.transcribe import figures_of, read_request, settle, small_type_of
+from wikikit.scan.transcribe import figures_of, fit_figures, read_request, settle, small_type_of
 
 #: Requests per batch are bounded by size: base64 images, ~0.5 MB per strip.
 MAX_BATCH_BYTES = 200 * 1024 * 1024
@@ -122,6 +122,17 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
             items = _items(ps)
             item = next(it for it in items if it.name == key)
             text, why = settle(level, item, text, figures_of(items, item))
+            if why is not None:
+                # more marks than figures: the figure the locator found as one
+                # split to match, if blank paper parts it (`fit_figures`) —
+                # before the strip is read again for nothing
+                fitted = fit_figures(level, items, item, text)
+                if fitted is not None:
+                    fit_text, fit_why = settle(level, item, text, figures_of(fitted, item))
+                    if fit_why is None:
+                        ps["items"] = [{"kind": it.kind, "box": list(it.box), "column": it.column,
+                                        "name": it.name} for it in fitted]
+                        text, why = fit_text, None
             if why is None:
                 ps["readings"][key] = text
             else:

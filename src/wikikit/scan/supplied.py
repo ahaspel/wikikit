@@ -27,7 +27,8 @@ from wikikit.scan.cut import Item
 from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
-from wikikit.scan.transcribe import Unread, assemble_page, figures_of, read_item, small_type_of
+from wikikit.scan.transcribe import (Unread, assemble_page, figures_of, fit_figures, read_item, settle,
+                                     small_type_of)
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
@@ -63,7 +64,7 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
     readings, refused, unread, rejected = {}, [], {}, {}
     small = small_type_of(cp.level, cp.plan.items, layout)
     with metered() as reading:
-        for it in cp.plan.items:
+        for it in list(cp.plan.items):           # a split figure adds an item
             if it.kind == "figure" or special:
                 continue
             try:
@@ -71,6 +72,15 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
             except Refused:
                 readings[it.name], refused = "", refused + [it.name]
             except Unread as e:
+                # more marks than figures: the figure the locator found as one
+                # split to match, if blank paper parts it (`fit_figures`)
+                fitted = fit_figures(cp.level, cp.plan.items, it, e.answer or "")
+                if fitted is not None:
+                    text, why = settle(cp.level, it, e.answer, figures_of(fitted, it))
+                    if why is None:
+                        cp.plan.items[:] = fitted
+                        readings[it.name] = text
+                        continue
                 readings[it.name], unread[it.name] = "", e.reason
                 if e.answer:
                     rejected[it.name] = e.answer

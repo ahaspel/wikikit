@@ -235,7 +235,66 @@ def settle(level: Image.Image, item: Item, text: str, figures: list[Item] = ()) 
     if _COMMENTARY.search(text):
         lines, _ = _type_lines(level, item, figures)
         return ("", None) if not lines else (text, "a description of the image, not a reading")
+    if item.kind == "head" and text.strip() and not _MARK_LINE.sub("", text).strip():
+        # a page with no running head, its top line ornament (the Century's
+        # vol 1 p. 1 under its title banner): nothing printed to read
+        return "", None
     return text, check_reading(level, item, text, figures)
+
+
+#: Blank paper, in pixel rows at the scan's resolution, that parts two
+#: figures the locator found as one: vol 1 p. 10 of the Century prints
+#: Fig. 1 over Fig. 2 with ~60 rows between them.
+MIN_FIGURE_GAP = 24
+
+
+def split_figure(level: Image.Image, fig: Item, n: int) -> list[tuple[int, int, int, int]] | None:
+    """The `n` figures one figure item holds, stacked, parted at the n-1
+    deepest full-width bands of blank paper inside it, each trimmed to its
+    ink — or None if the item has fewer such bands."""
+    import numpy as np
+    from wikikit.scan.cut import INK, runs
+    x0, y0, x1, y1 = fig.box
+    dark = np.asarray(level.crop(fig.box).convert("L")) < INK
+    inked = dark.sum(axis=1) > max(2, dark.shape[1] * 0.003)
+    gaps = [(s, e) for s, e in runs(~inked) if s > 0 and e < len(inked) and e - s >= MIN_FIGURE_GAP]
+    if len(gaps) < n - 1:
+        return None
+    cuts = sorted((s + e) // 2 for s, e in sorted(gaps, key=lambda g: g[0] - g[1])[:n - 1])
+    out = []
+    for a, b in zip([0, *cuts], [*cuts, len(inked)]):
+        rows = np.flatnonzero(inked[a:b])
+        cols = np.flatnonzero(dark[a:b].any(axis=0))
+        if not len(rows) or not len(cols):
+            return None
+        out.append((x0 + int(cols[0]), y0 + a + int(rows[0]), x0 + int(cols[-1]) + 1, y0 + a + int(rows[-1]) + 1))
+    return out
+
+
+def fit_figures(level: Image.Image, items: list[Item], item: Item, text: str) -> list[Item] | None:
+    """A reading that marks more figures than its item holds, where it holds
+    one: the locator found as one figure what the print sets as several,
+    stacked (Century vol 1 p. 10's Figs. 1 and 2, under one caption).  The
+    page's items with that figure split to match the reading
+    (`split_figure`), or None — a mark the ink cannot account for stays a
+    reading refused (a formula read as a drawing must not pass)."""
+    figs = figures_of(items, item)
+    marks = text.count(FIGURE_MARK)
+    if len(figs) != 1 or marks <= 1:
+        return None
+    boxes = split_figure(level, figs[0], marks)
+    if boxes is None:
+        return None
+    fig, taken, names = figs[0], {it.name for it in items}, [figs[0].name]
+    k = 1
+    while len(names) < marks:
+        name = f"c{fig.column}f{k}"
+        if name not in taken:
+            names.append(name)
+            taken.add(name)
+        k += 1
+    at = items.index(fig)
+    return items[:at] + [Item("figure", b, fig.column, n) for b, n in zip(boxes, names)] + items[at + 1:]
 
 
 def check_reading(level: Image.Image, item: Item, text: str, figures: list[Item] = ()) -> str | None:
