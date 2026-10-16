@@ -166,6 +166,12 @@ class Corpus:
     #: own errors in with them (TIDE's footnotes mid-article, its schedules
     #: ruled between every row).  A page with nothing fetched enters at once.
     supplied_replaces_text_at: int = 1
+    #: QUOTATION MARKS — True: a straight pair ("…") in the text, or a pair
+    #: half straight and half curly, is set curly (“…”), as the book prints
+    #: them all (`preprocess.curly_quotes`).  EB1911 (user, 2026-10-16): the
+    #: print makes no difference, Wikisource's transcribers and our readings
+    #: mixed the two (vol 28 p. 427: “long” beside "overtides").
+    curly_quotes: bool = False
     #: LAYOUT — what the book knows of a page's layout, for the cutter:
     #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
     #: (its column count, …).  The cutter measures the ink only where the book

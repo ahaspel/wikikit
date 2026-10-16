@@ -34,6 +34,7 @@ from __future__ import annotations
 import html
 import re
 
+from wikikit.corpora import current_corpus
 from wikikit.corrections import apply_corrections
 from wikikit.scan.vocabulary import VOCABULARY
 from wikikit.wikitext import template_end
@@ -451,6 +452,53 @@ def _strip_chrome_furniture(stream: str) -> str:
     return "".join(out)
 
 
+#: A straight-quote pair in running text: an opening " before a word (a letter,
+#: digit, quote or bracket — never a sign: "-n(2 sin 0)" in raw OCR is no
+#: quotation) and not after a letter, digit, = or |; a closing " after a
+#: non-space and before no letter or digit; on one line, the words between
+#: holding no markup and no curly mark (a pair holding one is half of a
+#: garbled run: vol 18 p. 144).
+_STRAIGHT_PAIR = re.compile(r'(?<![\w"=|\[])"(?=[\w‘\'(\[¿¡])([^"“”\n<>|{}=\0]{1,240}?)(?<=\S)"(?![\w"])')
+#: A pair the transcriber began straight and closed curly, or the reverse:
+#: "Riflemen, Form!” (vol 26 p. 632), “The Proud." (vol 1 p. 184).
+_HALF_OPEN = re.compile(r'(?<![\w"=|\[])"(?=[\w‘\'(\[])([^"“”\n<>|{}=\0]{1,240}?”)')
+_HALF_CLOSE = re.compile(r'(“[^"“”\n<>|{}=\0]{1,240}?)(?<=\S)"(?![\w"])')
+#: Where a straight " is markup, never a quotation: a formula, an HTML tag (its
+#: attributes), an attribute value anywhere (style="…", Description = "…").
+_QUOTE_MASK = re.compile(r"<math[^>]*>.*?</math>|<[^<>\n]*>|=\s*\"[^\"\n]*\"", re.S)
+#: A wikitable's own lines of attributes: `{|`, `|-`, a caption `|+`.
+_TABLE_ATTR_LINE = re.compile(r"^[ \t]*(?:\{\||\|-|\|\+)")
+
+
+def curly_quotes(stream: str) -> str:
+    """Every straight-quote pair in running text set curly (“…”), and a pair
+    half straight set whole: the book prints one kind, the transcriptions mix
+    the two (`Corpus.curly_quotes`).  A lone " is left as it is — inches and
+    seconds of arc (12", 15° 20' 30"), ditto marks, stray OCR — and so is
+    every " in markup: formulas, tags and their attributes, attribute values,
+    a wikitable's attribute lines, a template's or link's own bars."""
+    masked = _QUOTE_MASK.sub(lambda m: "\0" * len(m.group(0)), stream)
+    out, i = [], 0
+    for line in re.finditer(r"[^\n]+", masked):
+        s = line.group(0)
+        if '"' not in s or _TABLE_ATTR_LINE.match(s):
+            continue
+        work = _STRAIGHT_PAIR.sub(lambda m: f"“{m.group(1)}”", s)
+        work = _HALF_OPEN.sub(lambda m: f"“{m.group(1)}", work)
+        work = _HALF_CLOSE.sub(lambda m: f"{m.group(1)}”", work)
+        if work == s:
+            continue
+        # the masked markup back as it was: each mark is one character for
+        # one, so the line keeps its length and every offset in it
+        a, b = line.start(), line.end()
+        text = stream[a:b]
+        out.append(stream[i:a])
+        out.append("".join(t if ch == "\0" else ch for t, ch in zip(text, work)))
+        i = b
+    out.append(stream[i:])
+    return "".join(out)
+
+
 def preprocess(stream: str, volume: int = 0) -> str:
     """The single preprocessing step: corrections + quote-run + source-clean +
     page-transition heal on the continuous RAW stream; return the frozen clean
@@ -463,6 +511,8 @@ def preprocess(stream: str, volume: int = 0) -> str:
     corrections (0 ⇒ none — for diagnostic / test callers without a volume;
     production passes the real volume via ``volume_stream``)."""
     stream = apply_corrections(stream, volume)     # data/corrections.json typo fixes
+    if current_corpus().curly_quotes:
+        stream = curly_quotes(stream)              # "…" → “…”, as the book prints them
     stream = _convert_quote_runs(stream)           # '''/''/<b>/<i>/{{bold|}} → «B»/«I»
     return _source_clean(stream)
 
