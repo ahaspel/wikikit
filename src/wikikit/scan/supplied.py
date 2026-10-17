@@ -3,9 +3,12 @@
 The file has the shape of a fetched page (`wikikit.source_pages`), so it enters
 by the same door, plus `source: "scan"` and its provenance: the deskew, every
 item's box, every reading, the figures' file names, the model, the date, and
-the items the API refused.  The READINGS are the source a proofreader corrects;
+the items the API refused, and who fetched it (`fetched_by`: whose key read
+it; it is theirs to proofread until given to someone else, `owner`).  The READINGS are the source a proofreader corrects;
 `raw_text` is assembled from them (`transcribe.assemble_page`) and re-assembled
-whenever one changes — never edited on its own.
+whenever one changes — until a person proofreads the PAGE as one text at the
+desk (`set_page_text`): from then on its text is theirs, kept as they left it,
+and the readings are the record of how the model read it.
 
 Figure images are not committed: they are crops of the scan, regenerated into
 the book's image store from the scan and the boxes recorded here
@@ -14,6 +17,7 @@ the book's image store from the scan and the boxes recorded here
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -27,14 +31,46 @@ from wikikit.scan.cut import Item
 from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
-from wikikit.scan.transcribe import (Unread, assemble_page, figures_of, fit_figures, read_item, settle,
-                                     small_type_of)
+from wikikit.scan.transcribe import (Unread, assemble_page, drop_neighbour_marks, figures_of, fit_figures,
+                                     read_item, settle, small_type_of)
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
 def page_id(volume: int, page: int) -> str:
     """A page's id wherever pages are tracked (the desk, a batch run)."""
     return f"v{volume:02d}-p{page:04d}"
+
+
+def fetcher() -> str | None:
+    """Who is reading pages here, on their own key: the checkout's git name
+    (`git config user.name`), recorded on each page they fetch."""
+    import subprocess
+    try:
+        out = subprocess.run(["git", "config", "user.name"], cwd=book_root(),
+                             capture_output=True, text=True).stdout.strip()
+    except OSError:
+        return None
+    return out or None
+
+
+def owner(payload: dict) -> str | None:
+    """Who proofreads the page: whoever it was given to at the desk, else
+    whoever fetched it."""
+    p = payload["provenance"]
+    return p.get("owner") or p.get("fetched_by")
+
+
+#: An apostrophe between two letters (don’t, o’clock): never markup, which is
+#: two or more; beside a digit it is a prime (5' 6"), left as it is.
+_APOSTROPHE = re.compile(r"(?<=[^\W\d_])'(?=[^\W\d_])")
+
+
+def curly_marks(text: str) -> str:
+    """A reading's marks as a book that prints them curly sets them
+    (`Corpus.curly_readings`): its quotation marks by the engine's own rule
+    (`preprocess.curly_quotes`), and an apostrophe within a word."""
+    from wikikit.pipeline.stages.preprocess import curly_quotes
+    return _APOSTROPHE.sub("’", curly_quotes(text))
 
 
 def figure_file(volume: int, page: int, item_name: str) -> str:
@@ -81,6 +117,13 @@ def transcribe_page(img: Image.Image, volume: int, page: int, scan: str,
                         cp.plan.items[:] = fitted
                         readings[it.name] = text
                         continue
+                # a mark for the next column's figure, seen across the cut
+                bare = drop_neighbour_marks(cp.plan.items, it, e.answer or "")
+                if bare is not None:
+                    text, why = settle(cp.level, it, bare, figures_of(cp.plan.items, it))
+                    if why is None:
+                        readings[it.name] = text
+                        continue
                 readings[it.name], unread[it.name] = "", e.reason
                 if e.answer:
                     rejected[it.name] = e.answer
@@ -103,10 +146,13 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
     gutter look's answer, when it was asked (`figures.gutter`)."""
     files = {it.name: figure_file(volume, page, it.name)
              for it in plan.items if it.kind == "figure"}
+    if current_corpus().curly_readings:
+        readings = {name: curly_marks(r) for name, r in readings.items()}
     payload = {
         "volume": volume, "page_number": page, "source": "scan", "title": scan,
         "provenance": {
             "scan": scan, "model": MODEL, "transcribed": date.today().isoformat(),
+            "fetched_by": fetcher(),
             "angle": plan.angle,
             "column_width": max(b - a for a, b in cut.page_columns(level)),
             "items": [{"name": it.name, "kind": it.kind, "column": it.column, "box": list(it.box)}
@@ -158,6 +204,12 @@ def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) 
     (`carry_markup`; `carried=False`: the readings alone).  `fetched`: the
     replaced page's text (default: as filed)."""
     p = payload["provenance"]
+    if p.get("page_edited"):
+        # proofread as a page: its text is the person's, never re-made from
+        # the readings — only its level said again
+        head, body, furniture = page_parts(payload["raw_text"])
+        payload["raw_text"] = framed(head, body, furniture, level(payload))
+        return payload
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
                         legacy_captions=not p.get("captions_marked"),
@@ -340,6 +392,8 @@ def level(payload: dict) -> int:
     (`special`: set across its columns) — the reader is told the page is
     incomplete; else 1 (not proofread)."""
     p = payload["provenance"]
+    if p.get("page_checked"):
+        return 3
     checked = p.get("checked", {})
     items = [it for it in items_of(payload) if it.kind != "figure"]
     texts = [it.name for it in items]
@@ -352,10 +406,49 @@ def level(payload: dict) -> int:
     return 2 if gaps else 1
 
 
+#: A page's frame as assembly writes it (`transcribe.assemble_page`): its
+#: quality and running head above the body, its furniture and notes below.
+_FRAME = re.compile(r'^<noinclude><pagequality level="\d" user="[^"]*" />(.*?)</noinclude>'
+                    r'(.*)<noinclude>(.*?)<references/></noinclude>$', re.S)
+
+
+def page_parts(raw: str) -> tuple[str, str, str]:
+    """(running head, body, furniture) of an assembled page."""
+    m = _FRAME.match(raw)
+    if not m:
+        raise ValueError(f"not a page as assembly frames it: {raw[:80]!r}")
+    return m.group(1), m.group(2), m.group(3)
+
+
+def framed(head: str, body: str, furniture: str, level: int) -> str:
+    who = "proofreader" if level >= 3 else "transcriber"
+    return (f'<noinclude><pagequality level="{level}" user="{who}" />{head}</noinclude>'
+            f"{body}<noinclude>{furniture}<references/></noinclude>")
+
+
+def set_page_text(payload: dict, head: str, body: str, checked: bool,
+                  by: str | None = None, at: str | None = None) -> dict:
+    """The page as a person left it at the desk: its running head and body,
+    and whether they checked it — proofread (level 3) once checked.  From then
+    on the page keeps this text: `reassemble` no longer makes it from the
+    readings (`page_edited`: who last saved it, and when)."""
+    p = payload["provenance"]
+    _, _, furniture = page_parts(payload["raw_text"])
+    p["page_edited"] = {"by": by, "at": at}
+    if checked:
+        p["page_checked"] = {"by": by, "at": at}
+    else:
+        p.pop("page_checked", None)
+    payload["raw_text"] = framed(head, body, furniture, level(payload))
+    return payload
+
+
 def write(payload: dict) -> Path:
     path = path_for(payload["volume"], payload["page_number"])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    # one line ending on every machine: a page fetched on Windows and one
+    # fetched elsewhere differ only where their content does
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
     return path
 
 

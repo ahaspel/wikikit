@@ -64,3 +64,13 @@ def test_offsets_are_kept():
     s = 'a "b" <i>c</i> "d"\nnext "e"'
     out = curly_quotes(s)
     assert len(out) == len(s) and out == "a “b” <i>c</i> “d”\nnext “e”"
+
+
+def test_our_readings_set_apostrophes_curly_too():
+    """A book whose readings are set curly as read (`Corpus.curly_readings`):
+    an apostrophe within a word as well — never a run of them, which is
+    markup, nor a prime beside a digit."""
+    from wikikit.scan.supplied import curly_marks
+    assert curly_marks("I'll ''able'' 'em; o'clock; \"don't\"") == "I’ll ''able'' 'em; o’clock; “don’t”"
+    for s in ("''abduce'''s", "'''3'''†", "a 5' 6\" man", "15° 20' 30\""):
+        assert curly_marks(s) == s

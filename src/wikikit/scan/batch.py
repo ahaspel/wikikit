@@ -33,7 +33,8 @@ from wikikit.scan.layout import layout_for
 from wikikit.scan.cut import Item
 from wikikit.scan.supplied import page_id
 from wikikit.scan.model import USAGE_FIELDS, batch_status, collect, request, submit
-from wikikit.scan.transcribe import figures_of, fit_figures, read_request, settle, small_type_of
+from wikikit.scan.transcribe import (drop_neighbour_marks, figures_of, fit_figures, read_request, settle,
+                                     small_type_of)
 
 #: Requests per batch are bounded by size: base64 images, ~0.5 MB per strip.
 MAX_BATCH_BYTES = 200 * 1024 * 1024
@@ -133,6 +134,13 @@ def _apply(state: dict, results: dict, scans: Callable[[int, int], Image.Image])
                         ps["items"] = [{"kind": it.kind, "box": list(it.box), "column": it.column,
                                         "name": it.name} for it in fitted]
                         text, why = fit_text, None
+            if why is not None:
+                # a mark for the next column's figure, seen across the cut
+                bare = drop_neighbour_marks(items, item, text)
+                if bare is not None:
+                    bare_text, bare_why = settle(level, item, bare, figures_of(items, item))
+                    if bare_why is None:
+                        text, why = bare_text, None
             if why is None:
                 ps["readings"][key] = text
             else:

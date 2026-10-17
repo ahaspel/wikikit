@@ -42,6 +42,20 @@ def test_a_mark_with_no_figure_at_all_is_never_fitted():
     assert fit_figures(_page(60), [text_item], text_item, f"{FIGURE_MARK}\ntext") is None
 
 
+def test_the_next_columns_figure_seen_across_the_cut_is_dropped():
+    from wikikit.scan.transcribe import drop_neighbour_marks
+    strip = Item("text", (857, 1960, 1601, 3027), 3, "c3s3")
+    theirs = Item("figure", (1601, 2008, 2343, 2304), 4, "c4f1")
+    items = [strip, Item("text", (1601, 1960, 2343, 2008), 4, "c4s3"), theirs]
+    text = f"may belong to the\n{FIGURE_MARK}\nstate. (b) In Scots law"
+    assert drop_neighbour_marks(items, strip, text) == "may belong to the\nstate. (b) In Scots law"
+    # a caption after the mark may be this column's own text: held
+    assert drop_neighbour_marks(items, strip, f"x\n{FIGURE_MARK}\n{{{{c|Fig. 3.}}}}") is None
+    # no figure beside the strip: a mark the ink cannot account for, held
+    far = Item("figure", (1900, 2008, 2343, 2304), 4, "c4f1")
+    assert drop_neighbour_marks([strip, far], strip, text) is None
+
+
 def test_a_head_that_is_only_a_mark_is_no_head():
     head = Item("head", (0, 0, 400, 40), 0, "head")
     assert settle(Image.new("L", (400, 600), 255), head, FIGURE_MARK) == ("", None)

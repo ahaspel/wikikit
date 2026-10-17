@@ -167,3 +167,128 @@ def test_corrections_come_back_and_a_fully_checked_page_is_proofread(tmp_path, m
     [line] = desk.apply(rest)
     assert line.endswith("level 3 (now proofread)")
     assert '<pagequality level="3" user="proofreader" />' in supplied.read(1, 29)["raw_text"]
+
+
+def test_a_page_proofread_whole_keeps_its_text(tmp_path, monkeypatch):
+    """The desk proofreads a page as one text: saved, the page keeps it —
+    reassembly no longer makes it from the readings — and a check makes it
+    proofread."""
+    from test_scan_supplied import payload
+    from wikikit.scan import desk, supplied
+    (tmp_path / "book.env").write_text("")
+    monkeypatch.chdir(tmp_path)
+    supplied.write(payload())
+    head, body, _ = supplied.page_parts(supplied.read(1, 29)["raw_text"])
+    fixed = body.replace("(ab′ạ-kus)", "(ab′a̤-kus)") + "\n\nA line the cut missed."
+    pid = supplied.page_id(1, 29)
+    [line] = desk.apply_pages({pid: {"head": head, "text": fixed, "status": "unchecked", "updated_by": "u_x"}})
+    assert line == "vol 1 p29: corrected, level 1"
+    page = supplied.reassemble(supplied.read(1, 29))            # as any later assembly would
+    assert supplied.page_parts(page["raw_text"])[1] == fixed
+    assert page["provenance"]["page_edited"]["by"] == "u_x"
+    assert desk.apply_pages({pid: {"head": head, "text": fixed, "status": "unchecked"}}) == []
+    [line] = desk.apply_pages({pid: {"head": head, "text": fixed, "status": "checked"}})
+    assert line == "vol 1 p29: text unchanged, level 3 (now proofread)"
+    raw = supplied.read(1, 29)["raw_text"]
+    assert raw.startswith('<noinclude><pagequality level="3" user="proofreader" />{{RunningHeader|')
+    assert raw.endswith("A line the cut missed.<noinclude><references/></noinclude>")
+
+
+def test_a_page_is_its_fetchers_until_given_away(tmp_path, monkeypatch):
+    """Each page is proofread by whoever fetched it, on their own key, until
+    it is given to someone else at the desk; given back, it is theirs again."""
+    from test_scan_supplied import payload
+    from wikikit.scan import desk, supplied
+    (tmp_path / "book.env").write_text("")
+    monkeypatch.chdir(tmp_path)
+    page = payload()
+    page["provenance"]["fetched_by"] = "ahaspel"
+    supplied.write(page)
+    pid = supplied.page_id(1, 29)
+    head, body, _ = supplied.page_parts(page["raw_text"])
+    assert supplied.owner(supplied.read(1, 29)) == "ahaspel"
+    assert desk.apply_pages({pid: {"head": head, "text": body, "owner": "ahaspel"}}) == []
+    [line] = desk.apply_pages({pid: {"head": head, "text": body, "owner": "alaemmle"}})
+    assert line == "vol 1 p29: text unchanged, level 1, given to alaemmle"
+    after = supplied.read(1, 29)
+    assert supplied.owner(after) == "alaemmle" and "page_edited" not in after["provenance"]
+    [line] = desk.apply_pages({pid: {"head": head, "text": body, "owner": "ahaspel"}})
+    assert "owner" not in supplied.read(1, 29)["provenance"]
+
+
+@pytest.mark.parametrize("text", [
+    # what assembly writes into a page: a figure, a figure with type beside
+    # it, the mark that the page opens a paragraph, a caption's lines
+    "{{nop}}'''abacus''' (ab′a̤-kus), ''n.''",
+    "before\n\n[[File:century v01 p0029 c1f1.png|center|251px]]\n{{c|Fig. 1.}}\n\nafter",
+    "text {{img float|file=century v01 p0034 c3f1.png|width=181px|align=left|cap=''a'', Abdomen.}} runs on",
+    "x {{img float|file=a b.png|width=99px|align=right|cap=Abutment.<br />''A, A,'' arch.}} y",
+    # after a note in small type the paragraph runs on through the rest of a
+    # sentence, and opens a new one otherwise (`elements._opens_paragraph_after_note`)
+    "a\n{{smaller block|q\n{{right|S, ii.}}}}\n{{smaller block|r}}\nb",
+    "a\n{{smaller block|q}}\nhence the name",
+    "a\n{{smaller block|q}}\n2. To be averse",
+    "a\n{{smaller block|q}}\n{{sc|Bacon}} said",
+    "a\n{{smaller block|q,}}\n\nand so on",
+    "'''''hate'''''",
+    # an indent: a line of verse set in, or a space of fixed width
+    "<poem>Line one\n{{gap}}line two\n{{gap|1em}}three\n{{em|3}}four\n{{gap|2.5em}}five</poem>",
+    "Total{{gap}}12 {{em}}a{{gap|4}}b",
+])
+def test_a_whole_page_renders_as_the_engine_does(text):
+    assert parity([text]) == []
+
+
+def test_a_figure_shows_the_desks_own_copy():
+    [shown] = desk_render(["[[File:x y.png|center|20px]]"], render_table())
+    assert 'src=""' in shown["html"]
+    from wikikit.scan.desk import DESK_RENDER_JS
+    import json, subprocess
+    runner = ("const r=require(process.argv[1]);"
+              "process.stdout.write(JSON.stringify(r.render('[[File:x y.png|center|20px]]', "
+              "JSON.parse(process.argv[2]), {'x y.png': 'figures/p/c1f1.png'})))")
+    out = json.loads(subprocess.run(["node", "-e", runner, str(DESK_RENDER_JS), json.dumps(render_table())],
+                                    capture_output=True, text=True, encoding="utf-8", check=True).stdout)
+    assert 'src="figures/p/c1f1.png"' in out["html"] and out["leaks"] == []
+
+
+@pytest.mark.parametrize("line", [
+    "now written ''o''', a reduced form of ''of''",           # a run of 3 left open
+    "< Hind. '''ădālat'', < Ar. '''adāla''(''t'')",            # bold and italic crossed
+    "''Monomero''somata'''' and",                              # four apostrophes
+])
+def test_apostrophes_the_edition_reads_otherwise_are_a_leak(line):
+    [shown] = desk_render([line], render_table())
+    assert line in shown["leaks"]
+
+
+def _desk_curly(texts: list[str]) -> list[str]:
+    import json, subprocess
+    from wikikit.scan.desk import DESK_RENDER_JS
+    runner = ("const r=require(process.argv[1]);let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{"
+              "const a=JSON.parse(s);process.stdout.write(JSON.stringify(a.texts.map(t=>r.curlyQuotes(t,a.q))))});")
+    out = subprocess.run(["node", "-e", runner, str(DESK_RENDER_JS)], capture_output=True, text=True,
+                         encoding="utf-8", check=True,
+                         input=json.dumps({"texts": texts, "q": render_table()["quotes"]}))
+    return json.loads(out.stdout)
+
+
+def test_the_desk_sets_quotation_marks_curly_as_the_engine_does():
+    """A book that sets its quotation marks curly (`Corpus.curly_quotes`):
+    the desk's reader view sets them as the engine does, every case the
+    engine's own tests hold it to, and words in any alphabet."""
+    import test_curly_quotes as cases
+    from wikikit.pipeline.stages.preprocess import curly_quotes
+    texts = ['the explanation of "overtides" and "compound tides."', '“The Proud." The duke',
+             'and "Riflemen, Form!” published', "only to “long” waves", 'a 12" gun and a 9" howitzer',
+             "15° 20' 30\" and 16° 2' 4\"", 'cwt. " " ditto', '{| style="margin:auto"\n|a||b\n|}',
+             '<span style="font-family:"x"">a</span>', '<math>\text{"a"}</math>',
+             '{{Css image crop|Description = "Fig. 2"}}', '<ref name="Hart">a</ref>',
+             '[[File:Sail plan of the "Santa Maria", 1893.png|center|400px]]', '[[The Nigger of the "Narcissus"]]',
+             '{{img float|file=The "Iowa".jpg|cap=x}}', '[[Conrad|The "Narcissus"]]',
+             'he said "first<ref>a note</ref> second" then', '(2 sin 0)"-n(2 sin 0)" 2',
+             '{{EB1911 article link|Alabama Arbitration|"Alabama" Arbitration}}',
+             "spirited away, \"''enlevé'',\" by some person", '"Été" and "ŝi" and "Ἀθῆναι" and "über"',
+             'as, "such rudiments or \'\'abecedaries,\'\'" \'\'Fuller\'\'', 'a "b"\nc "d" e\n"f']
+    assert cases.curly_quotes is curly_quotes
+    assert _desk_curly(texts) == [curly_quotes(t) for t in texts]

@@ -6,19 +6,23 @@ server, where the engine is: its rendered pane is the site's viewer showing
 Century's) is a page outside this engine (a claude.ai artifact with its own
 store), so the engine meets it with files:
 
-- OUT: `bundle` writes, for chosen supplied pages, every item's image (cut
-  from the scan by the recorded boxes) and `desk.json` — the pages, their
-  strips and readings, the render table the engine measured
+- OUT: `bundle` writes, for chosen supplied pages, each page WHOLE: its scan
+  (deskewed), its running head and text as they will enter, copies of its
+  figures, and `desk.json` — the pages, the render table the engine measured
   (`vocabulary.render_table`), and the book's notation for the palette.  The
   desk applies the table with `desk_render.js` and knows no markup of its own.
-- BACK: `apply` takes the desk's saved strips and writes them into the
-  supplied pages' readings, records who checked what, and reassembles each
-  page — level 3 (proofread) once every text strip of it is checked.
-- PARITY: `parity` renders every strip with desk_render.js (under Node) and
-  with the engine's own chain, and reports any difference: the desk's view is
-  a second renderer, tolerated only because it is held to the first.
+  A page is proofread as one text: the strips it was cut into for the model
+  to read are not the proofreader's concern (user, 2026-10-16).
+- BACK: `apply_pages` takes the desk's saved pages and gives each its text as
+  the proofreader left it (`supplied.set_page_text`) — level 3 (proofread)
+  once checked.  `apply` is the local desk's, strip by strip, until it too
+  shows the page whole.
+- PARITY: `parity` renders every reading — `parity pages`, every page — with
+  desk_render.js (under Node) and with the engine's own chain, and reports any
+  difference: the desk's view is a second renderer, tolerated only because it
+  is held to the first.
 
-    uv run python -m wikikit.scan.desk parity        # from the book's root
+    uv run python -m wikikit.scan.desk parity [pages]   # from the book's root
 """
 from __future__ import annotations
 
@@ -36,7 +40,7 @@ from wikikit.pipeline.stages.preprocess import PARAGRAPH_ENDS_WITH_PAGE
 from wikikit.scan import cut, supplied
 from wikikit.scan.supplied import page_id
 from wikikit.scan.transcribe import PARA
-from wikikit.scan.vocabulary import _render, render_table
+from wikikit.scan.vocabulary import IMAGE_SRC, _render, render_table
 
 DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
@@ -46,6 +50,8 @@ _TEX_RE = re.compile(r'<span class="tex">[^<]*</span>')
 #: id="section-<its words>") is a link target, not the construct's look:
 #: render_table leaves it out of the desk, so parity leaves it out of the engine.
 _ANCHOR_RE = re.compile(r'\s+id="section-[^"]*"')
+#: what a report says of a page the desk has just made proofread
+NOW_PROOFREAD = " (now proofread)"
 
 
 def strip_id(volume: int, page: int, name: str) -> str:
@@ -127,7 +133,7 @@ def page_article(payload: dict, title: str, link=None) -> dict:
 
 
 def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Image],
-           out: Path, flags=None, label=None) -> Path:
+           out: Path, flags=None, label=None, people=None) -> Path:
     """Write the desk's files for these supplied pages into `out`.
 
     `flags`: the book's own checks, `payload -> {strip name: [{"text",
@@ -137,32 +143,97 @@ def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Imag
 
     `label`: `(volume, page) -> str`, what the person at the desk calls the
     page — the PRINTED page, where a book's file numbers are not the print's
-    (EB1911's are Wikisource's scan indices).  None: the file's number."""
+    (EB1911's are Wikisource's scan indices).  None: the file's number.
+
+    `people`: everyone a page may be given to at the desk — each page shows
+    to its owner (`supplied.owner`).  None: the owners of these pages."""
     out.mkdir(parents=True, exist_ok=True)
     desk_pages = []
     for vol, pg in pages:
         payload = supplied.read(vol, pg)
         p = payload["provenance"]
-        rels = cut_strips(payload, scans[(vol, pg)], out)
-        page_flags = flags(payload) if flags else {}
-        strips = []
-        for it in supplied.items_of(payload):
-            strips.append({"id": strip_id(vol, pg, it.name), "name": it.name, "kind": it.kind,
-                           "column": it.column, "img": rels[it.name],
-                           "text": p["readings"].get(it.name, "") if it.kind != "figure" else None,
-                           "refused": it.name in p.get("refused", []) or it.name in p.get("unread", {}),
-                           "unread": p.get("unread", {}).get(it.name),
-                           "checked": it.name in p.get("checked", {}),
-                           "flags": page_flags.get(it.name, [])})
-        head = (p["readings"].get("head") or "").strip()
-        desk_pages.append({"id": page_id(vol, pg), "volume": vol, "page": pg,
-                           "label": (label or page_label)(vol, pg),
-                           "running_head": head,
-                           "disagreements": p.get("disagreements", {}), "strips": strips})
+        pid = page_id(vol, pg)
+        level = cut.deskew(scans[(vol, pg)].convert("L"), p["angle"])
+        img = f"pages/{pid}.jpg"
+        (out / img).parent.mkdir(parents=True, exist_ok=True)
+        level.save(out / img, quality=85, optimize=True)
+        head, body, _ = supplied.page_parts(payload["raw_text"])
+        columns = {it.name: it.column for it in supplied.items_of(payload)}
+        notes = []
+        gaps = sorted({columns[n] for n in [*p.get("refused", []), *p.get("unread", {})]
+                       if n in columns and n not in p.get("checked", {})})
+        if gaps and not p.get("page_edited"):
+            notes.append(f"The model could not read part of column {', '.join(map(str, gaps))}: "
+                         "transcribe what is missing from the scan.")
+        desk_pages.append({"id": pid, "volume": vol, "page": pg,
+                           "label": (label or page_label)(vol, pg), "img": img,
+                           "head": head, "text": body,
+                           "figures": figure_copies(payload, level, out),
+                           # the book's checks, each found in the page's text by its words
+                           "flags": [{"text": f["text"], "reason": f["reason"]}
+                                     for fs in (flags(payload) if flags else {}).values() for f in fs],
+                           "notes": notes, "checked": supplied.level(payload) >= 3,
+                           "owner": supplied.owner(payload)})
     (out / "desk.json").write_text(json.dumps({
-        "table": render_table(), "notation": notation(), "paragraph_signal": PARA,
-        "pages": desk_pages}, ensure_ascii=False, indent=1), encoding="utf-8")
+        "table": render_table(), "notation": notation(), "pages": desk_pages,
+        "people": sorted(set(people or ()) | {d["owner"] for d in desk_pages if d["owner"]})},
+        ensure_ascii=False, indent=1), encoding="utf-8")
     return out / "desk.json"
+
+
+def figure_copies(payload: dict, level: Image.Image, out: Path) -> dict[str, str]:
+    """The page's figures, cut from the deskewed scan for the desk to show in
+    the page as it will enter -> {file name as the page names it: path
+    relative to `out`}."""
+    p = payload["provenance"]
+    pid = page_id(payload["volume"], payload["page_number"])
+    copies = {}
+    for it in supplied.items_of(payload):
+        name = p["figure_files"].get(it.name) if it.kind == "figure" else None
+        if name:
+            rel = f"figures/{pid}/{it.name}.png"
+            (out / rel).parent.mkdir(parents=True, exist_ok=True)
+            level.crop(it.box).save(out / rel, optimize=True)
+            copies[name] = rel
+    return copies
+
+
+def apply_pages(rows: dict[str, dict]) -> list[str]:
+    """The desk's saved pages -> the supplied pages.  `rows` maps a page id to
+    {"head", "text", "status", "owner", "updated_by", "updated_at"} as the
+    desk stores them: each page takes its text as the person left it, and is
+    proofread once they checked it (`supplied.set_page_text`); a page given to
+    someone else at the desk is theirs from now on (`owner`).  Returns one
+    line per page changed."""
+    report = []
+    for pid, row in sorted(rows.items()):
+        vol, pg = int(pid[1:3]), int(pid[5:9])
+        if page_id(vol, pg) != pid:
+            raise KeyError(f"not a page id: {pid!r}")
+        payload = supplied.read(vol, pg)
+        before = supplied.level(payload)
+        head, body, _ = supplied.page_parts(payload["raw_text"])
+        new_head, new_body = row.get("head", head), row.get("text", body)
+        checked = row.get("status") == "checked"
+        edited = (new_head, new_body) != (head, body)
+        given = row.get("owner") or supplied.owner(payload)
+        regiven = given != supplied.owner(payload)
+        if not edited and checked == (before >= 3) and not regiven:
+            continue
+        if regiven:
+            p = payload["provenance"]
+            p["owner"] = given
+            if given == p.get("fetched_by"):
+                del p["owner"]
+        if edited or checked != (before >= 3):
+            supplied.set_page_text(payload, new_head, new_body, checked,
+                                   by=row.get("updated_by"), at=row.get("updated_at"))
+        supplied.write(payload)
+        after = supplied.level(payload)
+        report.append(f"vol {vol} p{pg}: {'corrected' if edited else 'text unchanged'}, level {after}"
+                      + (NOW_PROOFREAD if after > before else "")
+                      + (f", given to {given}" if regiven else ""))
+    return report
 
 
 def apply(rows: dict[str, dict]) -> list[str]:
@@ -194,7 +265,7 @@ def apply(rows: dict[str, dict]) -> list[str]:
         supplied.write(payload)
         report.append(f"vol {vol} p{pg}: {changed} reading(s) corrected, "
                       f"{len(checked)} strip(s) checked, level {supplied.level(payload)}"
-                      + (" (now proofread)" if supplied.level(payload) > before else ""))
+                      + (NOW_PROOFREAD if supplied.level(payload) > before else ""))
     return report
 
 
@@ -202,7 +273,7 @@ def desk_render(texts: list[str], table: dict) -> list[dict]:
     """desk_render.js on each text, under Node: what the desk shows."""
     runner = ("const r=require(process.argv[1]);let s='';process.stdin.on('data',d=>s+=d);"
               "process.stdin.on('end',()=>{const a=JSON.parse(s);"
-              "process.stdout.write(JSON.stringify(a.texts.map(t=>r.render(t,a.table))))});")
+              "process.stdout.write(JSON.stringify(a.texts.map(t=>r.render(t,a.table,{}))))});")
     done = subprocess.run(["node", "-e", runner, str(DESK_RENDER_JS)],
                           input=json.dumps({"texts": texts, "table": table}),
                           capture_output=True, text=True, encoding="utf-8", check=True)
@@ -232,30 +303,41 @@ def parity(texts: list[str]) -> list[tuple[str, str, str]]:
         # A formula is typeset by the reader — KaTeX in the viewer and on the
         # desk — so both sides hold the engine's stand-in for it.  Both sides
         # are compared as characters: &nbsp; and \xa0 are one space.
-        desk = html.unescape(_TEX_RE.sub(table["math"][0], d["html"]))
-        engine = html.unescape(engine)
+        # A figure's image is the site's file there and the desk's copy here.
+        desk = html.unescape(IMAGE_SRC.sub('src=""', _TEX_RE.sub(table["math"][0], d["html"])))
+        engine = html.unescape(IMAGE_SRC.sub('src=""', engine))
         if d["leaks"] or desk != engine:
             out.append((text, desk, engine))
     return out
 
 
-def _book_readings() -> list[str]:
+def _book_payloads() -> list[dict]:
     from wikikit.corpora import book_root
     from wikikit.source_pages import SUPPLIED_DIR
+    return [json.loads(f.read_text(encoding="utf-8"))
+            for f in sorted((book_root() / SUPPLIED_DIR).glob("vol_*/*.json"))]
+
+
+def _book_readings() -> list[str]:
     texts = []
-    for f in sorted((book_root() / SUPPLIED_DIR).glob("vol_*/*.json")):
-        p = json.loads(f.read_text(encoding="utf-8"))["provenance"]
+    for payload in _book_payloads():
+        p = payload["provenance"]
         heads = {i["name"] for i in p["items"] if i["kind"] == "head"}
         texts += [t for n, t in p["readings"].items() if n not in heads and t]
     return texts
 
 
+def _book_pages() -> list[str]:
+    """Every supplied page's body, as the desk shows it to proofread."""
+    return [supplied.page_parts(payload["raw_text"])[1] for payload in _book_payloads()]
+
+
 def main() -> int:
-    if sys.argv[1:] != ["parity"]:
+    if sys.argv[1:] not in (["parity"], ["parity", "pages"]):
         print(__doc__)
         return 2
     sys.stdout.reconfigure(encoding="utf-8")
-    texts = _book_readings()
+    texts = _book_pages() if sys.argv[2:] == ["pages"] else _book_readings()
     bad = parity(texts)
     for text, desk, engine in bad:
         print(f"DIFFER  {text[:90]!r}\n  desk   {desk[:160]!r}\n  engine {engine[:160]!r}")

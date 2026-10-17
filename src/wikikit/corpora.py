@@ -172,6 +172,14 @@ class Corpus:
     #: print makes no difference, Wikisource's transcribers and our readings
     #: mixed the two (vol 28 p. 427: “long” beside "overtides").
     curly_quotes: bool = False
+    #: OUR READINGS' MARKS — True: each page we transcribe has its quotation
+    #: marks and its apostrophes set curly as it is read (`supplied.curly_marks`):
+    #: the book prints them so, and a straight ' beside '' or ''' is the
+    #: markup's own character (the Century, user 2026-10-17: "curly is much
+    #: better for us because it doesn't interfere with markup").  Off where our
+    #: readings are matched against another transcription's text (EB1911's
+    #: patches, against Wikisource's).
+    curly_readings: bool = False
     #: LAYOUT — what the book knows of a page's layout, for the cutter:
     #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
     #: (its column count, …).  The cutter measures the ink only where the book

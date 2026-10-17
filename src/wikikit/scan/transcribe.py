@@ -297,6 +297,33 @@ def fit_figures(level: Image.Image, items: list[Item], item: Item, text: str) ->
     return items[:at] + [Item("figure", b, fig.column, n) for b, n in zip(boxes, names)] + items[at + 1:]
 
 
+#: How near a figure of the next column must come to a strip's side to show
+#: in its image: the cut between columns can run through a drawing's margin.
+NEIGHBOUR_REACH = 12
+
+
+def drop_neighbour_marks(items: list[Item], item: Item, text: str) -> str | None:
+    """A reading whose strip holds no figure but marks one, where a figure of
+    the next column touches the strip's side at that height: the drawing
+    seen across the cut (Century vol 1 p. 40: column 4's figure reaching
+    into column 3's image), already marked where it stands.  The reading
+    without those marks — or None if any mark has a caption after it (its
+    text may be printed here) or more marks than such figures."""
+    if figures_of(items, item):
+        return None
+    x0, y0, x1, y1 = item.box
+    near = [it for it in items if it.kind == "figure" and it.column != item.column
+            and (abs(it.box[0] - x1) <= NEIGHBOUR_REACH or abs(it.box[2] - x0) <= NEIGHBOUR_REACH)
+            and it.box[1] < y1 and it.box[3] > y0]
+    lines = text.split("\n")
+    at = [k for k, line in enumerate(lines) if _MARK_LINE.fullmatch(line)]
+    if not at or len(at) != text.count(FIGURE_MARK) or len(at) > len(near):
+        return None
+    if any(k + 1 < len(lines) and lines[k + 1].lstrip().startswith("{{c|") for k in at):
+        return None
+    return "\n".join(line for k, line in enumerate(lines) if k not in set(at))
+
+
 def check_reading(level: Image.Image, item: Item, text: str, figures: list[Item] = ()) -> str | None:
     """Why a reading is not a reading of its image, or None if it is.  A
     reading marks each figure its item holds, once: a mark short is a figure
@@ -419,6 +446,8 @@ def join_across_cut(before: str, after: str) -> str:
     closing markup the next strip did not reopen — the word stays whole; where
     the markup then ends is for the proofreader to see and settle."""
     before, after = before.rstrip(), after.lstrip()
+    if not before or not after:
+        return before or after                # a strip read empty joins nothing
     vocab = constructs()
     for c in vocab:
         # the word's hyphen set AFTER its construct's close ("{{sc|Bi}}-" then

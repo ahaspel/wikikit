@@ -181,13 +181,18 @@ def _measure_lines(c: Construct) -> dict:
     return dict(zip(("open", "line", "stanza", "close"), parts))
 
 
+def _in_running_text(written: str) -> str:
+    """What the engine makes of `written` set in running text, between words."""
+    return _render(f"A {written} Z").removeprefix("A").removesuffix("Z").strip()
+
+
 def _measure_args(c: Construct) -> dict:
     """A template of arguments as the engine renders it, from its samples
     (`Construct.args`): {"parts": the html around and between the arguments it
     shows, "order": which argument fills each gap, "after": what a newline
     right after it becomes} — html = parts[0] + arg[order[0]] + parts[1] + …"""
     written = f"{c.open}{'|'.join(c.args)}{c.close}"
-    body = _render(f"A {written} Z").removeprefix("A").removesuffix("Z").strip()
+    body = _in_running_text(written)
     shown = []
     for i, sample in enumerate(c.args):
         if not sample or sample not in body:
@@ -260,7 +265,84 @@ def render_table() -> dict:
             raise ValueError(f"the engine no longer renders the vocabulary's table as a table: {html!r}")
         openings[attrs] = opening
     table["table"] = {"open": openings, "close": "</table>", **_table_furniture()}
+    table.update(_page_forms())
     return table
+
+
+#: The forms assembly writes into a page, beyond what a reading writes: a
+#: figure set in its column, a figure with type beside it, and the mark that
+#: the page opens a paragraph.  The desk shows a page as it will enter, so it
+#: is measured for these too.
+FIGURE = "[[File:{file}|center|{width}px]]"
+INSET = "{{{{img float|file={file}|width={width}px|align={align}|cap={cap}}}}}"
+#: in a measured image, where the desk puts its own: the image's address (the
+#: desk's copy, not the site's), its file name, width and caption
+#: an image's address in the engine's html
+IMAGE_SRC = re.compile(r'src="[^"]*"')
+IMAGE_SLOTS = {"src": "\u0010src\u0010", "file": "\u0010file\u0010",
+               "width": "\u0010width\u0010", "cap": "\u0010cap\u0010"}
+
+
+def _page_forms() -> dict:
+    """{"resumes": the engine's continuation test, "figure": html, "inset":
+    {"left"|"right": html}, "nop": html}, each image's html with
+    `IMAGE_SLOTS` where the desk fills in its own."""
+    def measured(written: str) -> str:
+        html, n = IMAGE_SRC.subn(f'src="{IMAGE_SLOTS["src"]}"', _in_running_text(written))
+        html = html.replace(f"{_PROBE}.png", IMAGE_SLOTS["file"]).replace("777", IMAGE_SLOTS["width"])
+        html = html.replace(f"{_PROBE}CAP", IMAGE_SLOTS["cap"])
+        if n != 1 or _PROBE in html or "777" in html:
+            raise ValueError(f"the engine no longer renders {written!r} as one image: {html!r}")
+        return html
+    nop = _render("A{{nop}}Z")
+    # the words that say a run is the rest of a sentence a block cut in half
+    # (`elements._RESUMPTION_JOINER`, or a lowercase opening): after a note in
+    # small type the paragraph runs on through them, and a sentence a display
+    # cut at a , ; or : resumes across a blank line
+    from wikikit.pipeline.stages.elements import _RESUMPTION_JOINER, _SENTENCE_OPEN
+    return {"resumes": {"joiner": _RESUMPTION_JOINER.pattern, "open": "".join(_SENTENCE_OPEN)},
+            "figure": measured(FIGURE.format(file=f"{_PROBE}.png", width=777)),
+            "inset": {a: measured(INSET.format(file=f"{_PROBE}.png", width=777, align=a, cap=f"{_PROBE}CAP"))
+                      for a in ("left", "right")},
+            "nop": nop.removeprefix("A").removesuffix("Z"),
+            # a figure's caption keeps its printed lines
+            "br": _render("A<br />Z").removeprefix("A").removesuffix("Z"),
+            "gap": _gap(),
+            "quotes": _quotes()}
+
+
+def _quotes() -> dict:
+    """The book's straight quotation marks set curly as the engine sets them
+    (`preprocess.curly_quotes`), its own patterns spelled for the desk's
+    JavaScript: {"on": whether this book sets them (`Corpus.curly_quotes`),
+    "pair", "half_open", "half_close", "mask", "table_attr": patterns}.
+    Python's \\w is any letter or digit, JavaScript's only ASCII's: spelled
+    out, as Unicode classes; and a quote mark needs no escape, which
+    JavaScript's Unicode patterns refuse."""
+    from wikikit.corpora import current_corpus
+    from wikikit.pipeline.stages import preprocess as pp
+    def js(p: re.Pattern) -> str:
+        return p.pattern.replace("\\w", "\\p{L}\\p{N}_").replace("\\'", "'").replace('\\"', '"')
+    return {"on": current_corpus().curly_quotes,
+            "pair": js(pp._STRAIGHT_PAIR), "half_open": js(pp._HALF_OPEN),
+            "half_close": js(pp._HALF_CLOSE), "mask": js(pp._QUOTE_MASK),
+            "table_attr": js(pp._TABLE_ATTR_LINE)}
+
+
+def _gap() -> dict:
+    """An indent or a space of fixed width ({{gap}}, {{em}}; `|N` or `|Nem`
+    sets it: N rounded, at least one): {"unit": the html of one em,
+    "gap"|"em": how many a bare one is}."""
+    def inner(written: str) -> str:
+        return _render(f"A{written}Z").removeprefix("A").removesuffix("Z")
+    unit = inner("{{em|1}}")
+    out = {"unit": unit}
+    for name in ("gap", "em"):
+        html = inner(f"{{{{{name}}}}}")
+        if not unit or html != unit * html.count(unit) or inner(f"{{{{{name}|3em}}}}") != unit * 3:
+            raise ValueError(f"the engine no longer sets {{{{{name}}}}} as a run of ems: {html!r}")
+        out[name] = html.count(unit)
+    return out
 
 
 def _table_furniture() -> dict:

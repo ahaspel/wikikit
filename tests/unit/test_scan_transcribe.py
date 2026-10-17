@@ -124,6 +124,10 @@ def test_a_figure_at_the_end_of_the_page_is_not_lost():
     # the hyphen set after the construct's close (SILVER: "{{sc|Bi}}-")
     ("the articles {{sc|Money}} and {{sc|Bi}}-", "{{sc|metallism}}; the reader",
      "the articles {{sc|Money}} and {{sc|Bimetallism}}; the reader"),
+    # a strip read empty (blank paper) joins nothing: no space is left behind
+    # (vol 8 leaf 10: " THE DE VINNE PRESS." after an empty strip)
+    ("", "THE DE VINNE PRESS.", "THE DE VINNE PRESS."),
+    ("the last words.", "  ", "the last words."),
 ])
 def test_readings_join_across_a_cut(before, after, joined):
     assert join_across_cut(before, after) == joined
