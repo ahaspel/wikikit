@@ -6,7 +6,7 @@ from wikikit.scan.vocabulary import TYPESET, VOCABULARY, prompt_text, render_tab
 
 def test_every_construct_renders_through_the_engine_and_nothing_leaks():
     table = render_table()
-    page_forms = {"resumes", "figure", "inset", "nop", "br", "gap", "quotes"}
+    page_forms = {"resumes", "figure", "inset", "nop", "br", "gap", "quotes", "around a block"}
     assert set(table) == {c.name for c in VOCABULARY} | {"paragraph", "table"} | page_forms
     for name, value in table.items():
         if name in TYPESET or name in page_forms:
@@ -37,3 +37,9 @@ def test_a_poem_is_measured_as_lines_the_engine_keeps():
 def test_math_is_lifted_out_for_the_reader_to_typeset():
     assert render_table()["math"] == ["«MATHPH»"]
     assert "no HTML but <sup>, <sub>, <math>," in prompt_text()
+
+
+def test_a_span_round_a_block_is_measured_as_the_block_it_becomes():
+    # {{smaller|{{c|…}}}}: a browser lets no block stand in a span, so the
+    # engine sets it as a div (`_tables.styled_marker`) and the desk does too
+    assert render_table()["around a block"]["smaller"] == ['<div style="font-size:83%">', "</div>"]

@@ -181,6 +181,28 @@ def _measure_lines(c: Construct) -> dict:
     return dict(zip(("open", "line", "stanza", "close"), parts))
 
 
+def _around_a_block(table: dict) -> dict:
+    """What each construct becomes round a block where it differs from its
+    form round words: {name: [html_open, html_close]}.  A span holding a block
+    is a div (`_tables.styled_marker`): {{smaller|{{c|…}}}} is small type set
+    as a block, as the engine sets it."""
+    def body(written: str) -> str:
+        return _render(f"A{PARAGRAPH}{written}{PARAGRAPH}Z") \
+            .removeprefix("A" + table["paragraph"]).removesuffix(table["paragraph"] + "Z")
+    block = body(f"{{{{c|{_PROBE}}}}}")
+    out = {}
+    for c in constructs():
+        form = table.get(c.name)
+        if c.furniture or c.args or c.name in TYPESET or c.name in LINES or not isinstance(form, list):
+            continue
+        open_, sep, close = body(f"{c.open}{{{{c|{_PROBE}}}}}{c.close}").partition(block)
+        # a construct that holds no block (EB1911's shoulder heading, set in
+        # the margin) has no form round one: the desk keeps its own
+        if sep and [open_, close] != form[:2]:
+            out[c.name] = [open_, close]
+    return out
+
+
 def _in_running_text(written: str) -> str:
     """What the engine makes of `written` set in running text, between words."""
     return _render(f"A {written} Z").removeprefix("A").removesuffix("Z").strip()
@@ -253,6 +275,7 @@ def render_table() -> dict:
         table[c.name] = [head.removeprefix("A").strip(), close, after if after.strip() else " "]
     para = _render(f"A{PARAGRAPH}Z")
     table["paragraph"] = para.removeprefix("A").removesuffix("Z")
+    table["around a block"] = _around_a_block(table)
     # the tables: each allowed opening as the engine renders it, and the close
     # — measured; rows and cells are the plain <tr>/<td> the parity gate checks.
     # {"open": {opening as written: html}, "close": html}

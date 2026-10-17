@@ -19,7 +19,8 @@
   "src/wikikit/diagnostics/quality_report.py": "«MATH» strip on a metrics copy",
   "src/wikikit/audits/dup_constants.py": "literal classifier (reads «»)",
   "src/wikikit/audits/marker_emitters.py": "construction recognizer (reads «NAME:)",
-  "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner"
+  "src/wikikit/pipeline/annotate_math_markers.py": "«MATH[hint]» owner",
+  "src/wikikit/pipeline/stages/elements/_tables.py": "styled-wrapper producer («SPAN»/«DIV»): a span holding a block is a div"
  },
  "py_globs": [
   "src/**/*.py",

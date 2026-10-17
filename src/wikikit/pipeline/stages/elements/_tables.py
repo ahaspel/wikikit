@@ -317,13 +317,25 @@ def styled_marker(tag: str, css: str, body: str) -> str:
     `tag` is `DIV` (block) or `SPAN` (inline) — the viewer decodes both
     identically, rendering `<div>` vs `<span>`.  A `<div>`/`<span>` differ ONLY
     in display level; there is no producer reason to treat them differently, so
-    they don't.  Empty `css` (nothing of the wrapper's own survived) returns
-    `body` bare; empty `body` returns ""."""
+    they don't — but for this: a span whose `body` holds a block (`BLOCK_MARKER`)
+    is a div.  HTML lets no block stand in a span: a browser closes the open
+    paragraph before the block, and the span with it, so the span's style is
+    lost (`{{smaller|{{c|…}}}}` came out full size — the Century desk,
+    2026-10-17; 23 EB1911 font sizes round a centred line).  Empty `css`
+    (nothing of the wrapper's own survived) returns `body` bare; empty `body`
+    returns ""."""
     if not body:
         return ""
     if not css:
         return body
+    if tag == "SPAN" and BLOCK_MARKER.search(body):
+        tag = "DIV"
     return f"«{tag}[style:{css}]»{body}«/{tag}»"
+
+
+#: The markers the viewer renders as blocks (`render.inline.decode_inline`): a
+#: paragraph, a centred or styled block, a table, a list, a verse.
+BLOCK_MARKER = re.compile(r"«(?:P»|CTR»|DIV\[|TABLE[\[»]|UL»|OL[\[»]|LI»)|\{\{VERSE")
 
 
 def br_stack(top: str, bottom: str) -> str:

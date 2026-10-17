@@ -236,6 +236,10 @@ def test_a_page_is_its_fetchers_until_given_away(tmp_path, monkeypatch):
     # an indent: a line of verse set in, or a space of fixed width
     "<poem>Line one\n{{gap}}line two\n{{gap|1em}}three\n{{em|3}}four\n{{gap|2.5em}}five</poem>",
     "Total{{gap}}12 {{em}}a{{gap|4}}b",
+    # small type round a block is set as a block, either way it is nested
+    "a\n\n{{smaller|{{c|Egyptian. Hieroglyphic. Hieratic.}}}}\n\nb",
+    "a\n\n{{c|{{smaller|Egyptian. Hieroglyphic. Hieratic.}}}}\n\nb",
+    "a {{smaller|small words}} b",
 ])
 def test_a_whole_page_renders_as_the_engine_does(text):
     assert parity([text]) == []

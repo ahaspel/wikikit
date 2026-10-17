@@ -22,7 +22,7 @@
   // Template constructs are `{{name|body}}`; the others are spelled out.
   const SPELLED = { bold: true, italic: true, sup: true, sub: true, math: true, paragraph: true,
                     poem: true, table: true, figure: true, inset: true, nop: true, resumes: true,
-                    gap: true, quotes: true };
+                    gap: true, quotes: true, "around a block": true };
 
   // A formula, lifted out whole as the engine lifts it, comes back as a span
   // of its (escaped) LaTeX for the page to typeset with KaTeX, as the viewer
@@ -68,14 +68,21 @@
     return out + (c.after && c.after.trim() ? END : "");
   }
 
+  // What the engine renders as a block, in a construct's content: a construct
+  // round one takes its form round a block (the table's "around a block").
+  const HOLDS_BLOCK = /<(?:p|div|table|ul|ol|li|blockquote)\b|[\u0004\u0005]|\n[ \t]*\n/;
+
   // Templates, innermost first.
   function templates(t, table) {
+    const around = table["around a block"] || {};
     for (let i = 0; i < 12; i++) {
       const next = t.replace(/\{\{\s*([^{}|]+?)\s*\|([^{}]*)\}\}/g, (m, name, body) => {
         const key = name.trim().toLowerCase();
         const c = SPELLED[key] ? null : table[key];
         if (c && c.parts) return ELEMENT + withArgs(body, c);
-        return c ? ELEMENT + c[0] + body.trim() + c[1] + (c[2] && c[2].trim() ? END : "") : m;
+        if (!c) return m;
+        const [open, close] = around[key] && HOLDS_BLOCK.test(body) ? around[key] : c;
+        return ELEMENT + open + body.trim() + close + (c[2] && c[2].trim() ? END : "");
       });
       if (next === t) break;
       t = next;
