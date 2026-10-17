@@ -16,7 +16,7 @@
            border-bottom: 1px solid var(--rule); padding: 8px 16px; }
   .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .bar h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
-  select, button { font: inherit; }
+  select, button, input { font: inherit; }
   select { max-width: 22em; padding: 3px 4px; }
   button { padding: 3px 10px; border: 1px solid var(--rule); background: #fff;
            border-radius: 4px; cursor: pointer; color: var(--ink); }
@@ -29,38 +29,32 @@
   #status.saved { color: var(--ok); }
   .palette { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
   .palette button { padding: 1px 7px; font-size: 12px; color: var(--muted); }
-  .heads { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);
-           gap: 12px; margin-top: 6px; color: var(--muted); font-size: 12px;
-           text-transform: uppercase; letter-spacing: .05em; }
+  .notes { margin: 6px 0 0; padding: 0; list-style: none; color: var(--warn); }
   main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);
-         gap: 12px; padding: 12px 16px 40vh; align-items: start; }
-  .orig { grid-column: 1; }
-  .src { grid-column: 3; }
-  .rendered { grid-column: 2; align-self: stretch; }
-  .rendered > div { position: sticky; top: var(--hh, 100px);
-                    height: calc(100vh - var(--hh, 100px) - 12px); }
-  .rendered iframe { width: 100%; height: 100%; border: 1px solid var(--rule);
-                     background: #fff; border-radius: 4px; }
-  .tag { font-size: 12px; color: var(--muted); margin: 0 0 3px; display: flex; gap: 8px;
-         align-items: center; }
-  .orig img { width: 100%; display: block; border: 1px solid var(--rule); background: #fff;
-              cursor: zoom-in; }
-  .orig img.zoom { width: auto; max-width: none; cursor: zoom-out; }
-  .orig .frame { overflow-x: auto; }
-  textarea { width: 100%; min-height: 4em; resize: vertical; padding: 6px;
+         gap: 12px; padding: 12px 16px; height: calc(100vh - var(--hh, 100px)); }
+  .pane { display: flex; flex-direction: column; min-height: 0; }
+  .tag { font-size: 12px; color: var(--muted); margin: 0 0 4px; display: flex; gap: 8px;
+         align-items: center; text-transform: uppercase; letter-spacing: .05em; }
+  .tag .zoom { margin-left: auto; display: flex; gap: 2px; text-transform: none; letter-spacing: 0; }
+  .tag .zoom button { padding: 0 6px; font-size: 12px; }
+  .tag .zoom button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .scan { flex: 1; overflow: auto; border: 1px solid var(--rule); background: #fff; border-radius: 4px; }
+  .scan img { display: block; width: calc(100% * var(--zoom, 1)); max-width: none; }
+  iframe { flex: 1; width: 100%; border: 1px solid var(--rule); background: #fff; border-radius: 4px; }
+  .headrow { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .headrow label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .headrow input { flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 4px;
+                   font: 13px Consolas, "DejaVu Sans Mono", monospace; }
+  textarea { flex: 1; width: 100%; resize: none; padding: 6px;
              border: 1px solid var(--rule); border-radius: 4px; background: #fff; color: var(--ink);
-             font: 13px/1.45 Consolas, "DejaVu Sans Mono", monospace; overflow: hidden; }
-  textarea:focus { outline: 2px solid #c9a46b; }
+             font: 13px/1.45 Consolas, "DejaVu Sans Mono", monospace; }
+  textarea:focus, .headrow input:focus { outline: 2px solid #c9a46b; }
   .src.done textarea { background: #f4f9f1; }
-  .check { margin-left: auto; display: flex; gap: 4px; align-items: center; color: var(--ink); }
-  .figure-note { color: var(--muted); font-style: italic; padding: 6px 0; }
+  .check { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
   .empty { padding: 40px 16px; color: var(--muted); }
   @media (max-width: 900px) {
-    .heads { display: none; }
-    main { grid-template-columns: minmax(0,1fr); }
-    .orig, .src, .rendered { grid-column: 1; }
-    .rendered { grid-row: auto !important; }
-    .rendered > div { position: static; height: 70vh; }
+    main { grid-template-columns: minmax(0,1fr); height: auto; }
+    .pane { height: 75vh; }
   }
 </style>
 </head>
@@ -78,13 +72,16 @@
     <button id="save" class="primary" title="Save (Ctrl+S)">Save</button>
   </div>
   <div class="palette" id="palette"></div>
-  <div class="heads"><div>Original</div><div>Rendered (as the page would enter)</div><div>Source</div></div>
+  <ul class="notes" id="notes"></ul>
 </header>
 <main id="main"><div class="empty">Loading…</div></main>
 <script>
 "use strict";
+/* A page is proofread whole: its scan, the page as it would enter (the site's
+   own viewer, drawn by the server from the text as it stands here), and its
+   running head and text, one text to correct and one check for the page. */
 const $ = id => document.getElementById(id);
-const state = { queue: [], page: null, edits: {}, previewTimer: 0, previewN: 0, lastFocus: null, led: null };
+const state = { queue: [], page: null, edits: {}, previewTimer: 0, previewN: 0, led: null, zoom: 1 };
 const key = (v, p) => `${v}-${p}`;
 
 function setStatus(text, cls = "") { const s = $("status"); s.textContent = text; s.className = cls; }
@@ -99,9 +96,8 @@ async function api(path, body) {
 
 // ── the queue ──────────────────────────────────────────────────────────
 function queueLabel(q) {
-  const k = key(q.volume, q.page);
-  const mark = q.level >= 3 ? "✓ proofread" : `${q.checked}/${q.strips} checked`;
-  return `${q.label} — ${mark}${state.edits[k] ? " • unsaved" : ""}`;
+  const mark = q.level >= 3 ? "✓ proofread" : `level ${q.level}`;
+  return `${q.label} — ${mark}${state.edits[key(q.volume, q.page)] ? " • unsaved" : ""}`;
 }
 function drawQueue() {
   const sel = $("pages");
@@ -120,89 +116,83 @@ async function loadQueue() {
 
 // ── one page ───────────────────────────────────────────────────────────
 function pageEdits() { return state.edits[key(state.page.volume, state.page.page)]; }
-function currentStrips() {
-  // {name: {text, status}} for every text strip, as the editor holds it
-  const out = {};
-  for (const s of state.page.strips) {
-    if (s.kind === "figure") continue;
-    const e = (pageEdits() || {})[s.name];
-    // base: the reading as this page was loaded — the server refuses the save
-    // if the reading on file is no longer it
-    out[s.name] = { text: e ? e.text : s.text, base: e ? e.base : s.text,
-                    status: (e ? e.checked : s.checked) ? "checked" : "unchecked" };
-  }
-  return out;
+// the page as the editor holds it; base: as it was loaded — the server
+// refuses the save if the page on file is no longer that
+function current() {
+  const pg = state.page, e = pageEdits();
+  return { head: e ? e.head : pg.head, text: e ? e.text : pg.text,
+           checked: e ? e.checked : pg.checked, base: e ? e.base : [pg.head, pg.text] };
 }
 
-function autosize(ta) { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 2) + "px"; }
-
 function drawPage() {
-  const pg = state.page, main = $("main");
+  const pg = state.page, main = $("main"), cur = current();
   main.innerHTML = "";
   $("ws").href = pg.wikisource || "#";
   $("ws").style.visibility = pg.wikisource ? "visible" : "hidden";
-  let row = 1;
-  const edits = pageEdits() || {};
-  for (const s of pg.strips) {
-    const orig = document.createElement("div");
-    orig.className = "orig"; orig.style.gridRow = row;
-    const label = s.kind === "head" ? "running head" : s.kind === "figure" ? `figure ${s.name}` : `column ${s.column} · ${s.name}`;
-    orig.innerHTML = `<div class="tag">${label}</div><div class="frame"><img alt="${s.name}" loading="lazy"></div>`;
-    const img = orig.querySelector("img");
-    img.src = s.img;
-    img.addEventListener("click", () => img.classList.toggle("zoom"));
-    main.appendChild(orig);
+  const notes = $("notes"); notes.innerHTML = "";
+  for (const n of pg.notes || []) { const li = document.createElement("li"); li.textContent = n; notes.appendChild(li); }
 
-    const src = document.createElement("div");
-    src.className = "src"; src.style.gridRow = row;
-    if (s.kind === "figure") {
-      src.innerHTML = `<div class="figure-note">Figure: set on the page where its [[FIGURE]] mark stands.</div>`;
-    } else {
-      const e = edits[s.name];
-      const checked = e ? e.checked : s.checked;
-      src.innerHTML = `<div class="tag">${label}<label class="check"><input type="checkbox"> checked against the original</label></div><textarea spellcheck="false"></textarea>`;
-      const ta = src.querySelector("textarea"), cb = src.querySelector("input");
-      ta.value = e ? e.text : (s.text || "");
-      cb.checked = checked;
-      src.classList.toggle("done", checked);
-      ta.addEventListener("focus", () => { state.lastFocus = ta; });
-      ta.addEventListener("input", () => { edit(s, { text: ta.value }); autosize(ta); });
-      cb.addEventListener("change", () => { edit(s, { checked: cb.checked }); src.classList.toggle("done", cb.checked); });
-      requestAnimationFrame(() => autosize(ta));
-    }
-    main.appendChild(src);
-    row++;
-  }
-  const rendered = document.createElement("div");
-  rendered.className = "rendered";
-  rendered.style.gridRow = `1 / ${row}`;
-  rendered.innerHTML = `<div><iframe title="The page rendered as it would enter"></iframe></div>`;
-  main.appendChild(rendered);
+  const orig = document.createElement("section");
+  orig.className = "pane";
+  orig.innerHTML = `<div class="tag">Original<span class="zoom">${[1, 1.5, 2, 3].map(z =>
+    `<button data-zoom="${z}" aria-pressed="${z === state.zoom}">${z === 1 ? "Fit" : z * 100 + "%"}</button>`).join("")}</span></div>
+    <div class="scan"><img alt="The page's scan"></div>`;
+  const box = orig.querySelector(".scan"), img = orig.querySelector("img");
+  img.src = pg.scan;
+  box.style.setProperty("--zoom", state.zoom);
+  orig.querySelectorAll("[data-zoom]").forEach(b => b.addEventListener("click", () => {
+    const old = state.zoom, z = Number(b.dataset.zoom);
+    const fx = (box.scrollLeft + box.clientWidth / 2) / old, fy = (box.scrollTop + box.clientHeight / 2) / old;
+    state.zoom = z; box.style.setProperty("--zoom", z);
+    box.scrollLeft = fx * z - box.clientWidth / 2; box.scrollTop = fy * z - box.clientHeight / 2;
+    orig.querySelectorAll("[data-zoom]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  box.addEventListener("scroll", () => follow(scroller(box), frameScroller()));
+  state.scanBox = box;
+
+  const rendered = document.createElement("section");
+  rendered.className = "pane";
+  rendered.innerHTML = `<div class="tag">Rendered (as the page would enter)</div><iframe title="The page rendered as it would enter"></iframe>`;
   state.frame = rendered.querySelector("iframe");
+
+  const src = document.createElement("section");
+  src.className = "pane src";
+  src.innerHTML = `<div class="tag">Source</div>
+    <div class="headrow"><label for="head">Running head</label><input id="head" spellcheck="false"></div>
+    <textarea id="text" spellcheck="false" aria-label="The page's text"></textarea>
+    <label class="check"><input type="checkbox" id="checked"> The whole page checked against the original</label>`;
+  main.append(orig, rendered, src);
+  const head = $("head"), ta = $("text"), cb = $("checked");
+  head.value = cur.head; ta.value = cur.text; cb.checked = cur.checked;
+  src.classList.toggle("done", cur.checked);
+  for (const el of [head, ta]) {
+    el.addEventListener("focus", () => { state.lastFocus = el; });
+    el.addEventListener("input", () => edit({ head: head.value, text: ta.value }));
+  }
+  cb.addEventListener("change", () => { edit({ checked: cb.checked }); src.classList.toggle("done", cb.checked); });
+  state.lastFocus = ta;
   refreshFrame();
   drawPalette();
   updateStatus();
 }
 
-function edit(strip, change) {
-  const k = key(state.page.volume, state.page.page);
-  const edits = state.edits[k] = state.edits[k] || {};
-  const cur = edits[strip.name] || { text: strip.text || "", checked: strip.checked, base: strip.text };
-  edits[strip.name] = Object.assign(cur, change);
-  // an edit that returns a strip to what is saved is no edit
-  if (cur.text === (strip.text || "") && cur.checked === strip.checked) delete edits[strip.name];
-  if (!Object.keys(edits).length) delete state.edits[k];
+function edit(change) {
+  const pg = state.page, k = key(pg.volume, pg.page);
+  const cur = state.edits[k] || { head: pg.head, text: pg.text, checked: pg.checked, base: [pg.head, pg.text] };
+  state.edits[k] = Object.assign(cur, change);
+  // an edit that returns the page to what is saved is no edit
+  if (cur.head === pg.head && cur.text === pg.text && cur.checked === pg.checked) delete state.edits[k];
   updateStatus();
   drawQueue();
-  if ("text" in change) schedulePreview();
+  if ("text" in change || "head" in change) schedulePreview();
 }
 
 function updateStatus() {
-  const n = Object.keys(pageEdits() || {}).length;
-  if (n) setStatus(`${n} strip(s) changed, unsaved`, "dirty");
-  else setStatus(state.page.level >= 3 ? "Proofread (level 3)" : `Level ${state.page.level}`);
-  $("save").disabled = $("revert").disabled = !n;
-  const saves = state.page.saves || [];
+  const e = pageEdits(), pg = state.page;
+  if (e) setStatus("Changed, unsaved", "dirty");
+  else setStatus(pg.level >= 3 ? "Proofread (level 3)" : `Level ${pg.level}`);
+  $("save").disabled = $("revert").disabled = !e;
+  const saves = pg.saves || [];
   $("undo").disabled = !saves.length;
   $("undo").textContent = saves.length ? `Undo save (${saves.length})` : "Undo save";
   state.undoArmed = false;
@@ -213,12 +203,11 @@ function schedulePreview() {
   clearTimeout(state.previewTimer);
   state.previewTimer = setTimeout(preview, 700);
 }
-// the server draws the page from the readings this tab holds: tell it what
-// they are (the readings as saved, when the tab holds no edits, clear its draft)
+// the server draws the page from the text this tab holds: tell it what it is
+// (the page as saved, when the tab holds no edits, clears its draft)
 async function syncDraft() {
-  const pg = state.page, readings = {};
-  for (const [name, s] of Object.entries(currentStrips())) readings[name] = s.text;
-  await api("/desk/api/preview", { volume: pg.volume, page: pg.page, readings });
+  const pg = state.page, cur = current();
+  await api("/desk/api/preview", { volume: pg.volume, page: pg.page, head: cur.head, text: cur.text });
 }
 async function preview() {
   try {
@@ -226,21 +215,31 @@ async function preview() {
     refreshFrame();
   } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
 }
-// One scroll: the rendered pane keeps the same place, as a share of its
-// length, as the original and the source beside it — scroll either, the
-// other follows.  A scroll set here is not followed back (`state.led`).
+
+// One scroll: the scan and the rendered page keep the same place, as a share
+// of their length — scroll either, the other follows.  A scroll set here is
+// not followed back (`state.led`).
+function scroller(el) {
+  return { el, get y() { return el.scrollTop; }, set y(v) { el.scrollTop = v; },
+           get span() { return el.scrollHeight - el.clientHeight; } };
+}
+function frameScroller() {
+  const w = state.frame && state.frame.contentWindow;
+  if (!w) return null;
+  return { el: w, get y() { return w.scrollY; }, set y(v) { w.scrollTo(0, v); },
+           get span() { return w.document.documentElement.scrollHeight - w.innerHeight; } };
+}
 function follow(from, to) {
-  if (state.led === from) { state.led = null; return; }
+  if (!from || !to) return;
+  if (state.led === from.el) { state.led = null; return; }
   try {
-    const span = w => w.document.documentElement.scrollHeight - w.innerHeight;
-    const share = span(from) > 0 ? from.scrollY / span(from) : 0;
-    const y = Math.round(share * Math.max(0, span(to)));
-    if (Math.abs(to.scrollY - y) < 2) return;    // no move, so no echo to wait for
-    state.led = to;
-    to.scrollTo(0, y);
+    const share = from.span > 0 ? from.y / from.span : 0;
+    const y = Math.round(share * Math.max(0, to.span));
+    if (Math.abs(to.y - y) < 2) return;          // no move, so no echo to wait for
+    state.led = to.el;
+    to.y = y;
   } catch (e) {}
 }
-window.addEventListener("scroll", () => { if (state.frame) follow(window, state.frame.contentWindow); });
 
 function refreshFrame() {
   const f = state.frame, pg = state.page;
@@ -261,15 +260,15 @@ function refreshFrame() {
       // "I. Iron bar in direct tension:—")
       + ".body-text[data-runs-on] > p:first-of-type { text-indent: 1.5em; }";
     d.head.appendChild(st);
-    f.contentWindow.addEventListener("scroll", () => follow(f.contentWindow, window));
-    // the viewer draws after its fetch: take the page's place once the body is there
+    f.contentWindow.addEventListener("scroll", () => follow(frameScroller(), scroller(state.scanBox)));
+    // the viewer draws after its fetch: take the scan's place once the body is there
     let tries = 0;
     const t = setInterval(() => {
       const d = f.contentDocument;
       if ((d && d.querySelector(".body-text")) || ++tries > 50) {
         clearInterval(t);
         state.led = null;
-        follow(window, f.contentWindow);
+        follow(scroller(state.scanBox), frameScroller());
       }
     }, 50);
   };
@@ -291,7 +290,7 @@ function drawPalette() {
 }
 function wrap(c) {
   const ta = state.lastFocus;
-  if (!ta || !document.body.contains(ta)) { setStatus("Click in a source strip first", "error"); return; }
+  if (!ta || !document.body.contains(ta)) { setStatus("Click in the source first", "error"); return; }
   const [a, z] = [ta.selectionStart, ta.selectionEnd];
   const sel = ta.value.slice(a, z);
   let inner = sel;
@@ -314,9 +313,11 @@ function wrap(c) {
 async function save() {
   const pg = state.page;
   if (!pageEdits()) return;
+  const cur = current();
   setStatus("Saving…");
   try {
-    const r = await api("/desk/api/save", { volume: pg.volume, page: pg.page, strips: currentStrips() });
+    const r = await api("/desk/api/save", { volume: pg.volume, page: pg.page, head: cur.head, text: cur.text,
+                                            base: cur.base, status: cur.checked ? "checked" : "unchecked" });
     delete state.edits[key(pg.volume, pg.page)];
     state.page = r.page;
     await loadQueue();
@@ -333,7 +334,6 @@ async function openPage(i) {
   drawQueue();
   try { await syncDraft(); } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
   drawPage();
-  window.scrollTo(0, 0);
 }
 
 // ── going back ─────────────────────────────────────────────────────────
@@ -385,7 +385,7 @@ window.addEventListener("hashchange", () => {
 });
 window.addEventListener("beforeunload", e => { if (Object.keys(state.edits).length) e.preventDefault(); });
 new ResizeObserver(() => document.documentElement.style.setProperty(
-  "--hh", document.querySelector("header").offsetHeight + 12 + "px")).observe(document.querySelector("header"));
+  "--hh", document.querySelector("header").offsetHeight + "px")).observe(document.querySelector("header"));
 
 (async () => {
   try {

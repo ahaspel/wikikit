@@ -1,30 +1,32 @@
 """The proofreading desk, served locally on the book's own site server.
 
-The desk shows three things side by side for each page: the ORIGINAL (each
-strip cut from the scan), the page RENDERED as it would enter, and the SOURCE
-(each strip's reading, to correct).  The rendered pane is the site's own
-viewer showing `desk.page_article` — the engine's chain, so the desk has no
-renderer of its own and nothing to hold in parity.  It is redrawn from the
-readings as they stand in the editor, saved or not.
+The desk shows three things side by side for each page, the page WHOLE: the
+ORIGINAL (its scan, levelled), the page RENDERED as it would enter, and the
+SOURCE (its running head and text, one text to correct, one check for the
+page).  The rendered pane is the site's own viewer showing `desk.page_article`
+— the engine's chain, so the desk has no renderer of its own and nothing to
+hold in parity.  It is redrawn from the text as it stands in the editor, saved
+or not.
 
-Saving writes the corrections and the checks into the supplied page
-(`desk.apply`): a page whose every text strip is checked is proofread (level
-3), and enters the book at the next rebuild.  Do not save while a rebuild runs.
+Saving writes the text and the check into the supplied page
+(`desk.apply_pages`): from then on the page keeps that text, and once checked
+it is proofread (level 3) and enters the book at the next rebuild.  Do not
+save while a rebuild runs.
 
 Routes, beside everything the site server answers (`wikikit.site.serve`):
 
     /desk                           the desk page
     /desk/api/queue                 the pages waiting, with their progress
-    /desk/api/page/V/P              one page: its strips and their readings
-    /desk/strip/V/P/NAME.png        a strip's image, cut from the scan
+    /desk/api/page/V/P              one page: its head, text and check
+    /desk/scan/V/P.jpg              its scan, levelled
     /desk/article/V-P.json          the page as it would enter, for the viewer
-    POST /desk/api/preview          {volume, page, readings}: redraw from these
-    POST /desk/api/save             {volume, page, strips: {name: {text, status}}}
+    POST /desk/api/preview          {volume, page, head, text}: redraw from these
+    POST /desk/api/save             {volume, page, head, text, base, status}
     POST /desk/api/undo             {volume, page}: the page as it was before its last save
 
-Every save first keeps the page as it was (`history/<page>/<time>.json` beside
-the strips): undo puts the latest back, one save at a time, back to the page
-as it came to the desk.
+Every save first keeps the page as it was (`history/<page>/<time>.json` under
+the desk's folder): undo puts the latest back, one save at a time, back to the
+page as it came to the desk.
 """
 from __future__ import annotations
 
@@ -87,13 +89,18 @@ def _page_links() -> _PageLinks:
     return _LINKS[0]
 
 
+def _head_and_text(payload: dict) -> tuple[str, str]:
+    head, body, _ = supplied.page_parts(payload["raw_text"])
+    return head, body
+
+
 class Handler(site.Handler):
     queue = staticmethod(lambda: [])            # () -> [(volume, page)], set by `serve`
     label = staticmethod(desk.page_label)
     link = None                                 # (body, volume, page) -> body, set by `serve_desk`
     who = "proofreader"
-    strips_dir: Path
-    drafts: dict = {}                           # (volume, page) -> readings being edited
+    desk_dir: Path
+    drafts: dict = {}                           # (volume, page) -> (head, text) being edited
     lock = threading.Lock()
 
     # ── answers ──────────────────────────────────────────────────────────
@@ -111,38 +118,29 @@ class Handler(site.Handler):
 
     def _page(self, vol: int, pg: int) -> dict:
         payload = supplied.read(vol, pg)
-        p = payload["provenance"]
+        head, text = _head_and_text(payload)
         from wikikit.source_pages import RAW_DIR, page_filename, volume_dir
         fetched = volume_dir(vol, RAW_DIR) / page_filename(vol, pg)
         title = json.loads(fetched.read_text(encoding="utf-8")).get("title") if fetched.exists() else None
         return {"volume": vol, "page": pg, "label": self.label(vol, pg), "level": supplied.level(payload),
                 "wikisource": ("https://en.wikisource.org/wiki/" + title.replace(" ", "_")) if title else None,
-                "strips": [{"name": it.name, "kind": it.kind, "column": it.column,
-                            "img": f"/desk/strip/{vol}/{pg}/{it.name}.png",
-                            "text": p["readings"].get(it.name) if it.kind != "figure" else None,
-                            "checked": it.name in p.get("checked", {})}
-                           for it in supplied.items_of(payload)],
+                "scan": f"/desk/scan/{vol}/{pg}.jpg", "head": head, "text": text,
+                "checked": supplied.level(payload) >= 3, "notes": desk.page_notes(payload),
                 "constructs": [{"name": c.name, "open": c.open, "close": c.close, "says": c.says,
                                 "args": list(c.args)} for c in constructs()],
                 "saves": [h.stem for h in self._history(vol, pg)]}
 
     def _queue(self) -> list[dict]:
-        out = []
-        for vol, pg in self.queue():
-            payload = supplied.read(vol, pg)
-            p = payload["provenance"]
-            texts = [it.name for it in supplied.items_of(payload) if it.kind != "figure"]
-            out.append({"volume": vol, "page": pg, "label": self.label(vol, pg),
-                        "level": supplied.level(payload), "strips": len(texts),
-                        "checked": sum(n in p.get("checked", {}) for n in texts)})
-        return out
+        return [{"volume": vol, "page": pg, "label": self.label(vol, pg),
+                 "level": supplied.level(supplied.read(vol, pg))} for vol, pg in self.queue()]
 
-    def _strip(self, vol: int, pg: int, name: str) -> Path:
-        path = self.strips_dir / "strips" / supplied.page_id(vol, pg) / f"{name}.png"
+    def _scan(self, vol: int, pg: int) -> Path:
+        path = self.desk_dir / "pages" / f"{supplied.page_id(vol, pg)}.jpg"
         with self.lock:
             if not path.exists():
-                desk.cut_strips(supplied.read(vol, pg), current_corpus().page_scan(vol, pg),
-                                self.strips_dir)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                desk.levelled_scan(supplied.read(vol, pg), current_corpus().page_scan(vol, pg)) \
+                    .save(path, quality=85, optimize=True)
         return path
 
     def _article(self, vol: int, pg: int) -> dict:
@@ -150,13 +148,12 @@ class Handler(site.Handler):
         draft = self.drafts.get((vol, pg))
         if draft:
             payload = copy.deepcopy(payload)
-            payload["provenance"]["readings"].update(draft)
-            supplied.reassemble(payload)
+            supplied.set_page_text(payload, *draft, checked=supplied.level(payload) >= 3)
         return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""),
                                  link=self.link)
 
     def _history(self, vol: int, pg: int) -> list[Path]:
-        return desk.saved_versions(self.strips_dir, vol, pg)
+        return desk.saved_versions(self.desk_dir, vol, pg)
 
     @staticmethod
     def _engine_unchanged() -> None:
@@ -169,41 +166,41 @@ class Handler(site.Handler):
                                "restart the desk, then try again — nothing was written")
 
     def _undo(self, vol: int, pg: int) -> str:
-        """The page as it was before its last save, put back and reassembled
-        (by the engine as it is now)."""
-        self._engine_unchanged()
+        """The page as it was before its last save, put back as it was kept:
+        never rebuilt from its readings, which would lose text set apart from
+        them (the older level-2 pages')."""
         with self.lock:
             history = self._history(vol, pg)
             if not history:
                 raise RuntimeError("no save of this page to undo")
             last = history[-1]
             payload = json.loads(last.read_text(encoding="utf-8"))
-            supplied.write(supplied.reassemble(payload))
+            supplied.write(payload)
             last.unlink()
             self.drafts.pop((vol, pg), None)
         return (f"restored the page as it was before the save of {last.stem} "
                 f"(level {supplied.level(payload)})")
 
-    def _save(self, vol: int, pg: int, strips: dict) -> str:
+    def _save(self, vol: int, pg: int, body: dict) -> str:
         self._engine_unchanged()
         at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        rows = {desk.strip_id(vol, pg, name): {"text": s.get("text"), "status": s.get("status"),
-                                               "updated_by": self.who, "updated_at": at}
-                for name, s in strips.items()}
         with self.lock:
-            # each strip's reading as the editor first had it must be the
-            # reading on file still: else the page changed under the editor
-            # (another tab, a fix written into it) and the save would undo that
-            readings = supplied.read(vol, pg)["provenance"]["readings"]
-            moved = [n for n, s in strips.items() if "base" in s and readings.get(n) != s["base"]]
-            if moved:
-                raise RuntimeError(f"the page has changed since you opened it ({', '.join(moved)}): "
+            # the page as the editor first had it must be the page on file
+            # still: else it changed under the editor (another tab, a fix
+            # written into it) and the save would undo that
+            if "base" in body and list(_head_and_text(supplied.read(vol, pg))) != body["base"]:
+                raise RuntimeError("the page has changed since you opened it: "
                                    "reload it and make your corrections again — nothing was written")
             # the page as it was, kept before it is written: undo puts it back
-            desk.keep_version(self.strips_dir, vol, pg)
-            [line] = desk.apply(rows)
+            desk.keep_version(self.desk_dir, vol, pg)
+            lines = desk.apply_pages({supplied.page_id(vol, pg): {
+                "head": body["head"], "text": body["text"], "status": body.get("status"),
+                "updated_by": self.who, "updated_at": at}})
             self.drafts.pop((vol, pg), None)
-        return line
+        if not lines:
+            self._history(vol, pg)[-1].unlink()          # nothing written: nothing to undo
+            return "nothing changed"
+        return lines[0]
 
     # ── routes ───────────────────────────────────────────────────────────
     def _desk_get(self) -> bool:
@@ -218,9 +215,9 @@ class Handler(site.Handler):
                 self._json(self._queue())
             elif parts[1:3] == ["api", "page"] and len(parts) == 5:
                 self._json(self._page(int(parts[3]), int(parts[4])))
-            elif parts[1] == "strip" and len(parts) == 5:
-                self._send(self._strip(int(parts[2]), int(parts[3]), parts[4].removesuffix(".png"))
-                           .read_bytes(), "image/png")
+            elif parts[1] == "scan" and len(parts) == 4:
+                self._send(self._scan(int(parts[2]), int(parts[3].removesuffix(".jpg"))).read_bytes(),
+                           "image/jpeg")
             elif parts[1] == "article" and len(parts) == 3:
                 vol, pg = parts[2].removesuffix(".json").split("-")
                 self._json(self._article(int(vol), int(pg)))
@@ -244,17 +241,15 @@ class Handler(site.Handler):
         vol, pg = int(body["volume"]), int(body["page"])
         try:
             if path == "/desk/api/preview":
-                on_file = supplied.read(vol, pg)["provenance"]["readings"]
-                if all(on_file.get(n) == t for n, t in body["readings"].items()):
+                if [body["head"], body["text"]] == list(_head_and_text(supplied.read(vol, pg))):
                     self.drafts.pop((vol, pg), None)        # back to the page as saved
                 else:
-                    self.drafts[(vol, pg)] = body["readings"]
+                    self.drafts[(vol, pg)] = (body["head"], body["text"])
                 self._json({"ok": True})
             elif path == "/desk/api/undo":
                 self._json({"ok": True, "report": self._undo(vol, pg), "page": self._page(vol, pg)})
             elif path == "/desk/api/save":
-                self._json({"ok": True, "report": self._save(vol, pg, body["strips"]),
-                            "page": self._page(vol, pg)})
+                self._json({"ok": True, "report": self._save(vol, pg, body), "page": self._page(vol, pg)})
             else:
                 self.send_error(404)
         except Exception as e:                      # surfaced on the desk, never swallowed
@@ -276,7 +271,7 @@ def serve_desk(queue, label, port: int = 8020, who: str = "proofreader", links: 
     Handler.who = who
     if links:
         Handler.link = staticmethod(lambda body, vol, pg: _page_links().link(body, vol, pg))
-    Handler.strips_dir = corpus.derived("desk")
+    Handler.desk_dir = corpus.derived("desk")
     print(f"the desk: http://localhost:{port}{corpus.root}/desk")
     with site.Server(("127.0.0.1", port), Handler) as httpd:
         httpd.serve_forever()

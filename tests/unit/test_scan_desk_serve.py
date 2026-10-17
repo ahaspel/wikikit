@@ -1,5 +1,5 @@
-"""The local desk: the page rendered by the site's own chain, redrawn from the
-readings being edited, and saved back into the supplied page."""
+"""The local desk: a page proofread whole, rendered by the site's own chain,
+redrawn from the text being edited, and saved back into the supplied page."""
 import dataclasses
 import json
 import threading
@@ -35,7 +35,7 @@ def desk_at(tmp_path, monkeypatch):
     H = desk_serve.Handler
     H.root, H.downloads, H.log = "", {}, tmp_path / "desk.log"
     H.queue, H.label = staticmethod(lambda: [(1, 29)]), staticmethod(lambda v, p: f"Vol. {v}, p. {p}")
-    H.who, H.strips_dir, H.drafts = "tester", tmp_path / "desk", {}
+    H.who, H.desk_dir, H.drafts = "tester", tmp_path / "desk", {}
     server = desk_serve.site.Server(("127.0.0.1", 0), H)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
@@ -44,53 +44,63 @@ def desk_at(tmp_path, monkeypatch):
         req = urllib.request.Request(base + path, data=None if body is None else json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req) as r:
-            return r.read() if path.endswith(".png") else json.loads(r.read())
+            return r.read() if path.endswith(".jpg") else json.loads(r.read())
     yield call
     server.shutdown()
 
 
-def test_the_desk_lists_its_pages_and_their_strips(desk_at):
+def _opened(call):
+    page = call("/desk/api/page/1/29")
+    return page["head"], page["text"]
+
+
+def _save(call, head, text, base, status):
+    return call("/desk/api/save", {"volume": 1, "page": 29, "head": head, "text": text,
+                                   "base": base, "status": status})
+
+
+def test_the_desk_lists_its_pages_and_shows_each_whole(desk_at):
     [q] = desk_at("/desk/api/queue")
-    assert q == {"volume": 1, "page": 29, "label": "Vol. 1, p. 29", "level": 1, "strips": 3, "checked": 0}
+    assert q == {"volume": 1, "page": 29, "label": "Vol. 1, p. 29", "level": 1}
     page = desk_at("/desk/api/page/1/29")
-    assert [s["name"] for s in page["strips"]] == ["head", "c1s1", "c1f1", "c1s2"]
+    head, body, _ = supplied.page_parts(supplied.read(1, 29)["raw_text"])
+    assert (page["head"], page["text"], page["checked"]) == (head, body, False)
     assert any(c["open"] == "''" for c in page["constructs"])
-    assert desk_at("/desk/strip/1/29/c1s1.png").startswith(b"\x89PNG")
+    assert desk_at("/desk/scan/1/29.jpg").startswith(b"\xff\xd8")
 
 
 def test_an_unsaved_edit_is_rendered_and_a_save_writes_it(desk_at):
-    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": "¶\n'''abaca''' (ab′a̤-kus)"}})
+    head, text = _opened(desk_at)
+    edited = text.replace("'''abacus'''", "'''abaca'''")
+    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "head": head, "text": edited})
     article = desk_at("/desk/article/1-29.json")
     assert article["title"].endswith("(unsaved)") and "<b>abaca</b>" in article["rendered_html"]
-    assert "(ab′ạ-kus)" in supplied.read(1, 29)["raw_text"]                     # nothing written yet
-    strips = {n: {"text": None, "status": "checked"} for n in ("head", "c1s2")}
-    strips["c1s1"] = {"text": "¶\n'''abaca''' (ab′a̤-kus)", "status": "checked"}
-    r = desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": strips})
-    assert r["report"].endswith("level 3 (now proofread)")
+    assert "'''abacus'''" in supplied.read(1, 29)["raw_text"]                    # nothing written yet
+    r = _save(desk_at, head, edited, [head, text], "checked")
+    assert r["report"] == "vol 1 p29: corrected, level 3 (now proofread)"
     page = supplied.read(1, 29)
-    assert "'''abaca'''" in page["raw_text"] and page["provenance"]["checked"]["c1s1"]["by"] == "tester"
-    assert not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
+    assert "'''abaca'''" in page["raw_text"] and page["provenance"]["page_checked"]["by"] == "tester"
+    assert r["page"]["checked"] and not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
 
 
 def test_a_desk_older_than_the_engine_refuses_to_save(desk_at, monkeypatch):
     # its assembly would be the old code's (vol 26 p582, 2026-10-15)
     monkeypatch.setattr(desk_serve, "STARTED", 0.0)
+    head, text = _opened(desk_at)
     before = supplied.read(1, 29)["raw_text"]
     with pytest.raises(urllib.error.HTTPError) as e:
-        desk_at("/desk/api/save", {"volume": 1, "page": 29,
-                                   "strips": {"c1s1": {"text": "¶\nchanged", "status": "checked"}}})
+        _save(desk_at, head, "changed", [head, text], "checked")
     assert "restart the desk" in json.loads(e.value.read())["error"]
     assert supplied.read(1, 29)["raw_text"] == before
 
 
 def test_a_save_over_a_page_changed_since_it_was_opened_is_refused(desk_at):
-    opened = supplied.read(1, 29)["provenance"]["readings"]["c1s1"]
+    head, text = _opened(desk_at)
     page = supplied.read(1, 29)
     page["provenance"]["readings"]["c1s1"] = "¶\n'''abacus''' (ab′a̤-kus), ''n.'' fixed meanwhile"
     supplied.write(supplied.reassemble(page))                    # written under the editor
     with pytest.raises(urllib.error.HTTPError) as e:
-        desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
-            "c1s1": {"text": opened + " edited", "base": opened, "status": "checked"}}})
+        _save(desk_at, head, text + " edited", [head, text], "checked")
     assert "changed since you opened it" in json.loads(e.value.read())["error"]
     assert "fixed meanwhile" in supplied.read(1, 29)["raw_text"]
 
@@ -106,15 +116,13 @@ def test_the_page_is_linked_as_the_build_links_its_article():
 
 def test_undo_puts_the_page_back_as_it_was_before_each_save(desk_at):
     first = supplied.read(1, 29)["raw_text"]
-    opened = supplied.read(1, 29)["provenance"]["readings"]["c1s1"]
-    desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
-        "c1s1": {"text": "¶\n'''abaca''' one", "base": opened, "status": "unchecked"}}})
-    desk_at("/desk/api/save", {"volume": 1, "page": 29, "strips": {
-        "c1s1": {"text": "¶\n'''abaca''' two", "base": "¶\n'''abaca''' one", "status": "checked"}}})
+    head, text = _opened(desk_at)
+    _save(desk_at, head, text + " one", [head, text], "unchecked")
+    _save(desk_at, head, text + " two", [head, text + " one"], "checked")
     assert len(desk_at("/desk/api/page/1/29")["saves"]) == 2
     r = desk_at("/desk/api/undo", {"volume": 1, "page": 29})
-    assert "'''abaca''' one" in supplied.read(1, 29)["raw_text"] and len(r["page"]["saves"]) == 1
-    assert "c1s1" not in supplied.read(1, 29)["provenance"].get("checked", {})
+    assert (text + " one") in supplied.read(1, 29)["raw_text"] and len(r["page"]["saves"]) == 1
+    assert supplied.level(supplied.read(1, 29)) == 1
     desk_at("/desk/api/undo", {"volume": 1, "page": 29})
     assert supplied.read(1, 29)["raw_text"] == first
     with pytest.raises(urllib.error.HTTPError) as e:
@@ -122,11 +130,17 @@ def test_undo_puts_the_page_back_as_it_was_before_each_save(desk_at):
     assert "no save of this page to undo" in json.loads(e.value.read())["error"]
 
 
-def test_readings_as_saved_clear_the_draft(desk_at):
-    saved = supplied.read(1, 29)["provenance"]["readings"]
-    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": "¶\nedited"}})
+def test_a_save_that_changes_nothing_leaves_nothing_to_undo(desk_at):
+    head, text = _opened(desk_at)
+    r = _save(desk_at, head, text, [head, text], "unchecked")
+    assert r["report"] == "nothing changed" and r["page"]["saves"] == []
+
+
+def test_the_page_as_saved_clears_the_draft(desk_at):
+    head, text = _opened(desk_at)
+    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "head": head, "text": text + " edited"})
     assert desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
-    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "readings": {"c1s1": saved["c1s1"]}})
+    desk_at("/desk/api/preview", {"volume": 1, "page": 29, "head": head, "text": text})
     assert not desk_at("/desk/article/1-29.json")["title"].endswith("(unsaved)")
 
 
@@ -138,3 +152,17 @@ def test_a_page_carrying_on_a_paragraph_is_shown_without_opening_one():
     supplied.reassemble(runs_on)
     html = desk.page_article(runs_on, "T")["rendered_html"]
     assert '<div class="body-text" data-runs-on>' in html and "carried on" in html
+
+
+def test_undo_puts_back_text_set_apart_from_the_readings(desk_at):
+    # an older page whose text was set by hand, apart from its readings: a
+    # save keeps the page whole, and undo puts it back as it was, never
+    # rebuilt from the readings (the older level-2 pages of EB1911)
+    page = supplied.read(1, 29)
+    page["raw_text"] = page["raw_text"].replace("'''abacus'''", "'''abacus''' set by hand")
+    supplied.write(page)
+    kept = supplied.read(1, 29)["raw_text"]
+    head, text = _opened(desk_at)
+    _save(desk_at, head, text + " edited", [head, text], "unchecked")
+    desk_at("/desk/api/undo", {"volume": 1, "page": 29})
+    assert supplied.read(1, 29)["raw_text"] == kept

@@ -151,22 +151,24 @@ def test_an_argument_the_engine_never_shows_is_not_shown(book_with_arguments):
     assert shown == {"html": "″", "leaks": []}
 
 
-def test_corrections_come_back_and_a_fully_checked_page_is_proofread(tmp_path, monkeypatch):
+def test_a_page_checked_strip_by_strip_is_checked_whole_once_edited(tmp_path, monkeypatch):
+    """A page proofread on the old desk, its every strip checked, is level 3;
+    edited whole, only its own check counts — the strips' checks were of a
+    text it no longer has."""
     from test_scan_supplied import payload
     from wikikit.scan import desk, supplied
     (tmp_path / "book.env").write_text("")
     monkeypatch.chdir(tmp_path)
-    supplied.write(payload())
-    sid = lambda name: desk.strip_id(1, 29, name)
-    fixed = "¶\n'''abacus''' (ab′a̤-kus), ''n.''"                   # ạ -> a̤, from the scan
-    [line] = desk.apply({sid("c1s1"): {"text": fixed, "status": "checked", "updated_by": "u_x"}})
-    assert line.startswith("vol 1 p29: 1 reading(s) corrected") and line.endswith("level 1")
-    page = supplied.read(1, 29)
-    assert "(ab′a̤-kus)" in page["raw_text"] and 'level="1"' in page["raw_text"]
-    rest = {sid(n): {"text": None, "status": "checked"} for n in ("head", "c1s2")}
-    [line] = desk.apply(rest)
-    assert line.endswith("level 3 (now proofread)")
-    assert '<pagequality level="3" user="proofreader" />' in supplied.read(1, 29)["raw_text"]
+    page = payload()
+    page["provenance"]["checked"] = {n: {"by": "x"} for n in ("head", "c1s1", "c1s2")}
+    supplied.write(supplied.reassemble(page))
+    assert supplied.level(supplied.read(1, 29)) == 3
+    head, body, _ = supplied.page_parts(supplied.read(1, 29)["raw_text"])
+    pid = supplied.page_id(1, 29)
+    [line] = desk.apply_pages({pid: {"head": head, "text": body + " more", "status": "unchecked"}})
+    assert line == "vol 1 p29: corrected, level 1"
+    [line] = desk.apply_pages({pid: {"head": head, "text": body + " more", "status": "checked"}})
+    assert line == "vol 1 p29: text unchanged, level 3 (now proofread)"
 
 
 def test_a_page_proofread_whole_keeps_its_text(tmp_path, monkeypatch):

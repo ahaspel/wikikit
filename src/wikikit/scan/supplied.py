@@ -390,11 +390,12 @@ def level(payload: dict) -> int:
     a page with text missing) while any text item the model refused or left
     unread is unchecked, or while the page is filed for special handling
     (`special`: set across its columns) — the reader is told the page is
-    incomplete; else 1 (not proofread)."""
+    incomplete; else 1 (not proofread).  A page edited whole is checked whole
+    (`page_checked`): its items' checks were of a text it no longer has."""
     p = payload["provenance"]
     if p.get("page_checked"):
         return 3
-    checked = p.get("checked", {})
+    checked = {} if p.get("page_edited") else p.get("checked", {})
     items = [it for it in items_of(payload) if it.kind != "figure"]
     texts = [it.name for it in items]
     if texts and all(n in checked for n in texts):
