@@ -43,6 +43,11 @@ from wikikit.scan.transcribe import PARA
 from wikikit.scan.vocabulary import IMAGE_SRC, _render, render_table
 
 DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
+#: The desk's text face, Gentium Plus, whole (SIL, OFL: its licence beside it),
+#: copied beside a published desk as fonts/.  Never Google Fonts' copy: that is
+#: cut into script subsets which leave out the rarer combining marks (the
+#: breve of y̆), so a marked letter came from another font, its mark unplaced.
+DESK_FONTS = Path(__file__).resolve().parent / "desk_fonts"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
 #: A formula as desk_render.js leaves it for KaTeX (its LaTeX escaped, so no "<").
 _TEX_RE = re.compile(r'<span class="tex">[^<]*</span>')
