@@ -65,6 +65,15 @@ _MEDIA = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
           "gif": "image/gif", "svg": "image/svg+xml"}
 
 
+#: The Greek face's fonts (GFS Didot, the site's own copies), which epub.css's
+#: @font-face rules name by bare filename: written beside the stylesheet — the
+#: EPUB's OEBPS/, the MDX's .mdd (wikikit.mdx.build).
+GREEK_FACE = tuple(os.path.join(os.path.dirname(os.path.dirname(__file__)), "site", "pages",
+                                f"gfs-didot-{style}.woff2")
+                   for style in ("regular", "italic", "bold", "bold-italic"))
+FONT_FACE_RE = re.compile(r"@font-face\s*\{[^}]*\}\s*")
+
+
 def _media_type(name):
     """Media type from the LAST extension token in the name — a few disk names carry
     trailing junk after the ext (`….jpg_‎`), which defeats a bare splitext."""
@@ -85,12 +94,14 @@ def epub_css(target="epub"):
     Kindle drops the ONE stylesheet transform (.mirror-h scaleX(-1), ALPHABET's mirrored
     letterforms): Amazon's ET pipeline rasterizes every transformed node and its
     rasterizer dies on bare mirrored text (E00192 → the whole book "Not Supported");
-    the letterforms render unmirrored there — ET cannot draw them any other way."""
+    the letterforms render unmirrored there — ET cannot draw them any other way.
+    Kindle carries no Greek face either: its pipeline is closed, and is left as it was."""
     base = open(os.path.join(os.path.dirname(__file__), "epub.css"), encoding="utf-8").read()
     if target == "kindle":
         base = base.replace(".mirror-h { display: inline-block; transform: scaleX(-1); }",
                             ".mirror-h { display: inline-block; }")
         assert "transform" not in base, "kindle css must carry no transforms"
+        base = FONT_FACE_RE.sub("", base).replace('"Greek Didot", ', "")
     return base + ("\n/* math */\n"
                    "svg.math-display, img.math-display { display:block; margin:1.1em auto;"
                    " max-width:100%; height:auto; }\n"
@@ -1275,6 +1286,9 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         + closing + "</div>"))
 
     open(os.path.join(oebps, "style.css"), "w", encoding="utf-8").write(epub_css(target))
+    if target != "kindle":
+        for font in GREEK_FACE:
+            shutil.copyfile(font, os.path.join(oebps, os.path.basename(font)))
 
     # Cover: the site mark's language at 1600×2560; cover-image manifest property
     # (EPUB3) + the legacy meta (Kindle keys its thumbnails on it).  KINDLE gets the
@@ -1385,6 +1399,10 @@ def build_epub(stems, out_path, *, title, ident, target="epub", articles_dir=ART
         manifest.append('<item id="search-api" href="search-api.js" '
                         'media-type="application/javascript"/>')
     manifest.append('<item id="css" href="style.css" media-type="text/css"/>')
+    if target != "kindle":
+        for n, font in enumerate(GREEK_FACE):
+            manifest.append(f'<item id="font-greek-{n}" href="{os.path.basename(font)}" '
+                            'media-type="font/woff2"/>')
 
     opf = (
         '<?xml version="1.0" encoding="utf-8"?>\n'

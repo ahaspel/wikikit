@@ -28,6 +28,7 @@ import zipfile
 
 from wikikit.corpora import book_root, brand, current_corpus
 from wikikit.epub import math_assets
+from wikikit.epub.build import GREEK_FACE, FONT_FACE_RE
 from wikikit.epub.images import diet_image
 from wikikit.export.corpus import load_corpus
 from wikikit.export.article_json import stable_id_from_filename
@@ -166,6 +167,16 @@ class Inventory(HTMLParser):
 def stylesheet() -> str:
     css = (_PKG / "epub" / "epub.css").read_text(encoding="utf-8")
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    # The Greek face's @font-face rules pass unscoped (a face is used only where
+    # a scoped rule names it, so it cannot leak), each naming only a font the
+    # .mdd carries (`font_resources`).  Any other @-rule or url() still stops.
+    faces = FONT_FACE_RE.findall(css)
+    css = FONT_FACE_RE.sub("", css)
+    packed = set(font_resources())
+    for face in faces:
+        named = set(re.findall(r'url\("([^"]+)"\)', face))
+        if not named or not named <= packed:
+            raise ValueError(f"@font-face names a font the .mdd does not carry: {face}")
     if "@" in css or "url(" in css:
         raise ValueError("EPUB stylesheet changed: review CSS scoping/resources")
 
@@ -179,7 +190,7 @@ def stylesheet() -> str:
         return ",".join(s_ if s == "body" else s_ + " " + s for s in selectors) + "{"
 
     css = re.sub(r"([^{}]+)\{", scope, css)
-    return css + """
+    return "".join(faces) + css + """
 {s} {line-height:1.5; color:inherit; background:transparent;}
 {s} .contributors {color:inherit; opacity:.8;}
 {s} svg.math-display {display:block; max-width:100%; height:auto; margin:1em auto;}
@@ -188,6 +199,12 @@ def stylesheet() -> str:
 {s} .sample-note {font-size:.85em; border-bottom:1px solid; padding:.4em 0;}
 {s} .outside-sample {font-size:.8em;}
 """.replace("{s}", s_)
+
+
+def font_resources() -> dict[str, bytes]:
+    """The Greek face's fonts, named as epub.css's @font-face rules name them,
+    for the .mdd beside britannica.css."""
+    return {Path(p).name: Path(p).read_bytes() for p in GREEK_FACE}
 
 
 def wrap(body: str) -> str:
@@ -717,7 +734,7 @@ def build_edition(output: Path, *, sample=True, native_search=False):
             if "«MATH" in a["body"] or "«EQN" in a["body"]:
                 render_article(a, target="epub", epub_bundled=policy)
         math_assets.generate(math_assets.take_collected(), svg=True, png=False)
-        resources = {"britannica.css": stylesheet().encode("utf-8")}
+        resources = {"britannica.css": stylesheet().encode("utf-8"), **font_resources()}
         entries, source_assets, contributors = {}, {}, {}
         aliases = defaultdict(set)
         failures = []
