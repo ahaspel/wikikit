@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import html
 import re
+import shutil
 import json
 import subprocess
 import sys
@@ -43,10 +44,12 @@ from wikikit.scan.transcribe import PARA
 from wikikit.scan.vocabulary import IMAGE_SRC, _render, render_table
 
 DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
-#: The desk's text face, Gentium Plus, whole (SIL, OFL: its licence beside it),
-#: copied beside a published desk as fonts/.  Never Google Fonts' copy: that is
-#: cut into script subsets which leave out the rarer combining marks (the
-#: breve of y̆), so a marked letter came from another font, its mark unplaced.
+#: The desk's text face, Junicode, whole (Peter S. Baker, OFL: its licence
+#: beside it), copied beside a published desk as fonts/: polytonic Greek, the
+#: transliterations' letters, true small capitals, marks placed (user's
+#: choice, 2026-10-18).  Never a font host's subsets: Google Fonts cuts a
+#: face by script and leaves out the rarer combining marks (the breve of y̆),
+#: so a marked letter came from another font, its mark unplaced.
 DESK_FONTS = Path(__file__).resolve().parent / "desk_fonts"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
 #: A formula as desk_render.js leaves it for KaTeX (its LaTeX escaped, so no "<").
@@ -152,8 +155,11 @@ def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Imag
     (EB1911's are Wikisource's scan indices).  None: the file's number.
 
     `people`: everyone a page may be given to at the desk — each page shows
-    to its owner (`supplied.owner`).  None: the owners of these pages."""
+    to its owner (`supplied.owner`).  None: the owners of these pages.
+
+    The desk's text face goes beside them, as fonts/ (`DESK_FONTS`)."""
     out.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(DESK_FONTS, out / "fonts", dirs_exist_ok=True)
     desk_pages = []
     for vol, pg in pages:
         payload = supplied.read(vol, pg)

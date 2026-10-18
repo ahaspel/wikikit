@@ -42,6 +42,7 @@ Two jobs in one server:
 from __future__ import annotations
 
 import http.server
+import mimetypes
 import os
 import socketserver
 import sys
@@ -53,6 +54,10 @@ from pathlib import Path
 
 from wikikit.corpora import book_root, current_corpus
 from wikikit.site.build import page
+
+# The Greek face's fonts, typed as deploy.sh uploads them (not every Python's
+# table knows the suffix).
+mimetypes.add_type("font/woff2", ".woff2")
 
 MEILI = "http://127.0.0.1:7700"
 #: The key the LOCAL Meilisearch was started with — one instance serves every

@@ -3,7 +3,8 @@
     uv run python -m wikikit.site.build          # writes <derived>/site/
 
 A served name is either an ENGINE page (`pages/`, its `@@name@@` tokens filled
-from the book's profile) or a file in the book's `site_dir`, copied verbatim.
+from the book's profile; a binary file there, a font, copied verbatim) or a
+file in the book's `site_dir`, copied verbatim.
 The two sets may not overlap: a book page shadowing an engine page would be a
 fork of the viewer, not a customisation of it.
 """
@@ -31,6 +32,10 @@ BOOK_PAGES = frozenset({"home.html", "ancillary.html", "download.html", "topics.
 
 #: The kinds of file a book's site folder serves; its builders stay behind.
 SERVED = frozenset({".html", ".js", ".css", ".svg", ".jpg", ".png"})
+
+#: The engine pages whose `@@name@@` tokens are filled; any other engine file
+#: (the Greek face's fonts and their licence) is served as it is.
+FILLED = frozenset({".html", ".js"})
 
 #: The one served file neither side writes by hand — `wikikit.site.stamp`
 #: generates it from the corpus, into the assembled folder.
@@ -94,7 +99,7 @@ def _sources() -> dict[str, Path]:
 
 def _bytes(src: Path) -> bytes:
     data = src.read_bytes()
-    if src.parent == PAGES:
+    if src.parent == PAGES and src.suffix in FILLED:
         data = fill(data.decode("utf-8"), src.name).encode("utf-8")
     return data
 
