@@ -32,7 +32,7 @@ from wikikit.scan.layout import layout_for
 from wikikit.scan.model import MODEL, Refused, metered
 from wikikit.scan.page import cut_page
 from wikikit.scan.transcribe import (Unread, assemble_page, drop_neighbour_marks, figures_of, fit_figures,
-                                     read_item, settle, small_type_of)
+                                     read_item, settle, small_captions, small_type_of)
 from wikikit.source_pages import SUPPLIED_DIR, page_filename, volume_dir
 
 
@@ -148,6 +148,8 @@ def build_payload(volume: int, page: int, scan: str, level: Image.Image, plan: c
              for it in plan.items if it.kind == "figure"}
     if current_corpus().curly_readings:
         readings = {name: curly_marks(r) for name, r in readings.items()}
+    if current_corpus().captions_small:
+        readings = {name: small_captions(r) for name, r in readings.items()}
     payload = {
         "volume": volume, "page_number": page, "source": "scan", "title": scan,
         "provenance": {

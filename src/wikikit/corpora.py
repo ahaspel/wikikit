@@ -180,6 +180,12 @@ class Corpus:
     #: readings are matched against another transcription's text (EB1911's
     #: patches, against Wikisource's).
     curly_readings: bool = False
+    #: OUR READINGS' CAPTIONS — True: the book prints its figures' captions and
+    #: legends in smaller type, and each page we transcribe sets them so as it is
+    #: read (`transcribe.small_captions`); the model reads them at the text's
+    #: size (the Century, user 2026-10-18: "consistently read as normal-sized",
+    #: small in every one seen).  An exception is the proofreader's to undo.
+    captions_small: bool = False
     #: LAYOUT — what the book knows of a page's layout, for the cutter:
     #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
     #: (its column count, …).  The cutter measures the ink only where the book

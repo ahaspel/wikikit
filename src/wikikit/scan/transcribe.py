@@ -685,6 +685,29 @@ def _figure_end(lines: list[str], k: int) -> int:
     return j
 
 
+def small_captions(text: str) -> str:
+    """A reading's figure captions, and the centred lines of their legends,
+    in smaller type: for a book that prints its captions so
+    (`Corpus.captions_small`), not left to the model, which reads them at the
+    text's size.  `{{c|{{smaller|…}}}}`: the centring stays outermost, as
+    assembly finds a caption by it.  A line already wholly small, or a legend
+    the model set off in small type, is left as it is."""
+    from wikikit.wikitext import template_end
+    lines = text.split("\n")
+    for k, line in enumerate(lines):
+        if line.strip() != FIGURE_MARK:
+            continue
+        for j in range(k + 1, _figure_end(lines, k)):
+            s = lines[j].strip()
+            if not (s.startswith("{{c|") and template_end(s, 0) == len(s)):
+                continue
+            inner = s[len("{{c|"):-2]
+            if not any(inner.startswith(o) and _balanced_end(inner, 0) == len(inner)
+                       for o in _SMALL_OPEN):
+                lines[j] = "{{c|{{smaller|" + inner + "}}}}"
+    return "\n".join(lines)
+
+
 def _caption_of(lines: list[str]) -> str:
     """A figure's caption lines as one caption: each line's own centring
     taken off (the float centres its caption), the lines kept apart."""

@@ -5,7 +5,8 @@ import pytest
 
 from wikikit.pipeline.stages.preprocess import PARAGRAPH_ENDS_WITH_PAGE
 from wikikit.scan.cut import Item
-from wikikit.scan.transcribe import PARA, assemble_page, captions, instructions, join_across_cut, prompt_for
+from wikikit.scan.transcribe import (PARA, assemble_page, captions, instructions, join_across_cut, prompt_for,
+                                     small_captions)
 from wikikit.scan.vocabulary import VOCABULARY
 
 H = Item("head", (0, 0, 900, 40), 0, "head")
@@ -41,6 +42,22 @@ def test_the_strip_prompt_states_the_engine_vocabulary_and_the_edge_signals():
     for c in VOCABULARY:
         assert f"{c.open}text{c.close}" in p
     assert PARA in p and '"diffi-"' in p
+
+
+def test_a_book_that_prints_captions_small_sets_them_small():
+    # Century vol 1 pp. 6 and 28: a caption and its legend lines, centred; a
+    # second figure's caption already small, and a legend set off in small
+    # type, are left alone; text that is no caption is never touched.
+    text = ("as follows:\n[[FIGURE]]\n{{c|Acalephs.}}\n{{c|1, ''Rhizostoma.'' 2, ''Medusa.''}}\n"
+            "{{c|The next line of text.}} is not a legend\n"
+            "[[FIGURE]]\n{{c|{{smaller|Fig. 1, a diagram.}}}}\n{{smaller block|''A'', its stem.}}\n"
+            "Text.\n{{c|Centred, but no caption.}}")
+    assert small_captions(text) == (
+        "as follows:\n[[FIGURE]]\n{{c|{{smaller|Acalephs.}}}}\n"
+        "{{c|{{smaller|1, ''Rhizostoma.'' 2, ''Medusa.''}}}}\n"
+        "{{c|The next line of text.}} is not a legend\n"
+        "[[FIGURE]]\n{{c|{{smaller|Fig. 1, a diagram.}}}}\n{{smaller block|''A'', its stem.}}\n"
+        "Text.\n{{c|Centred, but no caption.}}")
 
 
 def test_strips_join_across_cuts_and_break_where_the_model_says():
