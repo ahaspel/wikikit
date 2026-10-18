@@ -44,12 +44,14 @@ from wikikit.scan.transcribe import PARA
 from wikikit.scan.vocabulary import IMAGE_SRC, _render, render_table
 
 DESK_RENDER_JS = Path(__file__).resolve().parent / "desk_render.js"
-#: The desk's text face, Junicode, whole (Peter S. Baker, OFL: its licence
+#: A desk's text face, Junicode, whole (Peter S. Baker, OFL: its licence
 #: beside it), copied beside a published desk as fonts/: polytonic Greek, the
-#: transliterations' letters, true small capitals, marks placed (user's
-#: choice, 2026-10-18).  Never a font host's subsets: Google Fonts cuts a
-#: face by script and leaves out the rarer combining marks (the breve of y̆),
-#: so a marked letter came from another font, its mark unplaced.
+#: transliterations' letters, true small capitals, marks placed (the Anthon's,
+#: user's choice, 2026-10-18).  Never a font host's subsets: Google Fonts cuts
+#: a face by script and leaves out the rarer combining marks (the breve of y̆),
+#: so a marked letter came from another font, its mark unplaced.  The site's
+#: Greek face (GFS Didot, `epub.build.GREEK_FACE`) goes beside it, for a desk
+#: that keeps the site's Georgia (the Century's).
 DESK_FONTS = Path(__file__).resolve().parent / "desk_fonts"
 _LINK_RE = re.compile(r"<a\b[^>]*>(.*?)</a>", re.S)
 #: A formula as desk_render.js leaves it for KaTeX (its LaTeX escaped, so no "<").
@@ -157,9 +159,13 @@ def bundle(pages: list[tuple[int, int]], scans: dict[tuple[int, int], Image.Imag
     `people`: everyone a page may be given to at the desk — each page shows
     to its owner (`supplied.owner`).  None: the owners of these pages.
 
-    The desk's text face goes beside them, as fonts/ (`DESK_FONTS`)."""
+    The desk's fonts go beside them, as fonts/ (`DESK_FONTS`, and the site's
+    Greek face)."""
+    from wikikit.epub.build import GREEK_FACE
     out.mkdir(parents=True, exist_ok=True)
     shutil.copytree(DESK_FONTS, out / "fonts", dirs_exist_ok=True)
+    for font in GREEK_FACE:
+        shutil.copyfile(font, out / "fonts" / Path(font).name)
     desk_pages = []
     for vol, pg in pages:
         payload = supplied.read(vol, pg)
