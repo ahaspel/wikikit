@@ -30,15 +30,17 @@ page as it came to the desk.
 
 THE PATCH SCREEN (when the book gives `serve_desk` its patches): each patch
 laid on a fetched page (`wikikit.scan.patches`) beside the scan, Wikisource's
-markup as it stands and as the patch leaves it, for a person to rule KEEP or
-DROP — the ruling is final, over every check that flagged the patch or
-passed it.  The book owns the patches and the rulings (`PatchSource`):
+markup as it stands and as the patch leaves it, for a person to rule KEEP,
+DROP or EDIT (the person's own text laid in the patch's place) — the ruling
+is final, over every check that flagged the patch or passed it.  The book
+owns the patches and the rulings (`PatchSource`):
 
     /desk/patches                   the patch screen
     /desk/api/patch-queue           the pages with patches, flagged ones counted
     /desk/api/patches/V/P           one page's patches, each with its markup and place
     /desk/pscan/V/P.jpg             the page's scan, levelled by our reading
-    POST /desk/api/patch-ruling     {volume, page, old, new, ruling: keep|drop|null, note}
+    POST /desk/api/patch-ruling     {volume, page, old, new, ruling: keep|drop|edit|null, note,
+                                     text: the edit's own new text}
 """
 from __future__ import annotations
 
@@ -117,7 +119,8 @@ class PatchSource:
         """The page's patches: {kind, start, end, old, new} on the fetched
         page, `flags` (what the book's checks say of it, [] if nothing),
         `chain` ("install" | "drop": what the checks alone would do) and
-        `ruling` (a person's {ruling, note, by, at}, or None)."""
+        `ruling` (a person's {ruling, note, by, at, text}, or None; `text`
+        is an edit's new text)."""
         raise NotImplementedError
 
     def reading(self, volume: int, page: int) -> dict:
@@ -126,8 +129,9 @@ class PatchSource:
         raise NotImplementedError
 
     def rule(self, volume: int, page: int, old: str, new: str, ruling: str | None,
-             note: str, by: str) -> str:
-        """Record a person's ruling (None withdraws it); a report."""
+             note: str, by: str, text: str | None = None) -> str:
+        """Record a person's ruling (None withdraws it; "edit" lays `text` in
+        the patch's place, refused if the book's checks fail it); a report."""
         raise NotImplementedError
 
 
@@ -367,11 +371,14 @@ class Handler(site.Handler):
             elif path == "/desk/api/undo":
                 self._json({"ok": True, "report": self._undo(vol, pg), "page": self._page(vol, pg)})
             elif path == "/desk/api/patch-ruling" and self.patch_source is not None:
-                if body.get("ruling") not in ("keep", "drop", None):
-                    raise ValueError(f"a ruling is keep, drop or none, not {body.get('ruling')!r}")
+                if body.get("ruling") not in ("keep", "drop", "edit", None):
+                    raise ValueError(f"a ruling is keep, drop, edit or none, not {body.get('ruling')!r}")
+                if body.get("ruling") == "edit" and not isinstance(body.get("text"), str):
+                    raise ValueError("an edit needs its text")
                 with self.lock:
                     report = self.patch_source.rule(vol, pg, body["old"], body["new"], body.get("ruling"),
-                                                    body.get("note") or "", self.who)
+                                                    body.get("note") or "", self.who,
+                                                    body.get("text") if body.get("ruling") == "edit" else None)
                 self._json({"ok": True, "report": report, "page": self._patch_page(vol, pg)})
             elif path == "/desk/api/save":
                 self._json({"ok": True, "report": self._save(vol, pg, body), "page": self._page(vol, pg)})

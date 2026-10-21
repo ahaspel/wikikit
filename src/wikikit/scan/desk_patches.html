@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patch Desk</title>
+<!-- the site's KaTeX: an edit's formulas must render as the site renders them -->
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
 <style>
   :root {
     --paper: #faf6ee; --ink: #2b241c; --muted: #6b5e4f; --rule: #d8cdb8;
@@ -53,6 +55,13 @@
   .pill.chain-drop { color: var(--warn); }
   .pill.ruled { color: #fff; background: var(--ok); border-color: var(--ok); }
   .pill.ruled.drop { background: var(--bad); border-color: var(--bad); }
+  .pill.ruled.edit { background: var(--accent); border-color: var(--accent); }
+  .card.edit { border-left: 5px solid var(--accent); }
+  .editor { margin-top: 6px; }
+  .editor textarea { width: 100%; min-height: 5em; padding: 6px; border: 1px solid var(--accent); border-radius: 4px;
+                     font: 12.5px/1.45 Consolas, "DejaVu Sans Mono", monospace; resize: vertical; }
+  .was { font-size: 12px; color: var(--muted); margin-top: 4px; word-break: break-word; }
+  .was code { font: 12px Consolas, "DejaVu Sans Mono", monospace; }
   .flags { margin: 4px 0 0; padding-left: 18px; color: var(--bad); font-size: 12px; }
   .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; }
   .cols h3 { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--muted);
@@ -86,7 +95,7 @@
     <button id="next" title="Next page">▶</button>
     <label class="opt"><input type="checkbox" id="flagged"> flagged pages only</label>
     <a id="desk" href="../desk">the proofreading desk</a>
-    <span class="keys">↑/↓ patch · K keep · D drop · C clear</span>
+    <span class="keys">↑/↓ patch · K keep · D drop · E edit · C clear</span>
     <span id="status"></span>
   </div>
 </header>
@@ -94,8 +103,9 @@
 <script>
 "use strict";
 /* Each patch on a fetched page, beside the scan: Wikisource's markup as it
-   stands and as the patch would leave it.  A person's ruling, keep or drop,
-   is final over every check (the book's install honours it). */
+   stands and as the patch would leave it.  A person's ruling, keep, drop or
+   edit (their own text in the patch's place), is final over every check (the
+   book's install honours it). */
 const $ = id => document.getElementById(id);
 const state = { queue: [], page: null, on: 0, zoom: 2 };
 const base = location.pathname.replace(/\/desk\/patches\/?$/, "");
@@ -192,14 +202,15 @@ function draw() {
 function card(x, i) {
   const c = el("article", "card" + (x.ruling ? " " + x.ruling.ruling : ""));
   c.dataset.i = i;
-  c.onclick = e => { if (e.target.tagName !== "BUTTON" && e.target.tagName !== "INPUT") { state.on = i; highlight(); } };
+  c.onclick = e => { if (!["BUTTON", "INPUT", "TEXTAREA"].includes(e.target.tagName)) { state.on = i; highlight(); } };
+  const edited = x.ruling && x.ruling.ruling === "edit";
   const meta = el("div", "meta");
   meta.append(el("span", "n", `#${i + 1}`), el("span", "pill", x.kind));
   meta.append(el("span", "pill" + (x.chain === "drop" ? " chain-drop" : ""),
                  x.chain === "drop" ? "checks: dropped" : "checks: installed"));
   if (x.flags.length) meta.append(el("span", "pill flag", `${x.flags.length} flag${x.flags.length === 1 ? "" : "s"}`));
-  if (x.ruling) meta.append(el("span", "pill ruled" + (x.ruling.ruling === "drop" ? " drop" : ""),
-                               `ruled ${x.ruling.ruling}` + (x.ruling.by ? ` by ${x.ruling.by}` : "")));
+  if (x.ruling) meta.append(el("span", "pill ruled " + x.ruling.ruling,
+                               (edited ? "edited" : `ruled ${x.ruling.ruling}`) + (x.ruling.by ? ` by ${x.ruling.by}` : "")));
   if (!x.place) meta.append(el("span", "", "· not placed on the scan"));
   c.append(meta);
   if (x.flags.length) {
@@ -209,20 +220,74 @@ function card(x, i) {
   }
   if (!x.stands) c.append(el("div", "warn", "Wikisource's page has changed: the old text no longer stands at this place."));
   const cols = el("div", "cols"), a = el("div"), b = el("div");
+  const after = edited ? x.ruling.text : x.new;
   a.append(el("h3", "", "Wikisource now"), markup(x.before, x.old, x.after, "old"));
-  b.append(el("h3", "", "With the patch"), markup(x.before, x.new, x.after, "new"));
+  b.append(el("h3", "", edited ? "With your edit" : "With the patch"), markup(x.before, after, x.after, "new"));
   cols.append(a, b);
   c.append(cols);
+  if (edited) {
+    const was = el("div", "was", "The reading's patch was: ");
+    was.append(el("code", "", x.new || "∅"));
+    c.append(was);
+  }
   const act = el("div", "act");
   const note = el("input"); note.placeholder = "note (why)"; note.value = x.ruling ? x.ruling.note || "" : "";
-  const keep = el("button", "keep", "Keep"), drop = el("button", "drop", "Drop"), clear = el("button", "", "Clear");
+  const keep = el("button", "keep", "Keep"), drop = el("button", "drop", "Drop"),
+        edit = el("button", "", "Edit"), clear = el("button", "", "Clear");
   keep.onclick = () => rule(i, "keep", note.value);
   drop.onclick = () => rule(i, "drop", note.value);
+  edit.onclick = () => openEditor(c, x, i, note);
   clear.onclick = () => rule(i, null, "");
   clear.disabled = !x.ruling;
-  act.append(keep, drop, clear, note);
+  act.append(keep, drop, edit, clear, note);
   c.append(act);
   return c;
+}
+
+function openEditor(c, x, i, note) {
+  /* the patch's new text in a box; the "with" markup follows as you type */
+  if (c.querySelector(".editor")) { c.querySelector("textarea").focus(); return; }
+  state.on = i; highlight();
+  const box = el("div", "editor"), ta = el("textarea");
+  ta.value = x.ruling && x.ruling.ruling === "edit" ? x.ruling.text : x.new;
+  ta.spellcheck = false;
+  const pre = c.querySelectorAll(".cols pre")[1], mark = pre.querySelector("mark");
+  const shown = () => { mark.textContent = ta.value || "∅"; };
+  const save = el("button", "keep", "Save edit"), cancel = el("button", "", "Cancel");
+  const close = () => { box.remove(); mark.textContent = (x.ruling && x.ruling.ruling === "edit" ? x.ruling.text : x.new) || "∅"; };
+  save.onclick = () => saveEdit(i, ta.value, note.value);
+  cancel.onclick = close;
+  ta.oninput = shown;
+  ta.onkeydown = e => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveEdit(i, ta.value, note.value); }
+    else if (e.key === "Escape") { e.preventDefault(); close(); }
+  };
+  const row = el("div", "act");
+  row.append(save, cancel, el("span", "keys", "Ctrl+Enter save · Esc cancel"));
+  box.append(ta, row);
+  c.querySelector(".act").before(box);
+  ta.focus();
+}
+
+function katexProblem(text) {
+  /* the first formula in `text` KaTeX refuses, as the site hands it (\mbox
+     read as \text); null when every one renders */
+  const tex = [...text.matchAll(/<math[^>]*>([\s\S]*?)<\/math>/gi)].map(m => m[1]);
+  if (!tex.length) return null;
+  if (typeof katex === "undefined") return "KaTeX did not load, so the formulas can't be checked — nothing saved";
+  for (const t of tex) {
+    try { katex.renderToString(t.replace(/\\mbox\b/g, "\\text"), { throwOnError: true }); }
+    catch (e) { return `KaTeX refuses ${JSON.stringify(t.slice(0, 60))}: ${e.message}`; }
+  }
+  return null;
+}
+
+function saveEdit(i, text, note) {
+  const x = state.page.patches[i];
+  if (text === x.new) return rule(i, "keep", note);     // unchanged: the patch as the reading made it
+  const bad = katexProblem(text);
+  if (bad) { setStatus(bad, "error"); return; }
+  return rule(i, "edit", note, text);
 }
 
 function highlight() {
@@ -246,12 +311,12 @@ function focusSpot() {
   scan.scrollTo({ top: y * k - scan.clientHeight / 2, left: x0 * k - 12, behavior: "smooth" });
 }
 
-async function rule(i, ruling, note) {
+async function rule(i, ruling, note, text) {
   const x = state.page.patches[i];
   try {
     setStatus("saving…");
     const r = await api("/desk/api/patch-ruling", { volume: state.page.volume, page: state.page.page,
-                                                    old: x.old, new: x.new, ruling, note });
+                                                    old: x.old, new: x.new, ruling, note, text });
     state.page = r.page;
     state.on = Math.min(i + (ruling ? 1 : 0), state.page.patches.length - 1);
     draw();
@@ -272,7 +337,7 @@ $("next").onclick = () => step(1);
 $("pages").onchange = e => { const [v, p] = e.target.value.split("-").map(Number); openPage(v, p); };
 $("flagged").onchange = () => { drawQueue(); if (!shown().some(q => q.volume === state.page?.volume && q.page === state.page?.page)) step(0); };
 document.addEventListener("keydown", e => {
-  if (!state.page || e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!state.page || ["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
   const n = state.page.patches.length;
   if (e.key === "ArrowDown" || e.key === "ArrowUp") {
     e.preventDefault();
@@ -280,6 +345,11 @@ document.addEventListener("keydown", e => {
     highlight();
   } else if (e.key === "k" || e.key === "K") rule(state.on, "keep", "");
   else if (e.key === "d" || e.key === "D") rule(state.on, "drop", "");
+  else if (e.key === "e" || e.key === "E") {
+    e.preventDefault();                               // the "e" is not typed into the box
+    const c = state.els.list.querySelector(`.card[data-i="${state.on}"]`);
+    c.querySelector(".act button:nth-child(3)").click();
+  }
   else if (e.key === "c" || e.key === "C") rule(state.on, null, "");
 });
 new ResizeObserver(() => document.documentElement.style.setProperty(
