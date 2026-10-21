@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patch Desk</title>
+<style>
+  :root {
+    --paper: #faf6ee; --ink: #2b241c; --muted: #6b5e4f; --rule: #d8cdb8;
+    --panel: #fffdf8; --accent: #7a3b12; --ok: #2f6b2f; --warn: #9a5b00; --bad: #a12a2a;
+    --old: #f6d5d0; --new: #d3ecd0; --spot: rgba(214, 120, 30, .28);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel);
+           border-bottom: 1px solid var(--rule); padding: 8px 16px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .bar h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+  select, button, input { font: inherit; }
+  select { max-width: 26em; padding: 3px 4px; }
+  button { padding: 3px 10px; border: 1px solid var(--rule); background: #fff;
+           border-radius: 4px; cursor: pointer; color: var(--ink); }
+  button:hover { border-color: var(--muted); }
+  button:disabled { opacity: .5; cursor: default; }
+  label.opt { display: flex; gap: 4px; align-items: center; color: var(--muted); }
+  #status { color: var(--muted); margin-left: auto; }
+  #status.error { color: var(--bad); }
+  #status.saved { color: var(--ok); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+         gap: 12px; padding: 12px 16px; height: calc(100vh - var(--hh, 60px)); }
+  .pane { display: flex; flex-direction: column; min-height: 0; }
+  .tag { font-size: 12px; color: var(--muted); margin: 0 0 4px; display: flex; gap: 8px;
+         align-items: center; text-transform: uppercase; letter-spacing: .05em; }
+  .tag .zoom { margin-left: auto; display: flex; gap: 2px; text-transform: none; letter-spacing: 0; }
+  .tag .zoom button { padding: 0 6px; font-size: 12px; }
+  .tag .zoom button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .scan { flex: 1; overflow: auto; border: 1px solid var(--rule); background: #fff; border-radius: 4px; }
+  .sheet { position: relative; width: calc(100% * var(--zoom, 2)); }
+  .sheet img { display: block; width: 100%; }
+  .spot { position: absolute; background: var(--spot); border: 2px solid #d6781e; border-radius: 3px;
+          pointer-events: none; }
+  .list { flex: 1; overflow: auto; padding-right: 4px; }
+  .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+          padding: 8px 10px; margin-bottom: 10px; }
+  .card.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(122, 59, 18, .15); }
+  .card.keep { border-left: 5px solid var(--ok); }
+  .card.drop { border-left: 5px solid var(--bad); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+  .meta .n { font-weight: 600; color: var(--ink); }
+  .pill { padding: 0 6px; border-radius: 9px; border: 1px solid var(--rule); background: #fff; }
+  .pill.flag { color: var(--bad); border-color: #e3b5ad; background: #fdf1ef; }
+  .pill.chain-drop { color: var(--warn); }
+  .pill.ruled { color: #fff; background: var(--ok); border-color: var(--ok); }
+  .pill.ruled.drop { background: var(--bad); border-color: var(--bad); }
+  .flags { margin: 4px 0 0; padding-left: 18px; color: var(--bad); font-size: 12px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; }
+  .cols h3 { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--muted);
+             text-transform: uppercase; letter-spacing: .05em; }
+  pre { position: relative; margin: 0; padding: 6px; background: #fff; border: 1px solid var(--rule); border-radius: 4px;
+        white-space: pre-wrap; word-break: break-word; max-height: 16em; overflow: auto;
+        font: 12.5px/1.45 Consolas, "DejaVu Sans Mono", monospace; }
+  pre .ctx { color: #8a7d6c; }
+  mark.old { background: var(--old); color: var(--ink); outline: 1px solid #d9a197; }
+  mark.new { background: var(--new); color: var(--ink); outline: 1px solid #93c38c; }
+  .act { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .act input { flex: 1; min-width: 10em; padding: 3px 6px; border: 1px solid var(--rule); border-radius: 4px; }
+  .act .keep { border-color: var(--ok); color: var(--ok); }
+  .act .drop { border-color: var(--bad); color: var(--bad); }
+  .warn { color: var(--bad); font-size: 12px; margin-top: 4px; }
+  .empty { padding: 40px 16px; color: var(--muted); }
+  .keys { font-size: 12px; color: var(--muted); }
+  @media (max-width: 900px) {
+    main { grid-template-columns: minmax(0, 1fr); height: auto; }
+    .pane { height: 70vh; }
+    .cols { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Patch Desk</h1>
+    <button id="prev" title="Previous page">◀</button>
+    <select id="pages" aria-label="Page"></select>
+    <button id="next" title="Next page">▶</button>
+    <label class="opt"><input type="checkbox" id="flagged"> flagged pages only</label>
+    <a id="desk" href="../desk">the proofreading desk</a>
+    <span class="keys">↑/↓ patch · K keep · D drop · C clear</span>
+    <span id="status"></span>
+  </div>
+</header>
+<main id="main"><div class="empty">Loading…</div></main>
+<script>
+"use strict";
+/* Each patch on a fetched page, beside the scan: Wikisource's markup as it
+   stands and as the patch would leave it.  A person's ruling, keep or drop,
+   is final over every check (the book's install honours it). */
+const $ = id => document.getElementById(id);
+const state = { queue: [], page: null, on: 0, zoom: 2 };
+const base = location.pathname.replace(/\/desk\/patches\/?$/, "");
+
+function setStatus(text, cls = "") { const s = $("status"); s.textContent = text; s.className = cls; }
+
+async function api(path, body) {
+  const r = await fetch(base + path, body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function shown() { return $("flagged").checked ? state.queue.filter(q => q.flagged) : state.queue; }
+
+function drawQueue() {
+  const sel = $("pages"), cur = state.page && `${state.page.volume}-${state.page.page}`;
+  sel.textContent = "";
+  for (const q of shown()) {
+    const o = document.createElement("option");
+    o.value = `${q.volume}-${q.page}`;
+    o.textContent = `${q.label} — ${q.patches} patch${q.patches === 1 ? "" : "es"}`
+      + (q.flagged ? `, ${q.flagged} flagged` : "") + (q.ruled ? `, ${q.ruled} ruled` : "");
+    sel.append(o);
+  }
+  if (cur) sel.value = cur;
+}
+
+async function loadQueue() {
+  state.queue = await api("/desk/api/patch-queue");
+  drawQueue();
+}
+
+async function openPage(v, p, on = 0) {
+  setStatus("loading…");
+  state.page = await api(`/desk/api/patches/${v}/${p}`);
+  state.on = Math.min(on, Math.max(0, state.page.patches.length - 1));
+  $("pages").value = `${v}-${p}`;
+  draw();
+  setStatus("");
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function markup(before, mid, after, cls) {
+  const pre = el("pre");
+  pre.append(el("span", "ctx", before), el("mark", cls, mid || "∅"), el("span", "ctx", after));
+  return pre;
+}
+
+function draw() {
+  const pg = state.page, main = $("main");
+  main.textContent = "";
+  const left = el("section", "pane"), right = el("section", "pane");
+  const tag = el("div", "tag"); tag.append("Original");
+  const zoom = el("span", "zoom");
+  for (const z of [1, 1.5, 2, 3]) {
+    const b = el("button", "", `${z}×`);
+    b.setAttribute("aria-pressed", String(z === state.zoom));
+    b.onclick = () => { state.zoom = z; draw(); };
+    zoom.append(b);
+  }
+  tag.append(zoom);
+  const scan = el("div", "scan"), sheet = el("div", "sheet");
+  sheet.style.setProperty("--zoom", state.zoom);
+  const img = el("img"); img.src = base + pg.scan; img.alt = `scan of ${pg.label}`;
+  const spot = el("div", "spot"); spot.hidden = true;
+  sheet.append(img, spot); scan.append(sheet);
+  left.append(tag, scan);
+  img.onload = () => focusSpot();
+
+  const rtag = el("div", "tag");
+  rtag.append(`${pg.label}: ${pg.patches.length} patch${pg.patches.length === 1 ? "" : "es"}`);
+  const list = el("div", "list");
+  pg.patches.forEach((x, i) => list.append(card(x, i)));
+  if (!pg.patches.length) list.append(el("div", "empty", "No patches on this page."));
+  right.append(rtag, list);
+  main.append(left, right);
+  // each markup box opens on its change, not on the context before it
+  for (const pre of list.querySelectorAll("pre")) {
+    const m = pre.querySelector("mark");
+    pre.scrollTop = m.offsetTop - (pre.clientHeight - m.offsetHeight) / 2;
+  }
+  state.els = { scan, img, spot, list };
+  highlight();
+}
+
+function card(x, i) {
+  const c = el("article", "card" + (x.ruling ? " " + x.ruling.ruling : ""));
+  c.dataset.i = i;
+  c.onclick = e => { if (e.target.tagName !== "BUTTON" && e.target.tagName !== "INPUT") { state.on = i; highlight(); } };
+  const meta = el("div", "meta");
+  meta.append(el("span", "n", `#${i + 1}`), el("span", "pill", x.kind));
+  meta.append(el("span", "pill" + (x.chain === "drop" ? " chain-drop" : ""),
+                 x.chain === "drop" ? "checks: dropped" : "checks: installed"));
+  if (x.flags.length) meta.append(el("span", "pill flag", `${x.flags.length} flag${x.flags.length === 1 ? "" : "s"}`));
+  if (x.ruling) meta.append(el("span", "pill ruled" + (x.ruling.ruling === "drop" ? " drop" : ""),
+                               `ruled ${x.ruling.ruling}` + (x.ruling.by ? ` by ${x.ruling.by}` : "")));
+  if (!x.place) meta.append(el("span", "", "· not placed on the scan"));
+  c.append(meta);
+  if (x.flags.length) {
+    const ul = el("ul", "flags");
+    for (const f of x.flags) ul.append(el("li", "", f));
+    c.append(ul);
+  }
+  if (!x.stands) c.append(el("div", "warn", "Wikisource's page has changed: the old text no longer stands at this place."));
+  const cols = el("div", "cols"), a = el("div"), b = el("div");
+  a.append(el("h3", "", "Wikisource now"), markup(x.before, x.old, x.after, "old"));
+  b.append(el("h3", "", "With the patch"), markup(x.before, x.new, x.after, "new"));
+  cols.append(a, b);
+  c.append(cols);
+  const act = el("div", "act");
+  const note = el("input"); note.placeholder = "note (why)"; note.value = x.ruling ? x.ruling.note || "" : "";
+  const keep = el("button", "keep", "Keep"), drop = el("button", "drop", "Drop"), clear = el("button", "", "Clear");
+  keep.onclick = () => rule(i, "keep", note.value);
+  drop.onclick = () => rule(i, "drop", note.value);
+  clear.onclick = () => rule(i, null, "");
+  clear.disabled = !x.ruling;
+  act.append(keep, drop, clear, note);
+  c.append(act);
+  return c;
+}
+
+function highlight() {
+  for (const c of state.els.list.children) c.classList.toggle("on", Number(c.dataset.i) === state.on);
+  const c = state.els.list.querySelector(".card.on");
+  if (c) c.scrollIntoView({ block: "nearest" });
+  focusSpot();
+}
+
+function focusSpot() {
+  const { img, spot, scan } = state.els, x = state.page.patches[state.on];
+  if (!x || !x.place || !img.naturalWidth) { spot.hidden = true; return; }
+  const [x0, y0, x1, y1] = x.place.box, W = img.naturalWidth, H = img.naturalHeight;
+  const y = y0 + x.place.at * (y1 - y0), band = Math.max(90, (y1 - y0) * 0.04);
+  spot.hidden = false;
+  spot.style.left = `${100 * x0 / W}%`;
+  spot.style.width = `${100 * (x1 - x0) / W}%`;
+  spot.style.top = `${100 * Math.max(y0, y - band / 3) / H}%`;
+  spot.style.height = `${100 * band / H}%`;
+  const k = img.clientWidth / W;
+  scan.scrollTo({ top: y * k - scan.clientHeight / 2, left: x0 * k - 12, behavior: "smooth" });
+}
+
+async function rule(i, ruling, note) {
+  const x = state.page.patches[i];
+  try {
+    setStatus("saving…");
+    const r = await api("/desk/api/patch-ruling", { volume: state.page.volume, page: state.page.page,
+                                                    old: x.old, new: x.new, ruling, note });
+    state.page = r.page;
+    state.on = Math.min(i + (ruling ? 1 : 0), state.page.patches.length - 1);
+    draw();
+    setStatus(r.report, "saved");
+    const q = state.queue.find(q => q.volume === state.page.volume && q.page === state.page.page);
+    if (q) { q.ruled = state.page.patches.filter(p => p.ruling).length; drawQueue(); }
+  } catch (e) { setStatus(e.message, "error"); }
+}
+
+function step(d) {
+  const qs = shown(), at = qs.findIndex(q => q.volume === state.page?.volume && q.page === state.page?.page);
+  const q = qs[Math.max(0, Math.min(qs.length - 1, at + d))];
+  if (q) openPage(q.volume, q.page).catch(e => setStatus(e.message, "error"));
+}
+
+$("prev").onclick = () => step(-1);
+$("next").onclick = () => step(1);
+$("pages").onchange = e => { const [v, p] = e.target.value.split("-").map(Number); openPage(v, p); };
+$("flagged").onchange = () => { drawQueue(); if (!shown().some(q => q.volume === state.page?.volume && q.page === state.page?.page)) step(0); };
+document.addEventListener("keydown", e => {
+  if (!state.page || e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
+  const n = state.page.patches.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    state.on = Math.max(0, Math.min(n - 1, state.on + (e.key === "ArrowDown" ? 1 : -1)));
+    highlight();
+  } else if (e.key === "k" || e.key === "K") rule(state.on, "keep", "");
+  else if (e.key === "d" || e.key === "D") rule(state.on, "drop", "");
+  else if (e.key === "c" || e.key === "C") rule(state.on, null, "");
+});
+new ResizeObserver(() => document.documentElement.style.setProperty(
+  "--hh", document.querySelector("header").offsetHeight + "px")).observe(document.querySelector("header"));
+
+(async () => {
+  try {
+    await loadQueue();
+    const first = state.queue.find(q => q.flagged) || state.queue[0];
+    if (first) await openPage(first.volume, first.page);
+    else $("main").innerHTML = '<div class="empty">No patches.</div>';
+  } catch (e) { setStatus(e.message, "error"); }
+})();
+</script>
+</body>
+</html>

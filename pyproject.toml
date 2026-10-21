@@ -53,7 +53,7 @@ where = ["src"]
                  "installer/.gitignore"]
 "wikikit.diagnostics" = ["tei_all.rng"]
 "wikikit.site" = ["pages/*.html", "pages/*.js", "pages/*.woff2", "pages/*.txt"]
-"wikikit.scan" = ["desk_render.js", "desk_local.html", "desk_fonts/*"]
+"wikikit.scan" = ["desk_render.js", "desk_local.html", "desk_patches.html", "desk_fonts/*"]
 
 [dependency-groups]
 dev = [

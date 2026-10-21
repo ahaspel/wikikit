@@ -27,12 +27,25 @@ Routes, beside everything the site server answers (`wikikit.site.serve`):
 Every save first keeps the page as it was (`history/<page>/<time>.json` under
 the desk's folder): undo puts the latest back, one save at a time, back to the
 page as it came to the desk.
+
+THE PATCH SCREEN (when the book gives `serve_desk` its patches): each patch
+laid on a fetched page (`wikikit.scan.patches`) beside the scan, Wikisource's
+markup as it stands and as the patch leaves it, for a person to rule KEEP or
+DROP — the ruling is final, over every check that flagged the patch or
+passed it.  The book owns the patches and the rulings (`PatchSource`):
+
+    /desk/patches                   the patch screen
+    /desk/api/patch-queue           the pages with patches, flagged ones counted
+    /desk/api/patches/V/P           one page's patches, each with its markup and place
+    /desk/pscan/V/P.jpg             the page's scan, levelled by our reading
+    POST /desk/api/patch-ruling     {volume, page, old, new, ruling: keep|drop|null, note}
 """
 from __future__ import annotations
 
 import copy
 import json
 import os
+import re
 import tempfile
 import threading
 import time
@@ -45,6 +58,9 @@ from wikikit.scan.vocabulary import constructs
 from wikikit.site import serve as site
 
 PAGE = Path(__file__).resolve().parent / "desk_local.html"
+PATCH_PAGE = Path(__file__).resolve().parent / "desk_patches.html"
+#: characters of Wikisource's markup shown either side of a patch
+PATCH_CONTEXT = 360
 #: The engine's code, and when this process loaded it (`Handler._save`).
 ENGINE = Path(__file__).resolve().parents[1]
 STARTED = time.time()
@@ -89,6 +105,60 @@ def _page_links() -> _PageLinks:
     return _LINKS[0]
 
 
+class PatchSource:
+    """What a book gives the patch screen.  A patch is named by its page and
+    its exact `old` and `new` text, as the book's own checks name it."""
+
+    def queue(self) -> list[tuple[int, int]]:
+        """The pages with patches, in the order the screen offers them."""
+        raise NotImplementedError
+
+    def patches(self, volume: int, page: int) -> list[dict]:
+        """The page's patches: {kind, start, end, old, new} on the fetched
+        page, `flags` (what the book's checks say of it, [] if nothing),
+        `chain` ("install" | "drop": what the checks alone would do) and
+        `ruling` (a person's {ruling, note, by, at}, or None)."""
+        raise NotImplementedError
+
+    def reading(self, volume: int, page: int) -> dict:
+        """Our reading of the page (a supplied-page payload): its deskew and
+        items place the patch on the scan."""
+        raise NotImplementedError
+
+    def rule(self, volume: int, page: int, old: str, new: str, ruling: str | None,
+             note: str, by: str) -> str:
+        """Record a person's ruling (None withdraws it); a report."""
+        raise NotImplementedError
+
+
+_WORD = re.compile(r"[^\W\d_]{3,}")
+
+
+def patch_place(reading: dict, raw: str, x: dict) -> dict | None:
+    """Where a patch stands on the scan: the item of our reading holding its
+    new text, found by the real words Wikisource's page sets either side of
+    it (OCR spoils some: fewest words first, until exactly one place in our
+    reading holds the new text among them), and how far down that item it
+    stands.  None when no single place holds it."""
+    texts = reading["provenance"].get("readings") or {}
+    boxes = {it["name"]: it["box"] for it in reading["provenance"]["items"]}
+    plain = lambda s: _WORD.findall(re.sub(r"\{\{[^{}]*\}\}|<[^>]*>|''+", " ", s))
+    before = plain(raw[max(0, x["start"] - 160):x["start"]])
+    after = plain(raw[x["end"]:x["end"] + 160])
+    new = x["new"].strip()[:40]                 # our text: it stands in our reading as is
+    if not new:
+        return None
+    for k, j in ((0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (0, 2), (2, 1), (1, 2), (2, 2)):
+        words = [re.escape(w) for w in before[len(before) - k:]] if k else []
+        pat = r"\W+".join(words + [re.escape(new)] + [re.escape(w) for w in after[:j]])
+        hits = [(name, m.start() / max(1, len(text))) for name, text in texts.items()
+                if name in boxes and text for m in re.finditer(pat, text)]
+        if len(hits) == 1:
+            name, at = hits[0]
+            return {"item": name, "box": boxes[name], "at": round(at, 4)}
+    return None
+
+
 def _head_and_text(payload: dict) -> tuple[str, str]:
     head, body, _ = supplied.page_parts(payload["raw_text"])
     return head, body
@@ -98,6 +168,7 @@ class Handler(site.Handler):
     queue = staticmethod(lambda: [])            # () -> [(volume, page)], set by `serve`
     label = staticmethod(desk.page_label)
     link = None                                 # (body, volume, page) -> body, set by `serve_desk`
+    patch_source: PatchSource | None = None     # the book's patches, set by `serve_desk`
     who = "proofreader"
     desk_dir: Path
     drafts: dict = {}                           # (volume, page) -> (head, text) being edited
@@ -151,6 +222,38 @@ class Handler(site.Handler):
             supplied.set_page_text(payload, *draft, checked=supplied.level(payload) >= 3)
         return desk.page_article(payload, self.label(vol, pg) + (" (unsaved)" if draft else ""),
                                  link=self.link)
+
+    # ── the patch screen ─────────────────────────────────────────────────
+    def _patch_queue(self) -> list[dict]:
+        out = []
+        for vol, pg in self.patch_source.queue():
+            ps = self.patch_source.patches(vol, pg)
+            out.append({"volume": vol, "page": pg, "label": self.label(vol, pg), "patches": len(ps),
+                        "flagged": sum(1 for x in ps if x["flags"]),
+                        "ruled": sum(1 for x in ps if x["ruling"])})
+        return out
+
+    def _patch_page(self, vol: int, pg: int) -> dict:
+        from wikikit.source_pages import fetched_text
+        raw = fetched_text(vol, pg) or ""
+        reading = self.patch_source.reading(vol, pg)
+        rows = []
+        for x in self.patch_source.patches(vol, pg):
+            a, b = max(0, x["start"] - PATCH_CONTEXT), min(len(raw), x["end"] + PATCH_CONTEXT)
+            rows.append({**x, "before": raw[a:x["start"]], "after": raw[x["end"]:b],
+                         "stands": raw[x["start"]:x["end"]] == x["old"],
+                         "place": patch_place(reading, raw, x)})
+        return {"volume": vol, "page": pg, "label": self.label(vol, pg),
+                "scan": f"/desk/pscan/{vol}/{pg}.jpg", "patches": rows}
+
+    def _patch_scan(self, vol: int, pg: int) -> Path:
+        path = self.desk_dir / "patch_pages" / f"{supplied.page_id(vol, pg)}.jpg"
+        with self.lock:
+            if not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                desk.levelled_scan(self.patch_source.reading(vol, pg), current_corpus().page_scan(vol, pg)) \
+                    .save(path, quality=85, optimize=True)
+        return path
 
     def _history(self, vol: int, pg: int) -> list[Path]:
         return desk.saved_versions(self.desk_dir, vol, pg)
@@ -211,6 +314,21 @@ class Handler(site.Handler):
         try:
             if parts == ["desk"]:
                 self._send(PAGE.read_bytes(), "text/html; charset=utf-8")
+            elif parts[1:2] in (["patches"], ["pscan"]) or parts[1:3] in (["api", "patch-queue"],
+                                                                         ["api", "patches"]):
+                if self.patch_source is None:
+                    self._json({"error": "this book gives the desk no patches"}, 404)
+                elif parts[1:] == ["patches"]:
+                    self._send(PATCH_PAGE.read_bytes(), "text/html; charset=utf-8")
+                elif parts[1:] == ["api", "patch-queue"]:
+                    self._json(self._patch_queue())
+                elif parts[1:3] == ["api", "patches"] and len(parts) == 5:
+                    self._json(self._patch_page(int(parts[3]), int(parts[4])))
+                elif parts[1] == "pscan" and len(parts) == 4:
+                    self._send(self._patch_scan(int(parts[2]), int(parts[3].removesuffix(".jpg"))).read_bytes(),
+                               "image/jpeg")
+                else:
+                    self.send_error(404)
             elif parts[1:] == ["api", "queue"]:
                 self._json(self._queue())
             elif parts[1:3] == ["api", "page"] and len(parts) == 5:
@@ -248,6 +366,13 @@ class Handler(site.Handler):
                 self._json({"ok": True})
             elif path == "/desk/api/undo":
                 self._json({"ok": True, "report": self._undo(vol, pg), "page": self._page(vol, pg)})
+            elif path == "/desk/api/patch-ruling" and self.patch_source is not None:
+                if body.get("ruling") not in ("keep", "drop", None):
+                    raise ValueError(f"a ruling is keep, drop or none, not {body.get('ruling')!r}")
+                with self.lock:
+                    report = self.patch_source.rule(vol, pg, body["old"], body["new"], body.get("ruling"),
+                                                    body.get("note") or "", self.who)
+                self._json({"ok": True, "report": report, "page": self._patch_page(vol, pg)})
             elif path == "/desk/api/save":
                 self._json({"ok": True, "report": self._save(vol, pg, body), "page": self._page(vol, pg)})
             else:
@@ -256,12 +381,14 @@ class Handler(site.Handler):
             self._json({"ok": False, "error": f"{type(e).__name__}: {e}"}, 500)
 
 
-def serve_desk(queue, label, port: int = 8020, who: str = "proofreader", links: bool = True) -> None:
+def serve_desk(queue, label, port: int = 8020, who: str = "proofreader", links: bool = True,
+               patches: PatchSource | None = None) -> None:
     """Serve the site with the desk beside it at http://localhost:PORT/desk.
     `queue`: () -> [(volume, page)], the pages waiting; `label`: (volume, page)
     -> what the person calls the page; `who`: recorded as the checker;
     `links`: resolve each page's xrefs as the build does (`_PageLinks`: needs
-    the book's database — run with its settings)."""
+    the book's database — run with its settings); `patches`: the book's
+    patches, for the patch screen at /desk/patches."""
     corpus = current_corpus()
     site.Handler.root = corpus.root
     site.Handler.downloads = site._download_home()
@@ -272,6 +399,9 @@ def serve_desk(queue, label, port: int = 8020, who: str = "proofreader", links: 
     if links:
         Handler.link = staticmethod(lambda body, vol, pg: _page_links().link(body, vol, pg))
     Handler.desk_dir = corpus.derived("desk")
+    Handler.patch_source = patches
     print(f"the desk: http://localhost:{port}{corpus.root}/desk")
+    if patches is not None:
+        print(f"the patch screen: http://localhost:{port}{corpus.root}/desk/patches")
     with site.Server(("127.0.0.1", port), Handler) as httpd:
         httpd.serve_forever()
