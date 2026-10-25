@@ -73,6 +73,15 @@ def curly_marks(text: str) -> str:
     return _APOSTROPHE.sub("’", curly_quotes(text))
 
 
+def book_rules(text: str) -> str:
+    """A page's body with the book's own rules applied (`Corpus.text_rules`):
+    at every assembly and every save, so a text written before a rule came,
+    or a save of one, is set as the rule says."""
+    for rule in current_corpus().text_rules:
+        text = rule(text)
+    return text
+
+
 def figure_file(volume: int, page: int, item_name: str) -> str:
     """A figure's image name: the book's key, volume, page and item — stable
     while the page's cut is."""
@@ -208,9 +217,9 @@ def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) 
     p = payload["provenance"]
     if p.get("page_edited"):
         # proofread as a page: its text is the person's, never re-made from
-        # the readings — only its level said again
+        # the readings — only its level said again, and the book's rules
         head, body, furniture = page_parts(payload["raw_text"])
-        payload["raw_text"] = framed(head, body, furniture, level(payload))
+        payload["raw_text"] = framed(head, book_rules(body), furniture, level(payload))
         return payload
     raw = assemble_page(items_of(payload), p["readings"], p["figure_files"],
                         p["column_width"], level=level(payload),
@@ -227,6 +236,9 @@ def reassemble(payload: dict, carried: bool = True, fetched: str | None = None) 
         p["carried"] = {"tables": rep["tables"],     # kept: spans in the fetched page
                         "tables kept": {k: [list(s) for s in v] for k, v in rep["tables kept"].items()},
                         "links": rep["links"], "unplaced": rep["unplaced"]}
+    if current_corpus().text_rules:
+        head, body, furniture = page_parts(raw)
+        raw = framed(head, book_rules(body), furniture, level(payload))
     payload["raw_text"] = raw
     return payload
 
@@ -437,6 +449,7 @@ def set_page_text(payload: dict, head: str, body: str, checked: bool,
     readings (`page_edited`: who last saved it, and when)."""
     p = payload["provenance"]
     _, _, furniture = page_parts(payload["raw_text"])
+    body = book_rules(body)
     p["page_edited"] = {"by": by, "at": at}
     if checked:
         p["page_checked"] = {"by": by, "at": at}

@@ -186,6 +186,13 @@ class Corpus:
     #: size (the Century, user 2026-10-18: "consistently read as normal-sized",
     #: small in every one seen).  An exception is the proofreader's to undo.
     captions_small: bool = False
+    #: THE BOOK'S OWN RULES for the pages we transcribe: each ``rule(text) ->
+    #: text`` sets something the book prints that a reading misses (the
+    #: Century, user 2026-10-25: its etymologies set off by two spaces).  Run
+    #: on a page's body wherever its text is written — assembly, a person's
+    #: save at the desk (`supplied.book_rules`) — so each must change nothing
+    #: it has already set.  () = none.
+    text_rules: tuple = ()
     #: LAYOUT — what the book knows of a page's layout, for the cutter:
     #: ``page_layout(volume, page)`` -> ``wikikit.scan.layout.PageLayout``
     #: (its column count, …).  The cutter measures the ink only where the book

@@ -223,7 +223,9 @@ def apply_pages(rows: dict[str, dict]) -> list[str]:
         payload = supplied.read(vol, pg)
         before = supplied.level(payload)
         head, body, _ = supplied.page_parts(payload["raw_text"])
-        new_head, new_body = row.get("head", head), row.get("text", body)
+        # the book's rules first: a page saved from text bundled before a rule
+        # came differs from ours only by what the rule sets — not an edit
+        new_head, new_body = row.get("head", head), supplied.book_rules(row.get("text", body))
         checked = row.get("status") == "checked"
         edited = (new_head, new_body) != (head, body)
         given = row.get("owner") or supplied.owner(payload)
