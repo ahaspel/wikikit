@@ -40,7 +40,10 @@ owns the patches and the rulings (`PatchSource`):
     /desk/api/patches/V/P           one page's patches, each with its markup and place
     /desk/pscan/V/P.jpg             the page's scan, levelled by our reading
     POST /desk/api/patch-ruling     {volume, page, old, new, ruling: keep|drop|edit|null, note,
-                                     text: the edit's own new text}
+                                     edit: {start, end, text, was} — the span of the
+                                     fetched page the edit replaces (the patch's own, or
+                                     wider: the words either side changed too), its text,
+                                     and what the screen showed there (held to the page)}
 """
 from __future__ import annotations
 
@@ -119,8 +122,8 @@ class PatchSource:
         """The page's patches: {kind, start, end, old, new} on the fetched
         page, `flags` (what the book's checks say of it, [] if nothing),
         `chain` ("install" | "drop": what the checks alone would do) and
-        `ruling` (a person's {ruling, note, by, at, text}, or None; `text`
-        is an edit's new text)."""
+        `ruling` (a person's {ruling, note, by, at, edit}, or None; `edit`
+        is an edit's own patch {start, end, old, new})."""
         raise NotImplementedError
 
     def reading(self, volume: int, page: int) -> dict:
@@ -129,9 +132,10 @@ class PatchSource:
         raise NotImplementedError
 
     def rule(self, volume: int, page: int, old: str, new: str, ruling: str | None,
-             note: str, by: str, text: str | None = None) -> str:
-        """Record a person's ruling (None withdraws it; "edit" lays `text` in
-        the patch's place, refused if the book's checks fail it); a report."""
+             note: str, by: str, edit: dict | None = None) -> str:
+        """Record a person's ruling (None withdraws it; "edit" lays
+        edit["text"] over the fetched page's edit["start"]:edit["end"] in the
+        patch's place, refused if the book's checks fail it); a report."""
         raise NotImplementedError
 
 
@@ -159,8 +163,31 @@ def patch_place(reading: dict, raw: str, x: dict) -> dict | None:
                 if name in boxes and text for m in re.finditer(pat, text)]
         if len(hits) == 1:
             name, at = hits[0]
-            return {"item": name, "box": boxes[name], "at": round(at, 4)}
+            return {"item": name, "box": boxes[name], "at": round(at, 4), "len": len(texts[name])}
     return None
+
+
+def estimate_places(rows: list[dict]) -> None:
+    """A place for each row `patch_place` could not place, from the placed
+    patches either side of it on the page: between two in one item, as far
+    down as it stands between them in Wikisource's text; else beside the
+    nearer, moved by its distance in characters.  Marked `estimated`."""
+    placed = sorted((r["span"][0], r["place"]) for r in rows if r["place"])
+    if not placed:
+        return
+    for r in rows:
+        if r["place"]:
+            continue
+        at = r["span"][0]
+        prev = next((x for x in reversed(placed) if x[0] <= at), None)
+        nxt = next((x for x in placed if x[0] > at), None)
+        if prev and nxt and prev[1]["item"] == nxt[1]["item"]:
+            f = (at - prev[0]) / max(1, nxt[0] - prev[0])
+            p, a = prev[1], prev[1]["at"] + f * (nxt[1]["at"] - prev[1]["at"])
+        else:
+            o, p = min((x for x in (prev, nxt) if x), key=lambda x: abs(x[0] - at))
+            a = p["at"] + (at - o) / max(1, p["len"])
+        r["place"] = {**p, "at": round(min(1.0, max(0.0, a)), 4), "estimated": True}
 
 
 def _head_and_text(payload: dict) -> tuple[str, str]:
@@ -210,11 +237,16 @@ class Handler(site.Handler):
                  "level": supplied.level(supplied.read(vol, pg))} for vol, pg in self.queue()]
 
     def _scan(self, vol: int, pg: int) -> Path:
-        path = self.desk_dir / "pages" / f"{supplied.page_id(vol, pg)}.jpg"
+        return self._levelled("pages", vol, pg, supplied.read)
+
+    def _levelled(self, folder: str, vol: int, pg: int, reading) -> Path:
+        """The page's scan levelled as `reading(vol, pg)` cut it, made once
+        into the desk's `folder`."""
+        path = self.desk_dir / folder / f"{supplied.page_id(vol, pg)}.jpg"
         with self.lock:
             if not path.exists():
                 path.parent.mkdir(parents=True, exist_ok=True)
-                desk.levelled_scan(supplied.read(vol, pg), current_corpus().page_scan(vol, pg)) \
+                desk.levelled_scan(reading(vol, pg), current_corpus().page_scan(vol, pg)) \
                     .save(path, quality=85, optimize=True)
         return path
 
@@ -243,21 +275,20 @@ class Handler(site.Handler):
         reading = self.patch_source.reading(vol, pg)
         rows = []
         for x in self.patch_source.patches(vol, pg):
-            a, b = max(0, x["start"] - PATCH_CONTEXT), min(len(raw), x["end"] + PATCH_CONTEXT)
-            rows.append({**x, "before": raw[a:x["start"]], "after": raw[x["end"]:b],
-                         "stands": raw[x["start"]:x["end"]] == x["old"],
+            # the span shown: the patch's own, or the wider one a person's edit took
+            e = (x["ruling"] or {}).get("edit") or x
+            s, t = e["start"], e["end"]
+            a, b = max(0, s - PATCH_CONTEXT), min(len(raw), t + PATCH_CONTEXT)
+            rows.append({**x, "span": [s, t], "was": e["old"], "now": e["new"],
+                         "before": raw[a:s], "after": raw[t:b],
+                         "stands": raw[s:t] == e["old"],
                          "place": patch_place(reading, raw, x)})
+        estimate_places(rows)
         return {"volume": vol, "page": pg, "label": self.label(vol, pg),
                 "scan": f"/desk/pscan/{vol}/{pg}.jpg", "patches": rows}
 
     def _patch_scan(self, vol: int, pg: int) -> Path:
-        path = self.desk_dir / "patch_pages" / f"{supplied.page_id(vol, pg)}.jpg"
-        with self.lock:
-            if not path.exists():
-                path.parent.mkdir(parents=True, exist_ok=True)
-                desk.levelled_scan(self.patch_source.reading(vol, pg), current_corpus().page_scan(vol, pg)) \
-                    .save(path, quality=85, optimize=True)
-        return path
+        return self._levelled("patch_pages", vol, pg, self.patch_source.reading)
 
     def _history(self, vol: int, pg: int) -> list[Path]:
         return desk.saved_versions(self.desk_dir, vol, pg)
@@ -373,12 +404,14 @@ class Handler(site.Handler):
             elif path == "/desk/api/patch-ruling" and self.patch_source is not None:
                 if body.get("ruling") not in ("keep", "drop", "edit", None):
                     raise ValueError(f"a ruling is keep, drop, edit or none, not {body.get('ruling')!r}")
-                if body.get("ruling") == "edit" and not isinstance(body.get("text"), str):
-                    raise ValueError("an edit needs its text")
+                edit = body.get("edit") if body.get("ruling") == "edit" else None
+                if body.get("ruling") == "edit" and not (
+                        isinstance(edit, dict) and all(isinstance(edit.get(k), str) for k in ("text", "was"))
+                        and all(isinstance(edit.get(k), int) for k in ("start", "end"))):
+                    raise ValueError("an edit needs its start, end, text and what was shown")
                 with self.lock:
                     report = self.patch_source.rule(vol, pg, body["old"], body["new"], body.get("ruling"),
-                                                    body.get("note") or "", self.who,
-                                                    body.get("text") if body.get("ruling") == "edit" else None)
+                                                    body.get("note") or "", self.who, edit)
                 self._json({"ok": True, "report": report, "page": self._patch_page(vol, pg)})
             elif path == "/desk/api/save":
                 self._json({"ok": True, "report": self._save(vol, pg, body), "page": self._page(vol, pg)})
