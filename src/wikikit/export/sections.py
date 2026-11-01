@@ -98,6 +98,16 @@ def _numbering(title: str) -> tuple[str, str]:
     return (section_key(m.group(1)), section_key(m.group(2))) if m else ("", section_key(title))
 
 
+def _places(bucket: list) -> list:
+    """A tier's matches, one per PLACE: a heading and the «ANCHOR» beside it
+    carrying its slug are one place, not a tie (MEXICO's "History" twice,
+    `section-history` both — 256 such titles, 2026-11-01).  The heading is kept."""
+    out: dict = {}
+    for sec in sorted(bucket, key=lambda s: s.get("kind") == "anchor"):
+        out.setdefault(sec.get("slug") or id(sec), sec)
+    return list(out.values())
+
+
 def match_section(sections, name: str, *, aggressive: bool = False, strict: bool = False):
     """Resolve a section reference `name` to the matching section — a
     ``{"title", "slug", …}`` dict — within `sections`, or None.  Callers read
@@ -125,7 +135,7 @@ def match_section(sections, name: str, *, aggressive: bool = False, strict: bool
                  for sec in sections]
         for tier in (lambda k, n, r: k == target, lambda k, n, r: bool(n) and r == target,
                      lambda k, n, r: n == target):
-            bucket = [sec for sec, k, n, r in keyed if k and tier(k, n, r)]
+            bucket = _places([sec for sec, k, n, r in keyed if k and tier(k, n, r)])
             if bucket:
                 return bucket[0] if len(bucket) == 1 else None
         return None
@@ -146,7 +156,7 @@ def match_section(sections, name: str, *, aggressive: bool = False, strict: bool
         elif target in tkey:
             contained.append(sec)
     tiers = (exact, prefix, suffix, contained) if aggressive else (exact, prefix, contained)
-    for bucket in tiers:
+    for bucket in map(_places, tiers):
         if len(bucket) == 1:
             return bucket[0]
         if bucket:

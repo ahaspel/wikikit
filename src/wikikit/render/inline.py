@@ -23,6 +23,7 @@ from wikikit.corpora import current_corpus
 from wikikit.image_assets import local_image_filename
 from wikikit.markers import (DHR_RE, DHRI_RE, OL_OPEN_RE,
                                 balanced_end, strip_marker_tokens)
+from wikikit.util.strings import anchor_slug
 from urllib.parse import quote
 
 def site_url(path):
@@ -49,7 +50,7 @@ def escape_html(value):
     return s
 
 
-def _article_url(filename, bundled=None):
+def _article_url(filename, bundled=None, section=None):
     """``{stable_id}.json`` filename → article link URL.  The ONE URL builder for every
     article link (inline «LN», xref panel, plate/parent).  URLs route on the stable_id
     ALONE — `/article/{stable_id}` — so a renamed article keeps its URL (the title is not
@@ -57,11 +58,14 @@ def _article_url(filename, bundled=None):
     One form everywhere: the local server speaks production's URL space (wikikit.site.serve).
     ``bundled`` (the EPUB link policy, ``epub.pack.LINK_TOKENS``) emits a canonical
     ``epublink:`` token instead — the packer alone knows chunk assignment and
-    materializes the real href (in-book chunk#anchor, else the live-site URL)."""
+    materializes the real href (in-book chunk#anchor, else the live-site URL).
+    ``section`` (a resolved heading's slug) lands the link on that heading's
+    anchor, ``section-<slug>`` — the id the «SEC»/«SH» producers bake."""
     stem = re.sub(r"\.json$", "", str(filename or ""))
+    slug = anchor_slug(section) if section else ""
     if bundled is not None:
-        return bundled.url_for(stem)
-    return site_url("/article/" + stem)
+        return bundled.url_for(stem, slug or None)
+    return site_url("/article/" + stem) + ("#section-" + slug if slug else "")
 
 
 def _encode_uri_component(s):
@@ -233,7 +237,10 @@ def _ln_open_factory(article_url, book=False):
         filename = g1 if has_file else None
         target = g2 if has_file else g1
         if filename:
-            href = article_url(filename)
+            # A resolved link's `#` is the heading the export bound — the bake
+            # writes only a resolved section there (Spain#history: 556 links
+            # landed on the article's top until 2026-11-01).
+            href = article_url(filename, target.partition("#")[2] or None)
         elif book:
             # A book must not lean on the site's search box for an unresolved
             # xref (Kindle has no search page — the link is a dead end dressed
@@ -334,7 +341,7 @@ def decode_inline(h, *, escape=False, skip_math=False, article_url=None,
     # Inline «LN» links honor the render target's link policy (site clean URL vs the
     # EPUB in-book form), so the body's links match the panel/plate links.
     article_url = article_url or (
-        lambda fn: _article_url(fn, getattr(ctx, "epub_bundled", None)))
+        lambda fn, section=None: _article_url(fn, getattr(ctx, "epub_bundled", None), section))
 
     # IMG — shielded from escapeHtml (the filename is a URL, not display text) and
     # restored last, exactly as the viewer does.  FN / MATH stay deferred (block+shell

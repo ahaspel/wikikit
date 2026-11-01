@@ -26,6 +26,16 @@ def test_at_a_domains_root_addresses_are_unchanged():
     assert fill('<a href="@@root@@/index.html">', "t") == '<a href="/index.html">'
 
 
+def test_a_resolved_link_lands_on_its_section():
+    from wikikit.render.inline import decode_inline
+    assert _article_url("25-0547-dd33a0.json", section="history") == \
+        "/article/25-0547-dd33a0#section-history"
+    html = decode_inline("see «LN:25-0547-dd33a0.json|Spain#history|Spain«/LN», and "
+                         "«LN:18-0882-dd33a0.json|Morocco|Morocco«/LN»")
+    assert 'href="/article/25-0547-dd33a0#section-history"' in html
+    assert 'href="/article/18-0882-dd33a0"' in html
+
+
 @pytest.mark.parametrize("corpus", UNDER, indirect=True)
 def test_under_a_path_every_address_carries_it(corpus):
     assert _article_url("01-0001-abc123.json") == "/fixture/article/01-0001-abc123"

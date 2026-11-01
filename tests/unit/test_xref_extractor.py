@@ -46,6 +46,26 @@ def test_cited_work_in_italics_gets_no_stamp() -> None:
     assert _stamped("See «I»Geschichte der Mathematik«/I», 2nd Bd.") == []
 
 
+def test_a_cited_book_or_author_gets_no_stamp() -> None:
+    """A name a chapter or section number follows is a citation: Herodotus,
+    not HEROD; the Gospel, not Pope JOHN VII."""
+    assert _stamped("in 480 (cf. Herod. vi. 49 with 94).") == []
+    assert _stamped("a quotation (cf. John vii. 20, viii. 48).") == []
+    assert _stamped("see Fig. 3, t, on the plate") == []
+
+
+def test_a_name_ending_its_sentence_is_still_stamped() -> None:
+    results = _stamped("For this kingdom see Ethiopia. J. T. Bent conjectured")
+
+    assert [r["normalized_target"] for r in results] == ["ETHIOPIA"]
+
+
+def test_only_the_cited_segment_of_an_enumeration_goes() -> None:
+    results = _stamped("see Mechanics and Herod. vii. 61")
+
+    assert [r["normalized_target"] for r in results] == ["MECHANICS"]
+
+
 # --- q.v.: producer-stamped windows (J7 slice 1) ---
 #
 # Prose q.v. recognition moved OUT of this extractor into the body producer:
@@ -209,6 +229,28 @@ def test_a_semicolon_continues_an_enumeration() -> None:
     out = _chain("(see {{sc|Artiodactyla}}; {{sc|Hippopotamus}}; {{sc|Peccary}}).")
     assert {x["normalized_target"] for x in extract_xrefs(out)} == \
         {"ARTIODACTYLA", "HIPPOPOTAMUS", "PECCARY"}
+
+
+# The heading the book prints after the name names a SECTION of that article:
+# "see MEXICO: History".  It is stamped as a section of the name before it.
+
+
+def test_a_printed_heading_after_a_name_is_a_section_of_it() -> None:
+    out = _chain("the Liberals (see {{sc|Mexico}}: ''History''). General")
+    assert "«I»«LN[sec]:Mexico#History|History«/LN»«/I»" in out
+    assert [(x["xref_type"], x["normalized_target"]) for x in extract_xrefs(out)] == \
+        [("see", "MEXICO"), ("section", "MEXICO: HISTORY")]
+
+
+def test_a_heading_after_a_plain_name_or_a_source_link() -> None:
+    assert "«LN[sec]:Mexico#History|History«/LN»" in _chain("(see Mexico: ''History'')")
+    assert "«LN[sec]:Ethiopia#The Axumite Kingdom|The Axumite Kingdom«/LN»" in \
+        _chain("(see {{1911link|Ethiopia}}, ''The Axumite Kingdom''.)")
+
+
+def test_a_name_linked_to_its_section_already_is_passed() -> None:
+    out = _chain("(see {{1911link|Spain#History|Spain}}, ''History'')")
+    assert "LN[sec]" not in out
 
 
 def test_the_new_cues_are_small_caps_only() -> None:

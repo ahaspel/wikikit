@@ -144,6 +144,10 @@ def refine_answer(text: str, fig: dict, window: dict) -> dict:
         return [round(x0 + window["x0"]), round(y0 + window["y0"]),
                 round(x1 + window["x0"]), round(y1 + window["y0"])]
 
+    if not got.get("box"):
+        # the close look saw no drawing in its window (Century vol 1, 2026-10-30):
+        # the first look's box stands, as below
+        return {**fig, "page_box": fig["box"]}
     box = to_page(got["box"])
     rx0, ry0, rx1, ry1 = fig["box"]
     if box[2] <= rx0 or box[0] >= rx1 or box[3] <= ry0 or box[1] >= ry1:

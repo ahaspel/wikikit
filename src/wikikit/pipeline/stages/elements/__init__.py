@@ -416,7 +416,9 @@ def _produce_body(raw, inner, context, inner_registry):
     # space.  Nothing raw leaks; the render sees only «BR» / «P» / spaces.
     out = _dehyphenate(re.sub(r"\n{2,}", "«P»", raw))
     sep = "«BR»" if context.parent_label in ("POEM", "PPOEM") else " "
-    return _stamp_see_windows(_stamp_qv_windows(out.replace("\n", sep)))
+    return _stamp_section_headings(
+        _stamp_see_windows(_stamp_qv_windows(out.replace("\n", sep))),
+        getattr(context, "prev_marker", ""))
 
 
 # A `(q.v.)` site: EB's own cue that the preceding words name an EB article.
@@ -464,6 +466,13 @@ _SEE_STAMP_RE = re.compile(
     r"(?P<lead>(?:the\s+)?(?:articles?\s+(?:on\s+)?)?)"
     r"(?P<win>[^«»\x01\x03|.;:!?()\n]{1,80})")
 _SEE_SEG_SPLIT_RE = re.compile(r"(,|\s+and\s+)")
+# A window ending at a period that a chapter or section number follows is a
+# CITATION, its last words an abbreviated author or book: "cf. Herod. vi. 49"
+# (Herodotus, linked to HEROD 17 times), "cf. John vii. 20" (the Gospel, linked
+# to Pope JOHN VII), "cf. Dan. vii. 8", "cf. Eccles. xii. 5" — 2026-11-01.  The
+# window stops at the period, so only what follows it tells; that segment is
+# not a reference.
+_SEE_CITED_AFTER_RE = re.compile(r"\.\s+(?:[ivxlcdm]+\.|\d)")
 # The same cue, ending the LEFT NEIGHBOUR of a small-capitals styler: the book
 # prints a cross-reference's NAME in small capitals ("see {{sc|Hydromechanics}}"),
 # which the walker produces as its own element — so the window above, which
@@ -496,11 +505,13 @@ def _stamp_see_windows(text: str) -> str:
         if not win or not win[:1].isupper():
             return m.group(0)
         kind = "see_also" if "also" in m.group("cue").lower() else "see"
+        segs = _SEE_SEG_SPLIT_RE.split(win)
+        cited = _SEE_CITED_AFTER_RE.match(m.string, m.end()) is not None
         parts = []
-        for seg in _SEE_SEG_SPLIT_RE.split(win):
+        for i, seg in enumerate(segs):
             s = seg.strip()
             if (_SEE_SEG_SPLIT_RE.fullmatch(seg) or len(s) < 3
-                    or not s[:1].isupper()):
+                    or not s[:1].isupper() or (cited and i == len(segs) - 1)):
                 parts.append(seg)                  # separator / non-reference
                 continue
             lead = seg[:len(seg) - len(seg.lstrip())]
@@ -509,6 +520,48 @@ def _stamp_see_windows(text: str) -> str:
         return (m.group("cue") + m.group("gap") + m.group("lead")
                 + "".join(parts))
     return _SEE_STAMP_RE.sub(_stamp, text)
+
+
+# The book names a SECTION of the article it points at by printing the heading
+# in italics after the name: "see MEXICO: History", "see Ethiopia, The Axumite
+# Kingdom", "Geometry, § Analytical".  Wikisource's editors linked some of these
+# to the section (Spain#History, 197) and most not (438, 2026-11-01), and the
+# SEE stamps above take only the name.  So the heading is stamped too, as a
+# `«LN[sec]:Name#Heading|Heading«/LN»` inside its italics: a section of what
+# the name binds, never a reference of its own — the export binds it only to a
+# heading of that article, else it strips, so a cited book after an author's
+# name ("Migne, Patrologia Latina") stays prose.  The name is a see stamp or a
+# link of the source's, the one before it in this run or the left neighbour
+# (a name in small capitals is its own element); a name the source already
+# linked to a section ("Spain#History") carries its section and is passed.
+_SECT_NAME_RE = re.compile(
+    r"«LN(?:\[(?:see|see_also)\])?:(?P<target>[^|«#]+)\|[^«]*«/LN»(?:«/SC»)?")
+_SECT_NAME_LEFT_RE = re.compile(_SECT_NAME_RE.pattern + "$")
+_SECT_HEAD_RE = re.compile(
+    r"(?P<sep>\s*(?:[:,]\s*(?:§\s*)?|§\s*))«I»(?P<head>[^«»\x01\x03|#]{1,60})«/I»")
+
+
+def _stamp_section_headings(text: str, prev_marker: str = "") -> str:
+    def _head(target: str, at: int):
+        h = _SECT_HEAD_RE.match(text, at)
+        if h is None or not h.group("head")[:1].isupper():
+            return None
+        head = h.group("head")
+        return h, (f"{h.group('sep')}«I»«LN[sec]:{target.strip()}#{head.rstrip(' .')}"
+                   f"|{head}«/LN»«/I»")
+    out, i = [], 0
+    left = _SECT_NAME_LEFT_RE.search(prev_marker or "")
+    if left is not None:
+        got = _head(left.group("target"), 0)
+        if got:
+            out.append(got[1])
+            i = got[0].end()
+    for m in _SECT_NAME_RE.finditer(text, i):
+        got = _head(m.group("target"), m.end())
+        if got:
+            out.append(text[i:m.end()] + got[1])
+            i = got[0].end()
+    return "".join(out) + text[i:]
 
 
 # A paragraph that is nothing but one placeholder.  The anchoring is this

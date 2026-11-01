@@ -757,6 +757,7 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     from wikikit.link_resolver import prose_window
     fn_to_id = fn_to_id or {}
     xrefs = []
+    bound = {}          # normalized target -> the article it bound, for a section
     for m in extract_xrefs(body):
         xr = Xref(
             article_id=article_id,
@@ -785,6 +786,15 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
                 m["normalized_target"], display, self_fn=self_fn,
                 prose=prose_window(body, m["surface_text"]))
             section = None
+        elif m["xref_type"] == "section":
+            # The heading the book prints after a name ("see MEXICO: History"):
+            # the article the NAME bound (it precedes), at that heading — or
+            # nothing, never the article alone (the name's own link is that).
+            name, _, heading = m["normalized_target"].rpartition(": ")
+            fn = bound.get(name)
+            section = resolver.section_of(fn, heading) if fn else None
+            if section is None:
+                fn = None
         else:
             fn, section, cut = resolver.resolve_xref(
                 m["normalized_target"], display,
@@ -797,6 +807,8 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
             xr.matched_cut = cut
         xr.target_article_id = fn_to_id.get(fn) if fn else None
         xr.target_section = section
+        if fn and m["xref_type"] != "section":
+            bound.setdefault(m["normalized_target"], fn)
         xr.status = ("resolved" if xr.target_article_id is not None
                      else "unresolved")
         xrefs.append(xr)
@@ -877,7 +889,9 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
                 return dtoks[i].start(), dtoks[i + k - 1].end()
         return None
 
-    _WINDOW_KINDS = ("w", "see", "see_also")
+    # `sec` (a printed heading, a section of the name before it) is ours too:
+    # unbound, it is prose, never a Wikisource page.
+    _WINDOW_KINDS = ("w", "see", "see_also", "sec")
 
     def _resolve_link(kind, target_text, display) -> str:
         # Normalize before the lookup so a `#section` target collapses to the same
@@ -891,9 +905,12 @@ def _link_xrefs_in_body(body, xrefs, self_stable_id, session,
         hit = link_targets.get(normalize_xref_target(target_text).lower())
         if hit:
             fn, cut, section = hit
-            # A source `#section` already rides in the target; a resolver-bound
-            # section is written there the same way.
-            anchor = f"#{section}" if section and "#" not in target_text else ""
+            # The `#` the render lands on is the section the RESOLVER bound,
+            # written as its slug — in place of a source `#` (Spain#History →
+            # Spain#history), which is dropped where no heading of ours matched
+            # (a Bible verse's `#7:10`): the render reads the `#` as an anchor.
+            anchor = f"#{section}" if section else ""
+            target_text = target_text.partition("#")[0]
             if kind in _WINDOW_KINDS and cut:
                 # A window-stamp: the resolver bound a CUT of the window (a
                 # suffix for (q.v.), any span for see) — link exactly those

@@ -110,6 +110,10 @@ def extract_xrefs(text: str) -> list[dict[str, str]]:
         elif m.kind in ("see", "see_also"):
             # A see-window: same bypass, untrusted policy (abstain-default).
             _add(surface, target, m.kind, m.display, window=True)
+        elif m.kind == "sec":
+            # A printed heading after a name, `Name#Heading`: a section of what
+            # the name binds, and nothing else (`_xrefs_from_body`).
+            _add(surface, target, "section", m.display)
         elif _is_plausible_target(target):
             _add(surface, target, "link", m.display)
 

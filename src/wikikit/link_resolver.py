@@ -410,6 +410,14 @@ class LinkResolver:
                     "filename": xfn, "anchor": sl}
         return None
 
+    def section_of(self, fn: str, heading: str):
+        """The slug of ``fn``'s section that ``heading`` names, or None — the
+        heading the book prints after a cross-reference's name ("see MEXICO:
+        History").  The precise tier (a tie abstains): a cited book after an
+        author's name must not land on a heading that merely resembles it."""
+        sec = match_section(self._article_sections(fn), heading)
+        return (sec.get("slug") or None) if sec else None
+
     # -- 1. sections (a separate pass) --------------------------------------
     def _resolve_sect(self, raw: str):
         """`X § Y` -> a DEDICATED `{demonym} Y` article (Russia § Lit -> RUSSIAN
