@@ -182,6 +182,17 @@ def fetched_text(volume: int, page: int, raw_dir: Path | str = RAW_DIR) -> str |
     return json.loads(path.read_text(encoding="utf-8")).get("raw_text")
 
 
+def load_supplied(supplied_dir: Path | str = SUPPLIED_DIR) -> list[tuple[Path, dict]]:
+    """Every supplied page as filed — ``[(path, payload)]`` in (volume, page)
+    order, whether or not the book prefers it to its fetched page: what the desk
+    and the supplied gate go through.  A page that cannot be read RAISES."""
+    failures: list[tuple[Path, str]] = []
+    found = _scan_dir(Path(supplied_dir), None, None, failures, required=False)
+    if failures:
+        raise SourceLoadError(failures)
+    return [found[k] for k in sorted(found)]
+
+
 def load_payloads(volume: int | None = None, *,
                   pages: Iterable[int] | None = None,
                   raw_dir: Path | str = RAW_DIR,

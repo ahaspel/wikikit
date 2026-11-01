@@ -292,9 +292,8 @@ def parity(texts: list[str]) -> list[tuple[str, str, str]]:
 
 def _book_payloads() -> list[dict]:
     from wikikit.corpora import book_root
-    from wikikit.source_pages import SUPPLIED_DIR
-    return [json.loads(f.read_text(encoding="utf-8"))
-            for f in sorted((book_root() / SUPPLIED_DIR).glob("vol_*/*.json"))]
+    from wikikit.source_pages import SUPPLIED_DIR, load_supplied
+    return [d for _, d in load_supplied(book_root() / SUPPLIED_DIR)]
 
 
 def _book_readings() -> list[str]:
