@@ -222,8 +222,14 @@ def _split_cells(row_body: str) -> list[Cell]:
             attr, content = html_attr, raw
         else:                              # wiki cell — split attr|content
             attr, content = _wiki_attr_split(raw)
-        cells.append((sep, attr.strip(), content.strip()))
+        cells.append((sep, attr.strip(), content.strip(_TRIM)))
     return cells
+
+
+# What MediaWiki trims from a cell (PHP's `trim()`), and no more: Python's
+# `strip()` also eats a figure space (U+2007), which tables set to pad a
+# column's numbers into line (ORDNANCE's ` 12·5`, `66 `).
+_TRIM = " \t\n\r\0\x0b"
 
 
 def _wiki_attr_split(raw: str) -> tuple[str, str]:
