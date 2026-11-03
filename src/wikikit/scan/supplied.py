@@ -405,20 +405,33 @@ def level(payload: dict) -> int:
     unread is unchecked, or while the page is filed for special handling
     (`special`: set across its columns) — the reader is told the page is
     incomplete; else 1 (not proofread).  A page edited whole is checked whole
-    (`page_checked`): its items' checks were of a text it no longer has."""
+    (`page_checked`): its items' checks were of a text it no longer has.
+
+    A text item read BLANK is text not read, checked or not (`blank`): a
+    check of nothing vouches for nothing.  Three pages, a strip each read
+    empty and checked at the desk, entered a fifth short (2026-11-03)."""
     p = payload["provenance"]
     if p.get("page_checked"):
         return 3
-    checked = {} if p.get("page_edited") else p.get("checked", {})
     items = [it for it in items_of(payload) if it.kind != "figure"]
+    body = {it.name for it in items if it.kind != "head"}       # a lost running head loses no text
+    if not p.get("page_edited") and blank(payload):
+        return 2
+    checked = {} if p.get("page_edited") else p.get("checked", {})
     texts = [it.name for it in items]
     if texts and all(n in checked for n in texts):
         return 3
     if p.get("special"):
         return 2
-    body = {it.name for it in items if it.kind != "head"}       # a lost running head loses no text
     gaps = [n for n in [*p.get("refused", []), *p.get("unread", {})] if n in body and n not in checked]
     return 2 if gaps else 1
+
+
+def blank(payload: dict) -> list[str]:
+    """The page's text items read blank: text not read, whatever checks them."""
+    readings = payload["provenance"].get("readings", {})
+    return [it.name for it in items_of(payload)
+            if it.kind == "text" and not (readings.get(it.name) or "").strip()]
 
 
 #: A page's frame as assembly writes it (`transcribe.assemble_page`): its

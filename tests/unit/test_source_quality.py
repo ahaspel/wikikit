@@ -9,12 +9,13 @@ from wikikit.render.article import render_article
 from wikikit.scan import supplied
 
 
-def payload(refused=(), unread=None, checked=None):
+def payload(refused=(), unread=None, checked=None, readings=None):
     items = [{"name": "head", "kind": "head", "column": 0, "box": [0, 0, 10, 10]},
              {"name": "c1s1", "kind": "text", "column": 1, "box": [0, 10, 10, 20]},
              {"name": "c1s2", "kind": "text", "column": 1, "box": [0, 20, 10, 30]}]
+    read = {"head": "{{RunningHeader|1|A|B}}", "c1s1": "Some text.", "c1s2": "More text."}
     return {"provenance": {"items": items, "refused": list(refused), "unread": unread or {},
-                           "checked": checked or {}}}
+                           "checked": checked or {}, "readings": {**read, **(readings or {})}}}
 
 
 def test_a_page_with_text_missing_is_problematic_until_checked():
@@ -24,6 +25,14 @@ def test_a_page_with_text_missing_is_problematic_until_checked():
     assert supplied.level(payload(unread={"head": "a malformed running head"})) == 1  # no text lost
     assert supplied.level(payload(refused=["c1s2"], checked={"c1s2": "x"})) == 1         # a person read it
     assert supplied.level(payload(checked={"head": 1, "c1s1": 1, "c1s2": 1})) == 3
+
+
+def test_a_strip_read_blank_is_text_missing_though_checked():
+    # vol 26 p. 696: a strip read empty, checked at the desk, entered a fifth short
+    blank = payload(readings={"c1s2": ""}, checked={"head": 1, "c1s1": 1, "c1s2": 1})
+    assert supplied.blank(blank) == ["c1s2"]
+    assert supplied.level(blank) == 2
+    assert supplied.level(payload(readings={"head": ""})) == 1              # a running head is no text
 
 
 class FakeQuery:
