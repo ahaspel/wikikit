@@ -396,8 +396,11 @@ class LinkResolver:
         if not suffix:
             return None
         if not base:
+            # a heading the article HAS, else no anchor (and so no self-link):
+            # SARTHE's "#Le Mans" bound SARTHE#le-mans, a heading it lacks
+            # (58 links on 2026-11-04)
             return ({"target": name, "display": suffix.title(),
-                     "filename": self_fn, "anchor": suffix} if self_fn else None)
+                     "filename": self_fn, "anchor": self.section_of(self_fn, suffix)} if self_fn else None)
         xm = self._resolve_plain(base)
         if not xm:
             return None
@@ -453,8 +456,10 @@ class LinkResolver:
             bm = self._resolve_plain(base)
             if bm:
                 bfn, bdisp = bm
-                return {"target": raw, "display": anchor.strip() or bdisp,
-                        "filename": bfn, "anchor": anchor.strip()}
+                # the article's heading the fragment names, else the article
+                # alone (NUMBER#24: no heading "24")
+                return {"target": raw, "display": anchor.strip() or bdisp, "filename": bfn,
+                        "anchor": self.section_of(bfn, anchor.strip()) if anchor.strip() else None}
         si = self.section_index.get(_art_norm(raw))
         if si:
             sfile, sslug, sart = si

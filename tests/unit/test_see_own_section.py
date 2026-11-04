@@ -53,3 +53,15 @@ def test_an_article_that_binds_wins_over_the_heading():
 
 def test_no_heading_no_link():
     assert resolver(INFANTRY).resolve_xref("OMAN", None, trusted=False, self_fn="x.json") == (None, None, None)
+
+
+def test_a_fragment_lands_only_on_a_heading_the_article_has():
+    # SARTHE's "#Le Mans" bound SARTHE#le-mans, NUMBER#24 a "24" it lacks:
+    # 67 links to anchors that were not there (2026-11-04)
+    r = resolver([{"title": "Le Mans.", "slug": "le-mans"}])
+    assert r._resolve_colon("#Le Mans", self_fn="x.json")["anchor"] == "le-mans"
+    assert resolver(INFANTRY)._resolve_colon("#Le Mans", self_fn="x.json")["anchor"] is None
+    r = resolver([{"title": "47.", "slug": "47"}])
+    r._resolve_plain = lambda base: ("19-0879-dd33a0.json", "NUMBER")
+    assert r._section_post("Number#24", set())["anchor"] is None
+    assert r._section_post("Number#47", set())["anchor"] == "47"

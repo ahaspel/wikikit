@@ -36,6 +36,16 @@ def test_a_resolved_link_lands_on_its_section():
     assert 'href="/article/18-0882-dd33a0"' in html
 
 
+def test_an_apostrophe_is_no_section():
+    # escaped for the page, the apostrophe is `&#39;`: its `#` read as the
+    # section's sent 262 links to "#section-39-s" (2026-11-04)
+    from wikikit.render.inline import decode_inline
+    html = decode_inline("«LN:14-0234-a17a53.json|Ibn Khallikān's|Ibn Khallikān's«/LN»", escape=True)
+    assert 'href="/article/14-0234-a17a53"' in html
+    html = decode_inline("«LN:24-0802-e2cb62.json|Shakespeare#love's-labour's-lost|it«/LN»", escape=True)
+    assert 'href="/article/24-0802-e2cb62#section-love-s-labour-s-lost"' in html
+
+
 @pytest.mark.parametrize("corpus", UNDER, indirect=True)
 def test_under_a_path_every_address_carries_it(corpus):
     assert _article_url("01-0001-abc123.json") == "/fixture/article/01-0001-abc123"

@@ -17,6 +17,7 @@ The article-link URL is the one seam onto the URL layer (the viewer's ``articleU
 BritannicaUrls); it is injected via ``article_url`` so an emitter supplies its own
 target-specific resolver.  The default matches the jsdom reference stub.
 """
+import html
 import re
 
 from wikikit.corpora import current_corpus
@@ -239,8 +240,10 @@ def _ln_open_factory(article_url, book=False):
         if filename:
             # A resolved link's `#` is the heading the export bound — the bake
             # writes only a resolved section there (Spain#history: 556 links
-            # landed on the article's top until 2026-11-01).
-            href = article_url(filename, target.partition("#")[2] or None)
+            # landed on the article's top until 2026-11-01).  Read on the
+            # unescaped target: an apostrophe's `&#39;` is no `#` (262 links to
+            # "#section-39-s", 2026-11-04).
+            href = article_url(filename, html.unescape(target).partition("#")[2] or None)
         elif book:
             # A book must not lean on the site's search box for an unresolved
             # xref (Kindle has no search page — the link is a dead end dressed
