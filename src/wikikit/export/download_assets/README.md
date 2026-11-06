@@ -16,6 +16,24 @@ task_categories:
 - text-retrieval
 - question-answering
 - text-generation
+configs:
+- config_name: articles
+  default: true
+  data_files:
+  - split: train
+    path: articles.jsonl
+- config_name: xref_edges
+  data_files:
+  - split: train
+    path: xref_edges.jsonl
+- config_name: topics
+  data_files:
+  - split: train
+    path: topics.json
+- config_name: contributors
+  data_files:
+  - split: train
+    path: contributors.json
 ---
 
 # Encyclopædia Britannica, 11th Edition (1911) — Full Corpus with Knowledge Graphs
@@ -94,7 +112,10 @@ authors  = json.load(open("contributors.json", encoding="utf-8"))
 
 ```python
 from datasets import load_dataset
-ds = load_dataset("britannica11/eb1911", data_files="articles.jsonl", split="train")
+articles = load_dataset("britannica11/eb1911", split="train")            # the default
+edges    = load_dataset("britannica11/eb1911", "xref_edges", split="train")
+topics   = load_dataset("britannica11/eb1911", "topics", split="train")
+authors  = load_dataset("britannica11/eb1911", "contributors", split="train")
 ```
 
 ## Content note
