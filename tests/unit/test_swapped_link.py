@@ -96,3 +96,11 @@ def test_case_only_difference_is_not_a_reference_either():
     swap = swapped_link("oystercatcher", "Oyster-catcher", TITLES)
     assert swap is not None
     assert swap[1] == "Oyster-catcher"
+
+
+def test_a_jump_within_the_page_is_never_swapped():
+    """BIBLE's `[[#N.T. Criticism|Textual Criticism]]`: the display is a filed
+    title and longer than the fragment, but a `#…` target names a heading of
+    the page itself — swapped, the reader saw "#N.T. Criticism"."""
+    titles = NormalizedIndex([("TEXTUAL CRITICISM", "26-0744.json")])
+    assert swapped_link("#N.T. Criticism", "Textual Criticism", titles) is None

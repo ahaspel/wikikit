@@ -1036,6 +1036,14 @@ class LinkResolver:
                         return self_fn, sec["slug"], name
             return None, None, None
         names = [n for n in (target, display) if n]
+        # A jump within the page (`#Regular Army`, normalized `: REGULAR ARMY`)
+        # names a heading of THIS article; its display is prose, not a name.
+        # Tried first for its four words, UNITED KINGDOM's "regular, or general
+        # service, army" bound REGULAR over the article's own Regular Army
+        # section (2026-11-06).  The target alone decides.
+        base, colon, _ = normalize_xref_target(target).partition(": ")
+        if colon and not base.strip():
+            names = [target]
         # Prefer the MORE-SPECIFIC name first: the side carrying more content
         # words identifies the reference better (target `SAY` vs display
         # `Léon Say`).  Stable sort → target still leads on a tie.

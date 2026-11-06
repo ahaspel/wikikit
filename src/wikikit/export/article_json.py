@@ -130,6 +130,11 @@ def swapped_link(target_text: str, display: str, title_to_filename):
     # SEES, so it is the precision question, not the recall one: under the fold
     # `Menelek II.` and `Justinian I.` match the filed `MENELEK II` / `JUSTINIAN
     # I`, the swap fires, and the regnal number the page printed disappears.
+    # A bare fragment is a jump within the page, never a filed title written
+    # backwards: BIBLE's `[[#N.T. Criticism|Textual Criticism]]` was swapped
+    # onto TEXTUAL CRITICISM and printed "#N.T. Criticism" (4 links, 2026-11-06).
+    if target_text.lstrip().startswith("#"):
+        return None
     t_up, d_up = target_text.strip().upper(), display.strip().upper()
     fn_t = title_to_filename.get_as_written(target_text)
     fn_d = title_to_filename.get_as_written(display)
