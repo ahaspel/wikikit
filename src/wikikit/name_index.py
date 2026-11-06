@@ -75,6 +75,19 @@ class NameIndex:
             self.fn_cws[fn] = content(wf)
             for w in wf:
                 self.word_fns.setdefault(w, set()).add(fn)
+        # EB inverts a leading article to the end — UNITED STATES, THE; HAGUE,
+        # THE; FRENCH REVOLUTION, THE (220 titles) — and a reference names the
+        # thing without it.  Filed only under {…, THE}, "United States" missed
+        # the exact rungs and fell to subset, where an embedding chose UNITED
+        # STATES NAVAL ACADEMY (2026-11-06).  The name without its article is
+        # filed too, after every real title, so it never shadows one.
+        for e in arts:
+            head, sep, art = e["title"].rpartition(",")
+            if not sep or art.strip().upper() != "THE":
+                continue
+            for key, table in ((wordset(head), self.by_ws), (wordset_f(head), self.by_wsf)):
+                if key and key not in table:
+                    table[key] = [(e["filename"], e["title"])]
         # Shared name→fn map for the fuzzy rung + section lookup (first-wins by norm).
         self.by_norm, self.tmap = build_core_maps(
             ((e["title"], (e["filename"], e["title"])) for e in arts),

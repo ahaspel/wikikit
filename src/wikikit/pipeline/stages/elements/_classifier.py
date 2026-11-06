@@ -282,19 +282,24 @@ def _derive_double_brace_label(raw: str, inner_text: str = "") -> str:
     # (like the image cases) since the first-token name is the ambiguous "eb1911".
     # `CE article link` (Catholic Encyclopedia cross-edition) joins the family — a
     # link is a link; the «LN» ladder hunts EB11, then external WS, then strips.
-    if re.match(r"\{\{\s*(?:EB1911|EB9|CE)\s+article\s+link\b", raw, re.IGNORECASE):
+    #
+    # `{{EB1911 intra-article link|Display|Target}}` is the SAME link: Wikisource's
+    # template writes `[[1911 Encyclopædia Britannica/{2 or 1}|{1}]]`, as article
+    # link does — "intra" is within the encyclopaedia, and only the type differs
+    # (article link sets small capitals unless `nosc=`, this one only with `sc=`).
+    # Read as a section of the page it sits on ("#Le Mans"), its 45 uses — SARTHE's
+    # towns, SOMME's "France", TOKUGAWA's "Japan: History" — bound to the article
+    # itself, at headings it lacks (2026-11-06).
+    if re.match(r"\{\{\s*(?:(?:EB1911|EB9|CE)\s+article|EB1911\s+intra-article)\s+link\b",
+                raw, re.IGNORECASE):
         return "EB1911_ARTICLE_LINK"
-    # `{{EB1911 intra-article link|Section}}` — a same-article subsection link (the
-    # `[[#Section]]` bracket form's template twin).  Matched on the raw opener.
-    if re.match(r"\{\{\s*EB1911\s+intra-article\s+link\b", raw, re.IGNORECASE):
-        return "INTRA_ARTICLE_LINK"
     # Target-first link siblings — lkpl / 1911link / EB1911 link, plus the EB9/CE
     # cross-edition family (`{{9link}}`, `{{EB9link}}`, `{{EB9 lkpl}}`, `{{CE lkpl}}`,
     # `{{1911 article link}}` target-first, `{{EB9 Intra-Article Link}}`).  A link is
     # a link: «LN» + the ladder hunts EB11 first, then external WS, then strips —
     # so a 9th-edition ref to a topic EB11 also covers resolves to OUR article.
-    # (NOT the display-first "EB9/EB1911 article link" above, NOT the EB1911
-    # self-fragment "intra-article link" below.)
+    # (NOT the display-first "EB9/EB1911 article link" and "EB1911 intra-article
+    # link" above.)
     # `{{DNB lkpl|Walsh, Peter|Dict. Nat. Biog}}` — a citation of ANOTHER WORK,
     # the Dictionary of National Biography, and not an EB1911 cross-reference at
     # all.  It was in the target-first family below, which cost us a real

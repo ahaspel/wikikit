@@ -254,10 +254,6 @@ def _resolve_cross_work(target, display, body):
     return "", body
 
 
-def _resolve_intra(target, display, body):
-    return ("#" + target if target else ""), body
-
-
 def _resolve_selfref(target, display, body):
     """Strip the `1911 Encyclopædia Britannica/` prefix, KEEP the `#Section`
     fragment.  A bare ref to the work (no `/Article`) points at no article."""
@@ -327,8 +323,6 @@ _LINK_FORMS = {
                                      peel_target_when_bare=True),
     "CROSS_WORK_LINK":     _LinkForm(_slots_target_first, _resolve_cross_work,
                                      peel_target_when_bare=True),
-    "INTRA_ARTICLE_LINK":  _LinkForm(_slots_target_first, _resolve_intra,
-                                     peel_target_when_bare=True),
     "EB1911_SELFREF":      _LinkForm(_slots_bracket, _resolve_selfref),
     "AUTHOR_LINK":         _LinkForm(_slots_bracket, _resolve_author, _al),
     "FRAGMENT_LINK":       _LinkForm(_slots_bracket, _resolve_fragment),
@@ -362,5 +356,4 @@ _wrap_cross_work = _link_wrap("CROSS_WORK_LINK")
 _wrap_selfref = _link_wrap("EB1911_SELFREF")
 _wrap_author_link = _link_wrap("AUTHOR_LINK")
 _wrap_fragment_link = _link_wrap("FRAGMENT_LINK")
-_wrap_intra_link = _link_wrap("INTRA_ARTICLE_LINK")
 _wrap_wikilink = _link_wrap("WIKILINK")

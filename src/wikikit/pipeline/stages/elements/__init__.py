@@ -29,7 +29,7 @@ from wikikit.pipeline.stages.elements._dual_line import _process_dual_line
 from wikikit.pipeline.stages.elements._link import (
     _LINK_LABELS, _link_display,
     _wrap_article_link, _wrap_target_first, _wrap_cross_work, _wrap_selfref,
-    _wrap_author_link, _wrap_fragment_link, _wrap_intra_link, _wrap_wikilink)
+    _wrap_author_link, _wrap_fragment_link, _wrap_wikilink)
 from wikikit.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from wikikit.pipeline.stages.elements._spacer import process_spacer
@@ -1529,7 +1529,6 @@ _PR_WRAP = {
     "EB1911_SELFREF":      _wrap_selfref,
     "AUTHOR_LINK":         _wrap_author_link,
     "FRAGMENT_LINK":       _wrap_fragment_link,
-    "INTRA_ARTICLE_LINK":  _wrap_intra_link,
     "WIKILINK":            _wrap_wikilink,
     # stylers — the substituted body wrapped by `style_block`; each re-derives its CSS from raw
     "PARAM":      _wrap_param,        # {{Fs|108%|X}}      → «SPAN[style:…]»X
@@ -1706,7 +1705,7 @@ _PRODUCER_DISPATCH: dict[str, _ElementHandler] = {
     "CONTRIBUTOR_FOOTER": lambda raw, inner, ctx, reg:
         _process_contributor_footer(raw),
     # The «LN:target|display» link family (EB1911_ARTICLE_LINK / TARGET_FIRST_LINK / AUTHOR_LINK /
-    # EB1911_SELFREF / FRAGMENT_LINK / INTRA_ARTICLE_LINK / WIKILINK) is generated from `_PR_WRAP`
+    # EB1911_SELFREF / FRAGMENT_LINK / WIKILINK) is generated from `_PR_WRAP`
     # below (peel/recurse/wrap): `_link_display` peels the display, each `_wrap_*` parses the
     # target from raw and emits «LN».
     # Spacer leaves — em/gap/clear/anchor/ditto/dhr/rule → atomic char/marker.  `ctx` rides in
