@@ -10,6 +10,7 @@
   "src/wikikit/pipeline/stages/elements/_classifier.py": "TITLE peel",
   "src/wikikit/pipeline/stages/elements/_link.py": "link wire form",
   "src/wikikit/pipeline/stages/elements/_section_anchors.py": "section-anchor producer",
+  "src/wikikit/pipeline/stages/elements/_figure_anchors.py": "figure-anchor + figure-reference producer (post-walk; reads «P»/«TABLE»/«ANCHOR» to pair images with captions)",
   "src/wikikit/pipeline/stages/elements/_shapes.py": "TITLE peel",
   "src/wikikit/pipeline/stages/elements/_title.py": "title producer",
   "src/wikikit/pipeline/stages/elements/_walker.py": "the walker",

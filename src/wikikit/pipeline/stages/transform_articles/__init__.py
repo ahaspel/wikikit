@@ -141,6 +141,8 @@ def walk_article(session, article) -> str:
     """
     from wikikit.pipeline.stages.elements import (
         ElementContext, process_elements)
+    from wikikit.pipeline.stages.elements._figure_anchors import (
+        stamp_figure_anchors, stamp_figure_refs)
     from wikikit.pipeline.stages.elements._section_anchors import (
         stamp_section_anchors)
 
@@ -155,6 +157,9 @@ def walk_article(session, article) -> str:
     # plus balanced «TABLE[…]» table spans.  A section is a heading NOT inside a
     # table; the pre-walk `stamp_sections` regex never had this structure.
     walked = stamp_section_anchors(walked)
+    # Figures, the same family: an image and its caption are siblings no producer
+    # sees together.  Anchors first, so the references can land on them.
+    walked = stamp_figure_refs(stamp_figure_anchors(walked))
     m = _TITLE_NODE_RE.search(walked)
     if not m:
         return walked

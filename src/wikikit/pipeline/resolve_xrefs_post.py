@@ -21,7 +21,7 @@ from wikikit.db.models import Article
 from wikikit.db.session import SessionLocal
 from wikikit.export.article_json import (
     _link_xrefs_in_body, _safe_filename, _xrefs_from_body,
-    build_title_index, register_stable_id_dedup, xref_panel_entries,
+    build_title_index, panel_xrefs, register_stable_id_dedup, xref_panel_entries,
 )
 from wikikit.link_resolver import LinkResolver
 from wikikit.markers import countable_words
@@ -109,7 +109,7 @@ def resolve_and_render(session, payloads: dict, decorate=None) -> int:
         # 2026-09-26 rebuild shipped 37,225 counts identical to the pre-fix
         # ones.  `check_word_counts.py` gates the shipped field now.
         d["word_count"] = countable_words(body)
-        d["xrefs"] = [e for e in xref_list if e["status"] == "resolved"]
+        d["xrefs"] = panel_xrefs(xref_list, src + ".json")
         d["rendered_html"] = render_article(d, target="site")
         n += 1
         if n % 5000 == 0:

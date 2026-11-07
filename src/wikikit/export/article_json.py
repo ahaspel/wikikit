@@ -822,6 +822,20 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     return xrefs
 
 
+def panel_xrefs(xref_list: list, self_fn: str) -> list:
+    """The shipped ``xrefs`` field: resolved references to ANOTHER article.
+
+    It feeds the Cross-references panel, ``xref_edges.jsonl`` and the search
+    indexer, all of which mean "the articles this one points to".  A jump within
+    the page (`#N.T. Criticism`, and every "fig. 3" once figures link) resolves
+    to the article itself: NUMBER listed NUMBER in its own panel, and the
+    dataset carried the edge NUMBER → NUMBER.  The link in the body stays; only
+    the index of other articles leaves it out — as the link census (7.4) does.
+    """
+    return [e for e in xref_list
+            if e["status"] == "resolved" and e.get("target_filename") != self_fn]
+
+
 def xref_panel_entries(xrefs, session):
     """Panel rows for a set of resolved xrefs: normalized_target + status +,
     for a resolved one, OUR canonical target_filename/target_title (the panel is
@@ -1294,7 +1308,7 @@ def export_articles_to_json(
                 # Panel = the article's resolved INTERNAL cross-references only.
                 # Unresolved entries and external «XL» links never enter it — the EB11
                 # web downstairs stays internal (external links live inline, as «XL»).
-                "xrefs": [e for e in xref_list if e["status"] == "resolved"],
+                "xrefs": panel_xrefs(xref_list, _safe_filename(article, article.title)),
                 "plates": [
                     {
                         "title": plate_info["title"],

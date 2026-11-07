@@ -34,11 +34,13 @@ from __future__ import annotations
 import re
 
 from wikikit.export.sections import section_key
-from wikikit.markers import strip_marker_tokens
+from wikikit.markers import IMG_PARTS_RE, strip_marker_tokens
 from wikikit.pipeline.stages.elements._anchor import anchor_marker
+from wikikit.pipeline.stages.elements._link import ln_marker
 from wikikit.util.strings import anchor_slug
 
-_IMG = re.compile(r"\{\{IMG:[^{}]*\}\}")
+# The image marker's own grammar: filename, meta block, caption field.
+_IMG = IMG_PARTS_RE
 # A caption's figure number: "Fig. 3", "Fig 3", "Figure 3", "Fig. 2 a" / "2b".
 _CAPTION_NUM = re.compile(r"\bFig(?:ure)?\s?\.?\s*(\d{1,3})(?:\s?([a-z])\b)?")
 _PARA = re.compile(r"«P»")
@@ -56,7 +58,7 @@ _REF = re.compile(
 _ONE_NUM = re.compile(r"(\d{1,3})(?:\s?([a-z])\b)?")
 # Spans a reference never links inside: an image marker (its caption field), a
 # link, a marker token's own fields.
-_PROTECT = re.compile(r"\{\{IMG:[^{}]*\}\}|«LN[^»]*?:.*?«/LN»|«[A-Z_]+:[^»]*»", re.S)
+_PROTECT = re.compile(_IMG.pattern + r"|«LN[^»]*?:.*?«/LN»|«[A-Z_]+:[^»]*»", re.S)
 # What, just before a reference, makes it someone else's figure.
 _PLATE_BEFORE = re.compile(r"(?:\b[Pp]l(?:ate)?s?\.?\s+[IVXLCivxlc\d]+\.?,?\s*)$")
 # …or after it: "(fig. 120, Plate XXV.)" — SHIPBUILDING.
@@ -88,17 +90,11 @@ def _figures(body: str):
                 pending.clear()
             continue
         # the image's own caption field
-        field = m.group(0)[len("{{IMG:"):-2].split("|", 1)
-        own = None
-        if len(field) == 2:
-            caption = [f for f in field[1].split("|")
-                       if not re.match(r"(?:align|width|height)=", f)]
-            if caption:
-                own = _caption_number(strip_marker_tokens("|".join(caption), ""))
+        own = _caption_number(strip_marker_tokens(m.group(3), "")) if m.group(3) else None
         if own:
             out.append((pos, *own))
             continue
-        fname = field[0]
+        fname = m.group(1)
         fm = _FILE_NUM.search(fname.replace("%20", " ")) if "1911" in fname else None
         pending.append((pos, int(fm.group(1)) if fm else None))
         # the text after this image, up to the next image or paragraph break
@@ -257,5 +253,5 @@ def stamp_figure_refs(body: str, stats: dict | None = None) -> str:
             for a, b, name in parts:
                 edits.append((a, b, name, body[a:b]))
     for a, b, name, shown in reversed(edits):
-        body = body[:a] + f"«LN:#{name}|{shown}«/LN»" + body[b:]
+        body = body[:a] + ln_marker("#" + name, shown) + body[b:]
     return body
