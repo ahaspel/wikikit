@@ -98,6 +98,13 @@ def test_case_only_difference_is_not_a_reference_either():
     assert swap[1] == "Oyster-catcher"
 
 
+def test_a_section_address_is_never_swapped():
+    """JULIAN: the producer put `Shapur#II` in the target; a filed title in the
+    display must not turn it back round and print the address."""
+    titles = NormalizedIndex([("SHAPUR II.", "24-0836-a49583.json")])
+    assert swapped_link("Shapur#II", "Shapur II.", titles) is None
+
+
 def test_a_jump_within_the_page_is_never_swapped():
     """BIBLE's `[[#N.T. Criticism|Textual Criticism]]`: the display is a filed
     title and longer than the fragment, but a `#…` target names a heading of

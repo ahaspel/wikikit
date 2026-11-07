@@ -60,6 +60,47 @@ def test_plain_slots_keep_the_template_convention():
         "Oystercatcher", "Oyster-catcher")
 
 
+@pytest.mark.parametrize("raw,read,want", [
+    # JULIAN: target-first read showed the reader "Shapur#II".
+    ("{{1911link|nosc=y|Shapur II.|Shapur#II}}", _slots_target_first,
+     ("Shapur#II", "Shapur II.")),
+    ("{{11link|native|Senegal (colony)#Inhabitants}}", _slots_target_first,
+     ("Senegal (colony)#Inhabitants", "native")),
+    ("{{1911link|Japan|Japan/04 Art}}", _slots_target_first, ("Japan/04 Art", "Japan")),
+    # Already in the form's own order: unchanged.
+    ("{{EB1911 lkpl|Africa#History|''History''}}", _slots_target_first,
+     ("Africa#History", "''History''")),
+    ("{{EB1911 article link|Rome|Rome/History#Republic}}", _slots_display_first,
+     ("Rome/History#Republic", "Rome")),
+    # The one display-first link written the other way round.
+    ("{{EB1911 article link|Army#Spanish|Army}}", _slots_display_first,
+     ("Army#Spanish", "Army")),
+])
+def test_the_address_slot_is_the_target(raw, read, want):
+    """The page never prints a Wikisource address, so whichever slot holds one
+    is the target — the two-slot templates are written both ways round."""
+    assert read(raw) == want
+
+
+@pytest.mark.parametrize("slot", ["Mus&#233;e", "«I»Op. cit.«/I»", "glan-<br /> dular",
+                                  "and/or", "1/2"])
+def test_entities_markup_and_slashes_are_not_addresses(slot):
+    from wikikit.pipeline.stages.elements._link import _is_address
+    assert not _is_address(slot)
+
+
+@pytest.mark.parametrize("label,raw,want", [
+    ("TARGET_FIRST_LINK", "{{1911link|Irrigation#Egypt}}", ("Irrigation#Egypt", "Irrigation")),
+    ("EB1911_ARTICLE_LINK", "{{EB1911 article link|Mechanics/Applied}}",
+     ("Mechanics#Applied", "Mechanics")),
+    ("EB1911_ARTICLE_LINK", "{{EB1911 article link|Both}}", ("Both", "Both")),
+])
+def test_a_lone_address_shows_its_article(label, raw, want):
+    form = _LINK_FORMS[label]
+    target, display = form.slots(raw)
+    assert form.resolve(target, display, _link_display(raw, label)) == want
+
+
 @pytest.mark.parametrize("label,raw,want", [
     # A template's lone positional is its own display; a bracket's absent one is nothing.
     ("TARGET_FIRST_LINK", "{{lkpl|Egypt/3 History}}", "Egypt/3 History"),

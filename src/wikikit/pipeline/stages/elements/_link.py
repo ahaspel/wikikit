@@ -55,6 +55,41 @@ def _slots_bracket(raw: str) -> tuple[str, str | None]:
 
 _MARKUP_SLOT = re.compile(r"\{\{|«")
 
+# A Wikisource ADDRESS — a `#Section` fragment or a subpage path
+# (`Egypt/2_Ancient_Egypt`, `Rome/History`, `Drama/7`).  The page never prints
+# one, so a slot carrying it is the TARGET whichever position it sits in.  `&#`
+# is an entity, not a fragment; `«/I»` and `<br />` are markup, not a path; a
+# page name starts with a letter, so `1/2` is a fraction.
+_ADDRESS_SLOT = re.compile(r"(?<!&)#|^[^\W\d_][^/|<«]*/[\dA-Z]")
+
+
+def _is_address(slot: str) -> bool:
+    return bool(_ADDRESS_SLOT.search(slot))
+
+
+def _address_order(pos: list[str]) -> tuple[str, str] | None:
+    """`(target, display)` when exactly one of two slots is an address, else None.
+
+    The two-slot link templates are written BOTH ways round in the source
+    (`swapped_link` counts it), and the convention each form assumes is wrong
+    whenever the transcriber used the other.  For most pairs only the title
+    index can tell; for these the slot itself can.  JULIAN's
+    `{{1911link|nosc=y|Shapur II.|Shapur#II}}` read target-first printed
+    "Shapur#II" to the reader AND filed the link under the regnal name, losing
+    the section; ASMARA's `{{1911link|Abyssinia|Abyssinia#History}}` landed at
+    the top of ABYSSINIA and printed "Abyssinia#History".  In the raw corpus 663
+    two-slot links carry an address in exactly one slot (`1911link`/`11link` 211
+    in the second, `EB1911 lkpl` 50 in the first, `EB1911 article link` 399 in
+    the second and 1 in the first) and NONE in both, so the tell never has to
+    choose.
+    """
+    if len(pos) < 2:
+        return None
+    a0, a1 = _is_address(pos[0]), _is_address(pos[1])
+    if a0 == a1:
+        return None
+    return (pos[0], pos[1]) if a0 else (pos[1], pos[0])
+
 
 def _slots_target_first(raw: str) -> tuple[str, str | None]:
     """`{{lkpl|Target|Display}}` — target is the first positional.
@@ -74,6 +109,8 @@ def _slots_target_first(raw: str) -> tuple[str, str | None]:
         return "", None
     if len(pos) == 1:
         return pos[0], None
+    if (by_address := _address_order(pos)):
+        return by_address
     if _MARKUP_SLOT.search(pos[0]) and not _MARKUP_SLOT.search(pos[1]):
         return pos[1], pos[0]
     return pos[0], pos[1]
@@ -82,12 +119,16 @@ def _slots_target_first(raw: str) -> tuple[str, str | None]:
 def _slots_display_first(raw: str) -> tuple[str, str | None]:
     """`{{EB1911 article link|Display|Target}}` — the other convention.  A lone
     positional is BOTH: the source named one string and meant it to be shown and
-    followed."""
+    followed — unless it is an ADDRESS, which is followed but never shown
+    (`{{EB1911 article link|Mechanics/Applied}}`); the resolver shows the
+    article name, as the target-first form does."""
     pos = _positionals(raw)
     if not pos:
         return "", None
     if len(pos) == 1:
-        return pos[0], pos[0]
+        return pos[0], (None if _is_address(pos[0]) else pos[0])
+    if (by_address := _address_order(pos)):
+        return by_address
     return pos[1], pos[0]
 
 
@@ -214,23 +255,22 @@ _AUTHOR_PREFIX = re.compile(r"^\s*Author:\s*", re.IGNORECASE)
 def _resolve_article(target, display, body):
     """A subpage target whose display is a roman numeral is a SECTION LABEL —
     `IV. History` names a part of the page it sits on, not another article."""
+    folded = target
     if "/" in target:
         if display and _ROMAN_LABEL.match(display):
             return "", body
         # The subpage path becomes OUR section form; it used to be discarded
         # entirely in favour of the display arg, which sent the reader to the top
         # of a 110-page article when the source had named one of its sections.
-        return subpage_target(target), body
-    return target, body
+        folded = subpage_target(target)
+    return folded, (body if display is not None else folded.partition("#")[0])
 
 
 def _resolve_target_first(target, display, body):
     """A no-display `{{lkpl|Egypt/3 History}}` printed the raw Wikisource path to
-    the reader in 23 places.  The piped form already shows the article name;
-    match it."""
-    if "/" not in target:
-        return target, body
-    folded = subpage_target(target)
+    the reader in 23 places, and `{{1911link|Irrigation#Egypt}}` its fragment.
+    The piped form already shows the article name; match it."""
+    folded = subpage_target(target) if "/" in target else target
     return folded, (body if display is not None else folded.partition("#")[0])
 
 
