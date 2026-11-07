@@ -384,10 +384,12 @@ class LinkResolver:
                 return self._res(cands[0][0], "bible")
         return None
 
-    def _resolve_colon(self, name: str, self_fn: str = None):
+    def _resolve_colon(self, name: str, self_fn: str = None, *, whole_article: bool = False):
         """Normalized section-suffix form ``ARTICLE: SECTION`` (a `#section` target
         that normalize_xref_target rewrote to `: `).  Empty base = a same-article
-        section (the xref caller supplies ``self_fn``)."""
+        section (the xref caller supplies ``self_fn``).  ``whole_article`` (the
+        xref path) lands an unprinted section on its article; the topic path
+        keeps colon forms inert."""
         target = normalize_xref_target(name)
         if ": " not in target:
             return None
@@ -401,7 +403,19 @@ class LinkResolver:
             # (58 links on 2026-11-04)
             return ({"target": name, "display": suffix.title(),
                      "filename": self_fn, "anchor": self.section_of(self_fn, suffix)} if self_fn else None)
-        xm = self._resolve_plain(base)
+        xm, named = None, base
+        if whole_article and _qualifier_of(base):
+            # A Wikisource page name's qualifier — `Senegal (colony)`, `Athens
+            # (Greece)`, `Gregory (Popes)` — is the wiki's, not EB1911's; our
+            # titles carry none.  The bare name, EXACT and unique, comes before
+            # any fuzzy reading of the whole string, which can bind the
+            # qualifier word itself (`Senegal (colony)` -> COLONY).
+            bare = _QUALIFIER_RE.sub("", base).strip()
+            hits = self.idx.by_norm.get(normalize_xref_target(bare)) or []
+            if len(hits) == 1:
+                xm, named = hits[0], bare
+        if not xm:
+            xm = self._resolve_plain(base)
         if not xm:
             return None
         xfn, xdisp = xm
@@ -411,6 +425,19 @@ class LinkResolver:
             tc = re.sub(r"^[ivxlc]+\.\s*", "", t, flags=re.I).strip("—. ")
             return {"target": f"{xdisp}#{sl}", "display": f"{xdisp} — {tc}",
                     "filename": xfn, "anchor": sl}
+        if whole_article and len(self.idx.by_norm.get(normalize_xref_target(named)) or []) == 1:
+            # EXACT title only — with no heading to confirm it, a fuzzy base is
+            # a guess (EGYPT's `Ds#Egyptian` fuzzed to D).
+            # The article named, at a heading it does not print: the ARTICLE, as
+            # `subpage_target` promises.  Returning nothing sent the reference on
+            # down the ladder to fuzzy-match its display word — UNITED KINGDOM's
+            # `{{11link|English|England#Inhabitants}}` bound ENGLISH LANGUAGE,
+            # `Indian|India#Inhabitants` INDIAN ARCHITECTURE, and
+            # `Scottish|Scotland#Inhabitants` nothing at all.  When the article is
+            # the referring one, `_xref_pass` reads the anchorless self-match as
+            # the terminal abstain (SENEGAL's `native|Senegal (colony)#
+            # Inhabitants`, which bound COLONY).
+            return {"target": xdisp, "display": xdisp, "filename": xfn, "anchor": None}
         return None
 
     def section_of(self, fn: str, heading: str):
@@ -901,7 +928,7 @@ class LinkResolver:
         b = self._try_bible(name)
         if b:
             return _SELF if b["filename"] == self_fn else (b["filename"], None)
-        c = self._resolve_colon(name, self_fn=self_fn)
+        c = self._resolve_colon(name, self_fn=self_fn, whole_article=True)
         if c:
             if c["filename"] == self_fn and not c.get("anchor"):
                 return _SELF
