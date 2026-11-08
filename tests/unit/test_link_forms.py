@@ -39,6 +39,31 @@ def test_target_first_slots(raw, want):
 
 
 @pytest.mark.parametrize("raw,want", [
+    # an HTML tag is markup: the slot is what the page prints (SPINEL)
+    ("{{11link|chromite (FeCr<sub>2</sub>O<sub>4</sub>)|Chromite}}",
+     ("Chromite", "chromite (FeCr<sub>2</sub>O<sub>4</sub>)")),
+    # a tag in the display slot is the usual order already
+    ("{{EB1911 lkpl|Labyrinthulidea|Labyrinthul<del>o</del>idea}}",
+     ("Labyrinthulidea", "Labyrinthul<del>o</del>idea")),
+    # a bare `<` is not a tag
+    ("{{lkpl|Target|a < b}}", ("Target", "a < b")),
+])
+def test_an_html_tag_marks_the_printed_slot(raw, want):
+    assert _slots_target_first(raw) == want
+
+
+@pytest.mark.parametrize("raw,shown", [
+    ("[[wikt:jnt#Egyptian|ỉn.t]]", "ỉn.t"),
+    ("[[wikt:treble|trebled]]", "trebled"),
+    ("[[Wiktionary:proem]]", "proem"),
+])
+def test_a_wiktionary_gloss_prints_and_never_links(raw, shown):
+    from wikikit.pipeline.stages.elements._link import _resolve_wikilink
+    target, display = _slots_bracket(raw)
+    assert _resolve_wikilink(target, display, display) == ("", shown)
+
+
+@pytest.mark.parametrize("raw,want", [
     ("{{EB1911 article link|Display|Target}}", ("Target", "Display")),
     # One positional is BOTH — shown and followed.
     ("{{EB1911 article link|Both}}", ("Both", "Both")),

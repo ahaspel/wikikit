@@ -53,7 +53,12 @@ def _slots_bracket(raw: str) -> tuple[str, str | None]:
     return target.strip(), (display.strip() or None)
 
 
-_MARKUP_SLOT = re.compile(r"\{\{|«")
+# A slot carrying markup is what the page PRINTS: a template, a marker, or an
+# HTML tag — `<` cannot occur in a page name at all.  SPINEL's
+# `{{11link|magnetite (Fe′′Fe<sub>2</sub>′′′O<sub>4</sub>)|Magnetite}}` read
+# target-first lost the formula from the text, and the `/` of `</sub>` split
+# the "target" as a subpage path (`magnetite (Fe′′Fe2<#sub>)`).
+_MARKUP_SLOT = re.compile(r"\{\{|«|<[A-Za-z/!]")
 
 # A Wikisource ADDRESS — a `#Section` fragment or a subpage path
 # (`Egypt/2_Ancient_Egypt`, `Rome/History`, `Drama/7`).  The page never prints
@@ -328,10 +333,22 @@ def _resolve_fragment(target, display, body):
                                                 else section)
 
 
+_DICTIONARY_PREFIX = re.compile(r"^\s*(?:wikt|wiktionary)\s*:", re.IGNORECASE)
+
+
 def _resolve_wikilink(target, display, body):
     """With no display, show the bare name (`w:`/`Portal:` prefix stripped as
-    noise); the target keeps its prefix for the resolver."""
-    return target, (body if display is not None else _strip_link_prefix(target))
+    noise); the target keeps its prefix for the resolver.
+
+    A Wiktionary link is a transcriber's gloss on a WORD — the book prints no
+    reference there — so it cites another work, like `{{DNB lkpl}}`: its display,
+    unlinked.  Resolved as a title it bound EGYPT's hieroglyph readings `r`/`tꜣ`
+    to the letters R and T and `jnt` to REPRODUCTIVE SYSTEM, `bolis` to BOLI and
+    "trebled" to TREBLE (7 of 45, 2026-11-08)."""
+    shown = body if display is not None else _strip_link_prefix(target)
+    if _DICTIONARY_PREFIX.match(target):
+        return "", shown
+    return target, shown
 
 
 def _al(target: str, disp: str, ctx) -> str:
