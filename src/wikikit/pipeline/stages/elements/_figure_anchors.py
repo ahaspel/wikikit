@@ -35,6 +35,7 @@ import re
 
 from wikikit.export.sections import section_key
 from wikikit.markers import IMG_PARTS_RE, strip_marker_tokens
+from wikikit.pipeline.stages.elements import _SECT_NAME_RE
 from wikikit.pipeline.stages.elements._anchor import anchor_marker
 from wikikit.pipeline.stages.elements._link import ln_marker
 from wikikit.util.strings import anchor_slug
@@ -63,6 +64,10 @@ _PROTECT = re.compile(_IMG.pattern + r"|«LN[^»]*?:.*?«/LN»|«[A-Z_]+:[^»]*�
 _PLATE_BEFORE = re.compile(r"(?:\b[Pp]l(?:ate)?s?\.?\s+[IVXLCivxlc\d]+\.?,?\s*)$")
 # …or after it: "(fig. 120, Plate XXV.)" — SHIPBUILDING.
 _PLATE_AFTER = re.compile(r"[,\s]*(?:on\s+)?[Pp]l(?:ate)?s?\.?\s+[IVXLCivxlc\d]")
+# Another article's name right before the reference — a see stamp or a source
+# link, then its closers and a comma or colon ("see «Brain», fig. 8").
+_NAME_BEFORE = re.compile(_SECT_NAME_RE.pattern
+                          + r"(?:«/[A-Z]+»)*\s*[,:]?\s*(?:«[A-Z]+»)*\s*$")
 _CITED_BEFORE = re.compile(
     r"(?:«/I»[^.;()«]{0,12}|\bop\.\s?cit\.[^;()«]{0,20}|\bp{1,2}\.\s?\d+[^;()«]{0,6}"
     r"|\bvol\.\s?[ivxlc\d]+[^;()«]{0,20})[,\s]*$")
@@ -195,14 +200,14 @@ def _ref_numbers(nums: str):
 
 
 def stamp_figure_refs(body: str, stats: dict | None = None) -> str:
-    """Link "fig. N" / "figs. N and M" to the nearest anchor of that number."""
+    """Link "fig. N" / "figs. N and M" to the nearest anchor of that number —
+    or, right after another article's name ("see «Brain», fig. 8"), to THAT
+    article's figure, as a section of what the name binds (`«LN[sec]»`)."""
     anchors: dict = {}                            # (num, letter) -> [(pos, name)]
     for pos, name in _source_anchors(body):
         k = _FIG_KEY.match(section_key(strip_marker_tokens(name, "")))
         if k:
             anchors.setdefault((int(k.group(1)), k.group(2)), []).append((pos, name))
-    if not anchors:
-        return body
     protected = [(m.start(), m.end()) for m in _PROTECT.finditer(body)]
 
     def shielded(p: int) -> bool:
@@ -232,6 +237,18 @@ def stamp_figure_refs(body: str, stats: dict | None = None) -> str:
         # OF the figure — ECHINODERMA's "(fig. 19, 2)" is item 2 of fig. 19.
         if m.group("cue") == "fig.":
             numbers = numbers[:1]
+        # Right after another article's name, the figure is THAT article's:
+        # NERVE's "see «Brain», fig. 8" linked NERVE's own Fig. 8 (21 links in
+        # 12 articles, 2026-11-08).  Stamped as a section of what the name binds
+        # — the export lands it on BRAIN's Fig. 8, or leaves it text.
+        named = _NAME_BEFORE.search(body, max(0, m.start() - 300), m.start())
+        if named is not None:
+            target = named.group("target").strip()
+            for s, e, num, letter in numbers:
+                edits.append((nums_at + s if len(numbers) > 1 else m.start(), nums_at + e,
+                              None, f"{target}#{_figure_name(num, letter, 0)}"))
+                tally("other article's figure")
+            continue
         for s, e, num, letter in numbers:
             # "fig. 2 a" is sub-figure 2a; "fig. 2 i" a label INSIDE fig. 2;
             # a bare "fig. 2" with only 2a/2b printed means the first.
@@ -252,6 +269,9 @@ def stamp_figure_refs(body: str, stats: dict | None = None) -> str:
         else:
             for a, b, name in parts:
                 edits.append((a, b, name, body[a:b]))
-    for a, b, name, shown in reversed(edits):
-        body = body[:a] + ln_marker("#" + name, shown) + body[b:]
+    for a, b, name, shown in sorted(edits, key=lambda e: e[0], reverse=True):
+        if name is None:                          # another article's figure
+            body = body[:a] + ln_marker(shown, body[a:b], kind="sec") + body[b:]
+        else:
+            body = body[:a] + ln_marker("#" + name, shown) + body[b:]
     return body

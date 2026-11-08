@@ -143,6 +143,7 @@ def walk_article(session, article) -> str:
         ElementContext, process_elements)
     from wikikit.pipeline.stages.elements._figure_anchors import (
         stamp_figure_anchors, stamp_figure_refs)
+    from wikikit.pipeline.stages.elements._jump_anchors import stamp_jump_anchors
     from wikikit.pipeline.stages.elements._section_anchors import (
         stamp_section_anchors)
 
@@ -160,6 +161,9 @@ def walk_article(session, article) -> str:
     # Figures, the same family: an image and its caption are siblings no producer
     # sees together.  Anchors first, so the references can land on them.
     walked = stamp_figure_refs(stamp_figure_anchors(walked))
+    # The article's own jumps to a numbered paragraph, an equation number or a
+    # run-in subhead: an anchor where the jump points, when no heading answers.
+    walked = stamp_jump_anchors(walked)
     m = _TITLE_NODE_RE.search(walked)
     if not m:
         return walked

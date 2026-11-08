@@ -29,7 +29,7 @@ from wikikit.pipeline.stages.elements._dual_line import _process_dual_line
 from wikikit.pipeline.stages.elements._link import (
     _LINK_LABELS, _link_display,
     _wrap_article_link, _wrap_target_first, _wrap_cross_work, _wrap_selfref,
-    _wrap_author_link, _wrap_fragment_link, _wrap_wikilink)
+    _wrap_author_link, _wrap_fragment_link, _wrap_wikilink, ln_marker)
 from wikikit.pipeline.stages.elements._contributor import (
     _process_contributor_footer)
 from wikikit.pipeline.stages.elements._spacer import process_spacer
@@ -547,8 +547,9 @@ def _stamp_section_headings(text: str, prev_marker: str = "") -> str:
         if h is None or not h.group("head")[:1].isupper():
             return None
         head = h.group("head")
-        return h, (f"{h.group('sep')}«I»«LN[sec]:{target.strip()}#{head.rstrip(' .')}"
-                   f"|{head}«/LN»«/I»")
+        return h, (f"{h.group('sep')}«I»"
+                   + ln_marker(f"{target.strip()}#{head.rstrip(' .')}", head, kind="sec")
+                   + "«/I»")
     out, i = [], 0
     left = _SECT_NAME_LEFT_RE.search(prev_marker or "")
     if left is not None:

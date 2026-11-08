@@ -229,7 +229,8 @@ def subpage_target(target: str) -> str:
     return _release(f"{article}#{anchor}" if anchor else article)
 
 
-def ln_marker(target: str, display: str, filename: str | None = None) -> str:
+def ln_marker(target: str, display: str, filename: str | None = None,
+              kind: str | None = None) -> str:
     """THE `«LN»` emitter — the only place the marker's field order is written.
 
     Two forms, one owner: the producer's 2-part `«LN:target|display«/LN»`, and the
@@ -244,7 +245,8 @@ def ln_marker(target: str, display: str, filename: str | None = None) -> str:
     what prints a filed catalogue title into running prose.
     """
     head = f"{filename}|{target}" if filename is not None else target
-    return f"«LN:{head}|{display}«/LN»"
+    slot = f"[{kind}]" if kind else ""
+    return f"«LN{slot}:{head}|{display}«/LN»"
 
 
 # ── The seven link wraps (rows in `_PR_WRAP`; `body` = the substituted display) ─────────────

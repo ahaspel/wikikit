@@ -108,3 +108,17 @@ def test_every_reference_lands_on_exactly_its_anchor():
     [ln] = list(iter_ln_markers(out))
     assert ln.target == "#Fig. 1 second", "the NEAREST figure of that number"
     assert match_section(secs, ln.target[1:])["title"] == "Fig. 1 second"
+
+
+@pytest.mark.parametrize("text,want", [
+    # NERVE: another article's name, then its figure — a section of what the
+    # name binds, never this article's own Fig. 8
+    ("see «SC»«LN[see]:Brain|Brain«/LN»«/SC», fig.\xa08", ["Brain#Fig. 8"]),
+    ("«LN:Greek Art|Greek Art«/LN», figs. 2 and 3", ["Greek Art#Fig. 2", "Greek Art#Fig. 3"]),
+])
+def test_a_figure_after_another_articles_name_is_that_articles(text, want):
+    body = "{{IMG:a.png}}" + cap(8) + "{{IMG:b.png}}" + cap(2) + "«P»" + text
+    out = stamp_figure_refs(stamp_figure_anchors(body))
+    secs = [m for m in iter_ln_markers(out) if m.kind == "sec"]
+    assert [m.target for m in secs] == want
+    assert not [m for m in iter_ln_markers(out) if m.target.startswith("#")]

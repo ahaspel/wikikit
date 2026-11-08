@@ -744,6 +744,19 @@ def _safe_filename(article_id, title: str = "") -> str:
     return f"{stable}.json"
 
 
+# "below" / "above" right after a reference (a comma between): the text places
+# what it names in THIS article — "(see «SC»History«/SC», below)".
+_HERE_AFTER = re.compile(r",?\s*(?:below|above)\b")
+
+
+def _placed_here(body: str, surface: str) -> bool:
+    i = body.find(surface)
+    if i < 0:
+        return False
+    after = strip_marker_tokens(body[i + len(surface):i + len(surface) + 60], "")
+    return bool(_HERE_AFTER.match(after))
+
+
 def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
     """The candidate-source half of the xref decorator: extract every
     reference from the body and resolve it through the shared ``LinkResolver``
@@ -808,7 +821,8 @@ def _xrefs_from_body(body, article_id, resolver, fn_to_id=None, self_fn=None):
                 prose=prose_window(body, m["surface_text"]) if trusted else "",
                 self_fn=self_fn, trusted=trusted,
                 embedded=m["xref_type"] == "link",
-                window=m.get("window", False))
+                window=m.get("window", False),
+                here=_placed_here(body, m["surface_text"]))
             # The name-cut that bound — the bake shortens a window-stamp's
             # display to exactly these words (a full-length cut is a no-op).
             xr.matched_cut = cut

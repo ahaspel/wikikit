@@ -1048,7 +1048,7 @@ class LinkResolver:
     def resolve_xref(self, target: str, display: str = None, *,
                      prose: str = "", self_fn: str = None,
                      trusted: bool = True, embedded: bool = False,
-                     window: bool = False):
+                     window: bool = False, here: bool = False):
         """One inline article reference -> ``(filename, section, cut)`` (all
         None when nothing binds).  ``target`` is the extractor's normalized
         target OR a producer-stamped prose window; ``display`` the marker's
@@ -1075,6 +1075,18 @@ class LinkResolver:
                 normalize_xref_target(target):
             display = None
         if not trusted:
+            # "see HISTORY, below": a see the text places in THIS article (``here``
+            # — "below"/"above" right after it) and that names one of its own
+            # headings points within the page, before any article.  PORTUGAL's
+            # and TUNISIA's "(see History, below)" bound HISTORY, the article on
+            # historiography.  Only with a heading: "see FLINT IMPLEMENTS, below"
+            # is the article that follows (47 of 52 such sees, 2026-11-08).
+            if here and self_fn:
+                secs = self._article_sections(self_fn)
+                for name in (n for n in (target, display) if n):
+                    sec = match_section(secs, name, strict=True)
+                    if sec and sec.get("slug"):
+                        return self_fn, sec["slug"], name
             fn, cut = self.resolve_see(target, display, self_fn=self_fn,
                                        window=window)
             if fn:
