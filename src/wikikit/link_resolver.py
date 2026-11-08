@@ -346,6 +346,9 @@ class LinkResolver:
         return self._sec_cache[fn]
 
     def _opening(self, fn: str) -> str:
+        if fn in self._openings:
+            # the ``openings`` test seam — until 2026-11-08 stored and never read
+            return self._openings[fn]
         if fn not in self._open_cache:
             try:
                 d = json.loads((ARTS_DIR / fn).read_text(encoding="utf-8"))
@@ -403,17 +406,31 @@ class LinkResolver:
             # (58 links on 2026-11-04)
             return ({"target": name, "display": suffix.title(),
                      "filename": self_fn, "anchor": self.section_of(self_fn, suffix)} if self_fn else None)
-        xm, named = None, base
-        if whole_article and _qualifier_of(base):
+        qual = _qualifier_of(base)
+        xm = None
+        if whole_article and qual:
             # A Wikisource page name's qualifier — `Senegal (colony)`, `Athens
             # (Greece)`, `Gregory (Popes)` — is the wiki's, not EB1911's; our
-            # titles carry none.  The bare name, EXACT and unique, comes before
-            # any fuzzy reading of the whole string, which can bind the
-            # qualifier word itself (`Senegal (colony)` -> COLONY).
+            # titles carry none.  The bare name, EXACT, comes before any fuzzy
+            # reading of the whole string, which can bind the qualifier word
+            # itself (`Senegal (colony)` -> COLONY).  Among its homonyms the
+            # heading picks; failing that, the qualifier does — through the
+            # fisher, taken only when the QUALIFIER decided (as `_xref_pass`'s
+            # widened bag): GREGORY "the name of sixteen popes", not the Scottish
+            # family, for `Gregory (Popes)/Gregory XII`, whose popes print no
+            # per-pope heading.
             bare = _QUALIFIER_RE.sub("", base).strip()
-            hits = self.idx.by_norm.get(normalize_xref_target(bare)) or []
-            if len(hits) == 1:
-                xm, named = hits[0], bare
+            xm = self._exact_at_heading(bare, suffix)
+            if not xm:
+                hits = self.idx.by_norm.get(normalize_xref_target(bare)) or []
+                if len(hits) > 1:
+                    fn, title, method = self.fish(bare, hits, qualifier=qual,
+                                                  want_kind=lead_kind(qual))
+                    if fn and method in ("qualifier", "qualifier-kind"):
+                        xm = (fn, title)
+        # EXACT: the name's one title, or the homonym its heading or qualifier
+        # picked — not a fuzzy reading of the base.
+        exact = bool(xm) or bool(xm := self._exact_at_heading(base, suffix))
         if not xm:
             xm = self._resolve_plain(base)
         if not xm:
@@ -425,7 +442,7 @@ class LinkResolver:
             tc = re.sub(r"^[ivxlc]+\.\s*", "", t, flags=re.I).strip("—. ")
             return {"target": f"{xdisp}#{sl}", "display": f"{xdisp} — {tc}",
                     "filename": xfn, "anchor": sl}
-        if whole_article and len(self.idx.by_norm.get(normalize_xref_target(named)) or []) == 1:
+        if whole_article and exact:
             # EXACT title only — with no heading to confirm it, a fuzzy base is
             # a guess (EGYPT's `Ds#Egyptian` fuzzed to D).
             # The article named, at a heading it does not print: the ARTICLE, as
@@ -439,6 +456,19 @@ class LinkResolver:
             # Inhabitants`, which bound COLONY).
             return {"target": xdisp, "display": xdisp, "filename": xfn, "anchor": None}
         return None
+
+    def _exact_at_heading(self, name: str, heading: str):
+        """The exact-title hit for ``name`` — the only one, or, among homonyms,
+        the only one that prints ``heading``.  An address names its heading, and
+        the heading tells the homonyms apart: `Rome#Republic` is the history
+        article, not the town in New York; `China#History` the country, not the
+        porcelain; `Senegal (colony)#Inhabitants` the colony, not the river.
+        A collision none or several of them answer stays unresolved here."""
+        hits = self.idx.by_norm.get(normalize_xref_target(name)) or []
+        if len(hits) > 1:
+            hits = [h for h in hits
+                    if match_section(self._article_sections(h[0]), heading, aggressive=True)]
+        return hits[0] if len(hits) == 1 else None
 
     def section_of(self, fn: str, heading: str):
         """The slug of ``fn``'s section that ``heading`` names, or None — the
@@ -1071,10 +1101,16 @@ class LinkResolver:
         base, colon, _ = normalize_xref_target(target).partition(": ")
         if colon and not base.strip():
             names = [target]
-        # Prefer the MORE-SPECIFIC name first: the side carrying more content
-        # words identifies the reference better (target `SAY` vs display
-        # `Léon Say`).  Stable sort → target still leads on a tie.
-        names.sort(key=lambda n: -len(content(wordset_f(n))))
+        elif not colon:
+            # Prefer the MORE-SPECIFIC name first: the side carrying more content
+            # words identifies the reference better (target `SAY` vs display
+            # `Léon Say`).  Stable sort → target still leads on a tie.
+            names.sort(key=lambda n: -len(content(wordset_f(n))))
+        # An ADDRESS target (`Egypt#Mahommedan`) is as specific as a reference
+        # gets — an article AND its heading — so it leads.  Sorted behind the
+        # wordier display "Egypt: History (§ Mahommedan)", the display's colon
+        # reading landed on the bare article first, at a heading EGYPT does not
+        # print, and the address never ran (CALIPHATE, CARMATHIANS, 2026-11-07).
         loose = _XREF_LINK_LOOSE if embedded else _XREF_LOOSE
         for rungs in (_XREF_TIGHT, loose):
             for name in names:
