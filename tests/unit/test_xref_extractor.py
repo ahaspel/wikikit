@@ -1,3 +1,4 @@
+import pytest
 from wikikit.xrefs.extractor import extract_xrefs
 
 
@@ -256,3 +257,17 @@ def test_a_name_linked_to_its_section_already_is_passed() -> None:
 def test_the_new_cues_are_small_caps_only() -> None:
     # in plain text "the article" is prose, not a pointer
     assert extract_xrefs(_chain("The article Projection was printed in 1910.")) == []
+
+
+# A `#` target is judged by its parts: the jump by its heading, the address by
+# its article name — the name tests ("too short", "ends in an initial", "a
+# four-digit date") said nothing about WAVE's "(1)" or CALIPHATE's "§ C".
+
+@pytest.mark.parametrize("target", ["#1", "Caliphate#C", "Alexandria (Egypt)#Battle of 1801"])
+def test_a_jump_or_address_is_judged_by_its_parts(target) -> None:
+    assert [x["normalized_target"] for x in extract_xrefs(f"«LN:{target}|x«/LN»")]
+
+
+@pytest.mark.parametrize("target", ["#", "Ds#Egyptian", "the#History"])
+def test_an_implausible_name_before_the_heading_is_still_rejected(target) -> None:
+    assert extract_xrefs(f"«LN:{target}|x«/LN»") == []

@@ -5,9 +5,20 @@ from wikikit.xrefs.normalizer import normalize_xref_target
 
 
 def _is_plausible_target(target: str) -> bool:
-    """Reject targets that are clearly not article references."""
+    """Reject targets that are clearly not article references.
+
+    The tests below are about NAMES.  A `#` target is judged by its parts: a jump
+    within the page (`#1`) is a heading of this article, and an address
+    (`Caliphate#C`, `Alexandria (Egypt)#Battle of 1801`) is plausible when its
+    article name is — the heading is the article's own text, bound only to a
+    heading that carries it.  Judged whole, WAVE's equation jumps were "too
+    short", CALIPHATE's "§ C" ended in an initial and the battle of 1801 was a
+    bibliographic date: 12 links in the source, all dropped (2026-11-08)."""
     if not target:
         return False
+    base, sep, heading = target.partition("#")
+    if sep:
+        return bool(heading.strip()) if not base.strip() else _is_plausible_target(base)
     # Reject single common words that result from broken markup or overcapture
     if target.lower() in (
         "a", "above", "also", "although", "an", "and", "at", "bel", "below",
