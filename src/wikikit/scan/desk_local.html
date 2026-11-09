@@ -147,8 +147,6 @@ function drawPage() {
     box.scrollLeft = fx * z - box.clientWidth / 2; box.scrollTop = fy * z - box.clientHeight / 2;
     orig.querySelectorAll("[data-zoom]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   }));
-  box.addEventListener("scroll", () => follow(scroller(box), frameScroller()));
-  state.scanBox = box;
 
   const rendered = document.createElement("section");
   rendered.className = "pane";
@@ -165,6 +163,8 @@ function drawPage() {
   const head = $("head"), ta = $("text"), cb = $("checked");
   head.value = cur.head; ta.value = cur.text; cb.checked = cur.checked;
   src.classList.toggle("done", cur.checked);
+  ta.addEventListener("scroll", () => follow(scroller(ta), frameScroller()));
+  state.textBox = ta;
   for (const el of [head, ta]) {
     el.addEventListener("focus", () => { state.lastFocus = el; });
     el.addEventListener("input", () => edit({ head: head.value, text: ta.value }));
@@ -216,9 +216,10 @@ async function preview() {
   } catch (e) { setStatus(`Preview failed: ${e.message}`, "error"); }
 }
 
-// One scroll: the scan and the rendered page keep the same place, as a share
+// One scroll: the source and the rendered page keep the same place, as a share
 // of their length — scroll either, the other follows.  A scroll set here is
-// not followed back (`state.led`).
+// not followed back (`state.led`).  The scan scrolls on its own: two columns,
+// so no share of its length is the place the text has reached.
 function scroller(el) {
   return { el, get y() { return el.scrollTop; }, set y(v) { el.scrollTop = v; },
            get span() { return el.scrollHeight - el.clientHeight; } };
@@ -260,15 +261,15 @@ function refreshFrame() {
       // "I. Iron bar in direct tension:—")
       + ".body-text[data-runs-on] > p:first-of-type { text-indent: 1.5em; }";
     d.head.appendChild(st);
-    f.contentWindow.addEventListener("scroll", () => follow(frameScroller(), scroller(state.scanBox)));
-    // the viewer draws after its fetch: take the scan's place once the body is there
+    f.contentWindow.addEventListener("scroll", () => follow(frameScroller(), scroller(state.textBox)));
+    // the viewer draws after its fetch: take the source's place once the body is there
     let tries = 0;
     const t = setInterval(() => {
       const d = f.contentDocument;
       if ((d && d.querySelector(".body-text")) || ++tries > 50) {
         clearInterval(t);
         state.led = null;
-        follow(scroller(state.scanBox), frameScroller());
+        follow(scroller(state.textBox), frameScroller());
       }
     }, 50);
   };
